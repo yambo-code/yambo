@@ -9,7 +9,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
  !
  use pars,           ONLY:SP,cZERO,cONE,pi
  use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,skip_cond_sum_rule, &
-&                         X_magnons,Epsilon_ij
+&                         X_magnons,Epsilon_ij,i_G_shift
  use R_lattice,      ONLY:bare_qpg
  use frequency,      ONLY:w_samp
  use BS,             ONLY:BSE_mode,l_BS_anomalous_Hall
@@ -78,7 +78,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
  !endif
  ! DEBUG >
  !
- if(.not.trim(global_gauge)=='velocity') gauge_factor=cONE*Co/bare_qpg(iq,1)**2
+ if(.not.trim(global_gauge)=='velocity') gauge_factor=cONE*Co/bare_qpg(iq,i_G_shift)**2
  !
  if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
  if (use_Cf) allocate(X_i(2,it))
@@ -238,7 +238,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
    if (trim(OBS)=="optics") then
      Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor*FG_factor 
      if (BSS_eels_to_eps) Epsilon_ii(iw,i_eps(:))=(1._SP-Epsilon_ii(iw,i_eps(:)))**(-1)-1._SP
-     Epsilon_ii(iw,i_eps(:))=Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*4._SP*pi/bare_qpg(iq,1)**2
+     Epsilon_ii(iw,i_eps(:))=Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*4._SP*pi/bare_qpg(iq,i_G_shift)**2
    endif
    !
    ! I add the term describing the Anomalous Hall effect which is
@@ -246,7 +246,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
    !
    if (l_BS_anomalous_Hall.and.trim(OBS)=="kerr") then
      if (trim(global_gauge)=='length') then
-       B_Hall(2)=B_Hall(2)*Co/bare_qpg(iq,1)**2
+       B_Hall(2)=B_Hall(2)*Co/bare_qpg(iq,i_G_shift)**2
        Epsilon_ij(iw,2)=Epsilon_ij(iw,2)+B_Hall(2)/W%p(iw)
      else if (trim(global_gauge)=='velocity') then
        B_Hall(2)=B_Hall(2)*Co

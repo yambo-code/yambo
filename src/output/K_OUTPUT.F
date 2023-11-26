@@ -7,18 +7,18 @@
 !
 subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !
- use pars,           ONLY:pi,SP,cI,cZERO
+ use pars,           ONLY:pi,SP,cI,cZERO,schlen
  use drivers,        ONLY:l_col_cut
  use frequency,      ONLY:w_samp
  use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall,&
 &                         l_eps_res_ares,l_ab_from_eels
- use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BSqpts,BS_field_direction,BS_dip_size,BS_H_dim,BS_K_coupling
+ use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BS_dip_size,BS_H_dim,BS_K_coupling
  use stderr,         ONLY:STRING_match
  use X_m,            ONLY:Epsilon_ii,eps_2_alpha,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&
 &                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,&
-&                         X_magnons
+&                         X_magnons,i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus
  use com,            ONLY:msg,com_compose_msg
- use R_lattice,      ONLY:bare_qpg,q_norm,FineGd_desc,nkbz
+ use R_lattice,      ONLY:bare_qpg,FineGd_desc,nkbz
  use D_lattice,      ONLY:l_0D,l_1D,l_2D,l_3D
  use electrons,      ONLY:spin_occ
  use DIPOLES,        ONLY:DIP_desc
@@ -35,6 +35,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  character(2)      :: ordering
  integer           :: id
  character(10)     :: solver
+ character(schlen) :: out_string
  complex(SP)       :: hall(3,2),eps(BSS_n_freqs,3),spectra(BSS_n_freqs,3),alpha(BSS_n_freqs,3),fac
  real(SP)          :: data_sort(N_BS_E_sorted+1)
  logical           :: l_last_col
@@ -48,12 +49,13 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    if (STRING_match(WHAT,"IP"))        solver="IP"
    !
    if (STRING_match(WHAT,"bare")) then
-     call X_OUTPUT_driver(WHAT="keys "//OBS,IQ=iq)
+     out_string=""
    else
-     if (     STRING_match(WHAT,"IP")                      ) call X_OUTPUT_driver(WHAT="keys "//OBS,IQ=iq,keys='IP')
-     if (.not.STRING_match(WHAT,"IP").and..not.BS_K_is_ALDA) call X_OUTPUT_driver(WHAT="keys "//OBS,IQ=iq,keys=trim(solver)//' bse')
-     if (                   BS_K_is_ALDA) call X_OUTPUT_driver(WHAT="keys "//OBS,IQ=iq,keys=trim(solver)//' alda bse')
+     if (     STRING_match(WHAT,"IP")                      ) out_string='IP'
+     if (.not.STRING_match(WHAT,"IP").and..not.BS_K_is_ALDA) out_string=trim(solver)//' bse'
+     if (                                      BS_K_is_ALDA) out_string=trim(solver)//' alda bse'
    endif
+   call X_OUTPUT_driver(WHAT="keys"//OBS,IQ=iq,IG=i_G_shift,keys=trim(out_string))
    !
    ! If epsilon is not evaluated or extendable to the negative axis, eels is not evaluated
    ! This is not really needed and could be removed with just a warning
@@ -67,7 +69,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  if (STRING_match(WHAT,"override"))  call X_OUTPUT_driver("override "//OBS)
  !
  if (STRING_match(WHAT,"open").or.STRING_match(WHAT,"override")) then
-   call X_OUTPUT_messages(iq,Q_plus_G=BSqpts(:,iq),ig=1)
+   call X_OUTPUT_messages(iq,Q_plus_G=Q_plus_G_pt,ig=i_G_shift)
    !
    if (     trim(BSE_mode)=='resonant' ) ordering='r'
    if (.not.trim(BSE_mode)=='resonant' ) ordering='R'
@@ -88,7 +90,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  if (.not.STRING_match(WHAT,"dump")) return
  !
  fac=eps_2_alpha/4._SP/pi
- if (l_col_cut) fac=fac*bare_qpg(iq,1)**2/q_norm(iq)**2
+ if (l_col_cut) fac=fac*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
  !
  ! ABSORPTION
  !

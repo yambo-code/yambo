@@ -237,7 +237,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
   allocate(MPA_R_par(1))
  endif
  if (io_RESPONSE) call MPA_ALLOC_parallel(MPA_E_par(1),MPA_R_par(1),X%ng,2*X%mpa_npoles,"MPA")
- ! todo: update mat=>par for MPA case.
  !
  !
  ! AF: the following line needs to be moved elsewhere
@@ -281,6 +280,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
    if (iqibz/=isc%iqref) then
      !
      iq_mem=PAR_Q_ibz_index(iqibz)
+     iq_mem = 1
      X_range=(/1,Xw%n_freqs/)
      if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
      !
@@ -337,7 +337,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
 !&                                                  Xw%mpa_solver,MPred,PPcond_rate,MP_err,cond_num)
          !MB: in the following we introduce the MPA_E/R_par. should be same as X_par(iq_mem)%blc(ig1,ig2,X_range2),
          ! where X_range2 -> : ... not sure if I have to introduce the iq_mem.
-         call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo,MPA_R_par(1)%blc(ig1,ig2,:),MPA_E_par(1)%blc(ig1,ig2,:),&
+         call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo,MPA_R_par(iq_mem)%blc(ig1,ig2,:),MPA_E_par(iq_mem)%blc(ig1,ig2,:),&
 &                                                  Xw%mpa_solver,MPred,PPcond_rate,MP_err,cond_num)
          if(MPred) MPred_rate=MPred_rate+1._SP
          PPcond_Qrate=PPcond_Qrate+PPcond_rate
@@ -347,7 +347,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        enddo
      enddo
      !$omp end do
-     !     
+     !   
      YAMBO_FREE(MPA_Xo)
      !
      !$omp end parallel
@@ -425,7 +425,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
    endif
    ! 
    MPA_E_par_p=>DEV_VAR(MPA_E_par(1)%blc)
-   MPA_R_par_p=>DEV_VAR(MPA_E_par(1)%blc)
+   MPA_R_par_p=>DEV_VAR(MPA_R_par(1)%blc)
    !
    call timing('GW(mpa)_qp_loop',OPR='start')
    !

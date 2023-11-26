@@ -335,9 +335,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
 #endif
    endif
    !
-! XXX
-write(*,*) "upto before io_RESPONSE"
-! XXX
    ! DS MERGE >
    !
    ! X_par => X_mat

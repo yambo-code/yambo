@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2009 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM, DS
+! Authors (see AUTHORS file for details): AM DS
 !
 logical function EPS_check(wv,nw,be_verbose,ordering)
  !
@@ -13,15 +13,15 @@ logical function EPS_check(wv,nw,be_verbose,ordering)
  !
  implicit none
  !
- integer              :: nw
- complex(SP)          :: wv(nw)
- logical              :: be_verbose
- character(2)         :: ordering
+ integer,     intent(in) :: nw
+ complex(SP), intent(in) :: wv(nw)
+ logical,     intent(in) :: be_verbose
+ character(2), intent(in):: ordering
  !
  EPS_check=.TRUE.
  !
- if (ordering=='Tr'.or.ordering=='Ta') then
-   if (real(wv(1))<-real(wv(1))) then
+ if (ordering=="r".or.ordering=='Ra'.or.ordering=='Ta') then
+   if (real(wv(1))<0._SP) then
      EPS_check=.FALSE.
      if (be_verbose) call warning(' [EPS_check] Impossible to extend EPS in the w<0 axis')
      return
@@ -34,7 +34,8 @@ end function EPS_check
 subroutine EPS_extend(wv,nw,be_verbose,ordering,eps,eps_extended)
  !
  ! extend epsilon to the negative axes if needed
- ! This subroutines always works with (eps - 1.) to avoid numerical noise
+ ! This subroutines always works with (eps - 1.) to avoid numerical noise.
+ ! It is based on Kramers-Kronig relations, so it gives the retared response
  ! 
  use pars,          ONLY:SP,pi,cZERO,cI
  use units,         ONLY:HA2EV
@@ -53,7 +54,7 @@ subroutine EPS_extend(wv,nw,be_verbose,ordering,eps,eps_extended)
  integer            :: iw
  complex(SP)        :: eps_kk(nw),wv_kk(nw)
  !
- if (trim(ordering)=='T'.or.trim(ordering)=='R') then
+ if (trim(ordering)=='R'.or.trim(ordering)=="T") then
    eps_extended=eps
    return
  endif

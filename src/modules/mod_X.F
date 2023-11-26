@@ -66,6 +66,8 @@ module X_m
  !
  integer                  :: N_BS_E_sorted=0
  complex(SP), allocatable :: BS_E_sorted(:,:,:)
+ complex(SP), allocatable :: Resp_ii(:,:)
+ complex(SP), allocatable :: Resp_ij(:,:)
  complex(SP), allocatable :: Epsilon_ii(:,:)
  complex(SP), allocatable :: Epsilon_ij(:,:)
  complex(SP), allocatable :: Joint_DOS(:,:) 

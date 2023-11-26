@@ -8,12 +8,12 @@
 subroutine K_driver_init(what,iq,Ken,Xk)
  !
  use R_lattice,    ONLY:bz_samp
- use electrons,    ONLY:levels,n_sp_pol
+ use electrons,    ONLY:levels,n_sp_pol,n_spinor
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
- use stderr,       ONLY:STRING_match,STRING_same
- use BS_solvers,   ONLY:BSS_eels_to_eps,BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,&
-&                       l_ab_from_eels,BSS_slepc_double_grp
+ use stderr,       ONLY:STRING_match
+ use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,&
+&                       l_abs_prop_chi_bse,BSS_slepc_double_grp
  use BS,           ONLY:BSE_L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
 &                       BS_perturbative_SOC,l_BS_magnons,l_BS_photolum,&
 &                       BS_cpl_K_exchange,BS_n_g_exch,BS_res_K_exchange,BS_K_coupling,BS_res_ares_n_mat,&
@@ -42,13 +42,34 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  BS_n_eh_spaces=1
  BS_res_ares_n_mat=1
  !
- ! BSE_L_kind check
- !==============
- if (.not.STRING_match(BSE_L_kind,"bar").and..not.STRING_match(BSE_L_kind,"full")) call error('set Lkind = BAR or FULL')
+ ! default mode
+ if(STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-bar"
  !
- if (trim(BSE_L_kind)=="full".and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
-   call warning(' Lkind=full with retarded leads to bad epsilon. Use either resonant or coupling. Setting resonant. ')
-   BSE_mode="resonant"
+ if (l_col_cut) then
+   ! We are here in 0D, 1D or 2D
+   ! The G=0 term included in L-full is representative
+   ! of the portion of the line (2D) / plane (1D) / volume (0D)  around G=0
+   ! which contributes to the L-T splitting.
+   ! Such term goes to zero as the volume goes to infinity.
+   if (iq==1) then
+     ! At q=0 there is no L-T spliting. So Lbar and Lfull give the same result
+     ! It is useless to compute the non analytical Lfull and better to
+     ! directly remove the G=0 term
+     call warning('Coulomb cutoff at q=0. Default/Suggested Lkind= bar')
+     if(STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-bar"
+   endif
+   if (iq/=1) then
+     ! We are here in 1D or 2D.
+     ! At q>0 there is L-T spliting in 1D or 2D
+     ! Lbar and Lfull give the same result only in the limit V->infinity
+     ! The above mentioned G=0 term is part of this effect.
+     ! Here we assume it would be better to include it, to be double checked
+     call warning('Coulomb cutoff at q>0. Default/Suggested Lkind= full')
+     if(STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-full"
+     ! N.B.: One could compute the calculation without L-T slitting,
+     ! by removing such full line (2D) / plane (1D). Not coded at the moment.
+     ! I would define it as L="transverse"
+   endif
  endif
  !
  ! RES/ANTI-RES (q-dependent)
@@ -82,40 +103,12 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    if (.not.BS_K_coupling) BS_res_ares_n_mat=2
  endif
  !
- ! Need to convert eels to epsilon ? (part A, part B in K_driver)
- !================================================================
- !
- ! If the system is 3D eps/=eps^-1
- if (l_3D)          BSS_eels_to_eps=trim(BSE_L_kind)=="full"
- !
- ! If the Coulomb cutoff is     used ...
- if (l_col_cut) then
-   !
-   !...the system is 0D  eps= eps^-1=1 since vbar=0
-   if (l_0D)  BSS_eels_to_eps=.false.
-   !
-   ! If the Coulomb cutoff is used and the system is 1D or 2D eps and eels are different at finite q
-   if (l_1D.or.l_2D) then
-     if (iq==1) BSS_eels_to_eps=.false.
-     if (iq/=1) BSS_eels_to_eps=STRING_same(BSE_L_kind,"full")
-   endif
-   !
- endif
- !
- ! In general alpha depend on eels
- ! Without cutoff, this is used only in 3D, and in (2D or 1D) at q>0,
- ! otherwise eps=eel and eps converges faster to the +inf volume limit,
- ! thus it is convenient un relate alpha to eps
- !
- ! Also to remember that standard BSE is with Lbar, i.e. something proportional to eps
- ! For the case Lfull we could use the same logic of G-space since we have something proportional to eps^-1
- ! The following logical could be merged with the BSS_eels_to_eps logical
- !-------
- l_ab_from_eels=.false.
- !if ( l_3D .or. (  (l_1D.or.l_2D) .and. iq>1 ) .or. (l_col_cut .and. STRING_same(BSE_L_kind,"Lbar")) ) l_ab_from_eels = .true.
- if ( l_3D .or. (  (l_1D.or.l_2D) .and. iq>1 ) .or. l_col_cut ) l_ab_from_eels = .true.
- !
  if (what=="loop-init") return
+ !
+ ! BSE_L_kind check
+ !==============
+ if (.not.STRING_match(BSE_L_kind,"bar").and..not.STRING_match(BSE_L_kind,"full")) &
+ & call error('set Lkind = DEFAULT or BAR or FULL')
  !
  BS_K_is_ALDA=l_alda_fxc
  BS_dip_size=1

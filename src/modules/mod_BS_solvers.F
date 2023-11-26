@@ -18,6 +18,7 @@ module BS_solvers
  !==================
  real(SP)    :: Co_factor
  complex(SP) :: diam_term_exact
+ complex(SP) :: para_term_w0(2)
  complex(SP) :: A_drude(2)
  complex(SP) :: B_Hall(2)
  !
@@ -62,9 +63,10 @@ module BS_solvers
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
  logical  :: BSS_perturbative_width
- logical  :: BSS_eels_to_eps
- logical  :: l_eps_res_ares
- logical  :: l_ab_from_eels
+ logical  :: l_resp_can_be_extended=.TRUE.
+ logical  :: l_abs_prop_chi_bse=.TRUE.
+ logical  :: l_eels_can_be_computed=.TRUE.
+ logical  :: l_eels_from_inversion=.TRUE.
  logical  :: BSS_uses_pert_SOC=.FALSE.
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.

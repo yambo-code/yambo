@@ -365,14 +365,14 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      !
      ! IP part is always proportional to Xo/(Xo+1._SP)
      ! To discuss and agree what to put here
-     spec_o(:,2)=-spec_i(:,2)/(spec_i(:,2)+1._SP)
-     if (l_last_col.and.l_inv) spec_o(:,3)=-spec_i(:,3)/(spec_i(:,3)+1._SP)
+     spec_o(:,2)= spec_i(:,2)/(spec_i(:,2)+1._SP)
+     if (l_last_col.and.l_inv) spec_o(:,3)= spec_i(:,3)/(spec_i(:,3)+1._SP)
      !
      ! BSE_part, equations depends if Lbse contasin Lfull or Lbar
-     if (.not.l_abs_prop_chi_bse) spec_o(:,1)=-spec_i(:,1)/(spec_i(:,1)+1._SP)
+     if (.not.l_abs_prop_chi_bse) spec_o(:,1)= spec_i(:,1)/(spec_i(:,1)+1._SP)
      if (     l_abs_prop_chi_bse) spec_o(:,1)= spec_i(:,1)
      if (l_last_col .and. l_hay) then
-       if (.not.l_abs_prop_chi_bse) spec_o(:,3)=-spec_i(:,3)/(spec_i(:,3)+1._SP)
+       if (.not.l_abs_prop_chi_bse) spec_o(:,3)= spec_i(:,3)/(spec_i(:,3)+1._SP)
        if (     l_abs_prop_chi_bse) spec_o(:,3)= spec_i(:,3)
      endif
      !

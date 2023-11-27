@@ -296,14 +296,14 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
        !
      enddo ! loop i_m
      !
- !!! !aim137 DEBUG AVERAGE ENERGY<
- !!! write(filename,'(i0)') ik_bz
- !!! open(111,file='FL_Hamiltonian'//trim(adjustl(filename))//'.dat')
- !!! do i2_fks=FL_states(1),FL_states(2)
- !!! write(111,*) FL_Ho_plus_Sigma(i2_fks,FL_states(1):FL_states(2),ik_mem,is)*HA2EV
- !!! enddo
- !!! close(111)
- !!! !aim137 DEBUG AVERAGE ENERGY>
+  !! !aim137 DEBUG EXPORT QE OPERATOR<
+  !! write(filename,'(i0)') ik_bz
+  !! open(111,file='FL_Hamiltonian_kpt'//trim(adjustl(filename))//'.dat')
+  !! do i2_fks=FL_states(1),FL_states(2)
+  !! write(111,*) FL_Ho_plus_Sigma(i2_fks,FL_states(1):FL_states(2),ik_mem,is)*HA2EV
+  !! enddo
+  !! close(111)
+  !! !aim137 DEBUG EXPORT QE OPERATOR>
      !
      !call FL_fix_band_phases(FL_V_bands(NL_bands(1):NL_bands(2),:,:,ik_bz,is),E%nbf(1),iter_num)
      !

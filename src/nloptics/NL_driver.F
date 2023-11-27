@@ -231,6 +231,14 @@ subroutine NL_driver(E,X,k,q,Dip)
 !open(112,file='RT_V_Hartree_real_space.dat')
 !write(112,*) '#time[fs] - density at different positions'
 !!aim137 DEBUG>
+!aim137 DEBUG< write Hamiltonian
+!do ik_bz=1,36
+!write(filename ,'(i0)') ik_bz
+!open(110+ik_bz,file='RT_Hamiltonian_kpt_'//trim(adjustl(filename))//'.dat')
+!write(110+ik_bz,*) '#kpt',ik_bz
+!write(110+ik_bz,*) '#time[fs] - real and imag part of Hamiltonain - matrix elements (4,4) (4,5) (5,4) (5,5)'
+!enddo
+!aim137 DEBUG>
  !
  do i_f=1,n_frequencies
    !
@@ -323,7 +331,7 @@ subroutine NL_driver(E,X,k,q,Dip)
 !enddo
 !!aim137 DEBUG>
  !aim137 DEBUG< density
- close(111)
- close(112)
+ !close(111)
+ !close(112)
  !aim137 DEBUG>
 end subroutine NL_driver

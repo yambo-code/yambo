@@ -12,8 +12,9 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match
- use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,&
-&                       l_abs_prop_chi_bse,BSS_slepc_double_grp
+ use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,BSS_slepc_double_grp,&
+&                       run_Slepc,BSS_mode,&
+&                       l_abs_prop_chi_bse,l_eels_can_be_computed,l_eels_from_inversion
  use BS,           ONLY:BSE_L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
 &                       BS_perturbative_SOC,l_BS_magnons,l_BS_photolum,&
 &                       BS_cpl_K_exchange,BS_n_g_exch,BS_res_K_exchange,BS_K_coupling,BS_res_ares_n_mat,&
@@ -71,6 +72,58 @@ subroutine K_driver_init(what,iq,Ken,Xk)
      ! I would define it as L="transverse"
    endif
  endif
+ !
+ ! Is absorption (alpha or epsilon) proportional to chi
+ !===================================
+ !
+ ! * In 3D Alpha and epsilon are proporitonal to Lbar
+ !
+ ! * In 2D, 1D, and 0D Alpha is proportional to L(low_dim), where
+ !   L(low_dim)=Lfull=Lbar in the V-> infinity volume
+ !
+ !   - If the cut-off is not used Lbar is a better approximation to L(low_dim)
+ !     e.g. same situation of the 3D case
+ !
+ !   - If the cut-off is used Lfull is probably a better approximation to L(low_dim),
+ !     e.g. opposite situation of the 3D case
+ !
+ ! Thus, overall, only without the coulomb cutoff Alpha il proporional to Lbar,
+ ! e.g. it is proportional to epsilon. This is important without cut-off only
+ !
+ if (       l_col_cut .and. iq> 1) l_abs_prop_chi_bse=STRING_match(BSE_L_kind,"full")
+ if ( (.not.l_col_cut) .or. iq==1) l_abs_prop_chi_bse=STRING_match(BSE_L_kind,"bar")
+ !
+ ! However in general the difference with the coulomb cutoff is expected to be tiny.
+ ! Advanced user can impose to change behaviour.
+ ! With Slepc this must be imposed by the code
+ call parser('ImposeAbsPropChiBSE',l_flag)
+ if (.not.(l_3D.or.l_abs_prop_chi_bse).and.l_flag) then
+   l_abs_prop_chi_bse=.true.
+   call warning("Imposting absorption ot be proportional to computed L")
+ endif
+ if (run_Slepc .and. .not.l_abs_prop_chi_bse) then
+   if (l_col_cut .and. iq>1) then
+     call warning("Slepc with coulomb cutoff at finite-q, and Lbar. abs not printed")
+     call warning("You can print it by adding in input the flag ImposeAbsPropChiBse")
+   else if (.not.l_3D) then
+     call warning("Slepc without coulomb cutoff or q=0, and Lfull in low dim. abs not printed")
+     call warning("You can print it by adding in input the flag ImposeAbsPropChiBse")
+   endif
+ endif
+ !
+ ! Either I'm forced to get the epsilon from extension + inversion
+ ! or I want to get the epsilon from extension + inversion
+ ! to account of G=0 term in  coupling mode
+ ! Not needed if already in coupling mode
+ ! Not possible with slepc
+ l_eels_from_inversion= (l_abs_prop_chi_bse .or. .not.trim(BSE_mode)=="coupling")
+ ! Here I'm ignoring the logical l_resp_can_be_inverted
+ !l_eels_from_inversion=l_eels_from_inversion .and. .not.l_resp_can_be_extended
+ !
+ ! If I cannot get the eels from the inversion and I'm in Lbar case I'm in troubles
+ l_eels_can_be_computed = l_eels_from_inversion .or. .not.l_abs_prop_chi_bse
+ !
+ if (.not.l_eels_can_be_computed) call warning("EELs evaluation switched-off")
  !
  ! RES/ANTI-RES (q-dependent)
  !==============

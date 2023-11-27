@@ -32,9 +32,10 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
  real(SP),     optional :: data(:)
  !
  ! Work Space
- integer            ::it,ik,ic
+ integer            ::it,itp,ik,ic
  character(schlen)  ::key(10),BASIC_col(7)
- logical            ::l_flag
+ character(5)       ::obs_with_res(6)
+ logical            ::l_flag,l_print_res
  !
  if (STRING_match(WHAT,"DEF")) then
    call ELEMENTAL_init(1,"fxc","Exchange-Correlation Kernel","optics")
@@ -119,9 +120,14 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
        X_obs(3)%N_columns=3
        X_obs(3)%COL_header(1:3)  = (/'Re(E)','Im(E)','N_deg'/)
      endif
+     obs_with_res=[character(5) :: "eps","alpha","Spm","Smp","off","CD" ]
      do it=1,N_X_obs
        if (.not.X_do_obs(trim(X_obs(it)%what))) cycle
-       if (.not.any(trim(X_obs(it)%what)==((/"eps","Spm","Smp","off"/))).and..not.trim(X_obs(it)%what)=="CD") cycle
+       l_print_res=.false.
+       do itp=1,6
+         l_print_res=l_print_res.or.trim(X_obs(it)%what)==trim(obs_with_res(itp))
+       enddo
+       if (.not.l_print_res) cycle
        do ic=2,3
          X_obs(ic)%N_columns=X_obs(ic)%N_columns+1
          X_obs(ic)%COL_header(X_obs(ic)%N_columns) =trim(X_obs(it)%what) 

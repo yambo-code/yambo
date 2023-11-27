@@ -34,7 +34,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
  ! Work Space
  integer            ::it,itp,ik,ic
  character(schlen)  ::key(10),BASIC_col(7)
- character(5)       ::obs_with_res(6)
+ character(5)       ::obs_with_res(7)
  logical            ::l_flag,l_print_res
  !
  if (STRING_match(WHAT,"DEF")) then
@@ -67,8 +67,9 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
      if (trim(alpha_dim)/='adim') call X_obs_onoff("+ alpha")
    endif
    !
-   ! Check if EELS has to be evaluated
-   if (l_0D.or.l_1D.or.l_2D) call X_obs_onoff("- eel eps")
+   ! Switch off macroscopic quantities for lower dim materials
+   if (l_0D.or.l_1D.or.l_2D) call X_obs_onoff("- eel eps off")
+   ! Switch off eels if it cannot be computed
    if (.not.l_eels_can_be_computed) call X_obs_onoff("- eel")
    !
    if (l_BS_abs) then
@@ -78,9 +79,8 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
    if (l_BS_jdos) call X_obs_onoff("+ jdos")
    if (l_BS_esort) call X_obs_onoff("+ Esort E_IP")
    if (l_BS_kerr) then
-     call X_obs_onoff("+ off")
-     if (     X_do_obs("alpha")) call X_obs_onoff("+ beta")
-     if (.not.X_do_obs("alpha")) call X_obs_onoff("+ moke")
+     if (X_do_obs("alpha")) call X_obs_onoff("+ beta")
+     if (X_do_obs("eps"))   call X_obs_onoff("+ off moke")
    endif
    if (l_BS_magnons) call X_obs_onoff("+ Spm")
    if (l_BS_magnons.and.n_spinor==2) call X_obs_onoff("+ Smp")
@@ -120,11 +120,11 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
        X_obs(3)%N_columns=3
        X_obs(3)%COL_header(1:3)  = (/'Re(E)','Im(E)','N_deg'/)
      endif
-     obs_with_res=[character(5) :: "eps","alpha","Spm","Smp","off","CD" ]
+     obs_with_res=[character(5) :: "eps","alpha","Spm","Smp","off","beta","CD" ]
      do it=1,N_X_obs
        if (.not.X_do_obs(trim(X_obs(it)%what))) cycle
        l_print_res=.false.
-       do itp=1,6
+       do itp=1,7
          l_print_res=l_print_res.or.trim(X_obs(it)%what)==trim(obs_with_res(itp))
        enddo
        if (.not.l_print_res) cycle

@@ -104,7 +104,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    do i_rsp=1,n_resp
      spectra(:,i_rsp)=Resp_ii(:,i_rsp+1)
      spectra(:,i_rsp)=Resp_ii(:,i_rsp+1)
-     if (X_do_obs("off")) then
+     if (X_do_obs("off").or.X_do_obs("beta")) then
        spectra_ij(:,i_rsp)=Resp_ij(:,i_rsp+1)
        spectra_ij(:,i_rsp)=Resp_ij(:,i_rsp+1)
      endif
@@ -126,7 +126,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      if(trim(global_gauge)=='length'  ) spectra(:,i_rsp)= spectra(:,i_rsp)/bare_qpg(iq,i_G_shift)**2
      if(trim(global_gauge)=='velocity') spectra(:,i_rsp)= spectra(:,i_rsp)/ W%p(:)**2
      !
-     if (X_do_obs("off")) then
+     if (X_do_obs("off").or.X_do_obs("beta")) then
        if(trim(global_gauge)=='length'  ) spectra_ij(:,i_rsp)=spectra_ij(:,i_rsp)/bare_qpg(iq,i_G_shift)**2
        if(trim(global_gauge)=='velocity') spectra_ij(:,i_rsp)=spectra_ij(:,i_rsp)/ W%p(:)**2
      endif

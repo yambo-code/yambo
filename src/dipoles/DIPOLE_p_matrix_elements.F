@@ -78,6 +78,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
    ! wf_grad = -i grad fdo(iv,ik)
    !
 #ifdef _GPU
+! AF_FIX: to be cleaned up
    !
    xk_i1=Xk%pt(ik,i1)
    alat_i1=alat(i1)

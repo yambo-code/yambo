@@ -76,6 +76,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  type(PAR_matrix), target      :: BUFFER,KERNEL,Xo
  complex(SP), pointer DEV_ATTR :: BUFFER_p(:,:,:)
  complex(SP), pointer DEV_ATTR :: KERNEL_p(:,:,:)
+ complex(SP), pointer DEV_ATTR :: Xo_p(:,:,:)
  !
  ! Setup 
  !
@@ -95,6 +96,9 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  compute_on_gpu=have_gpu.and.X_use_gpu
  !
  if (PAR_COM_SLK%n_CPU>=4.and.have_gpu) compute_on_gpu=.false.
+ !
+ ! AF_FIX: openacc + GPU linalg should be enabled
+ if (have_openacc) compute_on_gpu=.false.
  !
  if (have_gpu) call msg('s','[LA] '//what//' compute_on_gpu ',compute_on_gpu )
  !
@@ -182,6 +186,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    !
    BUFFER_p => DEV_VAR(BUFFER%blc)
    KERNEL_p => DEV_VAR(KERNEL%blc)
+   Xo_p     => DEV_VAR(Xo%blc)
    if (compute_on_gpu) call devxlib_memset_d(KERNEL_p,cZERO)
    !
    Xo_cols(:)=Xo%cols(:)
@@ -241,8 +246,8 @@ subroutine X_redux(iq,what,X_par,Xw,X)
      ! Linear System
      !
      if (compute_on_gpu) then
-       !call devxlib_memcpy_d2d(BUFFER_p(:,:,BUFFER%I), DEV_VAR(Xo%blc)(:,:,1))
-       call devxlib_memcpy_d2d(DEV_VAR(BUFFER%blc)(:,:,BUFFER%I), DEV_VAR(Xo%blc)(:,:,1))
+       call devxlib_memcpy_d2d(BUFFER_p(:,:,BUFFER%I), Xo_p(:,:,1))
+!       call devxlib_memcpy_d2d(DEV_VAR(BUFFER%blc)(:,:,BUFFER%I), DEV_VAR(Xo%blc)(:,:,1))
      else
        BUFFER%blc(:,:,BUFFER%I) =  Xo%blc(:,:,1)
      endif

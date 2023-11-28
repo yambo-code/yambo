@@ -48,8 +48,10 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  use BS,            ONLY:BS_block,BS_H_dim
  use timing_m,      ONLY:timing
  use gpu_m,         ONLY:have_gpu
+ use devxlib,       ONLY:devxlib_allocated
  !
 #include<y_memory.h>
+#include<dev_defs.h>
  !
  integer                    :: idriver
  integer,          optional :: lib_in
@@ -85,12 +87,13 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
 #if defined _SCALAPACK 
    if (M_slk%kind=="SLK") lib_in_use=USE_SLK
 #endif
-   if (have_gpu.and.allocated(M_slk%blc_d)) USE_GPU=.true.
+   if (have_gpu.and.devxlib_mapped(DEV_VAR(M_slk%blc))) USE_GPU=.true.
  else if (present(M_bse)) then
    N=BS_H_dim
  else if (present(M)) then
    N=size(M,1)
  endif
+
  !
  ! Decide which to use among LK or SLK
  !
@@ -117,6 +120,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    lib_in_use=USE_LK
    !
  endif
+
  !
  ! =============== PARALLEL SECTION ==========================================================
  !
@@ -290,7 +294,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    !
    if (idriver==LIN_SYS) then
 #ifdef _GPU
-     call SERIAL_lin_system_gpu(N,N,M_slk%blc_d(:,:,M_slk%I),B_slk%blc_d(:,:,B_slk%I))
+     call SERIAL_lin_system_gpu(N,N,DEV_VAR(M_slk%blc)(:,:,M_slk%I),DEV_VAR(B_slk%blc)(:,:,B_slk%I))
 #else
      call error('[LA] GPU support required but not present')
 #endif

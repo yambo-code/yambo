@@ -79,6 +79,7 @@ module linear_algebra
    subroutine LINEAR_ALGEBRA_WS_reset(WS)
      use drivers,   ONLY:l_nl_optics,l_real_time
      type(LALGEBRA_WS) :: WS
+     !
      if(.not.(l_nl_optics.or.l_real_time)) then
        YAMBO_FREE_GPU(DEV_VAR(WS%v_real))
        YAMBO_FREE_GPU(DEV_VAR(WS%vp_real))
@@ -118,7 +119,10 @@ module linear_algebra
        if(allocated(WS%v_int_d))    deallocate(WS%v_int_d)
 #endif
 #ifdef _OPENACC
-       call error("[GPU] openacc FREE not implemented in LinAlg_WS_reset")
+       ! AF: This is only for NL or RT runs
+       !     commented here for simplicity
+       !
+       !call error("[GPU] openacc FREE not implemented in LinAlg_WS_reset")
 #endif
      endif
      !

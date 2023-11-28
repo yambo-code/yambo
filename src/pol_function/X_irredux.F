@@ -90,7 +90,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
 &                        X_cols_transp(2),X_rows1,X_rows2,X_cols1,X_cols2,X_rows1_l,X_rows2_l,X_nrows_l,io_err
  logical              :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)             :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff
- complex(SP)          :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),ctmp
+ complex(SP)          :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),ctmp(1,1)
 
  complex(SP),allocatable, target          :: Xo_res(:,:)
  complex(SP),allocatable, target DEV_ATTR :: Xo_res_d(:,:)
@@ -253,7 +253,8 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  lwork=ngrho
  if (l_X_terminator) lwork=2*ngrho
- YAMBO_ALLOC(work,(lwork))
+ !
+ YAMBO_ALLOC_GPU(work,(lwork))
  !
  call elemental_collision_free(Xo_scatt)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
@@ -268,12 +269,16 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
      if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
      !
      call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res_p,Xo_scatt,work,lwork)
-     ctmp = Xo_res_p(1,1)
+     !
+     ! AF:
+     ! ctmp is allocated as ctmp(1,1) to be compliant with devxlib interfaces
+     !
+     call devxlib_memcpy_d2h(ctmp,Xo_res_p,range1=[1,1],range2=[1,1])
      !
      ! DALV: we must guarantee that ctmp is always 1 and that we enter the loop just
      !       once to avoid an inconsistency with the Drude frequency given by input
      !
-     X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)
+     X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp(1,1)*drude_GreenF(:)
      !
      if (have_gpu) then
        do iw=1,Xw%n_freqs
@@ -334,7 +339,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
      GreenF_iw=GreenF(iw)
      !
      !DEV_ACC data present(X_par_p,Xo_res_p)
-     !DEV_ACC parallel loop async
+     !DEV_ACC parallel loop 
      !DEV_CUF kernel do(2) <<<*,*>>>
      do ig_col=X_cols1,X_cols2
        do ig1=X_rows1,X_rows2
@@ -379,7 +384,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
        if (PAR_COM_RL_INDEX_n_CPU>1) then
          !
          !DEV_ACC data present(X_par_lowtri_p,Xo_res_p)
-         !DEV_ACC parallel loop collapse(2) async
+         !DEV_ACC parallel loop collapse(2) 
          !DEV_CUF kernel do(2)
          do ig_col=X_cols1,X_cols2
          do ig1=X_rows1,X_rows2
@@ -397,7 +402,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
        else
          !
          !DEV_ACC data present(X_par_p,Xo_res_p)
-         !DEV_ACC parallel loop collapse(2) async
+         !DEV_ACC parallel loop collapse(2) 
          !DEV_CUF kernel do(2)
          do ig_col=X_cols1,X_cols2
          do ig1=X_rows1,X_rows2
@@ -465,7 +470,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  YAMBO_FREE(work)
  call elemental_collision_free(Xo_scatt)
  !
-!DEV_OMP end parallel
+ !DEV_OMP end parallel
  !
  !
  if (iq==1.and.io_DIP) then

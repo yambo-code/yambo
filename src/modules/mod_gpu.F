@@ -28,10 +28,10 @@ module gpu_m
   use devxlib_environment
   use devxlib_cublas
   use devxlib_memcpy
+  !use cusolverdn
   use cusolverdn_y
 # if defined _CUDAF
   use cufft
-  !use cusolverdn_y
 # elif defined _OPENACC
   use cufft_m_y
 # endif
@@ -63,6 +63,7 @@ module gpu_m
 #else
   logical, parameter:: have_openmp5=.false.
 #endif
+  character(16)  :: gpu_str=""
   !
   logical:: have_gpu_devices=.false.
   character(256) :: cuda_visible_devices=" "
@@ -109,6 +110,7 @@ module gpu_m
   public :: have_openmp5
   public :: have_gpu_devices
   public :: cuda_visible_devices
+  public :: gpu_str
   public :: gpu_setup
   public :: gpu_linalg_init
   public :: gpu_linalg_setup
@@ -141,6 +143,10 @@ contains
     integer :: ierr
     !
     gpu_subscription=1
+    gpu_str=""
+    if (have_cuf)     gpu_str="CUDA-Fortran"
+    if (have_openacc) gpu_str="OpenACC"
+    if (have_openmp5) gpu_str="OpenMP-GPU"
     !
     ! GPU assignment
     ! This needs to be done first

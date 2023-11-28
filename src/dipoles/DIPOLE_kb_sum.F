@@ -91,7 +91,6 @@ subroutine DIPOLE_kb_sum(rho,pp_dim_yambo,ib_range,iv,ic,XX)
  use devxlib,       ONLY:devxlib_memcpy_d2h
  use DIPOLES,       ONLY:drho=>DEV_VAR(DIP_work_drho)
  !
-use openacc
 #include<dev_defs.h>
  !
  implicit none

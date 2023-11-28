@@ -44,7 +44,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  use R_lattice,     ONLY:qindx_X,bz_samp,q0_def_norm
  use vec_operate,   ONLY:v_norm
  use collision_el,  ONLY:elemental_collision
- use devxlib,       ONLY:devxlib_memcpy_d2d_p,devxlib_conjg
+ use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_conjg,devxlib_memset_d
  !
  implicit none
  !
@@ -63,30 +63,33 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  ! AF: rhotw_save, rhotw_save2 are on GPU mem if _GPU is active
  !     pointing to work, allocated in the parent routine for performance
  !
- complex(SP), pointer, contiguous DEV_ATTR :: Xo_scatt_rhotw_p(:)
- complex(SP), pointer, contiguous DEV_ATTR :: rhotw_save(:), rhotw_save2(:)
- integer            :: sop_inv_l,X_ng
- complex(SP)        :: ctmp,Z_
- real(SP)           :: Z_eh_occ
- logical            :: l_X_term_vv
- integer            :: ngrho
- integer            :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,&
-&                      isp,iv,ic,isave(4),n_poles,i_bg,ig_start,ROWS(2)
+ complex(SP), pointer DEV_ATTR :: Xo_scatt_rhotw_p(:)
+ complex(SP), pointer DEV_ATTR :: rhotw_save(:), rhotw_save2(:)
+ integer      :: sop_inv_l,X_ng
+ complex(SP)  :: ctmp,Z_
+ real(SP)     :: Z_eh_occ
+ logical      :: l_X_term_vv
+ integer      :: ngrho
+ integer      :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,&
+&                isp,iv,ic,isave(4),n_poles,i_bg,ig_start,ROWS(2)
  !
  ! DIPOLES
  !
- complex(SP)        :: DIP_projected,field_dir(3)
+ complex(SP)  :: DIP_projected,field_dir(3)
  !
  field_dir=Dip%q0/v_norm(Dip%q0)*q0_def_norm
  !
  isave     = 0
  n_poles   = sum(bare_grid_N(1:i_cg-1))
- Xo_res    = cZERO
  Z_        = cONE
+ Xo_res    = cZERO
+ call devxlib_memset_d(Xo_res,cZERO)
  !
  ngrho     = Xo_scatt%ngrho
  !
  rhotw_save => work(1:ngrho)
+ !
+! AF_FIX: the above line needs a fix
  if (l_X_terminator) rhotw_save2 => work(ngrho+1:2*ngrho)
  !
  loop_bare_grid: do i_bg = 1,bare_grid_N(i_cg)
@@ -148,7 +151,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
          call DEV_SUB(scatter_Bamp)(Xo_scatt)
          !
          ! dev2dev, rhotw_save=Xo_scatt%rhotw
-         call devxlib_memcpy_d2d_p(rhotw_save,Xo_scatt_rhotw_p)
+         call devxlib_memcpy_d2d(rhotw_save,Xo_scatt_rhotw_p)
          !
          isave=(/iv,ic,ik,i_spin/)
          !
@@ -157,7 +160,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
        sop_inv_l=sop_inv(is)
        !
        !DEV_ACC data present(g_rot,rhotw_save,Xo_scatt_rhotw_p)
-       !DEV_ACC parallel loop async
+       !DEV_ACC parallel loop private(ig2)
        !DEV_CUF kernel do(1) <<<*,*>>>
        !DEV_OMP parallel do default(shared), private(ig1,ig2)
        do ig1=2,X_ng
@@ -187,10 +190,12 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      !
      !
      !DEV_ACC data present(Xo_scatt_rhotw_p)
+     !DEV_ACC kernels
      if(iv/=ic) Xo_scatt_rhotw_p(1)=    -conjg(DIP_projected)
      if(iv==ic) Xo_scatt_rhotw_p(1)=cONE-conjg(DIP_projected)
      !
      if (l_X_term_vv.and.iv==ic) Xo_scatt_rhotw_p(1)=0.0_SP
+     !DEV_ACC end kernels
      !DEV_ACC end data
      !
    else
@@ -209,7 +214,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
    !-------------^^^^^---------------------------------------
 #ifdef _GPU
    !DEV_ACC data present(Xo_res,Xo_scatt_rhotw_p)
-   !DEV_ACC parallel loop async collapse(2)
+   !DEV_ACC parallel loop collapse(2)
    !DEV_CUF kernel do(2) <<<*,*>>>
    do ig2=X_cols(1),X_cols(2)
      do ig1=X_rows(1),X_rows(2)
@@ -221,13 +226,16 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
    enddo
    !DEV_ACC end data
 #else
+   !
    !$omp parallel do default(shared), private(ig2)
    do ig2=X_cols(1),X_cols(2)
      ROWS=(/X_rows(1),min(ig2,X_rows(2))/)
      call V_plus_alpha_V(ROWS(2)-ROWS(1)+1,Z_eh_occ*Xo_scatt%rhotw(ig2),&
 &                       conjg(Xo_scatt%rhotw(ROWS(1):ROWS(2))),Xo_res(ROWS(1):ROWS(2),ig2))
    enddo
+   !
 #endif
+
    !
    ! add terminator specific corrections
    ! (ic is running in valence)
@@ -239,11 +247,14 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      Xo_scatt%qs = (/1,1,1/)
      !
      ! dev2dev
-     call devxlib_memcpy_d2d_p(rhotw_save2,Xo_scatt_rhotw_p)
+     call devxlib_memcpy_d2d(rhotw_save2,Xo_scatt_rhotw_p)
      !
+! AF_FIX: to be checked
      if (X%ng==1) then
        !DEV_ACC data present(Xo_scatt_rhotw_p)
+       !DEV_ACC kernels
        Xo_scatt_rhotw_p(1)=cONE 
+       !DEV_ACC end kernels
        !DEV_ACC end data
      else
        call DEV_SUB(scatter_Bamp)(Xo_scatt)
@@ -251,12 +262,12 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      !
      ! symm
      ! dev2dev, rhotw_save=Xo_scatt%rhotw
-     call devxlib_memcpy_d2d_p(rhotw_save,Xo_scatt_rhotw_p)
+     call devxlib_memcpy_d2d(rhotw_save,Xo_scatt_rhotw_p)
      !
      sop_inv_l=sop_inv(is)
      !
      !DEV_ACC data present(g_rot,rhotw_save,Xo_scatt_rhotw_p)
-     !DEV_ACC parallel loop async
+     !DEV_ACC parallel loop private(ig2)
      !DEV_CUF kernel do(1) <<<*,*>>>
      !DEV_OMP parallel do default(shared), private(ig1,ig2)
      do ig1=1,X_ng
@@ -271,7 +282,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      !
 #ifdef _GPU
      !DEV_ACC data present(Xo_res,Xo_scatt_rhotw_p,G_m_G)
-     !DEV_ACC parallel loop async collapse(2)
+     !DEV_ACC parallel loop collapse(2)
      !DEV_CUF kernel do(2) <<<*,*>>>
      do ig2=X_cols(1),X_cols(2)
        do ig1=ig_start,X_rows(2)
@@ -281,7 +292,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      enddo
      !DEV_ACC end data
 #else
-     !$omp parallel do default(shared), private(ig1,ig2)
+     !DEV_OMP parallel do default(shared), private(ig1,ig2)
      do ig2=X_cols(1),X_cols(2)
        do ig1=ig_start,min(ig2,X_rows(2))
          Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt%rhotw(G_m_G(ig2,ig1))
@@ -289,15 +300,20 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      enddo
 #endif
      ! dev2dev
-     call devxlib_memcpy_d2d_p(Xo_scatt_rhotw_p,rhotw_save2)
+     call devxlib_memcpy_d2d(Xo_scatt_rhotw_p,rhotw_save2)
      !
    endif
    !
  enddo loop_bare_grid
  !
+! AF_FIX: metal case to be fixed !
  if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) then
+    !DEV_ACC data present(Xo_res)
+    !DEV_ACC kernels
     ctmp=Xo_res(1,1)
     Xo_res(1,1)=ctmp/real(drude_n_states,SP)
+    !DEV_ACC end kernels
+    !DEV_ACC end data
  endif
  !
 end subroutine X_irredux_residuals

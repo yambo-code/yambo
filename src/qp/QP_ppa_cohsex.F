@@ -546,11 +546,14 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
            dp_dummy_r = 0.0_DP
            dp_dummy_i = 0.0_DP
            !
-           !$cuf kernel do(2)
+           !DEV_ACC data present(X_mat,RIM_W,isc_gamp_p,isc_rhotw_p,iscp_rhotw_p)
+           !DEV_ACC parallel loop collapse(2) private(PPA_E,PPA_R,l_rim_W_g,bose_PPA_E,ctmp) &
+           !DEV_ACC               reduction(+:dp_dummy_r,dp_dummy_i)
+           !DEV_CUF kernel do(2)
            do ig2=1,Xng
              do ig1=1,Xng
                !
-               PPA_E= real(XppaE/X_mat_d(ig1,ig2,Xr2),kind=SP)
+               PPA_E= real(XppaE/DEV_VAR(X_mat)(ig1,ig2,Xr2),kind=SP)
                !
                ! RIM W support
                !
@@ -558,10 +561,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
                if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
                !
                if (l_RIM_W_g) then
-                 PPA_R=-cmplx(RIM_W_d(iqibz,ig1,ig2)/2._SP, &
-&                             aimag(X_mat_d(ig1,ig2,Xr1))*real(isc_gamp_p(ig1,ig2)),kind=SP)/2._SP*PPA_E
+                 PPA_R=-cmplx(DEV_VAR(RIM_W)(iqibz,ig1,ig2)/2._SP, &
+&                             aimag(DEV_VAR(X_mat)(ig1,ig2,Xr1))*real(isc_gamp_p(ig1,ig2)),kind=SP)/2._SP*PPA_E
                else
-                 PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_p(ig1,ig2)
+                 PPA_R=-DEV_VAR(X_mat)(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_p(ig1,ig2)
                endif
                !
                ! inline bose_f function
@@ -585,6 +588,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
                !
              enddo
            enddo
+           !DEV_ACC end data
            !
            dp_dummy%re = dp_dummy_r
            dp_dummy%im = dp_dummy_i

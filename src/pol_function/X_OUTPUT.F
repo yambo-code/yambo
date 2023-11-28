@@ -32,12 +32,10 @@ subroutine X_OUTPUT(iq,Xen,Xk,wv,X,spectra)
  !
  ! Workspace
  !
- complex(SP)      :: fac
+ complex(SP)      :: fac,tmp_spec(wv%n_freqs)
  real(SP)         :: output_data(5),a_xc,b_xc
- logical          :: l_ext_eps,l_alpha_prop_to_chi_full,l_eels_from_ext_eps
- integer          :: iw,n_data
- !
- logical,external :: EPS_check
+ logical          :: l_alpha_prop_to_chi_full,l_eels_from_ext_eps
+ integer          :: iw,iw_ref,n_data
  !
  ! Output files init 
  !===================
@@ -59,10 +57,6 @@ subroutine X_OUTPUT(iq,Xen,Xk,wv,X,spectra)
  ! Check if EELS can be evaluated, e.g. if we are using only w>0 frequencies
  ! This allows to include the v_{G=0} term with coupling also for "r" or "a" orderings.
  ! Not needed for "T" or  "R" orderings. Used only for 3D materials now
- l_ext_eps=.false.
- if (X_do_obs("eel")) l_ext_eps=EPS_check(wv%p,wv%n_freqs,.TRUE.,X%ordering)
- !! l_ext_eps is for now ignored since  for back compatibility in the test-suite
- !l_eels_from_ext_eps=.not.(trim(X%ordering)=='R'.or.trim(X%ordering)=="T") .and. l_ext_eps .and. l_3D
  l_eels_from_ext_eps=.not.(trim(X%ordering)=='R'.or.trim(X%ordering)=="T") .and. l_3D
  !
  ! OutPut files...
@@ -92,7 +86,8 @@ subroutine X_OUTPUT(iq,Xen,Xk,wv,X,spectra)
    ! The RPA part is always defined in the same way otherwise I get IP instead of RPA without LF.
    ! This is like the Lbar case in BSE.
    ! Via EPS_extend v_{G=0} is included in coupling mode regardless or the ordering
-   call EPS_extend(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1)-1._SP,EEL(:,1))
+   call FREQUENCIES_set_reference_point(wv%p,wv%n_freqs,iw_ref)
+   call EPS_extend(wv%p,wv%n_freqs,iw_ref,.true.,X%ordering,Epsilon_ii(:,1)-1._SP,EEL(:,1))
    EEL(:,1)=-1._SP/(1._SP+EEL(:,1))
    !
  endif
@@ -138,8 +133,8 @@ subroutine X_OUTPUT(iq,Xen,Xk,wv,X,spectra)
        !
        EEL(:,2)=-spectra(:,2)/(spectra(:,2)+1._SP)
        call warning(" G=0 term accounted for in coupling mode for eels")
-       call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,EEL(:,2),EEL(:,2))
-       EEL(:,2)=-1._SP/(1._SP+EEL(:,2))
+       call EPS_extend(wv%p,wv%n_freqs,iw_ref,.false.,X%ordering,EEL(:,2),tmp_spec)
+       EEL(:,2)=-1._SP/(1._SP+tmp_spec)
        !
      else
        !

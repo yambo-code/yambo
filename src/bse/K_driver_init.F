@@ -117,13 +117,11 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  ! Not needed if already in coupling mode
  ! Not possible with slepc
  l_eels_from_inversion= (l_abs_prop_chi_bse .or. .not.trim(BSE_mode)=="coupling")
- ! Here I'm ignoring the logical l_resp_can_be_inverted
- !l_eels_from_inversion=l_eels_from_inversion .and. .not.l_resp_can_be_extended
  !
  ! If I cannot get the eels from the inversion and I'm in Lbar case I'm in troubles
  l_eels_can_be_computed = l_eels_from_inversion .or. .not.l_abs_prop_chi_bse
  !
- if (.not.l_eels_can_be_computed) call warning("EELs evaluation switched-off")
+ if (.not.l_eels_can_be_computed) call warning("EELs evaluation will be switched-off")
  !
  ! RES/ANTI-RES (q-dependent)
  !==============

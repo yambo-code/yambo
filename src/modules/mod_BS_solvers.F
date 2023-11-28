@@ -63,7 +63,6 @@ module BS_solvers
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
  logical  :: BSS_perturbative_width
- logical  :: l_resp_can_be_extended=.TRUE.
  logical  :: l_abs_prop_chi_bse=.TRUE.
  logical  :: l_eels_can_be_computed=.TRUE.
  logical  :: l_eels_from_inversion=.TRUE.
@@ -71,9 +70,7 @@ module BS_solvers
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.
  logical  :: run_Diago=.FALSE.
-#if defined _SLEPC && !defined _NL
  logical  :: run_Slepc=.FALSE.
-#endif
  !
  ! Solvers (Diago)
  !=========

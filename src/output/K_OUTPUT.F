@@ -40,8 +40,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  character(10)     :: solver
  character(schlen) :: out_string
  complex(SP)       :: hall(3,2),tmp_var(BSS_n_freqs,3),spectra(BSS_n_freqs,3),&
- &                    fac,diam_term_used(2),spectra_ij(BSS_n_freqs,3)
- real(SP)          :: data_sort(N_BS_E_sorted+1),nel_diam(2)
+ &                    fac,diam_term_used(3),spectra_ij(BSS_n_freqs,3)
+ real(SP)          :: data_sort(N_BS_E_sorted+1),nel_diam(3)
  logical           :: l_last_col,l_inv,l_hay,l_sle
  !
  if (STRING_match(WHAT,"open")) then
@@ -120,7 +120,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
      spectra(:,1)=spectra(:,1)-diam_term_used(2)
      spectra(:,2)=spectra(:,2)-diam_term_used(1)
-     spectra(:,3)=spectra(:,3)-diam_term_used(2)
+     spectra(:,3)=spectra(:,3)-diam_term_used(3)
    endif
    !
    do i_rsp=1,n_resp
@@ -152,6 +152,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    call msg("o eps",com_compose_msg(pre="# ",body="Ao"),nel_diam(1),INDENT=0,after_msg="[nel]")
    if (.not.STRING_match(WHAT,"IP")) &
    &call msg("o eps",com_compose_msg(pre="# ",body="A"),nel_diam(2),INDENT=0,after_msg="[nel]")
+   if (l_last_col) &
+   &call msg("o eps",com_compose_msg(pre="# ",body="A'"),nel_diam(3),INDENT=0,after_msg="[nel]")
    !
    ! ... Epsilon_ii
    call ELEMENTAL_dump("eps",Epsilon_ii(:,2:4)+1._SP)
@@ -420,10 +422,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      if (skip_cond_sum_rule) then
        tmp_dru(:,1)=A_drude(2)/W%p(:)**2
        tmp_dru(:,2)=A_drude(1)/W%p(:)**2
-       if(l_last_col) then
-         if(l_hay) tmp_dru(:,3)=tmp_dru(:,1)
-         if(l_inv) tmp_dru(:,3)=tmp_dru(:,2)
-       endif
+       tmp_dru(:,3)=A_drude(3)/W%p(:)**2
      endif
      !
      if (l_drude.or.skip_cond_sum_rule) then

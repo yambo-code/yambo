@@ -18,8 +18,8 @@ module BS_solvers
  !==================
  real(SP)    :: Co_factor
  complex(SP) :: diam_term_exact
- complex(SP) :: para_term_w0(2)
- complex(SP) :: A_drude(2)
+ complex(SP) :: para_term_w0(3)
+ complex(SP) :: A_drude(3)
  complex(SP) :: B_Hall(2)
  !
  ! Haydock

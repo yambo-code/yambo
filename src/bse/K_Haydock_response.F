@@ -105,7 +105,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
  !
  iw_start=1
  if(trim(OBS)=="optics") then
-   para_term_w0(2)=cZERO
+   para_term_w0(2:3)=cZERO
    if(any(Af/=0._SP)) iw_start=0
  endif
  !
@@ -214,7 +214,8 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
      Joint_DOS(iw,i_resp(:))=  -X_o(1:2,1)*Co
    case("optics")
      if(iw==0) then
-       para_term_w0(:)=-X_o(1:2,1)*gauge_factor
+       para_term_w0(2)=-X_o(1,1)*gauge_factor
+       para_term_w0(3)=-X_o(2,1)*gauge_factor
        cycle
      endif
      Resp_ii(iw,i_resp(:))= -X_o(1:2,1)*Co

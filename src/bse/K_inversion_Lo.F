@@ -15,7 +15,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
  use BS_solvers,     ONLY:Co_factor,diam_term_exact,BSS_dipoles_opt,BSS_uses_DbGd,&
-&                         BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,K_diago_in_BS_mat,BS_diagonal
+&                         BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,K_diago_in_BS_mat,BS_diagonal,&
+&                         para_term_w0
  use BS,             ONLY:BS_H_dim,BS_K_dim,BSE_mode,BS_q,BS_n_eh_spaces,&
 &                         BS_K_anti_resonant,l_BS_ares_from_res
  use parallel_m,     ONLY:PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
@@ -40,8 +41,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  type(w_samp)     :: W_mins,W_plus
  integer          :: iw_ref,i_bsk,i_res,i_cpl,i_Lo_trans,ik_bz,iv,ic,iw,i_sp_c,i_sp_v,ik_ibz,&
- &                   i_res_ares,i_loop,n_loop,i_eps,i_Lo,transition(4)
- complex(SP)      :: E_plus_W,residual,para_term_w0
+ &                   i_res_ares,i_para,i_loop,n_loop,i_eps,i_Lo,transition(4)
+ complex(SP)      :: E_plus_W,residual
  complex(SP)      :: SF(W%n_freqs,2)
  character(schlen):: LT_title
  !
@@ -76,6 +77,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  do i_loop=1,n_loop
    !
    i_eps=2+i_loop
+   if (i_loop==1) i_para=1
+   if (i_loop==2) i_para=3
    !
    if(n_loop==2) then
      if(l_BS_photolum) then
@@ -172,13 +175,13 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        if(i_res_ares==1) then
          residual=BSS_dipoles_opt(1,i_res)*conjg(BSS_dipoles_opt(1,i_res))
          if (allocated(BSS_eh_W) .and. trim(global_gauge)=="velocity") residual=residual*E_plus_W/conjg(E_plus_W)
-         para_term_w0=para_term_w0+Lo(i_res,iw_ref,1)*Co_factor
+         para_term_w0(i_para)=para_term_w0(i_para)+Lo(i_res,iw_ref,1)*Co_factor
          Resp_ii(:,i_eps)=Resp_ii(:,i_eps)-residual*Lo(i_res,:,1)
        endif     
        !
        if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
          residual=conjg(BSS_dipoles_opt(1,i_Lo_trans))*BSS_dipoles_opt(1,i_Lo_trans)
-         para_term_w0=para_term_w0+Lo(i_Lo_trans,iw_ref,i_Lo)*Co_factor
+         para_term_w0(i_para)=para_term_w0(i_para)+Lo(i_Lo_trans,iw_ref,i_Lo)*Co_factor
          Resp_ii(:,i_eps)=Resp_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
        endif
        !
@@ -199,8 +202,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    !
    if(i_loop==n_loop) call PP_redux_wait(Lo,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    !
-   call PP_redux_wait(resp_ii(:,i_eps),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-   call PP_redux_wait(para_term_w0,    COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   call PP_redux_wait(resp_ii(:,i_eps),    COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   call PP_redux_wait(para_term_w0(i_para),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    if (l_BS_photolum.and.i_loop==1) call PP_redux_wait(PL(:,i_eps),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    !
    Resp_ii(:,i_eps)= Resp_ii(:,i_eps)*Co_factor

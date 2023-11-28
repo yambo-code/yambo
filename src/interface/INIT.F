@@ -503,12 +503,12 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        BS_K_coupling    =index(BSE_mode,'coupling')>0
        if (BS_K_coupling) then
          BS_cpl_K_exchange=BS_res_K_exchange  
-         BS_cpl_K_corr    =BS_res_K_corr      
+         BS_cpl_K_corr    =BS_res_K_corr.and..not.index(BSE_mode,'x_coupling')>0
        endif
        call parser('WehDiag',dummy_logical)
        if (     dummy_logical) BS_W_is_diagonal=.TRUE. 
        call parser('WehCpl' ,dummy_logical )
-       if (.not.dummy_logical) BS_cpl_K_corr=.FALSE.
+       if (.not.(dummy_logical.or.index(BSE_mode,'xc_coupling')>0)) BS_cpl_K_corr=.FALSE.
      endif
      !
      if (l_bse) then

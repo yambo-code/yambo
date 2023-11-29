@@ -396,7 +396,6 @@ contains
 
   !
   ! dummy subroutine to avoid having an empty module
-  !
   subroutine cusolverdn_y_dummy__(i)
      integer :: i
      i=0

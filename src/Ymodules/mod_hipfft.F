@@ -97,6 +97,18 @@ CONTAINS
       END IF
   END SUBROUTINE hipfftCheck
   
+#else
+
+contains
+
+  !
+  ! dummy subroutine to avoid having an empty module
+  subroutine hip_dummy__(i)
+     integer :: i
+     i=0 
+  end subroutine
+
+#endif
 
 END MODULE
 

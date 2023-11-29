@@ -81,7 +81,6 @@ contains
 contains
   !
   ! dummy subroutine to avoid having an empty module
-  !
   subroutine hip_dummy__(i)
      integer :: i
      i=0 

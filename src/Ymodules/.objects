@@ -15,8 +15,11 @@ RT_objects_iterative  = mod_RT_iterative.o
 #if defined _NL
 NL_objects       = mod_fields.o mod_electric.o mod_nl_optics.o mod_NL_interfaces.o
 #endif
-#if defined _OPENACC || defined _OPENMP5
+#if defined _OPENACC
 DEV_objects_EXTRA = mod_cudafor.o mod_cufft.o
+#endif
+#if defined _OPENMP_GPU
+DEV_objects_EXTRA = mod_hip.o mod_hipfft.o
 #endif
 #if defined _io_lib
 objs = mod_pars.o mod_stderr.o mod_parallel.o mod_parallel_interface.o  \

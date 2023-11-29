@@ -1,7 +1,7 @@
 
 #include<dev_defs.h>
 !
-module cufft_m_y
+module cufft_m
   use iso_c_binding
 #if defined _OPENACC
   use openacc
@@ -80,4 +80,4 @@ module cufft_m_y
 #else
   integer :: cufft_dummy
 #endif
-end module cufft_m_y
+end module cufft_m

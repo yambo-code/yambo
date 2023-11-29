@@ -33,7 +33,10 @@ module gpu_m
 # if defined _CUDAF
   use cufft
 # elif defined _OPENACC
-  use cufft_m_y
+  use cufft_m
+# elif defined _OPENMP_GPU && defined _HIP
+  use hip_m
+  use hipfft_m
 # endif
   use parallel_m,   ONLY:myid,host_name,PAR_COM_HOST
   use iso_c_binding
@@ -58,15 +61,15 @@ module gpu_m
 #else
   logical, parameter:: have_openacc=.false.
 #endif
-#ifdef _OPENMP5
-  logical, parameter:: have_openmp5=.true.
+#ifdef _OPENMP_GPU
+  logical, parameter:: have_ompgpu=.true.
 #else
-  logical, parameter:: have_openmp5=.false.
+  logical, parameter:: have_ompgpu=.false.
 #endif
   character(16)  :: gpu_str=""
   !
   logical:: have_gpu_devices=.false.
-  character(256) :: cuda_visible_devices=" "
+  character(256) :: gpu_visible_devices=" "
   integer:: gpu_subscription
 
   logical:: gpu_linalg_init=.false.
@@ -107,9 +110,9 @@ module gpu_m
   public :: have_gpu
   public :: have_cuf
   public :: have_openacc
-  public :: have_openmp5
+  public :: have_ompgpu
   public :: have_gpu_devices
-  public :: cuda_visible_devices
+  public :: gpu_visible_devices
   public :: gpu_str
   public :: gpu_setup
   public :: gpu_linalg_init
@@ -131,7 +134,7 @@ module gpu_m
   public :: async_d2h
   public :: async_d
   !
-#if defined _GPU
+#if defined _GPU && defined _CUDA
   public :: cudaGetDevice
 #endif
 
@@ -146,7 +149,7 @@ contains
     gpu_str=""
     if (have_cuf)     gpu_str="CUDA-Fortran"
     if (have_openacc) gpu_str="OpenACC"
-    if (have_openmp5) gpu_str="OpenMP-GPU"
+    if (have_ompgpu)  gpu_str="OpenMP-GPU"
     !
     ! GPU assignment
     ! This needs to be done first
@@ -173,12 +176,22 @@ contains
     have_gpu_devices=.false. 
     if (have_gpu) then
       !
-      call get_environment_variable("CUDA_VISIBLE_DEVICES",cuda_visible_devices)
-      if (len_trim(cuda_visible_devices) >0) have_gpu_devices=.true.
+      call get_environment_variable("CUDA_VISIBLE_DEVICES",gpu_visible_devices)
+      if (len_trim(gpu_visible_devices) >0) have_gpu_devices=.true.
+      !
+      if (.not.have_gpu_devices) then
+         call get_environment_variable("ROCR_VISIBLE_DEVICES",gpu_visible_devices)
+         if (len_trim(gpu_visible_devices) >0) have_gpu_devices=.true.
+      endif
+      if (.not.have_gpu_devices) then
+         call get_environment_variable("HIP_VISIBLE_DEVICES",gpu_visible_devices)
+         if (len_trim(gpu_visible_devices) >0) have_gpu_devices=.true.
+      endif
       !
     endif
     !
-#if defined _CUDAF
+#if defined _CUDA
+#  if defined _CUDAF
     stream_default=cudaforGetDefaultStream()
     ierr = CudaStreamCreateWithFlags(stream_h2d,cudaStreamNonBlocking)
     ierr = CudaStreamCreateWithFlags(stream_d2h,cudaStreamNonBlocking)
@@ -187,7 +200,9 @@ contains
     async_h2d     =stream_h2d
     async_d2h     =stream_d2h
     async_d       =stream_d
-#elif defined _OPENACC
+    !
+#  elif defined _OPENACC
+    !
     ! 2022-02-02 DS and AF TO BE FIXED
     !stream_default=acc_async_noval
     stream_default=acc_get_cuda_stream(acc_async_sync)
@@ -201,6 +216,10 @@ contains
     async_d2h=1002
     async_d=10
     !
+#  endif
+#endif
+!
+#if defined _HIP && _OPENMP_GPU
 #endif
     !
   end subroutine gpu_setup
@@ -221,12 +240,13 @@ contains
     implicit none
     integer :: ierr
     ierr = 0
-#if defined _CUDAF || defined  _OPNEACC 
+#if ( defined _CUDAF || defined  _OPNEACC ) && defined _CUDA
     ierr = CudaDeviceSynchronize()
     ierr = CudaGetLastError()
-    !<debug>
-    !write(*,*) CudaGetLastMessage(ierr)
-    !</debug>
+#endif
+#if defined _OPENMP_GPU && defined _HIP
+    ierr = HipDeviceSynchronize()
+    ierr = HipGetLastError()
 #endif
     return
   end function
@@ -235,8 +255,11 @@ contains
     implicit none
     integer :: ierr
     ierr = 0 
-#ifdef _GPU
+#if ( defined _CUDAF || defined  _OPNEACC ) && defined _CUDA
     ierr = CudaDeviceSynchronize()
+#endif
+#if defined _OPENMP_GPU && defined _HIP
+    ierr = HipDeviceSynchronize()
 #endif
     return
   end function

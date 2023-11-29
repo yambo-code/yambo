@@ -97,6 +97,8 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  !DEV_ACC data present(rho_tw_rs_p,WF_symm_i_p,WF_symm_o_p)
  !DEV_ACC parallel loop async
  !DEV_CUF kernel do(1) <<<*,*>>>
+ !DEV_OMPGPU target map(present,alloc:rho_tw_rs_p,WF_symm_i_p,WF_symm_o_p)
+ !DEV_OMPGPU teams loop collapse(1)
  !DEV_OMP parallel default(shared), private(ir)
  !DEV_OMP do
  do ir = 1, fft_size
@@ -106,12 +108,14 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  if (n_spinor==2) then
    !DEV_ACC parallel loop async
    !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_OMPGPU teams loop collapse(1)
    !DEV_OMP do
    do ir = 1, fft_size
      rho_tw_rs_p(ir) = rho_tw_rs_p(ir)+cmplx(conjg(WF_symm_i_p(ir,2))*WF_symm_o_p(ir,2),kind=DP)
    enddo
  endif
  !DEV_OMP end parallel
+ !DEV_OMPGPU end target
  !DEV_ACC end data
  !
 #endif
@@ -173,22 +177,28 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
    !DEV_ACC data present(rhotw_p,rho_tw_rs_p,fft_g_table)
    !DEV_ACC parallel loop async
    !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_OMPGPU target map(present,alloc:rhotw_p,rho_tw_rs_p,fft_g_table)
+   !DEV_OMPGPU teams loop
    !DEV_OMP parallel do default(shared), private(ig)
    do ig = 1, isc_ngrho
      rhotw_p(ig)= cmplx(rho_tw_rs_p(DEV_VAR(fft_g_table)(ig,iGo)),kind=SP)
    enddo
    !DEV_ACC end data
+   !DEV_OMPGPU end target
    !
  else
    !
    !DEV_ACC data present(rhotw_p,rho_tw_rs_p,fft_g_table,g_rot)
    !DEV_ACC parallel loop async
    !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_OMPGPU target map(present,alloc:rhotw_p,rho_tw_rs_p,fft_g_table,g_rot)
+   !DEV_OMPGPU teams loop
    !DEV_OMP parallel do default(shared), private(ig)
    do ig = 1, isc_ngrho
      rhotw_p(ig)= cmplx(rho_tw_rs_p(DEV_VAR(fft_g_table)(DEV_VAR(g_rot)(ig,qs),iGo)),kind=SP)
    enddo
    !DEV_ACC end data
+   !DEV_OMPGPU end target
    !
  endif
  !

@@ -22,7 +22,9 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module FFT_m
- use pars,         ONLY: SP
+ use pars,          ONLY: SP
+ use iso_c_binding, ONLY: c_ptr 
+ !
 #include<dev_defs.h>
  !
  implicit none
@@ -48,6 +50,11 @@ module FFT_m
  !
  integer     :: cufft_plan !(FW) +1 sign: G-space to R-space & oscillators
                            !(BW) -1 sign: R-space to G-space
+ !
+ ! hipFFT support (AMD GPUs)
+ !
+ type(c_ptr) :: hipfft_plan
+
 
  contains
    !

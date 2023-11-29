@@ -52,7 +52,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use R_lattice,     ONLY:nkibz,k_pt,b
  use interfaces,    ONLY:WF_free
  use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size,&
-&                        fftw_plan,cufft_plan,DEV_VAR(fft_g_table)
+&                        fftw_plan,cufft_plan,hipfft_plan,DEV_VAR(fft_g_table)
  use wave_func,     ONLY:wf_nc_k,wf_igk,DEV_VAR(wf_igk),WF_buffer,&
 &                        wf_ng,wf_norm_test,wf_ncx,io_WF,wf_b_indx,&
 &                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,WAVEs,states_to_load
@@ -407,6 +407,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               !DEV_ACC data present(wf_igk,fft_g_table,wf_DP,wf_disk)
               !DEV_ACC parallel loop async
               !DEV_CUF kernel do(1) <<<*,*>>>
+              !DEV_OMPGPU target map(present,alloc:wf_igk,fft_g_table,wf_DP,wf_disk)
+              !DEV_OMPGPU teams loop
               do ic=1,npwk
                 !
                 ig=DEV_VAR(wf_igk)(ic,ikibz)
@@ -416,17 +418,25 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
                 DEV_VAR(wf_DP)(igfft)=cmplx(DEV_VAR(wf_disk)(ic,i_spinor,ib_to_load),kind=DP)
                 !
               enddo
+              !DEV_OMPGPU end target
               !DEV_ACC end data
               !
+#ifdef _CUDA
               call fft_3d_cuda( DEV_VAR(wf_DP),fft_dim,+1,cufft_plan)
+#elif defined _HIP
+              call fft_3d_hip( DEV_VAR(wf_DP),fft_dim,+1,hipfft_plan)
+#endif
               WFN = WF%N
               !
               !DEV_ACC data present(wfc_p,wf_DP)
               !DEV_ACC parallel loop async
               !DEV_CUF kernel do(1)
+              !DEV_OMPGPU target map(present,alloc:wfc_p,wf_DP)
+              !DEV_OMPGPU teams loop
               do ic=1,wf_grid_size
                 wfc_p(ic,i_spinor,WFN)=cmplx(DEV_VAR(wf_DP)(ic),kind=SP)*fft_norm
               enddo
+              !DEV_OMPGPU end target
               !DEV_ACC end data
               !
             enddo  ! i_spinor

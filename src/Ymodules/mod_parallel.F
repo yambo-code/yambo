@@ -74,7 +74,7 @@ module parallel_m
 #endif
  !
  integer            :: myid
- integer            :: mycuda_dev = 0
+ integer            :: mygpu_dev   = 0
  integer            :: ncpu
  integer            :: n_nodes(1)  = 1
  integer            :: n_IO_nodes  = 1

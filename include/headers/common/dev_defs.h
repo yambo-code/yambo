@@ -71,6 +71,12 @@
 #  define DEV_CUF !!!!
 #endif
 
+#if defined _OPENMP_GPU
+#  define DEV_OMPGPU $omp
+#else
+#  define DEV_OMPGPU !!!!
+#endif
+
 #if defined _OPENMP && !defined (_GPU)
 #  define DEV_OMP $omp
 #else

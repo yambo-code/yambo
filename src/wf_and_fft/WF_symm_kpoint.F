@@ -83,24 +83,30 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
          !DEV_ACC data present(WF_k_out,g_rot,WF_p)
          !DEV_ACC parallel loop collapse(2) async
          !DEV_CUF kernel do(2) <<<*,*>>>
+         !DEV_OMPGPU target map(present,alloc:WF_k_out,g_rot,WF_p)
+         !DEV_OMPGPU teams loop collapse(2)
          do i_spinor=1,n_spinor
          do i_g=1,wf_ng
            WF_k_out(DEV_VAR(g_rot)(i_g,is),i_spinor,ib,i_sp_pol)=WF_p(i_g,i_spinor,iwf)
          enddo
          enddo
+         !DEV_OMPGPU end target
          !DEV_ACC end data
          !
        else
          !
-         !DEV_ACC data present(WF_k_out,g_rot,spin_sop,WF_p)
+         !DEV_ACC data present(WF_k_out,g_rot,WF_p,spin_sop)
          !DEV_ACC parallel loop async
          !DEV_CUF kernel do(1) <<<*,*>>>
+         !DEV_OMPGPU target map(present,alloc:WF_k_out,g_rot,WF_p,spin_sop)
+         !DEV_OMPGPU teams loop collapse(2)
          do i_g=1,wf_ng
            WF_k_out(DEV_VAR(g_rot)(i_g,is),1,ib,i_sp_pol)=DEV_VAR(spin_sop)(1,1,is)*WF_p(i_g,1,iwf)+ &
 &                                                         DEV_VAR(spin_sop)(1,2,is)*WF_p(i_g,2,iwf)
            WF_k_out(DEV_VAR(g_rot)(i_g,is),2,ib,i_sp_pol)=DEV_VAR(spin_sop)(2,1,is)*WF_p(i_g,1,iwf)+ &
 &                                                         DEV_VAR(spin_sop)(2,2,is)*WF_p(i_g,2,iwf)
          enddo
+         !DEV_OMPGPU end target
          !DEV_ACC end data
        endif
        !

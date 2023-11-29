@@ -115,6 +115,8 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  !DEV_ACC data present(gamp_p,RIM_qpg,bare_qpg)
  !DEV_ACC parallel loop collapse(2) async
  !DEV_CUF kernel do(2)
+ !DEV_OMPGPU target map(present,alloc:gamp_p,RIM_qpg,bare_qpg)
+ !DEV_OMPGPU teams loop collapse(2)
  !DEV_OMP parallel do default(shared), private(i1,i2,ig1,ig2,l_RIM), collapse(2)
  !
  do i1=1,ng1
@@ -185,13 +187,19 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
      !
    enddo
  enddo
+ !DEV_OMPGPU end target
  !DEV_ACC end data
  !
  ! Anisotropy correction
  !
  if (.not.l_col_cut) then
    !DEV_ACC data present(gamp_p)
+   !DEV_ACC kernel
+   !DEV_OMPGPU target map(present,alloc:gamp_p)
+! AF_FIX: the omp part needs to be revised
    if (all((/iq==1,RIM_ng>0,mode=='c',RIM_anisotropy/=0._SP/))) gamp_p(1,1)=RIM_anisotropy/2._SP
+   !DEV_OMPGPU end target
+   !DEV_ACC end kernel
    !DEV_ACC end data
  endif
  !

@@ -71,10 +71,13 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
    !DEV_ACC data present(WF_p,WF_symm,fft_rot_r)
    !DEV_ACC parallel loop async
    !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_OMPGPU target map(present,alloc:WF_p,WF_symm,fft_rot_r)
+   !DEV_OMPGPU teams loop
    !DEV_OMP parallel do default(shared), private(ifft)
    do ifft = 1, fft_size
      WF_symm(ifft,1)=WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),1,i_wf)
    enddo
+   !DEV_OMPGPU end target
    !DEV_ACC end data
    !
  endif
@@ -84,6 +87,8 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
    !DEV_ACC data present(WF_p,WF_symm,fft_rot_r,spin_sop)
    !DEV_ACC parallel loop async
    !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_OMPGPU target map(present,alloc:WF_p,WF_symm,fft_rot_r,spin_sop)
+   !DEV_OMPGPU teams loop
    !DEV_OMP parallel do default(shared), private(ifft)
    do ifft = 1, fft_size
      WF_symm(ifft,1)=DEV_VAR(spin_sop)(1,1,isymm)*WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),1,i_wf)+ &
@@ -91,6 +96,7 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
      WF_symm(ifft,2)=DEV_VAR(spin_sop)(2,1,isymm)*WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),1,i_wf)+ &
                      DEV_VAR(spin_sop)(2,2,isymm)*WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),2,i_wf)
    enddo
+   !DEV_OMPGPU end target
    !DEV_ACC end data
    !
  endif

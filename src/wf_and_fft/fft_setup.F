@@ -32,7 +32,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_rot_r_inv,&
 &                         fft_norm,fft_g_table,fft_multiplier,modx,&
 &                         DEV_VAR(fft_g_table),DEV_VAR(fft_rot_r),DEV_VAR(fft_rot_r_inv)
- use FFT_m,          ONLY:fftw_plan,cufft_plan
+ use FFT_m,          ONLY:fftw_plan,cufft_plan,hipfft_plan
 #if defined _FFTQE
  use fft_base,       ONLY:dffts
 #endif
@@ -40,6 +40,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use timing_m,       ONLY:timing
  use gpu_m,          ONLY:have_gpu
  use devxlib,        ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memset_d
+ use iso_c_binding,  ONLY:c_null_ptr
  !
 #include<y_memory.h>
  !
@@ -116,6 +117,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    !DEV_ACC data present(g_vec_rot,fft_g_table)
    !DEV_ACC parallel loop collapse(2)
    !DEV_CUF kernel do(2)
+   !DEV_OMPGPU target map(present,alloc:g_vec_rot,fft_g_table)
+   !DEV_OMPGPU teams loop collapse(2)
    do i1=1,i1_max
      do i2=1,iGo_max
        !
@@ -144,6 +147,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
        !
      enddo
    enddo
+   !DEV_OMPGPU end target
    !DEV_ACC end data
    !
 #else
@@ -263,6 +267,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 #endif
 #if defined _GPU
  cufft_plan=0
+ hipfft_plan=c_null_ptr
 #endif
  !
  YAMBO_FREE_GPU(DEV_VAR(g_vec_rot))

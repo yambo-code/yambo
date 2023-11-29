@@ -192,14 +192,14 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  !
  ! Anisotropy correction
  !
+! AF_FIX: the omp part needs to be revised
  if (.not.l_col_cut) then
    !DEV_ACC data present(gamp_p)
-   !DEV_ACC kernel
+!!!!   !DEV_ACC kernels
    !DEV_OMPGPU target map(present,alloc:gamp_p)
-! AF_FIX: the omp part needs to be revised
    if (all((/iq==1,RIM_ng>0,mode=='c',RIM_anisotropy/=0._SP/))) gamp_p(1,1)=RIM_anisotropy/2._SP
    !DEV_OMPGPU end target
-   !DEV_ACC end kernel
+!!!!   !DEV_ACC end kernels
    !DEV_ACC end data
  endif
  !

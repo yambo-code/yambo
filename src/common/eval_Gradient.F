@@ -37,7 +37,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  !
  use pars,          ONLY:SP,DP,cI,cZERO,cZERO_DP
  use FFT_m,         ONLY:fft_size,fft_dim,DEV_VAR(fft_g_table)
- use FFT_m,         ONLY:fftw_plan,cufft_plan
+ use FFT_m,         ONLY:fftw_plan,cufft_plan,hipfft_plan
  use R_lattice,     ONLY:g_vec,DEV_VAR(g_vec),ng_vec
  use wave_func,     ONLY:wf_ng
  use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_allocated,devxlib_memset_d
@@ -112,11 +112,14 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
    !DEV_ACC data present(Vr_p,V3g_p,fft_g_table,g_vec)
    !DEV_ACC parallel loop collapse(2) async
    !DEV_CUF kernel do(2) <<<*,*>>>
+   !DEV_OMPGPU target map(present,alloc:Vr_p,V3g_p,fft_g_table,g_vec)
+   !DEV_OMPGPU teams loop collapse(2)
    do ic = 1,3
    do ig = 1,ng_
       V3g_p(ig,ic)=cI*real(DEV_VAR(g_vec)(ig,ic),DP)*Vr_p(DEV_VAR(fft_g_table)(ig,1))/real(fft_size,DP)
    enddo
    enddo
+   !DEV_OMPGPU end target
    !DEV_ACC end data
    !
    do ic = 1,3
@@ -126,13 +129,19 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
      !DEV_ACC data present(Vr_p,V3g_p,fft_g_table)
      !DEV_ACC parallel loop async
      !DEV_CUF kernel do(1) <<<*,*>>>
+     !DEV_OMPGPU target map(present,alloc:Vr_p,V3g_p,fft_g_table)
+     !DEV_OMPGPU teams loop
      do ig = 1, ng_
        Vr_p(DEV_VAR(fft_g_table)(ig,1)) = V3g_p(ig,ic)
      enddo
+     !DEV_OMPGPU end target
      !DEV_ACC end data
      !
-#if defined _GPU
+! AF_FIX
+#if defined _CUDA || defined _GPU
      call fft_3d_cuda(Vr_p,fft_dim,1,cufft_plan) 
+#elif defined _HIP
+     call fft_3d_hip(Vr_p,fft_dim,1,hipfft_plan) 
 #else
 #    if defined _FFTW
      call dfftw_destroy_plan(fftw_plan)

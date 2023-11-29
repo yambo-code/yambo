@@ -8,7 +8,7 @@ module gpu_loc_m
   implicit none
   private
 
-  logical :: cuda_linalg_init=.false.
+  logical :: gpu_linalg_init=.false.
 
 #if defined _CUDAF 
   logical :: have_device=.true.
@@ -48,7 +48,7 @@ contains
 
   subroutine gpu_linalg_setup()
     implicit none
-#ifdef _CUDAF || defined 
+#if defined _CUDAF || defined _OPENACC
     integer :: istat 
     istat = cublasInit()
     if(istat/=0) stop 'cublasInit failed'

@@ -54,8 +54,7 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
 #endif
 #if defined _OPENACC
  use openacc
- !use cudafor_m_y
- use cufft_m_y
+ use cufft_m
 #endif
  use gpu_m,  only: gpu_devsync
  !

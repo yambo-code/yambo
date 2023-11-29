@@ -31,11 +31,12 @@ subroutine fft_free()
  use FFT_m,    ONLY:fftw_plan
 #endif
 #if defined _GPU
- use FFT_m,    ONLY:cufft_plan,DEV_VAR(fft_g_table),DEV_VAR(fft_rot_r),DEV_VAR(fft_rot_r_inv)
+ use FFT_m,    ONLY:cufft_plan,hipfft_plan,DEV_VAR(fft_g_table),DEV_VAR(fft_rot_r),DEV_VAR(fft_rot_r_inv)
 #if defined _CUDAF
  use cufft
 #else
- use cufft_m_y
+ use cufft_m
+ use hipfft_m
 #endif
 #endif
  !

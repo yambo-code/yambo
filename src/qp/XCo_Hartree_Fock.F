@@ -152,11 +152,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    DP_Sx = 0.0d0
    !
-#if !defined _GPU
    !  !!! num_threads(n_outthr)
-   !$omp parallel default(shared), &
-   !$omp          private(isc,iscp,iq,iq_ibz,is_ibz,ikp,iGp,jb,DP_Sx_l), reduction(+:DP_sx)
-#endif
+   !DEV_OMP parallel default(shared), &
+   !DEV_OMP          private(isc,iscp,iq,iq_ibz,is_ibz,ikp,iGp,jb,DP_Sx_l), reduction(+:DP_sx)
    !
    call OPENMP_update(master_thread)
    !
@@ -174,9 +172,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
    !
-#if !defined _GPU
-   !$omp do schedule(dynamic)
-#endif
+   !DEV_OMP do schedule(dynamic)
+   !
    do iq=1,q%nbz
      iq_ibz=q%sstar(iq,1)
      is_ibz=q%sstar(iq,2)
@@ -256,16 +253,12 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      enddo
      !
    enddo
-#if !defined _GPU
-   !$omp end do
-#endif
+   !DEV_OMP end do
    !
    call elemental_collision_free(isc)
    call elemental_collision_free(iscp)
    !
-#if !defined _GPU
-   !$omp end parallel
-#endif
+   !DEV_OMP end parallel
    !
    QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)+ cmplx(DP_Sx,kind=SP)
    !

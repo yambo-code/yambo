@@ -24,9 +24,9 @@
 !
 module cusolverdn_y
   !
-  use iso_c_binding
-  !
 #ifdef _GPU
+  !
+  use iso_c_binding
   ! enums
   enum, bind(C) ! cusolverStatus_t
      enumerator :: CUSOLVER_STATUS_SUCCESS=0
@@ -392,4 +392,15 @@ module cusolverdn_y
 
 #endif
 
+contains
+
+  !
+  ! dummy subroutine to avoid having an empty module
+  !
+  subroutine cusolverdn_y_dummy__(i)
+     integer :: i
+     i=0
+  end subroutine
+
 end module cusolverdn_y
+

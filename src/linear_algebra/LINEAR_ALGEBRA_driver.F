@@ -48,7 +48,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  use BS,            ONLY:BS_block,BS_H_dim
  use timing_m,      ONLY:timing
  use gpu_m,         ONLY:have_gpu
- use devxlib,       ONLY:devxlib_allocated
+ use devxlib,       ONLY:devxlib_mapped
  !
 #include<y_memory.h>
 #include<dev_defs.h>

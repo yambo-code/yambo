@@ -54,7 +54,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use descriptors,ONLY:IO_desc_reset
 #if defined _SLEPC && !defined _NL
  use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_maxit,&
- &                    BSS_slepc_precondition,BSS_slepc_approach
+ &                    BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_matrix
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,MAX_BSK_LIN_size,&
 &                     BS_K_dim,BS_not_const_eh_f,BSK_mode,l_BSE_kernel_complete,&
@@ -466,6 +466,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  MAX_BSK_LIN_size=45000*45000 ! 46341 is the sqare root of the maximum integer in IP: 2147483647
  !
 #if defined _SLEPC && !defined _NL
+ BSS_slepc_matrix='shell'
  BSS_slepc_approach='none'
  BSS_slepc_precondition='none'
  BSS_slepc_extraction='ritz'

@@ -95,7 +95,7 @@ module BS_solvers
  integer          :: BSS_slepc_maxit      !maximum number of iterations
  real(SP)         :: BSS_slepc_tol        !tolerance for the iterative solver
  real(SP)         :: BSS_slepc_target_E   !find eigenvalues close to this energy
- logical          :: BSS_slepc_matrix     !use a shell matrix for slepc
+ character(schlen):: BSS_slepc_matrix     !matrix type ("shell","explicit","explicit-debug")
  logical          :: BSS_slepc_double_grp !duplicate the number of groups for slepc shells solver
  !
  ! Solvers (Inversion)

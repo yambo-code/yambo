@@ -1,4 +1,10 @@
 #
+# License-Identifier: GPL
+#
+# Copyright (C) 2020 The Yambo Team
+#
+# Authors (see AUTHORS file for details): AM
+#
 # EXT_LIBS imported 
 #
 ifeq ($(wildcard config/mk/global/defs.mk),config/mk/global/defs.mk)

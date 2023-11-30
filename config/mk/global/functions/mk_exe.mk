@@ -1,3 +1,10 @@
+#
+# License-Identifier: GPL
+#
+# Copyright (C) 2020 The Yambo Team
+#
+# Authors (see AUTHORS file for details): AM
+#
 define mk_exe
  LLIBS="";for lib in $$XLIBS; do if test -f $(compdir)/lib/lib$$lib.a; then LLIBS="$$LLIBS -l$$lib" ; fi; done ; \
  for lib in $$X_ypp_LIBS; do if test -f $(compdir)/lib/lib_ypp_$$lib.a; then LLIBS="$$LLIBS -l_ypp_$$lib" ; fi ; done ; \

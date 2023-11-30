@@ -26,7 +26,7 @@ subroutine WF_free(WF,keep_fft)
  use wave_func,    ONLY:WAVEs
  use pseudo,       ONLY:pp_is_uspp,PP_uspp_free
  use gpu_m,        ONLY:have_gpu
- use devxlib,      ONLY:devxlib_allocated
+ use devxlib,      ONLY:devxlib_mapped
  !
 #include<dev_defs.h>
 #include<y_memory.h>
@@ -45,7 +45,7 @@ subroutine WF_free(WF,keep_fft)
  if (pp_is_uspp) call PP_uspp_free()
  !
  if (have_gpu) then
-   if (.not. ( allocated(WF%c) .eqv. devxlib_allocated(DEV_VAR(WF%c)) ) ) &
+   if (.not. ( allocated(WF%c) .eqv. devxlib_mapped(DEV_VAR(WF%c)) ) ) &
 &    call error("[WF] inconsistent alloc of GPU wfcs")
  endif
  !

@@ -24,7 +24,7 @@
 module wave_func
  !
  use pars,           ONLY:SP
- use devxlib,        ONLY:devxlib_allocated
+ use devxlib,        ONLY:devxlib_mapped
  !
 #include <dev_defs.h>
 #include <y_memory.h>
@@ -138,7 +138,7 @@ module wave_func
      WF_out%c      = WF_in%c
      WF_out%index  = WF_in%index
      !
-     lpres=devxlib_allocated(DEV_VAR(WF_in%c))
+     lpres=devxlib_mapped(DEV_VAR(WF_in%c))
      if (lpres) then
         YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(WF_out%c),WF_in%c)
      endif

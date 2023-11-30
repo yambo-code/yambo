@@ -23,8 +23,8 @@ CUDA_INCS="$(icudalib)"
 BLAS_LIBS="$(lblas)"
 LAPACK_LIBS="$(llapack)"
 CONFFLAGS=--prefix=$(LIBPATH) $(devxlib_flgs) \
-		F90="$(fc)" \
-		MPIF90="$(fc)" 
+          F90="$(fc)" \
+          MPIF90="$(fc)" 
 #
 # MAIN target
 #
@@ -37,6 +37,7 @@ uncompress:
 	@touch uncompressed.stamp
 
 configure: uncompress
+	export BLAS_LIBS ; export LAPACK_LIBS
 	@$(configure)
 
 compile: uncompress configure

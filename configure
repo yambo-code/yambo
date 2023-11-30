@@ -13807,8 +13807,10 @@ $as_echo_n "checking for internal HDF5 library... " >&6; };
     NETCDF_HDF5_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/${IO_LIB_VER}" ;
     NETCDF_HDF5_PAR_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/parallel" ;
     #
-    HDF5_LIBS_F="${NETCDF_HDF5_PATH}/lib/libhdf5_hl_fortran.a ${NETCDF_HDF5_PATH}/lib/libhdf5_fortran.a";
-    HDF5_LIBS_C="${NETCDF_HDF5_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PATH}/lib/libhdf5.a";
+    #HDF5_LIBS_F="${NETCDF_HDF5_PATH}/lib/libhdf5_hl_fortran.a ${NETCDF_HDF5_PATH}/lib/libhdf5_fortran.a";
+    HDF5_LIBS_F="-L${NETCDF_HDF5_PATH}/lib/ -lhdf5_hl_fortran -lhdf5_fortran";
+    #HDF5_LIBS_C="${NETCDF_HDF5_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PATH}/lib/libhdf5.a";
+    HDF5_LIBS_C="-L${NETCDF_HDF5_PATH}/lib/ -lhdf5_hl -lhdf5";
     HDF5_LIBS="$HDF5_LIBS_F $HDF5_LIBS_C";
     HDF5_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
     #
@@ -13824,7 +13826,8 @@ $as_echo "already compiled" >&6; } ;
       #
       compile_hdf5="no" ;
       IO_LIB_VER="parallel";
-      HDF5_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_hl_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a" ;
+      #HDF5_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_hl_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a" ;
+      HDF5_LIBS="-L${NETCDF_HDF5_PAR_PATH}/lib/ -lhdf5_hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ;
       HDF5_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: already compiled (using parallel version)" >&5
 $as_echo "already compiled (using parallel version)" >&6; } ;
@@ -14265,9 +14268,11 @@ $as_echo_n "checking for internal NETCDF library... " >&6; };
     NETCDF_HDF5_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/${IO_LIB_VER}" ;
     NETCDF_HDF5_PAR_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/parallel" ;
     #
-    NETCDF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdf.a" ;
+    #NETCDF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdf.a" ;
+    NETCDF_LIBS="-L${NETCDF_HDF5_PATH}/lib/ -lnetcdf" ;
     NETCDF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
-    NETCDFF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdff.a" ;
+    #NETCDFF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdff.a" ;
+    NETCDFF_LIBS="-L${NETCDF_HDF5_PATH}/lib/ -lnetcdff" ;
     NETCDFF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
     #
     netcdf=yes ;
@@ -14282,9 +14287,11 @@ $as_echo "already compiled" >&6; } ;
       #
       compile_netcdf="no" ;
       IO_LIB_VER="parallel";
-      NETCDF_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" ;
+      #NETCDF_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" ;
+      NETCDF_LIBS="-L${NETCDF_HDF5_PAR_PATH}/lib/ -llnetcdf" ;
       NETCDF_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
-      NETCDFF_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" ;
+      #NETCDFF_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" ;
+      NETCDFF_LIBS="-L${NETCDF_HDF5_PAR_PATH}/lib/ -lnetcdff" ;
       NETCDFF_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: already compiled (using parallel version)" >&5
 $as_echo "already compiled (using parallel version)" >&6; } ;

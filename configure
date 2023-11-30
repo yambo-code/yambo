@@ -7031,8 +7031,8 @@ case "${host}" in
 i?86*linux*)
   case "${FC}" in
   *ftn* )
-    SYSFLAGS="-O2 -g -emf -ffree -eZ"
-    FUFLAGS="-O0 -g -emf -ffree -eZ"
+    SYSFLAGS="-O2 -g -emf -eZ"
+    FUFLAGS="-O0 -g -emf  -eZ"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     DEBUG_FLAGS="-g "
@@ -7187,8 +7187,8 @@ i?86*linux*)
 ia64*linux* )
   case "${FC}" in
   *ftn* )
-    SYSFLAGS="-O2 -g -emf -ffree -eZ"
-    FUFLAGS="-O0 -g -emf -ffree -eZ"
+    SYSFLAGS="-O2 -g -emf -eZ"
+    FUFLAGS="-O0 -g -emf  -eZ"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     DEBUG_FLAGS="-g "
@@ -7276,8 +7276,8 @@ ia64*linux* )
 *x86*64* )
   case "${FC}" in
   *ftn* )
-    SYSFLAGS="-O2 -g -emf -ffree -eZ"
-    FUFLAGS="-O0 -g -emf -ffree -eZ"
+    SYSFLAGS="-O2 -g -emf -eZ"
+    FUFLAGS="-O0 -g -emf  -eZ"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     DEBUG_FLAGS="-g "
@@ -14729,14 +14729,16 @@ $as_echo_n "checking for IOTK in $with_iotk_libdir... " >&6; } ; fi
       compile_p2y="yes"
       compile_iotk="no"
       IOTK_INCS="$IFLAG$try_iotk_incdir_src"
-      IOTK_LIBS="$try_iotk_libdir_src/libiotk.a"
+      #IOTK_LIBS="$try_iotk_libdir_src/libiotk.a"
+      IOTK_LIBS="-L$try_iotk_libdir_src/ -liotk"
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
     elif test -r $try_iotk_libdir/libiotk.a  && test -e $try_iotk_incdir/iotk_module.mod ; then
       compile_p2y="yes"
       compile_iotk="no"
       IOTK_INCS="$IFLAG$try_iotk_incdir"
-      IOTK_LIBS="$try_iotk_libdir/libiotk.a"
+      #IOTK_LIBS="$try_iotk_libdir/libiotk.a"
+      IOTK_LIBS="-L$try_iotk_libdir/ -liotk"
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
     else

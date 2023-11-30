@@ -65,13 +65,15 @@ if test "x$enable_iotk" = "xyes" ; then
       compile_p2y="yes"
       compile_iotk="no"
       IOTK_INCS="$IFLAG$try_iotk_incdir_src"
-      IOTK_LIBS="$try_iotk_libdir_src/libiotk.a"
+      #IOTK_LIBS="$try_iotk_libdir_src/libiotk.a"
+      IOTK_LIBS="-L$try_iotk_libdir_src/ -liotk"
       AC_MSG_RESULT([yes])
     elif test -r $try_iotk_libdir/libiotk.a  && test -e $try_iotk_incdir/iotk_module.mod ; then
       compile_p2y="yes"
       compile_iotk="no"
       IOTK_INCS="$IFLAG$try_iotk_incdir"
-      IOTK_LIBS="$try_iotk_libdir/libiotk.a"
+      #IOTK_LIBS="$try_iotk_libdir/libiotk.a"
+      IOTK_LIBS="-L$try_iotk_libdir/ -liotk"
       AC_MSG_RESULT([yes])
     else
       AC_MSG_RESULT([no. Fallback to internal library.])

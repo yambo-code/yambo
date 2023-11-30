@@ -48,7 +48,7 @@ subroutine ELPH_load_indexes(k,E,q,qindx_ID,qindx_ID_frag)
  !
  if(l_use_qindxB) then
    !
-   if(.not.bse_scattering) call error(' Please run setup with BSEscatt flag ')
+   bse_scattering=.true.
    !
    ! here qindx_B is allocated
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)

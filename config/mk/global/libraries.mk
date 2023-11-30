@@ -33,8 +33,8 @@ BASIC_LIBS_LD= tools memory allocations communicate modules matrices linear_alge
 MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse
 MAIN_LIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse
 
-PJ_PHLIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function el-ph qp acfdt bse
-PJ_PHLIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_function el-ph qp acfdt bse
+PJ_PHLIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function el-ph qp acfdt bse exc-ph
+PJ_PHLIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_function el-ph qp acfdt bse exc-ph
 
 PJ_SCLIBS    = $(MAIN_LIBS) collisions hamiltonian sc
 PJ_SCLIBS_LD = $(MAIN_LIBS_LD) hamiltonian collisions sc

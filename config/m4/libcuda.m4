@@ -43,7 +43,11 @@ AC_ARG_WITH(cuda_path, [AS_HELP_STRING([--with-cuda-path=<path>],
 AC_ARG_ENABLE([cuda-libs-check],
    [AS_HELP_STRING([--enable-cuda-libs-check=yes],[The configure script will check CUDA installation and report problems @<:@default=yes@:>@])],
    [],[enable_cuda_libs_check=yes])
-
+#
+AC_ARG_WITH(gpu_libs, [AS_HELP_STRING([--with-gpu-libs=<libs>], 
+            [Use auxiliary GPU libraries <libs>],[32])])
+AC_ARG_WITH(gpu_incs, [AS_HELP_STRING([--with-gpu-incs=<incs>], 
+            [Use auxiliary GPU lib include options <incs>],[32])])
 
 acx_libcuda_ok="no"
 internal_libcuda="no"
@@ -176,6 +180,7 @@ else
   AC_MSG_RESULT([yes.])
 fi
 fi
+
 
 FCFLAGS="$acx_libcuda_save_FCFLAGS"
 LIBS="$acx_libcuda_save_LIBS"

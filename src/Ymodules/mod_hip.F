@@ -50,7 +50,7 @@ module hip_m
      function HipDeviceSynchronize() &
         BIND(C,name="hipDeviceSynchronize")
         use iso_c_binding
-        !use enums
+        import HIP_SUCCESS
         implicit none
         integer(kind(HIP_SUCCESS)) :: HipDeviceSynchronize
      end function HipDeviceSynchronize
@@ -58,7 +58,7 @@ module hip_m
      function HipGetLastError() &
         BIND(C,name="hipGetLastError")
         use iso_c_binding
-        !use enums
+        import HIP_SUCCESS
         implicit none
         integer(kind(HIP_SUCCESS)) :: HipGetLastError
      end function hipDeviceSynchronize

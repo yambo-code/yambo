@@ -705,8 +705,12 @@ internal_devxlib
 compile_devxlib
 DEVXLIB_INCS
 DEVXLIB_LIBS
+LIBROCM_PATH
+LIBROCM_INCS
+LIBROCM_LIBS
 DEVXLIB_CUDALIBS
 DEVXLIB_FLAGS
+GPU_INCS
 GPU_LIBS
 GPU_FLAGS
 def_gpu
@@ -1053,11 +1057,15 @@ with_cuda_libdir
 with_cuda_includedir
 with_cuda_path
 enable_cuda_libs_check
+with_gpu_libs
+with_gpu_incs
 with_cuda_cc
 with_cuda_runtime
 with_cuda_int_libs
 enable_nvtx
-with_gpu_libs
+with_rocm_libdir
+with_rocm_includedir
+with_rocm_path
 with_devxlib_libs
 with_devxlib_path
 with_devxlib_libdir
@@ -1820,6 +1828,8 @@ Optional Packages:
   --with-cuda-libdir=<path>     Path to the libcuda lib directory
   --with-cuda-includedir=<path> Path to the libcuda include directory
   --with-cuda-path=<path>       Path to libcuda install directory
+  --with-gpu-libs=<libs>        Use auxiliary GPU libraries <libs>
+  --with-gpu-incs=<incs>        Use auxiliary GPU lib include options <incs>
   --with-cuda-cc=VAL      GPU architecture (Kepler: 35, Pascal: 60, Volta: 70,
                           Ampere: 80) [default=70]
   --with-cuda-runtime=VAL CUDA runtime (Pascal: 8+, Volta: 9+) [default=10.1]
@@ -1827,6 +1837,11 @@ Optional Packages:
                           CUDA internal libraries ()
                           [default=cuda,cufft,cublas,cusolver,cudart]
   --with-gpu-libs=<libs>        Use extra GPU-specific libraries <libs>
+  --with-gpu-incs=<incs>        Includes for extra GPU-specific libraries
+                                <incs>
+  --with-rocm-libdir=<path>     Path to the rocm lib directory
+  --with-rocm-includedir=<path> Path to the rocm include directory
+  --with-rocm-path=<path>       Path to rocm install directory
   --with-devxlib-libs=<libs>    Use devxlib libraries <libs>
   --with-devxlib-path=<path>    Path to devxlib install directory
   --with-devxlib-libdir=<path>  Path to the devxlib lib directory
@@ -15269,6 +15284,18 @@ else
   enable_cuda_libs_check=yes
 fi
 
+#
+
+# Check whether --with-gpu_libs was given.
+if test "${with_gpu_libs+set}" = set; then :
+  withval=$with_gpu_libs;
+fi
+
+
+# Check whether --with-gpu_incs was given.
+if test "${with_gpu_incs+set}" = set; then :
+  withval=$with_gpu_incs;
+fi
 
 
 acx_libcuda_ok="no"
@@ -15443,6 +15470,7 @@ $as_echo "yes." >&6; }
 fi
 fi
 
+
 FCFLAGS="$acx_libcuda_save_FCFLAGS"
 LIBS="$acx_libcuda_save_LIBS"
 
@@ -15572,6 +15600,32 @@ if test "${with_gpu_libs+set}" = set; then :
 fi
 
 
+# Check whether --with-gpu_incs was given.
+if test "${with_gpu_incs+set}" = set; then :
+  withval=$with_gpu_incs;
+fi
+
+#
+
+# Check whether --with-rocm_libdir was given.
+if test "${with_rocm_libdir+set}" = set; then :
+  withval=$with_rocm_libdir;
+fi
+
+
+# Check whether --with-rocm_includedir was given.
+if test "${with_rocm_includedir+set}" = set; then :
+  withval=$with_rocm_includedir;
+fi
+
+
+# Check whether --with-rocm_path was given.
+if test "${with_rocm_path+set}" = set; then :
+  withval=$with_rocm_path;
+fi
+
+
+
 use_int_cuda_libs="no"
 use_gpu_libs="no"
 enable_nvtx=no
@@ -15594,9 +15648,30 @@ def_gpu=""
  # GPU aux libraries
  GPU_LIBS="";
  if test x"$GPU_LIBS" = "x" -o x"$with_gpu_libs" = "x" ; then
-     use_gpu_libs=yes;
-     GPU_LIBS="{$with_gpu_libs}";
+     GPU_LIBS="$with_gpu_libs";
  fi
+ GPU_INCS="";
+ if test x"$GPU_INCS" = "x" -o x"$with_gpu_incs" = "x" ; then
+     GPU_INCS="$with_gpu_incs";
+ fi
+
+#
+if test "x$with_rocm_path" = "x" ; then with_rocm_path="$ROCM_PATH" ; fi
+if test "x$with_rocm_path" = "x" ; then with_rocm_path="$ROCM_ROOT" ; fi
+if test "x$with_rocm_path" = "x" ; then with_rocm_path="$ROCM_HOME" ; fi
+
+LIBROCM_PATH="$with_rocm_path"
+
+if test -d "$with_rocm_path"; then
+   librocm_incdir="$with_rocm_path/include"
+   librocm_libdir="$with_rocm_path/lib"
+   if ! test -d "$librocm_libdir" ; then librocm_libdir="$with_rocm_path/lib" ; fi
+fi
+if test -d "$with_rocm_includedir"; then librocm_incdir="$with_rocm_includedir" ; fi
+if test -d "$with_rocm_libdir";     then librocm_libdir="$with_rocm_libdir"     ; fi
+
+LIBROCM_LIBS="-L$librocm_libdir -lrocblas"
+LIBROCM_INCS="-I$librocm_incdir"
 
 # Cuda Fortran
 if test x"$enable_cuda_fortran" != "xno" ; then
@@ -15771,6 +15846,10 @@ if test x"$enable_openmp5" != "xno" ; then
    #
 fi
 #
+
+
+
+
 
 
 

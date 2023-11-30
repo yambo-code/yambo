@@ -112,6 +112,16 @@ AC_ARG_ENABLE(nvtx,
 #
 AC_ARG_WITH(gpu_libs, [AS_HELP_STRING([--with-gpu-libs=<libs>],
             [Use extra GPU-specific libraries <libs>],[32])])
+AC_ARG_WITH(gpu_incs, [AS_HELP_STRING([--with-gpu-incs=<incs>],
+            [Includes for extra GPU-specific libraries <incs>],[32])])
+#
+AC_ARG_WITH(rocm_libdir, [AS_HELP_STRING([--with-rocm-libdir=<path>], 
+            [Path to the rocm lib directory],[32])])
+AC_ARG_WITH(rocm_includedir, [AS_HELP_STRING([--with-rocm-includedir=<path>], 
+            [Path to the rocm include directory],[32])])
+AC_ARG_WITH(rocm_path, [AS_HELP_STRING([--with-rocm-path=<path>], 
+            [Path to rocm install directory],[32])])
+
 
 use_int_cuda_libs="no"
 use_gpu_libs="no"
@@ -135,9 +145,31 @@ def_gpu=""
  # GPU aux libraries
  GPU_LIBS="";
  if test x"$GPU_LIBS" = "x" -o x"$with_gpu_libs" = "x" ; then
-     use_gpu_libs=yes;
-     GPU_LIBS="{$with_gpu_libs}";
+     GPU_LIBS="$with_gpu_libs";
  fi
+ GPU_INCS="";
+ if test x"$GPU_INCS" = "x" -o x"$with_gpu_incs" = "x" ; then
+     GPU_INCS="$with_gpu_incs";
+ fi
+
+#
+dnl Heuristics to detect ROCm dir
+if test "x$with_rocm_path" = "x" ; then with_rocm_path="$ROCM_PATH" ; fi
+if test "x$with_rocm_path" = "x" ; then with_rocm_path="$ROCM_ROOT" ; fi
+if test "x$with_rocm_path" = "x" ; then with_rocm_path="$ROCM_HOME" ; fi
+
+LIBROCM_PATH="$with_rocm_path"
+
+if test -d "$with_rocm_path"; then
+   librocm_incdir="$with_rocm_path/include"
+   librocm_libdir="$with_rocm_path/lib"
+   if ! test -d "$librocm_libdir" ; then librocm_libdir="$with_rocm_path/lib" ; fi
+fi
+if test -d "$with_rocm_includedir"; then librocm_incdir="$with_rocm_includedir" ; fi
+if test -d "$with_rocm_libdir";     then librocm_libdir="$with_rocm_libdir"     ; fi
+
+LIBROCM_LIBS="-L$librocm_libdir -lrocblas"
+LIBROCM_INCS="-I$librocm_incdir"
 
 # Cuda Fortran
 if test x"$enable_cuda_fortran" != "xno" ; then
@@ -230,7 +262,11 @@ AC_SUBST(with_gpu_libs)
 AC_SUBST(def_gpu)
 AC_SUBST(GPU_FLAGS)
 AC_SUBST(GPU_LIBS)
+AC_SUBST(GPU_INCS)
 AC_SUBST(DEVXLIB_FLAGS)
 AC_SUBST(DEVXLIB_CUDALIBS)
+AC_SUBST(LIBROCM_LIBS)
+AC_SUBST(LIBROCM_INCS)
+AC_SUBST(LIBROCM_PATH)
 #
 ])

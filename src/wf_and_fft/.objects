@@ -22,7 +22,7 @@ WF_rot_object = WF_rotate.o
 #if defined _SC || defined _RT
 WF_der_objects = WF_derivative.o
 #endif
-#if defined _GPU
+#if defined _CUDA
 FFT_gpu = fft_3d_cuda.o
 #endif
 #if defined _HIP

@@ -95,7 +95,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
    Vr_h=cmplx(f(:,i_spinor),kind=DP)
    call devxlib_memcpy_h2d(Vr_p,Vr_h)
    !
-#if defined _GPU
+#if defined _CUDA
    call fft_3d_cuda(Vr_p,fft_dim,-1,cufft_plan) 
 #else
 #  if defined _FFTW
@@ -137,8 +137,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
      !DEV_OMPGPU end target
      !DEV_ACC end data
      !
-! AF_FIX
-#if defined _CUDA || defined _GPU
+#if defined _CUDA
      call fft_3d_cuda(Vr_p,fft_dim,1,cufft_plan) 
 #elif defined _HIP
      call fft_3d_hip(Vr_p,fft_dim,1,hipfft_plan) 

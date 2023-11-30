@@ -190,12 +190,12 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      !
      !
      !DEV_ACC data present(Xo_scatt_rhotw_p)
-     !DEV_ACC kernels
+     !DEV_ACC serial
      if(iv/=ic) Xo_scatt_rhotw_p(1)=    -conjg(DIP_projected)
      if(iv==ic) Xo_scatt_rhotw_p(1)=cONE-conjg(DIP_projected)
      !
      if (l_X_term_vv.and.iv==ic) Xo_scatt_rhotw_p(1)=0.0_SP
-     !DEV_ACC end kernels
+     !DEV_ACC end serial
      !DEV_ACC end data
      !
    else
@@ -252,9 +252,9 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
 ! AF_FIX: to be checked
      if (X%ng==1) then
        !DEV_ACC data present(Xo_scatt_rhotw_p)
-       !DEV_ACC kernels
+       !DEV_ACC serial
        Xo_scatt_rhotw_p(1)=cONE 
-       !DEV_ACC end kernels
+       !DEV_ACC end serial
        !DEV_ACC end data
      else
        call DEV_SUB(scatter_Bamp)(Xo_scatt)
@@ -309,10 +309,10 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
 ! AF_FIX: metal case to be fixed !
  if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) then
     !DEV_ACC data present(Xo_res)
-    !DEV_ACC kernels
+    !DEV_ACC serial
     ctmp=Xo_res(1,1)
     Xo_res(1,1)=ctmp/real(drude_n_states,SP)
-    !DEV_ACC end kernels
+    !DEV_ACC end serial
     !DEV_ACC end data
  endif
  !

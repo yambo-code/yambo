@@ -37,7 +37,7 @@
 #  define DEV_ATTRIBUTE         , device
 #  define DEV_PINNED            , pinned
 
-#elif defined _OPENACC || defined _OPENMP5
+#elif defined _OPENACC || defined _OPENMP_GPU
 #  define DEV_SUBNAME(x)        CAT(x,_gpu)
 #  define DEV_SUBNAME_ALT(x)    CAT(x,_cpu)
 #  define DEV_VARNAME(x)        x

@@ -99,7 +99,7 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
          !DEV_ACC parallel loop async
          !DEV_CUF kernel do(1) <<<*,*>>>
          !DEV_OMPGPU target map(present,alloc:WF_k_out,g_rot,WF_p,spin_sop)
-         !DEV_OMPGPU teams loop collapse(2)
+         !DEV_OMPGPU teams loop
          do i_g=1,wf_ng
            WF_k_out(DEV_VAR(g_rot)(i_g,is),1,ib,i_sp_pol)=DEV_VAR(spin_sop)(1,1,is)*WF_p(i_g,1,iwf)+ &
 &                                                         DEV_VAR(spin_sop)(1,2,is)*WF_p(i_g,2,iwf)

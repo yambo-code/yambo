@@ -43,7 +43,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use LIVE_t,         ONLY: USER_wall_time_string
  use gpu_m,          ONLY: gpu_visible_devices,have_gpu_devices,gpu_subscription,gpu_str
 #if defined _GPU
- use gpu_m,          ONLY:cudaGetDevice
+ use gpu_m,          ONLY:gpu_GetDevice
 #endif
  !
  implicit none
@@ -127,7 +127,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r', 'GPU devices         ',have_gpu_devices)
  if (len_trim(gpu_visible_devices)>0) call msg('r', 'GPU visible dev    ',trim(gpu_visible_devices))
  call msg('r', 'MPI tasks / GPU     ',gpu_subscription)
- ierr = cudaGetDevice(i_dev)
+ ierr = gpu_GetDevice(i_dev)
  call msg('s', 'MPI assigned to GPU ',i_dev)
 #endif
  !

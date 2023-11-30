@@ -24,7 +24,7 @@
 !
 module cusolverdn_y
   !
-#ifdef _GPU
+#if defined _GPU && defined _CUDA
   !
   use iso_c_binding
   ! enums

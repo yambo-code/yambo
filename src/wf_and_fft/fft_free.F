@@ -25,6 +25,7 @@
 !
 subroutine fft_free()
  !
+ use iso_c_binding
  use FFT_m,    ONLY:fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
 &                   fft_rot_r,fft_rot_r_inv,fft_multiplier
 #if defined _FFTW
@@ -35,7 +36,6 @@ subroutine fft_free()
 #if defined _CUDAF
  use cufft
 #else
- use cufft_m
  use hipfft_m
 #endif
 #endif
@@ -53,8 +53,13 @@ subroutine fft_free()
  YAMBO_FREE_GPU(DEV_VAR(fft_g_table))
  YAMBO_FREE_GPU(DEV_VAR(fft_rot_r))
  YAMBO_FREE_GPU(DEV_VAR(fft_rot_r_inv))
+#  if defined _CUDA
  ierr=cufftDestroy(cufft_plan) 
  cufft_plan=0
+#  elif defined _HIP
+ ierr=hipfftDestroy(hipfft_plan) 
+hipfft_plan=c_null_ptr
+#  endif
 #endif
  !
  YAMBO_FREE(fft_g_table)

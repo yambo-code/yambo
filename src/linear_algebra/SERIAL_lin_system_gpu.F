@@ -49,6 +49,10 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  !
  if(.not.(l_nl_optics.or.l_real_time)) call timing(trim(subname),OPR='start')
  !
+#if ! defined _CUDA
+ call error(trim(subname)//" not yet ported on non-CUDA GPUs")
+#endif
+ !
  call LINEAR_ALGEBRA_WS_reset(WS)
  WS%dim=n
  !
@@ -67,8 +71,10 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  !DEV_ACC data present(A_d)
  !DEV_ACC host_data use_device(A_d)
  !
+#if defined _CUDA
  WS%i_fail = cusolverDnZgetrf_bufferSize(cusolv_h,WS%dim,WS%dim,A_d,WS%dim,lwork)
  if(WS%i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnZgetrf_bufferSize failed')
+#endif
  !
  !DEV_ACC end host_data
  !DEV_ACC end data
@@ -78,11 +84,15 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  !DEV_ACC data present(A_d,B_d,WS%v_cmplx,WS%v_int,WS%vp_int)
  !DEV_ACC host_data use_device(A_d,B_d,WS%v_cmplx,WS%v_int,WS%vp_int)
  !
+#if defined _CUDA
  WS%i_fail = cusolverDnZgetrf(cusolv_h,WS%dim,WS%dim,A_d,WS%dim,DEV_VAR(WS%v_cmplx),DEV_VAR(WS%v_int),DEV_VAR(WS%vp_int))
  if(WS%i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnZgetrf failed')
+#endif
  !
+#if defined _CUDA
  WS%i_fail = cusolverDnZgetrs(cusolv_h,CUBLAS_OP_N,WS%dim,nrhs,A_d,WS%dim,DEV_VAR(WS%v_int),B_d,WS%dim,DEV_VAR(WS%vp_int))
  if(WS%i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnZgetrs failed')
+#endif
  !
  !DEV_ACC end host_data
  !DEV_ACC end data
@@ -92,28 +102,32 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  !DEV_ACC data present(A_d)
  !DEV_ACC host_data use_device(A_d)
  !
+#if defined _CUDA
  WS%i_fail = cusolverDnCgetrf_bufferSize(cusolv_h,WS%dim,WS%dim,A_d,WS%dim,lwork)
  if(WS%i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnZgetrf_bufferSize failed')
+#endif
  !
  !DEV_ACC end host_data
  !DEV_ACC end data
  !
-write(*,*) "before alloc2", lwork
  YAMBO_ALLOC_GPU(DEV_VAR(WS%v_cmplx),(lwork))
  v_cmplx_p => DEV_VAR(WS%v_cmplx)
-write(*,*) "after alloc2"
  !
  !DEV_ACC data present(A_d,B_d,v_cmplx_p,v_int_p,vp_int_p)
  !DEV_ACC host_data use_device(A_d,B_d,v_cmplx_p,v_int_p,vp_int_p)
  !
 write(*,*) "before cusolverDnCgetrf"
+#if defined _CUDA
  WS%i_fail = cusolverDnCgetrf(cusolv_h,WS%dim,WS%dim,A_d,WS%dim,v_cmplx_p,v_int_p,vp_int_p)
  if(WS%i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnCgetrf failed')
+#endif
 write(*,*) "after cusolverDnCgetrf"
  !
 write(*,*) "before cusolverDnCgetrs"
+#if defined _CUDA
  WS%i_fail = cusolverDnCgetrs(cusolv_h,CUBLAS_OP_N,WS%dim,nrhs,A_d,WS%dim,v_int_p,B_d,WS%dim,vp_int_p)
  if(WS%i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnCgetrs failed')
+#endif
 write(*,*) "after cusolverDnCgetrs"
  !
  !DEV_ACC end host_data

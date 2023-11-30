@@ -32,7 +32,7 @@ module gpu_loc_m
   logical :: have_ompgpu=.false.
 #endif
   !
-#if defined _GPU
+#if defined _GPU && defined _CUDA
   type(cuBlasHandle) :: cublas_h
   public :: cublas_h
 #endif

@@ -41,7 +41,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  use D_lattice,      ONLY:idt_index
  use R_lattice,      ONLY:DEV_VAR(g_rot)
  use pseudo,         ONLY:pp_is_uspp
- use FFT_m,          ONLY:fftw_plan,cufft_plan,fft_size,fft_dim,DEV_VAR(fft_g_table)
+ use FFT_m,          ONLY:fftw_plan,cufft_plan,hipfft_plan,fft_size,fft_dim,DEV_VAR(fft_g_table)
  use interfaces,     ONLY:DEV_SUB(WF_apply_symm)
  use devxlib,        ONLY:devxlib_memset_d,devxlib_memset_h
  !
@@ -124,7 +124,11 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  !
 #if defined _GPU_LOC
  !
+#  if defined _CUDA
  call fft_3d_cuda(rho_tw_rs_p,fft_dim,+1,cufft_plan)
+#  elif defined _HIP
+ call fft_3d_hip(rho_tw_rs_p,fft_dim,+1,hipfft_plan)
+#  endif
  !
 #else 
  !

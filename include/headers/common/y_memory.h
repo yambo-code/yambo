@@ -23,7 +23,7 @@
  
 */
  use y_memory,     ONLY:MEM_err,MEM_msg,MEM_count,MEM_count_d,MEM_global_mesg,IPL
-#if defined _OPENACC || defined _OPENMP5
+#if defined _OPENACC || defined _OPENMP_GPU
  use devxlib,      ONLY:devxlib_map,devxlib_unmap,devxlib_mapped,devxlib_memcpy_h2d
 #endif
  implicit none
@@ -171,7 +171,7 @@
   if (     allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,size(x,KIND=IPL))NEWLINE \
   if (     allocated(x)) &NEWLINE& deallocate(x)
 
-#if defined _OPENACC || defined _OPENMP5
+#if defined _OPENACC || defined _OPENMP_GPU
 #define YAMBO_FREE(x) \
   if ( .not.allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \
   if (      allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,size(x,KIND=IPL))NEWLINE \
@@ -186,9 +186,9 @@
   if (     associated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,size(x,KIND=IPL))NEWLINE \
   if (     associated(x)) &NEWLINE& deallocate(x);nullify(x)
 
- /* device allocations, OPENACC/OPENMP5, CUDAF */
+ /* device allocations, OPENACC/OPENMP_GPU, CUDAF */
 
-#if defined _OPENACC || defined _OPENMP5
+#if defined _OPENACC || defined _OPENMP_GPU
 
 #define YAMBO_ALLOC_CHECK_GPU(x) \
   if (     allocated(x)) &NEWLINE& call MEM_count_d(QUOTES x QUOTES,x)NEWLINE \

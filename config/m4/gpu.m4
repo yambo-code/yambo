@@ -252,7 +252,7 @@ if test x"$enable_openmp5" != "xno" ; then
    DEVXLIB_FLAGS="--enable-openmp5" # --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
    if test x"$LIBROCM_PATH" != "x" ; then DEVXLIB_FLAGS+=" --enable-rocblas --with-rocm-path=$LIBROCM_PATH" ; fi
    GPU_FLAGS="-fopenmp" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
-   def_gpu="-D_GPU -D_HIP -D_OPENMP5"
+   def_gpu="-D_GPU -D_HIP -D_OPENMP_GPU"
    #
 fi
 #

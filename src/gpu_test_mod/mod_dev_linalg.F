@@ -55,7 +55,7 @@ contains
     real(SP)  DEV_ATTR :: x(N), y(N)
     integer  :: istat
     !
-#if defined _CUDAF || defined _OPENACC || defined _OPENMP5
+#if defined _CUDAF || defined _OPENACC || defined _OPENMP_GPU
     !DEV_OMP5 target data map(tofrom:x,y), use_device_ptr(x,y)
     !DEV_ACC data present(x,y)
     !DEV_ACC host_data use_device(x,y)

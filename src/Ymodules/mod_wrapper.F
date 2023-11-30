@@ -201,35 +201,6 @@ module wrapper
 #endif
    end subroutine mm_cgemm
    !
-#if defined _COMMENT
-   subroutine mm_cgemm_gpu(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
-     implicit none
-     complex(SP),          intent(in)  :: ALPHA,BETA
-     integer,              intent(in)  :: K,LDA,LDB,LDC,M,N
-     character,            intent(in)  :: TRANSA,TRANSB
-     complex(SP) DEV_ATTR, intent(in)  :: A(LDA,*),B(LDB,*)
-     complex(SP) DEV_ATTR, intent(out) :: C(LDC,*)
-     !
-#if defined _GPU
-     !DEV_ACC data present(A,B,C)
-     !DEV_ACC host_data use_device(A,B,C)
-#  if defined _DOUBLE
-     call cublasZGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
-#  else
-     call cublasCGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
-#  endif
-     !DEV_ACC end host_data
-     !DEV_ACC end data
-#else
-#  if defined _DOUBLE
-     call ZGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
-#  else
-     call CGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
-#  endif
-#endif
-   end subroutine mm_cgemm_gpu
-#endif
-
    subroutine mm_c(TRANSA,TRANSB,msize,A,B,C)
      integer,     intent(in)  :: msize
      complex(SP), intent(in)  :: A(msize,msize),B(msize,msize)
@@ -455,29 +426,26 @@ module wrapper
    end function Vstar_dot_V_c1_gpu
    !
    complex(SP) function Vstar_dot_V_c2_gpu(N,CX,CY)
+     use iso_c_binding
+#ifdef _CUDAF
+     use cudafor,  only: c_devloc
+#endif
      implicit none
      integer,              intent(in) :: N
      complex(SP) DEV_ATTR, intent(in) :: CX(:,:),CY(:,:)
      !
-#if defined _GPU
-     !DEV_ACC data present(CX,CY)
-     !DEV_ACC host_data use_device(CX,CY)
-#  if defined _DOUBLE
-     Vstar_dot_V_c2_gpu=cublasZdotc(N,CX,1,CY,1)
-#  else
-     Vstar_dot_V_c2_gpu=cublasCdotc(N,CX,1,CY,1)
-#  endif
-     !DEV_ACC end host_data
-     !DEV_ACC end data
+     complex(SP), pointer DEV_ATTR :: CX_p(:), CY_p(:)
+     !
+#ifdef _CUDAF
+     call c_f_pointer(c_devloc(CX),CX_p,[size(CX)])
+     call c_f_pointer(c_devloc(CY),CY_p,[size(CY)])
 #else
-#  if defined _DOUBLE
-     complex(SP)::zdotc
-     Vstar_dot_V_c2_gpu=ZDOTC(N,CX,1,CY,1)
-#  else
-     complex(SP)::cdotc
-     Vstar_dot_V_c2_gpu=CDOTC(N,CX,1,CY,1)
-#  endif
+     call c_f_pointer(c_loc(CX),CX_p,[size(CX)])
+     call c_f_pointer(c_loc(CY),CY_p,[size(CY)])
 #endif
+     !
+     Vstar_dot_V_c2_gpu=devxlib_xDOTC_gpu(N,CX_p,1,CY_p,1)
+     !     
    end function Vstar_dot_V_c2_gpu
    !
    !==============
@@ -504,12 +472,16 @@ module wrapper
      integer :: i
      !
      Vstar_dot_VV_c1_gpu=0.0_SP
+     !
      !DEV_ACC data present(CX,CY,CZ)
      !DEV_ACC parallel loop
      !DEV_CUF kernel do(1) <<<*,*>>>
+     !DEV_OMPGPU target map(present,alloc:CX,CY,CZ)
+     !DEV_OMPGPU teams loop
      do i = 1, N
        Vstar_dot_VV_c1_gpu=Vstar_dot_VV_c1_gpu+conjg(CX(i))*CY(i)*CZ(i)
      enddo
+     !DEV_OMPGPU end target
      !DEV_ACC end data
    end function Vstar_dot_VV_c1_gpu
    !
@@ -592,9 +564,12 @@ module wrapper
      !DEV_ACC data present(CX,CY,CZ)
      !DEV_ACC parallel loop async
      !DEV_CUF kernel do(1) <<<*,*>>>
+     !DEV_OMPGPU target map(present,alloc:CX,CY,CZ)
+     !DEV_OMPGPU teams loop
      do i = 1, N
        V_dot_VV_c1_gpu=V_dot_VV_c1_gpu+CX(i)*CY(i)*CZ(i)
      enddo
+     !DEV_OMPGPU end target
      !DEV_ACC end data
    end function V_dot_VV_c1_gpu
    !
@@ -643,9 +618,12 @@ module wrapper
      !DEV_ACC data present(CX,CY,CZ)
      !DEV_ACC parallel loop
      !DEV_CUF kernel do(1) <<<*,*>>>
+     !DEV_OMPGPU target map(present,alloc:CX,CY,CZ)
+     !DEV_OMPGPU teams loop
      do i=1,N
         CZ(i)=CX(i)*CY(i)
      enddo
+     !DEV_OMPGPU end target
      !DEV_ACC end data
    end subroutine V_by_V_pwise_gpu
    !

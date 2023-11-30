@@ -62,8 +62,8 @@ subroutine fft_3d_hip(c_d,n,fft_sign,hipfft_plan)
  ! 
  ! Work Space
  !
- integer :: i_sign,istat
- integer :: fft_dim(3), data_dim(3)
+ integer(c_int) :: i_sign
+ integer :: istat, fft_dim(3), data_dim(3)
  integer :: stride, dist, batch
  !
  if (fft_sign>0) i_sign=HIPFFT_BACKWARD
@@ -90,27 +90,29 @@ subroutine fft_3d_hip(c_d,n,fft_sign,hipfft_plan)
                            HIPFFT_Z2Z, batch )
  endif
  !
-#ifdef _OPENACC || _OPENMP_GPU
- ! AF_FIX:  2022-02-02 DS and AF TO BE FIXED
- !
- !DEV_ACC wait(acc_async_noval)
+! AF_FIX:  to be checked
  !istat = cudaStreamSynchronize(acc_get_cuda_stream(acc_async_noval))
  istat = gpu_devsync()
-#endif
+ !
+ !DEV_ACC wait(acc_async_noval)
+ !!!!DEV_OMPGPU ???
  !
  !DEV_ACC data present(c_d)
  !DEV_ACC host_data use_device(c_d)
- !DEV_OMPGPU target use_device_ptr(c_d)
- istat = hipfftExecZ2Z( hipfft_plan, c_d, c_d, i_sign )
- !DEV_OMPGPU end target
+ !DEV_OMPGPU target data use_device_ptr(c_d)
+ !
+ istat = hipfftExecZ2Z( hipfft_plan, c_loc(c_d), c_loc(c_d), i_sign )
+ !
+ !DEV_OMPGPU end target data
  !DEV_ACC end host_data
  !DEV_ACC end data
  !
-#ifdef _OPENACC || _OPENMP_GPU
  !DEV_ACC wait(acc_async_noval)
+ !!!!DEV_OMPGPU wait ???
+
+! AF_FIX: to be checked
  !istat = cudaStreamSynchronize(acc_get_cuda_stream(acc_async_noval))
  istat = gpu_devsync()
-#endif
  !
 end subroutine fft_3d_hip
 

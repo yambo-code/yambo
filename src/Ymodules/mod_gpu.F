@@ -73,7 +73,7 @@ module gpu_m
   integer:: gpu_subscription
 
   logical:: gpu_linalg_init=.false.
-#ifdef _GPU
+#if defined _GPU && defined _CUDA
   type(cusolverDnHandle)   :: cusolv_h
   public :: cusolv_h
 #endif
@@ -119,6 +119,7 @@ module gpu_m
   public :: gpu_linalg_setup
   public :: gpu_getstat
   public :: gpu_devsync
+  public :: gpu_GetDevice
   !
   public :: gpu_subscription
   !
@@ -158,12 +159,22 @@ contains
     !
     myid_host_loc=PAR_COM_HOST%CPU_id
     !
+#if defined _CUDA
     ierr = cudaGetDeviceCount( ndev )
     if (ierr/=0) call error("[GPU] cannot get DeviceCount")
     ierr = cudaSetDevice(mod(myid_host_loc, ndev))
     if (ierr/=0) call error("[GPU] cannot set device")
     ierr = cudaDeviceSynchronize()
     if (ierr/=0) call error("[GPU] cannot device-sync")
+#endif
+#if defined _HIP
+    ierr = hipGetDeviceCount( ndev )
+    if (ierr/=0) call error("[GPU] cannot get DeviceCount")
+    ierr = hipSetDevice(mod(myid_host_loc, ndev))
+    if (ierr/=0) call error("[GPU] cannot set device")
+    ierr = hipDeviceSynchronize()
+    if (ierr/=0) call error("[GPU] cannot device-sync")
+#endif
     !
     gpu_subscription=PAR_COM_HOST%n_CPU / ndev
     !
@@ -260,6 +271,19 @@ contains
 #endif
 #if defined _OPENMP_GPU && defined _HIP
     ierr = HipDeviceSynchronize()
+#endif
+    return
+  end function
+  
+  function gpu_GetDevice(i_dev) result(ierr)
+    implicit none
+    integer :: ierr, i_dev
+    ierr = 0 
+#if ( defined _CUDAF || defined  _OPNEACC ) && defined _CUDA
+    ierr = cudaGetDevice(i_dev)
+#endif
+#if defined _OPENMP_GPU && defined _HIP
+    ierr = hipGetDevice(i_dev)
 #endif
     return
   end function

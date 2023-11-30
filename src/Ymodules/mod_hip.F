@@ -36,7 +36,7 @@
 !
 module hip_m
 
-#if defined(_HIP)
+#if defined _HIP 
   !
   use iso_c_binding
   implicit none
@@ -47,13 +47,40 @@ module hip_m
 
   interface  
      !
-     function HipDeviceSynchronize() &
+     function hipDeviceSynchronize() &
         BIND(C,name="hipDeviceSynchronize")
         use iso_c_binding
         import HIP_SUCCESS
         implicit none
-        integer(kind(HIP_SUCCESS)) :: HipDeviceSynchronize
-     end function HipDeviceSynchronize
+        integer(kind(HIP_SUCCESS)) :: hipDeviceSynchronize
+     end function hipDeviceSynchronize
+     !
+     function hipGetDeviceCount(ncount) &
+        BIND(C,name="hipGetDeviceCount")
+        use iso_c_binding
+        import HIP_SUCCESS
+        implicit none
+        integer(c_int) :: ncount
+        integer(kind(HIP_SUCCESS)) :: hipGetDeviceCount
+     end function hipGetDeviceCount
+     !
+     function hipGetDevice(deviceId) &
+        BIND(C,name="hipGetDevice")
+        use iso_c_binding
+        import HIP_SUCCESS
+        implicit none
+        integer(c_int) :: deviceId
+        integer(kind(HIP_SUCCESS)) :: hipGetDevice
+     end function hipGetDevice
+     !
+     function hipSetDevice(deviceId) &
+        BIND(C,name="hipSetDevice")
+        use iso_c_binding
+        import HIP_SUCCESS
+        implicit none
+        integer(c_int), value :: deviceId
+        integer(kind(HIP_SUCCESS)) :: hipSetDevice
+     end function hipSetDevice
      !
      function HipGetLastError() &
         BIND(C,name="hipGetLastError")

@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !@brief Newton solver for the quasi-particle equation
 !
@@ -78,20 +62,21 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  if (l_elel_corr) then
    !
-   ! AF,DALV: use of RIM_W to be extended beyond PPA
+   ! AF,DALV: use of RIM_W implemented for PPA and MPA
    !
    if (l_ppa) then
      !
-     if (l_rim_w) call interpolate_W(X,Xw,q,'PPA')
-     call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter)
+     if (l_rim_w) call QP_interpolate_W(X,Xw,q,'PPA')
+     call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
      !
    else if (l_mpa) then
      !
-     call QP_mpa(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter) 
+     if (l_RIM_W) call QP_interpolate_W(X,Xw,q,'MPA')
+     call QP_mpa(X,Xk,en,k,q,qp,Xw,iter) 
      !
    else if (l_cohsex) then
      !
-     call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter)
+     call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
      !
    else 
      !

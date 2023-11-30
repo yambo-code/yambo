@@ -1,38 +1,23 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2021 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AM DS
 !
 subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !
- use pars,           ONLY:pi,SP,cI
+ use pars,           ONLY:pi,SP,cI,schlen
  use drivers,        ONLY:l_col_cut
  use frequency,      ONLY:w_samp
  use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall
- use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BSqpts,BS_field_direction,BS_dip_size,BS_H_dim,BS_K_coupling
+ use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BS_dip_size,BS_H_dim,BS_K_coupling
  use stderr,         ONLY:STRING_match
  use X_m,            ONLY:Epsilon_ii,eps_2_alpha,EPS_2_eels,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&
-&                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,X_magnons
+&                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,X_magnons,&
+&                         i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus
  use com,            ONLY:msg,com_compose_msg
- use R_lattice,      ONLY:bare_qpg,q_norm,FineGd_desc,nkbz
+ use R_lattice,      ONLY:bare_qpg,FineGd_desc,nkbz
  use D_lattice,      ONLY:l_0D
  use electrons,      ONLY:spin_occ
  use DIPOLES,        ONLY:DIP_desc
@@ -49,6 +34,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  character(2)      :: ordering
  integer           :: id
  character(10)     :: solver
+ character(schlen) :: out_string
  complex(SP)       :: spectra(BSS_n_freqs,3),eel(BSS_n_freqs,3),fac
  real(SP)          :: data_sort(N_BS_E_sorted+1)
  logical           :: l_last_col,eval_eels
@@ -62,12 +48,13 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    if (STRING_match(WHAT,"IP"))        solver="IP"
    !
    if (STRING_match(WHAT,"bare")) then
-     call X_OUTPUT_driver(WHAT="keys "//OBS,IQ=iq)
+     out_string=""
    else
-     if (     STRING_match(WHAT,"IP")                      ) call X_OUTPUT_driver(WHAT="keys "//OBS,IQ=iq,keys='IP')
-     if (.not.STRING_match(WHAT,"IP").and..not.BS_K_is_ALDA) call X_OUTPUT_driver(WHAT="keys "//OBS,IQ=iq,keys=trim(solver)//' bse')
-     if (                   BS_K_is_ALDA) call X_OUTPUT_driver(WHAT="keys "//OBS,IQ=iq,keys=trim(solver)//' alda bse')
+     if (     STRING_match(WHAT,"IP")                      ) out_string='IP'
+     if (.not.STRING_match(WHAT,"IP").and..not.BS_K_is_ALDA) out_string=trim(solver)//' bse'
+     if (                                      BS_K_is_ALDA) out_string=trim(solver)//' alda bse'
    endif
+   call X_OUTPUT_driver(WHAT="keys"//OBS,IQ=iq,IG=i_G_shift,keys=trim(out_string))
    !
    call X_OUTPUT_driver("open "//OBS)
  endif
@@ -76,7 +63,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  if (STRING_match(WHAT,"override"))  call X_OUTPUT_driver("override "//OBS)
  !
  if (STRING_match(WHAT,"open").or.STRING_match(WHAT,"override")) then
-   call X_OUTPUT_messages(iq,Q_plus_G=BSqpts(:,iq),ig=1)
+   call X_OUTPUT_messages(iq,Q_plus_G=Q_plus_G_pt,ig=i_G_shift)
    !
    if (     trim(BSE_mode)=='resonant' ) ordering='r'
    if (.not.trim(BSE_mode)=='resonant' ) ordering='R'
@@ -96,7 +83,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !
  if (.not.STRING_match(WHAT,"dump")) return
  !
- fac=eps_2_alpha/4._SP/pi*bare_qpg(iq,1)**2/q_norm(iq)**2
+ fac=eps_2_alpha/4._SP/pi*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
  !
  ! ABSORPTION
  !------------

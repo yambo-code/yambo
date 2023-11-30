@@ -1,30 +1,14 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2007 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K_inversion_driver(iq,W,E,k,q) 
  !
  use pars,           ONLY:SP,pi
- use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude,X_OUTPUT_driver
+ use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude,i_G_shift,X_OUTPUT_driver
  use BS_solvers,     ONLY:BSS_inversion_mode,BSS_desc,K_INV_PL,K_INV_EPS,&
 &                         K_Inversion_data,K_slk,K_inv_slk,BSS_eels_to_eps
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk,l_BS_ares_from_res,&
@@ -279,7 +263,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !==============
  !
  if (BSS_eels_to_eps) Epsilon_ii(:,2)=(1._SP-Epsilon_ii(:,2))**(-1)-1._SP
- if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*4._SP*pi/bare_qpg(iq,1)**2
+ if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*4._SP*pi/bare_qpg(iq,i_G_shift)**2
  !
  ratio=real(count(K_INV_EPS%err==0))/real(W%n_freqs)*100._SP
  !

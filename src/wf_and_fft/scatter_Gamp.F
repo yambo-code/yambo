@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  !
@@ -36,8 +20,8 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  use drivers,       ONLY:l_col_cut
  use collision_el,  ONLY:elemental_collision
  use R_lattice,     ONLY:d3q_factor,RIM_ng,RIM_qpg,RIM_is_diagonal,&
-&                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts,cut_is_slab
- use R_lattice,     ONLY:RIM_qpg_d,bare_qpg_d
+&                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts,cut_is_slab,&
+&                        RIM_qpg_d,bare_qpg_d
  use deviceXlib_m
  use timing_m
  !

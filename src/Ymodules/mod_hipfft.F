@@ -34,7 +34,7 @@ MODULE hipfft_m
 
      FUNCTION hipfftPlan1d(plan,nx,myType,batch) BIND(C, name="hipfftPlan1d")
        USE iso_c_binding
-       !USE enums
+       import HIPFFT_SUCCESS, HIPFFT_R2C
        implicit none
        integer(kind(HIPFFT_SUCCESS)) :: hipfftPlan1d
        type(c_ptr) :: plan
@@ -45,7 +45,7 @@ MODULE hipfft_m
 
      FUNCTION hipfftExecZ2Z(plan,idata,odata,direction) BIND(C, name="hipfftExecZ2Z")
        USE iso_c_binding
-       !USE enums
+       import HIPFFT_SUCCESS
        IMPLICIT NONE
        INTEGER(kind(HIPFFT_SUCCESS)) :: hipfftExecZ2Z
        TYPE(C_PTR),VALUE :: plan
@@ -57,7 +57,7 @@ MODULE hipfft_m
      FUNCTION hipfftPlanMany(plan,rank,n,inembed,istride,idist,onembed,ostride,odist,myType,batch) &
          bind(c, name="hipfftPlanMany")
        USE iso_c_binding
-       !USE enums
+       import HIPFFT_SUCCESS, HIPFFT_R2C
        IMPLICIT NONE
        INTEGER(KIND(HIPFFT_SUCCESS)) :: hipfftPlanMany
        TYPE(C_PTR) :: plan
@@ -75,7 +75,7 @@ MODULE hipfft_m
 
      FUNCTION hipfftDestroy(plan) BIND(C, name="hipfftDestroy")
        USE iso_c_binding
-       !USE enums
+       import HIPFFT_SUCCESS
        IMPLICIT NONE
        INTEGER(kind(HIPFFT_SUCCESS)) :: hipfftDestroy
        TYPE(C_PTR),VALUE :: plan
@@ -86,7 +86,6 @@ MODULE hipfft_m
 CONTAINS
 
   SUBROUTINE hipfftcheck(hiperror)
-      USE enums
       IMPLICIT NONE
 
       INTEGER(KIND(HIPFFT_SUCCESS)) :: hiperror

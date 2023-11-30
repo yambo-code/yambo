@@ -61,7 +61,7 @@ module hip_m
         import HIP_SUCCESS
         implicit none
         integer(kind(HIP_SUCCESS)) :: HipGetLastError
-     end function hipDeviceSynchronize
+     end function HipGetLastError
      !
    end interface
 

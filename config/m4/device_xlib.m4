@@ -130,7 +130,8 @@ fi
 
 if test x"$acx_devxlib_ok" = xno; then
   internal_devxlib="yes"
-  DEVXLIB_LIBS="${extlibs_path}/${FCKIND}/${FC}/${GPU_SUPPORT}/lib/libdevXlib.a"
+  #DEVXLIB_LIBS="${extlibs_path}/${FCKIND}/${FC}/${GPU_SUPPORT}/lib/libdevXlib.a"
+  DEVXLIB_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${GPU_SUPPORT}/lib -ldevXlib"
   DEVXLIB_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/${GPU_SUPPORT}/include"
   if test -e "${extlibs_path}/${FCKIND}/${FC}/${GPU_SUPPORT}/lib/libdevXlib.a"; then
     compile_devxlib="no"

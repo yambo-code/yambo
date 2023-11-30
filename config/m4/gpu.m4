@@ -110,10 +110,15 @@ AC_ARG_WITH([cuda-int-libs],
 AC_ARG_ENABLE(nvtx,
         [AS_HELP_STRING([--enable-nvtx=<path>], [Enable NVTX support @<:@default=no@:>@])],[],[enable_nvtx="no"])
 #
+AC_ARG_WITH(gpu_libs, [AS_HELP_STRING([--with-gpu-libs=<libs>],
+            [Use extra GPU-specific libraries <libs>],[32])])
+
 use_int_cuda_libs="no"
+use_gpu_libs="no"
 enable_nvtx=no
 DEVXLIB_CUDALIBS=""
 DEVXLIBLIB_FLAGS=""
+GPU_LIBS=""
 GPU_FLAGS=""
 def_gpu=""
 
@@ -126,6 +131,13 @@ def_gpu=""
    DEVXLIB_CUDALIBS="${with_cuda_int_libs}";
  fi
 
+ #
+ # GPU aux libraries
+ GPU_LIBS="";
+ if test x"$GPU_LIBS" = "x" -o x"$with_gpu_libs" = "x" ; then
+     use_gpu_libs=yes;
+     GPU_LIBS="{$with_gpu_libs}";
+ fi
 
 # Cuda Fortran
 if test x"$enable_cuda_fortran" != "xno" ; then
@@ -179,7 +191,7 @@ if test x"$enable_openacc" != "xno" ; then
    # Flags to be passed to the devicexlib library
    #
    DEVXLIB_FLAGS="--enable-openacc --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime} "
-   def_gpu="-D_GPU -D_OPENACC"
+   def_gpu="-D_GPU -D_CUDA -D_OPENACC"
    #
    case "${FCVERSION}" in
     *nvfortran*)
@@ -205,17 +217,19 @@ if test x"$enable_openmp5" != "xno" ; then
    #
    # Flags to be passed to the devicexlib library
    #
-   DEVXLIB_FLAGS="--enable-openmp5 --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
+   DEVXLIB_FLAGS="--enable-openmp5" # --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
    GPU_FLAGS="-fopenmp" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
-   def_gpu="-D_GPU -D_OPENMP5"
+   def_gpu="-D_GPU -D_HIP -D_OPENMP5"
    #
 fi
 #
 AC_SUBST(with_cuda_cc)
 AC_SUBST(with_cuda_runtime)
 AC_SUBST(with_cuda_int_libs)
+AC_SUBST(with_gpu_libs)
 AC_SUBST(def_gpu)
 AC_SUBST(GPU_FLAGS)
+AC_SUBST(GPU_LIBS)
 AC_SUBST(DEVXLIB_FLAGS)
 AC_SUBST(DEVXLIB_CUDALIBS)
 #

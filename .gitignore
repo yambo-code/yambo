@@ -34,6 +34,7 @@ lib/archive/git.list
 *modules.dep
 *.save
 *.f90
+*.i
 *.s
 *.swp*
 *dSYM

@@ -707,8 +707,10 @@ DEVXLIB_INCS
 DEVXLIB_LIBS
 DEVXLIB_CUDALIBS
 DEVXLIB_FLAGS
+GPU_LIBS
 GPU_FLAGS
 def_gpu
+with_gpu_libs
 with_cuda_int_libs
 with_cuda_runtime
 with_cuda_cc
@@ -1055,6 +1057,7 @@ with_cuda_cc
 with_cuda_runtime
 with_cuda_int_libs
 enable_nvtx
+with_gpu_libs
 with_devxlib_libs
 with_devxlib_path
 with_devxlib_libdir
@@ -1823,6 +1826,7 @@ Optional Packages:
   --with-cuda-int-libs=VAL
                           CUDA internal libraries ()
                           [default=cuda,cufft,cublas,cusolver,cudart]
+  --with-gpu-libs=<libs>        Use extra GPU-specific libraries <libs>
   --with-devxlib-libs=<libs>    Use devxlib libraries <libs>
   --with-devxlib-path=<path>    Path to devxlib install directory
   --with-devxlib-libdir=<path>  Path to the devxlib lib directory
@@ -7026,6 +7030,13 @@ SLK_FC_FLAGS=""
 case "${host}" in
 i?86*linux*)
   case "${FC}" in
+  *ftn* )
+    SYSFLAGS="-O2 -g -emf -ffree -eZ"
+    FUFLAGS="-O0 -g -emf -ffree -eZ"
+    FCMFLAG=""
+    OMPFLAGS="-fopenmp"
+    DEBUG_FLAGS="-g "
+  ;;
   *pgf9* | *ftn* | *pgfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
     FUFLAGS="-O0 -Mbackslash"
@@ -7175,6 +7186,13 @@ i?86*linux*)
   ;;
 ia64*linux* )
   case "${FC}" in
+  *ftn* )
+    SYSFLAGS="-O2 -g -emf -ffree -eZ"
+    FUFLAGS="-O0 -g -emf -ffree -eZ"
+    FCMFLAG=""
+    OMPFLAGS="-fopenmp"
+    DEBUG_FLAGS="-g "
+  ;;
   *pgf9* | *ftn* | *pgfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
     #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
@@ -7257,6 +7275,13 @@ ia64*linux* )
   ;;
 *x86*64* )
   case "${FC}" in
+  *ftn* )
+    SYSFLAGS="-O2 -g -emf -ffree -eZ"
+    FUFLAGS="-O0 -g -emf -ffree -eZ"
+    FCMFLAG=""
+    OMPFLAGS="-fopenmp"
+    DEBUG_FLAGS="-g "
+  ;;
   *pgf9* | *ftn* | *pgfortran* | *nvfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
     #SYSFLAGS="-O2 -g -Munroll -Mnoframe -Mdalign -Mbackslash -cpp"
@@ -14733,7 +14758,8 @@ $as_echo_n "checking for internal IOTK library... " >&6; }
     internal_iotk="yes"
     compile_p2y="yes"
     IOTK_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include/"
-    IOTK_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libiotk.a"
+    #IOTK_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libiotk.a"
+    IOTK_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -liotk"
     if ! test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libiotk.a" || ! test -e "${extlibs_path}/${FCKIND}/${FC}/include/iotk_base.mod" || ! test -e "${extlibs_path}/${FCKIND}/${FC}/include/iotk_specials.h"; then
       compile_iotk="yes"
       if test ! -d lib ; then mkdir lib ; fi
@@ -15168,7 +15194,8 @@ if test x"$acx_libxc_ok" = xno; then
   have_configured="no"
   internal_libxc="yes"
   # version 5 is used
-  LIBXC_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libxcf90.a ${extlibs_path}/${FCKIND}/${FC}/lib/libxcf03.a  ${extlibs_path}/${FCKIND}/${FC}/lib/libxc.a"
+  #LIBXC_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libxcf90.a ${extlibs_path}/${FCKIND}/${FC}/lib/libxcf03.a  ${extlibs_path}/${FCKIND}/${FC}/lib/libxc.a"
+  LIBXC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib/ -lxcf90 -lxcf03 -lxc"
   LIBXC_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/include"
   if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libxc.a" && test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libxcf90.a" && test -e ${extlibs_path}/${FCKIND}/${FC}/lib/libxcf03.a; then
     compile_libxc="no"
@@ -15529,10 +15556,19 @@ else
 fi
 
 #
+
+# Check whether --with-gpu_libs was given.
+if test "${with_gpu_libs+set}" = set; then :
+  withval=$with_gpu_libs;
+fi
+
+
 use_int_cuda_libs="no"
+use_gpu_libs="no"
 enable_nvtx=no
 DEVXLIB_CUDALIBS=""
 DEVXLIBLIB_FLAGS=""
+GPU_LIBS=""
 GPU_FLAGS=""
 def_gpu=""
 
@@ -15545,6 +15581,13 @@ def_gpu=""
    DEVXLIB_CUDALIBS="${with_cuda_int_libs}";
  fi
 
+ #
+ # GPU aux libraries
+ GPU_LIBS="";
+ if test x"$GPU_LIBS" = "x" -o x"$with_gpu_libs" = "x" ; then
+     use_gpu_libs=yes;
+     GPU_LIBS="{$with_gpu_libs}";
+ fi
 
 # Cuda Fortran
 if test x"$enable_cuda_fortran" != "xno" ; then
@@ -15687,7 +15730,7 @@ if test x"$enable_openacc" != "xno" ; then
    # Flags to be passed to the devicexlib library
    #
    DEVXLIB_FLAGS="--enable-openacc --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime} "
-   def_gpu="-D_GPU -D_OPENACC"
+   def_gpu="-D_GPU -D_CUDA -D_OPENACC"
    #
    case "${FCVERSION}" in
     *nvfortran*)
@@ -15713,12 +15756,14 @@ if test x"$enable_openmp5" != "xno" ; then
    #
    # Flags to be passed to the devicexlib library
    #
-   DEVXLIB_FLAGS="--enable-openmp5 --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
+   DEVXLIB_FLAGS="--enable-openmp5" # --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
    GPU_FLAGS="-fopenmp" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
-   def_gpu="-D_GPU -D_OPENMP5"
+   def_gpu="-D_GPU -D_HIP -D_OPENMP5"
    #
 fi
 #
+
+
 
 
 
@@ -15896,7 +15941,8 @@ fi
 
 if test x"$acx_devxlib_ok" = xno; then
   internal_devxlib="yes"
-  DEVXLIB_LIBS="${extlibs_path}/${FCKIND}/${FC}/${GPU_SUPPORT}/lib/libdevXlib.a"
+  #DEVXLIB_LIBS="${extlibs_path}/${FCKIND}/${FC}/${GPU_SUPPORT}/lib/libdevXlib.a"
+  DEVXLIB_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${GPU_SUPPORT}/lib -ldevXlib"
   DEVXLIB_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/${GPU_SUPPORT}/include"
   if test -e "${extlibs_path}/${FCKIND}/${FC}/${GPU_SUPPORT}/lib/libdevXlib.a"; then
     compile_devxlib="no"

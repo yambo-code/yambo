@@ -177,7 +177,8 @@ if test x"$acx_libxc_ok" = xno; then
   have_configured="no"
   internal_libxc="yes"
   # version 5 is used
-  LIBXC_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libxcf90.a ${extlibs_path}/${FCKIND}/${FC}/lib/libxcf03.a  ${extlibs_path}/${FCKIND}/${FC}/lib/libxc.a"
+  #LIBXC_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libxcf90.a ${extlibs_path}/${FCKIND}/${FC}/lib/libxcf03.a  ${extlibs_path}/${FCKIND}/${FC}/lib/libxc.a"
+  LIBXC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib/ -lxcf90 -lxcf03 -lxc"
   LIBXC_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/include"
   if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libxc.a" && test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libxcf90.a" && test -e ${extlibs_path}/${FCKIND}/${FC}/lib/libxcf03.a; then
     compile_libxc="no"

@@ -42,6 +42,13 @@ SLK_FC_FLAGS=""
 case "${host}" in
 i?86*linux*)
   case "${FC}" in
+  *ftn* )
+    SYSFLAGS="-O2 -g -emf -ffree -eZ"
+    FUFLAGS="-O0 -g -emf -ffree -eZ"
+    FCMFLAG=""
+    OMPFLAGS="-fopenmp"
+    DEBUG_FLAGS="-g "
+  ;;
   *pgf9* | *ftn* | *pgfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
     FUFLAGS="-O0 -Mbackslash"
@@ -191,6 +198,13 @@ i?86*linux*)
   ;;
 ia64*linux* )
   case "${FC}" in
+  *ftn* )
+    SYSFLAGS="-O2 -g -emf -ffree -eZ"
+    FUFLAGS="-O0 -g -emf -ffree -eZ"
+    FCMFLAG=""
+    OMPFLAGS="-fopenmp"
+    DEBUG_FLAGS="-g "
+  ;;
   *pgf9* | *ftn* | *pgfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
     #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
@@ -273,6 +287,13 @@ ia64*linux* )
   ;;
 *x86*64* )
   case "${FC}" in
+  *ftn* )
+    SYSFLAGS="-O2 -g -emf -ffree -eZ"
+    FUFLAGS="-O0 -g -emf -ffree -eZ"
+    FCMFLAG=""
+    OMPFLAGS="-fopenmp"
+    DEBUG_FLAGS="-g "
+  ;;
   *pgf9* | *ftn* | *pgfortran* | *nvfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
     #SYSFLAGS="-O2 -g -Munroll -Mnoframe -Mdalign -Mbackslash -cpp"

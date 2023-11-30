@@ -38,7 +38,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  use R_lattice,     ONLY:d3q_factor,RIM_ng,RIM_qpg,RIM_is_diagonal,&
 &                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts,cut_is_slab,&
 &                        DEV_VAR(RIM_qpg),DEV_VAR(bare_qpg)
- use devxlib,       ONLY:devxlib_allocated
+ use devxlib,       ONLY:devxlib_mapped
  use gpu_m
  use timing_m
  !
@@ -98,10 +98,10 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  endif
  !
 #ifdef _GPU_LOC
- if (allocated(RIM_qpg).and..not.devxlib_allocated(DEV_VAR(RIM_qpg))) then
+ if (allocated(RIM_qpg).and..not.devxlib_mapped(DEV_VAR(RIM_qpg))) then
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_qpg),RIM_qpg)
  endif
- if (.not.devxlib_allocated(DEV_VAR(bare_qpg))) then
+ if (.not.devxlib_mapped(DEV_VAR(bare_qpg))) then
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(bare_qpg),bare_qpg)
  endif
 #endif

@@ -60,7 +60,7 @@ subroutine DIPOLE_kb_project(pp_range,ib_range,ib,i_wf,wf_ncx,nbndx,npp,pp_dim_y
  call c_f_pointer(c_devloc(kbv), kbv_p, (/wf_ncx,dim_flat/) )
  call c_f_pointer(c_devloc(XX(:,:,:,pp_range(1):pp_range(2),ib)),  XX_p,  (/n_spinor,dim_flat/) )
  !
-#elif defined _OPENACC
+#elif defined _OPENACC || defined _OPENMP_GPU
  !
  call c_f_pointer(c_loc(kbv), kbv_p, (/wf_ncx,dim_flat/) )
  call c_f_pointer(c_loc(XX(:,:,:,pp_range(1):pp_range(2),ib)),     XX_p, (/n_spinor,dim_flat/) )
@@ -109,6 +109,8 @@ subroutine DIPOLE_kb_sum(rho,pp_dim_yambo,ib_range,iv,ic,XX)
  !DEV_ACC data present(drho,XX)
  !DEV_ACC parallel loop collapse(3) async
  !DEV_CUF kernel do(3)
+ !DEV_OMPGPU target map(present,alloc:drho,XX)
+ !DEV_OMPGPU teams loop collapse(3)
  !DEV_OMP parallel do default(shared), private(i1,i2,i_spinor), collapse(3)
  do i1=1,pp_dim_yambo
    do i2=1,3
@@ -118,6 +120,7 @@ subroutine DIPOLE_kb_sum(rho,pp_dim_yambo,ib_range,iv,ic,XX)
      enddo
    enddo
  enddo
+ !DEV_OMPGPU end target
  !DEV_ACC end data
  !
  call devxlib_memcpy_d2h(drho_loc,drho)

@@ -272,11 +272,14 @@ subroutine X_redux(iq,what,X_par,Xw,X)
         !DEV_ACC data present(BUFFER_p,bare_qpg)
         !DEV_ACC parallel loop collapse(2) async
         !DEV_CUF kernel do(2)
+        !DEV_OMPGPU target map(present,alloc:BUFFER_p,bare_qpg)
+        !DEV_OMPGPU teams loop collapse(2)
         do ig2=Xo_cols(1),Xo_cols(2)
         do ig1=Xo_rows(1),Xo_rows(2)
            BUFFER_p(ig1,ig2,iw_par)=BUFFER_p(ig1,ig2,iw_par)*4._SP*pi/DEV_VAR(bare_qpg)(iq,ig1)/DEV_VAR(bare_qpg)(iq,ig2)
         enddo
         enddo
+        !DEV_OMPGPU end target
         !DEV_ACC end data
         !
         call devxlib_async_synchronize(async_default)
@@ -390,12 +393,15 @@ contains
        !DEV_ACC data present(KERNEL_p,Xo_p,bare_qpg)
        !DEV_ACC parallel loop collapse(2) async
        !DEV_CUF kernel do(2) <<<*,*>>>
+       !DEV_OMPGPU target map(present,alloc:KERNEL_p,Xo_p,bare_qpg)
+       !DEV_OMPGPU teams loop collapse(2)
        do ig2=Xo_cols(1),Xo_cols(2)
        do ig1=Xo_rows(1),Xo_rows(2)
           KERNEL_p(ig1,ig2,1) =KERNEL_p(ig1,ig2,1)-Xo_p(ig1,ig2,1)*4._SP*pi/DEV_VAR(bare_qpg)(iq,ig2)**2
           if (ig1==ig2) KERNEL_p(ig1,ig1,1)=KERNEL_p(ig1,ig1,1)+cONE
        enddo
        enddo
+       !DEV_OMPGPU end target
        !DEV_ACC end data
        !
      else

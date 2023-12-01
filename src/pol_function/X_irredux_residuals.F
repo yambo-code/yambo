@@ -162,11 +162,14 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
        !DEV_ACC data present(g_rot,rhotw_save,Xo_scatt_rhotw_p)
        !DEV_ACC parallel loop private(ig2)
        !DEV_CUF kernel do(1) <<<*,*>>>
+       !DEV_OMPGPU target map(present,alloc:g_rot,rhotw_save,Xo_scatt_rhotw_p)
+       !DEV_OMPGPU teams loop private(ig2)
        !DEV_OMP parallel do default(shared), private(ig1,ig2)
        do ig1=2,X_ng
          ig2=DEV_VAR(g_rot)(ig1,sop_inv_l)
          Xo_scatt_rhotw_p(ig1)=rhotw_save(ig2)
        enddo
+       !DEV_OMPGPU end target
        !DEV_ACC end data
        !
        if (is>nsym/(i_time_rev+1)) then
@@ -191,10 +194,14 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      !
      !DEV_ACC data present(Xo_scatt_rhotw_p)
      !DEV_ACC serial
+     !DEV_OMPGPU target map(present,alloc:Xo_scatt_rhotw_p)
+     !
      if(iv/=ic) Xo_scatt_rhotw_p(1)=    -conjg(DIP_projected)
      if(iv==ic) Xo_scatt_rhotw_p(1)=cONE-conjg(DIP_projected)
      !
      if (l_X_term_vv.and.iv==ic) Xo_scatt_rhotw_p(1)=0.0_SP
+     !
+     !DEV_OMPGPU end target
      !DEV_ACC end serial
      !DEV_ACC end data
      !
@@ -212,10 +219,14 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
    !
    ! Filling the upper triangular part of the residual here ! 
    !-------------^^^^^---------------------------------------
+   !
 #ifdef _GPU
+   !
    !DEV_ACC data present(Xo_res,Xo_scatt_rhotw_p)
    !DEV_ACC parallel loop collapse(2)
    !DEV_CUF kernel do(2) <<<*,*>>>
+   !DEV_OMPGPU target map(present,alloc:Xo_res,Xo_scatt_rhotw_p)
+   !DEV_OMPGPU teams loop collapse(2)
    do ig2=X_cols(1),X_cols(2)
      do ig1=X_rows(1),X_rows(2)
        if (ig1 <= ig2) then
@@ -224,7 +235,9 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
        endif
      enddo
    enddo
+   !DEV_OMPGPU end target
    !DEV_ACC end data
+   !
 #else
    !
    !$omp parallel do default(shared), private(ig2)
@@ -249,11 +262,12 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      ! dev2dev
      call devxlib_memcpy_d2d(rhotw_save2,Xo_scatt_rhotw_p)
      !
-! AF_FIX: to be checked
      if (X%ng==1) then
        !DEV_ACC data present(Xo_scatt_rhotw_p)
        !DEV_ACC serial
+       !DEV_OMPGPU target map(present,alloc:Xo_scatt_rhotw_p)
        Xo_scatt_rhotw_p(1)=cONE 
+       !DEV_OMPGPU end target
        !DEV_ACC end serial
        !DEV_ACC end data
      else
@@ -267,13 +281,16 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      sop_inv_l=sop_inv(is)
      !
      !DEV_ACC data present(g_rot,rhotw_save,Xo_scatt_rhotw_p)
-     !DEV_ACC parallel loop private(ig2)
+     !DEV_ACC parallel loop private(ig1,ig2)
      !DEV_CUF kernel do(1) <<<*,*>>>
+     !DEV_OMPGPU target map(present,alloc:g_rot,rhotw_save,Xo_scatt_rhotw_p)
+     !DEV_OMPGPU teams loop private(ig1,ig2)
      !DEV_OMP parallel do default(shared), private(ig1,ig2)
      do ig1=1,X_ng
        ig2=DEV_VAR(g_rot)(ig1,sop_inv_l)
        Xo_scatt_rhotw_p(ig1)=rhotw_save(ig2)
      enddo
+     !DEV_OMPGPU end target
      !DEV_ACC end data
      !
      if (is>nsym/(i_time_rev+1)) then
@@ -284,12 +301,15 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      !DEV_ACC data present(Xo_res,Xo_scatt_rhotw_p,G_m_G)
      !DEV_ACC parallel loop collapse(2)
      !DEV_CUF kernel do(2) <<<*,*>>>
+     !DEV_OMPGPU target map(present,alloc:Xo_res,Xo_scatt_rhotw_p,G_m_G)
+     !DEV_OMPGPU teams loop collapse(2)
      do ig2=X_cols(1),X_cols(2)
        do ig1=ig_start,X_rows(2)
          if (ig1 > ig2) cycle
          Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt_rhotw_p(DEV_VAR(G_m_G)(ig2,ig1))
        enddo
      enddo
+     !DEV_OMPGPU end target
      !DEV_ACC end data
 #else
      !DEV_OMP parallel do default(shared), private(ig1,ig2)
@@ -306,12 +326,13 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
    !
  enddo loop_bare_grid
  !
-! AF_FIX: metal case to be fixed !
  if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) then
     !DEV_ACC data present(Xo_res)
     !DEV_ACC serial
+    !DEV_OMPGPU target map(present,alloc:Xo_res)
     ctmp=Xo_res(1,1)
     Xo_res(1,1)=ctmp/real(drude_n_states,SP)
+    !DEV_OMPGPU end target
     !DEV_ACC end serial
     !DEV_ACC end data
  endif

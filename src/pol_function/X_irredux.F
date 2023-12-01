@@ -341,11 +341,14 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
      !DEV_ACC data present(X_par_p,Xo_res_p)
      !DEV_ACC parallel loop 
      !DEV_CUF kernel do(2) <<<*,*>>>
+     !DEV_OMPGPU target map(present,alloc:X_par_p,Xo_res_p)
+     !DEV_OMPGPU teams loop collapse(2)
      do ig_col=X_cols1,X_cols2
        do ig1=X_rows1,X_rows2
          if (ig1 <= ig_col) X_par_p(ig1,ig_col,iw)=X_par_p(ig1,ig_col,iw)+GreenF_iw*Xo_res_p(ig1,ig_col)
        enddo
      enddo
+     !DEV_OMPGPU end target
      !DEV_ACC end data
      !
 #else
@@ -386,6 +389,8 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
          !DEV_ACC data present(X_par_lowtri_p,Xo_res_p)
          !DEV_ACC parallel loop collapse(2) 
          !DEV_CUF kernel do(2)
+         !DEV_OMPGPU target map(present,alloc:X_par_lowtri_p,Xo_res_p)
+         !DEV_OMPGPU teams loop collapse(2)
          do ig_col=X_cols1,X_cols2
          do ig1=X_rows1,X_rows2
            !
@@ -397,6 +402,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
            !
          enddo
          enddo
+         !DEV_OMPGPU end target
          !DEV_ACC end data
          !
        else
@@ -404,6 +410,8 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
          !DEV_ACC data present(X_par_p,Xo_res_p)
          !DEV_ACC parallel loop collapse(2) 
          !DEV_CUF kernel do(2)
+         !DEV_OMPGPU target map(present,alloc:X_par_p,Xo_res_p)
+         !DEV_OMPGPU teams loop collapse(2)
          do ig_col=X_cols1,X_cols2
          do ig1=X_rows1,X_rows2
            !
@@ -414,6 +422,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
            !
          enddo
          enddo
+         !DEV_OMPGPU end target
          !DEV_ACC end data
          !
        endif

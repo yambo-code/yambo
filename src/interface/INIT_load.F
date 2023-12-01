@@ -670,13 +670,14 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'PLqres', '[EXCPH] Write contribution from each q-point')
  !
  ! Testing only zone <
- call it('f',defs,'NoMatrxEl' , '[EXCPH] Set all exciton-phonon matrix elements to one (for testing purpose)')
- call it('f',defs,'KeepDeg'   , '[EXCPH] Keep degenerate states (for testing purpose')
+ call it('f',defs,'ConstElph' , '[EXCPH] Set all electron-phonon matrix elements to one (for testing purpose)')
+ call it('f',defs,'NoMatrxEl' , '[EXCPH] Set all  exciton-phonon matrix elements to one (for testing purpose)')
+ call it('f',defs,'KeepDeg'   , '[EXCPH] Keep degenerate states (for testing purpose)')
  !
- call it('f',defs,'AbsElph', '[EXCPH] Module of elph matrix elements')
- call it('f',defs,'AbsExc',  '[EXCPH] Module of excitonic WFs')
- call it('f',defs,'HoleContributionOnly', '[EXCPH] Hole only')
- call it('f',defs,'ElectronContributionOnly',  '[EXCPH] Elec only')
+ call it('f',defs,'AbsElph', '[EXCPH] Module of elph matrix elements (for testing purpose)')
+ call it('f',defs,'AbsExc',  '[EXCPH] Module of excitonic WFs (for testing purpose)')
+ call it('f',defs,'HoleContributionOnly', '[EXCPH] Hole channel only (for testing purpose)')
+ call it('f',defs,'ElectronContributionOnly',  '[EXCPH] Elec channel only (for testing purpose)')
  ! Testing only zone >
  !
  call it(defs,'LDamping', '[EXCPH] Damping of exc-ph self-energy',L_damping,E_unit)

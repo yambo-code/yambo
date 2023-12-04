@@ -133,6 +133,14 @@ if test "$internal_libxc" = "yes" ; then
   if test "$compile_libxc" = "no" ; then LIBXC_check="I"; fi
 fi
 #
+MAGMA_check="-"
+if test "$internal_magma" = "yes" ; then
+  if test "$compile_magma" = "yes" ; then SLEPC_check="C"; fi
+  if test "$compile_magma" = "no"  ; then SLEPC_check="I"; fi
+elif test "$enable_magma" = "yes" ; then
+  MAGMA_check="E"
+fi
+#
 YDB_check="-";
 if test "$enable_ydb" = "yes" ; then YDB_check="X"; fi
 YPY_check="-";
@@ -224,6 +232,7 @@ AC_SUBST(YDB_check)
 AC_SUBST(YPY_check)
 #
 AC_SUBST(LIBXC_check)
+AC_SUBST(MAGMA_check)
 AC_SUBST(MPI_check)
 AC_SUBST(MPI_info)
 #

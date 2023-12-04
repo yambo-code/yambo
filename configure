@@ -689,6 +689,7 @@ IOTK_INCS_R
 IOTK_LIBS_R
 MPI_info
 MPI_check
+MAGMA_check
 LIBXC_check
 YPY_check
 YDB_check
@@ -717,6 +718,12 @@ MEM_profile_check
 TIME_profile_check
 KEEP_OBJS_check
 DP_check
+internal_magma
+compile_magma
+enable_magma
+def_magma
+MAGMA_INCS
+MAGMA_LIBS
 CUDA_FLAGS
 def_cuda
 internal_libxc
@@ -1040,6 +1047,12 @@ with_libxc_libdir
 with_libxc_includedir
 enable_cuda
 enable_nvtx
+enable_magma_linalg
+with_magma_libs
+with_magma_incs
+with_magma_path
+with_magma_libdir
+with_magma_includedir
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1724,6 +1737,8 @@ Optional Features:
   --enable-etsf-io        Activate the ETSF_IO support
   --enable-cuda=<opt>     Enable CUDA support
   --enable-nvtx=<path>    Enable NVTX support
+  --enable-magma-linalg   Enable suport for the diagonalization of BSE using
+                          MAGMA. Default is no
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1796,6 +1811,12 @@ Optional Packages:
   --with-libxc-libdir=<path>    Path to the libxc lib directory
   --with-libxc-includedir=<path>
                                 Path to the libxc include directory
+  --with-magma-libs=<libs>      Use Magma libraries <libs>
+  --with-magma-incs=<incs>      Use Magma includes <incs>
+  --with-magma-path=<path>      Path to the Magma install directory
+  --with-magma-libdir=<path>    Path to the Magma lib directory
+  --with-magma-includedir=<path>
+                                Path to the Magma include directory
 
 Some influential environment variables:
   CC          C compiler command
@@ -10282,6 +10303,31 @@ url_ydb=https://github.com/yambo-code/ydb.git
 
 
 #
+#        Copyright (C) 2000-2022 the YAMBO team
+#              http://www.yambo-code.org
+#
+# Authors (see AUTHORS file for details): AM
+#
+# This file is distributed under the terms of the GNU
+# General Public License. You can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation;
+# either version 2, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this program; if not, write to the Free
+# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+#
+
+
+#
 ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
@@ -15519,6 +15565,200 @@ fi
 #
 
 # ============================================================================
+# MAGMA
+
+#
+# Check whether --enable-magma_linalg was given.
+if test "${enable_magma_linalg+set}" = set; then :
+  enableval=$enable_magma_linalg;
+fi
+
+#
+
+# Check whether --with-magma_libs was given.
+if test "${with_magma_libs+set}" = set; then :
+  withval=$with_magma_libs;
+fi
+
+
+# Check whether --with-magma_incs was given.
+if test "${with_magma_incs+set}" = set; then :
+  withval=$with_magma_incs;
+fi
+
+
+# Check whether --with-magma_path was given.
+if test "${with_magma_path+set}" = set; then :
+  withval=$with_magma_path;
+fi
+
+
+# Check whether --with-magma_libdir was given.
+if test "${with_magma_libdir+set}" = set; then :
+  withval=$with_magma_libdir;
+fi
+
+
+# Check whether --with-magma_includedir was given.
+if test "${with_magma_includedir+set}" = set; then :
+  withval=$with_magma_includedir;
+fi
+
+
+#
+def_magma=""
+magma="no"
+enable_magma="no"
+internal_magma="no"
+compile_magma="no"
+#
+if test x"$enable_magma_linalg" = "xyes"; then
+  enable_magma="yes";
+fi
+#
+# MAGMA global options
+#
+if test  x"$with_magma_libs" = "xyes" ; then
+  enable_magma="yes" ;
+  with_magma_libs="";
+elif test  x"$with_magma_libs" = "xno" ; then
+  enable_magma="no" ;
+  with_magma_libs="";
+fi
+#
+if test  x"$with_magma_libdir" != "x" ; then enable_magma="yes" ; fi
+if test  x"$with_magma_path"   != "x" ; then enable_magma="yes" ; fi
+if test  x"$with_magma_libs"   != "x" ; then enable_magma="yes" ; fi
+#
+# Set MAGMA LIBS and FLAGS from INPUT
+#
+if test -d "$with_magma_path" || test -d "$with_magma_libdir" || test x"$with_magma_libs" != "x" ; then
+  #
+  # external magma
+  #
+  if   test   x"$with_magma_libs" != "x" ; then  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Magma using $with_magma_libs" >&5
+$as_echo_n "checking for Magma using $with_magma_libs... " >&6; } ;
+  elif test -d "$with_magma_libdir"      ; then  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Magma in $with_magma_libdir" >&5
+$as_echo_n "checking for Magma in $with_magma_libdir... " >&6; } ;
+  elif test -d "$with_magma_path"        ; then  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Magma in $with_magma_path" >&5
+$as_echo_n "checking for Magma in $with_magma_path... " >&6; } ;
+  fi
+  #
+  if test -d "$with_magma_path" ; then
+      try_magma_libdir="$with_magma_path/lib" ;
+      try_magma_incdir="$with_magma_path/include" ;
+  fi
+  #
+  if test -d "$with_magma_libdir"     ; then try_magma_libdir="$with_magma_libdir" ; fi
+  if test -d "$with_magma_includedir" ; then try_magma_incdir="$with_magma_includedir" ; fi
+  #
+  try_MAGMA_INCS="$IFLAG$try_magma_incdir" ;
+  try_MAGMA_LIBS="-L$try_magma_libdir -lmagma" ;
+  #
+  if test x"$with_magma_libs" != "x" ; then try_MAGMA_LIBS="$with_magma_libs" ; fi
+  if test x"$with_magma_incs" != "x" ; then try_MAGMA_INCS="$with_magma_incs" ; fi
+  #
+  if test -z "$try_MAGMA_LIBS" ; then as_fn_error $? "No libs specified" "$LINENO" 5 ; fi
+  if test -z "$try_MAGMA_INCS" ; then as_fn_error $? "No include-dir specified" "$LINENO" 5 ; fi
+  #
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+  #
+  save_fcflags="$FCFLAGS" ;
+  save_libs="$LIBS" ;
+  #
+  FCFLAGS="$try_MAGMA_INCS $save_fcflags";
+  LIBS="$try_MAGMA_LIBS $save_libs";
+  #
+  cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+use magma
+implicit none
+integer :: lda
+!magma_devptr_t :: dA
+      end
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  magma=yes
+else
+  magma=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext;
+  #
+  if test "x$magma" = "xyes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; } ;
+    MAGMA_INCS="$try_MAGMA_INCS" ;
+    MAGMA_LIBS="$try_MAGMA_LIBS" ;
+    compile_magma="no";
+    internal_magma="no";
+    def_magma="-D_MAGMA"
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; } ;
+    #
+  fi
+  #
+  FCFLAGS="$save_fcflags" ;
+  LIBS="$save_libs" ;
+  #
+fi
+#
+# TO BE FIXED: needs internal compilation support and paths have to be corrected with GPU_SUPPORT folder
+if test "x$enable_magma" = "xyes" && test "x$magma" = "xno" ; then
+  #
+  # internal magma
+  #
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for internal Magma library" >&5
+$as_echo_n "checking for internal Magma library... " >&6; }
+  #
+  internal_magma="yes"
+  #
+  if test "x$lapack_shared" = "x1" ; then
+    #MAGMA_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libmagma.so" ;
+    MAGMA_LIBS="" ;
+  else
+    #MAGMA_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libmagma.a" ;
+    MAGMA_LIBS="" ;
+  fi
+  #MAGMA_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
+  MAGMA_INCS="" ;
+  #
+  magma=yes
+  def_magma="-D_MAGMA"
+  if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libmagma.a" ; then
+    compile_magma="no" ;
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
+$as_echo "already compiled" >&6; } ;
+  elif test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libmagma.so" ; then
+    compile_magma="no" ;
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
+$as_echo "already compiled" >&6; } ;
+  else
+    #compile_magma="yes" ;
+    #AC_MSG_RESULT([to be compiled]) ;
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: Compatible external Magma not found/specified. Internal compilation not available yet." >&5
+$as_echo "Compatible external Magma not found/specified. Internal compilation not available yet." >&6; } ;
+    compile_magma="no"
+    def_magma=""
+    enable_magma="no"
+  fi
+  #
+fi
+#
+
+
+
+
+
+
+#
+
+# ============================================================================
 # Prepare the REPORT file variables
 
 #
@@ -15645,6 +15885,14 @@ LIBXC_check="E"
 if test "$internal_libxc" = "yes" ; then
   if test "$compile_libxc" = "yes"; then LIBXC_check="C"; fi
   if test "$compile_libxc" = "no" ; then LIBXC_check="I"; fi
+fi
+#
+MAGMA_check="-"
+if test "$internal_magma" = "yes" ; then
+  if test "$compile_magma" = "yes" ; then SLEPC_check="C"; fi
+  if test "$compile_magma" = "no"  ; then SLEPC_check="I"; fi
+elif test "$enable_magma" = "yes" ; then
+  MAGMA_check="E"
 fi
 #
 YDB_check="-";
@@ -16157,6 +16405,7 @@ LAPACK_PETSC_INCS_R=$STRIPE
 
 
 #
+
 
 # ============================================================================
 # Compilation dir

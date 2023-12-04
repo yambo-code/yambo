@@ -7,7 +7,15 @@
 !
 module linear_algebra
  !
- use pars,       ONLY:SP,schlen
+ use iso_c_binding
+ use pars,       ONLY: SP,schlen
+#ifdef _MAGMA
+ use magma2,     ONLY: magma_init,magma_queue_create, &
+&                      magma_cgeev_m,magma_zgeev_m,MagmaVec
+#endif
+#ifdef _OPENMP
+ use omp_lib
+#endif
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -22,6 +30,11 @@ module linear_algebra
  integer, parameter :: LIN_SYS=8
  integer, parameter :: MAT_MUL=9
  integer, parameter :: min_cpu_block_size=50
+ !
+ ! magma vars
+ !
+ type(c_ptr) :: magma_queue    !! magma_queue_t
+ logical     :: magma_init_done = .false.
  !
  ! Common Work Space
  !
@@ -109,6 +122,15 @@ module linear_algebra
      call error( trim( STRING_pack('LINEAR ALGEBRA driver [',trim(calling_subr),']',trim(message_)) ))
    end subroutine
    !
+   subroutine magma_setup()
+#ifdef _MAGMA
+     call magma_init()
+     call magma_queue_create( 0, magma_queue )
+     magma_init_done=.true.
+#endif
+     return
+   end subroutine
+   !
    !============================
    ! SINGLE VALUE DECOMPOSITION
    !============================
@@ -176,9 +198,9 @@ module linear_algebra
      complex(SP),intent(inout) :: M(msize,*)
      !
 #if defined _DOUBLE
-   call ZHEEV('V','U',msize,M,msize,E_real,work,lwork,rwk,ifail)
+     call ZHEEV('V','U',msize,M,msize,E_real,work,lwork,rwk,ifail)
 #else
-   call CHEEV('V','U',msize,M,msize,E_real,work,lwork,rwk,ifail)
+     call CHEEV('V','U',msize,M,msize,E_real,work,lwork,rwk,ifail)
 #endif
      !
    end subroutine heev 
@@ -191,10 +213,43 @@ module linear_algebra
      complex(SP),intent(out)   :: E_cmpl(*),V_left(msize,*),V_right(msize,*),work(*)
      complex(SP),intent(inout) :: M(msize,*)
      !
-#if defined _DOUBLE
-   call ZGEEV('V','V',msize,M,msize,E_cmpl,V_left,msize,V_right,msize,work,lwork,rwk,ifail)
+     integer :: nthreads
+     !
+     !
+     ! use magma (if available)
+     !
+#if defined _MAGMA
+     !
+     if (.not.magma_init_done) call magma_setup()
+     !
+#  if defined _OPENMP
+     ! thread safety
+     nthreads=omp_get_max_threads()
+     call omp_set_num_threads(1)
+#  endif
+     !
+#  if defined _DOUBLE
+     call magma_zgeev_m(MagmaVec,MagmaVec, msize,M,msize,E_cmpl,V_left,msize,V_right,msize,&
+&                       work,lwork,rwk,ifail)
+#  else
+     call magma_cgeev_m(MagmaVec,MagmaVec, msize,M,msize,E_cmpl,V_left,msize,V_right,msize,&
+&                       work,lwork,rwk,ifail)
+#  endif
+     !
+#  if defined _OPENMP
+     call omp_set_num_threads(nthreads)
+#  endif
+     !
 #else
-   call CGEEV('V','V',msize,M,msize,E_cmpl,V_left,msize,V_right,msize,work,lwork,rwk,ifail)
+     !
+     ! use lapack
+     !
+#  if defined _DOUBLE
+     call ZGEEV('V','V',msize,M,msize,E_cmpl,V_left,msize,V_right,msize,work,lwork,rwk,ifail)
+#  else
+     call CGEEV('V','V',msize,M,msize,E_cmpl,V_left,msize,V_right,msize,work,lwork,rwk,ifail)
+#  endif
+     !
 #endif
      !
    end subroutine geev

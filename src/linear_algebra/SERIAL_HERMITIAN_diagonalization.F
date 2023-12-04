@@ -42,7 +42,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
 #if defined _DOUBLE
  call ZHEEV('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
 #else
- call magmaf_cheevd('v','u',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,lrwork,WS%v_int,liwork,WS%i_fail)
+ call magmaf_cheevd_m(2,'v','u',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,lrwork,WS%v_int,liwork,WS%i_fail)
 #endif
  !
  ! Allocate v_cmplx, v_real, v_int
@@ -70,7 +70,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  call ZHEEV('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing ZHEEV')
 #else
- call magmaf_cheevd('v','u',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,lrwork,WS%v_int,liwork,WS%i_fail)
+ call magmaf_cheevd_m(2,'v','u',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,lrwork,WS%v_int,liwork,WS%i_fail)
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing CHEEV')
 #endif
  !

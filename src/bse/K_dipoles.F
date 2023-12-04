@@ -14,6 +14,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  use R_lattice,     ONLY:bz_samp,q0_def_norm,qindx_X
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
+ use stderr,        ONLY:STRING_match
  use interfaces,    ONLY:WF_load,WF_free
  use electrons,     ONLY:levels,spin
  use X_m,           ONLY:X_t,global_gauge,i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus
@@ -216,7 +217,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  !
  call live_timing()
  !
- if (trim(BSE_L_kind)=="full") then
+ if (STRING_match(BSE_L_kind,"full")) then
    do i_T_g=1,BS_nT_grps
      if (.not.allocated(BS_T_grp(i_T_g)%dipoles_opt) ) then
        YAMBO_ALLOC(BS_T_grp(i_T_g)%dipoles_opt,(BS_dip_size,BS_T_grp(i_T_g)%size,2/BS_n_eh_spaces))

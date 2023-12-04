@@ -207,7 +207,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  endif
  !
  ! Remove exchange if computing the irreducible response
- if (trim(BSE_L_kind)=="tilde") then
+ if (STRING_match(BSE_L_kind,"tilde") ) then
    BS_res_K_exchange=.FALSE.
    BS_cpl_K_exchange=.FALSE.
  endif

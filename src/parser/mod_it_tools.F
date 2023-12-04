@@ -137,10 +137,10 @@ module it_tools
      do i2=1,n_ofs_defined
        if (len_trim(of_name(i2))==0) cycle
        if (.not.write_to_of) cycle
-       open(20,file=trim(of_name(i2)),position='append')
-       if (present(defs)) call initinfio(defs,20)
-       if (present(line)) write (20,'(2a)') '# ',line
-       close(20)
+       open(120,file=trim(of_name(i2)),position='append')
+       if (present(defs)) call initinfio(defs,120)
+       if (present(line)) write (120,'(2a)') '# ',line
+       close(120)
      enddo
    end subroutine
    !

@@ -100,7 +100,7 @@ subroutine of_open_close(of_name_extension,mode)
 #if defined _YAML_OUTPUT
    of_unit(file_index)=f_get_free_unit()
 #else
-   of_unit(file_index)=file_index+20
+   of_unit(file_index)=file_index+120
 #endif
    of_opened(file_index)=of_name_complete
    !

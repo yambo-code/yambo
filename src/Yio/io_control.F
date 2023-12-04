@@ -91,7 +91,7 @@ subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM,DO_IT)
    if ( .not. (define_ID_RD .or. HEAD_cpu) ) exit
    ID=i1
    call io_reset(ID)
-   io_unit(ID)=40+i1  ! This is not used with netcdf since nf90_create assigns the unit
+   io_unit(ID)=140+i1  ! This is not used with netcdf since nf90_create assigns the unit
    exit
  enddo
  if ( (define_ID_RD .or. HEAD_cpu) .and. ID==0 ) call error(" Recompile Yambo with a larger: max_io_units")

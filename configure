@@ -1063,6 +1063,8 @@ with_cuda_cc
 with_cuda_runtime
 with_cuda_int_libs
 enable_nvtx
+with_rocm_libs
+with_rocm_incs
 with_rocm_libdir
 with_rocm_includedir
 with_rocm_path
@@ -1839,6 +1841,8 @@ Optional Packages:
   --with-gpu-libs=<libs>        Use extra GPU-specific libraries <libs>
   --with-gpu-incs=<incs>        Includes for extra GPU-specific libraries
                                 <incs>
+  --with-rocm-libs=<libs>       Use librocm library <libs>
+  --with-rocm-incs=<incs>       Use librocm include options <incs>
   --with-rocm-libdir=<path>     Path to the rocm lib directory
   --with-rocm-includedir=<path> Path to the rocm include directory
   --with-rocm-path=<path>       Path to rocm install directory
@@ -15607,6 +15611,18 @@ fi
 
 #
 
+# Check whether --with-rocm_libs was given.
+if test "${with_rocm_libs+set}" = set; then :
+  withval=$with_rocm_libs;
+fi
+
+
+# Check whether --with-rocm_incs was given.
+if test "${with_rocm_incs+set}" = set; then :
+  withval=$with_rocm_incs;
+fi
+
+
 # Check whether --with-rocm_libdir was given.
 if test "${with_rocm_libdir+set}" = set; then :
   withval=$with_rocm_libdir;
@@ -15656,9 +15672,9 @@ def_gpu=""
  fi
 
 #
-if test "x$with_rocm_path" = "x" ; then with_rocm_path="$ROCM_PATH" ; fi
-if test "x$with_rocm_path" = "x" ; then with_rocm_path="$ROCM_ROOT" ; fi
-if test "x$with_rocm_path" = "x" ; then with_rocm_path="$ROCM_HOME" ; fi
+#if test "x$with_rocm_path" = "x" ; then with_rocm_path="$ROCM_PATH" ; fi
+#if test "x$with_rocm_path" = "x" ; then with_rocm_path="$ROCM_ROOT" ; fi
+#if test "x$with_rocm_path" = "x" ; then with_rocm_path="$ROCM_HOME" ; fi
 
 LIBROCM_PATH="$with_rocm_path"
 
@@ -15667,11 +15683,17 @@ if test -d "$with_rocm_path"; then
    librocm_libdir="$with_rocm_path/lib"
    if ! test -d "$librocm_libdir" ; then librocm_libdir="$with_rocm_path/lib" ; fi
 fi
-if test -d "$with_rocm_includedir"; then librocm_incdir="$with_rocm_includedir" ; fi
-if test -d "$with_rocm_libdir";     then librocm_libdir="$with_rocm_libdir"     ; fi
-
-LIBROCM_LIBS="-L$librocm_libdir -lrocblas"
-LIBROCM_INCS="-I$librocm_incdir"
+if test -d "$with_rocm_includedir"; then
+   librocm_incdir="$with_rocm_includedir"
+   LIBROCM_LIBS="-L$librocm_libdir -lrocblas"
+fi
+if test -d "$with_rocm_libdir"; then
+   librocm_libdir="$with_rocm_libdir"
+   LIBROCM_INCS="-I$librocm_incdir"
+fi
+#
+if test x"$with_rocm_libs" != x"" ; then  LIBROCM_LIBS="$with_rocm_libs" ; fi
+if test x"$with_rocm_incs" != x"" ; then  LIBROCM_INCS="$with_rocm_incs" ; fi
 
 # Cuda Fortran
 if test x"$enable_cuda_fortran" != "xno" ; then
@@ -15841,7 +15863,7 @@ if test x"$enable_openmp5" != "xno" ; then
    # Flags to be passed to the devicexlib library
    #
    DEVXLIB_FLAGS="--enable-openmp5" # --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
-   if test x"$LIBROCM_PATH" != "x" ; then DEVXLIB_FLAGS+=" --enable-rocblas --with-rocm-path=$LIBROCM_PATH" ; fi
+   if test x"$LIBROCM_LIBS" != "x" ; then DEVXLIB_FLAGS+=" --enable-rocblas --with-rocm-libs=$LIBROCM_LIBS" ; fi
    GPU_FLAGS="-fopenmp" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
    def_gpu="-D_GPU -D_HIP -D_OPENMP_GPU"
    #

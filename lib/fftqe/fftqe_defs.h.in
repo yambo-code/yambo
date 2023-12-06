@@ -1,4 +1,10 @@
-
+/*
+  License-Identifier: GPL
+ 
+  Copyright (C) 2014 The Yambo Team
+ 
+  Authors (see AUTHORS file for details): AF
+*/
 #define C_POINTER integer*@SIZEOF_INT_P@
 
 

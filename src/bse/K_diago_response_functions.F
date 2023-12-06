@@ -11,7 +11,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  ! eps2(iw)= 1 - Sum  [BS_R_left(i)*BS_R_right(i)] / [w+i*eta - E(i)]  
  !
  use pars,           ONLY:cZERO,cONE,SP,pi
- use X_m,            ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,X_drude_term,&
+ use X_m,            ONLY:Resp_ii,Joint_DOS,BS_E_sorted,&
 &                         global_gauge,skip_cond_sum_rule,i_G_shift
  use electrons,      ONLY:n_sp_pol,n_spinor
  use frequency,      ONLY:w_samp
@@ -20,14 +20,14 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  use LIVE_t,         ONLY:live_timing
  use BS,             ONLY:BS_perturbative_SOC,BS_res_ares_n_mat,l_BS_abs,l_BS_jdos,l_BS_esort,&
 &                         BS_K_anti_resonant,l_BS_ares_from_res,BS_K_coupling
- use BS_solvers,     ONLY:BSS_n_eig,Co_factor,diam_term_exact,BSS_eels_to_eps
+ use BS_solvers,     ONLY:BSS_n_eig,Co_factor,diam_term_exact
  use R_lattice,      ONLY:bare_qpg
  use units,          ONLY:HA2EV
  use vec_operate,    ONLY:degeneration_finder,sort
- use BS_solvers,     ONLY:B_Hall
- use X_m,            ONLY:Epsilon_ij,X_magnons
+ use BS_solvers,     ONLY:B_Hall,para_term_w0
+ use X_m,            ONLY:Resp_ij,X_magnons
  use PHOTOLUM,       ONLY:PL,PL_prefactor
- use BS,             ONLY:l_BS_kerr,l_BS_anomalous_Hall,l_BS_magnons,l_BS_photolum,l_BS_dichroism
+ use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_photolum,l_BS_dichroism
  !
  implicit none
  !
@@ -44,15 +44,19 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  type(PP_indexes)          :: px
  integer                   :: i1,i_pert_SOC,n_SOC,ares_fac,i_VAR,i_grp,i_lambda,nVAR,EDIM,n_deg_grp 
- complex(SP)               :: para_term_w0,diam_term_used,EXC_E(2/n_sp_pol),res_abs
+ complex(SP)               :: EXC_E(2/n_sp_pol),res_abs
  real(SP), allocatable     :: vtmpR(:)
  complex(SP), allocatable  :: BS_E_sorted_tmp(:,:)
  integer, allocatable      :: sort_indx(:),first_exc(:),n_of_exc(:)
- complex(SP)               :: gauge_factor,res_kerr,res_magn(2)
+ complex(SP)               :: g_fac,res_kerr,res_magn(2)
  logical                   :: l_ADD_the_ARES_using_the_RES
  !
  n_SOC=1
  ares_fac=(-1)**(i_BS_mat-1)
+ !
+ if(l_BS_abs) para_term_w0(2)=cZERO
+ !
+ if (trim(global_gauge)=='length') g_fac=cONE*Co_factor/bare_qpg(iq,i_G_shift)**2
  !
  if( BS_perturbative_SOC.and.n_sp_pol==1) n_SOC=2
  !
@@ -67,8 +71,6 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    BS_E_sorted_tmp=cZERO
  endif
  !
- para_term_w0=cZERO
- !
  l_ADD_the_ARES_using_the_RES=BS_K_anti_resonant.and.(.not.BS_K_coupling).and.l_BS_ares_from_res
  !
  ! If perturbative SOC energies are loaded compute the SOC energies
@@ -82,11 +84,13 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    !
    if (.not.px%element_1D(i1)) cycle
    !
-   if (l_BS_kerr.and.l_BS_anomalous_Hall) then
-     if (trim(global_gauge)=='length'  ) gauge_factor=cONE
-     if (trim(global_gauge)=='velocity') gauge_factor=BS_E(i1)
-     B_Hall(2)=B_Hall(2)+   BS_R_left(i1)*BS_R_right_kerr(i1) / gauge_factor **2._SP
+   if (l_BS_abs) then
+     res_abs=BS_R_left(i1)*BS_R_right(i1)*ares_fac
    endif
+   if (l_BS_kerr) then
+     res_kerr=BS_R_left(i1)*BS_R_right_kerr(i1)*ares_fac
+   endif
+   if(l_BS_magnons) res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)*ares_fac
    !
    if (     BS_perturbative_SOC) EXC_E(:)=BS_E(i1)+BS_E_SOC_corr(:,i1)
    !
@@ -99,6 +103,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
        nVAR=2
      endif
      !
+     if (trim(global_gauge)=='velocity') g_fac=Co_factor/EXC_E(i_pert_SOC)**2
+     !
      if(l_BS_jdos) then
        ! DS. Note. Jdos with coupling seems to have the wrong ordering, i.e.
        !           Re[Jdos(w)]=-Re[Jdos(-w)] while it should be Re[Jdos(w)]=Re[Jdos(-w)]
@@ -108,31 +114,28 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
        endif
      endif
      if(l_BS_abs) then
-       res_abs=BS_R_left(i1)*BS_R_right(i1)*ares_fac
        if(l_BS_esort.and.i_BS_mat==1) then
          BS_E_sorted_tmp(i1,nVAR+1:nVAR+1)=res_abs
          nVAR=nVAR+1
        endif
-       Epsilon_ii(:,2)=Epsilon_ii(:,2)-res_abs/(W%p(:)-EXC_E(i_pert_SOC))
+       Resp_ii(:,2)=Resp_ii(:,2)-res_abs/(W%p(:)-EXC_E(i_pert_SOC))
        if (l_ADD_the_ARES_using_the_RES) then
-         Epsilon_ii(:,2)=Epsilon_ii(:,2)+conjg(res_abs)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+         Resp_ii(:,2)=Resp_ii(:,2)+conjg(res_abs)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
-       if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+res_abs*EXC_E(i_pert_SOC)/bare_qpg(1,i_G_shift)**2
-       if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+res_abs/EXC_E(i_pert_SOC)
+       para_term_w0(2)=para_term_w0(2)+res_abs*g_fac*EXC_E(i_pert_SOC)
      endif
      if(l_BS_kerr) then
-       res_kerr=BS_R_left(i1)*BS_R_right_kerr(i1)*ares_fac
        if(l_BS_esort.and.i_BS_mat==1) then
          BS_E_sorted_tmp(i1,nVAR+1:nVAR+1)=res_kerr
          nVAR=nVAR+1
        endif
-       Epsilon_ij(:,2)=Epsilon_ij(:,2)-res_kerr/(W%p(:)-EXC_E(i_pert_SOC))
+       Resp_ij(:,2)=Resp_ij(:,2)-res_kerr/(W%p(:)-EXC_E(i_pert_SOC))
        if (l_ADD_the_ARES_using_the_RES) then
-         Epsilon_ij(:,2)=Epsilon_ij(:,2)+conjg(res_kerr)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+         Resp_ij(:,2)=Resp_ij(:,2)+conjg(res_kerr)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
+       B_Hall(2)=B_Hall(2)+res_kerr*g_fac
      endif
      if(l_BS_magnons) then
-       res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)*ares_fac
        if(l_BS_esort.and.i_BS_mat==1) then
          BS_E_sorted_tmp(i1,nVAR+1:nVAR+n_spinor)=res_magn(:n_spinor)
          nVAR=nVAR+n_spinor
@@ -197,9 +200,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  if(l_BS_jdos)  call PP_redux_wait(Joint_DOS(:,2) )
  !
  if(l_BS_abs) then
-   call PP_redux_wait(Epsilon_ii(:,2))
-   call PP_redux_wait(para_term_w0)
-   if (BS_K_anti_resonant.and..not.BS_K_coupling) para_term_w0=para_term_w0+conjg(para_term_w0)
+   call PP_redux_wait(Resp_ii(:,2))
+   call PP_redux_wait(para_term_w0(2))
  endif
  !
  if(l_BS_photolum) then
@@ -207,28 +209,12 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  endif
  !
  if(l_BS_kerr) then
-   call PP_redux_wait(Epsilon_ij(:,2))
-   if(l_BS_anomalous_Hall) call PP_redux_wait(B_Hall(2))
+   call PP_redux_wait(Resp_ij(:,2))
+   call PP_redux_wait(B_Hall(2))
  endif
  !
  if(l_BS_magnons) then
    call PP_redux_wait(X_magnons(:,:,2))
- endif
- !
- if(l_BS_abs) then
-   if (trim(global_gauge)=='velocity') then
-     if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
-     if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
-   endif
-   !
-   if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)= (Epsilon_ii(:,2)               )*Co_factor/bare_qpg(iq,i_G_shift)**2
-   if(trim(global_gauge)=='velocity') Epsilon_ii(:,2)= (Epsilon_ii(:,2)-diam_term_used)*Co_factor/  W%p(:)  **2
-   !
-   if(BSS_eels_to_eps) Epsilon_ii(:,2)=(1._SP-Epsilon_ii(:,2))**(-1)-1._SP
-   !
-   ! Drude term
-   !============
-   if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W%p(:)**2
  endif
  !
  if(l_BS_jdos) then
@@ -237,21 +223,14 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !                                         ! references needs to be updated before insterting it
  endif
  !
- if(l_BS_kerr) then
-   if(trim(global_gauge)=='length'  ) Epsilon_ij(:,2)=Epsilon_ij(:,2)*Co_factor/bare_qpg(iq,i_G_shift)**2
-   if(trim(global_gauge)=='velocity') Epsilon_ij(:,2)=Epsilon_ij(:,2)*Co_factor/    W%p(:)    **2
-   !
-   if(l_BS_anomalous_Hall) then
-     if(BS_K_anti_resonant.and..not.BS_K_coupling) B_Hall(2)=B_Hall(2)-conjg(B_Hall(2))
-     if(trim(global_gauge)=='length'  ) B_Hall(2)=B_Hall(2)*Co_factor/bare_qpg(iq,i_G_shift)**2
-     if(trim(global_gauge)=='velocity') B_Hall(2)=B_Hall(2)*Co_factor
-     !
-     ! I add the term describing the Anomalous Hall effect which is
-     ! missing in the length gauge (this should be zero for systems with a gap)
-     if (trim(global_gauge)=='length') Epsilon_ij(:,2)=Epsilon_ij(:,2)+B_Hall(2)/W%p(:)
-     !
-   endif
-   !
+ if (l_BS_abs) then
+   Resp_ii(:,2)=Resp_ii(:,2)*Co_factor
+   if (BS_K_anti_resonant.and..not.BS_K_coupling) para_term_w0(2)=para_term_w0(2)+conjg(para_term_w0(2))
+ endif
+ !
+ if (l_BS_kerr) then
+   Resp_ij(:,2)=Resp_ij(:,2)*Co_factor
+   if (BS_K_anti_resonant.and..not.BS_K_coupling) B_Hall(2)=B_Hall(2)-conjg(B_Hall(2))
  endif
  !
  if (l_BS_magnons) X_magnons(:,:,2)=X_magnons(:,:,2)*Co_factor/(4._SP*pi)

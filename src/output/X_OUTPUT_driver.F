@@ -8,13 +8,14 @@
 subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
  !
  use pars,          ONLY:schlen,SP
- use D_lattice,     ONLY:l_0D
+ use D_lattice,     ONLY:l_0D,l_1D,l_2D
  use X_m,           ONLY:X_obs,N_X_obs,alpha_dim,X_obs_onoff,X_do_obs
  use drivers,       ONLY:l_chi,l_optics,l_bs_fxc
  use electrons,     ONLY:n_spinor
  use PHOTOLUM,      ONLY:PL
  use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,BS_K_coupling,&
 &                        l_BS_photolum,l_BS_abs,l_BS_jdos,l_BS_esort,BS_K_anti_resonant
+ use BS_solvers,    ONLY:l_abs_prop_chi_bse,l_eels_can_be_computed
  use stderr,         ONLY:STRING_match,STRING_split,intc,STRING_remove
  use OUTPUT,         ONLY:OUTPUT_driver
  use interfaces,     ONLY:DESC_write
@@ -31,9 +32,10 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
  real(SP),     optional :: data(:)
  !
  ! Work Space
- integer            ::it,ik,ic
+ integer            ::it,itp,ik,ic
  character(schlen)  ::key(10),BASIC_col(7)
- logical            ::l_flag
+ character(5)       ::obs_with_res(7)
+ logical            ::l_flag,l_print_res
  !
  if (STRING_match(WHAT,"DEF")) then
    call ELEMENTAL_init(1,"fxc","Exchange-Correlation Kernel","optics")
@@ -59,33 +61,43 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
    !------------------------
    if (l_bs_fxc) call X_obs_onoff("+ fxc")
    if (l_BS_photolum) call X_obs_onoff("+ pl")
-   if (l_BS_abs.or.l_BS_kerr.or.(l_optics.and.l_chi)) call X_obs_onoff("+ eps")
-   !
-   ! Check if EELS has to be evaluated
-   if (X_do_obs("eps")) call X_obs_onoff("+ eel")
-   if (l_0D) call X_obs_onoff("- eel")
-   if (BS_K_anti_resonant.and..not.BS_K_coupling) then
-     call warning("Anti-Resonant kernel but no coupling: EELs evaluation switched-off")
+   if (l_BS_abs.or.l_BS_kerr.or.(l_optics.and.l_chi)) then
+     call X_obs_onoff("+ eps")
+     call X_obs_onoff("+ eel")
+     if (trim(alpha_dim)/='adim') call X_obs_onoff("+ alpha")
    endif
+   !
+   ! Switch off macroscopic quantities for lower dim materials
+   if (l_0D.or.l_1D.or.l_2D) call X_obs_onoff("- eel eps off")
+   ! Switch off eels if it cannot be computed
+   if (.not.l_eels_can_be_computed) call X_obs_onoff("- eel")
    !
    if (l_BS_abs) then
      call parser('Reflectivity',l_flag)
      if (l_flag) call X_obs_onoff("+ refl") 
-     if (X_do_obs("eel")) call X_obs_onoff("- refl")
    endif
    if (l_BS_jdos) call X_obs_onoff("+ jdos")
-   if (trim(alpha_dim)/='adim'.and.X_do_obs("eps")) call X_obs_onoff("+ alpha")
    if (l_BS_esort) call X_obs_onoff("+ Esort E_IP")
-   if (l_BS_kerr) call X_obs_onoff("+ off")
-   if (X_do_obs("alpha") .and. l_BS_kerr) call X_obs_onoff("+ beta")
-   if (.not.X_do_obs("alpha") .and. l_BS_kerr) call X_obs_onoff("+ moke")
+   if (l_BS_kerr) then
+     if (X_do_obs("alpha")) call X_obs_onoff("+ beta")
+     if (X_do_obs("eps"))   call X_obs_onoff("+ off moke")
+   endif
    if (l_BS_magnons) call X_obs_onoff("+ Spm")
    if (l_BS_magnons.and.n_spinor==2) call X_obs_onoff("+ Smp")
    if (l_BS_dichroism) call X_obs_onoff("+ CD")
    !
    !...solvers specific
    if (present(solver)) then
-     if (STRING_match(solver,"Slepc")) call X_obs_onoff("- eel")
+     if (STRING_match(solver,"Slepc")) then
+       if( l_abs_prop_chi_bse      .and. X_do_obs("eel") ) then
+         call X_obs_onoff("- eel")
+	 call warning("eels evaluation switched off for slepc")
+       endif
+       if((.not.l_abs_prop_chi_bse).and.(X_do_obs("eps").or.X_do_obs("alpha"))) then
+         call X_obs_onoff("- eps alpha")
+	 call warning("eps & alpha evaluation switched off for slepc")
+       endif
+     endif
      if (STRING_match(solver,"Inversion")) call X_obs_onoff("- Esort E_IP kerr magnons jdos")
      if (STRING_match(solver,"Haydock")) call X_obs_onoff("- Esort jdos E_IP")
      if (STRING_match(solver,"Diago").or.STRING_match(solver,"Slepc")) call X_obs_onoff("- E_IP")
@@ -108,9 +120,14 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
        X_obs(3)%N_columns=3
        X_obs(3)%COL_header(1:3)  = (/'Re(E)','Im(E)','N_deg'/)
      endif
+     obs_with_res=[character(5) :: "eps","alpha","Spm","Smp","off","beta","CD" ]
      do it=1,N_X_obs
        if (.not.X_do_obs(trim(X_obs(it)%what))) cycle
-       if (.not.any(trim(X_obs(it)%what)==((/"eps","Spm","Smp","off"/))).and..not.trim(X_obs(it)%what)=="CD") cycle
+       l_print_res=.false.
+       do itp=1,7
+         l_print_res=l_print_res.or.trim(X_obs(it)%what)==trim(obs_with_res(itp))
+       enddo
+       if (.not.l_print_res) cycle
        do ic=2,3
          X_obs(ic)%N_columns=X_obs(ic)%N_columns+1
          X_obs(ic)%COL_header(X_obs(ic)%N_columns) =trim(X_obs(it)%what) 

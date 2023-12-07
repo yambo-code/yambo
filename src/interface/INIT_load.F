@@ -663,15 +663,26 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'EXCTemp'       ,'[EXCPH] Excitonic Temperature (for luminescence spectra)',Boltz_Temp,T_unit)
  call it(defs,'AlphaQ'       ,'[EXCPH] Excitonic band structure 2D distortion',alphaQ)
  call it(defs,'EXCLongDr'     ,'[EXCPH] Electric field versor for the excitons',EXC_q0)
+ !
  call it('f',defs,'DbGdOnlyPh'   , '[EXCPH] Use Double-Grid only for phonon energies (do not interpolate excitons)')
- call it('f',defs,'NoMatrxEl'   , '[EXCPH] Set all exciton-phonon matrix elements to one (for testing purpose)')
+ call it('f',defs,'ExtendOutput', '[EXCPH] Print additional output with q-resolved lifetimes and resonances')
  call it('f',defs,'DbGdWEIGHTs', '[EXCPH] Use Double-grid also for satellite weights and renormalization')
  call it('f',defs,'PLqres', '[EXCPH] Write contribution from each q-point')
+ !
+ ! Testing only zone <
+ call it('f',defs,'ConstElph' , '[EXCPH] Set all electron-phonon matrix elements to one (for testing purpose)')
+ call it('f',defs,'NoMatrxEl' , '[EXCPH] Set all  exciton-phonon matrix elements to one (for testing purpose)')
+ call it('f',defs,'KeepDeg'   , '[EXCPH] Keep degenerate states (for testing purpose)')
+ !
+ call it('f',defs,'AbsElph', '[EXCPH] Module of elph matrix elements (for testing purpose)')
+ call it('f',defs,'AbsExc',  '[EXCPH] Module of excitonic WFs (for testing purpose)')
+ call it('f',defs,'HoleContributionOnly', '[EXCPH] Hole channel only (for testing purpose)')
+ call it('f',defs,'ElectronContributionOnly',  '[EXCPH] Elec channel only (for testing purpose)')
+ ! Testing only zone >
+ !
  call it(defs,'LDamping', '[EXCPH] Damping of exc-ph self-energy',L_damping,E_unit)
  call it(defs,'EXCPHdEtresh','[ELPH] Energy treshold for exc-ph denominator',EXCPH_deltaE_treshold,unit=E_unit)
  call it('f',defs,'ExcPhOffDiago', '[EXCPH] Exciton-Phonon off-diagonal self-energy')
- !
- ! GPL_EXCLUDE_START
  !
  call it(defs,'ElPhHBRnge','[ELPH] Hamiltonian bands range',elph_Ham_bands)
  call it(defs,'ElPhHKpt',  '[ELPH] Hamiltonian k-point',elph_Ham_ik)

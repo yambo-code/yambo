@@ -47,8 +47,8 @@ contains
     integer      :: ierr
     !
     ierr=0
-    !$acc exit data delete(var)
-    !$omp target exit data map(delete:var)
+    !DEV_ACC exit data delete(var)
+    !DEV_OMPGPU target exit data map(delete:var)
     !
 #ifdef _CUDAF
     if (allocated(var)) deallocate(var,stat=ierr)

@@ -32,13 +32,13 @@ subroutine saxpy_explicit(N, a, x, y)
     !DEV_CUF kernel do
     !DEV_ACC data present(x,y)
     !DEV_ACC parallel loop
-    !DEV_OMP5 target map(tofrom:x,y)
-    !DEV_OMP5 parallel do
+    !DEV_OMPGPU target map(tofrom:x,y)
+    !DEV_OMPGPU parallel do
     !DEV_OMP  parallel do default(shared), private (i)
     do i = 1, N
       y(i) = y(i) + a * x(i)
     end do
-    !DEV_OMP5 end target 
+    !DEV_OMPGPU end target 
     !DEV_ACC end data
     !
   end subroutine saxpy_explicit

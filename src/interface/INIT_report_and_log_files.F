@@ -89,7 +89,7 @@ subroutine INIT_report_and_log_files()
 #if defined _YAML_OUTPUT
    repfile_unit=f_get_free_unit()
 #else
-   repfile_unit=111
+   repfile_unit=11
 #endif
    of_unit(repfile_index) = repfile_unit
    open(unit=repfile_unit,file=trim(repfile))
@@ -108,7 +108,7 @@ subroutine INIT_report_and_log_files()
 #if defined _YAML_OUTPUT
    logfile_unit=f_get_free_unit()
 #else
-   logfile_unit=113
+   logfile_unit=13
 #endif
    of_unit(logfile_index) = logfile_unit
    open(unit=logfile_unit,file=trim(logfile))

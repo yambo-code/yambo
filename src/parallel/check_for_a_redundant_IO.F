@@ -50,8 +50,8 @@ subroutine check_for_a_redundant_IO(path_,cpu_seen_by_me,cpu_seen_by_any)
  enddo
  do ic=1,ncpu
    if (myid/=ic-1) cycle
-   open(unit=120,file=trim(file_name(ic)))
-   close(120)
+   open(unit=20,file=trim(file_name(ic)))
+   close(20)
  enddo
  call mpi_barrier(mpi_comm_world,i_err)
  cpu_seen_by_me=0

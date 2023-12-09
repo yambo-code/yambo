@@ -273,7 +273,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Are we editing the input file ?
  !
  if (infile_editing) then
-   inpfile_unit=112
+   inpfile_unit=12
    open(unit=inpfile_unit,file=trim(infile))
    call initinfio(defs,inpfile_unit)
    close(inpfile_unit)

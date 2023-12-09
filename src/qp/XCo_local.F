@@ -161,11 +161,11 @@ subroutine XCo_local(E,Xk)
      iwf =WF%index(ib,ik,1)
      iwfp=WF%index(ibp,ik,1)
      ! 
-!$omp parallel do default(shared), private(ifft)
+     !$omp parallel do default(shared), private(ifft)
      do ifft=1,fft_size
        c_ws(ifft,1)=V_xc(ifft,1)*WF%c(ifft,1,iwfp)
      enddo
-!$omp end parallel do
+     !$omp end parallel do
      !
      QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
      !

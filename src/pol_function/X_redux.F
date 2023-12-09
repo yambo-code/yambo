@@ -100,6 +100,9 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  ! AF_FIX: openacc + GPU linalg should be enabled
  if (have_openacc) compute_on_gpu=.false.
  !
+ ! AMD-GPUs + GPU linalg not yet implemented
+ if (have_hip) compute_on_gpu=.false.
+ !
  if (have_gpu) call msg('s','[LA] '//what//' compute_on_gpu ',compute_on_gpu )
  !
  ! ... and frequencies distribution

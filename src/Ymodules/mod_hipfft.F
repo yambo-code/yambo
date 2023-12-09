@@ -30,10 +30,11 @@ MODULE hipfft_m
     ENUMERATOR :: HIPFFT_Z2Z = 105 
   END ENUM
 
-  INTERFACE  
+  interface  
 
-     FUNCTION hipfftPlan1d(plan,nx,myType,batch) BIND(C, name="hipfftPlan1d")
-       USE iso_c_binding
+     function hipfftPlan1d(plan,nx,myType,batch) &
+              bind(C, name="hipfftPlan1d")
+       use iso_c_binding
        import HIPFFT_SUCCESS, HIPFFT_R2C
        implicit none
        integer(kind(HIPFFT_SUCCESS)) :: hipfftPlan1d
@@ -41,7 +42,20 @@ MODULE hipfft_m
        integer(c_int),value :: nx
        integer(kind(HIPFFT_R2C)),value :: myType
        integer(c_int),value :: batch
-     END FUNCTION
+     end function
+
+     function hipfftPlan3d(plan,nx,ny,nz,myType) &
+              bind(c, name="hipfftPlan3d")
+       use iso_c_binding
+       import HIPFFT_SUCCESS, HIPFFT_R2C
+       implicit none
+       integer(kind(HIPFFT_SUCCESS)) :: hipfftPlan3d
+       type(c_ptr) :: plan
+       integer(c_int),value :: nx
+       integer(c_int),value :: ny
+       integer(c_int),value :: nz
+       integer(kind(HIPFFT_R2C)),value :: myType
+     end function
 
      FUNCTION hipfftExecZ2Z(plan,idata,odata,direction) BIND(C, name="hipfftExecZ2Z")
        USE iso_c_binding

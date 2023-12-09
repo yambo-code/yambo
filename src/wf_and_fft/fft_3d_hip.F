@@ -63,8 +63,7 @@ subroutine fft_3d_hip(c_d,n,fft_sign,hipfft_plan)
  ! Work Space
  !
  integer(c_int) :: i_sign
- integer :: istat, fft_dim(3), data_dim(3)
- integer :: stride, dist, batch
+ integer :: istat
  !
  if (fft_sign>0) i_sign=HIPFFT_BACKWARD
  if (fft_sign<0) i_sign=HIPFFT_FORWARD
@@ -75,19 +74,9 @@ subroutine fft_3d_hip(c_d,n,fft_sign,hipfft_plan)
 !   istat = cufftSetStream( cufft_plan, acc_get_cuda_stream(acc_async_noval) )
 !   !istat = gpu_devsync()
 !#endif
-   fft_dim(1)=n(3)
-   fft_dim(2)=n(2)
-   fft_dim(3)=n(1)
    !
-   stride=1
-   batch=1
-   dist=product(n)
-   data_dim=fft_dim
+   istat = hipfftPlan3d( hipfft_plan, n(3), n(2), n(1), HIPFFT_Z2Z)
    !
-   istat = hipfftPlanMany( hipfft_plan, 3, c_loc(fft_dim),&
-                           c_loc(data_dim), stride, dist, &
-                           c_loc(data_dim), stride, dist, &
-                           HIPFFT_Z2Z, batch )
  endif
  !
 ! AF_FIX:  to be checked

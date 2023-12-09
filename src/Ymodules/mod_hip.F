@@ -45,6 +45,9 @@ module hip_m
       enumerator :: HIP_SUCCESS = 0 
   end enum
 
+  integer, parameter :: hipStreamDefault = 0
+  integer, parameter :: hipStreamNonBlocking = 1
+
   interface  
      !
      function hipDeviceSynchronize() &
@@ -65,7 +68,7 @@ module hip_m
      end function hipGetDeviceCount
      !
      function hipGetDevice(deviceId) &
-        BIND(C,name="hipGetDevice")
+              bind(C,name="hipGetDevice")
         use iso_c_binding
         import HIP_SUCCESS
         implicit none
@@ -74,7 +77,7 @@ module hip_m
      end function hipGetDevice
      !
      function hipSetDevice(deviceId) &
-        BIND(C,name="hipSetDevice")
+              bind(C,name="hipSetDevice")
         use iso_c_binding
         import HIP_SUCCESS
         implicit none
@@ -82,14 +85,34 @@ module hip_m
         integer(kind(HIP_SUCCESS)) :: hipSetDevice
      end function hipSetDevice
      !
-     function HipGetLastError() &
-        BIND(C,name="hipGetLastError")
+     function hipGetLastError() &
+              bind(C,name="hipGetLastError")
         use iso_c_binding
         import HIP_SUCCESS
         implicit none
-        integer(kind(HIP_SUCCESS)) :: HipGetLastError
-     end function HipGetLastError
+        integer(kind(HIP_SUCCESS)) :: hipGetLastError
+     end function hipGetLastError
      !
+     function hipStreamCreate(stream) bind(c, name="hipStreamCreate")
+        use iso_c_binding
+        import HIP_SUCCESS
+        implicit none
+        integer(kind(HIP_SUCCESS)) :: hipStreamCreate
+        !type(c_ptr) :: stream
+        integer(c_intptr_t) :: stream
+      end function
+      !
+      function hipStreamCreateWithFlags(stream,flags) &
+               bind(c, name="hipStreamCreateWithFlags")
+        use iso_c_binding
+        import HIP_SUCCESS
+        implicit none
+        integer(kind(HIP_SUCCESS)) :: hipStreamCreateWithFlags
+        !type(c_ptr) :: stream
+        integer(c_intptr_t) :: stream
+        integer(c_int),value :: flags
+      end function
+      !
    end interface
 
 contains

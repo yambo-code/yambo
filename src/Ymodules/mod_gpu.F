@@ -45,12 +45,23 @@ module gpu_m
   public
   !
   integer :: GPU_test_dim = 1000000
-
+  !
 #ifdef _GPU
   logical, parameter:: have_gpu=.true.
 #else
   logical, parameter:: have_gpu=.false.
 #endif
+#ifdef _CUDA
+  logical, parameter:: have_cuda=.true.
+#else
+  logical, parameter:: have_cuda=.false.
+#endif
+#ifdef _HIP
+  logical, parameter:: have_hip=.true.
+#else
+  logical, parameter:: have_hip=.false.
+#endif
+  !
 #ifdef _CUDAF
   logical, parameter:: have_cuf=.true.
 #else
@@ -66,6 +77,7 @@ module gpu_m
 #else
   logical, parameter:: have_ompgpu=.false.
 #endif
+  !
   character(16)  :: gpu_str=""
   !
   logical:: have_gpu_devices=.false.
@@ -79,9 +91,11 @@ module gpu_m
 #endif
   
   !
-  ! streams
+  ! Streams
   !
-#ifdef _CUDAF
+  ! The following should be ok with both CUDA and HIP streams
+  !
+#if defined _CUDAF
   integer, parameter :: stream_kind=Cuda_Stream_Kind
 #else
   integer, parameter :: stream_kind=c_intptr_t
@@ -231,6 +245,16 @@ contains
 #endif
 !
 #if defined _HIP && _OPENMP_GPU
+    !
+    stream_default=hipStreamDefault
+    ierr = hipStreamCreateWithFlags(stream_h2d,hipStreamNonBlocking)
+    ierr = hipStreamCreateWithFlags(stream_d2h,hipStreamNonBlocking)
+    ierr = hipStreamCreateWithFlags(stream_d,  hipStreamNonBlocking)
+    async_default =stream_default
+    async_h2d     =stream_h2d
+    async_d2h     =stream_d2h
+    async_d       =stream_d
+    !
 #endif
     !
   end subroutine gpu_setup
@@ -256,8 +280,8 @@ contains
     ierr = CudaGetLastError()
 #endif
 #if defined _OPENMP_GPU && defined _HIP
-    ierr = HipDeviceSynchronize()
-    ierr = HipGetLastError()
+    ierr = hipDeviceSynchronize()
+    ierr = hipGetLastError()
 #endif
     return
   end function
@@ -270,7 +294,7 @@ contains
     ierr = CudaDeviceSynchronize()
 #endif
 #if defined _OPENMP_GPU && defined _HIP
-    ierr = HipDeviceSynchronize()
+    ierr = hipDeviceSynchronize()
 #endif
     return
   end function

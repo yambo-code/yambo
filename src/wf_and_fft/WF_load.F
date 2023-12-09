@@ -98,7 +98,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  complex(DP), allocatable DEV_ATTR :: wf_DP_d(:)
  complex(SP), allocatable DEV_ATTR :: wf_disk_d(:,:,:)
  complex(SP), pointer     DEV_ATTR :: wfc_p(:,:,:)
- integer :: WFN
+ integer :: WF_N
  !
  ! I/O
  !
@@ -126,7 +126,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  sp_pol_to_load_=(/1,n_sp_pol/)
  if(present(sp_pol_to_load)) sp_pol_to_load_=sp_pol_to_load
  !
- ! Imposed Freeing and Allocating of WF's...
+ ! Imposed Freeing and Allocating of WFs...
  !
  free_and_alloc=.FALSE.
  !... when a single k-point is loaded each time... (no _SC)
@@ -282,12 +282,13 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  if (WF%space=='B')  wf_grid_size=wf_ncx
  !
  YAMBO_ALLOC(wf_DP,(wf_grid_size))
- !
  if (have_gpu) then
    YAMBO_ALLOC_GPU(DEV_VAR(wf_DP),(wf_grid_size))
-   wfc_p => DEV_VAR(WF%c)
-   WFN = WF%N
  endif
+ !
+ wfc_p => DEV_VAR(WF%c)
+ WF_N = WF%N
+ !
  !
  ! LOG the states loaded
  !
@@ -392,9 +393,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
          WF%index(ib,ikibz,i_sp_pol)=WF%N
          !
 #ifdef _GPU
-         ! This is a specialized CUDA version performing FFT on the device
+         ! This is a specialized GPU version performing FFT on the device
          !
-         if(buffer_is_ok) call error(" [CUDA WF_LOAD] buffering not yet implemented")
+         if(buffer_is_ok) call error(" [GPU WF_LOAD] buffering not yet implemented")
          !
          if(WF%space=='R') then
             !
@@ -408,7 +409,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               !DEV_ACC parallel loop async
               !DEV_CUF kernel do(1) <<<*,*>>>
               !DEV_OMPGPU target map(present,alloc:wf_igk,fft_g_table,wf_DP,wf_disk)
-              !DEV_OMPGPU teams loop
+              !DEV_OMPGPU teams loop private(ig,igfft)
               do ic=1,npwk
                 !
                 ig=DEV_VAR(wf_igk)(ic,ikibz)
@@ -426,7 +427,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 #elif defined _HIP
               call fft_3d_hip( DEV_VAR(wf_DP),fft_dim,+1,hipfft_plan)
 #endif
-              WFN = WF%N
+              WF_N = WF%N
               !
               !DEV_ACC data present(wfc_p,wf_DP)
               !DEV_ACC parallel loop async
@@ -434,7 +435,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               !DEV_OMPGPU target map(present,alloc:wfc_p,wf_DP)
               !DEV_OMPGPU teams loop
               do ic=1,wf_grid_size
-                wfc_p(ic,i_spinor,WFN)=cmplx(DEV_VAR(wf_DP)(ic),kind=SP)*fft_norm
+                wfc_p(ic,i_spinor,WF_N)=cmplx(DEV_VAR(wf_DP)(ic),kind=SP)*fft_norm
               enddo
               !DEV_OMPGPU end target
               !DEV_ACC end data

@@ -49,12 +49,11 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  !
  use pars,          ONLY:DP
  use devxlib_environment
-#if defined _CUDAF
- use cufft
+#if defined _CUDA
+ use cufft_m
 #endif
 #if defined _OPENACC
  use openacc
- use cufft_m
 #endif
  use gpu_m,  only: gpu_devsync
  !

@@ -3,7 +3,9 @@
 !
 module cufft_m
   use iso_c_binding
-#if defined _OPENACC
+#if defined _CUDAF
+  use cufft
+#elif defined _OPENACC
   use openacc
   implicit none
 

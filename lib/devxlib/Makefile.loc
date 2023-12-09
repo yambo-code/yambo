@@ -23,7 +23,7 @@ CUDA_INCS="$(icudalib)"
 BLAS_LIBS="$(lblas)"
 LAPACK_LIBS="$(llapack)"
 CONFFLAGS=--prefix=$(LIBPATH) $(devxlib_flgs) \
-          --with-blas-libs=\"$(BLAS_LIBS)\" --with-blas-libs=\"$(LAPACK_LIBS)\" \
+          --with-blas-libs=\"$(BLAS_LIBS)\" --with-lapack-libs=\"$(LAPACK_LIBS)\" \
           F90="$(fc)" MPIF90="$(fc)" 
 #
 # MAIN target

@@ -33,11 +33,13 @@ subroutine fft_free()
 #endif
 #if defined _GPU
  use FFT_m,    ONLY:cufft_plan,hipfft_plan,DEV_VAR(fft_g_table),DEV_VAR(fft_rot_r),DEV_VAR(fft_rot_r_inv)
-#if defined _CUDAF
+#  if defined _CUDAF
  use cufft
-#else
+#  elif defined _OPENACC && defined _CUDA
+ use cufft_m
+#  elif defined _HIP
  use hipfft_m
-#endif
+#  endif
 #endif
  !
 #include<y_memory.h>
@@ -58,7 +60,7 @@ subroutine fft_free()
  cufft_plan=0
 #  elif defined _HIP
  ierr=hipfftDestroy(hipfft_plan) 
-hipfft_plan=c_null_ptr
+ hipfft_plan=c_null_ptr
 #  endif
 #endif
  !

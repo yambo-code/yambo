@@ -15678,16 +15678,16 @@ def_gpu=""
 
 LIBROCM_PATH="$with_rocm_path"
 
-if test -d "$with_rocm_path"; then
+if test x"$with_rocm_path" != x"" && test -d "$with_rocm_path" ; then
    librocm_incdir="$with_rocm_path/include"
    librocm_libdir="$with_rocm_path/lib"
    if ! test -d "$librocm_libdir" ; then librocm_libdir="$with_rocm_path/lib" ; fi
 fi
-if test -d "$with_rocm_includedir"; then
+if test x"$with_rocm_includedir" != x"" && test -d "$with_rocm_includedir" ; then
    librocm_incdir="$with_rocm_includedir"
    LIBROCM_LIBS="-L$librocm_libdir -lrocblas"
 fi
-if test -d "$with_rocm_libdir"; then
+if test  x"$with_rocm_libdir" != "$with_rocm_libdir" && test -d "$with_rocm_libdir" ; then
    librocm_libdir="$with_rocm_libdir"
    LIBROCM_INCS="-I$librocm_incdir"
 fi

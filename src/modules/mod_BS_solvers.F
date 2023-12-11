@@ -88,15 +88,15 @@ module BS_solvers
  !
  ! Solvers (Slepc)
  !=========
- character(schlen):: BSS_slepc_approach     !choose slepc approach ("Krylov-Schur","Generalized-Davidson","Jacob-Davidson")
- character(schlen):: BSS_slepc_precondition !choose slepc eigenvalue precondition method (none,bcgs+jacobi)
- character(schlen):: BSS_slepc_extraction   !choose slepc eigenvalue extraction method (ritz,harmonic)
- integer          :: BSS_slepc_ncv        !dimension of the subspace
- integer          :: BSS_slepc_maxit      !maximum number of iterations
- real(SP)         :: BSS_slepc_tol        !tolerance for the iterative solver
- real(SP)         :: BSS_slepc_target_E   !find eigenvalues close to this energy
- character(schlen):: BSS_slepc_matrix     !matrix type ("shell","explicit","explicit-debug")
- logical          :: BSS_slepc_double_grp !duplicate the number of groups for slepc shells solver
+ character(schlen):: BSS_slepc_approach      !choose slepc approach ("Krylov-Schur","Generalized-Davidson","Jacob-Davidson")
+ character(schlen):: BSS_slepc_precondition  !choose slepc eigenvalue precondition method (none,bcgs+jacobi)
+ character(schlen):: BSS_slepc_extraction    !choose slepc eigenvalue extraction method (ritz,harmonic)
+ integer          :: BSS_slepc_ncv           !dimension of the subspace
+ integer          :: BSS_slepc_maxit         !maximum number of iterations
+ real(SP)         :: BSS_slepc_tol           !tolerance for the iterative solver
+ real(SP)         :: BSS_slepc_target_E      !find eigenvalues close to this energy
+ character(schlen):: BSS_slepc_matrix_format !matrix type ("shell","explicit","explicit-debug")
+ logical          :: BSS_slepc_double_grp    !duplicate the number of groups for slepc shells solver
  !
  ! Solvers (Inversion)
  !=========

@@ -46,9 +46,9 @@ subroutine K_diago_driver(iq,W,X_static)
  use slepcepsdef
  use petscmatdef
  !
- use BS_solvers,     ONLY:BSS_slepc_matrix,Slepc_v,BS_HAYVEC_free
+ use BS_solvers,     ONLY:BSS_slepc_matrix_format,Slepc_v,BS_HAYVEC_free
 #endif
- use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_photolum
+ use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_photolum,l_BS_ares_from_res
  use MAGNONS,        ONLY:BSS_MAGN_free
  use PHOTOLUM,       ONLY:BSS_PL_free
  !
@@ -182,11 +182,11 @@ subroutine K_diago_driver(iq,W,X_static)
      if(l_slepc) then
        ! 1. Here we will define a PetscShell matrix and define the matrix-vector multiplication
        ! using the K_multiply_by_V function used in the Haydock method
-       if (BSS_slepc_matrix=="shell") then 
+       if (BSS_slepc_matrix_format=="shell") then 
          call K_shell_matrix(i_BS_mat,slepc_mat)
        ! 2. Here we create a distributed PETSC matrix from the BS_blks
-       else if (BSS_slepc_matrix=="explicit") then
-         if (BS_K_coupling) then
+       else if (BSS_slepc_matrix_format=="explicit") then
+         if (BS_K_coupling.and.l_BS_ares_from_res) then
            ! 2.1. With memory optimization using nest matrix (only possible for the coupling case)      
            call K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
          else
@@ -194,7 +194,7 @@ subroutine K_diago_driver(iq,W,X_static)
            call K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
          endif
        ! 2.3 No optimization of memory for the coupling case (debug)
-       else if (BSS_slepc_matrix=="explicit-debug") then
+       else if (BSS_slepc_matrix_format=="explicit-debug") then
          call K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
        ! Default option is to use PetscShell
        else 
@@ -432,11 +432,12 @@ subroutine K_diago_driver(iq,W,X_static)
    subroutine K_slepc_local_init()
      !
      use com,           ONLY:msg
+     call msg( 'sr', '[SLEPC] BSS_slepc_matrix_format                          ',BSS_slepc_matrix_format)
      !
      call parser('BSSEnTarget',l_target_energy)
      !
-     if (BSS_slepc_matrix=='explicit'.or.BSS_slepc_matrix=='explicit-debug') call msg( 's', '[SLEPC] Faster alogorithm but BSE matrix duplicated over MPI tasks')
-     if (BSS_slepc_matrix=='shell')  call msg( 's', '[SLEPC] Slower alogorithm but BSE matrix distributed over MPI tasks')
+     if (BSS_slepc_matrix_format=='explicit'.or.BSS_slepc_matrix_format=='explicit-debug') call msg( 's', '[SLEPC] Faster alogorithm but BSE matrix duplicated over MPI tasks')
+     if (BSS_slepc_matrix_format=='shell')  call msg( 's', '[SLEPC] Slower alogorithm but BSE matrix distributed over MPI tasks')
      !
      ! Number of states for partial diagonalization
      !================================================
@@ -465,7 +466,7 @@ subroutine K_diago_driver(iq,W,X_static)
    !
    subroutine K_slepc_local_free()
      !
-     if (BSS_slepc_matrix=='shell') then
+     if (BSS_slepc_matrix_format=='shell') then
        call BS_HAYVEC_free(Slepc_v%Vi)
        call BS_HAYVEC_free(Slepc_v%Vo)
        deallocate(Slepc_v%Vi)

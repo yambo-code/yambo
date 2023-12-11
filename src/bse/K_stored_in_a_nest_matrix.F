@@ -29,7 +29,10 @@ module shellmat_module
 end module shellmat_module
 
 subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
+!
 ! K is stored in a PETSc nest matrix, taking advantage of the four block structure
+! BS_K_coupling and l_BS_ares_from_res are assumed TRUE
+!
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
@@ -38,10 +41,8 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
 #include <slepc/finclude/slepceps.h>
 !
   use pars,           ONLY:cI,cONE
-  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling,&
-  &                        BS_res_ares_n_mat,l_BS_ares_from_res
+  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks
   use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width
-  use com,            ONLY:msg
   !
   use petscmat
   use slepceps
@@ -62,17 +63,13 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
   PetscInt            :: H_pos(2),SL_K_dim(2),SL_H_dim
   PetscInt            :: itwo
   PetscErrorCode      :: ierr
-  character (len = 70) :: str_num_block
   !
   external AT_mat_mult, BHT_mat_mult, AT_mat_mult_transpose, BHT_mat_mult_transpose
   !
-  call msg( 'nsr', '[SLEPC] Matrix is nest')
-  !
-  if(     BS_K_coupling) SL_H_dim=BS_H_dim
-  if(.not.BS_K_coupling) SL_H_dim=BS_K_dim(i_BS_mat)
+  SL_H_dim=BS_H_dim
   SL_K_dim=BS_K_dim
   !
-  ! Allocate the slepc Matrix
+  ! Allocate the explicit submatrices of the nest matrix
   !
   call MatCreate(PETSC_COMM_WORLD,A,ierr)
   call MatSetSizes(A,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
@@ -86,17 +83,14 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
   call MatSetFromOptions(B,ierr)
   call MatSetUp(B,ierr)
   !
-  ! Filling of the slepc_mat
+  ! Fill the values of the explicit submatrices of the nest matrix
   !
   do i_B=1,n_BS_blks
     i_Tk  =BS_blk(i_B)%iT_k
     i_Tp  =BS_blk(i_B)%iT_p
     !
-    if (i_BS_mat/=BS_blk(i_B)%ira_k .and. BS_res_ares_n_mat==2) cycle
-    !
     H_shift=0
     if(BS_blk(i_B)%mode=="C") H_shift(2)=BS_K_dim(1)
-    if(BS_blk(i_B)%mode=="A") H_shift(:)=BS_K_dim(1)
     !
     do i_r=1,BS_blk(i_B)%size(1)
       !
@@ -109,7 +103,7 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
         ! Then the upper triangle of each block and direct symmetrization
         !
         if (H_pos(1)+H_shift(1)>H_pos(2)+H_shift(2)) cycle
-        if (l_BS_ares_from_res.and.H_pos(1)>H_pos(2)) cycle
+        if (H_pos(1)>H_pos(2)) cycle
         !
         Mij     =      BS_blk(i_B)%mat(i_r,i_c)
         Mij_star= real(BS_blk(i_B)%mat(i_r,i_c))-cI*aimag(BS_blk(i_B)%mat(i_r,i_c))
@@ -130,32 +124,11 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
            call MatSetValue( A, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
            ! The resonant block is hermitian
            call MatSetValue( A, H_pos(2), H_pos(1),   Mij_star, INSERT_VALUES, ierr )
-         if (l_BS_ares_from_res.and.BS_K_coupling) then
-           ! The anti-resonant block is A=-R*
-           !call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1), -Mij_star, INSERT_VALUES, ierr )
-           ! The anti-resonant block is hermitian
-           !call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1)+SL_K_dim(1),      -Mij, INSERT_VALUES, ierr )
-         endif
         case("C")
            call MatSetValue( B, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
            ! Anti-coupling from coupling: the whole BSE matrix is Pseudo-HErmitian
-           if (l_BS_ares_from_res) then
-             ! The coupling block and the anti-coupling block are symmetric
-             call MatSetValue( B, H_pos(2), H_pos(1),       Mij , INSERT_VALUES, ierr )
-           endif
-        case("A")
-         ! The anti-resonant block is hermitial
-         if(BS_res_ares_n_mat==1) then
-           !call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
-           !call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1)+SL_K_dim(1),  Mij_star , INSERT_VALUES, ierr )
-         else
-           !call MatSetValue( slepc_mat, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
-           !call MatSetValue( slepc_mat, H_pos(2), H_pos(1),  Mij_star , INSERT_VALUES, ierr )
-         endif
-        case("Q")
-           !call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
-           ! Coupling from anti-coupling: the whole BSE matrix is Pseudo-HErmitian
-           !call MatSetValue( slepc_mat, H_pos(2), H_pos(1)+SL_K_dim(1), -Mij_star , INSERT_VALUES, ierr )
+           ! The coupling block and the anti-coupling block are symmetric
+           call MatSetValue( B, H_pos(2), H_pos(1),       Mij , INSERT_VALUES, ierr )
         end select
         !
       enddo
@@ -169,6 +142,8 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
  call MatAssemblyBegin(B,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyEnd(B,MAT_FINAL_ASSEMBLY,ierr)
  !
+ ! Create the two shell submatrices and define the required operations
+ !
  call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,AT,ierr)
  call MatShellSetOperation(AT,MATOP_MULT,AT_mat_mult,ierr)
  call MatShellSetOperation(AT,MATOP_MULT_TRANSPOSE,AT_mat_mult_transpose,ierr)
@@ -176,6 +151,8 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
  call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,BHT,ierr)
  call MatShellSetOperation(BHT,MATOP_MULT,BHT_mat_mult,ierr)
  call MatShellSetOperation(BHT,MATOP_MULT_TRANSPOSE,BHT_mat_mult_transpose,ierr)
+ !
+ ! Build the nest matrix
  !
  matArray(1) = A
  matArray(2) = B

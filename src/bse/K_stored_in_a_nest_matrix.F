@@ -43,6 +43,7 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
   use pars,           ONLY:cI,cONE
   use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks
   use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width
+  use cuda_m,         ONLY:have_cuda
   !
   use petscmat
   use slepceps
@@ -73,13 +74,25 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
   !
   call MatCreate(PETSC_COMM_WORLD,A,ierr)
   call MatSetSizes(A,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
-  call MatSetType(A, MATMPIDENSE,ierr)
+  call MatSetType(A,MATMPIDENSE,ierr)
+  if (have_cuda) then
+#ifdef PETSC_HAVE_CUDA
+  call MatSetType(A,MATDENSECUDA,ierr)
+  call MatSetVecType(A,VECCUDA,ierr)
+#endif
+  endif
   call MatSetFromOptions(A,ierr)
   call MatSetUp(A,ierr)
   !
   call MatCreate(PETSC_COMM_WORLD,B,ierr)
   call MatSetSizes(B,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
-  call MatSetType(B, MATMPIDENSE,ierr)
+  call MatSetType(B,MATMPIDENSE,ierr)
+  if (have_cuda) then
+#ifdef PETSC_HAVE_CUDA
+  call MatSetType(B,MATDENSECUDA,ierr)
+  call MatSetVecType(B,VECCUDA,ierr)
+#endif
+  endif
   call MatSetFromOptions(B,ierr)
   call MatSetUp(B,ierr)
   !
@@ -145,10 +158,20 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
  ! Create the two shell submatrices and define the required operations
  !
  call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,AT,ierr)
+ if (have_cuda) then
+#ifdef PETSC_HAVE_CUDA
+ call MatSetVecType(AT,VECCUDA,ierr)
+#endif
+ endif
  call MatShellSetOperation(AT,MATOP_MULT,AT_mat_mult,ierr)
  call MatShellSetOperation(AT,MATOP_MULT_TRANSPOSE,AT_mat_mult_transpose,ierr)
  !
  call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,BHT,ierr)
+ if (have_cuda) then
+#ifdef PETSC_HAVE_CUDA
+ call MatSetVecType(BHT,VECCUDA,ierr)
+#endif
+ endif
  call MatShellSetOperation(BHT,MATOP_MULT,BHT_mat_mult,ierr)
  call MatShellSetOperation(BHT,MATOP_MULT_TRANSPOSE,BHT_mat_mult_transpose,ierr)
  !
@@ -160,6 +183,11 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
  matArray(4) = AT
  itwo = 2
  call MatCreateNest(PETSC_COMM_WORLD,itwo,PETSC_NULL_INTEGER,itwo,PETSC_NULL_INTEGER,matArray,slepc_mat,ierr)
+ if (have_cuda) then
+#ifdef PETSC_HAVE_CUDA
+ call MatSetVecType(slepc_mat,VECCUDA,ierr)
+#endif
+ endif
  !
 end subroutine K_stored_in_a_nest_matrix
 

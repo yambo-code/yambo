@@ -47,8 +47,11 @@ AC_SUBST(enable_keep_extlibs)
 # DP
 AC_ARG_ENABLE(dp, AS_HELP_STRING([--enable-dp],[Double-precision build. Default is no.]))
 def_dp=""
-if test x"$enable_dp" = "x";    then enable_dp="no";     build_precision="single"; fi
+build_precision=""
+if test x"$enable_dp" = "x";    then enable_dp="no"; fi
+if test x"$enable_dp" = "xno" ; then def_dp="";          build_precision="single"; fi
 if test x"$enable_dp" = "xyes"; then def_dp="-D_DOUBLE"; build_precision="double"; fi
+if test x"$build_precision" = "x"; then AC_MSG_ERROR([Non correct specification of compilation precision]); fi
 AC_SUBST(enable_dp)
 AC_SUBST(def_dp)
 AC_SUBST(build_precision)

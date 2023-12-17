@@ -27,6 +27,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  ! Hartree-Fock
  !
+ use iso_c_binding, ONLY:c_loc,c_f_pointer
  use pars,          ONLY:SP,schlen,DP,pi
  use drivers,       ONLY:l_sc_run,l_gw0,l_cohsex,l_real_time
  use com,           ONLY:msg
@@ -62,14 +63,16 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  !Work Space
  !
- type(elemental_collision), target::isc,iscp
- integer                  ::iq,iq_ibz,is_ibz,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band(2),n_lt_bands,n_lt_steps
- complex(DP)              ::DP_Sx, DP_Sx_l
- character(schlen)        ::ch,mode_
+ type(elemental_collision), target :: isc,iscp
+ complex(SP), pointer DEV_ATTR     :: gamp_p(:)
+ integer                  :: iq,iq_ibz,is_ibz,ib,ibp,jb,i_qp
+ integer                  :: Sx_lower_band,Sx_upper_band(2),n_lt_bands,n_lt_steps
+ complex(DP)              :: DP_Sx, DP_Sx_l
+ character(schlen)        :: ch,mode_
  !
  !QP list
  !
- integer              :: ik,ikp,iGp,i_sp_pol
+ integer :: ik,ikp,iGp,i_sp_pol
 
  !
  ! Resets & basis setup
@@ -170,6 +173,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    call DEV_SUB(scatter_Gamp)(isc,'x')
    !
+   ! gamp_p => DEV_VAR(isc%gamp)(:,1)
+   call c_f_pointer(c_loc(isc%gamp), gamp_p, (/size(isc%gamp)/) )
+   !
    if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
    !
    !DEV_OMP do schedule(dynamic)
@@ -244,8 +250,10 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
          call devxlib_memcpy_d2d(DEV_VAR(iscp%rhotw),DEV_VAR(isc%rhotw))
        endif
        !
-       DP_Sx_l=DEV_SUB(Vstar_dot_VV)(isc%ngrho,DEV_VAR(iscp%rhotw),&
-&                                    DEV_VAR(isc%rhotw),DEV_VAR(isc%gamp)(:,1))
+       ! when GPUs are not available, revert on CPUs
+       !
+       DP_Sx_l=Vstar_dot_VV_gpu(isc%ngrho,DEV_VAR(iscp%rhotw),&
+&                               DEV_VAR(isc%rhotw),gamp_p)
        DP_Sx=DP_Sx + DP_Sx_l * ( -4._SP/spin_occ*pi*E%f(jb,ikp,i_sp_pol) )
        !
        if (master_thread.and.is_ibz==1.and.n_lt_steps>0) call live_timing(steps=1)

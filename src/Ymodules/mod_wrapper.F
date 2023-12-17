@@ -455,7 +455,7 @@ module wrapper
    complex(SP) function Vstar_dot_VV_c1_cpu(N,CX,CY,CZ)
      implicit none
      integer,    intent(in) :: N
-     complex(SP),intent(in) :: CX(N),CY(N),CZ(N)
+     complex(SP),intent(in) :: CX(:),CY(:),CZ(:)
 #if defined _DOUBLE
      complex(SP)::zdotc
      Vstar_dot_VV_c1_cpu=ZDOTC(N,CX,1,CY*CZ,1)
@@ -468,21 +468,26 @@ module wrapper
    complex(SP) function Vstar_dot_VV_c1_gpu(N,CX,CY,CZ)
      implicit none
      integer,              intent(in) :: N
-     complex(SP) DEV_ATTR, intent(in) :: CX(N),CY(N),CZ(N)
-     integer :: i
+     complex(SP) DEV_ATTR, intent(in) :: CX(:),CY(:),CZ(:)
+     integer     :: i
+     complex(SP) :: ctmp
      !
      Vstar_dot_VV_c1_gpu=0.0_SP
+     ctmp=0.0
      !
      !DEV_ACC data present(CX,CY,CZ)
      !DEV_ACC parallel loop
      !DEV_CUF kernel do(1) <<<*,*>>>
-     !DEV_OMPGPU target map(present,alloc:CX,CY,CZ)
-     !DEV_OMPGPU teams loop
+     !DEV_OMPGPU target map(present,alloc:CX,CY,CZ) map(tofrom:ctmp)
+     !DEV_OMPGPU teams loop reduction(+:ctmp)
      do i = 1, N
-       Vstar_dot_VV_c1_gpu=Vstar_dot_VV_c1_gpu+conjg(CX(i))*CY(i)*CZ(i)
+       ctmp=ctmp+conjg(CX(i))*CY(i)*CZ(i)
      enddo
      !DEV_OMPGPU end target
      !DEV_ACC end data
+     !
+     Vstar_dot_VV_c1_gpu=ctmp
+     !
    end function Vstar_dot_VV_c1_gpu
    !
    !==============
@@ -544,7 +549,7 @@ module wrapper
    complex(SP) function V_dot_VV_c1_cpu(N,CX,CY,CZ)
      implicit none
      integer,     intent(in) :: N
-     complex(SP), intent(in) :: CX(N),CY(N),CZ(N)
+     complex(SP), intent(in) :: CX(:),CY(:),CZ(:)
 #if defined _DOUBLE
      complex(SP)::zdotu
      V_dot_VV_c1_cpu=ZDOTU(N,CX,1,CY*CZ,1)
@@ -556,7 +561,7 @@ module wrapper
    !
    complex(SP) function V_dot_VV_c1_gpu(N,CX,CY,CZ)
      integer,              intent(in) :: N
-     complex(SP) DEV_ATTR, intent(in) :: CX(N),CY(N),CZ(N)
+     complex(SP) DEV_ATTR, intent(in) :: CX(:),CY(:),CZ(:)
      integer :: i
      !
      V_dot_VV_c1_gpu=0.0_SP
@@ -565,7 +570,7 @@ module wrapper
      !DEV_ACC parallel loop async
      !DEV_CUF kernel do(1) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:CX,CY,CZ)
-     !DEV_OMPGPU teams loop
+     !DEV_OMPGPU teams loop reduction(+:V_dot_VV_c1_gpu)
      do i = 1, N
        V_dot_VV_c1_gpu=V_dot_VV_c1_gpu+CX(i)*CY(i)*CZ(i)
      enddo

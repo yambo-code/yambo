@@ -38,7 +38,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 #endif
  use wave_func,      ONLY:wf_ng
  use timing_m,       ONLY:timing
- use gpu_m,          ONLY:have_gpu
+ use gpu_m,          ONLY:have_gpu,gpu_devsync
  use devxlib,        ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memset_d
  use iso_c_binding,  ONLY:c_null_ptr
  !
@@ -60,6 +60,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  integer :: ln_1,ln_2,ln_3,iv_1,iv_2,iv_3
  integer :: fft_dim_1,fft_dim_2,fft_dim_3
  integer :: temp_1,temp_2,temp_3,i1_max
+ integer,  allocatable :: ivec_GmG(:,:,:)
+ integer,  allocatable DEV_ATTR :: ivec_GmG_d(:,:,:)
 #endif
  
  call timing("FFT_setup",opr="start")
@@ -95,11 +97,11 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  !
  ! SIZE estimation
  !
-#ifdef _GPU
- ln_1=-1
- ln_2=-1
- ln_3=-1
-#endif
+!#ifdef _GPU
+! ln_1=-1
+! ln_2=-1
+! ln_3=-1
+!#endif
  ln=-1
  i4=-1
  do while(.true.)
@@ -109,16 +111,22 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 #endif
    !
 #ifdef _GPU
+   !
    fft_dim_1 = fft_dim(1)
    fft_dim_2 = fft_dim(2)
    fft_dim_3 = fft_dim(3)
    i1_max = min(max(iG_max,wf_ng),ng_vec)
    !
+   YAMBO_ALLOC(ivec_GmG,(iGo_max,i1_max,3))
+   YAMBO_ALLOC_GPU(DEV_VAR(ivec_GmG),(iGo_max,i1_max,3))
+   call devxlib_memset_d(DEV_VAR(ivec_GmG),val=-1)
+   !
    !DEV_ACC data present(g_vec_rot,fft_g_table)
    !DEV_ACC parallel loop collapse(2)
    !DEV_CUF kernel do(2)
    !DEV_OMPGPU target map(present,alloc:g_vec_rot,fft_g_table)
-   !DEV_OMPGPU teams loop collapse(2)
+   !DEV_OMPGPU teams loop collapse(2) private(iv_1,iv_2,iv_3,temp_1,temp_2,temp_3)
+   !!!!!!! &          reduction(max:ln_1,ln_2,ln_3)
    do i1=1,i1_max
      do i2=1,iGo_max
        !
@@ -127,9 +135,12 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
        iv_3 = nint(DEV_VAR(g_vec_rot)(i1,3) - DEV_VAR(g_vec_rot)(i2,3))
        !
        if (i2==1.or.i1<=iG_max) then
-         ln_1=max(ln_1,iv_1)
-         ln_2=max(ln_2,iv_2)
-         ln_3=max(ln_3,iv_3)
+         DEV_VAR(ivec_GmG(i2,i1,1))=iv_1
+         DEV_VAR(ivec_GmG(i2,i1,2))=iv_2
+         DEV_VAR(ivec_GmG(i2,i1,3))=iv_3
+         !ln_1=max(ln_1,iv_1)
+         !ln_2=max(ln_2,iv_2)
+         !ln_3=max(ln_3,iv_3)
        endif
        !
        if (i4>0.and..not.ONLY_SIZE) then
@@ -139,7 +150,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
             if(iv_1<0) temp_1 = mod(temp_1 + fft_dim_1, fft_dim_1)
             if(iv_2<0) temp_2 = mod(temp_2 + fft_dim_2, fft_dim_2)
             if(iv_3<0) temp_3 = mod(temp_3 + fft_dim_3, fft_dim_3)
-
+            !
             DEV_VAR(fft_g_table)(i1,i2)=1+temp_1+&
 &                                  temp_2*fft_dim_1+&
 &                                  temp_3*fft_dim_1*fft_dim_2
@@ -150,6 +161,22 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    !DEV_OMPGPU end target
    !DEV_ACC end data
    !
+   if (i4>0.and..not.ONLY_SIZE) then
+     ! D2H fft_g_table <= fft_g_table_d
+     call devxlib_memcpy_d2h(fft_g_table,DEV_VAR(fft_g_table))
+   endif
+   !
+   call devxlib_memcpy_d2h(ivec_GmG,DEV_VAR(ivec_GmG))
+   ln(1)=maxval(ivec_GmG(:,:,1))
+   ln(2)=maxval(ivec_GmG(:,:,2))
+   ln(3)=maxval(ivec_GmG(:,:,3))
+   !ln(1) = ln_1
+   !ln(2) = ln_2
+   !ln(3) = ln_3
+   !
+   YAMBO_FREE_GPU(DEV_VAR(ivec_GmG))
+   YAMBO_FREE(ivec_GmG)
+   !
 #else
    do i1=1,min(max(iG_max,wf_ng),ng_vec)
      do i2=1,iGo_max
@@ -158,42 +185,35 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
        iv=nint(v1)
        !
        if (i2==1.or.i1<=iG_max) forall(i3=1:3) ln(i3)=max(ln(i3),iv(i3))
-#if defined _FFTQE
+#  if defined _FFTQE
        if (i4>0.and..not.ONLY_SIZE) fft_g_table(i1,i2)=fft_setmap(iv,dffts)
-#else
+#  else
        if (i4>0.and..not.ONLY_SIZE) fft_g_table(i1,i2)=1+modx(iv(1),fft_dim(1))+&
 &                                   modx(iv(2),fft_dim(2))*fft_dim(1)+&
 &                                   modx(iv(3),fft_dim(3))*fft_dim(1)*fft_dim(2)
-#endif
+#  endif
      enddo
    enddo
 #endif
    !
-#ifdef _GPU
-   if (i4>0.and..not.ONLY_SIZE) then
-     ! D2H fft_g_table <= fft_g_table_d
-     call devxlib_memcpy_d2h(fft_g_table,DEV_VAR(fft_g_table))
-   endif
-   ln(1) = ln_1
-   ln(2) = ln_2
-   ln(3) = ln_3
-#endif
    !
    ln=ln*fft_multiplier
-   !
    call fft_best_size(ln)
+   !
    if (i4>0) then
       call timing("FFT_setup",opr="stop")
       YAMBO_FREE_GPU(DEV_VAR(g_vec_rot))
       YAMBO_FREE(g_vec_rot)
       return
    endif
+   !
    fft_dim=ln
    fft_size=product(fft_dim)
    ! to avoid issues with CUDA
    fft_size=max(fft_size,1)
    !
    fft_norm=sqrt(1._SP/real(fft_size,SP))
+   !
    if (ONLY_SIZE) then
      i4=1
      cycle

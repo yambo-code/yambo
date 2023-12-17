@@ -43,7 +43,7 @@ case "${host}" in
 i?86*linux*)
   case "${FC}" in
   *ftn* )
-    SYSFLAGS="-O2 -g -emf -eZ"
+    SYSFLAGS="-O1 -g -emf -eZ"
     FUFLAGS="-O0 -g -emf  -eZ"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
@@ -199,7 +199,7 @@ i?86*linux*)
 ia64*linux* )
   case "${FC}" in
   *ftn* )
-    SYSFLAGS="-O2 -g -emf -eZ"
+    SYSFLAGS="-O1 -g -emf -eZ"
     FUFLAGS="-O0 -g -emf  -eZ"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
@@ -288,7 +288,7 @@ ia64*linux* )
 *x86*64* )
   case "${FC}" in
   *ftn* )
-    SYSFLAGS="-O2 -g -emf -eZ"
+    SYSFLAGS="-O1 -g -emf -eZ"
     FUFLAGS="-O0 -g -emf  -eZ"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"

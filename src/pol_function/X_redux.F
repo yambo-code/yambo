@@ -249,8 +249,8 @@ subroutine X_redux(iq,what,X_par,Xw,X)
      ! Linear System
      !
      if (compute_on_gpu) then
-       call devxlib_memcpy_d2d(BUFFER_p(:,:,BUFFER%I), Xo_p(:,:,1))
-!       call devxlib_memcpy_d2d(DEV_VAR(BUFFER%blc)(:,:,BUFFER%I), DEV_VAR(Xo%blc)(:,:,1))
+       !call devxlib_memcpy_d2d(BUFFER_p(:,:,BUFFER%I), Xo_p(:,:,1))
+       call devxlib_memcpy_d2d(DEV_VAR(BUFFER%blc)(:,:,BUFFER%I), DEV_VAR(Xo%blc)(:,:,1))
      else
        BUFFER%blc(:,:,BUFFER%I) =  Xo%blc(:,:,1)
      endif

@@ -116,7 +116,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
      !
      call DEV_SUB(WF_symm_kpoint)((/1,Dip%ib(2)/),ikbz,Xk,WF_symm)
      !  
-     call WF_shift_kpoint((/1,Dip%ib(2)/),ikbz,WF_shifts(ikbz,:),Xk,WF_symm,WF_ik)
+     call DEV_SUB(WF_shift_kpoint)((/1,Dip%ib(2)/),ikbz,WF_shifts(ikbz,:),Xk,WF_symm,WF_ik)
      !
      call WF_free(WF)
      !
@@ -154,7 +154,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            if(WF_shifts(ikbzp,id)==2) shift(id)=0
          endif
          !
-         call WF_shift_kpoint((/1,Dip%ib(2)/),ikbzp,shift,Xk,WF_symm,WF_ikp)
+         call DEV_SUB(WF_shift_kpoint)((/1,Dip%ib(2)/),ikbzp,shift,Xk,WF_symm,WF_ikp)
          !
          call WF_free(WF)
          !

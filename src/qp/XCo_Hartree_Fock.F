@@ -49,7 +49,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use openmp,        ONLY:OPENMP_update,master_thread,n_threads_SE
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:WF_load,QP_state_print
- use wrapper,       ONLY:DEV_SUB(Vstar_dot_VV)
+ use wrapper,       ONLY:Vstar_dot_VV_gpu
  use global_XC,     ONLY:WF_exx_screening
  use pseudo,        ONLY:becp, pp_is_uspp
  use qe_pseudo_m,   ONLY:beccopy

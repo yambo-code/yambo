@@ -550,11 +550,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
            !DEV_ACC parallel loop collapse(2) private(PPA_E,PPA_R,l_rim_W_g,bose_PPA_E,ctmp) &
            !DEV_ACC               reduction(+:dp_dummy_r,dp_dummy_i)
            !DEV_CUF kernel do(2)
-           !DEV_OMPGPU target map(present,alloc:X_mat,RIM_W,isc_gamp_p,isc_rhotw_p,iscp_rhotw_p)
+           !DEV_OMPGPU target map(present,alloc:X_mat,RIM_W,isc_gamp_p,isc_rhotw_p,iscp_rhotw_p) &
+           !DEV_OMPGPU &      map(tofrom:dp_dummy_r,dp_dummy_i)
            !DEV_OMPGPU teams loop collapse(2) private(PPA_E,PPA_R,l_rim_W_g,bose_PPA_E,ctmp) &
            !DEV_OMPGPU &          reduction(+:dp_dummy_r,dp_dummy_i)
-      ! AF_FIX: check whether the reduction and private clauses are needed and
-      ! properly ritten
+           !
            do ig2=1,Xng
              do ig1=1,Xng
                !

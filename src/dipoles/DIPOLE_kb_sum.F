@@ -35,7 +35,7 @@ subroutine DIPOLE_kb_project(pp_range,ib_range,ib,i_wf,wf_ncx,nbndx,npp,pp_dim_y
 #if defined _CUDAF
  use cudafor,       ONLY:c_devloc
 #endif
- use devxlib,       ONLY:devxlib_xGEMM_gpu
+use devxlib,       ONLY:devxlib_xGEMM_gpu
  !
  implicit none
  !
@@ -49,6 +49,9 @@ subroutine DIPOLE_kb_project(pp_range,ib_range,ib,i_wf,wf_ncx,nbndx,npp,pp_dim_y
  integer     :: dim_flat
  complex(SP) DEV_ATTR, pointer :: kbv_p(:,:),XX_p(:,:)
  complex(SP) DEV_ATTR, pointer :: WF_p(:,:)
+
+! XXX
+!integer :: ierr
  
  WF_p => WF(:,:,i_wf)
  dim_flat=n_spinor*4*npp

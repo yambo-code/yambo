@@ -95,8 +95,8 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
          !DEV_ACC data present(WF_p,g_vec,wf_igk)
          !DEV_ACC parallel loop private(ig,rho_acc) reduction(+:rho_acc_r,rho_acc_i)
          !DEV_CUF kernel do(1)
-         !DEV_OMPGPU target map(present,alloc:WF_p,g_vec,wf_igk)
-         !DEV_OMPGPU teams loop
+         !DEV_OMPGPU target map(present,alloc:WF_p,g_vec,wf_igk) map(tofrom:rho_acc_r,rho_acc_i)
+         !DEV_OMPGPU teams loop private(ig,rho_acc) reduction(+:rho_acc_r,rho_acc_i)
          do ic=1,wf_nc_ik
            ig=DEV_VAR(wf_igk)(ic,ik)
            rho_acc= conjg(WF_p(ic,i_spinor,iv_wf))*(xk_i1+DEV_VAR(g_vec)(ig,i1))*2.0_SP*pi/alat_i1* &
@@ -120,7 +120,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
      !DEV_ACC data present(WF_p,g_vec,wf_igk)
      !DEV_ACC parallel loop collapse(2) private(ig,rho_acc) reduction(+:rho_acc_r,rho_acc_i)
      !DEV_CUF kernel do(2)
-     !DEV_OMPGPU target map(present,alloc:WF_p,g_vec,wf_igk)
+     !DEV_OMPGPU target map(present,alloc:WF_p,g_vec,wf_igk) map(tofrom:rho_acc_r,rho_acc_i)
      !DEV_OMPGPU teams loop collapse(2) private(ig,rho_acc) reduction(+:rho_acc_r,rho_acc_i)
      do i_spinor=1,n_spinor
      do ic=1,wf_nc_ik
@@ -147,14 +147,14 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
 #else
    !
    wf_grad=cZERO
-   !$omp parallel do default(shared), private(ic,ig,i_spinor), collapse(2)
+   !DEV_OMP parallel do default(shared), private(ic,ig,i_spinor), collapse(2)
    do i_spinor=1,n_spinor
      do ic=1,wf_nc_k(ik)
        ig=wf_igk(ic,ik)
        wf_grad(ic,i_spinor)=WF_p(ic,i_spinor,iv_wf)*(Xk%pt(ik,i1)+g_vec(ig,i1))*2.0_SP*pi/alat(i1)
      enddo
    enddo
-   !$omp end parallel do
+   !DEV_OMP end parallel do
    !
    ! WARNING: 
    ! ========
@@ -192,7 +192,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
 enddo
  !
  if(l_eval_P2) then
-   !$omp parallel do default(shared), private(ic,ig,i_spinor), collapse(2)
+   !DEV_OMP parallel do default(shared), private(ic,ig,i_spinor), collapse(2)
    do i_spinor=1,n_spinor
      do ic=1,wf_nc_k(ik)
        ig=wf_igk(ic,ik)
@@ -202,7 +202,7 @@ enddo
 &                      + (Xk%pt(ik,3) + g_vec(ig,3))**2 * (2.0_SP*pi/alat(3))**2 )
      enddo
    enddo
-   !$omp end parallel do
+   !DEV_OMP end parallel do
    P2=Vstar_dot_V_omp(wf_nc_k(ik)*n_spinor,wf_der_sq(:wf_nc_k(ik),:),WF_p(:wf_nc_k(ik),:,ic_wf))
  endif
  !

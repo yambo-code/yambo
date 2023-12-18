@@ -28,6 +28,7 @@ module gpu_m
   use devxlib_environment
   use devxlib_cublas
   use devxlib_memcpy
+  use devxlib_linalg
   !use cusolverdn
   use cusolverdn_y
 # if defined _CUDAF
@@ -256,6 +257,10 @@ contains
     async_d       =stream_d
     !
 #endif
+    !
+    ! basic LinAlg functionalities of devxlib
+    !
+    call dev_linalg_setup()
     !
   end subroutine gpu_setup
   !

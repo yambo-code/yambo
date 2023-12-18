@@ -173,8 +173,10 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    call DEV_SUB(scatter_Gamp)(isc,'x')
    !
-   ! gamp_p => DEV_VAR(isc%gamp)(:,1)
-   call c_f_pointer(c_loc(isc%gamp), gamp_p, (/size(isc%gamp)/) )
+   gamp_p => DEV_VAR(isc%gamp)(:,1)
+   !
+   ! AF: Alternative coding to be removed if not needed
+   !call c_f_pointer(c_loc(isc%gamp), gamp_p, (/size(isc%gamp)/) )
    !
    if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
    !

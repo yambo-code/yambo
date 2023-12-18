@@ -563,19 +563,23 @@ module wrapper
      integer,              intent(in) :: N
      complex(SP) DEV_ATTR, intent(in) :: CX(:),CY(:),CZ(:)
      integer :: i
+     complex(SP) :: ctmp
      !
      V_dot_VV_c1_gpu=0.0_SP
+     ctmp=0.0_SP
      !
      !DEV_ACC data present(CX,CY,CZ)
      !DEV_ACC parallel loop async
      !DEV_CUF kernel do(1) <<<*,*>>>
-     !DEV_OMPGPU target map(present,alloc:CX,CY,CZ)
-     !DEV_OMPGPU teams loop reduction(+:V_dot_VV_c1_gpu)
+     !DEV_OMPGPU target map(present,alloc:CX,CY,CZ) map(tofrom:ctmp)
+     !DEV_OMPGPU teams loop reduction(+:ctmp)
      do i = 1, N
-       V_dot_VV_c1_gpu=V_dot_VV_c1_gpu+CX(i)*CY(i)*CZ(i)
+       ctmp=ctmp+CX(i)*CY(i)*CZ(i)
      enddo
      !DEV_OMPGPU end target
      !DEV_ACC end data
+     !
+     V_dot_VV_c1_gpu=ctmp
    end function V_dot_VV_c1_gpu
    !
    !=========

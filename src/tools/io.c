@@ -23,6 +23,7 @@
 #include <string.h>
 #include <wrapper.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 void C_FUNC(imkdir, IMKDIR)
                  (char *name) 

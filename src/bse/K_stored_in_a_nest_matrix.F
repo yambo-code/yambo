@@ -28,6 +28,20 @@ module shellmat_module
   Mat::A,B
 end module shellmat_module
 
+subroutine ignore_petsc_error_handler(comm,line,fun,file,n,p,mess,ctx,ierr)
+!
+! Handler to ignore error if MatMultHermitianTranspose cannot be set.
+! This operation is only available for shell matrices in PETSc from v.3.21
+! Setting MatMultTranspose is enough, but it is preferable to set both.
+!
+  use petscsysdef
+  integer line,n,p
+  PetscInt ctx 
+  PetscErrorCode ierr
+  MPI_Comm comm
+  character*(*) fun,file,mess
+end subroutine ignore_petsc_error_handler
+
 subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
 !
 ! K is stored in a PETSc nest matrix, taking advantage of the four block structure
@@ -65,7 +79,10 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
   PetscInt            :: itwo
   PetscErrorCode      :: ierr
   !
-  external AT_mat_mult, BHT_mat_mult, AT_mat_mult_transpose, BHT_mat_mult_transpose
+  external AT_mat_mult,BHT_mat_mult,& 
+           AT_mat_mult_transpose,BHT_mat_mult_transpose,&
+           AT_mat_mult_hermitian_transpose,BHT_mat_mult_hermitian_transpose,&
+           ignore_petsc_error_handler
   !
   SL_H_dim=BS_H_dim
   SL_K_dim=BS_K_dim
@@ -165,6 +182,9 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
  endif
  call MatShellSetOperation(AT,MATOP_MULT,AT_mat_mult,ierr)
  call MatShellSetOperation(AT,MATOP_MULT_TRANSPOSE,AT_mat_mult_transpose,ierr)
+ call PetscPushErrorHandler(ignore_petsc_error_handler,PETSC_NULL_INTEGER,ierr)
+ call MatShellSetOperation(AT,MATOP_MULT_HERMITIAN_TRANSPOSE,AT_mat_mult_hermitian_transpose,ierr)
+ call PetscPopErrorHandler(ierr)
  !
  call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,BHT,ierr)
  if (have_cuda) then
@@ -174,6 +194,9 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
  endif
  call MatShellSetOperation(BHT,MATOP_MULT,BHT_mat_mult,ierr)
  call MatShellSetOperation(BHT,MATOP_MULT_TRANSPOSE,BHT_mat_mult_transpose,ierr)
+ call PetscPushErrorHandler(ignore_petsc_error_handler,PETSC_NULL_INTEGER,ierr)
+ call MatShellSetOperation(BHT,MATOP_MULT_HERMITIAN_TRANSPOSE,BHT_mat_mult_hermitian_transpose,ierr)
+ call PetscPopErrorHandler(ierr)
  !
  ! Build the nest matrix
  !
@@ -234,15 +257,47 @@ subroutine BHT_mat_mult_transpose(M,X,F,ierr)
   use shellmat_module
   implicit none
   Mat     M
-  Vec     X,F
+  Vec     X,X_conjugate,F
   PetscScalar mone
   PetscErrorCode ierr
-  call VecConjugate(X,ierr)
-  call MatMult(B,X,F,ierr)
+  call VecDuplicate(X,X_conjugate,ierr)
+  call VecCopy(X,X_conjugate,ierr)
+  call VecConjugate(X_conjugate,ierr)
+  call MatMult(B,X_conjugate,F,ierr)
   mone = -1.0
   call VecConjugate(F,ierr)
   call VecScale(F,mone,ierr)
-  call VecConjugate(X,ierr)
+  call VecDestroy(X_conjugate,ierr)
   return
 end subroutine BHT_mat_mult_transpose
 
+subroutine AT_mat_mult_hermitian_transpose(M,X,F,ierr)
+  use shellmat_module
+  implicit none
+  Mat     M
+  Vec     X,X_conjugate,F
+  PetscScalar mone
+  PetscErrorCode ierr
+  call VecDuplicate(X,X_conjugate,ierr)
+  call VecCopy(X,X_conjugate,ierr)
+  call VecConjugate(X_conjugate,ierr)
+  call MatMult(A,X_conjugate,F,ierr)
+  mone = -1.0
+  call VecConjugate(F,ierr)
+  call VecScale(F,mone,ierr)
+  call VecDestroy(X_conjugate,ierr)
+  return
+end subroutine AT_mat_mult_hermitian_transpose
+
+subroutine BHT_mat_mult_hermitian_transpose(M,X,F,ierr)
+  use shellmat_module
+  implicit none
+  Mat     M
+  Vec     X,F
+  PetscScalar mone
+  PetscErrorCode ierr
+  call MatMult(B,X,F,ierr)
+  mone = -1.0
+  call VecScale(F,mone,ierr)
+  return
+end subroutine BHT_mat_mult_hermitian_transpose

@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
-!            http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): MG CA
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine NL_initialize(E,k)
  ! 
@@ -162,15 +146,16 @@ subroutine NL_initialize(E,k)
  !
  call msg('s','[NL] Number of active fields : ',n_active_fields)
  !
- if(n_active_fields>1.or.all(NL_er<0._SP)) then
+ if(all(NL_er<0._SP)) then
    l_pump_and_probe=.true.
    l_NE_with_fields=.true.
    call msg('s', '[NL] Variables NLEnSteps and NLEnRange are ignored ')
    call msg('sr','[NL] Pump and probe configuration: verbosity set to high')
-   if(n_frequencies/=1) call error("NLEnSteps /=1 not compatible with Pump and Probe ")
    NL_verbosity=VERB_HIGH
- elseif((Efield(1)%ef_name/='none').and.all(Efield(2:3)%ef_name=='none')) then
+ else
    call msg('sr','[NL] Non-linear optics configuration')
+   call msg('sr','[NL] Loop on frequencies of the first field ')
+   call warning('Variables Field1_Freq and Field1_NFreqs ignored')
  endif
  !
  if(.not.l_pump_and_probe.and.Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &

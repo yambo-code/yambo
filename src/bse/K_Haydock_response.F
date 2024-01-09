@@ -1,31 +1,15 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2020 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM MG DS IMA
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_threshold,FG_factor)
  !
  use pars,           ONLY:SP,cZERO,cONE,pi
  use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,skip_cond_sum_rule, &
-&                         X_magnons,Epsilon_ij
+&                         X_magnons,Epsilon_ij,i_G_shift
  use R_lattice,      ONLY:bare_qpg
  use frequency,      ONLY:w_samp
  use BS,             ONLY:BSE_mode,l_BS_anomalous_Hall
@@ -94,7 +78,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
  !endif
  ! DEBUG >
  !
- if(.not.trim(global_gauge)=='velocity') gauge_factor=cONE*Co/bare_qpg(iq,1)**2
+ if(.not.trim(global_gauge)=='velocity') gauge_factor=cONE*Co/bare_qpg(iq,i_G_shift)**2
  !
  if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
  if (use_Cf) allocate(X_i(2,it))
@@ -254,7 +238,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
    if (trim(OBS)=="optics") then
      Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor*FG_factor 
      if (BSS_eels_to_eps) Epsilon_ii(iw,i_eps(:))=(1._SP-Epsilon_ii(iw,i_eps(:)))**(-1)-1._SP
-     Epsilon_ii(iw,i_eps(:))=Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*4._SP*pi/bare_qpg(iq,1)**2
+     Epsilon_ii(iw,i_eps(:))=Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*4._SP*pi/bare_qpg(iq,i_G_shift)**2
    endif
    !
    ! I add the term describing the Anomalous Hall effect which is
@@ -262,7 +246,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
    !
    if (l_BS_anomalous_Hall.and.trim(OBS)=="kerr") then
      if (trim(global_gauge)=='length') then
-       B_Hall(2)=B_Hall(2)*Co/bare_qpg(iq,1)**2
+       B_Hall(2)=B_Hall(2)*Co/bare_qpg(iq,i_G_shift)**2
        Epsilon_ij(iw,2)=Epsilon_ij(iw,2)+B_Hall(2)/W%p(iw)
      else if (trim(global_gauge)=='velocity') then
        B_Hall(2)=B_Hall(2)*Co

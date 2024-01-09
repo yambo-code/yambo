@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, MG
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2006 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AM MG
 !
 module BS
  !
@@ -240,8 +224,12 @@ module BS
    ! ... correlation
    !------------------
    integer                       :: N_oscillators 
-   integer,     allocatable      :: kp_table(:,:)           ! 2,nkibz @ k = (i_kmq,i_pmq)
-   integer,     allocatable      :: O_table(:,:,:,:,:,:,:)  ! 2,sym,nkmq,npmq,n,n',spin @ k = (iOnn,i_block_ref)
+   integer,     allocatable      :: kp_table(:,:)            ! 2,nkibz @ k = (i_kmq,i_pmq)
+   ! O_table is used by the std algorithm
+   integer,     allocatable      :: O_table(:,:,:,:,:,:,:)   ! 2,sym,nkmq,npmq,n,n',spin @ k = (iOnn,i_block_ref)
+   ! O_table1 and O_table2 are used by the dir algorithm
+   integer,     allocatable      :: O_table1(:,:,:,:,:,:,:)  ! symk,symp,nkmq,npmq,n,n',spin @ k = iOnn
+   integer,     allocatable      :: O_table2(:,:,:,:,:,:,:)  ! symk,symp,nkmq,npmq,n,n',spin @ k = i_block_ref
    complex(SP), allocatable      :: O_c(:,:)
 #ifdef _CUDA
    complex(SP), allocatable, device :: O_c_d(:,:)
@@ -328,11 +316,15 @@ module BS
      do iB=iB_ref,1,-1
        ik_loop=BS_blk(iB)%ik
        ip_loop=BS_blk(iB)%ip
-       if ( ik_now==ik_loop .and. ip_now==ip_loop ) cycle
        if ( ik_now==ik_loop .and. ip_now==ip_loop .and. .not.l_BSE_minimize_memory ) cycle
        if (.not.allocated(BS_blk(iB)%O_c)) exit
        YAMBO_FREE(BS_blk(iB)%O_c)
-       YAMBO_FREE(BS_blk(iB)%O_table)
+       if (allocated(BS_blk(iB)%O_table)) then
+         YAMBO_FREE(BS_blk(iB)%O_table)
+       else if (allocated(BS_blk(iB)%O_table1)) then
+         YAMBO_FREE(BS_blk(iB)%O_table1)
+         YAMBO_FREE(BS_blk(iB)%O_table2)
+       endif
        YAMBO_FREE(BS_blk(iB)%kp_table)
 #ifdef _CUDA
        if (allocated(BS_blk(iB)%O_c_d)) deallocate(BS_blk(iB)%O_c_d)

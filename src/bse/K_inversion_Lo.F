@@ -1,32 +1,17 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo) 
  !
  use pars,           ONLY:SP,cZERO,cI,pi,rZERO,schlen
  use R_lattice,      ONLY:bz_samp,bare_qpg
  use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,l_drude,X_Double_Grid_setup,&
-&                         X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,skip_cond_sum_rule,X_do_obs
+&                         X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,skip_cond_sum_rule,X_do_obs,&
+&                         i_G_shift
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
  use BS_solvers,     ONLY:Co_factor,diam_term_exact,BSS_dipoles_opt,BSS_uses_DbGd,&
@@ -221,10 +206,10 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
    if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
    !
-   if(trim(global_gauge)=="length")   Epsilon_ii(:,i_eps)= Epsilon_ii(:,i_eps)                *Co_factor/bare_qpg(iq,1)**2
+   if(trim(global_gauge)=="length")   Epsilon_ii(:,i_eps)= Epsilon_ii(:,i_eps)                *Co_factor/bare_qpg(iq,i_G_shift)**2
    if(trim(global_gauge)=="velocity") Epsilon_ii(:,i_eps)=(Epsilon_ii(:,i_eps)-diam_term_used)*Co_factor/    W%p(:)    **2
    !
-   if (l_drude) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+X_drude_term(:)*4._SP*pi/bare_qpg(iq,1)**2
+   if (l_drude) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+X_drude_term(:)*4._SP*pi/bare_qpg(iq,i_G_shift)**2
    if (skip_cond_sum_rule) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+(para_term_w0-diam_term_exact)*Co_factor/ W%p(:)**2
    !
  enddo

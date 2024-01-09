@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, MG, DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2006 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AM MG DS
 !
 ! headers
 !
@@ -460,7 +444,7 @@ subroutine K_diago_driver(iq,W,X_static)
        BSS_n_eig = 1
      endif
      !
-     call PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+     call SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
      !
    end subroutine K_slepc_local_init
    !
@@ -474,6 +458,7 @@ subroutine K_diago_driver(iq,W,X_static)
        call PARALLEL_Haydock_VEC_COMMs('reset')
      endif
      !
+     call SlepcFinalize(ierr)
    end subroutine K_slepc_local_free
 #endif
    !

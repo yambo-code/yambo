@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2022 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM CA DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
@@ -28,7 +12,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use collision_ext, ONLY:COLLISIONS_element,COLLISIONS_group,LAST_COLL_sync,PAR_COLL_min
  use IO_m,          ONLY:io_sec,io_status,IO_OUTDATED_DB,read_is_on,IO_mode,io_unit,&
-&                        VERIFY,io_extension,write_is_on,nf90_sync,netcdf_call
+&                        VERIFY,io_extension,write_is_on,nf90_sync,netcdf_call,YAMBO_DEF_CHUNK
  use IO_int,        ONLY:io_connect,io_header,io_elemental,ver_is_gt_or_eq,io_fragment, &
 &                        io_variable_bulk,def_variable_bulk,io_disconnect
  use global_XC,     ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED
@@ -50,7 +34,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
  character(1)      :: TMP_VAR(1)
  character(schlen) :: db_name
- integer           :: i_coll,stat
+ integer           :: i_coll,stat,COLL_chunksize(3)
  logical           :: def1,def2,io2,io3,io4,file_sync
  !
  call timing('io_COLLISIONS',OPR='start')
@@ -89,7 +73,13 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    !
    if(COLL%kind==QP_SE_GW_NEQ.or.COLL%kind==QP_SE_GW_QED) then
      ! Real collisions
-     if(def2) call def_variable_bulk(ID,'COLLISIONS_v',2,(/COLL_element%N,COLL%N/),SP,par_io_kind='independent')
+     if(def2) then
+       COLL_chunksize(1:2)=YAMBO_DEF_CHUNK
+       if (COLL_element%N<YAMBO_DEF_CHUNK) COLL_chunksize(1)=COLL_element%N
+       if (COLL%N<YAMBO_DEF_CHUNK)         COLL_chunksize(2)=0
+       call def_variable_bulk(ID,'COLLISIONS_v',2,(/COLL_element%N,COLL%N/),SP,&
+       &                      par_io_kind='independent',chunksize=COLL_chunksize(1:2))
+     endif
      if(io3 ) then
        call C_F_POINTER(C_LOC(COLL_element%v_r),tmp_link_real,(/COLL_element%N,1/))
        call  io_variable_bulk(ID,2,R2=tmp_link_real,IPOS=(/1,i_coll/))
@@ -97,7 +87,14 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
      endif
    else
      ! Complex collisions
-     if(def2) call def_variable_bulk(ID,'COLLISIONS_v',2,(/2,COLL_element%N,COLL%N/),SP,par_io_kind='independent')
+     if(def2) then
+       COLL_chunksize(1)=2
+       COLL_chunksize(2:3)=YAMBO_DEF_CHUNK
+       if (COLL_element%N<YAMBO_DEF_CHUNK) COLL_chunksize(2)=COLL_element%N
+       if (COLL%N<YAMBO_DEF_CHUNK)         COLL_chunksize(3)=0
+       call def_variable_bulk(ID,'COLLISIONS_v',2,(/2,COLL_element%N,COLL%N/),SP,&
+       &                      par_io_kind='independent',chunksize=COLL_chunksize(1:2))
+     endif
      if(io3 ) then
        call C_F_POINTER(C_LOC(COLL_element%v_c),tmp_link_complex,(/COLL_element%N,1/))
        call  io_variable_bulk(ID,2,C2=tmp_link_complex,IPOS=(/1,1,i_coll/))

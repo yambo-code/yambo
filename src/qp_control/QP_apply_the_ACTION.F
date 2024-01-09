@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2017 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
  !
@@ -80,9 +64,9 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
      endif
    endif
    !
-   do ib=bands(1),bands(2)
+   do ik=1,E%nk
      !
-     do ik=1,E%nk
+     do ib=bands(1),bands(2)
        !
        if (allocated(QP_action(i_ACTION)%STATES_done)) then
           if (QP_action(i_ACTION)%STATES_done(ib,ik,i_spin)==1) cycle
@@ -110,6 +94,11 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
        endif
        !
      enddo
+     !
+     if(bands(1)>1) E%E(:bands(1)-1,ik,i_spin)=E%E(:bands(1)-1,ik,i_spin)+ &
+     &                        E%E(bands(1),ik,i_spin)-E%Eo(bands(1),ik,i_spin)
+     if(bands(2)<E%nb) E%E(bands(2)+1:,ik,i_spin)=E%E(bands(2)+1:,ik,i_spin)+ &
+     &                        E%E(bands(2),ik,i_spin)-E%Eo(bands(2),ik,i_spin)
      !
    enddo
    !

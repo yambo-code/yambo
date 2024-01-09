@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module vec_operate
  !
@@ -183,11 +167,17 @@ module vec_operate
      !
      select case(plane)
        case('xy')
-         M=reshape((/cos(t),-sin(t),rZERO,sin(t),cos(t),rZERO,rZERO,rZERO,rONE/),(/3,3/))
+         M=reshape((/cos(t),-sin(t),rZERO, sin(t),cos(t),rZERO,rZERO,rZERO,rONE/),(/3,3/))
+       case('yx')
+         M=reshape((/cos(t), sin(t),rZERO,-sin(t),cos(t),rZERO,rZERO,rZERO,rONE/),(/3,3/))
        case('xz')
-         M=reshape((/cos(t),rZERO,-sin(t),sin(t),rZERO,cos(t),rZERO,rONE,rZERO/),(/3,3/))
+         M=reshape((/cos(t),rZERO,-sin(t),rZERO,rONE,rZERO, sin(t),rZERO,cos(t)/),(/3,3/))
+       case('zx')
+         M=reshape((/cos(t),rZERO, sin(t),rZERO,rONE,rZERO,-sin(t),rZERO,cos(t)/),(/3,3/))
        case('yz')
-         M=reshape((/rZERO,cos(t),-sin(t),rZERO,sin(t),cos(t),rONE,rZERO,rZERO/),(/3,3/))
+         M=reshape((/rONE,rZERO,rZERO,rZERO,cos(t),-sin(t),rZERO, sin(t),cos(t)/),(/3,3/))
+       case('zy')
+         M=reshape((/rONE,rZERO,rZERO,rZERO,cos(t), sin(t),rZERO,-sin(t),cos(t)/),(/3,3/))
      end select
      !
      v_loc=matmul(M,v_in)

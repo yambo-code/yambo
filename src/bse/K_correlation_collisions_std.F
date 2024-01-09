@@ -1,27 +1,20 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, DS, HM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2015 The Yambo Team
 !
-! This program is distributed in the hope that it Will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
+! Authors (see AUTHORS file for details): AM DS HM
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!************************* WARNING **************************
+!* In this subroutine there is a bug for finite q (iq/=1)   *
+!* plus spin-orbit that we were not able to solve yet.      * 
+!* An alternative subroutine that applies symmetries in a   *
+!* different way is proposed K_correlation_collisions_dir.F *
+!* This second subroutine is automatically called when      *
+!* iq/=1 and spin_orbit is present.                         *
+!************************************************************
 !
-subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
+subroutine K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
  !
  ! This routine evaluates the correlation collisions:
  !
@@ -466,4 +459,4 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
      O_todo_table(i_s_collision,ikit,ikot,ibi,ibo,i_sp_pol_i) = .false.
    end subroutine
    !
-end subroutine K_correlation_collisions
+end subroutine K_correlation_collisions_std

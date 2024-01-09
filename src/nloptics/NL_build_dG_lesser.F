@@ -1,30 +1,16 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): MG CA
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine NL_build_dG_lesser(en,V_bands,dG) 
  !
  ! Construct dG = G_lesser(t) - G_lesser(t=0) 
  ! from the time-dependent valence bands
+ !
+ ! \rho(i1,i2,ik) = \sum_{iv}^{N_v}  V*(i2,iv,ik) V(i1,iv,ik)
  !
  use pars,           ONLY:SP,cI,cZERO
  use electrons,      ONLY:levels,spin_occ,n_sp_pol

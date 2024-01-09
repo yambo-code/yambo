@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): CH DS
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function e2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
@@ -35,7 +19,8 @@ integer function e2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use pseudo,              ONLY: PP_alloc_abinit, PP_free
  use R_lattice,           ONLY: bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY: wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
- use IO_m,                ONLY: io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number
+ use IO_int,              ONLY: io_control
+ use IO_m,                ONLY: OP_WR_CL,NONE,OP_APP_CL,serial_number
  use mod_com2y,           ONLY: interface_presets, force_noWFs
  use mod_wf2y,            ONLY: WF_splitter
  !

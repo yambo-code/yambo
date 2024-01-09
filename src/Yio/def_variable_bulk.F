@@ -1,27 +1,11 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, HM, DS
+! Copyright (C) 2018 The Yambo Team
 !
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
+! Authors (see AUTHORS file for details): AM HM DS
 !
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind,silent)
+subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind,silent,chunksize)
  !
  use netcdf
  use com,        ONLY:fat_log
@@ -40,6 +24,7 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
  character(schlen), optional, intent(in) :: dim_names(:)
  character(*),      optional, intent(in) :: par_io_kind
  logical,           optional, intent(in) :: silent
+ integer,           optional, intent(in) :: chunksize(:) ! Chunking parameter
  !
  ! Work Space
  !
@@ -102,6 +87,14 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
      if (present(par_io_kind).and.io_PAR_comm(ID)/=mpi_comm_null) then
        nf_error=nf90_var_par_access(io_unit(ID), io_netcdf_var(ID,VAR_ID), netcdf_par_io_kind)
        call netcdf_call(nf_error,ID,VAR=VAR)
+     endif
+     ! Add chunking to the variable. 
+     if (present(chunksize)) then
+       if (PRODUCT(chunksize)>0) then
+         ! Only chuck if all the dims are greater than 0
+         nf_error = nf90_def_var_chunking(io_unit(ID), io_netcdf_var(ID,VAR_ID), NF90_CHUNKED, chunksize)
+         call netcdf_call(nf_error,ID,VAR=VAR)
+       endif
      endif
 #endif
    endif

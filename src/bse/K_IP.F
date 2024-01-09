@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2012 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): DS AM IMA
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
@@ -33,7 +17,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use stderr,        ONLY:intc
  use electrons,     ONLY:levels,spin_occ,spin,nel,n_sp_pol,n_spinor
  use X_m,           ONLY:Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
-&                        X_drude_term,global_gauge,N_BS_E_sorted,&
+&                        X_drude_term,global_gauge,N_BS_E_sorted,i_G_shift,&
 &                        skip_cond_sum_rule,l_drude,X_magnons,Epsilon_ij,X_dichroism
  use BS_solvers,    ONLY:Co_factor,diam_term_exact,BSS_Wd,BSS_mode,BSS_uses_DbGd,FG_factor
  use BS,            ONLY:BS_T_grp,BS_nkFGbz_in_Tgrp,BS_nT_grps,BS_perturbative_SOC,&
@@ -64,7 +48,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  real(SP)          ::f_eh,f_eh_PL,res_PL
  logical           ::dip_v,dip_r
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
-&                    para_term_w0,diam_term_used,Z_eh,E_eh
+&                    para_term_w0,diam_term_used,Z_eh,E_eh,g_fac
  !
  integer       :: i_ColFG
  complex(SP), allocatable :: E_DbGd(:)
@@ -247,6 +231,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      do i_pert_SOC=1,n_SOC
        !
+       if(trim(global_gauge)=='length') g_fac=E_plus_W(i_pert_SOC)/bare_qpg(iq,i_G_shift)**2
+       if(trim(global_gauge)=='velocity') g_fac=1._SP/E_plus_W(i_pert_SOC)
+       !
        if (l_BS_jdos) then
          Joint_DOS(:,3) =Joint_DOS(:,3)+(-1._SP)**(i_res_ares)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
          if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
@@ -264,11 +251,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        endif
        !
        if(abs(E_plus_W(i_pert_SOC))>0._SP) then
-         if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+res_abs*E_plus_W(i_pert_SOC)/bare_qpg(iq,1)**2
-         if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+res_abs/E_plus_W(i_pert_SOC)
+         para_term_w0=para_term_w0+res_abs*g_fac
          if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
-           if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+conjg(res_abs*E_plus_W(i_pert_SOC))/bare_qpg(iq,1)**2
-           if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+conjg(res_abs/E_plus_W(i_pert_SOC))
+           para_term_w0=para_term_w0+conjg(res_abs*g_fac)
          endif
        endif
        !
@@ -280,8 +265,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          endif
          !
          ! Anomalous Hal term, Eq.(1.12) PRB 48, 11705 (1993)
-         if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)+res_kerr/   bare_qpg(1,1)    **2
-         if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)+res_kerr/E_plus_W(i_pert_SOC)**2
+         if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)+res_kerr/   bare_qpg(1,i_G_shift)**2
+         if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)+res_kerr/ E_plus_W(i_pert_SOC)**2
          !
        endif
        !
@@ -377,12 +362,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
    endif
    !
-   if (trim(global_gauge)=='length'  ) Epsilon_ii(:,3)=Co_factor* Epsilon_ii(:,3)                /bare_qpg(iq,1)**2
+   if (trim(global_gauge)=='length'  ) Epsilon_ii(:,3)=Co_factor* Epsilon_ii(:,3)                /bare_qpg(iq,i_G_shift)**2
    if (trim(global_gauge)=='velocity') Epsilon_ii(:,3)=Co_factor*(Epsilon_ii(:,3)-diam_term_used)/W_bss%p(:)**2
    !
    ! Drude term
    !
-   if (l_drude           ) X_drude_term(:)=       -drude_GreenF(:)       *4._SP*pi/bare_qpg(iq,1)**2
+   if (l_drude           ) X_drude_term(:)=       -drude_GreenF(:)       *4._SP*pi/bare_qpg(iq,i_G_shift)**2
    if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W_bss%p(:)**2
    !
    Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)
@@ -402,7 +387,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    B_Hall(1)=B_Hall(1)*Co_factor
    if (BS_K_anti_resonant) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
    !
-   if(trim(global_gauge)=='length'   ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/bare_qpg(iq,1)**2
+   if(trim(global_gauge)=='length'   ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/bare_qpg(iq,i_G_shift)**2
    if(trim(global_gauge)=='velocity' ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/ W_bss%p(:)   **2
    !
    ! I add the term describing the Anomalous Hall effect which is

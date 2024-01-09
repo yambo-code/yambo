@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! 
@@ -36,7 +20,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use DIPOLES,       ONLY:DIPOLE_t,DIP_desc
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,X_Double_Grid_setup,&
 &                        use_X_DbGd,eps_2_alpha,EPS_2_eels,X_par_lower_triangle,X_OUTPUT_messages,&
-&                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,X_OUTPUT_driver,X_do_obs
+&                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,X_OUTPUT_driver,X_do_obs,&
+&                        i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_COM_Q_A2A,PAR_COM_RL_INDEX,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,master_cpu
@@ -57,8 +42,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! 
  ! Work Space
  !
- integer          :: iw,iq,i_G_shift
- real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus,a_xc,b_xc
+ integer          :: iw,iq
+ real(SP)         :: output_data(5),a_xc,b_xc
  logical          :: l_skip_non_int_eps,Macroscopic_CPU,l_eels
  !
  integer,external :: OPTICS_select_q_and_G
@@ -113,7 +98,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! Check if this q is compatible with the user defined direction in chartesian coordinates
    ! and if an additional RL vectors must be added
-   i_G_shift=OPTICS_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
+   i_G_shift=OPTICS_select_q_and_G(iq,q,X)
    if (i_G_shift<0) cycle
    !
    ! In TDDFT with BS based kernel eps0 is non-sense

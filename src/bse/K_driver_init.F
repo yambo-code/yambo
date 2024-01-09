@@ -1,30 +1,14 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2021 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K_driver_init(what,iq,Ken,Xk)
  !
  use R_lattice,    ONLY:bz_samp
- use electrons,    ONLY:levels,n_sp_pol
+ use electrons,    ONLY:levels,n_sp_pol,n_spinor
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match,STRING_same
@@ -162,6 +146,12 @@ subroutine K_driver_init(what,iq,Ken,Xk)
      BSE_mode='retarded'
      call parser('FxcRetarded',FXC_is_retarded)
    endif
+ endif
+ !
+ ! Remove exchange if computing the irreducible response
+ if (trim(BSE_L_kind)=="tilde") then
+   BS_res_K_exchange=.FALSE.
+   BS_cpl_K_exchange=.FALSE.
  endif
  !
  ! CORE Logicals

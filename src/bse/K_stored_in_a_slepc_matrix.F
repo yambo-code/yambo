@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2018 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): HM DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  !
@@ -34,6 +18,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling,&
  &                        BS_res_ares_n_mat,l_BS_ares_from_res
  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width
+ use cuda_m,         ONLY:have_cuda
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
@@ -66,6 +51,11 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  call MatCreate(PETSC_COMM_WORLD,slepc_mat,ierr)
  call MatSetSizes(slepc_mat,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim,SL_H_dim,ierr)
  call MatSetType(slepc_mat, MATMPIDENSE,ierr)
+
+#if defined(PETSC_HAVE_CUDA)
+ if(have_cuda) call MatSetType(slepc_mat,MATDENSECUDA,ierr)
+#endif
+
  call MatSetUp(slepc_mat,ierr)
  ! 
  ! filling of the slepc_mat

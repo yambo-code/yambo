@@ -34,15 +34,19 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
  ! 
  ! A (parallel) matrix inversion is then performed
  ! 
- use pars,          ONLY:SP,DP,pi,cONE,cZERO
- use com,           ONLY:msg
- use vec_operate,   ONLY:iku_v_norm,c2a
- use matrix,        ONLY:PAR_matrix,MATRIX_reset
- use parallel_m,    ONLY:PP_redux_wait
- use linear_algebra,ONLY:INV
- use interfaces,    ONLY:LINEAR_ALGEBRA_driver,MATRIX_duplicate
- use environ_m,     ONLY:l_environ,eps_env_g, eps0, A0
- use R_lattice,     ONLY:b,G_m_G,g_vec,ng_vec,q_norm,minus_G
+ use pars,           ONLY:SP,DP,pi,cONE,cZERO
+ use com,            ONLY:msg
+ use vec_operate,    ONLY:iku_v_norm,c2a
+ use matrix,         ONLY:PAR_matrix,MATRIX_reset
+ use parallel_int,   ONLY:PP_redux_wait
+ use linear_algebra, ONLY:INV
+ use interfaces,     ONLY:LINEAR_ALGEBRA_driver,MATRIX_duplicate
+ use environ_m,      ONLY:l_environ,eps_env_RL, eps0, A0
+ use R_lattice,      ONLY:b,G_m_G,g_vec,ng_vec,q_norm,minus_G
+ use deviceXlib_m,   ONLY:dev_memcpy
+ use cuda_m,         ONLY:have_cuda
+ !
+#include<dev_defs.h>
 #include<memory.h>
  !
  real(SP),         intent(in)    :: q(3)
@@ -53,7 +57,8 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
  !
  integer     :: ig1,ig2,ng_loc,ig_m_g
  real(SP)    :: bare_qpg_v1(3),bare_qpg_v2(3),q_loc(3),q_vers(3),scal,scalp
- logical     :: l_this_is_q0
+ logical     :: l_this_is_q0,compute_on_gpu
+ complex(SP) :: ctmp(1)
  complex(DP) :: dp_dummy
  real(SP), allocatable :: g_vec_loc(:,:)
  type(PAR_matrix) :: Kbar
@@ -61,6 +66,9 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
  if (.not.l_environ) return
  if (trim(v_environ%kind)=="NAN".or..not.allocated(v_environ%blc)) &
 &   call error(' [ENVIRON] v_environ not initialized')
+ !
+ compute_on_gpu=.false.
+ if (allocated(v_environ%blc_d)) compute_on_gpu=.true.
  !
  if (v_environ%Nb/=1) call error(' [ENVIRON] Nb > 1 not implemented')
  !
@@ -81,17 +89,25 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
  ! here we deal with the q-> term numerically
  call c2a(b,q,q_loc,'ki2c')
  !
- ! AF: probably not needed if q(3) passed in input is already
- ! taking care of properly defining q0.
+!***************************************************************
+! l_this_is_q0 = (iku_v_norm(q)<q_norm(1)*1.5_SP)              
+ !                                                             
+ ! AF: probably not needed if q(3) passed in input is already  
+ ! taking care of properly defining q0.                        
+ !                                                             
+! if (l_this_is_q0) q_loc(:)=0.0_SP                            
+!***************************************************************
  !
  if (iku_v_norm(q)<1.0d-6) then
    q_loc(:)=q_norm(1)*(/1.0_SP,0.0_SP,0.0_SP/)
  endif
-
+ !
  ! 
  ! main loop
  ! 
- !$omp parallel do default(shared), private(ig1,ig2,bare_qpg_v1,bare_qpg_v2,scal,ig_m_g)
+ !$omp parallel do default(shared), &
+ !$omp &           private(ig1,ig2,bare_qpg_v1,bare_qpg_v2,scal,ig_m_g)
+ !
  do ig2=v_environ%cols(1),v_environ%cols(2)
    !
    bare_qpg_v2(:)=q_loc(:)+g_vec_loc(:,ig2)
@@ -99,24 +115,58 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
    do ig1=v_environ%rows(1),v_environ%rows(2)
      !
      bare_qpg_v1(:)=q_loc(:)+g_vec_loc(:,ig1)
+     !
      scal=dot_product(bare_qpg_v1,bare_qpg_v2)
      !
      ig_m_g=G_m_G(ig1,ig2)
-     v_environ%blc(ig1,ig2,1)=scal*eps_env_g(ig_m_g)/(4.0_SP*pi)
+     !
+     v_environ%blc(ig1,ig2,1)=scal*eps_env_RL(ig_m_g)/(4.0_SP*pi)
+!*********************************************************************************
+!     if (ig1==1.and.ig2==1.and.l_this_is_q0) then                                 
+       !                                                                                       
+       ! We impose K(0,0,0) = 1 in order to avoid problems arising from the       
+       ! "infinitesimal" value of q0 when making the inversion. We restore the     
+       ! value V(0,0,0) = 4pi/q0^2 after the inversion.                             
+       !                                                                            
+!       v_environ%blc(ig1,ig2,1)=1.0_SP                                            
+       !                                                                             
+!     else                                                                           
+       !                                                                           
+!       v_environ%blc(ig1,ig2,1)=scal*eps_env_RL(ig_m_g)/(4.0_SP*pi)                  
+       !                                                                           
+!     endif                                                                          
+!*********************************************************************************
      !
    enddo
  enddo
  !$omp end parallel do
  !
+ if (have_cuda) then
+   call dev_memcpy(v_environ%blc_d,v_environ%blc)
+ endif
+ !
  ! store the environ kernel in Kbar for later use if needed
- if (lcomp_asympt) call MATRIX_duplicate("+1",M_in=v_environ,M_out=Kbar)
+ if (lcomp_asympt) then
+    call MATRIX_duplicate("+1",M_in=v_environ,M_out=Kbar)
+    YAMBO_FREE(Kbar%blc_d)
+ endif
  !
  ! compute v_environ
  !
  call LINEAR_ALGEBRA_driver(INV,M_slk=v_environ)
-
+!*****************************************************************
+ !                                                                 
+ ! Once the kernel is inverted,                                   
+ ! the value 4pi/eps(0)/q0^2 is assigned to the v(0,0,0) element   
+ !                                                                
+! if (l_this_is_q0) then                                          
+!   ctmp(1)=4.0_SP*pi/eps_env_RL(1)/q_norm(1)**2                   
+!   DEV_VAR(v_environ%blc)(1,1,1) = ctmp(1)                       
+! endif                                                           
+!******************************************************************
  !
- ! compute the Ao_q asymptotic (q->0 limit)
+ ! Asymptotics
+ !
  ! v_environ ~ 4pi / [ q^2 * ( eps0+ A0 ) ]
  !
  ! A0 is calculated only for q-> 0
@@ -127,14 +177,14 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
  ! In order to handle it, the head is set to 1 and the wings to 0
  ! The factor 1/4pi needs to be removed
  !
- l_this_is_q0 = (iku_v_norm(q)<q_norm(1)*1.5_SP)
- !
  if (lcomp_asympt .and. l_this_is_q0) then
    !
-   eps0=eps_env_g(1)
+   eps0=eps_env_RL(1)
    Kbar%blc=Kbar%blc*4.0_SP*pi
+   !
    scal=dot_product(q_loc,q_loc)
-   q_vers=q_loc/sqrt(scal)
+   !q_vers=q_loc/sqrt(scal)
+   q_vers=(/1.0_SP,0.0_SP,0.0_SP/)
    !
    if (Kbar%rows(1)==1                    ) Kbar%blc(1,:,1)=0.0
    if (                    Kbar%cols(1)==1) Kbar%blc(:,1,1)=0.0
@@ -154,8 +204,8 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
        !
        scal=dot_product(q_vers,g_vec_loc(:,ig2))
        !
-       dp_dummy=dp_dummy + scal * eps_env_g(minus_G(ig1)) * Kbar%blc(ig1,ig2,1) * &
-&                          scalp* eps_env_g(ig2)
+       dp_dummy=dp_dummy + scal * eps_env_RL(minus_G(ig1)) * Kbar%blc(ig1,ig2,1) * &
+&                          scalp* eps_env_RL(ig2)
      enddo
    enddo
    !
@@ -166,7 +216,6 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
 &           (/real(eps0,SP),aimag(eps0),real(A0,SP),aimag(A0)/) )
    !
  endif
-
  !
  ! cleanup
  !
@@ -174,4 +223,3 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
  call MATRIX_reset(Kbar)
  !
 end subroutine environ_vcoul
-

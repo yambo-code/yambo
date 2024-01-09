@@ -25,14 +25,15 @@ subroutine p2y_environ(filename)
  !
  use pars,           ONLY:SP,DP,schlen
  use vec_operate,    ONLY:c2a
- use IO_m,           ONLY:OP_WR_CL,OP_APP_CL,REP,io_control
+ use IO_m,           ONLY:OP_WR_CL,OP_APP_CL,REP
+ use IO_int,         ONLY:io_control
  use pw_data,        ONLY:nr1_,nr2_,nr3_,a1_,a2_,a3_
  use R_lattice,      ONLY:b,g_vec,ng_vec
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,modx
 #if defined _FFTW
  use FFT_m,          ONLY:fftw_plan
 #endif
- use environ_m,      ONLY:nr1,nr2,nr3,ng_env,eps_env_g,environ_alloc,environ_free
+ use environ_m,      ONLY:nr1,nr2,nr3,ng_env,eps_env_RL,environ_alloc,environ_free
  use cube_m,         ONLY:cube_read_base
  !
 #include<memory.h>
@@ -105,16 +106,26 @@ subroutine p2y_environ(filename)
  enddo
 
  !
- ! (b) get PCM epsilon(r)
+ ! PDA:
+ ! (b) get PCM epsilon(r). The epsilon(r) func is first read and then converted
+ ! to [1 + (eps_infty - 1)/(eps_0 - 1) * (eps(r) - 1)]. The transformation
+ ! simply takes the initial eps(r) calculated for an environment with eps_0 and
+ ! rescale it to the fast optical eps_infty because the subsequent screening
+ ! for the GW correction takes into account fast optical electronic transitions.
+ ! In this case the values are for water (TOBE FIXED).
  !
  YAMBO_ALLOC(eps,(fft_size))
  YAMBO_ALLOC(eps_fft,(fft_size))
  call environ_alloc(ng_vec)
  !
  call cube_read_base(filename,dat=eps,orig=r0,IERR=io_err)
- if (io_err/=0) call error(' [ENVIRON] reading data from '//trim(filename))
- !
+ if (io_err/=0)    call error(' [ENVIRON] reading data from '//trim(filename))
  if (any(r0/=0.0)) call error(' [ENVIRON] invalid r0 /= 0')
+ !
+! XXX
+ ! Water specific values
+ eps(:) = 1 + ((1.78-1)/(78.5-1))*(eps(:) - 1)
+! XXX
 
  !
  ! (c) compute eps in reciprocal space
@@ -134,7 +145,7 @@ subroutine p2y_environ(filename)
  eps_fft=eps_fft/real(fft_size,DP)
  !
  do ig = 1, ng_vec
-   eps_env_g(ig)= cmplx(eps_fft(fft_g_table(ig,1)),kind=SP)
+   eps_env_RL(ig)= cmplx(eps_fft(fft_g_table(ig,1)),kind=SP)
  enddo
  !
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)

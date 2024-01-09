@@ -30,8 +30,11 @@ configure: uncompress
 	@if test -d $(PACKAGE) && ! test -f configured.stamp; then \
          echo "\t[$(PACKAGE)] configuration"; \
 	 cd $(PACKAGE); \
+	 echo "PETSC_DIR=$(LIBPATH)" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
 	 PETSC_DIR=$(LIBPATH) \
+	 echo "SLEPC_DIR=$(PWD)/$(PACKAGE)" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
 	 SLEPC_DIR=$(PWD)/$(PACKAGE) \
+	 echo "python3 ./configure $(CONFFLAGS)" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
 	 python3 ./configure $(CONFFLAGS) >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
 	 touch ../configured.stamp; \
 	fi

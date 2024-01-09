@@ -85,13 +85,19 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(QP_t)       ::qp
  type(w_samp)     ::Xxcw
  type(levels)     ::en_sc
- integer          :: io_X_err(5),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2),io_SC_E_err,i_r
+ integer          ::io_X_err(5),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2),io_SC_E_err,i_r
  !
  logical, external:: file_exists
  !
  ! Presets
  !
  INIT = 0
+ io_X_err     =-1
+ io_BS_err    =-1
+ io_BS_Fxc_err=-1
+ io_QINDX_err =-1
+ io_ELPH_err  =-1
+ io_SC_E_err  =-1
  !
  if (.not.FINALIZE.and..not.CLOSE_Gs) then
    !
@@ -494,12 +500,12 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        BS_K_coupling    =index(BSE_mode,'coupling')>0
        if (BS_K_coupling) then
          BS_cpl_K_exchange=BS_res_K_exchange  
-         BS_cpl_K_corr    =BS_res_K_corr      
+         BS_cpl_K_corr    =BS_res_K_corr.and..not.index(BSE_mode,'x_coupling')>0
        endif
        call parser('WehDiag',dummy_logical)
        if (     dummy_logical) BS_W_is_diagonal=.TRUE. 
        call parser('WehCpl' ,dummy_logical )
-       if (.not.dummy_logical) BS_cpl_K_corr=.FALSE.
+       if (.not.(dummy_logical.or.index(BSE_mode,'xc_coupling')>0)) BS_cpl_K_corr=.FALSE.
      endif
      !
      if (l_bse) then

@@ -42,7 +42,10 @@ module X_m
  ! Large Q-vector support 
  !
  real(SP)                 :: q_plus_G_direction(3)
+ real(SP)                 :: Q_plus_G_pt(3)
+ real(SP)                 :: Q_plus_G_sq_modulus
  integer                  :: Q_Shift_Order
+ integer                  :: i_G_shift
  !
  ! Double Grid
  !
@@ -63,6 +66,8 @@ module X_m
  !
  integer                  :: N_BS_E_sorted=0
  complex(SP), allocatable :: BS_E_sorted(:,:,:)
+ complex(SP), allocatable :: Resp_ii(:,:)
+ complex(SP), allocatable :: Resp_ij(:,:)
  complex(SP), allocatable :: Epsilon_ii(:,:)
  complex(SP), allocatable :: Epsilon_ij(:,:)
  complex(SP), allocatable :: Joint_DOS(:,:) 

@@ -10,7 +10,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
  use pars,           ONLY:SP,cZERO
  use parallel_m,     ONLY:PP_indexes
  use frequency,      ONLY:w_samp
- use X_m,            ONLY:Epsilon_ii,global_gauge
+ use X_m,            ONLY:Resp_ii,i_G_shift
  use LIVE_t,         ONLY:live_timing
  use R_lattice,      ONLY:bare_qpg
  use wrapper,        ONLY:Vstar_dot_V,M_by_V,V_dot_V
@@ -32,7 +32,6 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
  !
  integer      :: i2,iw,i_L
  character(1) :: Gr
- complex(SP)              :: gauge_factor
  complex(SP), allocatable :: Mm1(:,:)
  integer,        external :: PL_via_perturbative_inversion
  integer,        external :: EPS_via_perturbative_inversion
@@ -46,9 +45,6 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
    !
    iw=i2+iw_2start-1
    !
-   if (trim(global_gauge)=='length'  ) gauge_factor=-Co_factor/bare_qpg(iq,1)**2
-   if (trim(global_gauge)=='velocity') gauge_factor=-Co_factor/   W%p(iw)    **2
-   !
    ! The parallel loop is controlled in the manin body loop 
    ! when a full inversion is performed
    !
@@ -61,8 +57,8 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
      endif
      !
      if (K_INV_EPS%err(iw)/=0) then
-       K_INV_EPS%err(iw)=EPS_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles_opt(1,:),gauge_factor,&
-&                                                       Epsilon_ii(iw,2),Lo(:,iw,:))
+       K_INV_EPS%err(iw)=EPS_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles_opt(1,:),-Co_factor,&
+&                                                       Resp_ii(iw,2),Lo(:,iw,:))
      endif
      !
      if(l_BS_photolum) then
@@ -143,7 +139,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
        else
          call M_by_V_omp('n',BS_H_dim,Mm1,BSS_dipoles_opt(1,:),V)
        endif
-       Epsilon_ii(iw,2)=gauge_factor*Vstar_dot_V_omp(BS_H_dim,BSS_dipoles_opt(1,:),V)
+       Resp_ii(iw,2)=-Co_factor*Vstar_dot_V_omp(BS_H_dim,BSS_dipoles_opt(1,:),V)
      else if(i_L_==2) then
        if (K_slk%kind=="SLK") then
 #if defined _SCALAPACK
@@ -152,7 +148,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
        else
          call M_by_V_omp('n',BS_H_dim,Mm1,conjg(BSS_dipoles_opt(1,:)),V)
        endif
-       Epsilon_ii(iw,2)=Epsilon_ii(iw,2)+gauge_factor*V_dot_V_omp(BS_H_dim,BSS_dipoles_opt(1,:),V)
+       Resp_ii(iw,2)=Resp_ii(iw,2)-Co_factor*V_dot_V_omp(BS_H_dim,BSS_dipoles_opt(1,:),V)
      endif
    end subroutine
    !

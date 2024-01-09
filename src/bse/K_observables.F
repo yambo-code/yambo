@@ -3,20 +3,21 @@
 !
 ! Copyright (C) 2021 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 !
 subroutine K_observables( W )
  !
 #if defined _SLEPC && !defined _NL
  use BS_solvers,   ONLY:run_Slepc
 #endif
- use drivers,      ONLY:l_rpa_IP
+ use drivers,      ONLY:l_rpa_IP,l_col_cut
+ use D_lattice,    ONLY:l_3D
  use frequency,    ONLY:w_samp
  use X_m,          ONLY:global_gauge
- use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,BSS_mode,l_eps_res_ares
+ use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,BSS_mode
  use BS,           ONLY:BS_dip_size,l_BS_anomalous_Hall,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,&
-&                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,BSE_mode
+&                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,BSE_mode,BSE_L_kind
  use parser_m,     ONLY:parser
  use stderr,       ONLY:STRING_match
  use electrons,    ONLY:levels,n_sp_pol,n_spin
@@ -25,12 +26,11 @@ subroutine K_observables( W )
  !
  type(w_samp)   :: W
  !
- logical, external :: EPS_check
- !
  ! Work space
  !
- type(levels)  ::Ken
- character(2)      :: ordering
+ type(levels)  :: Ken
+ character(2)  :: ordering
+ logical       :: l_flag
  !
  ! What...
  !=========
@@ -89,11 +89,5 @@ subroutine K_observables( W )
    call warning(" Not a valid gauge in input. Switching to length gauge")
    global_gauge="length"
  endif
- !
- ! Check if eels can be evaluated
- !-------
- if (     trim(BSE_mode)=='resonant' ) ordering='r'
- if (.not.trim(BSE_mode)=='resonant' ) ordering='R'
- l_eps_res_ares=EPS_check(W%p,W%n_freqs,.TRUE.,ordering)
  !
 end subroutine

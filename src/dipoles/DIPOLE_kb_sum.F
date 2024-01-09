@@ -54,10 +54,6 @@ subroutine DIPOLE_kb_sum(rho,XXv,XXc)
  use pseudo,        ONLY:pp_kbv_dim_yambo
  use cuda_m,        ONLY:have_cuda
  use deviceXlib_m,  ONLY:dev_memcpy
-#if defined _SURF
- use surface_geometry,   ONLY:setup_surface_geometry,az
- use optcut,        ONLY:loptcut,setup_cutoff,dc
-#endif
  !
 #include<dev_defs.h>
  !
@@ -92,17 +88,7 @@ subroutine DIPOLE_kb_sum(rho,XXv,XXc)
  enddo
  !
  if (have_cuda) call dev_memcpy(drho,DEV_VAR(drho))
-#if defined _SURF
- if (loptcut) then
-    lfail=.false.
-    call setup_surface_geometry(lfail)
-    call setup_cutoff(lfail)
-    forall(i1=1:3) rho(i1)=rho(i1)+(sum(drho(:,i1,:))*dc/az)
- else
+ !
  forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(:,i1,:))
- endif
-#else
- forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(:,i1,:))
-#endif 
  !
 end subroutine DIPOLE_kb_sum

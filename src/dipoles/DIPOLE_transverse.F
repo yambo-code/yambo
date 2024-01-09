@@ -32,8 +32,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use deviceXlib_m,        ONLY:dev_memcpy
 #if defined _SURF
  use ras_module,          ONLY: lras
- use surface_geometry,    ONLY: setup_gvecaff,setup_surface_geometry
- use optcut,              ONLY: loptcut,Dipole_p_matrix_elements_cut
+ use surface_geometry,    ONLY: setup_gvecaff,setup_surface_geometry,az
+ use optcut,              ONLY: loptcut,Dipole_p_matrix_elements_cut,dc
 #endif
 
  !
@@ -54,7 +54,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: kbv_d(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: XX(:,:,:,:,:)
- complex(SP)                  :: rho_spinor(3,n_spinor,n_spinor),rho(3),rho_cut(3),P2
+ complex(SP)                  :: rho_spinor(3,n_spinor,n_spinor),rho(3),rho_tmp(3),rho_cut(3),P2
  real(SP)                     :: Ev_m_Ev_KS,Dipole_Energy_treshold
  !
  !I/O and external functions
@@ -246,7 +246,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          call DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_DIP_P2)
          !
 #if defined _SURF
-        if (lras.and.loptcut) call Dipole_p_matrix_elements_cut(Xk,iv_wf,ic_wf,ik,rho_cut)
+         if (lras.and.loptcut) call Dipole_p_matrix_elements_cut(Xk,iv_wf,ic_wf,ik,rho_cut)
 #endif 
          !
          !=====
@@ -280,7 +280,11 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          if (l_use_comm) call DIPOLE_kb_sum(rho,XX(:,:,:,:,iv),XX(:,:,:,:,ic))
          !
 #if defined _SURF
-         if (lras.and.loptcut) call DIPOLE_kb_sum(rho_cut,XX(:,:,:,:,iv),XX(:,:,:,:,ic))
+         if (l_use_comm.and.lras.and.loptcut) then
+           rho_tmp=cZERO
+           call DIPOLE_kb_sum(rho_tmp,XX(:,:,:,:,iv),XX(:,:,:,:,ic))
+           rho_cut=rho_cut+rho_tmp*dc/az
+         endif
 #endif
          !
          ! define a different thr for val-val transitions

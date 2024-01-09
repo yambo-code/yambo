@@ -54,10 +54,6 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  use SC,            ONLY:it_now
 #endif
  use timing_m,      ONLY:timing
-#if defined _SURF
- use ras_module,    ONLY: lras, lreels
- use optcut,        ONLY: loptcut
-#endif
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -108,14 +104,6 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  force_bare_X_G=use_X_DbGd.or.allocated(Xen%W).or.allocated(Xen%GreenF)
  !
  skip_WF_load= (iq==1.and.X%ng==1)
-
-#if defined _SURF
- ! Project's dependent presets
- if(lras.or.lreels) then
-    skip_WF_load   = .true.  ! No LFE, q=0
- endif
-#endif
-
  !
  ! Drude term  !DALV: this should be move to point ### for avoiding a shift of the frequency grid in FF real-axis GW calculations 
  !============

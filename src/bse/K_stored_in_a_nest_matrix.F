@@ -25,7 +25,7 @@
 module shellmat_module
 #include <petsc/finclude/petscmat.h>
   use petscmat
-  Mat::A,B
+  Mat::R,C
 end module shellmat_module
 
 subroutine ignore_petsc_error_handler(comm,line,fun,file,n,p,mess,ctx,ierr)
@@ -44,8 +44,13 @@ end subroutine ignore_petsc_error_handler
 
 subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
 !
-! K is stored in a PETSc nest matrix, taking advantage of the four block structure
 ! BS_K_coupling and l_BS_ares_from_res are assumed TRUE
+!
+! K is stored in a PETSc nest matrix, taking advantage of the four block
+! structure of the matrix in this case:
+!
+! | R     C  |
+! |-C^*  -R^T|
 !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
@@ -69,7 +74,7 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
   !
   integer, intent(in)  :: i_BS_mat
   Mat,     intent(out) :: slepc_mat
-  Mat                  :: AT,BHT
+  Mat                  :: RT,CHT
   Mat                  :: matArray(4)
   !
   integer     :: i_c,i_r,i_Tk,i_Tp,i_B,H_shift(2)
@@ -79,10 +84,10 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
   PetscInt            :: itwo
   PetscErrorCode      :: ierr
   !
-  external AT_mat_mult,BHT_mat_mult,& 
-           AT_mat_mult_transpose,BHT_mat_mult_transpose,&
-           AT_mat_mult_hermitian_transpose,BHT_mat_mult_hermitian_transpose,&
-           AT_get_diagonal,BHT_get_diagonal,&
+  external RT_mat_mult,CHT_mat_mult,& 
+           RT_mat_mult_transpose,CHT_mat_mult_transpose,&
+           RT_mat_mult_hermitian_transpose,CHT_mat_mult_hermitian_transpose,&
+           RT_get_diagonal,CHT_get_diagonal,&
            ignore_petsc_error_handler
   !
   SL_H_dim=BS_H_dim
@@ -90,29 +95,29 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
   !
   ! Allocate the explicit submatrices of the nest matrix
   !
-  call MatCreate(PETSC_COMM_WORLD,A,ierr)
-  call MatSetSizes(A,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
-  call MatSetType(A,MATMPIDENSE,ierr)
+  call MatCreate(PETSC_COMM_WORLD,R,ierr)
+  call MatSetSizes(R,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
+  call MatSetType(R,MATMPIDENSE,ierr)
   if (have_cuda) then
 #ifdef PETSC_HAVE_CUDA
-  call MatSetType(A,MATDENSECUDA,ierr)
-  call MatSetVecType(A,VECCUDA,ierr)
+  call MatSetType(R,MATDENSECUDA,ierr)
+  call MatSetVecType(R,VECCUDA,ierr)
 #endif
   endif
-  call MatSetFromOptions(A,ierr)
-  call MatSetUp(A,ierr)
+  call MatSetFromOptions(R,ierr)
+  call MatSetUp(R,ierr)
   !
-  call MatCreate(PETSC_COMM_WORLD,B,ierr)
-  call MatSetSizes(B,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
-  call MatSetType(B,MATMPIDENSE,ierr)
+  call MatCreate(PETSC_COMM_WORLD,C,ierr)
+  call MatSetSizes(C,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
+  call MatSetType(C,MATMPIDENSE,ierr)
   if (have_cuda) then
 #ifdef PETSC_HAVE_CUDA
-  call MatSetType(B,MATDENSECUDA,ierr)
-  call MatSetVecType(B,VECCUDA,ierr)
+  call MatSetType(C,MATDENSECUDA,ierr)
+  call MatSetVecType(C,VECCUDA,ierr)
 #endif
   endif
-  call MatSetFromOptions(B,ierr)
-  call MatSetUp(B,ierr)
+  call MatSetFromOptions(C,ierr)
+  call MatSetUp(C,ierr)
   !
   ! Fill the values of the explicit submatrices of the nest matrix
   !
@@ -152,14 +157,14 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
         !
         select case(BS_blk(i_B)%mode)
         case("R")
-           call MatSetValue( A, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
+           call MatSetValue( R, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
            ! The resonant block is hermitian
-           call MatSetValue( A, H_pos(2), H_pos(1),   Mij_star, INSERT_VALUES, ierr )
+           call MatSetValue( R, H_pos(2), H_pos(1),   Mij_star, INSERT_VALUES, ierr )
         case("C")
-           call MatSetValue( B, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
+           call MatSetValue( C, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
            ! Anti-coupling from coupling: the whole BSE matrix is Pseudo-HErmitian
            ! The coupling block and the anti-coupling block are symmetric
-           call MatSetValue( B, H_pos(2), H_pos(1),       Mij , INSERT_VALUES, ierr )
+           call MatSetValue( C, H_pos(2), H_pos(1),       Mij , INSERT_VALUES, ierr )
         end select
         !
       enddo
@@ -168,45 +173,45 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
     !
   enddo
   !
- call MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY,ierr)
- call MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY,ierr)
- call MatAssemblyBegin(B,MAT_FINAL_ASSEMBLY,ierr)
- call MatAssemblyEnd(B,MAT_FINAL_ASSEMBLY,ierr)
+ call MatAssemblyBegin(R,MAT_FINAL_ASSEMBLY,ierr)
+ call MatAssemblyEnd(R,MAT_FINAL_ASSEMBLY,ierr)
+ call MatAssemblyBegin(C,MAT_FINAL_ASSEMBLY,ierr)
+ call MatAssemblyEnd(C,MAT_FINAL_ASSEMBLY,ierr)
  !
  ! Create the two shell submatrices and define the required operations
  !
- call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,AT,ierr)
+ call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,RT,ierr)
  if (have_cuda) then
 #ifdef PETSC_HAVE_CUDA
- call MatSetVecType(AT,VECCUDA,ierr)
+ call MatSetVecType(RT,VECCUDA,ierr)
 #endif
  endif
- call MatShellSetOperation(AT,MATOP_GET_DIAGONAL,AT_get_diagonal,ierr)
- call MatShellSetOperation(AT,MATOP_MULT,AT_mat_mult,ierr)
- call MatShellSetOperation(AT,MATOP_MULT_TRANSPOSE,AT_mat_mult_transpose,ierr)
+ call MatShellSetOperation(RT,MATOP_GET_DIAGONAL,RT_get_diagonal,ierr)
+ call MatShellSetOperation(RT,MATOP_MULT,RT_mat_mult,ierr)
+ call MatShellSetOperation(RT,MATOP_MULT_TRANSPOSE,RT_mat_mult_transpose,ierr)
  call PetscPushErrorHandler(ignore_petsc_error_handler,PETSC_NULL_INTEGER,ierr)
- call MatShellSetOperation(AT,MATOP_MULT_HERMITIAN_TRANSPOSE,AT_mat_mult_hermitian_transpose,ierr)
+ call MatShellSetOperation(RT,MATOP_MULT_HERMITIAN_TRANSPOSE,RT_mat_mult_hermitian_transpose,ierr)
  call PetscPopErrorHandler(ierr)
  !
- call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,BHT,ierr)
+ call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,CHT,ierr)
  if (have_cuda) then
 #ifdef PETSC_HAVE_CUDA
- call MatSetVecType(BHT,VECCUDA,ierr)
+ call MatSetVecType(CHT,VECCUDA,ierr)
 #endif
  endif
- call MatShellSetOperation(BHT,MATOP_GET_DIAGONAL,BHT_get_diagonal,ierr)
- call MatShellSetOperation(BHT,MATOP_MULT,BHT_mat_mult,ierr)
- call MatShellSetOperation(BHT,MATOP_MULT_TRANSPOSE,BHT_mat_mult_transpose,ierr)
+ call MatShellSetOperation(CHT,MATOP_GET_DIAGONAL,CHT_get_diagonal,ierr)
+ call MatShellSetOperation(CHT,MATOP_MULT,CHT_mat_mult,ierr)
+ call MatShellSetOperation(CHT,MATOP_MULT_TRANSPOSE,CHT_mat_mult_transpose,ierr)
  call PetscPushErrorHandler(ignore_petsc_error_handler,PETSC_NULL_INTEGER,ierr)
- call MatShellSetOperation(BHT,MATOP_MULT_HERMITIAN_TRANSPOSE,BHT_mat_mult_hermitian_transpose,ierr)
+ call MatShellSetOperation(CHT,MATOP_MULT_HERMITIAN_TRANSPOSE,CHT_mat_mult_hermitian_transpose,ierr)
  call PetscPopErrorHandler(ierr)
  !
  ! Build the nest matrix
  !
- matArray(1) = A
- matArray(2) = B
- matArray(3) = BHT
- matArray(4) = AT
+ matArray(1) = R
+ matArray(2) = C
+ matArray(3) = CHT
+ matArray(4) = RT
  itwo = 2
  call MatCreateNest(PETSC_COMM_WORLD,itwo,PETSC_NULL_INTEGER,itwo,PETSC_NULL_INTEGER,matArray,slepc_mat,ierr)
  if (have_cuda) then
@@ -217,46 +222,46 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
  !
 end subroutine K_stored_in_a_nest_matrix
 
-subroutine AT_mat_mult(M,X,F,ierr)
+subroutine RT_mat_mult(M,X,F,ierr)
   use shellmat_module
   implicit none
   Mat     M
   Vec     X,F
   PetscScalar mone
   PetscErrorCode ierr
-  call MatMultTranspose(A,X,F,ierr)
+  call MatMultTranspose(R,X,F,ierr)
   mone = -1.0
   call VecScale(F,mone,ierr)
   return
-end subroutine AT_mat_mult
+end subroutine RT_mat_mult
 
-subroutine BHT_mat_mult(M,X,F,ierr)
+subroutine CHT_mat_mult(M,X,F,ierr)
   use shellmat_module
   implicit none
   Mat     M
   Vec     X,F
   PetscScalar mone
   PetscErrorCode ierr
-  call MatMultHermitianTranspose(B,X,F,ierr)
+  call MatMultHermitianTranspose(C,X,F,ierr)
   mone = -1.0
   call VecScale(F,mone,ierr)
   return
-end subroutine BHT_mat_mult
+end subroutine CHT_mat_mult
 
-subroutine AT_mat_mult_transpose(M,X,F,ierr)
+subroutine RT_mat_mult_transpose(M,X,F,ierr)
   use shellmat_module
   implicit none
   Mat     M
   Vec     X,F
   PetscScalar mone
   PetscErrorCode ierr
-  call MatMult(A,X,F,ierr)
+  call MatMult(R,X,F,ierr)
   mone = -1.0
   call VecScale(F,mone,ierr)
   return
-end subroutine AT_mat_mult_transpose
+end subroutine RT_mat_mult_transpose
 
-subroutine BHT_mat_mult_transpose(M,X,F,ierr)
+subroutine CHT_mat_mult_transpose(M,X,F,ierr)
   use shellmat_module
   implicit none
   Mat     M
@@ -266,15 +271,15 @@ subroutine BHT_mat_mult_transpose(M,X,F,ierr)
   call VecDuplicate(X,X_conjugate,ierr)
   call VecCopy(X,X_conjugate,ierr)
   call VecConjugate(X_conjugate,ierr)
-  call MatMult(B,X_conjugate,F,ierr)
+  call MatMult(C,X_conjugate,F,ierr)
   mone = -1.0
   call VecConjugate(F,ierr)
   call VecScale(F,mone,ierr)
   call VecDestroy(X_conjugate,ierr)
   return
-end subroutine BHT_mat_mult_transpose
+end subroutine CHT_mat_mult_transpose
 
-subroutine AT_mat_mult_hermitian_transpose(M,X,F,ierr)
+subroutine RT_mat_mult_hermitian_transpose(M,X,F,ierr)
   use shellmat_module
   implicit none
   Mat     M
@@ -284,49 +289,49 @@ subroutine AT_mat_mult_hermitian_transpose(M,X,F,ierr)
   call VecDuplicate(X,X_conjugate,ierr)
   call VecCopy(X,X_conjugate,ierr)
   call VecConjugate(X_conjugate,ierr)
-  call MatMult(A,X_conjugate,F,ierr)
+  call MatMult(R,X_conjugate,F,ierr)
   mone = -1.0
   call VecConjugate(F,ierr)
   call VecScale(F,mone,ierr)
   call VecDestroy(X_conjugate,ierr)
   return
-end subroutine AT_mat_mult_hermitian_transpose
+end subroutine RT_mat_mult_hermitian_transpose
 
-subroutine BHT_mat_mult_hermitian_transpose(M,X,F,ierr)
+subroutine CHT_mat_mult_hermitian_transpose(M,X,F,ierr)
   use shellmat_module
   implicit none
   Mat     M
   Vec     X,F
   PetscScalar mone
   PetscErrorCode ierr
-  call MatMult(B,X,F,ierr)
+  call MatMult(C,X,F,ierr)
   mone = -1.0
   call VecScale(F,mone,ierr)
   return
-end subroutine BHT_mat_mult_hermitian_transpose
+end subroutine CHT_mat_mult_hermitian_transpose
 
-subroutine AT_get_diagonal(M,D)
+subroutine RT_get_diagonal(M,D)
   use shellmat_module
   implicit none
   Mat     M
   Vec     D
   PetscScalar mone
   PetscErrorCode ierr
-  call MatGetDiagonal(A,D,ierr)
+  call MatGetDiagonal(R,D,ierr)
   mone = -1.0
   call VecScale(D,mone,ierr)
   return
-end subroutine AT_get_diagonal
+end subroutine RT_get_diagonal
 
-subroutine BHT_get_diagonal(M,D)
+subroutine CHT_get_diagonal(M,D)
   use shellmat_module
   implicit none
   Mat     M
   Vec     D
   PetscScalar mone
   PetscErrorCode ierr
-  call MatGetDiagonal(B,D,ierr)
+  call MatGetDiagonal(C,D,ierr)
   mone = -1.0
   call VecScale(D,mone,ierr)
   return
-end subroutine BHT_get_diagonal
+end subroutine CHT_get_diagonal

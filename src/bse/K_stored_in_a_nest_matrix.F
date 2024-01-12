@@ -82,6 +82,7 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
   external AT_mat_mult,BHT_mat_mult,& 
            AT_mat_mult_transpose,BHT_mat_mult_transpose,&
            AT_mat_mult_hermitian_transpose,BHT_mat_mult_hermitian_transpose,&
+           AT_get_diagonal,BHT_get_diagonal,&
            ignore_petsc_error_handler
   !
   SL_H_dim=BS_H_dim
@@ -180,6 +181,7 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
  call MatSetVecType(AT,VECCUDA,ierr)
 #endif
  endif
+ call MatShellSetOperation(AT,MATOP_GET_DIAGONAL,AT_get_diagonal,ierr)
  call MatShellSetOperation(AT,MATOP_MULT,AT_mat_mult,ierr)
  call MatShellSetOperation(AT,MATOP_MULT_TRANSPOSE,AT_mat_mult_transpose,ierr)
  call PetscPushErrorHandler(ignore_petsc_error_handler,PETSC_NULL_INTEGER,ierr)
@@ -192,6 +194,7 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
  call MatSetVecType(BHT,VECCUDA,ierr)
 #endif
  endif
+ call MatShellSetOperation(BHT,MATOP_GET_DIAGONAL,BHT_get_diagonal,ierr)
  call MatShellSetOperation(BHT,MATOP_MULT,BHT_mat_mult,ierr)
  call MatShellSetOperation(BHT,MATOP_MULT_TRANSPOSE,BHT_mat_mult_transpose,ierr)
  call PetscPushErrorHandler(ignore_petsc_error_handler,PETSC_NULL_INTEGER,ierr)
@@ -301,3 +304,29 @@ subroutine BHT_mat_mult_hermitian_transpose(M,X,F,ierr)
   call VecScale(F,mone,ierr)
   return
 end subroutine BHT_mat_mult_hermitian_transpose
+
+subroutine AT_get_diagonal(M,D)
+  use shellmat_module
+  implicit none
+  Mat     M
+  Vec     D
+  PetscScalar mone
+  PetscErrorCode ierr
+  call MatGetDiagonal(A,D,ierr)
+  mone = -1.0
+  call VecScale(D,mone,ierr)
+  return
+end subroutine AT_get_diagonal
+
+subroutine BHT_get_diagonal(M,D)
+  use shellmat_module
+  implicit none
+  Mat     M
+  Vec     D
+  PetscScalar mone
+  PetscErrorCode ierr
+  call MatGetDiagonal(B,D,ierr)
+  mone = -1.0
+  call VecScale(D,mone,ierr)
+  return
+end subroutine BHT_get_diagonal

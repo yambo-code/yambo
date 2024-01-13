@@ -5,7 +5,8 @@
 # Copyright (C) 2021 The Yambo Team
 #
 # Authors (see AUTHORS file for details): AM DS
-# make sure there is no locale setting creating unneeded differences.
+#
+# Note: make sure there is no locale setting creating not needed differences.
 #
 LC_ALL=C
 export LC_ALL

@@ -11,7 +11,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use drivers,        ONLY:l_col_cut
  use frequency,      ONLY:w_samp
  use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall
- use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BS_dip_size,BS_H_dim,BS_K_coupling
+ use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BS_H_dim,BS_K_coupling
  use stderr,         ONLY:STRING_match
  use X_m,            ONLY:Epsilon_ii,eps_2_alpha,EPS_2_eels,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&
 &                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,X_magnons,&

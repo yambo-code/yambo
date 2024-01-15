@@ -436,8 +436,8 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      call parser('BSSEnTarget',l_target_energy)
      !
-     if (BSS_slepc_matrix_format=='explicit'.or.BSS_slepc_matrix_format=='explicit-debug') call msg( 's', '[SLEPC] Faster alogorithm but BSE matrix duplicated over MPI tasks')
-     if (BSS_slepc_matrix_format=='shell')  call msg( 's', '[SLEPC] Slower alogorithm but BSE matrix distributed over MPI tasks')
+     if (BSS_slepc_matrix_format=='explicit'.or.BSS_slepc_matrix_format=='explicit-debug') call msg( 's', '[SLEPC] Faster algorithm but BSE matrix duplicated over MPI tasks')
+     if (BSS_slepc_matrix_format=='shell')  call msg( 's', '[SLEPC] Slower algorithm but BSE matrix distributed over MPI tasks')
      !
      ! Number of states for partial diagonalization
      !================================================

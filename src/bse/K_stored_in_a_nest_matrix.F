@@ -31,7 +31,7 @@ end module shellmat_module
 subroutine ignore_petsc_error_handler(comm,line,fun,file,n,p,mess,ctx,ierr)
 !
 ! Handler to ignore error if MatMultHermitianTranspose cannot be set.
-! This operation is only available for shell matrices in PETSc from v.3.21
+! This operation is only available for shell matrices in PETSc from v3.21.
 ! Setting MatMultTranspose is enough, but it is preferable to set both.
 !
   use petscsysdef
@@ -40,6 +40,8 @@ subroutine ignore_petsc_error_handler(comm,line,fun,file,n,p,mess,ctx,ierr)
   PetscErrorCode ierr
   MPI_Comm comm
   character*(*) fun,file,mess
+  ierr = 0
+  return
 end subroutine ignore_petsc_error_handler
 
 subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
@@ -66,8 +68,6 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
   !
   use petscmat
   use slepceps
-  use slepcepsdef
-  use petscmatdef
   use shellmat_module
   !
   implicit none
@@ -101,7 +101,6 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
   if (have_cuda) then
 #ifdef PETSC_HAVE_CUDA
   call MatSetType(R,MATDENSECUDA,ierr)
-  call MatSetVecType(R,VECCUDA,ierr)
 #endif
   endif
   call MatSetFromOptions(R,ierr)
@@ -113,7 +112,6 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
   if (have_cuda) then
 #ifdef PETSC_HAVE_CUDA
   call MatSetType(C,MATDENSECUDA,ierr)
-  call MatSetVecType(C,VECCUDA,ierr)
 #endif
   endif
   call MatSetFromOptions(C,ierr)

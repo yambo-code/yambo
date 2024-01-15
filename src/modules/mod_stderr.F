@@ -177,6 +177,8 @@ module stderr
        if(i_pos(2)<len_trim(string_in)) i_pos(2)=i_pos(2)-1
        ! 
        is=is+1
+       if (is>size(string_out)) exit
+       !
        string_out(is)=trim(string_in(i_pos(1):i_pos(2)))
        i_pos(1)=i_pos(2)+1
        !

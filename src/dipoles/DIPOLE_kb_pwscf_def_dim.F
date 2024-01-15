@@ -27,6 +27,7 @@ subroutine Dipole_kb_pwscf_def_dim()
  !
  allocate(pp_kbv_table(pp_kbv_dim))
  pp_kbv_table=0
+ tmp_var=cZERO
  !
  i1=0
  i2=0

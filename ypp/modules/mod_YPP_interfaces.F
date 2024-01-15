@@ -23,7 +23,7 @@ module YPP_interfaces
      integer,      optional :: COM_
    end subroutine
    !
-#endif
+#endif  
    !
    subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,spin_fac,pdos_fac,USE_the_DbGd,QUIET,FORCE_occ)
      use pars,           ONLY:SP

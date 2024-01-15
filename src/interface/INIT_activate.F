@@ -393,7 +393,9 @@ subroutine INIT_activate()
          if (.not.l_cohsex) call initactivate(1,'GTermKind GTermEn DysSolver')
          if (     l_cohsex) call initactivate(1,'UseEbands')
          if (trim(QP_solver)=="g") then
-           call initactivate(1,'GsampType GEnSteps GEnRnge GImRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
+           !DALV: hidding GsampType and GImRnge for now
+           !call initactivate(1,'GsampType GEnSteps GEnRnge GImRnge GEnMode GDmRnge GreenFTresh GreenF2QP')
+           call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP')
          else
            call initactivate(1,'SCEtresh')
            if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')

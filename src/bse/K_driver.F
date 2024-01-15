@@ -16,7 +16,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use DIPOLES,        ONLY:DIPOLE_t
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,REP
- use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0,BSS_eels_to_eps,BSS_uses_DbGd
+ use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0,BSS_uses_DbGd
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_res_K_corr,BS_n_g_W,BS_cpl_K_corr,&
 &                         BS_Blocks_and_Transitions_free,BSqpts,l_BS_photolum
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded

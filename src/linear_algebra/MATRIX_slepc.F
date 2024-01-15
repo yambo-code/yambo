@@ -14,6 +14,14 @@
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
 !
+module ContextSTShell
+#include <slepc/finclude/slepceps.h>
+  use slepceps
+  implicit none
+
+  Mat :: S,A_factor
+end module
+!
 subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cmpl)
  !
  ! 10/06/2016 HM
@@ -56,6 +64,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  ! slepc
  !
  external :: MyEPSMonitor !function to monitor the convergence
+ external :: STSetUp_User,STApply_User,STBackTransform_User,STDestroy_User
  ! 
  EPS                                :: eps
  ST                                 :: st    ! spectral transformation context
@@ -129,6 +138,16 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  epskind=EPSKRYLOVSCHUR
  ! From user
  if(BSS_slepc_approach=="Krylov-Schur")          epskind=EPSKRYLOVSCHUR
+ if(BSS_slepc_approach=="KS-sinvert") then
+   epskind=EPSKRYLOVSCHUR
+   call EPSGetST(eps,st,ierr)
+   stkind=STSHELL
+   call STSetType(st,stkind,ierr)
+   call STShellSetApply(st,STApply_User,ierr)
+   call STShellSetBackTransform(st,STBackTransform_User,ierr)
+   call PetscObjectSetName(st,"STShellTransformation",ierr)
+   call STSetUp_User(st,ierr)
+ endif
  if(BSS_slepc_approach=="Generalized-Davidson")  epskind=EPSGD
  if(BSS_slepc_approach=="Jacob-Davidson")        epskind=EPSJD
  !if(BSS_slepc_approach=="Scalapack")             epskind=EPSSCALAPACK
@@ -354,6 +373,136 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  call VecDestroy(xr,ierr)
  call VecDestroy(xr_left,ierr)
  !
+end subroutine
+!
+subroutine STSetUp_User(st,ierr)
+#include <slepc/finclude/slepceps.h>
+  use slepceps
+  use ContextSTShell
+  implicit none
+  !
+  ST                    :: st
+  Mat                   :: M,A,C,B,D,W
+  Mat, dimension(2,2)   :: M_submats
+  IS, dimension(2)      :: rows
+  PetscScalar           :: one,mone
+  PetscReal             :: info(MAT_FACTORINFO_SIZE)
+  PetscErrorCode        :: ierr
+  !
+  call STGetMatrix(st,0,M,ierr)
+  call MatNestGetSubMats(M, PETSC_NULL_INTEGER, PETSC_NULL_INTEGER, M_submats,ierr)
+  A = M_submats(1,1)
+  B = M_submats(1,2)
+  C = M_submats(2,1)
+  D = M_submats(2,2)
+  !
+  call MatDuplicate(A,MAT_COPY_VALUES,A_factor,ierr)
+  call MatFactorInfoInitialize(info,ierr)
+  call MatCholeskyFactor(A_factor,PETSC_NULL_IS,info,ierr)
+  call MatDuplicate(B,MAT_DO_NOT_COPY_VALUES,W,ierr)
+  call MatMatSolve(A_factor,B,W,ierr)
+  !call MatMatMult(C,W,MAT_INITIAL_MATRIX,PETSC_DEFAULT,S,ierr) !No support Scalapack -> MatProduct?
+  call MatProductCreate(C,W,PETSC_NULL_MAT,S,ierr)
+  call MatProductSetType(S,MATPRODUCT_AtB,ierr)
+  !call MatProductSetFromOptions(S,ierr)
+  call MatProductSymbolic(S,ierr)
+  call MatProductNumeric(S,ierr)
+  mone = -1
+  call MatScale(S,mone,ierr)
+  one = 1
+  call MatAXPY(S,one,D,SAME_NONZERO_PATTERN,ierr)
+  call MatCholeskyFactor(S,PETSC_NULL_IS,info,ierr)
+  !
+  call MatDestroy(W,ierr)
+  !
+  ierr=0
+  return
+end subroutine
+!
+subroutine STApply_User(st,vin,vout,ierr)
+#include <slepc/finclude/slepceps.h>
+  use slepceps
+  use ContextSTShell
+  implicit none
+
+  Mat                :: M,A,C,B,D
+  Mat,dimension(2,2) :: M_submats
+  Vec                :: f,g,x,y,y_tilde,w,vin,vout
+  ST                 :: st
+  IS,dimension(2)    :: rows
+  PetscScalar        :: mone
+  PetscErrorCode     :: ierr
+
+  call STGetMatrix(st,0,M,ierr)
+  call MatNestGetSubMats(M,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,M_submats,ierr)
+  A = M_submats(1,1)
+  B = M_submats(1,2)
+  C = M_submats(2,1)
+  D = M_submats(2,2)
+
+  ! Solve
+  call MatNestGetISs(M,rows,PETSC_NULL_INTEGER,ierr)
+  call VecGetSubVector(vin,rows(1),f,ierr)
+  call VecGetSubVector(vin,rows(2),g,ierr)
+  call VecGetSubVector(vout,rows(1),x,ierr)
+  call VecGetSubVector(vout,rows(2),y,ierr)
+
+  ! 1
+  call VecDuplicate(y,y_tilde,ierr)
+  call VecDuplicate(y,w,ierr)
+
+  call MatSolve(A_factor,f,w,ierr)
+  mone = -1
+  call VecScale(w,mone,ierr)
+  call MatMultAdd(C,w,g,y_tilde,ierr)
+  call MatSolve(S,y_tilde,y,ierr)
+
+  ! 2
+  call VecCopy(y,y_tilde,ierr)
+  call VecScale(y_tilde,mone,ierr)
+  call MatMultAdd(B,y_tilde,f,w,ierr)
+  call MatSolve(A_factor,w,x,ierr)
+
+  call VecDestroy(f,ierr)
+  call VecDestroy(g,ierr)
+  call VecDestroy(x,ierr)
+  call VecDestroy(y,ierr)
+  call VecDestroy(w,ierr)
+  call VecDestroy(y_tilde,ierr)
+
+  ierr=0
+  return
+end subroutine
+!
+subroutine STBackTransform_User(st,n,eigr,eigi,ierr)
+#include <slepc/finclude/slepceps.h>
+  use slepceps
+  use ContextSTShell
+
+  ST                       :: st
+  PetscInt                 :: n
+  PetscScalar,dimension(n) :: eigr,eigi
+  PetscErrorCode           :: ierr
+  PetscInt                 :: j
+
+  do j=1,n,1 
+    eigr(j) = 1.0 / eigr(j)
+  end do
+
+  ierr=0
+  return
+end subroutine
+!
+subroutine STDestroy_User(ierr)
+#include <slepc/finclude/slepceps.h>
+  use slepceps
+  use ContextSTShell
+
+  call MatDestroy(A_factor,ierr);
+  call MatDestroy(S,ierr);
+
+  ierr=0
+  return
 end subroutine
 !
 subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)

@@ -84,6 +84,7 @@ integer function io_NL(what,ID)
  if(read_is_on(ID).and..not.allocated(NL_P_t)) then
    !
    YAMBO_ALLOC(NL_P_t,(NE_steps,3))
+   YAMBO_ALLOC(NL_J_t,(NE_steps,6))
    !
    YAMBO_ALLOC(E_tot_t,(NE_steps,3))
    YAMBO_ALLOC(E_ext_t,(NE_steps,3))

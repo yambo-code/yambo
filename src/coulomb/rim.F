@@ -24,12 +24,12 @@ subroutine rim(mode,Xw)
  !
 #include<memory.h>
  !
- character(1)       :: mode
+ character(1)   :: mode
+ type(w_samp)   :: Xw
  !
  ! Work Space
  !
  type(PP_indexes)      ::px
- type(w_samp),optional :: Xw
  integer               :: iq
  real(SP)              :: em1_anis(3),G_radii,G_circ
  !

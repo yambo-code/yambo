@@ -18,12 +18,12 @@ subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM,DO_IT)
  ! c) ( ) + ( ) => IO PAR COMM = null
  !                 IO PAR CPU  = IO_read/IO_write defaults
  !
- use parallel_int,  ONLY:PP_bcast,PP_redux_wait
- use parallel_m,    ONLY:master_cpu,mpi_comm_null,yMPI_comm,mpi_comm_world,ncpu,myid
+ use parallel_int,  ONLY:PP_bcast
+ use parallel_m,    ONLY:master_cpu,mpi_comm_null,yMPI_comm,mpi_comm_world,ncpu
  use IO_m,          ONLY:io_unit,io_mode,io_com,io_action,io_sec,max_io_units, &
 &                        RD,WR,RD_CL,WR_CL,OP_APP,OP_APP_CL,OP_WR,OP_RD,OP_WR_CL,OP_RD_CL,&
 &                        io_reset,io_PAR_comm,io_PAR_cpu,IO_read,IO_write,&
-&                        read_is_on,write_is_on
+&                        write_is_on
  !
  implicit none
  !

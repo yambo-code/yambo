@@ -1,4 +1,5 @@
  SET_defaults.o
+ mod_COLL_interfaces.o
  mod_H_interfaces.o
  mod_RT_control.o
  mod_RT_lifetimes.o

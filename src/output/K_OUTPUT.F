@@ -13,7 +13,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall,&
 &                         diam_term_exact,para_term_w0,l_abs_prop_chi_bse,&
 &                         l_eels_from_inversion,Co_factor
- use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BS_dip_size,BS_H_dim,BS_K_coupling,&
+ use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BS_H_dim,BS_K_coupling,&
 &                         l_BS_anomalous_Hall
  use stderr,         ONLY:STRING_match
  use X_m,            ONLY:Epsilon_ii,eps_2_alpha,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&

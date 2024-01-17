@@ -17,7 +17,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  use stderr,        ONLY:STRING_match
  use interfaces,    ONLY:WF_load,WF_free
  use electrons,     ONLY:levels,spin
- use X_m,           ONLY:X_t,global_gauge,i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus
+ use X_m,           ONLY:X_t,global_gauge,i_G_shift
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_rotated
  use BS_solvers,    ONLY:BSS_Vnl_included
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BSE_L_kind,BS_bands,&

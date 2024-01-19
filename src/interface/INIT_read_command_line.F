@@ -215,7 +215,7 @@ subroutine INIT_read_command_line(rstr,init_)
        ! With and ALDA Fxc the t solver is not permitted
        !
        if (l_alda_fxc.and.STRING_match(BSS_mode,'t')) BSS_mode='h'
-       if (BSK_mode=='IP') call switch_off_runlevel('bss',on_name=' ')
+       if (BSK_mode=='IP') call switch_off_runlevel('bss',except=' ')
        if (BSK_mode==' ') then
          BSK_mode="SEX"
          Chi_mode="HARTREE"

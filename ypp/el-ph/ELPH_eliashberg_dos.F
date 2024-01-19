@@ -122,7 +122,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  !
  ! Load double-grid if present
  !
- call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_DG)
+ call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID_DG)
  io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
  !
  if(io_err==0) then
@@ -154,12 +154,6 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    if (l_eliashberg) io_err=io_ELPH(ID,'gkkp')
    !
    PH_freqs%E(iq,:,1)= sqrt( MAX( PH_freqs_sq(iq,:),0. ) )
-   !
-   if (use_PH_DbGd) then
-      call io_control(ACTION=IO_ACT,SEC=(/iq+1/),ID=ID_DG)
-      io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
-      if(io_err/=0) call error('Error reading PH-double grid for q-points '//intc(iq))
-   endif
    !
    if (.not.elph_use_q_grid.and.l_eliashberg) call setup_k_plus_q_levels(iq,en%E_Fermi)
    !

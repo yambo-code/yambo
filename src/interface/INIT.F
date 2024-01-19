@@ -189,7 +189,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    return
  endif
  !
- !Runlevels variables activation (Logicals from stdin)
+ ! Runlevels variables activation (Logicals from stdin)
  call LOCAL_from_runlevels_to_logicals()
  !
  ! Given the stding vars here I fix/check the 
@@ -332,6 +332,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_elph_scatt=runlevel_is_on('el_ph_scatt')
        l_elphoton_scatt=runlevel_is_on('el_photon_scatt')
 #endif
+#if defined _SC && defined _MODELS
+       l_sc_run=runlevel_is_on('scrun')
+#endif
 #if defined _SC && !defined _RT
        l_sc_run=runlevel_is_on('scrun')
        l_sc_magnetic=runlevel_is_on('magnetic')
@@ -343,7 +346,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _NL
        l_nl_optics=runlevel_is_on('nloptics')
 #endif
-#if defined  _ELPH || defined _PHEL
+#if defined _ELPH || defined _PHEL
        l_elph_Hamiltonian=runlevel_is_on('ElPhHam')
        l_elph_corr=runlevel_is_on('el_ph_corr')
        l_phel_corr=runlevel_is_on('ph_el_corr')
@@ -422,17 +425,18 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
      !
-     if (any((/l_em1s,l_em1d,l_X,l_optics,l_ppa,l_mpa/)))   call initactivate(1,'dipoles')
-     if (l_ppa.or.l_mpa)                                    call initactivate(1,'em1d')
-     if (l_gw0.and..not.any((/l_ppa,l_mpa,l_cohsex,l_HF_and_locXC,&
-&                             l_elph_corr,l_phel_corr,l_elphoton_corr/))) call initactivate(1,'em1d dipoles')
+     if (any((/l_em1s,l_em1d,l_X,l_optics,l_ppa/)))   call initactivate(1,'dipoles')
+     if (l_ppa)    call initactivate(1,'em1d')
+     if (l_mpa)    call initactivate(1,'dipoles')
+     if (l_gw0.and..not.any((/l_ppa,l_cohsex,l_HF_and_locXC,l_mpa,&
+&                                     l_elph_corr,l_phel_corr,l_elphoton_corr/))) call initactivate(1,'em1d dipoles')
      if (l_cohsex) call initactivate(1,'em1s dipoles')
      if (l_bss)    call initactivate(1,'optics dipoles bse')
      if (l_bs_fxc) BSS_mode="t"
      !
      if (l_mpa) then
        Xw(5)%n_freqs=4
-       Xw(5)%dr=(/0._SP,0.1_SP/)!/HA2EV !damping for MPA
+       Xw(5)%dr=(/0._SP,0.1_SP/) !MPA damping
      endif
      !
      if (l_bse) then
@@ -532,7 +536,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
      endif
      !
-     if ((l_gw0.or.l_life).and..not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr,l_phel_corr/))) call initactivate(1,'el_el_corr')
+     if ((l_gw0.or.l_life).and.&
+&        .not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr,l_phel_corr/))) call initactivate(1,'el_el_corr')
      !
    end subroutine LOCAL_after_input_IO
    !
@@ -543,8 +548,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_life) call initactivate(1,'el_el_corr')
 #endif
      !
-     if (io_ELPH_err(1)<0.and.io_ELPH_err(2)<0) call switch_off_runlevel('el_ph_corr ph_el_corr',on_name=' ')
-     if (io_ELPH_err(2)<0                     ) call switch_off_runlevel('el_ph_scatt ph_el_scatt',on_name=' ')
+     if (io_ELPH_err(1)<0.and.io_ELPH_err(2)<0) call switch_off_runlevel('el_ph_corr ph_el_corr',except=' ')
+     if (io_ELPH_err(2)<0                     ) call switch_off_runlevel('el_ph_scatt ph_el_scatt',except=' ')
      !
    end subroutine LOCAL_scatt_and_correlation_logicals
    !

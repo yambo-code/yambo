@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr)
+subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,extension,ierr)
  !
  ! This routine opens the fragment.
  !
@@ -25,11 +25,12 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr)
  !
  implicit none
  !
- integer, intent(in)   :: ID
- integer, intent(out)  :: ID_frag
- integer, optional     :: i_fragment
- integer, optional     :: j_fragment
- integer, optional     :: ierr
+ integer,      intent(in)   :: ID
+ integer,      intent(out)  :: ID_frag
+ integer,      optional     :: i_fragment
+ integer,      optional     :: j_fragment
+ integer,      optional     :: ierr
+ character(*), optional     :: extension
  !
  ! Work Space
  !
@@ -83,10 +84,14 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr)
  !
  io_file(ID_frag)=' '
  !
- fragment_filename=trim(io_extension(ID))//"_fragment_"//trim(intc(i_frag))
- if (present(j_fragment)) then
-   fragment_filename=trim(io_extension(ID)) &
-&                    //"_fragments_"//trim(intc(i_frag))//"_"//trim(intc(j_fragment))
+ if (present(extension)) then
+   fragment_filename=trim(io_extension(ID))//"_fragment_"//trim(extension)
+ else
+   fragment_filename=trim(io_extension(ID))//"_fragment_"//trim(intc(i_frag))
+   if (present(j_fragment)) then
+     fragment_filename=trim(io_extension(ID)) &
+&                      //"_fragments_"//trim(intc(i_frag))//"_"//trim(intc(j_fragment))
+   endif
  endif
  !
  ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID_frag)

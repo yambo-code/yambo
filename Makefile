@@ -9,6 +9,7 @@ ifeq ($(wildcard config/mk/global/defs.mk),config/mk/global/defs.mk)
  include config/mk/global/defs.mk
  include config/mk/defs.mk
 else ifeq ($(MAKECMDGOALS), download)
+else ifeq ($(MAKECMDGOALS), veryclean)
 else ifeq ($(MAKECMDGOALS), check-files)
 else ifeq ($(MAKECMDGOALS), check-packages)
 else

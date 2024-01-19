@@ -127,7 +127,7 @@ integer function io_QP_and_GF(what,qp,ID)
      call IO_desc_add(qp%desc,kind="s",str=" ",S=" ")
      call IO_desc_append(ELPH_desc,qp%desc)
      if (ver_is_gt_or_eq(ID,revision=19875)) then 
-       call IO_desc_add(qp%desc,kind="l",str='PH double-grid',L=use_PH_DbGd)
+       call IO_desc_add(qp%desc,kind="l",str='[ELPH] PH double-grid',L=use_PH_DbGd)
      endif
    endif
 #endif

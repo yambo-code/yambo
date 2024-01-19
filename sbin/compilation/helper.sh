@@ -5,7 +5,8 @@
 # Copyright (C) 2021 The Yambo Team
 #
 # Authors (see AUTHORS file for details): AM DS
-# make sure there is no locale setting creating unneeded differences.
+#
+# Note: make sure there is no locale setting creating not needed differences.
 #
 LC_ALL=C
 export LC_ALL
@@ -166,7 +167,7 @@ cp config/mk/local/makefile $cdir/Makefile
 # They will be left in a version, which might be the one of another projects (e.g. linked to another versione of the module) 
 #
 if [ "$mode" == "x" ] ; then
- files_to_remove=`find $compdir -type f -name "*_to_save"`
+ files_to_remove=`find $compdir -type f,l -name "*_to_save"`
  for file in $files_to_remove
  do
    source ./sbin/compilation/verbosity.sh "helper.sh: rm $file"

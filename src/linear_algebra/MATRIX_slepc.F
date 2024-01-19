@@ -90,7 +90,6 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  ! Non hermitian not implemented yet!
  !
  call MatGetSize(M_slepc,n,j,ierr)
- call SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
  call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
  !
  call MatCreateVecs(M_slepc,xr,xr_left,ierr)
@@ -362,7 +361,6 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  call EPSDestroy(eps,ierr)
  call VecDestroy(xr,ierr)
  call VecDestroy(xr_left,ierr)
- call SlepcFinalize(ierr)
  !
 end subroutine
 !

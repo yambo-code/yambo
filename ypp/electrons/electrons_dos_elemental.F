@@ -17,7 +17,6 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,spin_fac,pdos_fac,USE_
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use IO_int,         ONLY:IO_and_Messaging_switch
  use parser_m,       ONLY:parser
- use interpolate,    ONLY:INTERP_obj
  !
  implicit none
  !

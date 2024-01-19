@@ -30,8 +30,11 @@ configure: uncompress
 	@if test -d $(PACKAGE) && ! test -f configured.stamp; then \
          echo "\t[$(PACKAGE)] configuration"; \
 	 cd $(PACKAGE); \
+	 echo "PETSC_DIR=$(LIBPATH)" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
 	 PETSC_DIR=$(LIBPATH) \
+	 echo "SLEPC_DIR=$(PWD)/$(PACKAGE)" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
 	 SLEPC_DIR=$(PWD)/$(PACKAGE) \
+	 echo "python3 ./configure $(CONFFLAGS)" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
 	 python3 ./configure $(CONFFLAGS) >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
 	 touch ../configured.stamp; \
 	fi
@@ -49,7 +52,6 @@ install: uncompress configure compile
          echo "\t[$(PACKAGE)] installation"; \
 	 cd $(PACKAGE); \
          $(make) -j1 SLEPC_DIR=$(PWD)/$(PACKAGE) PETSC_DIR=$(LIBPATH) install  >> ${compdir}/log/compile_$(PACKAGE).log 2>&1; \
-         #chmod u+x $(LIBPATH)/lib/*slepc*.a; \
 	 touch ../installed.stamp; \
 	fi
 

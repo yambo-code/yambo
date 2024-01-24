@@ -19,7 +19,7 @@ module ContextSTShell
   use slepceps
   implicit none
 
-  Mat :: S,A_factor
+  Mat :: S,R_factor
 end module
 !
 subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cmpl)
@@ -64,7 +64,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  ! slepc
  !
  external :: MyEPSMonitor !function to monitor the convergence
- external :: STSetUp_User,STApply_User,STBackTransform_User,STDestroy_User
+ external :: STSetUp_User,STApply_User,STApplyHermitianTranspose_User,STBackTransform_User,STDestroy_User
  ! 
  EPS                                :: eps
  ST                                 :: st    ! spectral transformation context
@@ -140,10 +140,12 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  if(BSS_slepc_approach=="Krylov-Schur")          epskind=EPSKRYLOVSCHUR
  if(BSS_slepc_approach=="KS-sinvert") then
    epskind=EPSKRYLOVSCHUR
+   PetscCallA(EPSSetWhichEigenpairs(eps,EPS_SMALLEST_MAGNITUDE,ierr))
    PetscCallA(EPSGetST(eps,st,ierr))
    stkind=STSHELL
    PetscCallA(STSetType(st,stkind,ierr))
    PetscCallA(STShellSetApply(st,STApply_User,ierr))
+   PetscCallA(STShellSetApplyHermitianTranspose(st,STApplyHermitianTranspose_User,ierr))
    PetscCallA(STShellSetBackTransform(st,STBackTransform_User,ierr))
    PetscCallA(PetscObjectSetName(st,"STShellTransformation",ierr))
    PetscCallA(STSetUp_User(st,ierr))
@@ -382,36 +384,52 @@ subroutine STSetUp_User(st,ierr)
   implicit none
   !
   ST                    :: st
-  Mat                   :: M,A,C,B,D,W
+  Mat                   :: M,R,C,W,Rt
   Mat, dimension(2,2)   :: M_submats
-  IS, dimension(2)      :: rows
-  PetscScalar           :: one,mone
+  IS                    :: perm,iperm
+  PetscScalar           :: mone
   PetscReal             :: info(MAT_FACTORINFO_SIZE)
   PetscErrorCode        :: ierr
   !
   PetscCall(STGetMatrix(st,0,M,ierr))
   PetscCall(MatNestGetSubMats(M, PETSC_NULL_INTEGER, PETSC_NULL_INTEGER, M_submats,ierr))
-  A = M_submats(1,1)
-  B = M_submats(1,2)
+  R = M_submats(1,1)
   C = M_submats(2,1)
-  D = M_submats(2,2)
-  !
-  PetscCall(MatDuplicate(A,MAT_COPY_VALUES,A_factor,ierr))
+
+  PetscCall(MatViewFromOptions(R,PETSC_NULL_MAT,"-view_R",ierr))
+  PetscCall(MatViewFromOptions(C,PETSC_NULL_MAT,"-view_C",ierr))
+
+  PetscCall(MatDuplicate(R,MAT_COPY_VALUES,R_factor,ierr))
+  PetscCall(MatSetOption(R_factor,MAT_HERMITIAN,PETSC_TRUE,ierr))
+  PetscCallA(MatGetOrdering(R_factor,MATORDERINGNATURAL,perm,iperm,ierr))
   PetscCall(MatFactorInfoInitialize(info,ierr))
-  PetscCall(MatCholeskyFactor(A_factor,PETSC_NULL_IS,info,ierr))
-  PetscCall(MatDuplicate(B,MAT_DO_NOT_COPY_VALUES,W,ierr))
-  PetscCall(MatMatSolve(A_factor,B,W,ierr))
+  PetscCall(MatCholeskyFactor(R_factor,perm,info,ierr))
+  !
+  ! S = -R^T + (C^*)*(R^-1)*C
+  !
+  ! W = (R^-1)*C
+  PetscCall(MatDuplicate(C,MAT_DO_NOT_COPY_VALUES,W,ierr))
+  PetscCall(MatMatSolve(R_factor,C,W,ierr))
+  PetscCall(MatViewFromOptions(C,PETSC_NULL_MAT,"-view_WLU",ierr))
+  !
+  ! S_temp = (C^*)*W
+  PetscCall(MatConjugate(C,ierr))
   !PetscCall(MatMatMult(C,W,MAT_INITIAL_MATRIX,PETSC_DEFAULT,S,ierr)) !No support Scalapack -> MatProduct?
   PetscCall(MatProductCreate(C,W,PETSC_NULL_MAT,S,ierr))
   PetscCall(MatProductSetType(S,MATPRODUCT_AtB,ierr))
-  !PetscCall(MatProductSetFromOptions(S,ierr))
+  PetscCall(MatProductSetFromOptions(S,ierr))
   PetscCall(MatProductSymbolic(S,ierr))
   PetscCall(MatProductNumeric(S,ierr))
+  PetscCall(MatConjugate(C,ierr))
+  PetscCall(MatViewFromOptions(S,PETSC_NULL_MAT,"-view_Stemp",ierr))
+  !
+  ! S = (-R^T) + S_temp
+  PetscCall(MatCreateTranspose(R,Rt,ierr))
   mone = -1
-  PetscCall(MatScale(S,mone,ierr))
-  one = 1
-  PetscCall(MatAXPY(S,one,D,SAME_NONZERO_PATTERN,ierr))
-  PetscCall(MatCholeskyFactor(S,PETSC_NULL_IS,info,ierr))
+  PetscCall(MatAXPY(S,mone,Rt,SAME_NONZERO_PATTERN,ierr))
+  PetscCall(MatViewFromOptions(S,PETSC_NULL_MAT,"-view_S",ierr))
+  PetscCall(MatSetOption(S,MAT_HERMITIAN,PETSC_TRUE,ierr))
+  PetscCall(MatCholeskyFactor(S,perm,info,ierr))
   !
   PetscCall(MatDestroy(W,ierr))
   !
@@ -424,52 +442,112 @@ subroutine STApply_User(st,vin,vout,ierr)
   use slepceps
   use ContextSTShell
   implicit none
-
-  Mat                :: M,A,C,B,D
+  !
+  Mat                :: M,R,C,Cht
   Mat,dimension(2,2) :: M_submats
   Vec                :: f,g,x,y,y_tilde,w,vin,vout
   ST                 :: st
   IS,dimension(2)    :: rows
   PetscScalar        :: mone
   PetscErrorCode     :: ierr
-
+  !
   PetscCall(STGetMatrix(st,0,M,ierr))
   PetscCall(MatNestGetSubMats(M,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,M_submats,ierr))
-  A = M_submats(1,1)
-  B = M_submats(1,2)
-  C = M_submats(2,1)
-  D = M_submats(2,2)
-
+  R = M_submats(1,1)
+  C = M_submats(2,1) 
+  !
   ! Solve
   PetscCall(MatNestGetISs(M,rows,PETSC_NULL_INTEGER,ierr))
   PetscCall(VecGetSubVector(vin,rows(1),f,ierr))
   PetscCall(VecGetSubVector(vin,rows(2),g,ierr))
   PetscCall(VecGetSubVector(vout,rows(1),x,ierr))
   PetscCall(VecGetSubVector(vout,rows(2),y,ierr))
-
-  ! 1
+  !
+  ! 1 : y = (S^-1)(g + (C^*)*(R^-1)*f) 
   PetscCall(VecDuplicate(y,y_tilde,ierr))
   PetscCall(VecDuplicate(y,w,ierr))
-
-  PetscCall(MatSolve(A_factor,f,w,ierr))
-  mone = -1
-  PetscCall(VecScale(w,mone,ierr))
-  PetscCall(MatMultAdd(C,w,g,y_tilde,ierr))
+  !
+  ! w = (R^-1)*f
+  PetscCall(MatSolve(R_factor,f,w,ierr))
+  !
+  ! y_tilde = g + (C^*)*w
+  PetscCall(MatCreateHermitianTranspose(C,Cht,ierr))
+  PetscCall(MatMultAdd(Cht,w,g,y_tilde,ierr)) 
+  !
+  ! y = (S^-1)*y_tilde
   PetscCall(MatSolve(S,y_tilde,y,ierr))
-
-  ! 2
+  !
+  ! 2 : x = (R^-1)*(f-C*y)
+  !
+  ! w = f - C*y
   PetscCall(VecCopy(y,y_tilde,ierr))
+  mone=-1
   PetscCall(VecScale(y_tilde,mone,ierr))
-  PetscCall(MatMultAdd(B,y_tilde,f,w,ierr))
-  PetscCall(MatSolve(A_factor,w,x,ierr))
-
+  PetscCall(MatMultAdd(C,y_tilde,f,w,ierr)) 
+  !
+  ! x = (R^-1)*w
+  PetscCall(MatSolve(R_factor,w,x,ierr)) 
+  !
   PetscCall(VecDestroy(f,ierr))
   PetscCall(VecDestroy(g,ierr))
   PetscCall(VecDestroy(x,ierr))
   PetscCall(VecDestroy(y,ierr))
   PetscCall(VecDestroy(w,ierr))
   PetscCall(VecDestroy(y_tilde,ierr))
-
+  !
+  ierr=0
+  return
+end subroutine
+!
+subroutine STApplyHermitianTranspose_User(st,vin,vout,ierr)
+#include <slepc/finclude/slepceps.h>
+  use slepceps
+  use ContextSTShell
+  implicit none
+  !
+  Mat                :: M,R,C,Cht
+  Mat,dimension(2,2) :: M_submats
+  Vec                :: f,g,x,y,y_tilde,w,vin,vout
+  ST                 :: st
+  IS,dimension(2)    :: rows
+  PetscScalar        :: mone
+  PetscErrorCode     :: ierr
+  !
+  PetscCall(STGetMatrix(st,0,M,ierr))
+  PetscCall(MatNestGetSubMats(M,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,M_submats,ierr))
+  R = M_submats(1,1)
+  C = M_submats(2,1) 
+  !
+  PetscCall(MatNestGetISs(M,rows,PETSC_NULL_INTEGER,ierr))
+  PetscCall(VecGetSubVector(vin,rows(1),f,ierr))
+  PetscCall(VecGetSubVector(vin,rows(2),g,ierr))
+  PetscCall(VecGetSubVector(vout,rows(1),x,ierr))
+  PetscCall(VecGetSubVector(vout,rows(2),y,ierr))
+  !
+  ! 1
+  PetscCall(VecDuplicate(y,y_tilde,ierr))
+  PetscCall(VecDuplicate(y,w,ierr))
+  !
+  PetscCall(MatSolve(R_factor,f,w,ierr))
+  !
+  PetscCall(MatCreateHermitianTranspose(C,Cht,ierr))
+  mone=-1
+  PetscCall(VecScale(w,mone,ierr))
+  PetscCall(MatMultAdd(Cht,w,g,y_tilde,ierr)) ! g - (C^*)*w
+  PetscCall(MatSolve(S,y_tilde,y,ierr))
+  !
+  ! 2
+  PetscCall(VecCopy(y,y_tilde,ierr))
+  PetscCall(MatMultAdd(C,y_tilde,f,w,ierr)) ! f + C*y
+  PetscCall(MatSolve(R_factor,w,x,ierr)) 
+  !
+  PetscCall(VecDestroy(f,ierr))
+  PetscCall(VecDestroy(g,ierr))
+  PetscCall(VecDestroy(x,ierr))
+  PetscCall(VecDestroy(y,ierr))
+  PetscCall(VecDestroy(w,ierr))
+  PetscCall(VecDestroy(y_tilde,ierr))
+  !
   ierr=0
   return
 end subroutine
@@ -498,7 +576,7 @@ subroutine STDestroy_User(ierr)
   use slepceps
   use ContextSTShell
 
-  PetscCall(MatDestroy(A_factor,ierr))
+  PetscCall(MatDestroy(R_factor,ierr))
   PetscCall(MatDestroy(S,ierr))
 
   ierr=0

@@ -95,27 +95,27 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
   !
   ! Allocate the explicit submatrices of the nest matrix
   !
-  call MatCreate(PETSC_COMM_WORLD,R,ierr)
-  call MatSetSizes(R,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
-  call MatSetType(R,MATMPIDENSE,ierr)
+  PetscCallA(MatCreate(PETSC_COMM_WORLD,R,ierr))
+  PetscCallA(MatSetSizes(R,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr))
+  PetscCallA(MatSetType(R,MATSEQDENSE,ierr))
   if (have_cuda) then
 #ifdef PETSC_HAVE_CUDA
-  call MatSetType(R,MATDENSECUDA,ierr)
+  PetscCallA(MatSetType(R,MATDENSECUDA,ierr))
 #endif
   endif
-  call MatSetFromOptions(R,ierr)
-  call MatSetUp(R,ierr)
+  PetscCallA(MatSetFromOptions(R,ierr))
+  PetscCallA(MatSetUp(R,ierr))
   !
-  call MatCreate(PETSC_COMM_WORLD,C,ierr)
-  call MatSetSizes(C,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
-  call MatSetType(C,MATMPIDENSE,ierr)
+  PetscCallA(MatCreate(PETSC_COMM_WORLD,C,ierr))
+  PetscCallA(MatSetSizes(C,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr))
+  PetscCallA(MatSetType(C,MATSEQDENSE,ierr))
   if (have_cuda) then
 #ifdef PETSC_HAVE_CUDA
-  call MatSetType(C,MATDENSECUDA,ierr)
+  PetscCallA(MatSetType(C,MATDENSECUDA,ierr))
 #endif
   endif
-  call MatSetFromOptions(C,ierr)
-  call MatSetUp(C,ierr)
+  PetscCallA(MatSetFromOptions(C,ierr))
+  PetscCallA(MatSetUp(C,ierr))
   !
   ! Fill the values of the explicit submatrices of the nest matrix
   !
@@ -155,14 +155,14 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
         !
         select case(BS_blk(i_B)%mode)
         case("R")
-           call MatSetValue( R, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
+           PetscCallA(MatSetValue( R, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr ))
            ! The resonant block is hermitian
-           call MatSetValue( R, H_pos(2), H_pos(1),   Mij_star, INSERT_VALUES, ierr )
+           PetscCallA(MatSetValue( R, H_pos(2), H_pos(1),   Mij_star, INSERT_VALUES, ierr ))
         case("C")
-           call MatSetValue( C, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
+           PetscCallA(MatSetValue( C, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr ))
            ! Anti-coupling from coupling: the whole BSE matrix is Pseudo-HErmitian
            ! The coupling block and the anti-coupling block are symmetric
-           call MatSetValue( C, H_pos(2), H_pos(1),       Mij , INSERT_VALUES, ierr )
+           PetscCallA(MatSetValue( C, H_pos(2), H_pos(1),       Mij , INSERT_VALUES, ierr ))
         end select
         !
       enddo
@@ -171,37 +171,37 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
     !
   enddo
   !
- call MatAssemblyBegin(R,MAT_FINAL_ASSEMBLY,ierr)
- call MatAssemblyEnd(R,MAT_FINAL_ASSEMBLY,ierr)
- call MatAssemblyBegin(C,MAT_FINAL_ASSEMBLY,ierr)
- call MatAssemblyEnd(C,MAT_FINAL_ASSEMBLY,ierr)
+ PetscCallA(MatAssemblyBegin(R,MAT_FINAL_ASSEMBLY,ierr))
+ PetscCallA(MatAssemblyEnd(R,MAT_FINAL_ASSEMBLY,ierr))
+ PetscCallA(MatAssemblyBegin(C,MAT_FINAL_ASSEMBLY,ierr))
+ PetscCallA(MatAssemblyEnd(C,MAT_FINAL_ASSEMBLY,ierr))
  !
  ! Create the two shell submatrices and define the required operations
  !
- call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,RT,ierr)
+ PetscCallA(MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,RT,ierr))
  if (have_cuda) then
 #ifdef PETSC_HAVE_CUDA
- call MatSetVecType(RT,VECCUDA,ierr)
+ PetscCallA(MatSetVecType(RT,VECCUDA,ierr))
 #endif
  endif
- call MatShellSetOperation(RT,MATOP_GET_DIAGONAL,RT_get_diagonal,ierr)
- call MatShellSetOperation(RT,MATOP_MULT,RT_mat_mult,ierr)
- call MatShellSetOperation(RT,MATOP_MULT_TRANSPOSE,RT_mat_mult_transpose,ierr)
+ PetscCallA(MatShellSetOperation(RT,MATOP_GET_DIAGONAL,RT_get_diagonal,ierr))
+ PetscCallA(MatShellSetOperation(RT,MATOP_MULT,RT_mat_mult,ierr))
+ PetscCallA(MatShellSetOperation(RT,MATOP_MULT_TRANSPOSE,RT_mat_mult_transpose,ierr))
  call PetscPushErrorHandler(ignore_petsc_error_handler,PETSC_NULL_INTEGER,ierr)
- call MatShellSetOperation(RT,MATOP_MULT_HERMITIAN_TRANSPOSE,RT_mat_mult_hermitian_transpose,ierr)
+ PetscCallA(MatShellSetOperation(RT,MATOP_MULT_HERMITIAN_TRANSPOSE,RT_mat_mult_hermitian_transpose,ierr))
  call PetscPopErrorHandler(ierr)
  !
- call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,CHT,ierr)
+ PetscCallA(MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,CHT,ierr))
  if (have_cuda) then
 #ifdef PETSC_HAVE_CUDA
- call MatSetVecType(CHT,VECCUDA,ierr)
+ PetscCallA(MatSetVecType(CHT,VECCUDA,ierr))
 #endif
  endif
- call MatShellSetOperation(CHT,MATOP_GET_DIAGONAL,CHT_get_diagonal,ierr)
- call MatShellSetOperation(CHT,MATOP_MULT,CHT_mat_mult,ierr)
- call MatShellSetOperation(CHT,MATOP_MULT_TRANSPOSE,CHT_mat_mult_transpose,ierr)
+ PetscCallA(MatShellSetOperation(CHT,MATOP_GET_DIAGONAL,CHT_get_diagonal,ierr))
+ PetscCallA(MatShellSetOperation(CHT,MATOP_MULT,CHT_mat_mult,ierr))
+ PetscCallA(MatShellSetOperation(CHT,MATOP_MULT_TRANSPOSE,CHT_mat_mult_transpose,ierr))
  call PetscPushErrorHandler(ignore_petsc_error_handler,PETSC_NULL_INTEGER,ierr)
- call MatShellSetOperation(CHT,MATOP_MULT_HERMITIAN_TRANSPOSE,CHT_mat_mult_hermitian_transpose,ierr)
+ PetscCallA(MatShellSetOperation(CHT,MATOP_MULT_HERMITIAN_TRANSPOSE,CHT_mat_mult_hermitian_transpose,ierr))
  call PetscPopErrorHandler(ierr)
  !
  ! Build the nest matrix
@@ -211,10 +211,10 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
  matArray(3) = CHT
  matArray(4) = RT
  itwo = 2
- call MatCreateNest(PETSC_COMM_WORLD,itwo,PETSC_NULL_INTEGER,itwo,PETSC_NULL_INTEGER,matArray,slepc_mat,ierr)
+ PetscCallA(MatCreateNest(PETSC_COMM_WORLD,itwo,PETSC_NULL_INTEGER,itwo,PETSC_NULL_INTEGER,matArray,slepc_mat,ierr))
  if (have_cuda) then
 #ifdef PETSC_HAVE_CUDA
- call MatSetVecType(slepc_mat,VECCUDA,ierr)
+ PetscCallA(MatSetVecType(slepc_mat,VECCUDA,ierr))
 #endif
  endif
  !
@@ -227,9 +227,9 @@ subroutine RT_mat_mult(M,X,F,ierr)
   Vec     X,F
   PetscScalar mone
   PetscErrorCode ierr
-  call MatMultTranspose(R,X,F,ierr)
+  PetscCall(MatMultTranspose(R,X,F,ierr))
   mone = -1.0
-  call VecScale(F,mone,ierr)
+  PetscCall(VecScale(F,mone,ierr))
   return
 end subroutine RT_mat_mult
 
@@ -240,9 +240,9 @@ subroutine CHT_mat_mult(M,X,F,ierr)
   Vec     X,F
   PetscScalar mone
   PetscErrorCode ierr
-  call MatMultHermitianTranspose(C,X,F,ierr)
+  PetscCall(MatMultHermitianTranspose(C,X,F,ierr))
   mone = -1.0
-  call VecScale(F,mone,ierr)
+  PetscCall(VecScale(F,mone,ierr))
   return
 end subroutine CHT_mat_mult
 
@@ -253,9 +253,9 @@ subroutine RT_mat_mult_transpose(M,X,F,ierr)
   Vec     X,F
   PetscScalar mone
   PetscErrorCode ierr
-  call MatMult(R,X,F,ierr)
+  PetscCall(MatMult(R,X,F,ierr))
   mone = -1.0
-  call VecScale(F,mone,ierr)
+  PetscCall(VecScale(F,mone,ierr))
   return
 end subroutine RT_mat_mult_transpose
 
@@ -266,14 +266,14 @@ subroutine CHT_mat_mult_transpose(M,X,F,ierr)
   Vec     X,X_conjugate,F
   PetscScalar mone
   PetscErrorCode ierr
-  call VecDuplicate(X,X_conjugate,ierr)
-  call VecCopy(X,X_conjugate,ierr)
-  call VecConjugate(X_conjugate,ierr)
-  call MatMult(C,X_conjugate,F,ierr)
+  PetscCall(VecDuplicate(X,X_conjugate,ierr))
+  PetscCall(VecCopy(X,X_conjugate,ierr))
+  PetscCall(VecConjugate(X_conjugate,ierr))
+  PetscCall(MatMult(C,X_conjugate,F,ierr))
   mone = -1.0
-  call VecConjugate(F,ierr)
-  call VecScale(F,mone,ierr)
-  call VecDestroy(X_conjugate,ierr)
+  PetscCall(VecConjugate(F,ierr))
+  PetscCall(VecScale(F,mone,ierr))
+  PetscCall(VecDestroy(X_conjugate,ierr))
   return
 end subroutine CHT_mat_mult_transpose
 
@@ -284,14 +284,14 @@ subroutine RT_mat_mult_hermitian_transpose(M,X,F,ierr)
   Vec     X,X_conjugate,F
   PetscScalar mone
   PetscErrorCode ierr
-  call VecDuplicate(X,X_conjugate,ierr)
-  call VecCopy(X,X_conjugate,ierr)
-  call VecConjugate(X_conjugate,ierr)
-  call MatMult(R,X_conjugate,F,ierr)
+  PetscCall(VecDuplicate(X,X_conjugate,ierr))
+  PetscCall(VecCopy(X,X_conjugate,ierr))
+  PetscCall(VecConjugate(X_conjugate,ierr))
+  PetscCall(MatMult(R,X_conjugate,F,ierr))
   mone = -1.0
-  call VecConjugate(F,ierr)
-  call VecScale(F,mone,ierr)
-  call VecDestroy(X_conjugate,ierr)
+  PetscCall(VecConjugate(F,ierr))
+  PetscCall(VecScale(F,mone,ierr))
+  PetscCall(VecDestroy(X_conjugate,ierr))
   return
 end subroutine RT_mat_mult_hermitian_transpose
 
@@ -302,9 +302,9 @@ subroutine CHT_mat_mult_hermitian_transpose(M,X,F,ierr)
   Vec     X,F
   PetscScalar mone
   PetscErrorCode ierr
-  call MatMult(C,X,F,ierr)
+  PetscCall(MatMult(C,X,F,ierr))
   mone = -1.0
-  call VecScale(F,mone,ierr)
+  PetscCall(VecScale(F,mone,ierr))
   return
 end subroutine CHT_mat_mult_hermitian_transpose
 
@@ -315,9 +315,9 @@ subroutine RT_get_diagonal(M,D)
   Vec     D
   PetscScalar mone
   PetscErrorCode ierr
-  call MatGetDiagonal(R,D,ierr)
+  PetscCall(MatGetDiagonal(R,D,ierr))
   mone = -1.0
-  call VecScale(D,mone,ierr)
+  PetscCall(VecScale(D,mone,ierr))
   return
 end subroutine RT_get_diagonal
 
@@ -328,8 +328,8 @@ subroutine CHT_get_diagonal(M,D)
   Vec     D
   PetscScalar mone
   PetscErrorCode ierr
-  call MatGetDiagonal(C,D,ierr)
+  PetscCall(MatGetDiagonal(C,D,ierr))
   mone = -1.0
-  call VecScale(D,mone,ierr)
+  PetscCall(VecScale(D,mone,ierr))
   return
 end subroutine CHT_get_diagonal

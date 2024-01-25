@@ -26,10 +26,10 @@
 subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  !
  ! The gradient of a periodic function f(r):
- ! 
+ !
  ! f(r) = \sum f(G) exp(iGr) => FFT: f(G)
  !
- ! f'(r) = \sum iGf(G) exp(iGr) =           
+ ! f'(r) = \sum iGf(G) exp(iGr) =
  !
  ! \sum f'(G) exp(iGr)       => FFT^-1
  !
@@ -38,7 +38,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  use iso_c_binding, ONLY: c_null_ptr
  use pars,          ONLY: SP,DP,cI,cZERO,cZERO_DP
  use FFT_m,         ONLY: fft_size,fft_dim,DEV_VAR(fft_g_table)
- use FFT_m,         ONLY: fftw_plan,cufft_plan,hipfft_plan
+ use FFT_m,         ONLY: fftw_plan,cufft_plan,hipfft_plan,mklgpu_desc
  use R_lattice,     ONLY: g_vec,DEV_VAR(g_vec),ng_vec
  use wave_func,     ONLY: wf_ng
  use devxlib,       ONLY: devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_mapped,devxlib_memset_d
@@ -49,6 +49,9 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
 #ifdef _CUDA
  use cufft_m
 #endif
+#ifdef _MKLGPU
+ use mkl_dfti_omp_offload
+#endif
  use timing_m
  !
 #include<y_memory.h>
@@ -58,7 +61,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  complex(SP),      intent(out):: f_gradient(fft_size,spinor_size,3)
  character(len=*), intent(in) :: f_type       ! "wave", "density" or "potential"
  !
- ! Work Space 
+ ! Work Space
  !
  integer :: ng_,ic,ig,i_spinor,ierr
  complex(DP), allocatable,          target :: Vr(:), V3g(:,:)
@@ -105,11 +108,14 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
 #if defined _CUDA
    ierr = cufftDestroy(cufft_plan)
    cufft_plan=0
-   call fft_3d_cuda(Vr_p,fft_dim,-1,cufft_plan) 
+   call fft_3d_cuda(Vr_p,fft_dim,-1,cufft_plan)
 #elif defined _HIP
    ierr = hipfftDestroy(hipfft_plan)
    hipfft_plan=c_null_ptr
-   call fft_3d_hip(Vr_p,fft_dim,-1,hipfft_plan) 
+   call fft_3d_hip(Vr_p,fft_dim,-1,hipfft_plan)
+#elif defined _MKLGPU
+   ierr = DftiFreeDescriptor(mklgpu_desc)
+   call fft_3d_mklgpu(Vr_p,fft_dim,-1,mklgpu_desc)
 #else
 #  if defined _FFTW
    call dfftw_destroy_plan(fftw_plan)
@@ -151,9 +157,11 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
      !DEV_ACC end data
      !
 #if defined _CUDA
-     call fft_3d_cuda(Vr_p,fft_dim,1,cufft_plan) 
+     call fft_3d_cuda(Vr_p,fft_dim,1,cufft_plan)
 #elif defined _HIP
-     call fft_3d_hip(Vr_p,fft_dim,1,hipfft_plan) 
+     call fft_3d_hip(Vr_p,fft_dim,1,hipfft_plan)
+#elif defined _MKLGPU
+     call fft_3d_mklgpu(Vr_p,fft_dim,1,mklgpu_desc)
 #else
 #    if defined _FFTW
      call dfftw_destroy_plan(fftw_plan)

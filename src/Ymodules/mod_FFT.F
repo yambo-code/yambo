@@ -3,27 +3,34 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#ifdef(_MKLGPU)
+include "mkl_dfti_omp_offload.f90"
+#endif
+
 module FFT_m
  use pars,          ONLY: SP
- use iso_c_binding, ONLY: c_ptr 
+ use iso_c_binding, ONLY: c_ptr
+#ifdef(_MKLGPU)
+ use mkl_dfti_omp_offload
+#endif
  !
 #include<dev_defs.h>
  !
@@ -54,7 +61,16 @@ module FFT_m
  ! hipFFT support (AMD GPUs)
  !
  type(c_ptr) :: hipfft_plan
-
+                           !(BW) -1 sign: R-space to G-space
+ !
+ ! oneMKL support (Intel GPUs)
+ !
+#ifdef(_MKLGPU)
+ type(dfti_descriptor) :: mklgpu_desc
+#else
+ type(c_ptr) :: mklgpu_desc   !Placeholder not to be used (really
+                              ! needed?)
+#endif
 
  contains
    !
@@ -63,8 +79,8 @@ module FFT_m
      !  Calculate a function similar to MOD:
      !  modx(i,j) = mod (i,j) i>=0
      !            = mod ( mod(i,j)+j , j) i<0
-     !  Thus 
-     !   modx(3,2)=1 
+     !  Thus
+     !   modx(3,2)=1
      !   modx(-1,2)=1.
      !  This is different from MOD for i negative.
      !

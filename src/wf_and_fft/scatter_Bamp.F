@@ -3,27 +3,27 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,DS,AF
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine DEV_SUB(scatter_Bamp)(isc)
  !
- ! rhotw(G)=<ib ik_is i_sp| e^[I(RsG-G0).r] | ob ok_os o_sp>   
+ ! rhotw(G)=<ib ik_is i_sp| e^[I(RsG-G0).r] | ob ok_os o_sp>
  !
  !  is(3)=(ib,ik,is,i_sp) --<--:--<-- os(3)=(ob,ok,os,o_sp)
  !                             :
@@ -41,14 +41,15 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  use D_lattice,      ONLY:idt_index
  use R_lattice,      ONLY:DEV_VAR(g_rot)
  use pseudo,         ONLY:pp_is_uspp
- use FFT_m,          ONLY:fftw_plan,cufft_plan,hipfft_plan,fft_size,fft_dim,DEV_VAR(fft_g_table)
+ use FFT_m,          ONLY:fftw_plan,cufft_plan,hipfft_plan,mklgpu_desc,&
+ &                        fft_size,fft_dim,DEV_VAR(fft_g_table)
  use interfaces,     ONLY:DEV_SUB(WF_apply_symm)
  use devxlib,        ONLY:devxlib_memset_d,devxlib_memset_h
  !
  implicit none
  !
  type(elemental_collision), target::isc
- 
+
  integer :: qs,iGo
  integer :: ig,ir,isc_ngrho,ib,ibp
  complex(SP), pointer DEV_ATTR :: WF_symm_i_p(:,:), WF_symm_o_p(:,:)
@@ -62,20 +63,20 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  WF_symm_o_p => DEV_VAR(isc%WF_symm_o)
  rho_tw_rs_p => DEV_VAR(isc%rho_tw_rs)
  rhotw_p     => DEV_VAR(isc%rhotw)
- 
+
  !
  ! |ib ik_is i_sp>
  call DEV_SUB(WF_apply_symm)(isc%is,WF_symm_i_p)
  !
- ! | ob ok_os o_sp>   
+ ! | ob ok_os o_sp>
  call DEV_SUB(WF_apply_symm)(isc%os,WF_symm_o_p)
  !
  ! \tilde{\rho} in Real Space
  !
 #if defined _FFTQE && !defined _USE_3D_FFT && !defined _GPU_LOC
- ! 
+ !
  ! add one extra conjg since FFTQE cannot account for the conjg in one go
- ! 
+ !
  !$omp parallel default(shared), private(ir)
  !$omp do
  do ir = 1, fft_size
@@ -129,9 +130,11 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  call fft_3d_cuda(rho_tw_rs_p,fft_dim,+1,cufft_plan)
 #  elif defined _HIP
  call fft_3d_hip(rho_tw_rs_p,fft_dim,+1,hipfft_plan)
+#  elif defined _MKLGPU
+ call fft_3d_mklgpu(rho_tw_rs_p,fft_dim,+1,mklgpu_desc)
 #  endif
  !
-#else 
+#else
  !
 #  if defined _FFTW
  call fft_3d(isc%rho_tw_rs,fft_dim,+1,fftw_plan)
@@ -163,7 +166,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  !
  ! one extra conjg is performed on rho_tw_rs
  !
- if (qs==idt_index) then 
+ if (qs==idt_index) then
    !$omp parallel do default(shared), private(ig)
    do ig = 1, isc%ngrho
      isc%rhotw(ig)= cmplx(conjg(isc%rho_tw_rs(fft_g_table(ig,iGo))),kind=SP)
@@ -177,7 +180,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  !
 #else
  !
- if (qs==idt_index) then 
+ if (qs==idt_index) then
    !
    !DEV_ACC data present(rhotw_p,rho_tw_rs_p,fft_g_table)
    !DEV_ACC parallel loop async

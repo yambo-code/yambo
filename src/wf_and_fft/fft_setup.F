@@ -3,22 +3,22 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 #include<dev_defs.h>
@@ -32,7 +32,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_rot_r_inv,&
 &                         fft_norm,fft_g_table,fft_multiplier,modx,&
 &                         DEV_VAR(fft_g_table),DEV_VAR(fft_rot_r),DEV_VAR(fft_rot_r_inv)
- use FFT_m,          ONLY:fftw_plan,cufft_plan,hipfft_plan
+ use FFT_m,          ONLY:fftw_plan,cufft_plan,hipfft_plan,mklgpu_desc
 #if defined _FFTQE
  use fft_base,       ONLY:dffts
 #endif
@@ -41,6 +41,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use gpu_m,          ONLY:have_gpu,gpu_devsync
  use devxlib,        ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memset_d
  use iso_c_binding,  ONLY:c_null_ptr
+#if defined _MKLGPU
+ use mkl_dfti_omp_offload
+#endif
  !
 #include<y_memory.h>
  !
@@ -49,7 +52,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 #if defined _FFTQE
  integer, external :: fft_setmap
 #endif
- ! 
+ !
  ! Work Space
  !
  integer  :: i1,i2,i3,i4,iv(3),ln(3),is,space_inv(3,3)
@@ -63,13 +66,13 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  integer,  allocatable :: ivec_GmG(:,:,:)
  integer,  allocatable DEV_ATTR :: ivec_GmG_d(:,:,:)
 #endif
- 
+
  call timing("FFT_setup",opr="start")
  !
  space_inv=reshape((/-1, 0, 0, 0,-1, 0, 0, 0,-1/),(/3,3/))
  call m3inv(transpose(b),mat)
  scal(:)=2._SP*pi/alat(:)
- ! 
+ !
  mat(:,1)=scal(1)*mat(:,1)
  mat(:,2)=scal(2)*mat(:,2)
  mat(:,3)=scal(3)*mat(:,3)
@@ -234,18 +237,18 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    !
    !Remember
    !-------
-   ! 
+   !
    ! r_j= (I_i-1)/Ni a(j,i) = at(j,i) (i-1)/Ni
    !
    ! at=transpose(a)
    !
-   ! a(i,j)*b(k,j)=b(k,j)*at(j,i)=d_ik 2 pi 
+   ! a(i,j)*b(k,j)=b(k,j)*at(j,i)=d_ik 2 pi
    ! atm1=inverse(transpose(a))=b/2./pi
    !
-   ! r(s)_j=at(i,l) (I_l-1)/Nl = (R_s r)_i = R_s(i,k) at(k,j) (j-1)/Nj 
+   ! r(s)_j=at(i,l) (I_l-1)/Nl = (R_s r)_i = R_s(i,k) at(k,j) (j-1)/Nj
    !
    ! => (I_l-1)/Nl = atm1(l,i) R_s(i,k) at(k,j) (j-1)/Nj
-   ! 
+   !
    ! Now I want to rewrite wf_ks(r)= wf_k(r(s^-1))
    !
    do is=1,nsym+1
@@ -281,13 +284,16 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    endif
    !
  enddo
- ! 
+ !
 #if defined _FFTW
  fftw_plan=0
 #endif
 #if defined _GPU
  cufft_plan=0
  hipfft_plan=c_null_ptr
+#if defined _MKLGPU
+ ierr = DftiFreeDescriptor(mklgpu_desc)
+#endif
 #endif
  !
  YAMBO_FREE_GPU(DEV_VAR(g_vec_rot))
@@ -304,7 +310,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      !
      implicit none
      integer :: test_fft_size(3)
-     ! 
+     !
      ! Work Space
      !
      integer, parameter :: nn=82

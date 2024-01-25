@@ -44,7 +44,7 @@
 !=====================================================================
 !
 #include<dev_defs.h>
-!include "mkl_dfti_omp_offload.f90"
+include "mkl_dfti_omp_offload.f90"
 !
 subroutine fft_3d_mklgpu(c_d,n,fft_sign,mklgpu_desc)
  !
@@ -56,8 +56,8 @@ subroutine fft_3d_mklgpu(c_d,n,fft_sign,mklgpu_desc)
 #include<y_memory.h>
  !
  integer                :: fft_sign,n(3)
- type(dfti_descriptor)  :: mklgpu_desc
- complex(DP)            :: c_d(n(1),n(2),n(3))
+ type(dfti_descriptor), pointer :: mklgpu_desc
+ complex(DP)            :: c_d(1:product(n))
  !
  !
  ! Work Space
@@ -78,18 +78,21 @@ subroutine fft_3d_mklgpu(c_d,n,fft_sign,mklgpu_desc)
    !$omp dispatch
    istat = DftiCommitDescriptor(mklgpu_desc)
    !$omp end dispatch
+   if(istat /= 0) CALL error('[FFT] stopped in DFTI desc commit '// DftiErrorMessage(istat))
  endif
  !
  !DEV_OMPGPU target data use_device_addr(c_d)
  !
  if (fft_sign<0) then
     !$omp dispatch
-    dfti_status = DftiComputeForward(mklgpu_desc, c_d)
+    istat = DftiComputeForward(mklgpu_desc, c_d)
     !$omp end dispatch
+    if(istat /= 0) CALL error('[FFT] stopped in DFTI ComputeFW '// DftiErrorMessage(istat))
  elseif(fft_sign>0) then
     !$omp dispatch
-    dfti_status = DftiComputeBackward(mklgpu_desc, c_d)
+    istat = DftiComputeBackward(mklgpu_desc, c_d)
     !$omp end dispatch
+    if(istat /= 0) CALL error('[FFT] stopped in DFTI ComputeBW '// DftiErrorMessage(istat))
  endif
  !
  !DEV_OMPGPU end target data

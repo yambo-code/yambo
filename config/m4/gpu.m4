@@ -274,7 +274,7 @@ if test x"$enable_openmp5" != "xno" ; then
    if test x"$MKLGPU_LIBS" != "x" ; then
      DEVXLIB_FLAGS+=" --enable-mkl-gpu" ;
      def_gpu="$def_gpu -D_MKLGPU"
-     GPU_FLAGS="-qopenmp -fopenmp-target=spir64"
+     GPU_FLAGS="-qopenmp -fopenmp-targets=spir64"
    fi
    #
 fi

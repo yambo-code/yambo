@@ -432,7 +432,7 @@ module wrapper
 #endif
      implicit none
      integer,              intent(in) :: N
-     complex(SP) DEV_ATTR, intent(in) :: CX(:,:),CY(:,:)
+     complex(SP) DEV_ATTR, target, intent(in) :: CX(:,:),CY(:,:)
      !
      complex(SP), pointer DEV_ATTR :: CX_p(:), CY_p(:)
      !

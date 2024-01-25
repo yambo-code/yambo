@@ -365,6 +365,15 @@ ia64*linux* )
     NETCDFFLAGS="-DpgiFortran"
     DEBUG_FLAGS="-CB -traceback -debug full"
     ;;
+  *ifx*)
+    OMPFLAGS="-qopenmp"
+    CPU_FLAG=""
+    FCMFLAG="-nofor-main"
+    CFLAGS="-O2 -std=gnu99"
+    SYSFLAGS="-O3 -g"
+    FUFLAGS="-O0 -g"
+    DEBUG_FLAGS="-CB -traceback -debug full"
+    ;;
   *openf9*)
     SYSFLAGS="-O2 -fno-second-underscore"
     FUFLAGS="-O0 -fno-second-underscore"

@@ -105,19 +105,21 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  do ir = 1, fft_size
    rho_tw_rs_p(ir) = cmplx(conjg(WF_symm_i_p(ir,1))*WF_symm_o_p(ir,1),kind=DP)
  enddo
+ !DEV_OMPGPU end target
  !
  if (n_spinor==2) then
    !DEV_ACC parallel loop async
    !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_OMPGPU target map(present,alloc:rho_tw_rs_p,WF_symm_i_p,WF_symm_o_p)
    !DEV_OMPGPU teams loop
    !DEV_OMP do
    do ir = 1, fft_size
      rho_tw_rs_p(ir) = rho_tw_rs_p(ir)+cmplx(conjg(WF_symm_i_p(ir,2))*WF_symm_o_p(ir,2),kind=DP)
    enddo
+   !DEV_OMPGPU end target
    !
  endif
  !DEV_OMP end parallel
- !DEV_OMPGPU end target
  !DEV_ACC end data
  !
 #endif

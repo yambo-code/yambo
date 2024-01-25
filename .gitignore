@@ -31,6 +31,7 @@ lib/archive/git.list
 *.so
 *.mod
 *.smod
+*.modmic
 *modules.dep
 *.save
 *.f90

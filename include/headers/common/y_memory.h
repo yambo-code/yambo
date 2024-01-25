@@ -199,7 +199,7 @@
   call devxlib_map(x) NEWLINE \
   YAMBO_ALLOC_CHECK_GPU(x)
 #define YAMBO_ALLOC_GPU_SOURCE(x,y) \
-  if (.not.allocated(x)) then NEWLINE YAMBO_ALLOC_SOURCE(x,y) NEWLINE \
+   if (.not.allocated(x)) then NEWLINE call error("[ALLOC] x not allocated") NEWLINE	\
   endif NEWLINE \
   call devxlib_map(x) NEWLINE \
   call devxlib_memcpy_h2d(x,y) NEWLINE \

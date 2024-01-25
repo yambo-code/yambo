@@ -39,6 +39,7 @@ module gpu_m
   use hip_m
   use hipfft_m
 # elif defined _OPENMP_GPU && defined _MKLGPU
+  use omp_lib
   use mkl_dfti_omp_offload
 # endif
   use parallel_m,   ONLY:myid,host_name,PAR_COM_HOST

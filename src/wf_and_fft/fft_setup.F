@@ -47,7 +47,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  !
 #include<y_memory.h>
  !
- integer :: iG_max,iGo_max
+ integer :: iG_max,iGo_max,ierr
  logical :: ONLY_SIZE
 #if defined _FFTQE
  integer, external :: fft_setmap

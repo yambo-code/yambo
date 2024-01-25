@@ -125,7 +125,9 @@ AC_ARG_WITH(rocm_includedir, [AS_HELP_STRING([--with-rocm-includedir=<path>],
             [Path to the rocm include directory],[32])])
 AC_ARG_WITH(rocm_path, [AS_HELP_STRING([--with-rocm-path=<path>], 
             [Path to rocm install directory],[32])])
-
+#
+AC_ARG_WITH(mklgpu_libs, [AS_HELP_STRING([--with-mklgpu-libs=<libs>], 
+            [Use librocm library <libs>],[32])])
 
 use_int_cuda_libs="no"
 use_gpu_libs="no"
@@ -180,6 +182,9 @@ fi
 #
 if test x"$with_rocm_libs" != x"" ; then  LIBROCM_LIBS="$with_rocm_libs" ; fi
 if test x"$with_rocm_incs" != x"" ; then  LIBROCM_INCS="$with_rocm_incs" ; fi
+
+# MKL-GPU
+if test x"$with_mklgpu_libs" != x"" ; then MKLGPU_LIBS="$with_mklgpu_libs" ; fi
 
 # Cuda Fortran
 if test x"$enable_cuda_fortran" != "xno" ; then
@@ -259,10 +264,18 @@ if test x"$enable_openmp5" != "xno" ; then
    #
    # Flags to be passed to the devicexlib library
    #
-   DEVXLIB_FLAGS="--enable-openmp5" # --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
-   if test x"$LIBROCM_LIBS" != "x" ; then DEVXLIB_FLAGS+=" --enable-rocblas --with-rocm-libs=$LIBROCM_LIBS" ; fi
+   def_gpu="-D_GPU -D_OPENMP_GPU"
    GPU_FLAGS="-fopenmp" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
-   def_gpu="-D_GPU -D_HIP -D_OPENMP_GPU"
+   DEVXLIB_FLAGS="--enable-openmp5" # --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
+   if test x"$LIBROCM_LIBS" != "x" ; then
+     DEVXLIB_FLAGS+=" --enable-rocblas --with-rocm-libs=$LIBROCM_LIBS";
+     def_gpu="$def_gpu -D_HIP"
+   fi
+   if test x"$MKLGPU_LIBS" != "x" ; then
+     DEVXLIB_FLAGS+=" --enable-mkl-gpu" ;
+     def_gpu="$def_gpu -D_MKLGPU"
+     GPU_FLAGS="-qopenmp -fopenmp-target=spir64"
+   fi
    #
 fi
 #
@@ -279,5 +292,6 @@ AC_SUBST(DEVXLIB_CUDALIBS)
 AC_SUBST(LIBROCM_LIBS)
 AC_SUBST(LIBROCM_INCS)
 AC_SUBST(LIBROCM_PATH)
+AC_SUBST(MKLGPU_LIBS)
 #
 ])

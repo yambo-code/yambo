@@ -51,6 +51,10 @@ case "${FC}" in
       FCKIND="intel"
       FCVERSION=`$FC -v 2>&1`
       ;;
+    *ifx*)
+      FCKIND="intel"
+      FCVERSION=`$FC -v 2>&1`
+      ;;
     *ifort*)
       FCKIND="intel"
       FCVERSION=`$FC -v 2>&1`

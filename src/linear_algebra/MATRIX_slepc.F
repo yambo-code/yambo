@@ -381,6 +381,8 @@ subroutine STSetUp_User(st,ierr)
 #include <slepc/finclude/slepceps.h>
   use slepceps
   use ContextSTShell
+  use cuda_m,         ONLY:have_cuda
+  !
   implicit none
   !
   ST                    :: st
@@ -390,6 +392,7 @@ subroutine STSetUp_User(st,ierr)
   PetscScalar           :: mone
   PetscReal             :: info(MAT_FACTORINFO_SIZE)
   PetscErrorCode        :: ierr
+  PetscBool             :: flg
   !
   PetscCall(STGetMatrix(st,0,M,ierr))
   PetscCall(MatNestGetSubMats(M, PETSC_NULL_INTEGER, PETSC_NULL_INTEGER, M_submats,ierr))
@@ -401,9 +404,19 @@ subroutine STSetUp_User(st,ierr)
 
   PetscCall(MatDuplicate(R,MAT_COPY_VALUES,R_factor,ierr))
   PetscCall(MatSetOption(R_factor,MAT_HERMITIAN,PETSC_TRUE,ierr))
-  PetscCallA(MatGetOrdering(R_factor,MATORDERINGNATURAL,perm,iperm,ierr))
+  !PetscCall(MatSetOption(R_factor,MAT_SPD,PETSC_TRUE,ierr))
+  PetscCall(MatGetOrdering(R_factor,MATORDERINGNATURAL,perm,iperm,ierr))
   PetscCall(MatFactorInfoInitialize(info,ierr))
-  PetscCall(MatCholeskyFactor(R_factor,perm,info,ierr))
+  PetscCall(PetscObjectTypeCompare(R,MATSCALAPACK,flg,ierr))
+#if defined(PETSC_HAVE_CUDA)
+  if(have_cuda) PetscCall(MatLUFactor(R_factor,perm,iperm,info,ierr))
+#else
+  if(flg) then
+    PetscCall(MatLUFactor(R_factor,perm,iperm,info,ierr))
+  else
+    PetscCall(MatCholeskyFactor(R_factor,perm,info,ierr))
+  end if
+#endif
   !
   ! S = -R^T + (C^*)*(R^-1)*C
   !
@@ -429,7 +442,16 @@ subroutine STSetUp_User(st,ierr)
   PetscCall(MatAXPY(S,mone,Rt,SAME_NONZERO_PATTERN,ierr))
   PetscCall(MatViewFromOptions(S,PETSC_NULL_MAT,"-view_S",ierr))
   PetscCall(MatSetOption(S,MAT_HERMITIAN,PETSC_TRUE,ierr))
-  PetscCall(MatCholeskyFactor(S,perm,info,ierr))
+  PetscCall(PetscObjectTypeCompare(S,MATSCALAPACK,flg,ierr))
+#if defined(PETSC_HAVE_CUDA)
+  if(have_cuda) PetscCall(MatLUFactor(S,perm,iperm,info,ierr))
+#else
+  if(flg) then
+    PetscCall(MatLUFactor(S,perm,iperm,info,ierr))
+  else
+    PetscCall(MatCholeskyFactor(S,perm,info,ierr))
+  end if
+#endif
   !
   PetscCall(MatDestroy(W,ierr))
   !

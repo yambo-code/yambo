@@ -326,7 +326,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSSSlepcExtraction','[SLEPC] Extraction technique (ritz|harmonic)',BSS_slepc_extraction,verb_level=V_resp)
  call it(defs,'BSSSlepcNCV',   '[SLEPC] Dimension of the subspace',BSS_slepc_ncv,verb_level=V_resp)
  call it(defs,'BSSSlepcTol',   '[SLEPC] Tolerance for the iterative solver',BSS_slepc_tol,verb_level=V_resp)
- call it(defs,'BSSSlepcMatrixFormat','[SLEPC] Matrix type (shell|explicit|explicit-debug)',BSS_slepc_matrix_format,verb_level=V_resp)
+ call it(defs,'BSSSlepcMatrixFormat','[SLEPC] Matrix type (shell|explicit|explicit-debug)',&
+ &                                                BSS_slepc_matrix_format,verb_level=V_resp)
 #endif
 #if !defined _SC
  call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)

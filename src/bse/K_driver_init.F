@@ -12,7 +12,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match,STRING_same
- use BS_solvers,   ONLY:BSS_eels_to_eps,BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,&
+ use BS_solvers,   ONLY:BSS_eels_to_eps,BSS_mode,BSS_slepc_matrix_format,BSS_uses_DbGd,&
 &                       BSS_slepc_double_grp
  use BS,           ONLY:BSE_L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
 &                       BS_perturbative_SOC,l_BS_magnons,l_BS_photolum,&
@@ -169,13 +169,11 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  ! SLEPC
  !=======
- ! Here we will have two options to initialize the slepc matrix:
- call parser('BSSSlepcMatrix',BSS_slepc_matrix)
  !
 #if defined _SLEPC && !defined _NL
  !
  ! Special case, slepc with distributed matrix need to explicitly compute the anti-resonant block
- l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (.not.BSS_slepc_matrix)
+ l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (BSS_slepc_matrix_format=="shell")
  !
  ! The doubling is activated unless explicily imposed by input since slepc
  ! with shells requires the extended K_multiply_by_V for the non hermitian algorithm

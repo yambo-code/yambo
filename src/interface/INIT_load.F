@@ -39,7 +39,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig,Haydock_iterMAX
 #if defined _SLEPC && !defined _NL
  use BS_solvers,    ONLY:BSS_slepc_target_E,BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_maxit,&
- &                       BSS_slepc_precondition,BSS_slepc_approach
+ &                       BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_matrix_format
 #endif
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits,FXC_PF_alpha,ALDA_cut_scheme
@@ -326,7 +326,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSSSlepcExtraction','[SLEPC] Extraction technique (ritz|harmonic)',BSS_slepc_extraction,verb_level=V_resp)
  call it(defs,'BSSSlepcNCV',   '[SLEPC] Dimension of the subspace',BSS_slepc_ncv,verb_level=V_resp)
  call it(defs,'BSSSlepcTol',   '[SLEPC] Tolerance for the iterative solver',BSS_slepc_tol,verb_level=V_resp)
- call it('f',defs,'BSSSlepcMatrix','[SLEPC] Store slepc matrix, faster but more memory consuming',verb_level=V_resp)
+ call it(defs,'BSSSlepcMatrixFormat','[SLEPC] Matrix type (shell|explicit|explicit-debug)',BSS_slepc_matrix_format,verb_level=V_resp)
 #endif
 #if !defined _SC
  call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)

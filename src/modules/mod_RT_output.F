@@ -15,7 +15,7 @@ module RT_output_m
  !
 #include<memory.h>
  !
- integer, parameter       :: N_MAX_RT_o_files=100
+ integer, parameter       :: N_MAX_RT_o_files=150
  integer, parameter       :: N_MAX_RT_X_order=9
  integer, parameter       :: N_MAX_RT_headings=20
  !

@@ -14,11 +14,7 @@ subroutine acknowledge_yambo()
  call msg('r','|')
  call msg('r','| The users of YAMBO have little formal obligations with respect to')
  call msg('r','| the YAMBO group (those specified in the GNU General Public')
-! License-Identifier: GPL
-!
-! Copyright (C) 2009 The Yambo Team
-!
-! Authors (see AUTHORS file for details): AM
+ call msg('r','| License, http://www.gnu.org/copyleft/gpl.txt). However, it is')
  call msg('r','| common practice in the scientific literature, to acknowledge the')
  call msg('r','| efforts of people that have made the research possible. In this  ')
  call msg('r','| spirit, please find below the reference we kindly ask you to use    ')

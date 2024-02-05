@@ -36,7 +36,7 @@ subroutine scatter_Bamp_spin(isc,which)
  !
  complex(SP) :: WF_spin(fft_size,n_spinor)
  !
- integer     :: qs,iGo,ig, ir,ic,ig_
+ integer     :: qs,iGo,ig, ir,ic
  !
  ! |ib ik_is i_sp>
  call WF_apply_symm(isc%is,isc%WF_symm_i)

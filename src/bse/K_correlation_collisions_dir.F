@@ -11,7 +11,6 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
  !
  !  <n k1_bz |exp iG.r|m k2_bz> = <n k1_ibz s1 |exp iG.r|m k2_ibz s2>  =
  !
- use pars,          ONLY:SP
  use D_lattice,     ONLY:nsym
  use R_lattice,     ONLY:qindx_X,bz_samp
  use BS,            ONLY:O_ng,BS_bands,BS_res_K_corr,BS_blk,&
@@ -40,7 +39,7 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
  ! OMP LAST DEF
  integer ::     i_k_bz_last,i_p_bz_last,iq_W_bz_last,ig_W_last
  !
- integer     :: i_s_star,i_s_mq_star,i_s_collision,N_kmq,N_pmq
+ integer     :: i_s_star,i_s_mq_star,N_kmq,N_pmq
  character(1):: mode_now
  !
  logical, allocatable :: O_todo_table(:,:,:,:,:,:,:)

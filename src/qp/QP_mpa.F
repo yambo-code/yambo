@@ -13,7 +13,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp,W_reset
- use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
+ use electrons,     ONLY:levels,spin_occ,spin
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:l_sc_run,l_RIM_W
@@ -21,10 +21,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        PARALLEL_WF_distribute
  use parser_m,      ONLY:parser
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PAR_COM_Q_A2A,&
-&                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,PAR_COM_RL_INDEX,&
-&                        PAR_Q_ibz_index,n_WF_bands_to_load,HEAD_QP_cpu,master_cpu,myid
+&                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,&
+&                        PAR_Q_ibz_index,n_WF_bands_to_load
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
- use functions,     ONLY:bose_f
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:manage_action,OP_RD_CL,OP_WR_CL,OP_APP_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
  &                       io_RESPONSE,io_MULTIPOLE,deliver_IO_error_message
@@ -32,13 +31,12 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta
  use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t
  use wave_func,     ONLY:WF
- use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,RIM_W_ng,RIM_W
+ use R_lattice,     ONLY:qindx_S,bz_samp,RIM_W_ng,RIM_W
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
- use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:QP_state_print,WF_load,WF_free
  use matrix_operate,ONLY:mat_transpose
  use timing_m,      ONLY:timing
- use mpa_m,         ONLY:mpa_RE_solver,err_func_X,MPA_E_mat,MPA_R_mat,MPA_freqs,&
+ use mpa_m,         ONLY:mpa_RE_solver,MPA_E_mat,MPA_R_mat,MPA_freqs,&
 &                        MPA_alloc,MPA_free,MPA_E_mat_d,MPA_R_mat_d
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
@@ -58,9 +56,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Work Space
  !
- integer          :: i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
-&                    i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,IO_ACT,timing_steps,&
-&                    cond_g, cond_b
+ integer          :: i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,iqs,i_qp_to_start,iq_to_start,is,&
+&                    iq_mem,X_range(2),io_err,ID,IO_ACT,timing_steps
  !
  complex(SP), allocatable          :: W_(:),dc(:)
  type(elemental_collision), target :: isc,iscp
@@ -89,7 +86,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), allocatable :: MPA_Xo(:)
  character(len=99):: str
  !
- integer, external::io_X,io_MPA,QP_state_extract
+ integer, external::io_X,io_MPA
 
  !
  ! Reset & checks
@@ -340,13 +337,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      if (io_MULTIPOLE) then
        !
-! #if defined _PAR_IO
-!       call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iqibz,2*iqibz+1/),ID=ID2, &
-!       &               COMM=PAR_COM_RL_INDEX,DO_IT=PAR_COM_RL_A2A%CPU_id==0 )
-! #else
-!       call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iqibz,2*iqibz+1/),ID=ID2, &
-!       &               COMM=PAR_COM_NULL,DO_IT=PAR_COM_X_WORLD%CPU_id==0 )
-! #endif
        call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iqibz,2*iqibz+1/),ID=ID2)
        io_err=io_MPA(X,Xw,ID2)
        call msg('r',' :: PP cond fix/tot      ',PPcond_Qrate)

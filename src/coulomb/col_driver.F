@@ -35,6 +35,7 @@ subroutine col_driver(bare_NG,q)
  use stderr,        ONLY:STRING_pack,intc,gen_fmt,STRING_split
  use com,           ONLY:msg
  use vec_operate,   ONLY:iku_v_norm,sort
+ use frequency,     ONLY:w_samp
  use D_lattice,     ONLY:DL_vol
  use R_lattice,     ONLY:d3q_factor,RIM_is_diagonal,RIM_qpg,bare_qpg,&
 &                        nqibz,g_vec,q_pt,nqbz,RIM_ng,RIM_n_rand_pts,&
@@ -51,6 +52,7 @@ subroutine col_driver(bare_NG,q)
  !
  ! Work Space
  !
+ type(w_samp) :: Xw
  logical          :: l_RandQpts,is_cut(3)
  integer          :: ig,iq,ID,io_err
  integer, external:: io_RIM
@@ -129,7 +131,7 @@ subroutine col_driver(bare_NG,q)
      if (cut_is_slab) then
        call msg('nr','Performing RIM of v_slab')
      endif
-     call rim("x")
+     call rim("x",Xw)
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
      io_err=io_RIM(ID)
    endif

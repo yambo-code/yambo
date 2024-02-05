@@ -1,4 +1,5 @@
  SET_defaults.o
+ mod_COLL_interfaces.o
  mod_H_interfaces.o
  mod_SC.o
  mod_collision_ext.o

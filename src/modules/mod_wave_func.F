@@ -126,7 +126,7 @@ module wave_func
      WF_out%index  = WF_in%index
      !
      if (allocated(WF_in%c_d)) then
-        YAMBO_ALLOC_SOURCE(WF_out%c_d,WF_in%c)
+       YAMBO_ALLOC_SOURCE(WF_out%c_d,WF_in%c)
      endif
    end subroutine
    !

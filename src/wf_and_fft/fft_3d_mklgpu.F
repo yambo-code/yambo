@@ -66,7 +66,7 @@ subroutine fft_3d_mklgpu(c_d,n,fft_sign,mklgpu_desc)
  integer :: istat
  !
  istat = DftiGetValue( mklgpu_desc, DFTI_COMMIT_STATUS, desc_status )
- if (istat/=0) call error("[FFT] Invalid MKL GPU desc")
+ if (istat/=0) call error("[FFT] Invalid MKL GPU desc "// DftiErrorMessage(istat))
  if (desc_status==DFTI_UNCOMMITTED) then
    !
    istat = DftiCreateDescriptor( mklgpu_desc, DFTI_DOUBLE, DFTI_COMPLEX, 3, n)

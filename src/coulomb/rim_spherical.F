@@ -63,7 +63,6 @@ subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
  !
  integer   :: ip,ir,N_out,N_in,ic
  real(SP)  :: v_rand(3),qr(RIM_n_rand_pts,3),sphere_vol,box_vol,pt_cc(3)
- character(12)      :: ch(3)
  integer            :: iseed(8)
  real(DP), external :: dlaran
  !

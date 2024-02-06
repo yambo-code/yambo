@@ -4,5 +4,6 @@
  ct_etime.o
  io.o
  memstat.o
+ objects.o
  stack.o
 

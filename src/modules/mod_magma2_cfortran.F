@@ -64,10 +64,10 @@ interface
         integer(c_int),            value  :: ngpu
         integer(c_int),            value  :: jobz, uplo
         integer(c_int),            value  :: n, lda, lwork, lrwork, liwork
-        complex(c_float_complex), target :: A(lda,*)
-        real(c_double),            target :: w(*)
-        complex(c_float_complex), target :: work(*)
-        real(c_double),            target :: rwork(*)
+        complex(c_float_complex),  target :: A(lda,*)
+        real(c_float),             target :: w(*)
+        complex(c_float_complex),  target :: work(*)
+        real(c_float),             target :: rwork(*)
         integer(c_int),            target :: iwork(*)
         integer(c_int),            target :: info  !! int*
     end subroutine
@@ -99,10 +99,10 @@ interface
         integer(c_int),            value  :: jobz, uplo
         integer(c_int),            value  :: n, ldda, ldwa, lwork, lrwork, liwork
         type(c_ptr),               value  :: dA  !! double complex**
-        real(c_double),            target :: w(*)
-        complex(c_float_complex), target :: wA(*)
-        complex(c_float_complex), target :: work(*)
-        real(c_double),            target :: rwork(*)
+        real(c_float),             target :: w(*)
+        complex(c_float_complex),  target :: wA(*)
+        complex(c_float_complex),  target :: work(*)
+        real(c_float),             target :: rwork(*)
         integer(c_int),            target :: iwork(*)
         integer(c_int),            target :: info  !! int*
     end subroutine

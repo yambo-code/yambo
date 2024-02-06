@@ -65,9 +65,9 @@ interface
         integer(c_int),            value  :: jobz, uplo
         integer(c_int),            value  :: n, lda, lwork, lrwork, liwork
         real(c_float), target :: A(lda,*)
-        real(c_double),            target :: w(*)
+        real(c_float),             target :: w(*)
         real(c_float), target :: work(*)
-        real(c_double),            target :: rwork(*)
+        real(c_float),             target :: rwork(*)
         integer(c_int),            target :: iwork(*)
         integer(c_int),            target :: info  !! int*
     end subroutine

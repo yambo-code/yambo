@@ -7,7 +7,6 @@
 !
 subroutine DIPOLE_dimensions(Xen,Dip,bands,q0)
  !
- use drivers,        ONLY:l_col_cut
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
  use DIPOLES,        ONLY:DIPOLE_t

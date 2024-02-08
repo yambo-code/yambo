@@ -8,13 +8,13 @@
 subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo) 
  !
  use pars,           ONLY:SP,cZERO,cI,pi,rZERO,schlen
- use R_lattice,      ONLY:bz_samp,bare_qpg
+ use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:Resp_ii,global_gauge,X_Double_Grid_setup,&
-&                         X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,skip_cond_sum_rule,X_do_obs,&
+&                         X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,X_do_obs,&
 &                         i_G_shift
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
- use BS_solvers,     ONLY:Co_factor,diam_term_exact,BSS_dipoles_opt,BSS_uses_DbGd,&
+ use BS_solvers,     ONLY:Co_factor,BSS_dipoles_opt,BSS_uses_DbGd,&
 &                         BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,K_diago_in_BS_mat,BS_diagonal,&
 &                         para_term_w0
  use BS,             ONLY:BS_H_dim,BS_K_dim,BSE_mode,BS_q,BS_n_eh_spaces,&

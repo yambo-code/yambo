@@ -7,7 +7,7 @@
 !
 subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !
- use pars,           ONLY:pi,SP,cI,cZERO,schlen
+ use pars,           ONLY:pi,DP,SP,cI,cZERO,schlen
  use drivers,        ONLY:l_col_cut
  use frequency,      ONLY:w_samp
  use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall,&
@@ -16,13 +16,12 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BS_H_dim,BS_K_coupling,&
 &                         l_BS_anomalous_Hall
  use stderr,         ONLY:STRING_match
- use X_m,            ONLY:Epsilon_ii,eps_2_alpha,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&
+ use X_m,            ONLY:Epsilon_ii,eps_2_alpha,X_OUTPUT_driver,Epsilon_ij,&
 &                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,&
 &                         X_magnons,i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus,Resp_ii,Resp_ij,&
 &                         l_drude,skip_cond_sum_rule,X_drude_term,global_gauge
  use com,            ONLY:msg,com_compose_msg
  use R_lattice,      ONLY:bare_qpg,FineGd_desc,nkbz
- use D_lattice,      ONLY:l_0D,l_1D,l_2D,l_3D
  use electrons,      ONLY:spin_occ
  use DIPOLES,        ONLY:DIP_desc
  use PHOTOLUM,       ONLY:PL
@@ -39,8 +38,9 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  integer           :: id,i_rsp,n_resp,iw_ref
  character(10)     :: solver
  character(schlen) :: out_string
- complex(SP)       :: hall(3,2),tmp_var(BSS_n_freqs,3),spectra(BSS_n_freqs,3),&
+ complex(SP)       :: hall(3,2),tmp_var(BSS_n_freqs,3),&
  &                    fac,diam_term_used(3),spectra_ij(BSS_n_freqs,3)
+ complex(DP)       :: tmp_var_DP(BSS_n_freqs,3),spectra(BSS_n_freqs,3)
  real(SP)          :: data_sort(N_BS_E_sorted+1),nel_diam(3)
  logical           :: l_last_col,l_inv,l_hay,l_sle
  !
@@ -103,8 +103,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    !
    ! Resp = -vX
    do i_rsp=1,n_resp
-     spectra(:,i_rsp)=Resp_ii(:,i_rsp+1)
-     spectra(:,i_rsp)=Resp_ii(:,i_rsp+1)
+     spectra(:,i_rsp)=cmplx(Resp_ii(:,i_rsp+1),kind=DP)
+     spectra(:,i_rsp)=cmplx(Resp_ii(:,i_rsp+1),kind=DP)
      if (X_do_obs("off").or.X_do_obs("beta")) then
        spectra_ij(:,i_rsp)=Resp_ij(:,i_rsp+1)
        spectra_ij(:,i_rsp)=Resp_ij(:,i_rsp+1)
@@ -141,8 +141,9 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !------------
  if (X_do_obs("eps")) then
    !
-   call get_from_Lbar_or_Lfull_inverted(Epsilon_ii(:,2:4),spectra)
+   call get_from_Lbar_or_Lfull_inverted(tmp_var_DP,spectra)
    !
+   Epsilon_ii(:,2:4)=cmplx(tmp_var_DP,kind=SP)
    call add_drude_term(Epsilon_ii(:,2:4))
    !
    nel_diam(:)=real(A_drude(:))/real(nkbz,SP)*spin_occ/Co_factor
@@ -208,9 +209,9 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !----------------
  if (X_do_obs("alpha")) then
    ! WARNING: case with flag ImposeAlphaChiBar from input to be fixed
-   if(.not.l_col_cut) call get_from_Lbar_or_Lfull_inverted(tmp_var,spectra)
-   if(     l_col_cut) call get_from_Lfull_or_Lbar_inverted(tmp_var,spectra)
-   tmp_var=tmp_var*fac
+   if(.not.l_col_cut) call get_from_Lbar_or_Lfull_inverted(tmp_var_DP,spectra)
+   if(     l_col_cut) call get_from_Lfull_or_Lbar_inverted(tmp_var_DP,spectra)
+   tmp_var=cmplx(tmp_var_DP,kind=SP)*fac
    call ELEMENTAL_dump("alpha",tmp_var)
  endif
  !
@@ -225,7 +226,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !------
  if (X_do_obs("eel")) then
    call FREQUENCIES_set_reference_point(W%p,W%n_freqs,iw_ref)
-   call get_eel_from_spectra(tmp_var,spectra)
+   call get_eel_from_spectra(tmp_var,cmplx(spectra,kind=SP))
    call ELEMENTAL_dump("eel",tmp_var)
  endif
  !
@@ -322,18 +323,18 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    !
    subroutine get_from_Lbar_or_Lfull_inverted(spec_o,spec_i)
      !
-     complex(SP), intent(in)  :: spec_i(BSS_n_freqs,3)
-     complex(SP), intent(out) :: spec_o(BSS_n_freqs,3)
+     complex(DP), intent(in)  :: spec_i(BSS_n_freqs,3)
+     complex(DP), intent(out) :: spec_o(BSS_n_freqs,3)
      !
      ! IP part is always proportional to Xo
      spec_o(:,2)= spec_i(:,2)
      if (l_last_col.and.l_inv) spec_o(:,3)= spec_i(:,3)
      !
      ! BSE_part, equations depends if Lbse contasin Lfull or Lbar
-     if (.not.l_abs_prop_chi_bse) spec_o(:,1)=-spec_i(:,1)/(spec_i(:,1)-1._SP)
+     if (.not.l_abs_prop_chi_bse) spec_o(:,1)=-spec_i(:,1)/(spec_i(:,1)-1._DP)
      if (     l_abs_prop_chi_bse) spec_o(:,1)= spec_i(:,1)
      if (l_last_col .and. l_hay) then
-       if (.not.l_abs_prop_chi_bse) spec_o(:,3)=-spec_i(:,3)/(spec_i(:,3)-1._SP)
+       if (.not.l_abs_prop_chi_bse) spec_o(:,3)=-spec_i(:,3)/(spec_i(:,3)-1._DP)
        if (     l_abs_prop_chi_bse) spec_o(:,3)= spec_i(:,3)
      endif
      !
@@ -342,19 +343,19 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    !
    subroutine get_from_Lfull_or_Lbar_inverted(spec_o,spec_i)
      !
-     complex(SP), intent(in)  :: spec_i(BSS_n_freqs,3)
-     complex(SP), intent(out) :: spec_o(BSS_n_freqs,3)
+     complex(DP), intent(in)  :: spec_i(BSS_n_freqs,3)
+     complex(DP), intent(out) :: spec_o(BSS_n_freqs,3)
      !
      ! IP part is always proportional to Xo/(Xo+1._SP)
      ! To discuss and agree what to put here
-     spec_o(:,2)= spec_i(:,2)/(spec_i(:,2)+1._SP)
-     if (l_last_col.and.l_inv) spec_o(:,3)= spec_i(:,3)/(spec_i(:,3)+1._SP)
+     spec_o(:,2)= spec_i(:,2)/(spec_i(:,2)+1._DP)
+     if (l_last_col.and.l_inv) spec_o(:,3)= spec_i(:,3)/(spec_i(:,3)+1._DP)
      !
      ! BSE_part, equations depends if Lbse contasin Lfull or Lbar
-     if (.not.l_abs_prop_chi_bse) spec_o(:,1)= spec_i(:,1)/(spec_i(:,1)+1._SP)
+     if (.not.l_abs_prop_chi_bse) spec_o(:,1)= spec_i(:,1)/(spec_i(:,1)+1._DP)
      if (     l_abs_prop_chi_bse) spec_o(:,1)= spec_i(:,1)
      if (l_last_col .and. l_hay) then
-       if (.not.l_abs_prop_chi_bse) spec_o(:,3)= spec_i(:,3)/(spec_i(:,3)+1._SP)
+       if (.not.l_abs_prop_chi_bse) spec_o(:,3)= spec_i(:,3)/(spec_i(:,3)+1._DP)
        if (     l_abs_prop_chi_bse) spec_o(:,3)= spec_i(:,3)
      endif
      !

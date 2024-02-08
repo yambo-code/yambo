@@ -107,7 +107,7 @@ subroutine X_OUTPUT(iq,Xen,Xk,wv,X,spectra)
    if (X_do_obs("alpha")) then 
      if (l_alpha_prop_to_chi_full) then
        ! Alpha proportional to Lfull
-       Alpha(:,2)=spectra(:,2)
+       Alpha(:,2)=-spectra(:,2)
        ! Maybe we could extend Alpha ??
        if ( .not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') ) &
        & call warning(" Res (or ares) only alpha")

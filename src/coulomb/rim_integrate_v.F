@@ -24,7 +24,7 @@ subroutine rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
  real(DP) :: r1,rfac,RIM_acc(RIM_ng),RIM_acc_anis,pre_factor
  real(SP) :: slab_vz,slab_vplane,lcut
  !
- rfac=8._DP*real(k_grid_uc_vol,DP)/real(N_out,DP)/(2._DP*pi_DP)**3
+ rfac=8._DP*real(k_grid_uc_vol,DP)/real(N_out,kind=DP)/(2._DP*pi_DP)**3
  !
  if (cut_is_slab) lcut=alat(idir(1))/2._SP
  !

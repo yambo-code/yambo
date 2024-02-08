@@ -9,7 +9,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Plasmon Pole & COHSEX Correlation Self-Energy
  !
- use pars,          ONLY:DP,SP,pi,schlen,cZERO,cI
+ use pars,          ONLY:DP,SP,pi,schlen,cZERO,cI,pi_DP
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp,W_reset
@@ -585,7 +585,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                  endif
                endif
                !
-               ctmp = -4._DP/spin_occ*pi*isc_rhotw_d(ig1)*conjg(iscp_rhotw_d(ig2))*(-PPA_R)*&
+               ctmp = -4._DP/spin_occ*pi_DP*isc_rhotw_d(ig1)*conjg(iscp_rhotw_d(ig2))*(-PPA_R)*&
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_i_w-E_kmq-PPA_E)+&
 &                       (f_kmq+bose_PPA_E)/(conjg(W_i_w)-E_kmq+PPA_E))
                !
@@ -624,7 +624,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                  PPA_R=-X_mat(ig1,ig2,X_range(1))/2._DP*PPA_E*isc%gamp(ig1,ig2)
                end if
                !
-               ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
+               ctmp = -4._DP/spin_occ*pi_DP*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
 &                     ( (spin_occ-f_kmq+bose_f(real(PPA_E,kind=SP)))/(W_(i_w)-E_kmq-PPA_E)+&
 &                       (f_kmq+bose_f(real(PPA_E,kind=SP)))/(conjg(W_(i_w))-E_kmq+PPA_E))
                !
@@ -685,7 +685,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              PPA_E=X%ppaE/real(X_mat(ig1,ig2,X_range(2)))
              PPA_R=-X_mat(ig1,ig2,X_range(1))/2._DP*PPA_E*isc%gamp(ig1,ig2)
              !
-             dp_dummy=dp_dummy +cmplx(4._DP/spin_occ*pi*PPA_R*eet_factor(ig1,ig2)* &
+             dp_dummy=dp_dummy +cmplx(4._DP/spin_occ*pi_DP*PPA_R*eet_factor(ig1,ig2)* &
 &                         QP_ppa_EET_terminator(W_(i_w),E,isc%is,PPA_E,ig1,ig2,isc%qs(2),&
 &                                               eet_cutoff0(1),eet_cutoff1(1)),kind=DP)
              !

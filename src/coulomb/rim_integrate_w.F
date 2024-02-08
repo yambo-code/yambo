@@ -28,7 +28,7 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis,Xw)
  complex(DP):: RIM_acc,RIM_acc_anis,func
  real(SP)   :: slab_vz1,slab_vplane1,lcut,pre_factor,anis_fact,vslab2
  !
- rfac=8._SP*k_grid_uc_vol/real(N_out)/(2._SP*pi)**4
+ rfac=8._DP*k_grid_uc_vol/real(N_out,kind=DP)/(2._DP*pi)**4
  !
  if (cut_is_slab) then
   lcut=alat(idir(1))/2._SP
@@ -101,7 +101,7 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis,Xw)
        vslab(i1,1) = sqrt(4._DP*pi*(1.-exp(-q0_def_norm*lcut))/q0_def_norm**2)
        RIM_acc = RIM_acc + rfac*f_coeff(1,1,1,1,iw)*(4*pi*lcut)**2
        RIM_acc_anis = RIM_acc_anis + rfac*f_coeff(1,1,1,1,iw)*(4*pi*lcut)**2 &
-&                       *0.5_SP*(em1_anis(idir(2))+em1_anis(idir(3)))
+&                       *0.5_DP*(em1_anis(idir(2))+em1_anis(idir(3)))
        cycle
      end if
      !

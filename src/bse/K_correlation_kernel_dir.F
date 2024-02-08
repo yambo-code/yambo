@@ -12,13 +12,11 @@ function K_correlation_kernel_dir(i_block,i_p,i_pmq,                            
  !
  use pars,         ONLY:SP,cZERO,pi
  use BS,           ONLY:BS_blk,BS_n_g_W,BS_W,BS_W_is_diagonal
- use D_lattice,    ONLY:nsym,i_time_rev
  use R_lattice,    ONLY:G_m_G,g_rot
 #ifdef _CUDA
  use R_lattice,    ONLY:G_m_G_d,g_rot_d
 #endif
  use wrapper,      ONLY:V_by_V_pwise,M_by_V,Vstar_dot_V
- use deviceXlib_m, ONLY:dev_conjg
  !
  implicit none
  !

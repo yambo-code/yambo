@@ -8,7 +8,7 @@
 subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_threshold,FG_factor)
  !
  use pars,           ONLY:SP,cZERO,cONE,pi
- use X_m,            ONLY:Resp_ii,Joint_DOS,X_drude_term,global_gauge,skip_cond_sum_rule, &
+ use X_m,            ONLY:Resp_ii,Joint_DOS,global_gauge, &
 &                         X_magnons,Resp_ij,i_G_shift
  use R_lattice,      ONLY:bare_qpg
  use frequency,      ONLY:w_samp

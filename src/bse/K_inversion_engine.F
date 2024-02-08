@@ -10,9 +10,8 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
  use pars,           ONLY:SP,cZERO
  use parallel_m,     ONLY:PP_indexes
  use frequency,      ONLY:w_samp
- use X_m,            ONLY:Resp_ii,i_G_shift
+ use X_m,            ONLY:Resp_ii
  use LIVE_t,         ONLY:live_timing
- use R_lattice,      ONLY:bare_qpg
  use wrapper,        ONLY:Vstar_dot_V,M_by_V,V_dot_V
  use wrapper_omp,    ONLY:Vstar_dot_V_omp,M_by_V_omp,V_dot_V_omp
  use BS,             ONLY:BS_H_dim,l_BS_photolum

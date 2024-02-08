@@ -96,13 +96,13 @@ subroutine scatter_Bamp_spin(isc,which)
  !
 #if defined _OPENMP
  if (qs==idt_index) then 
-   !$omp parallel do default(shared), private(ig,ig_)
+   !$omp parallel do default(shared), private(ig)
    do ig = 1, isc%ngrho
      isc%rhotw(ig)= isc%rho_tw_rs(fft_g_table(ig,iGo))
    enddo
    !$omp end parallel do
  else
-   !$omp parallel do default(shared), private(ig,ig_)
+   !$omp parallel do default(shared), private(ig)
    do ig = 1, isc%ngrho
      isc%rhotw(ig)= isc%rho_tw_rs(fft_g_table(g_rot(qs,ig),iGo))
    enddo

@@ -14,7 +14,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
  use electrons,     ONLY:n_spinor
  use PHOTOLUM,      ONLY:PL
  use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,BS_K_coupling,&
-&                        l_BS_photolum,l_BS_abs,l_BS_jdos,l_BS_esort,BS_K_anti_resonant
+&                        l_BS_photolum,l_BS_abs,l_BS_jdos,l_BS_esort
  use BS_solvers,    ONLY:l_abs_prop_chi_bse,l_eels_can_be_computed
  use stderr,         ONLY:STRING_match,STRING_split,intc,STRING_remove
  use OUTPUT,         ONLY:OUTPUT_driver

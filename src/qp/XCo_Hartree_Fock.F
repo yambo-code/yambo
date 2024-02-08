@@ -234,7 +234,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
        !
        DP_Sx_l=Vstar_dot_VV(isc%ngrho,DEV_VAR(iscp%rhotw),&
 &                                     DEV_VAR(isc%rhotw),DEV_VAR(isc%gamp)(:,1))
-       DP_Sx=DP_Sx + DP_Sx_l * ( -4._SP/spin_occ*pi*E%f(jb,ikp,i_sp_pol) )
+       DP_Sx=DP_Sx + DP_Sx_l * ( -4._DP/spin_occ*pi*E%f(jb,ikp,i_sp_pol) )
        !
        if (master_thread.and.is_ibz==1.and.n_lt_steps>0) call live_timing(steps=1)
        !

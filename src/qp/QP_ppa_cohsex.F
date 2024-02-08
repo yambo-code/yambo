@@ -72,14 +72,14 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  character(schlen)::ch,SECTION_name,W_name
  !
  logical          ::X_is_TR_rotated,l_X_ALLOC_elemental,l_RIM_W_g
- real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
- complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor
- complex(DP)      ::dp_dummy,ctmp
+ real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol)
+ real(DP)         ::PPA_E
+ complex(SP)      ::local_rhotw(X%ng)
+ complex(DP)      ::dp_dummy,ctmp,PPA_R,pre_factor
  !
 #ifdef _CUDA
  integer                      :: Xng, Xr1, Xr2
- real(SP)                     :: XppaE, bose_PPA_E
- real(DP)                     :: dp_dummy_r, dp_dummy_i
+ real(DP)                     :: dp_dummy_r, dp_dummy_i, bose_PPA_E,XppaE
  complex(SP)                  :: W_i_w,W_i_w_2
  complex(SP), pointer, device :: isc_rhotw_d(:)
  complex(SP), pointer, device :: iscp_rhotw_d(:)
@@ -559,7 +559,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            do ig2=1,Xng
              do ig1=1,Xng
                !
-               PPA_E= real(XppaE/X_mat_d(ig1,ig2,Xr2),kind=SP)
+               PPA_E= real(XppaE/X_mat_d(ig1,ig2,Xr2),kind=DP)
                !
                ! RIM W support
                !
@@ -567,25 +567,25 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
                !
                if (l_RIM_W_g) then
-                 PPA_R=-cmplx(real(RIM_W_d(1,iqibz,ig1,ig2)/2._SP), &
-&                             aimag(X_mat_d(ig1,ig2,Xr1))*real(isc_gamp_d(ig1,ig2)),kind=SP)/2._SP*PPA_E
+                 PPA_R=-cmplx(real(RIM_W_d(1,iqibz,ig1,ig2)/2._DP,kind=DP), &
+&                             aimag(X_mat_d(ig1,ig2,Xr1))*real(isc_gamp_d(ig1,ig2)),kind=DP)/2._DP*PPA_E
                else
-                 PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_d(ig1,ig2)
+                 PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._DP*PPA_E*isc_gamp_d(ig1,ig2)
                endif
                !
                ! inline bose_f function
-               bose_PPA_E=0.
+               bose_PPA_E=0._DP
                if (PPA_E<0.) bose_PPA_E=-spin_occ
                if (Finite_Tel) then
                  if (abs(PPA_E)>epsilon(1.)) then
                    if (abs(PPA_E)<=bose_E_cut*Bose_Temp) bose_PPA_E=spin_occ*Bose_Temp/PPA_E
-                   if (abs(PPA_E)> bose_E_cut*Bose_Temp) bose_PPA_E=spin_occ/(exp(PPA_E/Bose_Temp)-1.)
+                   if (abs(PPA_E)> bose_E_cut*Bose_Temp) bose_PPA_E=spin_occ/(exp(PPA_E/Bose_Temp)-1._DP)
                  else
                    bose_PPA_E=spin_occ*Bose_Temp/epsilon(1.)
                  endif
                endif
                !
-               ctmp = -4._SP/spin_occ*pi*isc_rhotw_d(ig1)*conjg(iscp_rhotw_d(ig2))*(-PPA_R)*&
+               ctmp = -4._DP/spin_occ*pi*isc_rhotw_d(ig1)*conjg(iscp_rhotw_d(ig2))*(-PPA_R)*&
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_i_w-E_kmq-PPA_E)+&
 &                       (f_kmq+bose_PPA_E)/(conjg(W_i_w)-E_kmq+PPA_E))
                !
@@ -618,15 +618,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
                !
                if (l_RIM_W_g) then
-                 PPA_R=-cmplx(real(RIM_W(1,iqibz,ig1,ig2)/2._SP), &
-&                       aimag(X_mat(ig1,ig2,X_range(1)))*real(isc%gamp(ig1,ig2),kind=SP),kind=SP)/2._SP*PPA_E
+                 PPA_R=-cmplx(real(RIM_W(1,iqibz,ig1,ig2)/2._DP), &
+&                       aimag(X_mat(ig1,ig2,X_range(1)))*real(isc%gamp(ig1,ig2),kind=DP),kind=DP)/2._DP*PPA_E
                else
-                 PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
+                 PPA_R=-X_mat(ig1,ig2,X_range(1))/2._DP*PPA_E*isc%gamp(ig1,ig2)
                end if
                !
-               ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
-&                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&
-&                       (f_kmq+bose_f(PPA_E))/(conjg(W_(i_w))-E_kmq+PPA_E))
+               ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
+&                     ( (spin_occ-f_kmq+bose_f(real(PPA_E,kind=SP)))/(W_(i_w)-E_kmq-PPA_E)+&
+&                       (f_kmq+bose_f(real(PPA_E,kind=SP)))/(conjg(W_(i_w))-E_kmq+PPA_E))
                !
                dp_dummy=dp_dummy+ctmp
                !
@@ -645,7 +645,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          call M_by_V('N', X%ng, X_mat(:,:,X_range(1)), conjg(iscp%rhotw), local_rhotw)
          !
-         pre_factor=0.0_SP
+         pre_factor=0.0_DP
          !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor)
          do ig1=1,X%ng
            pre_factor=pre_factor+isc%rhotw(ig1)*local_rhotw(ig1)
@@ -655,12 +655,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          ! SEX
          !
-         if (l_sc_sex.or.l_cohsex) dc(1)=-4._SP/spin_occ*pi*pre_factor*e%f(isc%os(1),isc%os(2),isc%os(4))
+         if (l_sc_sex.or.l_cohsex) dc(1)=-4._DP/spin_occ*pi*pre_factor*e%f(isc%os(1),isc%os(2),isc%os(4))
          !
          ! COH (when no empties are used the COH part is indeed calculated above)
          !
          if (COHSEX_use_empties) then
-           if (l_sc_coh.or.l_cohsex) dc(2)=2._SP*pi*pre_factor
+           if (l_sc_coh.or.l_cohsex) dc(2)=2._DP*pi*pre_factor
          endif
          !
          QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)+dc(2)
@@ -683,9 +683,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            do ig1=1,X%ng
              !
              PPA_E=X%ppaE/real(X_mat(ig1,ig2,X_range(2)))
-             PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
+             PPA_R=-X_mat(ig1,ig2,X_range(1))/2._DP*PPA_E*isc%gamp(ig1,ig2)
              !
-             dp_dummy=dp_dummy +cmplx(4._SP/spin_occ*pi*PPA_R*eet_factor(ig1,ig2)* &
+             dp_dummy=dp_dummy +cmplx(4._DP/spin_occ*pi*PPA_R*eet_factor(ig1,ig2)* &
 &                         QP_ppa_EET_terminator(W_(i_w),E,isc%is,PPA_E,ig1,ig2,isc%qs(2),&
 &                                               eet_cutoff0(1),eet_cutoff1(1)),kind=DP)
              !

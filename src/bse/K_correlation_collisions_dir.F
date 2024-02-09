@@ -186,7 +186,7 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
  !$omp &          i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,&
  !$omp &          i_kmq_t,i_pmq_t, &
  !$omp &          i_p_bz_last,i_k_bz_last,iq_W_bz_last,ig_W_last, &
- !$omp &          K_CORR_collision, i_s_collision)
+ !$omp &          K_CORR_collision)
 #endif
  !
  call OPENMP_update(master_thread)

@@ -36,6 +36,7 @@ subroutine Kramers_Kronig(fi,wi,ni,fo,wo,no,y0)
    q(i1)=fi(i1)-m(i1)*wi(i1)
  enddo
  !
+ !
  do i1=1,no
    do i2=1,ni-1
      fo(i1)=fo(i1)+m(i2)*(wi(i2)-wi(i2+1))+&

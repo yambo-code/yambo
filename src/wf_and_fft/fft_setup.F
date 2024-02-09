@@ -138,9 +138,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
        iv_3 = nint(DEV_VAR(g_vec_rot)(i1,3) - DEV_VAR(g_vec_rot)(i2,3))
        !
        if (i2==1.or.i1<=iG_max) then
-         DEV_VAR(ivec_GmG(i2,i1,1))=iv_1
-         DEV_VAR(ivec_GmG(i2,i1,2))=iv_2
-         DEV_VAR(ivec_GmG(i2,i1,3))=iv_3
+         DEV_VAR(ivec_GmG)(i2,i1,1)=iv_1
+         DEV_VAR(ivec_GmG)(i2,i1,2)=iv_2
+         DEV_VAR(ivec_GmG)(i2,i1,3)=iv_3
          !ln_1=max(ln_1,iv_1)
          !ln_2=max(ln_2,iv_2)
          !ln_3=max(ln_3,iv_3)

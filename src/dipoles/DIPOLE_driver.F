@@ -126,14 +126,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  ! If we have additional nonlocal contributions such as Hubbard U,
  ! we need to switch to the covariant approach to capture them
  if (l_Hbare.and..not.use_covariant_approach) then
-   if(.not.exp_user) call error(' Dipoles approach must be set to Covariant for BareH calculations')
-   if(     exp_user) then
-     use_covariant_approach    =.true.
-     Dip%approach='Covariant'
-     use_g_space_approach      =.false.
-     use_real_space_approach   =.false.
-     use_shifted_grids_approach=.false.
-     call warning(' Dipoles approach has been set to Covariant for BareH calculations')
+   if(.not.exp_user) call error(' Dipoles approach should be set to Covariant for BareH calculations')
+   if(     exp_user) call warning(' Dipoles approach should be set to Covariant for BareH calculations')
    endif
  endif
  !

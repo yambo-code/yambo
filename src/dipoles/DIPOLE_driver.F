@@ -122,6 +122,17 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    Dip%approach='G-space v'
  endif
  !
+ ! If we have additional nonlocal contributions such as Hubbard U,
+ ! we need to switch to the covariant approach to capture them
+ if (l_Hbare.and..not.use_covariant_approach) then
+   use_covariant_approach    =.true.
+   Dip%approach='Covariant'
+   use_g_space_approach      =.false.
+   use_real_space_approach   =.false.
+   use_shifted_grids_approach=.false.
+   call warning(' Dipoles approach set to Covariant for BareH calculations')
+ endif
+ !
  call parser('PDirect'  ,Dip%force_v_g_space)
 #if defined _SC || defined _RT || defined _NL
  Dip%force_v_g_space=Dip%force_v_g_space.or.l_sc_run.or.l_real_time.or.l_nl_optics

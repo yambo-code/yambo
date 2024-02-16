@@ -150,6 +150,11 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp";
  options[*i_opt].yambo_string="avehole";
  options[*i_opt].section="Plots";
+ options[*i_opt].short_desc="exciton dipole real space";
+ options[*i_opt].long_opt="excdipole";
+ options[*i_opt].bin="ypp";
+ options[*i_opt].yambo_string="excdipole";
+ options[*i_opt].section="Plots";  
 #if !defined _YPP_RT  
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Phononic properties";

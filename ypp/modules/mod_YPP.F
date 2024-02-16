@@ -159,6 +159,7 @@ module YPPm
  logical      ::l_spin
  logical      ::l_free_hole
  logical      ::l_average_eh
+ logical      :: l_exc_dipole = .false.
  logical      ::l_angular_momentum
  logical      ::l_position
  integer      ::ncell(3) 

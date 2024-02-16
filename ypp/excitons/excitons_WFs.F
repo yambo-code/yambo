@@ -16,7 +16,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  use com,           ONLY:msg,of_open_close
  use electrons,     ONLY:spin,n_spinor
  use YPPm,          ONLY:v2plot,ncell,r_hole,l_free_hole,AVE_exc,&
-&                        nr,nr_tot,output_fname,l_average_eh,&
+&                        nr,nr_tot,output_fname,l_average_eh, l_exc_dipole, &
 &                        use_xcrysden,use_gnuplot,use_cube,plot_dim,&
 &                        EXCITONS_user_indexes,EXCITONS_n_user_states
  use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_desc,BSS_n_eig
@@ -39,13 +39,16 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  !
  type(PP_indexes)  :: px
  integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_l,i_lambda,j_lambda,i_sp_pol,ir,ir_hole,j1,&
-&                     n_lambda_deg,neh1,iv1,ic1,ikbz1,ikibz1,i_sp_pol1,is1
- integer           :: ikpbz,ikp,isp
- real(SP)          :: r_hole_rlu(3),kp_dot_r_h,k_dot_r_e
+&                     n_lambda_deg,neh1,iv1,ic1,ikbz1,ikibz1,i_sp_pol1,is1,  &
+&                     ivprime, icprime, ikbzprime, isprime, nehprime, i_sp_pol_prime, ir_dummy
+ integer           :: ikpbz,ikp,isp, ikpbzprime, ikpprime, ispprime, ikibzprime
+ real(SP)          :: r_hole_rlu(3),kp_dot_r_h,k_dot_r_e, r_h(3), r_e(3), r_dummy(3)
  complex(SP)       :: wf_,wf_vc(BS_H_dim),WF1_ir(n_spinor),WF2_ir(n_spinor),phase,B_coeff
  !
  integer,  allocatable :: rindex(:)
  real(SP), allocatable :: r_cell_cc(:,:)
+ complex(SP), allocatable :: exc_dipole_eh(:,:), wf1_square_ir(:,:), wf2_square_ir(:,:)
+ complex(SP), allocatable :: exc_dipole_ee(:,:), exc_dipole_hh(:,:)
  !
  call section('+','Excitonic Wave Function')
  !
@@ -110,7 +113,14 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  !
  ! Allocation
  !
+ OPEN(UNIT=12, FILE="exciton-dipole.txt", ACTION="write", STATUS="replace")
  YAMBO_ALLOC(v2plot,(nr_tot))
+ YAMBO_ALLOC(wf1_square_ir,(EXCITONS_n_user_states,3))
+ YAMBO_ALLOC(wf2_square_ir,(EXCITONS_n_user_states,3))
+ YAMBO_ALLOC(exc_dipole_eh,(EXCITONS_n_user_states,3))
+ YAMBO_ALLOC(exc_dipole_ee,(EXCITONS_n_user_states,3))
+ YAMBO_ALLOC(exc_dipole_hh,(EXCITONS_n_user_states,3))
+ write(12, *) '# Exciton dipole_eh/ee/hh Re_x [Bohr] Im_x[Bohr] Re_y [Bohr] Im_y[Bohr] Re_z [Bohr] Im_z[Bohr]'
  !
  ! Par Proc
  !
@@ -136,6 +146,11 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    call live_timing('ExcWF@'//trim(intc(j_lambda)),px%n_of_elements(myid+1))  
    !
    v2plot  =0._SP
+   wf1_square_ir(:,:) = cZERO
+   wf2_square_ir(:,:) = cZERO
+   exc_dipole_eh(:,:) = cZERO
+   exc_dipole_ee(:,:) = cZERO   
+   exc_dipole_hh(:,:) = cZERO   
    !
    if(l_average_eh) then
      !
@@ -203,7 +218,115 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
        !
      enddo ! loop on i_r 
      !
-   else
+   else if (l_exc_dipole) then 
+      !   
+      !$omp parallel default(shared), firstprivate(ir_dummy,r_dummy), &
+      !$omp private(wf1_square_ir,wf2_square_ir, exc_dipole,&
+      !$omp & ir,neh, nehprime, ikbz, ikbzprime, iv,, ivprime, ic, icprime, &
+      !$omp & i_sp_pol, i_sp_pol_prime, ikibz, ikibzprime, is, isprime, ikpbz,&
+      !$omp & ikpbzprime, ikp,ikpprime, isp, ispprime, &
+      !$omp & WF1_ir,WF2_ir,phase, i_l )
+      !
+      call msg('s', 'Computation of the exciton dipole')
+      call OPENMP_update(master_thread)
+      !
+      !$omp do schedule(dynamic)
+      !
+       do ir_dummy = 1, nr_tot
+         r_dummy = r_cell_cc(:, ir_dummy)
+         !
+         if (.not. px%element_1D(ir_dummy)) cycle
+         !
+         do neh = 1, BS_H_dim 
+          do nehprime = 1, BS_H_dim
+            do i_l= BS_e_degs(j_lambda), BS_e_degs(j_lambda)+n_lambda_deg-1
+                !
+                ikbz = BSS_eh_table(neh,1)
+                ikbzprime = BSS_eh_table(nehprime,1)
+                iv   = BSS_eh_table(neh,2)
+                ivprime  = BSS_eh_table(nehprime,2)
+                ic   = BSS_eh_table(neh,3)
+                icprime  = BSS_eh_table(nehprime,3)
+                i_sp_pol = spin(BSS_eh_table(neh,:))
+                i_sp_pol_prime = spin(BSS_eh_table(nehprime,:))
+                !
+                ikibz = Xk%sstar(ikbz,1)
+                is    = Xk%sstar(ikbz,2)
+                !
+                ikibzprime = Xk%sstar(ikbzprime,1)
+                isprime    = Xk%sstar(ikbzprime,2)
+                !
+                ikpbz = qindx_X(iq,ikbz,1)
+                ikp   = Xk%sstar(ikpbz,1)
+                isp   = Xk%sstar(ikpbz,2)            
+                !
+                !
+                ikpbzprime = qindx_X(iq,ikbzprime,1)
+                ikpprime   = Xk%sstar(ikpbzprime,1)
+                ispprime   = Xk%sstar(ikpbzprime,2)            
+                ! first term v=vp, c=cp
+                if (ic .eq. icprime .and. iv .eq. ivprime .and. neh .eq. nehprime) then 
+                  WF1_ir = WF_symm(rindex(ir_dummy),(/iv,ikp,isp,i_sp_pol/))
+                  WF2_ir = WF_symm(rindex(ir_dummy),(/icprime,ikpprime,isprime,i_sp_pol_prime/))
+                  ! |\phi_vk|^2*r_dummy and c
+                  wf1_square_ir(i_l,:) = abs(BS_mat(neh,i_l))**2*conjg(WF1_ir(1))*WF1_ir(1)*r_dummy(:)
+                  wf2_square_ir(i_l,:) = abs(BS_mat(nehprime,i_l))**2*conjg(WF2_ir(1))*WF2_ir(2)*r_dummy(:)              
+                  !
+                  if(n_spinor==2) then 
+                    wf1_square_ir(i_l,:) = wf1_square_ir(i_l,:) + abs(BS_mat(neh,i_l))**2*conjg(WF1_ir(2))*WF1_ir(2)*r_dummy(:)
+                    wf2_square_ir(i_l,:) = wf2_square_ir(i_l,:) + abs(BS_mat(nehprime,i_l))**2*conjg(WF2_ir(2))*WF2_ir(2)*r_dummy(:)
+                  endif
+                  exc_dipole_eh(i_l, :) = exc_dipole_eh(i_l,:) + wf1_square_ir(i_l,:) - wf2_square_ir(i_l,:)
+                endif
+                ! mixed terms with v'>v and c'=c
+                if (ivprime .ne. iv .and. icprime .eq. ic) then 
+                  WF1_ir = WF_symm(rindex(ir_dummy), (/iv,ikp,isp,i_sp_pol/))
+                  WF2_ir = WF_symm(rindex(ir_dummy), (/ivprime,ikpprime, isprime, i_sp_pol_prime/))
+                  !phi_v^*phi_v'
+                  wf1_square_ir(i_l,:) = conjg(BS_mat(neh,i_l))*BS_mat(nehprime,i_l)*&
+&                  conjg(WF1_ir(1))*WF2_ir(1)*r_dummy(:)
+                  !
+                  if(n_spinor == 2) then
+                    wf1_square_ir(i_l,:) = wf1_square_ir(i_l,:) + &
+&                    conjg(BS_mat(neh,i_l))*BS_mat(nehprime,i_l)*conjg(WF1_ir(2))*WF2_ir(2)*r_dummy(:)
+                  endif
+                  !
+                  exc_dipole_hh(i_l,:) = exc_dipole_hh(i_l,:) + real(wf1_square_ir(i_l,:))
+                endif
+                ! mixed terms c'>c and v'=v
+                if (icprime .ne. ic .and. ivprime .eq. iv) then 
+                  WF1_ir = WF_symm(rindex(ir_dummy),(/ic,ikp,isp,i_sp_pol/))
+                  WF2_ir = WF_symm(rindex(ir_dummy),(/icprime, ikpprime, ispprime, i_sp_pol_prime/))
+                  !phi_c'^**phi)c
+                  wf1_square_ir(i_l,:) = conjg(BS_mat(neh,i_l))*BS_mat(nehprime,i_l)*WF1_ir(1)*&
+&                  conjg(WF2_ir(1))*r_dummy(:)
+                  !
+                  if(n_spinor == 2) then 
+                    wf1_square_ir(i_l,:) = wf1_square_ir(i_l,:) + &
+&                    conjg(BS_mat(neh,i_l))*BS_mat(nehprime,i_l)*WF1_ir(2)*conjg(WF2_ir(2))*r_dummy(:)
+                  endif
+                  !
+                  exc_dipole_ee(i_l,:) = exc_dipole_ee(i_l,:) - (wf1_square_ir(i_l,:))
+                endif
+                !
+            enddo 
+          enddo
+        enddo ! Matrix elements
+        if (master_thread) call live_timing(steps=1)
+         !
+        !  do i_l= BS_e_degs(j_lambda), BS_e_degs(j_lambda)+n_lambda_deg-1
+        !    !
+        !    wf_1 = V_dot_V(BS_H_dim, BS_mat(:,i_l), wf1_square_sum)
+        !    wf_2 = V_dot_V(BS_H_dim, BS_mat(:,i_l), wf2_square_sum)
+        !    tmp_sum_1 = abs(wf_1)**2
+        !    tmp_sum_2 = abs(wf_2)**2
+        !  enddo ! end i_l
+        !  !
+        !  if (master_thread) call live_timing(steps=1)
+        !  ! 
+       enddo !end ir_dummy
+       !call msg('s', 'Finished dipole computation', &         
+  else if (.not. l_exc_dipole) then
      !   
      !$omp parallel default(shared), firstprivate(ir_hole,r_hole), &
      !$omp private(wf_vc, ir,neh, ikbz,iv,ic,i_sp_pol,ikibz,is, ikpbz,ikp,isp, &
@@ -290,14 +413,33 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    call of_open_close(trim(output_fname))
    !
  enddo
+ if (l_exc_dipole) then 
+  do i_l= BS_e_degs(j_lambda), BS_e_degs(j_lambda)+n_lambda_deg-1
+    write(12, '(I5, 5X, F10.8, 5X, F10.8, 5X, F10.8, 5X, F10.8, 5X, F10.8, 5X, F10.8)') &
+    &             i_l, real(exc_dipole_eh(i_l,1)), aimag(exc_dipole_eh(i_l,1)), real(exc_dipole_eh(i_l,2)), &
+    &             aimag(exc_dipole_eh(i_l,2)), real(exc_dipole_eh(i_l,3)), aimag(exc_dipole_eh(i_l,3)) 
+    write(12, '(I5, 5X, F10.8, 5X, F10.8, 5X, F10.8, 5X, F10.8, 5X, F10.8, 5X, F10.8)') &
+    &             i_l, real(exc_dipole_ee(i_l,1)), aimag(exc_dipole_ee(i_l,1)), real(exc_dipole_ee(i_l,2)), &
+    &             aimag(exc_dipole_ee(i_l,2)), real(exc_dipole_ee(i_l,3)), aimag(exc_dipole_ee(i_l,3))   
+    write(12, '(I5, 5X, F10.8, 5X, F10.8, 5X, F10.8, 5X, F10.8, 5X, F10.8, 5X, F10.8)') &
+    &             i_l, real(exc_dipole_hh(i_l,1)), aimag(exc_dipole_hh(i_l,1)), real(exc_dipole_hh(i_l,2)), &
+    &             aimag(exc_dipole_hh(i_l,2)), real(exc_dipole_hh(i_l,3)), aimag(exc_dipole_hh(i_l,3))             
+    enddo      
+ endif
  !
  call PP_indexes_reset(px)
  !
  YAMBO_FREE(v2plot)
  YAMBO_FREE(r_cell_cc)
  YAMBO_FREE(rindex)
+ YAMBO_FREE(wf1_square_ir)
+ YAMBO_FREE(wf2_square_ir)
+ YAMBO_FREE(exc_dipole_eh)
+ YAMBO_FREE(exc_dipole_ee)
+ YAMBO_FREE(exc_dipole_hh)  
  !
  call WF_free(WF)
+ close(unit=13)
  !
  contains
    !

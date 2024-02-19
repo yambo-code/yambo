@@ -37,8 +37,9 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  !
  use iso_c_binding, ONLY: c_null_ptr
  use pars,          ONLY: SP,DP,cI,cZERO,cZERO_DP
- use FFT_m,         ONLY: fft_size,fft_dim,DEV_VAR(fft_g_table)
- use FFT_m,         ONLY: fftw_plan,cufft_plan,hipfft_plan,mklgpu_desc
+ use FFT_m
+! use FFT_m,         ONLY: fft_size,fft_dim,DEV_VAR(fft_g_table)
+! use FFT_m,         ONLY: fftw_plan,cufft_plan,hipfft_plan,mklgpu_desc
  use R_lattice,     ONLY: g_vec,DEV_VAR(g_vec),ng_vec
  use wave_func,     ONLY: wf_ng
  use devxlib,       ONLY: devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_mapped,devxlib_memset_d

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-!#ifdef _MKLGPU 
+!#ifdef _MKLGPU
 !include "mkl_dfti_omp_offload.f90"
 !#endif
 
@@ -29,7 +29,7 @@ module FFT_m
  use pars,          ONLY: SP
  use iso_c_binding, ONLY: c_ptr
 #ifdef _MKLGPU
- use mkl_dfti_omp_offload
+ use mklfft_gpu
 #endif
  !
 #include<dev_defs.h>
@@ -62,15 +62,6 @@ module FFT_m
  !
  type(c_ptr) :: hipfft_plan
                            !(BW) -1 sign: R-space to G-space
- !
- ! oneMKL support (Intel GPUs)
- !
-#ifdef _MKLGPU
- type(dfti_descriptor), pointer :: mklgpu_desc
-#else
- type(c_ptr) :: mklgpu_desc   !Placeholder not to be used (really
-                              ! needed?)
-#endif
 
  contains
    !

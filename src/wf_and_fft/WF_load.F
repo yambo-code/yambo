@@ -51,8 +51,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use electrons,     ONLY:nel,n_spinor,n_sp_pol
  use R_lattice,     ONLY:nkibz,k_pt,b
  use interfaces,    ONLY:WF_free
- use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size,&
-&                        fftw_plan,cufft_plan,hipfft_plan,mklgpu_desc,DEV_VAR(fft_g_table)
+ use FFT_m
+! use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size,&
+!&                        fftw_plan,cufft_plan,hipfft_plan,mklgpu_desc,DEV_VAR(fft_g_table)
  use wave_func,     ONLY:wf_nc_k,wf_igk,DEV_VAR(wf_igk),WF_buffer,&
 &                        wf_ng,wf_norm_test,wf_ncx,io_WF,wf_b_indx,&
 &                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,WAVEs,states_to_load

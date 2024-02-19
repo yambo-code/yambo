@@ -19,7 +19,7 @@ NL_objects       = mod_fields.o mod_electric.o mod_nl_optics.o mod_NL_interfaces
 DEV_objects_BASE = mod_cudafor.o mod_cufft.o
 #endif
 #if defined _OPENMP_GPU
-DEV_objects_BASE = mod_hip.o mod_hipfft.o
+DEV_objects_BASE = mod_hip.o mod_hipfft.o mod_mklfft_gpu.o
 #endif
 #if defined _io_lib
 objs = mod_pars.o mod_stderr.o mod_parallel.o mod_parallel_interface.o  \

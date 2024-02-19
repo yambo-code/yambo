@@ -46,12 +46,17 @@
 #include<dev_defs.h>
 include "mkl_dfti_omp_offload.f90"
 !
+module mklfft_gpu
+
+use pars,                 only: DP
+use gpu_m,                only: gpu_devsync
+use devxlib_environment
+use mkl_dfti_omp_offload
+
+ type(dfti_descriptor), pointer :: mklgpu_desc
+
+contains
 subroutine fft_3d_mklgpu(c_d,n,fft_sign,mklgpu_desc)
- !
- use pars,                 only: DP
- use gpu_m,                only: gpu_devsync
- use devxlib_environment
- use mkl_dfti_omp_offload
  !
 #include<y_memory.h>
  !
@@ -65,9 +70,10 @@ subroutine fft_3d_mklgpu(c_d,n,fft_sign,mklgpu_desc)
  integer :: desc_status
  integer :: istat
  !
- istat = DftiGetValue( mklgpu_desc, DFTI_COMMIT_STATUS, desc_status )
- if (istat/=0) call error("[FFT] Invalid MKL GPU desc "// DftiErrorMessage(istat))
- if (desc_status==DFTI_UNCOMMITTED) then
+! istat = DftiGetValue( mklgpu_desc, DFTI_COMMIT_STATUS, desc_status )
+! if (istat/=0) call error("[FFT] Invalid MKL GPU desc "// DftiErrorMessage(istat))
+! if (desc_status==DFTI_UNCOMMITTED) then
+ if (.not. associated(mklgpu_desc)) then
    !
    istat = DftiCreateDescriptor( mklgpu_desc, DFTI_DOUBLE, DFTI_COMPLEX, 3, n)
    if(istat /= 0) CALL error('[FFT] stopped in DftiCreateDescriptor '// DftiErrorMessage(istat))
@@ -98,4 +104,4 @@ subroutine fft_3d_mklgpu(c_d,n,fft_sign,mklgpu_desc)
  !DEV_OMPGPU end target data
  !
 end subroutine fft_3d_mklgpu
-
+endmodule mklfft_gpu

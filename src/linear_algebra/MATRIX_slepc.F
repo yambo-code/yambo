@@ -130,11 +130,15 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  ! From user
  if(BSS_slepc_approach=="Krylov-Schur")          epskind=EPSKRYLOVSCHUR
  if(BSS_slepc_approach=="Generalized-Davidson")  epskind=EPSGD
- if(BSS_slepc_approach=="Jacobi-Davidson")        epskind=EPSJD
+ if(BSS_slepc_approach=="Jacobi-Davidson")       epskind=EPSJD
  !if(BSS_slepc_approach=="Scalapack")             epskind=EPSSCALAPACK
  !if(BSS_slepc_approach=="ELPA")                  epskind=EPSELPA
  ! In case input is mispelled fallback to Krylov-Schur
  if (epskind==EPSKRYLOVSCHUR) BSS_slepc_approach="Krylov-Schur"
+ !
+ if (.not. (epskind==EPSKRYLOVSCHUR .or. epskind==EPSGD .or. epskind=EPSJD )) then
+   call error("wrong slepc approach in input "//trim(BSS_slepc_approach))
+ endif
  !
  call msg( 'sr', '[SLEPC] Approach                          ',BSS_slepc_approach)
  !

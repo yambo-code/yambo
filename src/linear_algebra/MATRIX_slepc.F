@@ -122,7 +122,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  ! * Generalized-Davidson: EPSGD, RIGHT VECTORS ONLY
  !                       STPPRECOND + KSPPREONLY + PCJACOBY very fast for few eigenvectors
  !
- ! * Jacob-Davidson: EPSJD, NOT WORKING WITH KSP PREONLY
+ ! * Jacobi-Davidson: EPSJD, NOT WORKING WITH KSP PREONLY
  !                    STPPRECOND + KSPCG SUPER-SLOW + PCJACOBY super slow
  !
  ! Default
@@ -130,7 +130,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  ! From user
  if(BSS_slepc_approach=="Krylov-Schur")          epskind=EPSKRYLOVSCHUR
  if(BSS_slepc_approach=="Generalized-Davidson")  epskind=EPSGD
- if(BSS_slepc_approach=="Jacob-Davidson")        epskind=EPSJD
+ if(BSS_slepc_approach=="Jacobi-Davidson")        epskind=EPSJD
  !if(BSS_slepc_approach=="Scalapack")             epskind=EPSSCALAPACK
  !if(BSS_slepc_approach=="ELPA")                  epskind=EPSELPA
  ! In case input is mispelled fallback to Krylov-Schur

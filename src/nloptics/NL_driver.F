@@ -66,10 +66,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  integer           :: i_f,i1,i_sp_pol,N_sample_size,wf_ng_save,io_err
  logical           :: l_dynamics_is_over
  real(SP)          :: Time
- !aim137 DEBUG<
- integer           :: ik_bz,i_m
- character(4)      :: filename,filename2
- !aim137 DEBUG>
  !
  ! In Non-Linear NL_bands always equal to RT_bands
  ! ==============================================
@@ -204,41 +200,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  ! Start-Up & Timing
  !===================
  call live_timing('[NL] Frequencies ',PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1)*NE_steps)
-!!aim137 DEBUG< write RT_V_bands
-!i_m = 4
-!do ik_bz=1,36
-!write(filename ,'(i0)') ik_bz
-!write(filename2,'(i0)') i_m
-!open(110+ik_bz,file='RT_Vbands_band'//trim(adjustl(filename2))//'_kpt_'//trim(adjustl(filename))//'.dat')
-!write(110+ik_bz,*) '#BAND ',i_m,' kpt',ik_bz
-!write(110+ik_bz,*) '#time[fs] - real and imag part of coeffs for all KS bands'
-!enddo
-!!aim137 DEBUG>
-!!aim137 DEBUG< write V_Hartree
-!i_m = 4
-!do ik_bz=1,36
-!write(filename ,'(i0)') ik_bz
-!open(110+ik_bz,file='RT_V_Hartree_kpt_'//trim(adjustl(filename))//'.dat')
-!write(110+ik_bz,*) '#kpt',ik_bz
-!write(110+ik_bz,*) '#time[fs] - real and imag part of V_H - matrix elements (1,1) (1,2) (2,1) (2,2)'
-!enddo
-!!aim137 DEBUG>
-!!aim137 DEBUG< write density
-!open(111,file='RT_density.dat')
-!write(111,*) '#time[fs] - density at different positions'
-!!aim137 DEBUG>
-!!aim137 DEBUG< write V_Hartree real space
-!open(112,file='RT_V_Hartree_real_space.dat')
-!write(112,*) '#time[fs] - density at different positions'
-!!aim137 DEBUG>
-!aim137 DEBUG< write Hamiltonian
-!do ik_bz=1,36
-!write(filename ,'(i0)') ik_bz
-!open(110+ik_bz,file='RT_Hamiltonian_kpt_'//trim(adjustl(filename))//'.dat')
-!write(110+ik_bz,*) '#kpt',ik_bz
-!write(110+ik_bz,*) '#time[fs] - real and imag part of Hamiltonain - matrix elements (4,4) (4,5) (5,4) (5,5)'
-!enddo
-!aim137 DEBUG>
  !
  do i_f=1,n_frequencies
    !
@@ -295,13 +256,6 @@ subroutine NL_driver(E,X,k,q,Dip)
      !
      call live_timing(steps=1)
      !
-    !!aim137 DEBUG<
-    !do ik_bz=1,36
-    !write(110+ik_bz,'(100(1e19.10))') Time*AUT2FS,&
-    !& (real(V_bands(i1,i_m,ik_bz,1)),aimag(V_bands(i1,i_m,ik_bz,1)),i1=1,NL_bands(2))
-    !enddo
-    !!aim137 DEBUG>
-     !
      l_dynamics_is_over= (NE_i_time>=NE_steps) .or. stop_now(.false.)
      !
    enddo
@@ -325,13 +279,4 @@ subroutine NL_driver(E,X,k,q,Dip)
  call DIP_alloc('DIP_R')
  call DIP_alloc('DIP_v')
  !
-!!aim137 DEBUG<
-!do ik_bz=1,36
-!close(110+ik_bz)
-!enddo
-!!aim137 DEBUG>
- !aim137 DEBUG< density
- !close(111)
- !close(112)
- !aim137 DEBUG>
 end subroutine NL_driver

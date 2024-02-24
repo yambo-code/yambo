@@ -149,9 +149,6 @@ subroutine FL_driver(E,X,k,q,Dip)
    if(.not.l_use_Hxc_collisions .and. (Correlation==SEX.or.Correlation==HF)) &
 &    call error(' HF / SEX need Collisions. Cannot be computed on the fly.')
    !
-   !aim137 I think I don't need this?:
-   !if(COLLISIONS_CV_only) call msg('rs','Collisions contains C<->V ONLY scatterings')
-   !
  endif
  !
  if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE)  then
@@ -194,8 +191,6 @@ subroutine FL_driver(E,X,k,q,Dip)
  !
  ! Initialize IO
  ! ==================
- !aim137: we'll need to add FL_databases
- !call NL_databases_IO(0,'write')
  if (master_cpu) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_FL)
    i_err=io_FL(ID_FL)
@@ -216,7 +211,6 @@ subroutine FL_driver(E,X,k,q,Dip)
  call section('*','FL self-consistency')
  do i_f=1,n_frequencies
    !
-   !print*, 'Frequency step = ',i_f,' of ',n_frequencies
    if(.not.PAR_IND_freqs%element_1D(i_f)) cycle
    !
    if(freqs_done(i_f)) then
@@ -242,10 +236,6 @@ subroutine FL_driver(E,X,k,q,Dip)
    FL_S_plus =cZERO
    FL_time_S_det =cZERO
    !
-   ! aim137 prelim - I probably can do this just once outside the freq loop
-   ! aim137 and store it in a variable FL_S0_plus. Then, inside the freq loop,
-   ! aim137 do just FL_S_plus = FL_S0_plus. Would be faster but need more mem.
-   ! aim137 or put in a logical variable to calculate all overlaps as heads!
    do i_sp_pol=1,n_sp_pol
      do i_k_bz=1,k%nbz
        !
@@ -271,15 +261,14 @@ subroutine FL_driver(E,X,k,q,Dip)
    ! Efield
    ! ================
    Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
-   !print*, 'Frequency [eV] = ',Efield(1)%frequency(1)*HA2EV
    !
    do while(.not.l_FL_sc_reached)
      !
      FL_iteration=FL_iteration+1
-   ! print*, 'Starting iteration number ',FL_iteration, ' --------------'
+     !
      FL_Chi_pol(i_f,:,:,2) = FL_Chi_pol(i_f,:,:,1)
      !
-     call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency,FL_iteration) !aim137 check, there should be (1) after frequency
+     call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency,FL_iteration)
      !
      call FL_diagonalization(E,k,FL_V_bands,FL_QE,FL_iteration)
      !
@@ -291,16 +280,9 @@ subroutine FL_driver(E,X,k,q,Dip)
      l_FL_sc_reached = l_FL_conv_Chi .and. l_FL_conv_Rho
      if (l_FL_sc_reached) converged(i_f) = .true.
      !
-     !if (FL_iteration <= 10) l_FL_sc_reached = .false.
-     !if (master_cpu) print*, FL_iteration, '--------------', real(accuracy(i_f)), aimag(accuracy(i_f))
      if (FL_iteration >= FL_max_iterations) then
        !
        l_FL_sc_reached = .true.
-       !
-       !aim137 DEBUG<
-       !print*, 'Frequency step',i_f,' -- ',Efield(1)%frequency(1)*HA2EV,&
-       !&' eV -- unconverged after',FL_iteration,' iter. -- acc=',real(accuracy(i_f)), aimag(accuracy(i_f))
-       !aim137 DEBUG>
        !
      endif
      !
@@ -311,11 +293,6 @@ subroutine FL_driver(E,X,k,q,Dip)
    iterations(i_f) = FL_iteration
    !
    call live_timing(steps=1)
-   !
-   !call FL_all_times_pol(E,k) !this was to interface with ypp
-   !call FL_all_times_Vbands(E,k,.false.)
-   !
-   !call NL_databases_IO(i_f,'write')
    !
    call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/i_f+1/),MODE=VERIFY,ID=ID_FL)
    i_err=io_FL(ID_FL)

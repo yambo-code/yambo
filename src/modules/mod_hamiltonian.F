@@ -170,8 +170,6 @@ module hamiltonian
      !
    end subroutine
      !
-     ! aim137 adding FL_alloc
-     !
    subroutine FL_H_alloc(E,l_real_space,l_rotation_matrix,FL_states)
      use pars,           ONLY:SP
      use drivers,        ONLY:l_nl_optics,l_sc_run

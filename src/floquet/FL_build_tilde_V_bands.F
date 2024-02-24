@@ -121,9 +121,6 @@ subroutine FL_build_tilde_V_bands(en,Xk,ikbz,i_sp,istep,id_red,FL_V_bands,FL_V_t
   &  DIP_S(H_ref_bands(1):,:,id_red+(istep-1)*3,ikbz,i_sp),H_ref_nbands, &
   &  FL_V_bands(:,i1_fl,:,ikp_ibz),H_ref_bands(2),cZERO,tmp_Vp(H_ref_bands(1):,:,i1_fl),H_ref_nbands)
    !
-   ! aim137: las dos instancias de H_ref_bands(1): son "j" en mis ecuaciones. o sea, la dim del H.
-   ! aim137: pero recordar que al final el H va de H_ref_bands(1) a H_ref_bands(2)
-   !
    call M_by_M_omp('C','N',H_ref_nbands,en%nbf(i_sp),H_ref_bands(2),cONE,  &
   &  DIP_S(:,H_ref_bands(1):,id_red+(istep-1)*3,ikm ,i_sp),H_ref_bands(2), &
   &  FL_V_bands(:,i1_fl,:,ikm_ibz),H_ref_bands(2),cZERO,tmp_Vm(H_ref_bands(1):,:,i1_fl),H_ref_nbands)
@@ -134,19 +131,15 @@ subroutine FL_build_tilde_V_bands(en,Xk,ikbz,i_sp,istep,id_red,FL_V_bands,FL_V_t
  ! ===========================================
  ! where \tilde V(k+delta,n,:) = \sum_m \tilde S^-1(k,k+delta)_{m,n} * Vp(m,:)
  ! 
-! $omp parallel do default(shared), private(i2,iv1)
  do i2=H_ref_bands(1),H_ref_bands(2)
    do iv1=1,en%nbf(i_sp)
      do i1_fl=1,n_tot_fl_modes
        do i2_fl=1,n_tot_duffin_modes
          FL_V_tilde(i2,i1_fl,i2_fl,iv1,1)=sum( FL_Sm1_plus(:,iv1,i2_fl)*tmp_Vp(i2,:,i1_fl)) 
          FL_V_tilde(i2,i1_fl,i2_fl,iv1,2)=sum(FL_Sm1_minus(:,iv1,i2_fl)*tmp_Vm(i2,:,i1_fl))
-                                               !aim137: en ^, como elijo aca una columna y no la otra?
-                                               !aim137: 20220304: creo que asi esta bien...
        enddo
      enddo
    enddo
  enddo
-! $omp end parallel do
  !
 end subroutine FL_build_tilde_V_bands

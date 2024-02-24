@@ -60,8 +60,7 @@ subroutine FL_initialize(E,k,q)
  ! Input variables: FL_Chi_order, FL_add_mode, NL_bands
  !
  max_time_step   = FL_Chi_order
- max_fl_mode     = FL_Chi_order+FL_add_mode !aim137 removed for debug
- !max_fl_mode     = 3 !aim137 remove after DEBUG
+ max_fl_mode     = FL_Chi_order+FL_add_mode
  max_extra_mode  = 2*max_fl_mode
  max_duffin_mode = 4*max_fl_mode
  !
@@ -251,10 +250,12 @@ subroutine FL_initialize(E,k,q)
         Correlation=HARTREE
         RT_potential='HARTREE'
         eval_HARTREE =.true.
+        call error ('  [FL] HARTREE not yet implemented in Floquet')
     case('HARTREE')
         Correlation=HARTREE
         RT_potential='HARTREE'
         eval_HARTREE =.true.
+        call error ('  [FL] HARTREE not yet implemented in Floquet')
     case('TDDFT')  
         Correlation=TDDFT
         RT_potential='default'
@@ -284,6 +285,7 @@ subroutine FL_initialize(E,k,q)
         eval_COLLISIONS=.true.
         l_sc_coh       =.true.
         l_sc_sex       =.true.
+        call error ('  [FL] SEX not yet implemented in Floquet')
     case('HF')
         Correlation=HF
         RT_potential   ='HARTREE+FOCK'
@@ -292,22 +294,12 @@ subroutine FL_initialize(E,k,q)
         eval_COLLISIONS=.true.
         l_sc_hartree   =.true.
         l_sc_fock      =.true.
+        call error ('  [FL] HF not yet implemented in Floquet')
     case default
         call error("Unknow correlation in the response function")
  end select
  !
  H_potential = RT_potential
- !
- ! Deallocate bare_qpg if not required
- !=============================
- ! DS 2019/06/18:
- ! bare_qpg is used by DIPOLE_dimensions
- ! The dependency maybe likey removed in the future
- ! For now I'm commenting the following lines
- !  
- !if(.not.eval_HARTREE.and.CORRELATION/=JGM) then
- !  YAMBOX_FREE(bare_qpg)
- !endif
  !
  ! Frequencies range
  ! =========================

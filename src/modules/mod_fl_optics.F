@@ -58,7 +58,6 @@ module fl_optics
  real(SP),    allocatable :: Broyden_u(:,:)
  real(SP),    allocatable :: Broyden_a(:,:)
  !
- !aim137 new variables
  integer  :: max_fl_mode
  integer  :: FL_add_mode
  integer  :: max_extra_mode
@@ -107,9 +106,7 @@ module fl_optics
      !
      call FL_H_alloc(en,.true.,.false.,FL_states)
      !
-     ! aim137 allocate V_bands because I still need it for FL_start_and_restart
      YAMBO_ALLOC(V_bands,(NL_bands(2),maxval(en%nbf),QP_nk,n_sp_pol))
-     ! aim137 FL_bands in FKS space broken down in bands x fl modes
      YAMBO_ALLOC(FL_V_bands,(NL_bands(2),n_tot_fl_modes,maxval(en%nbf),QP_nk,n_sp_pol))
      YAMBO_ALLOC(FL_V_bands_hist,(NL_bands(2),n_tot_fl_modes,maxval(en%nbf),QP_nk,n_sp_pol))
      !
@@ -193,7 +190,6 @@ module fl_optics
      endif
      YAMBO_ALLOC(I_relax,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),maxval(en%nbf),PAR_Xk_nibz,n_sp_pol))
      YAMBO_ALLOC(Ho_plus_Sigma,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),PAR_Xk_nibz,n_sp_pol))
-     !aim137 k-parallelization
      YAMBO_ALLOC(FL_Ho_plus_Sigma,(FL_states(1):FL_states(2),FL_states(1):FL_states(2),PAR_Xk_nibz,n_sp_pol))
      !
    end subroutine FL_alloc_k_distributed
@@ -259,16 +255,6 @@ module fl_optics
      !
      FL_FT_extra_Mm1 = FL_FT_extra_M
      call SERIAL_inversion(n_tot_extra_modes,FL_FT_extra_Mm1,dummy_det,.false.)     !
-     !
-     !
-     !aim137 DEBUG
-     !do i_t=1,n_tot_extra_modes ! loop on time
-     !do i1_extra=1,n_tot_extra_modes ! loop on time
-     !  print*, sum(FL_FT_extra_M(i_t,:)*FL_FT_extra_Mm1(:,i1_extra))
-     !enddo
-     !enddo
-     !aim137 prelim - is this ok?
-     !aim137 DEBUG this gives some terms 1.d-16
      !
    end subroutine FL_FT_matrices
    !

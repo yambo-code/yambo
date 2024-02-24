@@ -113,8 +113,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
 #if defined _SCALAPACK
  if (idriver==DIAGO.and.present(E_cmpl).and.ncpu>1) then
    !
-   ! aim137 prelim - I comment this out as I was getting too many of them
-   !call warning('Parallel non-herm diag not yet implemented. Switching to LK')
+   call warning('Parallel non-herm diag not yet implemented. Switching to LK')
    lib_in_use=USE_LK
    !
  endif

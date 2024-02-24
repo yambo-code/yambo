@@ -60,9 +60,6 @@ subroutine INIT_C_driver_runlevels(defs)
    enddo
    !
    if (.not.bin_is_ok) cycle
-!aim137: print code_bin
-  !print*, 'code_bin = ', code_bin
-  !print*, 'code_tool = ', code_tool
    !
    call get_runlevel(string,1,i_c)
    call get_runlevel(desc,2,i_c)

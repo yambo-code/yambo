@@ -72,9 +72,9 @@ subroutine FL_el_density(en,Xk,rho,FL_V_bands,lowest_band)
      !
      do i1_extra=max_extra_mode+1,n_tot_extra_modes !aim137 prelim - this can be reduced to half as rho must be real
        !
-       do i1=1,NL_bands(2)   !j aim137 check - this should be from 1
-         do i2=1,NL_bands(2) !i aim137 but I think it is safe to choose this
-           do i1_fl=1,n_tot_fl_modes   !eta
+       do i1=1,NL_bands(2)
+         do i2=1,NL_bands(2)
+           do i1_fl=1,n_tot_fl_modes
              !
              i_shift_comb_fl = (i1_extra-(max_extra_mode+1)) &
                             &+ (i1_fl-(max_fl_mode+1))
@@ -90,7 +90,6 @@ subroutine FL_el_density(en,Xk,rho,FL_V_bands,lowest_band)
                  rho_no_sym(ir,i1_extra) = rho_no_sym(ir,i1_extra)+real(spin_occ,SP)*Xk%weights(ik) *&
                & conjg(FL_V_bands(i1,i1_fl,i_m,ik,i_sp)) * FL_V_bands(i2,i_comb_fl,i_m,ik,i_sp) *&
                & conjg(sum(WF%c(ir,:,i1_wf))) * sum(WF%c(ir,:,i2_wf)) 
-                 ! aim137 critical - I have serious doubts about summing over spinors
                  !
                enddo
              !

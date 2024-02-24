@@ -105,22 +105,4 @@ subroutine FL_S_numerical_inversion(en,Xk,FL_Sm1_num_plus,FL_Sm1_num_minus,id_re
    enddo
  enddo
  !
- !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
- !call FL_check_S_inversion(&
- !        &     FL_S_plus(:,:,:,id_red+(istep-1)*3,ikbz,i_sp),&
- !        &     FL_Sm1_num_plus,en%nbf(i_sp),n_tot_extra_modes,n_tot_extra_modes,&
- !        &     diagonal_elements,sum_minus_trace,100,l_debug_printouts)
- !
- !print*, ''
- !write(*,'(I2,I2,I2,100(1f13.7))') ikbz, id_red, istep, (real(diagonal_elements(i1)), i1=1,en%nbf(i_sp))
-  
- !if (ikbz == 3) then
- !  if (id_red == 2) then
- !    if (istep == 2) then
- !      call error('        stop here')
- !    endif
- !  endif
- !endif
- !aim137 debug )))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
- !
 end subroutine FL_S_numerical_inversion

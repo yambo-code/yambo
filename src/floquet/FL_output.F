@@ -57,7 +57,7 @@ subroutine FL_output
    !
    call of_open_close(Chi_filename,title_mode)
    !
-   call DESC_write('o floquet','#',NL_desc) !aim137 what is this string?
+   call DESC_write('o floquet','#',NL_desc)
    !
    call msg('o floquet','#')
    call msg('o floquet','#',headings(1:n_headings),INDENT=0,USE_TABS=.TRUE.)

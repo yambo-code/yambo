@@ -189,24 +189,17 @@ subroutine FL_average_energy(FL_Hamiltonian,eigenvectors,eigenvalues,AE_vec,i_ch
    enddo
  enddo
  !
- !aim137 DEBUG< add broadening to the average energy Hamiltonian
- !av_Hamiltonian(2,2) = av_Hamiltonian(2,2) + cI * NL_damping / 2._SP
- !aim137 DEBUG<
- !
  ! Diagonalisation
  !
  l_assume_Hermitian = .true.
  !
  if (l_assume_Hermitian) then
    !
-!  print*, '-- Hermitian Average Energy'
    ! option Hermitian
    call LINEAR_ALGEBRA_driver(DIAGO,M=av_Hamiltonian,E_real=av_energies)
-   !aim137 overwrites matrix M with eigenvectors as columns
    !
  else
    !
-!  print*, '-- non-Hermitian Average Energy'
    allocate(NHM_Left_Vec(subspace_dim,subspace_dim))
    allocate(NHM_Right_Vec(subspace_dim,subspace_dim))
    allocate(NHM_Cmpl_Val(subspace_dim))
@@ -237,45 +230,11 @@ subroutine FL_average_energy(FL_Hamiltonian,eigenvectors,eigenvalues,AE_vec,i_ch
    !
  enddo
  !
- print*, 'Vec__1',abs(subspace_vecs(FL_states(1):FL_states(2),1))
- print*, 'Vec__2',abs(subspace_vecs(FL_states(1):FL_states(2),2))
- print*, 'AE_vec',abs(AE_vec)
- !
  ! Normalisation
  !
  AE_vec_module = real(sqrt(sum(conjg(AE_vec(:))*AE_vec(:))),SP)
  AE_vec = AE_vec / AE_vec_module
  !
-!!!!!! i_central_fks = (NL_bands(1)-1)*n_tot_fl_modes + (max_fl_mode+1)
-!!!!!! i_coupling_fks = (NL_bands(1))*n_tot_fl_modes + (max_fl_mode+2)
-!!!!!! i_coupling_fks = maxloc(abs(eigenvectors(4*n_tot_fl_modes+1:FL_states(2),i_chosen_fks)),dim=1)
-!!!!!! i_coupling_fks = i_coupling_fks + 4*n_tot_fl_modes
-!!!!!! !i_coupling_fks = i_central_fks
-!!!!!! phase_orig = atan2(aimag(eigenvectors(i_coupling_fks,i_chosen_fks)),real(eigenvectors(i_coupling_fks,i_chosen_fks)))
-!!!!!!!print*, eigenvectors(i_coupling_fks,i_chosen_fks),'orig phase = ',phase_orig
-!!!!!! AE_vec = AE_vec * conjg(AE_vec(i_central_fks))/abs(AE_vec(i_central_fks))
-!!!!!! phase_new = atan2(aimag(AE_vec(i_coupling_fks)),real(AE_vec(i_coupling_fks)))
-!!!!!! do i1_fks=4*n_tot_fl_modes+1,FL_states(2)
-!!!!!! AE_vec(i1_fks) = AE_vec(i1_fks) * exp(-1._SP*cI*phase_new) * exp(cI*phase_orig)
-!!!!!! enddo
- !
-!!!!!! print*, 'i1_fks phase_orig phase_new'
-!!!!!!do i1_fks=FL_states(1),FL_states(2)
-!!!!!! !
-!!!!!! phase_orig = atan2(aimag(eigenvectors(i1_fks,i_chosen_fks)),real(eigenvectors(i1_fks,i_chosen_fks)))
-!!!!!! phase_new  = atan2(aimag(AE_vec(i1_fks)),real(AE_vec(i1_fks)))
-!!!!!! print*, i1_fks,phase_orig,phase_new
-!!!!!! !
-!!!!!! ! this was to keep the phases but it is wrong
-!!!!!! !AE_vec(i1_fks) = abs(AE_vec(i1_fks)) * exp(cI*phase_orig)
-!!!!!! !
-!!!!!!enddo
- !
-!print*, AE_vec(i_coupling_fks),'aven phase = ', phase_new
- !
-!write(*,'(A5,100(1f8.3))') 'avE= ',av_energies*HA2EV
-!print*, i_av_energy
-!write(*,'(A5,100(1f12.6))') 'vec= ',abs(AE_vec)
  ! Deallocation
  !
  deallocate(av_Hamiltonian)

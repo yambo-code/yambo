@@ -55,7 +55,6 @@ subroutine FL_build_W_operator(en,Xk,A_input,ik,i_sp,FL_V_bands,H_nl_sc)
  integer :: ikbz,istep,max_step
  complex(SP) :: Wk(3,FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  complex(SP) :: Wop(FL_states(1):FL_states(2),FL_states(1):FL_states(2),2)
- !aim137: cambie el orden de las variables respecto a NL V_tilde
  complex(SP) :: FL_V_tilde(H_ref_bands(2),n_tot_fl_modes,n_tot_duffin_modes,en%nbf(i_sp),2) 
  complex(SP) :: E_vec_pot(3)
  integer :: i1_fl,i2_fl,i3_fl,i4_fl,i_m,i_comb_fl,i_shift_comb_fl,i1_fks,i2_fks
@@ -85,20 +84,16 @@ subroutine FL_build_W_operator(en,Xk,A_input,ik,i_sp,FL_V_bands,H_nl_sc)
      do istep=1,max_step
        !
        call FL_build_tilde_V_bands(en,Xk,ikbz,i_sp,istep,id_red,FL_V_bands,FL_V_tilde)
-       ! aim137 :
-       ! FL_V_tilde = cZERO
-       !
        ! Build the W operator as
        !
        ! W(i,j) = \sum_m V*(m,i) * [\tilde Vp(m,j) - \tilde Vm(m,j) ]
        !
-       ! $omp parallel do default(shared), private(i2,i1)
-       do i1=H_ref_bands(1),H_ref_bands(2) !j
-         do i2=H_ref_bands(1),H_ref_bands(2) !i
-           do i1_fl=1,n_tot_fl_modes !gamma
-             i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !j,gamma
-             do i2_fl=1,n_tot_fl_modes !eta
-               i2_fks = i2_fl + (i2-1)*n_tot_fl_modes !i,eta
+       do i1=H_ref_bands(1),H_ref_bands(2)
+         do i2=H_ref_bands(1),H_ref_bands(2)
+           do i1_fl=1,n_tot_fl_modes
+             i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
+             do i2_fl=1,n_tot_fl_modes
+               i2_fks = i2_fl + (i2-1)*n_tot_fl_modes
                !
                do i3_fl=1,n_tot_fl_modes
                  do i4_fl=1,n_tot_duffin_modes
@@ -147,20 +142,17 @@ subroutine FL_build_W_operator(en,Xk,A_input,ik,i_sp,FL_V_bands,H_nl_sc)
            enddo ! i1_fl
          enddo ! i2 band
        enddo ! i1 band
-       ! $omp end parallel do
        !
-       ! $omp parallel do default(shared), private(i1)
        do i1=H_ref_bands(1),H_ref_bands(2)
          do i1_fl=1,n_tot_fl_modes
            !
            i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
            Wop(i1_fks,:,istep) = &
          & Wop(i1_fks,:,istep)* &
-         & cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP)) / (2._SP*cI) ! added factor due to E field Sin
+         & cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP)) / (2._SP*cI)
            !
          enddo
        enddo
-       ! $omp end parallel do
        !
      enddo
      !
@@ -173,56 +165,45 @@ subroutine FL_build_W_operator(en,Xk,A_input,ik,i_sp,FL_V_bands,H_nl_sc)
    endif    
    !
    ! Transform in cartesian coordinates 
-   ! aim137 still in loop over id_red
    !
    if(max_step==1) then
      !      
      ! First order formula D(dk)      
      ! Eq. 96 of PRB 63, 155107(2001)
      !
-     ! $omp parallel do default(shared), private(id)
      do id=1,3
        Wk(id,:,:)=Wk(id,:,:)+Wop(:,:,1)*a(id_red,id)
      enddo
-     ! $omp end parallel do
      !
    else
      !      
      ! Second order formula   ( 4*D(dk) - D(2*dk) ) / 3
      ! Eq. 97 of PRB 63, 155107(2001)
      !
-     ! $omp parallel do default(shared), private(id)
      do id=1,3
        Wk(id,:,:)=Wk(id,:,:)+(4._SP*Wop(:,:,1)-Wop(:,:,2))/3._SP*a(id_red,id)
      enddo
-     ! $omp end parallel do
      !
    endif
    !
  enddo ! loop on id_red
-     
-
  !
  ! Make an Hermitian operator
  !
- ! $omp parallel do default(shared), private(id)
  do id=1,3
    Wk(id,FL_states(1):FL_states(2),FL_states(1):FL_states(2)) = &
   &Wk(id,FL_states(1):FL_states(2),FL_states(1):FL_states(2)) + &
   &hermitian(Wk(id,FL_states(1):FL_states(2),FL_states(1):FL_states(2)))
  enddo
- ! $omp end parallel do
  !
- ! $omp parallel do default(shared), private(i1,id)
   do i1=H_ref_bands(1),H_ref_bands(2)
     do i1_fl=1,n_tot_fl_modes
       i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
       do id=1,3
         H_nl_sc(i1_fks,:)=H_nl_sc(i1_fks,:) - &
- &      Efield(1)%amplitude*Efield(1)%versor(id)*Wk(id,i1_fks,:) !I need amplitude and direction here
+ &      Efield(1)%amplitude*Efield(1)%versor(id)*Wk(id,i1_fks,:)
       enddo
     enddo
   enddo
- ! $omp end parallel do
  !
 end subroutine FL_build_W_operator

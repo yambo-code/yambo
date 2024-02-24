@@ -85,9 +85,6 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
    !
    if(.not.PAR_IND_Xk_ibz%element_1D(ik_bz)) then
      !
-     !aim137 to avoid summing previous values in PP_redux_wait, I set
-     !aim137 to zero the ones that will not be calculated in this core
-     !
      FL_QE(:,ik_bz,:) = 0._SP
      FL_V_bands(:,:,:,ik_bz,:) = cZERO
      cycle
@@ -99,6 +96,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
    do is=1,n_sp_pol
      !
      if (l_assume_Hermitian) then
+       !
        ! Diagonalization
        ! ===============
        !
@@ -107,7 +105,6 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
        call LINEAR_ALGEBRA_driver(DIAGO,&
        & M=FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is),&
        & E_real=FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is)) 
-       !aim137 overwrites matrix M with eigenvectors as columns
        !
      else
        ! Non-Hermitian Diagonalization
@@ -125,7 +122,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
                                 & V_right=NHM_Right_Vec(FL_states(1):FL_states(2),FL_states(1):FL_states(2)),&
                                 & E_cmpl=NHM_Cmpl_Val(FL_states(1):FL_states(2)))
 
-       ! discard imaginary part of eigenvalue
+       ! discard imaginary part of eigenvalues
        FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is) = real(NHM_Cmpl_Val(FL_states(1):FL_states(2)))
        ! take right eigenvectors
        FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is)=&
@@ -133,58 +130,23 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
        !
      endif
      !
-     !aim137 DEBUG<
-      !print*, ' =========================================== kpt = ',ik_bz
-      !print*, 'eigenvalues:'
-      !print*, FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is)*HA2EV
-    !write(filename,'(i0)') ik_bz
-    !open(111,file='FL_QEeigensolution_kpt'//trim(adjustl(filename))//'.dat')
-    !write(111,*) 'Quasi-energies [eV]'
-    !write(111,'(100(1f8.3))') FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is)*HA2EV
-    !write(111,*) 'Eigenvectors'
-    !do i1_fks=FL_states(1),FL_states(2)
-    !  !
-    !  write(111,*) 'evec ',i1_fks
-    !  write(111,'(100(1f7.4))') abs(FL_eigenvectors(FL_states(1):FL_states(2),i1_fks,ik_mem,is))
-    !  !
-    !enddo
-    !close(111)
-     !aim137 DEBUG>
-     !
      FL_chosen_bands = 0
      !
      ! Populate FL_V_bands
      ! ===================
      !
-     do i_m=NL_bands(1),E%nbf(is) ! band I want to update
+     do i_m=NL_bands(1),E%nbf(is)
        !
-       ! select eigenvector - 1. highest central component
+       ! select eigenvector - highest central component
        !
        i_central_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
        !
        FL_chosen_bands(i_m) = FL_states(1) - 1 + &
 &      maxloc(abs(FL_eigenvectors(i_central_fks,FL_states(1):FL_states(2),ik_mem,is)),dim=1)
        !
-       ! finding closest quasi-energy to check
-       !energy_difference = FL_eigenvalues(:,ik_bz,is)- E%E(i_m,ik_bz,1)
-       !i3_fks = FL_states(1) - 1 +  minloc(abs(FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is)),dim=1)
-       !if (i3_fks /= FL_chosen_bands(i_m)) &
-       !&call warning (' the criteria for eigenpair selection are not giving the same result')
-       !
        trial_vec(FL_states(1):FL_states(2)) = &
                     & FL_eigenvectors(FL_states(1):FL_states(2),FL_chosen_bands(i_m),ik_mem,is)
        trial_val = FL_eigenvalues(FL_chosen_bands(i_m),ik_bz,is)
-       !
-       !aim137 DEBUG <
-       !print*, 'kpt: ',ik_bz,' band: ',i_m,' complex quasienergy: ', NHM_Cmpl_Val(FL_chosen_bands(i_m))
-       !print*, 'real quasienergy: ',trial_val
-       !aim137 DEBUG >
-       !
-       ! Set phase zero for central component of the eigenvector
-       ! we are not doing this in the end
-       !
-       !i1_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
-       !trial_vec = trial_vec * conjg(trial_vec(i1_fks)) / abs(trial_vec(i1_fks))
        !
        ! Average Energy eigenproblem
        !
@@ -195,14 +157,13 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
        &           trial_vec(FL_states(1):FL_states(2)),&
        &           FL_chosen_bands(i_m))
        !
-       !print*, 'AE_vec',abs(trial_vec(FL_states(1):FL_states(2)))
        ! Detect population inversion
        !
        i_central_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
        !
        do i1_fks=FL_states(1),FL_states(2)
          !
-         if (abs(trial_vec(i1_fks)) > 10.005_SP .and. i1_fks /= i_central_fks) then !aim137 critical BORRAR ESTE 10.005 for DEBUG
+         if (abs(trial_vec(i1_fks)) > 0.05_SP .and. i1_fks /= i_central_fks) then
            !
            i1 = nint(real(i1_fks/n_tot_fl_modes,SP))+1
            i1_fl = mod(i1_fks,n_tot_fl_modes)
@@ -216,45 +177,16 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
            i1_fks_eigenvec = FL_states(1) - 1 + &
 &          maxloc(abs(FL_eigenvectors(i1_fks,FL_states(1):FL_states(2),ik_mem,is)),dim=1)
            !
-           print*, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  kpt = ',ik_bz, &
-                   &' band = ',i_m,'(',E%E(i_m,ik_bz,1)*HA2EV,' eV) -- &
-                   & band2 = ',i1, '(',E%E(i1 ,ik_bz,1)*HA2EV,' eV)'
-!          print*, i_central_fks,i_central_fks,FL_Ho_plus_Sigma(i_central_fks,i_central_fks,ik_mem,1)
-!          print*, i_central_fks,i1_fks,FL_Ho_plus_Sigma(i_central_fks,i1_fks,ik_mem,1)
-!          print*, i1_fks,i_central_fks,FL_Ho_plus_Sigma(i1_fks,i_central_fks,ik_mem,1)
-!          print*, i1_fks,i1_fks,FL_Ho_plus_Sigma(i1_fks,i1_fks,ik_mem,1)
-           write(*,'(100(1f7.4))') trial_val*HA2EV,abs(trial_vec)
-           write(*,'(100(1f7.4))') FL_eigenvalues(i1_fks_eigenvec,ik_bz,1)*HA2EV,&
-                   &               abs(FL_eigenvectors(FL_states(1):FL_states(2),i1_fks_eigenvec,ik_mem,is))
-          !call msg('r','Detected population inversion at k-point: ',ik_bz)
-          !call msg('r','involving band: ',i_m)
-          !call msg('r','and band: ',i1)
-          !call msg('r','Floquet mode on second band: ',i1_fl)
-          !call msg('r','Population on second band: ',abs(trial_vec(i1_fks)))
-          !call warning ('  [FL] There was a large population inversion in the system')
-          !
-          !aim137 DEBUG<
-         !write(filename,'(i0)') ik_bz
-         !open(111,file='FL_population_inversion'//trim(adjustl(filename))//'.dat')
-         !write(111,*) 'BAND ',i_m,', eigenvalue =',FL_QE(i_m,ik_bz,is)
-         !!write(111,*) 'Real and imaginary parts of eigenvector:'
-         !write(111,*) trial_vec
-         !write(111,*) FL_eigenvectors(FL_states(1):FL_states(2),i1_fks_eigenvec,ik_mem,is)
-         !close(111)
-          !aim137 DEBUG>
+           call msg('r','Detected population inversion at k-point: ',ik_bz)
+           call msg('r','involving band: ',i_m)
+           call msg('r','and band: ',i1)
+           call msg('r','Floquet mode on second band: ',i1_fl)
+           call msg('r','Population on second band: ',abs(trial_vec(i1_fks)))
+           call warning ('  [FL] There was a large population inversion in the system - check unconverged frequencies')
            !
          endif
          !
        enddo
-       !
-      !! Mix with KS time-independent bands
-      !! 
-      !beta = 0.1_SP
-      !trial_vec = trial_vec * beta
-      !i_central_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
-      !trial_vec(i_central_fks) = trial_vec(i_central_fks) + 1._SP * (1._SP-beta)
-      !modul=sqrt(sum(conjg(trial_vec(:))*trial_vec(:)))      
-      !trial_vec = trial_vec / modul
        !
        ! Check normalizaton
        !
@@ -273,39 +205,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
        enddo
        FL_QE(i_m,ik_bz,is) = trial_val
        !
-       !aim137 DEBUG <
-       !central component
-       !print*, atan(aimag(FL_V_bands(4,max_fl_mode+1,4,ik_bz,is))/real(FL_V_bands(4,max_fl_mode+1,4,ik_bz,is)))
-       !coupling component
-       !print*, atan(aimag(FL_V_bands(5,max_fl_mode+2,4,ik_bz,is))/real(FL_V_bands(5,max_fl_mode+2,4,ik_bz,is)))
-       !aim137 DEBUG >
-       !
-       !aim137 DEBUG AVERAGE ENERGY<
-  !!!  write(filename ,'(i0)') ik_bz
-  !!!  write(filename2,'(i0)') i_m
-  !!!  open(111,file='FL_near_degeneracies_band_'//trim(adjustl(filename2))//'_kpt_'//trim(adjustl(filename))//'.dat')
-  !!!  write(111,*) 'BAND ',i_m
-  !!!  do i2_fks=FL_states(1),FL_states(2)
-  !!!  if (abs(trial_val - FL_eigenvalues(i2_fks,ik_bz,is)) < 0.1/HA2EV) then
-  !!!  write(111,*) FL_eigenvalues(i2_fks,ik_bz,is)*HA2EV
-  !!!  write(111,*) FL_eigenvectors(FL_states(1):FL_states(2),i2_fks,ik_mem,is)
-  !!!  endif
-  !!!  enddo
-  !!!  close(111)
-       !aim137 DEBUG AVERAGE ENERGY>
-       !
      enddo ! loop i_m
-     !
-  !! !aim137 DEBUG EXPORT QE OPERATOR<
-  !! write(filename,'(i0)') ik_bz
-  !! open(111,file='FL_Hamiltonian_kpt'//trim(adjustl(filename))//'.dat')
-  !! do i2_fks=FL_states(1),FL_states(2)
-  !! write(111,*) FL_Ho_plus_Sigma(i2_fks,FL_states(1):FL_states(2),ik_mem,is)*HA2EV
-  !! enddo
-  !! close(111)
-  !! !aim137 DEBUG EXPORT QE OPERATOR>
-     !
-     !call FL_fix_band_phases(FL_V_bands(NL_bands(1):NL_bands(2),:,:,ik_bz,is),E%nbf(1),iter_num)
      !
    enddo
    !
@@ -318,27 +218,5 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
 #if defined _TIMING
  call timing('FL Diagonalization',OPR='stop')
 #endif
- !
- !Mixing of eigenvectors
- !FL_V_bands = FL_V_bands * FL_beta + FL_V_bands_hist * (1._SP - FL_beta)
- !
- !aim137 DEBUG
-!do ik_bz=1,QP_nk
-!do is=1,n_sp_pol
-!write(filename,'(i0)') ik_bz
-!open(111,file='FL_eigenvectors'//trim(adjustl(filename))//'.dat')
-!do i_m=NL_bands(1),E%nbf(1)
-!write(111,*) 'BAND ',i_m,', eigenvalue =',FL_QE(i_m,ik_bz,is)
-!!write(111,*) 'Real and imaginary parts of eigenvector:'
-!do i1=NL_bands(1),NL_bands(2)
-!write(111,'(100(2(1f20.14),A1))') ( FL_V_bands(i1,i1_fl,i_m,ik_bz,is),',', i1_fl=1,n_tot_fl_modes )
-!!write(111,'(100(1f20.14))') atan(real(FL_V_bands(i1,:,i_m,ik_bz,is)),aimag(FL_V_bands(i1,:,i_m,ik_bz,is)))
-!enddo
-!write(111,*) ''
-!enddo
-!close(111)
-!enddo
-!enddo
- !aim137 END DEBUG
  !
 end subroutine

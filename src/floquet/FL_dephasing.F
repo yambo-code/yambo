@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): MG IA
+! Authors (see AUTHORS file for details): MG DS IA
 !
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -22,6 +22,8 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine FL_dephasing(en,Xk,ik,i_sp,FL_V_bands,H_nl_sc)
+ !
+ ! Dephasing only for testing purposes - not working properly
  !
  use pars,           ONLY:SP,cI,cZERO,pi,cONE
  use units,          ONLY:SPEED_OF_LIGHT
@@ -58,16 +60,13 @@ subroutine FL_dephasing(en,Xk,ik,i_sp,FL_V_bands,H_nl_sc)
  !
  ! off diagonal part
  !
- do i1=H_ref_bands(1),H_ref_bands(2) !i
-   do i2=H_ref_bands(1),H_ref_bands(2) !j
-     do i1_fl=1,n_tot_fl_modes !eta
-       i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !i,eta
-       do i2_fl=1,n_tot_fl_modes !gamma
-         i2_fks = i2_fl + (i2-1)*n_tot_fl_modes !j,gamma
+ do i1=H_ref_bands(1),H_ref_bands(2)
+   do i2=H_ref_bands(1),H_ref_bands(2)
+     do i1_fl=1,n_tot_fl_modes
+       i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
+       do i2_fl=1,n_tot_fl_modes
+         i2_fks = i2_fl + (i2-1)*n_tot_fl_modes
          !
-         !aim137 DEBUG< trato de hacer esto solo en la diagonal
-         !if ( i1_fks /= i2_fks ) cycle
-         !aim137 DEBUG>
          do i3_fl=1,n_tot_fl_modes
              !
              i_shift_comb_fl = (i3_fl-(max_fl_mode+1)) &
@@ -92,16 +91,6 @@ subroutine FL_dephasing(en,Xk,ik,i_sp,FL_V_bands,H_nl_sc)
  !
  ! diagonal part
  !
- !aim137 DEBUG <
- !if (ik == 6) then
- !print*, '---------------------- kpoint ',ik
- !do i1_fks=FL_states(1),FL_states(2)
- !print*, I_deph(i1_fks,:)
- !enddo
- !end if
- !call error('..')
- !aim137 DEBUG >
- !
  do i1=H_ref_bands(1),en%nbf(i_sp) !i
    do i1_fl=1,n_tot_fl_modes !eta
      !
@@ -109,7 +98,6 @@ subroutine FL_dephasing(en,Xk,ik,i_sp,FL_V_bands,H_nl_sc)
      !
      I_deph(i1_fks,i1_fks) = I_deph(i1_fks,i1_fks) - 1._SP
      !
-!    I_deph(i1_fks,i1_fks) = cZERO
      !
    enddo
  enddo
@@ -121,22 +109,6 @@ subroutine FL_dephasing(en,Xk,ik,i_sp,FL_V_bands,H_nl_sc)
    !
  endif
  !
- !
-!!!!!!!!!!1 ! Claudio's dephasing
-!!!!!!!!!!1!!
-!!!!!!!!!!1!I_deph = cZERO
-!!!!!!!!!!1!!
-!!!!!!!!!!1!do i1=en%nbf(i_sp)+1,H_ref_bands(2) !i
-!!!!!!!!!!1!  do i1_fl=1,n_tot_fl_modes !eta
-!!!!!!!!!!1!    !
-!!!!!!!!!!1!    i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !i,eta
-!!!!!!!!!!1!    !
-!!!!!!!!!!1!    I_deph(i1_fks,i1_fks) = 1._SP
-!!!!!!!!!!1!    !
-!!!!!!!!!!1!  enddo
-!!!!!!!!!!1!enddo
- !
- ! $omp parallel do default(shared), private(i1,id)
   do i1=H_ref_bands(1),H_ref_bands(2)
     do i1_fl=1,n_tot_fl_modes
       i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
@@ -144,6 +116,5 @@ subroutine FL_dephasing(en,Xk,ik,i_sp,FL_V_bands,H_nl_sc)
  &      cI * NL_damping * I_deph(i1_fks,:)
     enddo
   enddo
- ! $omp end parallel do
  !
 end subroutine FL_dephasing

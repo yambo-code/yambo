@@ -25,6 +25,7 @@ subroutine FL_Broyden(n_out,n_in,broyden_alpha,call_num)
  !
  ! Broyden's second method for the mixing of the charge density
  ! Johnson, PRB 38, 12807 (1988)
+ ! IA: This subroutine is untested!
  !
  use pars,           ONLY: SP,rZERO,cZERO
  use fft_m,          ONLY: fft_size
@@ -55,7 +56,6 @@ subroutine FL_Broyden(n_out,n_in,broyden_alpha,call_num)
  !
  if (call_num == 1) then
    !
-   !aim137 I do not know why YAMBO_ALLOC does not work
    if (.not. allocated(Broyden_prev_n_in))  allocate(Broyden_prev_n_in(fft_size))
    if (.not. allocated(Broyden_prev_n_out)) allocate(Broyden_prev_n_out(fft_size))
    if (.not. allocated(Broyden_delta_F)) allocate(Broyden_delta_F(fft_size,FL_max_iterations-1))
@@ -76,7 +76,6 @@ subroutine FL_Broyden(n_out,n_in,broyden_alpha,call_num)
    !
  endif
  !
- ! from here on, is only executed if call_num > 1
  !
  ! 1. I calculate deltas, u, c, gamma and beta
  !
@@ -127,7 +126,7 @@ subroutine FL_Broyden(n_out,n_in,broyden_alpha,call_num)
  enddo
  !
  tmp_mat = cZERO
- tmp_mat = tmp_mat + broyden_beta !I cannot find an inversion of real matrices
+ tmp_mat = tmp_mat + broyden_beta
  call LINEAR_ALGEBRA_driver(INV,M=tmp_mat)
  broyden_beta = real(tmp_mat)
  !

@@ -100,17 +100,6 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
  endif
  !
- !aim137 DEBUG<
- if (Time*AUT2FS > 233) then
- write(111,'(10000(1e19.10))') Time*AUT2FS,(rho_n(i1)-rho_reference(i1),i1=1,fft_size)
- endif
- !aim137 DEBUG>
- !aim137 DEBUG<
- if (Time*AUT2FS > 233) then
- write(112,'(10000(1e19.10))') Time*AUT2FS,(V_hartree_sc(i1,1),i1=1,fft_size)
- endif
- !aim137 DEBUG>
- !
  ! Evaluate the Polarization 
  ! ===================================================================
  !
@@ -257,15 +246,6 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    enddo
 !$omp end parallel do
    !
-   !aim137 DEBUG<
-   !if (Time*AUT2FS > 50.) then
-   !write(110+ik,'(100(1e19.10))') Time*AUT2FS,&
-   !&   real(H_nl_sc(4,4)),aimag(H_nl_sc(4,4)),&
-   !&   real(H_nl_sc(4,5)),aimag(H_nl_sc(4,5)),&
-   !&   real(H_nl_sc(5,4)),aimag(H_nl_sc(5,4)),&
-   !&   real(H_nl_sc(5,5)),aimag(H_nl_sc(5,5))
-   !endif
-   !aim137 DEBUG>
   enddo  !---- loop on k-point
  enddo
  !

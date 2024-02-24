@@ -84,17 +84,13 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  real(SP)     :: FL_rho_at_t(fft_size)
  real(SP)     :: FL_res_rho_at_t(fft_size)
  complex(SP)  :: FL_dG_prev(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_tot_extra_modes)
- complex(SP)  :: FKS_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  complex(SP)  :: FL_Sigma_time(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_tot_extra_modes)
- complex(SP)  :: FL_Sigma_prev(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_tot_extra_modes)
  complex(SP)  :: CHECK_V_H_ij(n_tot_extra_modes)
  real(SP)     :: Time
  !
 #if defined _TIMING
  call timing('FL Hamiltonian',OPR='start')
 #endif
- !
- FKS_Sigma=cZERO
  !
  FL_V_Hartree = rZERO
  FL_V_Hartree_KS = cZERO
@@ -105,21 +101,15 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
    !
    if(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE) then
      !
-     if((eval_HARTREE .or. eval_DFT) )then!.and. l_FL_conv_Chi) then
+     if((eval_HARTREE .or. eval_DFT) )then
        !
        call FL_build_valence_bands(E,k,FL_V_bands,FL_V_bands_time)
        !
-       !print*, '>>>>Calculating rho Hartree in iteration ',iter_num
        do i_t=1,n_tot_extra_modes
          !
          call NL_build_valence_bands(E,FL_V_bands_time(:,i_t,:,:,:),VAL_BANDS,NL_bands(1))
          !
          call el_density_vbands(E,k,FL_delta_rho(:,i_t),VAL_BANDS)
-         !
-         !if (i_t == 1) print*, sum(real(FL_delta_rho(:,i_t))),sum(rho_reference)
-         !
-         !aim137 check - I do not think I need to normalise the sum(rho) with this ...
-         !FL_delta_rho(:,i_t) = FL_delta_rho(:,i_t) / sum(FL_delta_rho(:,i_t))*sum(rho_reference)
          !
          FL_delta_rho(:,i_t) = FL_delta_rho(:,i_t) - rho_reference(:)
          !
@@ -132,13 +122,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
            !
            FL_delta_rho(:,i_t) = FL_res_rho_at_t * FL_beta + &
                                & FL_delta_rho_hist(:,i_t)
-           ! or
-           !
-         ! if (l_FL_precond) call FL_precondition(FL_delta_rho(:,i_t))
-         ! !
-         ! !
-         ! FL_delta_rho(:,i_t) = FL_delta_rho(:,i_t) * FL_beta + &
-         !                     & FL_delta_rho_hist(:,i_t) * (1._SP - FL_beta)
            !
          else
            !
@@ -152,14 +135,8 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
          !
        enddo
        !
-       !print*, iter_num, abs(V_dot_V(fft_size,&
-       !&       FL_delta_rho(:,2)-FL_delta_rho_hist(:,2),&
-       !&       FL_delta_rho(:,2)-FL_delta_rho_hist(:,2)))
-       !
        FL_delta_rho_hist = FL_delta_rho
        !
-       !aim137 prelim - find appropriate criterio to have Rho converged
-       !if (iter_num > 4) l_FL_conv_Rho = .true.
      endif
      !
      if (eval_HARTREE) then
@@ -168,7 +145,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
          !
          call V_Hartree(FL_delta_rho(:,i_t),FL_V_Hartree(:,:,i_t))
          !
-         !print*, i_t-1, FL_V_Hartree(9,1,i_t), FL_V_Hartree(13,1,i_t), FL_V_Hartree(21,1,i_t)
        enddo
        !
      endif
@@ -185,22 +161,14 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  !
  ! Evaluate the G_lesser if using TD-SEX or TD-HF and than add COLLISIONS
  ! ======================================================
- ! aim137 put this in a loop on time steps.
+ !
  if (eval_dG .and. iter_num > 1) then
    !
-   !print*, '>>>>Calculating dG in iteration ',iter_num
    call FL_build_valence_bands(E,k,FL_V_bands,FL_V_bands_time)
    do i_t=1,n_tot_extra_modes
      !
      call NL_build_dG_lesser(E,FL_V_bands_time(:,i_t,:,:,:),&
 &    FL_dG_time(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),:,i_t))
-     !
-     !aim137 DEBUG<
-     !print*, 'Time step =',i_t,' at kpt =',26
-     !do i1=NL_bands(1),NL_bands(2)
-     !print*, real(FL_dG_time(i1,:,26,i_t))
-     !enddo
-     !aim137 DEBUG>
      !
    enddo
    !
@@ -212,15 +180,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
    FL_dG_prev = cZERO
    !
  endif
- !
- !aim137 DEBUG<
- !do i_t=1,n_tot_extra_modes
- !print*, 'Extra mode =',i_t,' at kpt =',26
- !do i1=NL_bands(1),NL_bands(2)
- !print*, abs(FL_dG(i1,:,26,i_t))
- !enddo
- !enddo
- !aim137 DEBUG>
  !
  if(l_use_Hxc_collisions .and. iter_num > 1) then
    !
@@ -234,22 +193,9 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
      !
    enddo
    !
-   !aim137 DEBUG<
-    !print*, 'I will print Sigma_Hartree in time and KS space'
-    !do ik_bz=26,26!1,QP_nk
-    !print*, ''
-    !print*, 'kpt',ik_bz,' and time step =',1
-    !do i1=NL_bands(1),NL_bands(2)
-    !print*, abs(FL_sigma_time(i1,:,ik_bz,1))
-    !enddo
-    !print*, ''
-    !enddo
-   !aim137 DEBUG>
-   FL_Sigma_prev = FL_Sigma
    FL_Sigma = cZERO
    !
    do ik_bz=1,QP_nk
-   !aim137 puedo paralelizar en kpoints aca
      do i1=NL_bands(1),NL_bands(2)
        do i2=NL_bands(1),NL_bands(2)
          !
@@ -260,25 +206,12 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
      enddo
    enddo
    !
-   !FL_Sigma = FL_beta * FL_Sigma + (1._SP-FL_beta) * FL_Sigma_prev
-   !
  else
    !
    if (allocated(FL_Sigma)) FL_Sigma = cZERO
    FL_Sigma_time = cZERO
-   FL_Sigma_prev = cZERO
    !
  endif
- !
- !
- !aim137 DEBUG<
-! do ik_bz=1,QP_nk
-! print*, 'kpt',ik_bz,'----------------------------'
-! do i1=NL_bands(1),NL_bands(2)
-! print*, abs(FL_sigma(i1,:,ik_bz,3))
-! enddo
-! enddo
- !aim137 DEBUG>
  !
  ! Build the Hamiltonian
  ! =====================
@@ -289,7 +222,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  do i_sp_pol=1,n_sp_pol
   do ik_bz=1,QP_nk
    !
-   !print*, '------ K-point: ',ik_bz
    if (.not.PAR_IND_Xk_ibz%element_1D(ik_bz)) cycle
    !
    ! ik_mem is for FL_Ho_plus_Sigma, which is allocated
@@ -310,24 +242,11 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
      if (eval_Hartree.and.(eval_DFT.or.Correlation==JGM)) then
        call error ('TDDFT not yet implemented in floptics')
      elseif(eval_Hartree.and.(.not.eval_DFT.and..not.Correlation==JGM)) then
-        !if (ik_bz==26) print*, 'I will print V_Hartree in time and KS space'
        do i1_extra=1,n_tot_extra_modes
          call V_real_space_to_H(ik_bz,i_sp_pol,&
             & FL_V_Hartree_KS_time(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),i1_extra),&
             & WF,'def',FL_V_Hartree(:,:,i1_extra))
        enddo 
-       !
-   !aim137 DEBUG<
-   !if (ik_bz==26) then
-   !print*, 'kpt',ik_bz,' and time step =',1
-   !print*, ''
-   !do i1=NL_bands(1),NL_bands(2)
-   !print*, abs(FL_V_Hartree_KS_time(i1,:,1))
-   !enddo
-   !print*, ''
-   !endif
-   !aim137 DEBUG>
-       !
        !
        FL_V_Hartree_KS = cZERO
        !
@@ -339,18 +258,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
            !
          enddo
        enddo
-       !
-       !aim137 DEBUG FT<
-       !
-       !CHECK_V_H_ij = cZERO
-       !call M_by_V('N',n_tot_extra_modes,n_tot_extra_modes,cONE,FL_FT_extra_M,&
-       !&n_tot_extra_modes,FL_V_Hartree_KS(5,4,:),1,cZERO,CHECK_V_H_ij(:),1)
-       !print*, 'Initial:'
-       !print*, FL_V_Hartree_KS_time(5,4,:)
-       !print*, 'Final:'
-       !print*, CHECK_V_H_ij(:)
-       !
-       !aim137 DEBUG FT>
        !
        do i1=NL_bands(1),NL_bands(2)
          do i1_fl=1,n_tot_fl_modes
@@ -366,11 +273,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
              & H_nl_sc(i1_fks,i2_fks) + &
              & FL_V_Hartree_KS(i1,i2,i_comb_extra)
                !
-               !aim137 DEBUG<
-               if (ik_bz == 24) then
-               FKS_Sigma(i1_fks,i2_fks) = FL_V_Hartree_KS(i1,i2,i_comb_extra)
-               endif
-               !aim137 DEBUG>
              enddo
            enddo
          enddo
@@ -379,20 +281,9 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
      !
    endif
    !
-   !aim137 DEBUG <
-  !if (iter_num == 3 .and. ik_bz == 1) then
-  !do i1_fks=FL_states(1),FL_states(2) 
-  !write(*,'(100(1f18.14))') H_nl_sc(i1_fks,:)
-  !enddo
-  !call error ('>>>>>>>>>>>>>>>>>> stop')
-  !endif
-   !aim137 DEBUG >
-   !
    ! Add Ho = T+V_ion+V_h+V_xc
    !==========================
    !
-   ! aim137: omp features commented out for now.
-! $omp parallel do default(shared), private(i1)
    do i1=NL_bands(1),NL_bands(2) 
      do i_fl=1,n_tot_fl_modes
        i_fks = i_fl + (i1-1)*n_tot_fl_modes
@@ -410,12 +301,9 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
        !
      enddo
    enddo
-! $omp end parallel do
    !
    if(l_use_DIPOLES.or.trim(global_gauge)=='velocity') then
      !    
-     !aim137 no se que es esto
-     !call RT_apply_field(ik_bz,i_sp_pol,H_nl_sc,A_tot)
      call error ('Code with dipoles for 1st order only not yet implemented')
      !
    else
@@ -428,7 +316,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
    ! ===============
    !
    if (l_use_Hxc_collisions .and. iter_num > 1) then
-     !if (ik_bz==26) print*, 'I will print the self-energy'
      do i1=NL_bands(1),NL_bands(2)
        do i1_fl=1,n_tot_fl_modes
          i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
@@ -443,11 +330,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
            & H_nl_sc(i1_fks,i2_fks) + &
            & FL_Sigma(i1,i2,ik_bz,i_comb_extra)
              !
-             !aim137 DEBUG<
-             !if (ik_bz == 26) then
-             !FKS_Sigma(i1_fks,i2_fks) = FL_Sigma(i1,i2,26,i_comb_extra)
-             !endif
-             !aim137 DEBUG>
            enddo
          enddo
        enddo
@@ -459,81 +341,18 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
    !
    ! Store the Hamiltonian
    ! =====================
-!aim137: omp features disabled for now
-! $omp parallel do default(shared), private(i1)
    do i1=NL_bands(1),NL_bands(2) 
      do i_fl=1,n_tot_fl_modes
        i_fks = i_fl + (i1-1)*n_tot_fl_modes
        FL_Ho_plus_Sigma(:,i_fks,ik_mem,i_sp_pol)=H_nl_sc(:,i_fks)
      enddo
    enddo
-! $omp end parallel do
    !
   enddo  !---- loop on k-point
  enddo
- !
- !if(Phase_LifeTime<zero_dfl) call PP_redux_wait(I_relax,COMM=PAR_COM_Xk_ibz_INDEX%COMM ) 
  !
 #if defined _TIMING
  call timing('FL Hamiltonian',OPR='stop')
 #endif
  !
-!aim137 DEBUG<
-!print*, ''
-!do i_fks=FL_states(1),FL_states(2)
-!write(*,*) abs(FKS_Sigma(i_fks,:))
-!enddo
-!print*, ''
-!aim137 DEBUG>
-!
-!!aim137 DEBUG<
-!print*, 'printing Hamiltonian'
-!do ik_bz=1,QP_nk
-!write(filename,'(i0)') ik_bz
-!open(111,file='FL_Ho_plus_Sigma'//trim(adjustl(filename))//'.dat')
-!do i_fks=FL_states(1),FL_states(2)
-!write(111,*) FL_Ho_plus_Sigma(i_fks,:,ik_bz,1)
-!enddo
-!close(111)
-!enddo
-!!aim137 END DEBUG
-!
-!aim137 DEBUG <
-!if (master_cpu) then
-!open(111,file='FL_rho_central_minus_reference.dat')
-!write(111,*) 'comparing FL_rho_delta (central component) of first iteration with rho_reference'
-!write(111,*) 'print FL_delta_rho(i,max_extra_mode+1)-rho_reference(i)'
-!do ir=1,fft_size
-!write(111,*) ir, FL_delta_rho(ir,max_extra_mode+1),rho_reference(ir),&
-!            &FL_delta_rho(ir,max_extra_mode+1)-rho_reference(ir)
-!enddo
-!close(111)
-!open(112,file='FL_rho_all_modes.dat')
-!do ir=1,fft_size
-!write(112,*) ir, FL_delta_rho(ir,:)
-!enddo
-!close(112)
-!endif
-!aim137 DEBUG >
-!
- !aim137 DEBUG
-!do ik_bz=1,QP_nk
-!do is=1,n_sp_pol
-!write(filename,'(i0)') 24!ik_bz
-!open(111,file='FL_VHartree'//trim(adjustl(filename))//'.dat')
-!do i_fks=FL_states(1),FL_states(2)
-!write(111,'(100(1f20.14))') abs(FKS_Sigma(i_fks,:))
-!enddo
-!close(111)
-!enddo
-!enddo
- !aim137 END DEBUG
- !aim137 DEBUG <
-!open(111,file='FL_density.dat')
-!do i_t=1,n_tot_extra_modes
-!Time = 1/Efield(1)%frequency(1) * 2._SP*pi * (i_t-1)/n_tot_extra_modes
-!write(111,'(10000(1e19.10))') Time*AUT2FS,(FL_delta_rho(i1,i_t),i1=1,fft_size)
-!enddo
-!close(111)
- !aim137 DEBUG >
 end subroutine FL_Hamiltonian

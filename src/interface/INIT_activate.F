@@ -572,7 +572,7 @@ subroutine INIT_activate()
    call initactivate(1,'Field1_Dir Field1_Int Field1_Phase')
    call initactivate(1,'Xorder Xadd_mode Xthresh_1 Xthresh_2 Xthresh_3 FL_solver &
            &            FL_deg_thresh FL_deg_lift S_inv_mode FL_beta FL_max_it')
-   call initactivate(1,'AvE_deg_thresh FL_Pade')
+   call initactivate(1,'Field1_Phase,FL_2D_ild,AvE_deg_thresh FL_Pade')
  endif
 #endif
  !

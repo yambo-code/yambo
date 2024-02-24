@@ -89,9 +89,6 @@ subroutine FL_start_and_restart(E,k,Dip)
  !
  if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE) then
    !  
-   !aim137 prelim - I will use this rho_reference for now, but 
-   !aim137 later on I may switch to the FL subroutine with the
-   !aim137 trivial FL_V_bands
    call NL_build_valence_bands(E,V_bands,VAL_BANDS,NL_bands(1))
    call el_density_vbands(E,k,rho_reference,VAL_BANDS)
    !
@@ -101,21 +98,6 @@ subroutine FL_start_and_restart(E,k,Dip)
  !=====================
  call A_vecpot_reset(A_tot)
  call A_vecpot_reset(A_ext)
- !
-!if(Correlation==TDDFT.and..not.COLLISIONS_have_HARTREE) then
-!  !
-!  ! Calculate V_xc
-!  !
-!  call XC_potential_driver(E,k,WF_kind,WF_xc_functional,1)
-!  V_xc_0=V_xc
-!  !       
-!endif
-!!
-!if(Correlation==JGM) then
-!  NL_P=cZERO
-!  call EXC_macroscopic_JGM(E,NL_P(1:3),rho_n,E_xc_0,V_xc_0)
-!  call msg('sr',' JGM initial alpha ',NL_LRC_alpha)
-!endif
  !
  ! Apply QP Corrections
  ! ====================
@@ -169,16 +151,16 @@ subroutine FL_start_and_restart(E,k,Dip)
  FL_QE = E%E(1:NL_bands(2),1:QP_nk,1:n_sp_pol)
  FL_QE_hist = cZERO
  !
-!!
-! Evaluate Initial Polarization 
-! ====================================
-!
+ !
+ ! Evaluate Initial Polarization 
+ ! ====================================
+ !
 if(.not.l_use_DIPOLES) then
   call POLARIZATION_output(E,k,Dip)
 endif
-!
+ !
 call DIP_polarization(E,k,V_bands,NL_initial_P(4:6))
-!
+ !
 if(.not.l_use_DIPOLES) then
   !   
   ! This subroutine update also the Sm1_plus,Sm1_minus and All_S_det matrices
@@ -189,18 +171,6 @@ if(.not.l_use_DIPOLES) then
 else
   NL_initial_P(1:3)=NL_initial_P(4:6)
 endif
-!!
-!if(l_eval_CURRENT) call NL_current(k,E,V_bands,NL_initial_J)
-!!
-!call msg('r','')
-!call msg('r',' * * * Non-linear dynamics parameters * * * ')
-!call msg('r','============================================')
-!call msg('r ',' Initial Polarization      ',real(NL_initial_P(1:3)))
-!call msg('r ',' Initial <Dip_x/y/z>       ',real(NL_initial_P(4:6)))
-!if(l_eval_CURRENT) then
-!  call msg('r ',' Initial Current         ',real(NL_initial_J(1:3)))
-!  call msg('r ',' Initial <v>=<[Hloc,r]>  ',real(NL_initial_J(4:6)))
-!endif
  !
  ! Restart
  ! ====================================

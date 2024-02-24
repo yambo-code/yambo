@@ -68,7 +68,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size
 #endif
 #if defined _OPENMP
-!aim137: adding fl
  use openmp,         ONLY:n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K,n_threads_NL,n_threads_FL
 #endif
 #if defined _YAML_OUTPUT
@@ -349,7 +348,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _NL
        l_nl_optics=runlevel_is_on('nloptics')
 #endif
-!aim137:adding fl 
 #if defined _FL
        l_fl_optics=runlevel_is_on('floptics')
 #endif
@@ -392,7 +390,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      call parser('DipBandsALL',all_bands)
      !
      Dip%bands_ordered=.not.all_bands
-     !aim137: preliminarily adding fl, not sure.
      l_local=l_sc_run.or.l_real_time.or.l_nl_optics.or.l_fl_optics
      if (l_local)         Dip%bands_ordered=.false.
 #if defined _QED
@@ -470,7 +467,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run) n_threads_SE=0
      if (l_real_time)                                     n_threads_RT=0
      if (l_nl_optics)                                     n_threads_NL=0
-     !aim137: adding fl
      if (l_fl_optics)                                     n_threads_FL=0
 #endif
 #if defined _OPENMP && defined _SC && !defined _RT && !defined _NL

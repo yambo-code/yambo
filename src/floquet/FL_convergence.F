@@ -24,6 +24,7 @@
 subroutine FL_check_convergence(FL_pol,l_sc_reached,accuracy)
  !
  use pars,       ONLY:SP,DP,cI
+ use R_lattice,  ONLY:k_map
  use fl_optics,  ONLY:FL_Chi_thr_1,FL_Chi_thr_2,FL_Chi_thr_3,n_tot_fl_modes,max_fl_mode,FL_Chi_order
  !
  implicit none
@@ -61,9 +62,9 @@ subroutine FL_check_convergence(FL_pol,l_sc_reached,accuracy)
    !
    if (FL_Chi_order > 1) then
      !
-     do id=1,2!aim137 change to 3
+     do id=1,3
        !
-       !aim137 add condition - if direction non periodic --> cycle
+       if(k_map%max_kdir(id)==1) cycle
        !
        diff_real  =  abs(  real(FL_pol(id,3,1)) &
                        & - real(FL_pol(id,3,2)))
@@ -99,9 +100,9 @@ subroutine FL_check_convergence(FL_pol,l_sc_reached,accuracy)
    !
    if (FL_Chi_order > 2) then
      !
-     do id=1,2!aim137 change to 3
+     do id=1,3
        !
-       !aim137 add condition - if direction non periodic --> cycle
+       if(k_map%max_kdir(id)==1) cycle
        !
        diff_real  =  abs(  real(FL_pol(id,4,1)) &
                        & - real(FL_pol(id,4,2)))

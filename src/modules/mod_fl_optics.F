@@ -73,7 +73,6 @@ module fl_optics
  real(SP) :: FL_Chi_thr_3
  real(SP) :: FL_deg_thrs
  real(SP) :: FL_deg_lift
- real(SP) :: FL_E_field_phase
  real(SP) :: FL_avE_degen
  real(SP) :: FL_ild
  real(SP) :: FL_Pade_damping

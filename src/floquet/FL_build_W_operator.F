@@ -37,7 +37,7 @@ subroutine FL_build_W_operator(en,Xk,A_input,ik,i_sp,FL_V_bands,H_nl_sc)
  use matrix_operate, ONLY:hermitian
  use fields,         ONLY:gauge_field,Efield
  use fl_optics,      ONLY:max_fl_mode,FL_space_dim,n_tot_fl_modes,FL_states,n_tot_duffin_modes,&
-&                         max_duffin_mode,FL_E_field_phase
+&                         max_duffin_mode
  !
  implicit none
  !
@@ -58,13 +58,10 @@ subroutine FL_build_W_operator(en,Xk,A_input,ik,i_sp,FL_V_bands,H_nl_sc)
  complex(SP) :: FL_V_tilde(H_ref_bands(2),n_tot_fl_modes,n_tot_duffin_modes,en%nbf(i_sp),2) 
  complex(SP) :: E_vec_pot(3)
  integer :: i1_fl,i2_fl,i3_fl,i4_fl,i_m,i_comb_fl,i_shift_comb_fl,i1_fks,i2_fks
- complex(SP) :: ph_p,ph_m
  !
  E_vec_pot=-A_input%vecpot_vel/SPEED_OF_LIGHT
  !
  Wk=cZERO
- ph_p = exp(+cI*pi*FL_E_field_phase)
- ph_m = exp(-cI*pi*FL_E_field_phase)
  !
  ikbz=Xk%k_table(ik,1)
  !
@@ -113,14 +110,14 @@ subroutine FL_build_W_operator(en,Xk,A_input,ik,i_sp,FL_V_bands,H_nl_sc)
                          Wop(i1_fks,i2_fks,istep) = Wop(i1_fks,i2_fks,istep) + & !only plus exponential
                                                   & (conjg(FL_V_bands(i2,i_comb_fl-1,i_m,ik)) * &
                                                   & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
-                                                  &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))*ph_p
+                                                  &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))
                        enddo
                      else
                        do i_m=1,en%nbf(i_sp) 
                          Wop(i1_fks,i2_fks,istep) = Wop(i1_fks,i2_fks,istep) + & !only minus exponential
                                          & (-1._SP)*(conjg(FL_V_bands(i2,i_comb_fl+1,i_m,ik)) * &
                                                   & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
-                                                  &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))*ph_m
+                                                  &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))
                        enddo
                      endif
                    else
@@ -128,10 +125,10 @@ subroutine FL_build_W_operator(en,Xk,A_input,ik,i_sp,FL_V_bands,H_nl_sc)
                        Wop(i1_fks,i2_fks,istep) = Wop(i1_fks,i2_fks,istep) + & !both exponentials
                                                 & (conjg(FL_V_bands(i2,i_comb_fl-1,i_m,ik)) * & !plus exp
                                                 & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
-                                                &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))*ph_p + &
+                                                &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2))) + &
                                        & (-1._SP)*(conjg(FL_V_bands(i2,i_comb_fl+1,i_m,ik)) * & !minus exp
                                                 & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
-                                                &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))*ph_m
+                                                &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))
                      enddo
                    endif
                    !

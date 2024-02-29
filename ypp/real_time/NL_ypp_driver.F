@@ -8,7 +8,7 @@
 subroutine NL_ypp_driver(en,k)
  !
  use YPP_real_time,  ONLY:X_order,RT_conf,RT_time,Pol,l_skip_OBS_IO,Pump_path
- use pars,           ONLY:SP,pi,lchlen
+ use pars,           ONLY:SP,pi,lchlen,cZERO
  use units,          ONLY:HA2EV,AUT2FS
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
@@ -204,6 +204,7 @@ subroutine NL_ypp_driver(en,k)
          if (i_order==1) then
            Susceptibility(i_order,i_f,1)=4._SP*pi*dot_product( Efield(i_Probe)%versor(:),X_effective(i_order,i_f,:) )*&
 &                                        Divide_by_Field(Efield(i_Probe),i_order)
+	   Susceptibility(i_order,i_f,2:3)=cZERO
          else 
            Susceptibility(i_order,i_f,:)=X_effective(i_order,i_f,:)*Divide_by_Field(Efield(i_Probe),i_order)
          end if

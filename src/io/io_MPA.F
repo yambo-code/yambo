@@ -8,16 +8,13 @@
 integer function io_MPA(X,Xw,ID)
  !
  use pars,          ONLY:SP,schlen
- use units,         ONLY:HA2EV
- use R_lattice,     ONLY:nqibz,g_vec
  use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,MPA_desc
  use frequency,     ONLY:w_samp
- use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header,&
-&                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental,&
-&                        io_fragment,ver_is_gt_or_eq
- use IO_m,          ONLY:io_sec,io_com,io_status,read_is_on,write_is_on,io_serial_number,serial_number,&
-&                        NONE,IO_INCOMPATIBLE_VAR,io_MULTIPOLE,IO_NOT_ALLOWED,io_extension,&
-&                        IO_OUTDATED_DB,frag_MULTIPOLE,IO_NO_DATABASE,io_mode,DUMP,frag_RESPONSE
+ use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_header,io_fragment,&
+&                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental
+ use IO_m,          ONLY:io_sec,io_com,io_status,read_is_on,&
+&                        io_MULTIPOLE,IO_NOT_ALLOWED,io_extension,&
+&                        frag_MULTIPOLE,IO_NO_DATABASE,io_mode,DUMP,frag_RESPONSE
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
  use mpa_m,         ONLY:MPA_E_mat,MPA_R_mat,MPA_freqs,MPA_alloc, &
@@ -31,11 +28,9 @@ integer function io_MPA(X,Xw,ID)
  !
  !Work Space
  !
- integer           :: sec_size,i1,iq,i_err,io_com_save,io_err,ID_frag
+ integer           :: sec_size,i1,iq,io_com_save,io_err,ID_frag
  logical           :: different_db_RL_order
- character(schlen) :: ch,db_desc
- character(2)      :: local_XC_KIND
- real(SP),   allocatable :: RL_vecs_disk(:,:)
+ character(schlen) :: ch
  complex(SP),allocatable :: X_on_disk(:,:)
    !
  integer, external :: variables_MPA
@@ -198,15 +193,13 @@ integer function io_MPA(X,Xw,ID)
  !
 end function
 !
-!
 integer function variables_MPA(ID,local_desc,X)
  !
- use pars,          ONLY:schlen,lchlen
- use units,         ONLY:HA2EV
+ use pars,          ONLY:schlen
  use descriptors,   ONLY:IO_desc,IO_desc_reset
  use X_m,           ONLY:X_t
- use IO_int,        ONLY:io_elemental,ver_is_gt_or_eq
- use IO_m,          ONLY:io_status,read_is_on
+ use IO_int,        ONLY:io_elemental
+ use IO_m,          ONLY:io_status
  implicit none
  !
  integer            ::ID
@@ -215,8 +208,7 @@ integer function variables_MPA(ID,local_desc,X)
  !
  ! Work Space
  !
- integer             ::i_local_desc,sec_size
- character(schlen)   ::X_label,MPA_label
+ character(schlen)   ::MPA_label
  !
  call IO_desc_reset(local_desc)
  MPA_label='MPA_'

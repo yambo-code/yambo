@@ -12,13 +12,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use stderr,         ONLY:intc,STRING_match
  use electrons,      ONLY:levels,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
- use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge,X_OUTPUT_driver
+ use X_m,            ONLY:X_t,X_duplicate,X_reset,X_OUTPUT_driver
  use DIPOLES,        ONLY:DIPOLE_t
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,REP
- use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0,BSS_eels_to_eps,BSS_uses_DbGd
+ use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0,BSS_uses_DbGd
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_res_K_corr,BS_n_g_W,BS_cpl_K_corr,&
-&                         BS_Blocks_and_Transitions_free,BSqpts,l_BS_photolum
+&                         BS_Blocks_and_Transitions_free,BSqpts
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded
  use drivers,        ONLY:l_rpa_IP,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PAR_IND_WF_b_and_k,PAR_K_scheme,PARALLEL_default_mode
@@ -57,18 +57,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !=========================
  call K_driver_init("init",1,Ken,Xk)
  !
- ! Observables initialization
- !============================
- call K_observables( )
- !
- ! PL is implemented only in velocity gauge
- if (l_BS_photolum) global_gauge="velocity"
- !
- if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
-   call warning(" Not a valid gauge in input. Switching to length gauge")
-   global_gauge="length"
- endif
- !
  ! Energy points
  !===============
  call W_reset(W_bss)
@@ -79,6 +67,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  W_bss%per_memstps=FXC_per_memstps
  call FREQUENCIES_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n_freqs
+ !
+ ! Observables initialization
+ !============================
+ call K_observables(W_bss)
  !
  ! Double Grid support
  !=====================
@@ -156,6 +148,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
      if (.not.iq==1) then
        iGo_BSE=maxval((/4*qindx_B_max,qindx_X(iq,:,2)/))
        iG_BSE =max(BS_n_g_exch,BS_n_g_W)
+       !iGo_BSE=4*maxval((/4*qindx_B_max,qindx_X(iq,:,2)/))
+       !iG_BSE =maxval((/BS_n_g_exch,BS_n_g_W,qindx_B_max/))
      endif
      !
      Max_G_m_G=eval_G_minus_G(iG_BSE,iGo_BSE)
@@ -199,7 +193,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    ! 0. The Dipoles 
    ! ===============
-   call K_dipoles(iq,Ken,Xk,Dip,W_bss)
+   call K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip,W_bss)
    !
    ! 1. The IP Part
    ! ===============

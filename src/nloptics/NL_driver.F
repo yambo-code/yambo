@@ -22,8 +22,8 @@ subroutine NL_driver(E,X,k,q,Dip)
  use R_lattice,      ONLY:bz_samp,qindx_free
  use fields,         ONLY:Efield
  use QP_CTL_m,       ONLY:QP_apply
- use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
-&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P,l_pump_and_probe, &
+ use nl_optics,      ONLY:n_frequencies,Correlation,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
+&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed,NL_J_t
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT,eval_HARTREE
@@ -204,7 +204,7 @@ subroutine NL_driver(E,X,k,q,Dip)
    !
    ! Efield
    ! ================
-   if(.not.l_pump_and_probe) Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
+   if(all(NL_er>0.0)) Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
    !
    l_dynamics_is_over=.false.
    !

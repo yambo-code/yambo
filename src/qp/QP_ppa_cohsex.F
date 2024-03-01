@@ -106,7 +106,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  integer,     external ::io_X
  complex(SP), external ::QP_ppa_EET_terminator
  !
- integer      :: first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp,i_c
  integer      :: PPcond_rate,TO_rate
  real(SP)     :: PP_err
  !

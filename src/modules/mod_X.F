@@ -42,7 +42,10 @@ module X_m
  ! Large Q-vector support 
  !
  real(SP)                 :: q_plus_G_direction(3)
+ real(SP)                 :: Q_plus_G_pt(3)
+ real(SP)                 :: Q_plus_G_sq_modulus
  integer                  :: Q_Shift_Order
+ integer                  :: i_G_shift
  !
  ! Double Grid
  !
@@ -63,6 +66,8 @@ module X_m
  !
  integer                  :: N_BS_E_sorted=0
  complex(SP), allocatable :: BS_E_sorted(:,:,:)
+ complex(SP), allocatable :: Resp_ii(:,:)
+ complex(SP), allocatable :: Resp_ij(:,:)
  complex(SP), allocatable :: Epsilon_ii(:,:)
  complex(SP), allocatable :: Epsilon_ij(:,:)
  complex(SP), allocatable :: Joint_DOS(:,:) 
@@ -191,15 +196,6 @@ module X_m
      type(bz_fine_grid),intent(in) :: k_FGbz
      real(SP),            optional :: nTrans_percent,Radius
    end subroutine
-   !
-   logical function EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel)
-     use pars,          ONLY:SP
-     integer              :: nw 
-     complex(SP)          :: wv(nw)
-     logical              :: be_verbose
-     character(2)         :: ordering
-     complex(SP) ,optional:: eps(nw),eel(nw)
-   end function
    !
    subroutine X_ALLOC_elemental(WHAT,DIM)
      character(*)      :: WHAT

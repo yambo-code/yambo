@@ -29,7 +29,7 @@ subroutine XCo_report(qp,E,k)
  !
  type(levels)      ::E_dummy
  integer           ::i_qp,ib,ik,ibp,ikp,i_s
- character(schlen) ::sec_mode_and_message(2),ch,ch_spin,nloc_fmt,loc_fmt
+ character(schlen) ::ch,ch_spin,nloc_fmt,loc_fmt
  logical           ::l_Vxc,l_Vnl_xc
  !
  ! Logicals

@@ -12,8 +12,10 @@
  K_blocks.o
  K_components_folded_in_serial_arrays.o
  K_compress.o
- K_correlation_collisions.o
- K_correlation_kernel.o
+ K_correlation_collisions_dir.o
+ K_correlation_collisions_std.o
+ K_correlation_kernel_dir.o
+ K_correlation_kernel_std.o
  K_diago_driver.o
  K_diago_hermitian_residuals.o
  K_diago_kerr_residual.o

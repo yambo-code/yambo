@@ -24,8 +24,8 @@ CONFFLAGS=--prefix=$(LIBPATH) --libdir=$(LIBPATH)/lib \
 	  CPP="$(cpp)" \
 	  CFLAGS="$(cflags)" \
 	  FC="$(fc)" \
-	  CPPFLAGS="$(netcdf_flag) $(ihdf5) $(ipnetcdf)" \
-	  LIBS="$(lpnetcdf) $(lhdf5)" \
+	  CPPFLAGS="$(netcdf_flag) $(ihdf5)" \
+	  LIBS="$(lhdf5)" \
 	  F77="$(f77)"
 # DEBUG <
 # This option is useful for debugging netcdf4 problems

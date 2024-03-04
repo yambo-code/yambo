@@ -79,6 +79,10 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
  endif
  !
+ ! Evaluate the G_lesser for current/polarization and collisions
+ ! ======================================================
+ if(eval_dG)              call NL_build_dG_lesser(E,V_bands,dG)
+ !
  ! Evaluate the Polarization 
  ! ===================================================================
  !
@@ -151,9 +155,8 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
     !
  endif
  !
- ! Evaluate the G_lesser if using TD-SEX or TD-HF and than add COLLISIONS
- ! ======================================================
- if(eval_dG)              call NL_build_dG_lesser(E,V_bands,dG)
+ ! Calculate collisions
+ ! =======================================
  if(l_use_Hxc_collisions) call COLLISIONS_compose_nl(dG)
  !
  ! Build the Hamiltonian

@@ -31,9 +31,9 @@ subroutine NL_start_and_restart(E,k,Dip)
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use fields,         ONLY:A_tot,A_ext,A_vecpot_reset
  use parallel_m,     ONLY:master_cpu
- use nl_optics,      ONLY:Correlation,IPA,E_full,full_rho,V_bands,TDDFT,n_runs_todo,NL_LRC_alpha,NL_bands,NE_steps_old, &
+ use nl_optics,      ONLY:Correlation,IPA,E_full,full_rho,V_bands,TDDFT,n_runs_todo,NL_LRC_alpha,NL_bands, &
 &                         V_xc_0,NL_initial_P,l_use_DIPOLES,n_runs,runs_done,JGM,E_xc_0,I_relax,l_use_DIPOLES,&
-&                         VAL_BANDS,l_eval_CURRENT,NL_initial_J,NL_P,l_pump_and_probe,NE_steps_old,NE_steps_done
+&                         VAL_BANDS,l_eval_CURRENT,NL_initial_J,NL_P,l_pump_and_probe
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,NONE,file_is_present,VERIFY
  use parallel_int,   ONLY:PP_redux_wait

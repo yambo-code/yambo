@@ -94,7 +94,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    !
    l_dip_appr_from_user=.false.
    call parser("DipApproach",l_dip_appr_from_user)
-   if (.not.l_dip_appr_from user) then
+   if (.not.l_dip_appr_from_user) then
      Dip%approach="Covariant"
      Dip%ib(1)   =1
    endif

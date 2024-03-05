@@ -60,6 +60,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  integer           :: ik,io_err
  character(schlen) :: msg
  logical           :: l_warning,use_dipole_transverse,idir_not_done(3)
+#if defined _NL
+ logical           :: l_dip_appr_from_user
+#endif
  !
  call timing('Dipoles',OPR='start')
  !
@@ -89,8 +92,13 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    ! perpendicular to the field direction
    ! I expect that dipole covariant decently reproduce non-linear response
    !
-   Dip%approach="Covariant"
-   Dip%ib(1)   =1
+   l_dip_appr_from_user=.false.
+   call parser("DipApproach",l_dip_appr_from_user)
+   if (.not.l_dip_appr_from user) then
+     Dip%approach="Covariant"
+     Dip%ib(1)   =1
+   endif
+   !
  endif
 #endif
  !

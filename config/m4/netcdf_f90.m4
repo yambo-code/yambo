@@ -3,7 +3,7 @@
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
 #        Copyright (C) 2000-2023 the YAMBO team
-#              http://www.yambo-code.org
+#              http://www.yambo-code.eu
 #
 # Authors (see AUTHORS file for details): AM, AF, DS
 #

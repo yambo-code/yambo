@@ -1,6 +1,6 @@
 /*
          Copyright (C) 2000-2023 the YAMBO team
-               http://www.yambo-code.org
+               http://www.yambo-code.eu
  
   Authors (see AUTHORS file for details): AM
   
@@ -24,7 +24,7 @@
 
 #define YAMBO_VERSION 5
 #define YAMBO_SUBVERSION 1
-#define YAMBO_PATCHLEVEL 2
-#define YAMBO_REVISION 21871
-#define YAMBO_HASH "8eb9fde4a" 
+#define YAMBO_PATCHLEVEL 3
+#define YAMBO_REVISION 21872
+#define YAMBO_HASH "612ae3ca5" 
 

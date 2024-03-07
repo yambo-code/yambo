@@ -2,7 +2,7 @@
 ! Copyright (C) 2003 M. Marques, A. Castro, A. Rubio, G. Bertsch
 !
 !        Copyright (C) 2000-2023 the YAMBO team
-!              http://www.yambo-code.org
+!              http://www.yambo-code.eu
 !
 ! Authors (see AUTHORS file for details): AM, MG, DV
 !

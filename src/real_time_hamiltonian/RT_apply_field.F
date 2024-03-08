@@ -47,6 +47,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    ! in case of complex Efield puts the correct Hermitian matrix
    ! and the intraband optical matrix elements have been set to zero
    !
+!$omp parallel do default(shared), private(i1,Jtot,A_dot_J)
    do i1=RT_bands(1),RT_bands(2)
      !
      ! Case A: the pseudo-potential is correctly gauged, so A*p enters the hamiltonian
@@ -69,7 +70,9 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
      A_dot_J(2)=sum(A_vec_pot(1:3)*conjg(Jtot(1:3)))
      H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(A_dot_J(1),SP)
    enddo
+!$omp end parallel do
    !
+!$omp parallel do default(shared), private(i1,i2,Jtot,A_dot_J)
    do i1=RT_bands(1),RT_bands(2)
      do i2=i1+1,RT_bands(2)
        !
@@ -89,6 +92,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
        !
      enddo
    enddo
+!$omp end parallel do
    !
  case('length')
    !

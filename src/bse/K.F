@@ -76,7 +76,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &               i_kmq_t,i_pmq_t,i_k_bz_mem,i_kmq_bz_mem,qindx_tmp(2)
  ! OMP LAST DEF
  integer ::     i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & 
-&               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last 
+&               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last,ig_W_final 
  !
  integer    :: i_block,O_ng_shift,NG,&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&

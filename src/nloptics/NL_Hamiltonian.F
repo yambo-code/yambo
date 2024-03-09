@@ -76,7 +76,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    ! Reconstruct the full density
    !
    call XC_potential_driver(E,k,WF_kind,WF_xc_functional,1)
-!$omp parallel do default(shared), private(ir,i_sp_pol)
+!$omp parallel do default(shared), private(ir,i_sp_pol), collapse(2)
    do ir=1,fft_size
      do i_sp_pol=1,n_sp_pol
        V_xc_sc(ir,i_sp_pol)=V_xc(ir,i_sp_pol)-V_xc_0(ir,i_sp_pol)

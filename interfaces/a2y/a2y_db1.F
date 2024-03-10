@@ -593,6 +593,7 @@ contains
   !end if
 
   ! TODO: handle the istwfk /= 1 cases
+  if (istwf_k/=1) call error("istwf_k different from 1")
   ! create mapping from G sphere to box
   if (present(map))     map = -1
   if (present(inv_map)) inv_map = -1

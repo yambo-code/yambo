@@ -218,14 +218,9 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! EXCITON-PHONON 
  ! ===============
 #if defined _ELPH && !defined _RT
- driver_now=l_EXCPH_gkkp
- if (driver_now) call EXCPH_gkkp_driver(Ken,Xk,q,X(i_X_kind))
- !
- driver_now=l_EXCPH_optics
- if(driver_now) call EXCPH_optics(Ken,Xk,q,X(i_X_kind),Xw(3))
- !
- driver_now=l_EXCPH_lifetime
- if(driver_now)  call EXCPH_lifetime(Xk,q,X(i_X_kind))
+ if (l_EXCPH_gkkp)     call EXCPH_gkkp_driver(Ken,Xk,q,X(i_X_kind))
+ if (l_EXCPH_optics)   call EXCPH_optics(Ken,Xk,q,X(i_X_kind),Xw(3))
+ if (l_EXCPH_lifetime) call EXCPH_lifetime(Xk,q,X(i_X_kind))
 #endif
  !
  !

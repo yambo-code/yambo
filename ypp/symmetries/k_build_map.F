@@ -59,7 +59,7 @@ subroutine k_build_map(k,k_save,kpoints_map,action_kind)
      !if (rlu_v_is_zero(v2-v1,zero_=k_rlu_zero)) then
      ! DEBUG >
      if ( v_is_zero(v1-v2,k_iku_zero) ) then
-       if(action_kind==1) kpoints_map(:, ik ) = k_save%sstar(ik_save,:)
+       if(action_kind==1) kpoints_map(:, ik ) = k_save%sstar(ik_save,:2)
        if(action_kind==2) kpoints_map(1, ik ) = ik_save
        exit 
      endif

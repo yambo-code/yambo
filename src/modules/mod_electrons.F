@@ -37,6 +37,8 @@ module electrons
  integer  :: n_spin_den
  logical  :: l_spin_orbit
  !
+ integer, parameter  :: n_max_deg=4
+ !
  ! Average magnetization density
  !
  logical                  :: eval_magn

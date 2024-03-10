@@ -125,6 +125,7 @@ module BS_solvers
  ! Solvers (Temporary (LARGE) arrays to be used in solvers ONLY)
  !=========
  integer    , allocatable :: BSS_eh_table(:,:)
+ integer    , allocatable :: BSS_eh_table_m1(:,:,:,:,:)
  real(SP)   , allocatable :: BSS_eh_E(:)
  real(SP)   , allocatable :: BSS_eh_f(:)
  real(SP)   , allocatable :: BSS_eh_W(:)

@@ -38,14 +38,14 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use R_lattice,      ONLY:bz_samp,qindx_B !_load
  use parser_m,       ONLY:parser
  use X_m,            ONLY:X_t
- use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig,BSS_alloc,BSS_free
+ use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BSS_eh_table_m1,BS_H_dim,BSS_n_eig,BSS_alloc,BSS_free
  use BS,             ONLY:BS_H_dim,BS_bands,BSqpts
  use ELPH,           ONLY:elph_branches,Q_io_map,l_GKKP_expanded_DB_exists
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message, &
 &                         REP,VERIFY,WR_CL,OP_WR,WR_CL_IF_END,manage_action
  use IO_int,         ONLY:io_control
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,BS_E_in,BS_E,BSS_eh_table_m1_in,&
-&                         EXCPH_states,EXCPH_sum,BSS_eh_table_m1,k_plus_q_table,build_Q_map,EXCPH_q, &
+&                         EXCPH_states,EXCPH_sum,k_plus_q_table,build_Q_map,EXCPH_q, &
 &                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,l_const_elph,l_abs_elph,l_abs_exc,l_elec_only,l_hole_only, &
 &                         n_exc_in,EXCPH_kind,EXCPH_kind_name,PALEARI,BERNARDI,BSE_alloc,BSE_free
  use LIVE_t,         ONLY:live_timing
@@ -165,13 +165,13 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! BSS_eh_table_m1
  !
- call build_inverse_eh_table()
+ call build_inverse_eh_table(k%nbz)
  !
  ! Save the Lin in information
  ! 
  BS_mat_in         =BS_mat(:,EXCPH_states(1):EXCPH_states(2))
  BSS_eh_table_in   =BSS_eh_table
- BSS_eh_table_m1_in=BSS_eh_table_m1
+ BSS_eh_table_m1_in=BSS_eh_table_m1(:,:,:,1,1)
  BS_E_in           =BS_E
  !
  ! Open gkkp_expanded
@@ -351,24 +351,6 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      !
    end subroutine build_k_plus_q_table
    !
-   subroutine build_inverse_eh_table()
-     !
-     integer :: iv,ic,i_H,ik_bz
-     !     
-     call live_timing('BSE inverse eh-table',BS_H_dim)
-     do i_H=1,BS_H_dim
-       !
-       ik_bz = BSS_eh_table(i_H,1)
-       iv    = BSS_eh_table(i_H,2)
-       ic    = BSS_eh_table(i_H,3)
-       !
-       BSS_eh_table_m1(ik_bz,iv,ic)=i_H
-       call live_timing(steps=1)
-       !
-     enddo
-     call live_timing( )
-     !
-   end subroutine build_inverse_eh_table
    !
    subroutine compare_qindxC_table()
      !

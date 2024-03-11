@@ -920,7 +920,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      !
      ! Bands
      !
+#if defined _NL
+     bands=-1 
+#else
      bands=(/1,E_in%nb/)
+#endif
      do i1=1,11
        if(.not.(is_def(i1))) cycle
        if(i1< 6) tmp_bands=X(i1)%ib

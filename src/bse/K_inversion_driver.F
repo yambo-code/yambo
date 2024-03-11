@@ -7,15 +7,15 @@
 !
 subroutine K_inversion_driver(iq,W,E,k,q) 
  !
- use pars,           ONLY:SP,pi
- use X_m,            ONLY:Resp_ii,X_drude_term,i_G_shift,X_OUTPUT_driver
+ use pars,           ONLY:SP
+ use X_m,            ONLY:Resp_ii,X_OUTPUT_driver
  use BS_solvers,     ONLY:BSS_inversion_mode,BSS_desc,K_INV_PL,K_INV_EPS,&
 &                         K_Inversion_data,K_slk,K_inv_slk
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk,l_BS_ares_from_res,&
 &                         BS_K_anti_resonant,l_BS_photolum,BS_res_ares_n_mat
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
- use R_lattice,      ONLY:bare_qpg,bz_samp
+ use R_lattice,      ONLY:bz_samp
  use com,            ONLY:isec,msg
  use LIVE_t,         ONLY:live_timing
  use parallel_int,   ONLY:PP_wait,PP_redux_wait,PARALLEL_index,PARALLEL_live_message

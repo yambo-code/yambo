@@ -90,12 +90,12 @@ subroutine k_expand(k)
  k%weights(:)=k%weights(:)/sum(k%weights)
  k%nbz=sum(k%nstar(:))
  !
- YAMBO_ALLOC(k%sstar,(k%nbz,2))
+ YAMBO_ALLOC(k%sstar,(k%nbz,3))
  i2=0
  do i1=1,k%nibz
    do is=1,k%nstar(i1)
      i2=i2+1
-     k%sstar(i2,:)=(/i1,k%star(i1,is)/)
+     k%sstar(i2,:)=(/i1,k%star(i1,is),is/)
    enddo
  enddo
  !

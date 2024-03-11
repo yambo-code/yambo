@@ -24,7 +24,7 @@ function Eval_Efermi_DbGd(k,q,en)
  ! Work space
  !
  real(SP) :: Eval_Efermi_DbGd
- integer  :: ikbz,iq_fine,N_k_plus_q,ic,ik
+ integer  :: N_k_plus_q,ic
  type(bz_samp) :: all_k_plus_q
  type(levels)  :: all_E_kpq
  !

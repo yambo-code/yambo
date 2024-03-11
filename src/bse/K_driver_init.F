@@ -21,7 +21,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
 &                       BS_n_eh_spaces,l_BS_ares_from_res,BS_bands,BS_K_anti_resonant
  use TDDFT,        ONLY:FXC_is_retarded,FXC_n_g_corr
  use drivers,      ONLY:l_col_cut,l_rpa_IP,l_alda_fxc,l_bs_fxc
- use D_lattice,    ONLY:i_time_rev,i_space_inv,l_0D,l_1D,l_2D,l_3D
+ use D_lattice,    ONLY:i_time_rev,i_space_inv,l_3D
 #if defined _RT
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:NEQ_Kernel,EQ_Transitions,EQ_NoOcc,NEQ_Residuals,RT_BSE_Occ_Mode

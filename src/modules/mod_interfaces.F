@@ -267,6 +267,13 @@ module interfaces
      type(tddft_wf_t), target, intent(inout) :: tddft_wf
    end function TDDFT_ALDA_R_space
    !
+   subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF)
+     use wave_func,     ONLY:WAVEs
+     integer,              intent(in)    :: b_to_load(2)
+     integer,              intent(in)    :: ik,i_sp_pol,isymm,ig0
+     type (WAVEs), target, intent(inout) :: WF
+   end subroutine WF_symm_kpoint_g
+   !
  end interface
  !
  interface WF_shift_kpoint

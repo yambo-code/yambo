@@ -33,7 +33,7 @@ subroutine EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
  !use electrons,      ONLY:levels
  use D_lattice,      ONLY:i_time_rev,sop_inv,sop_tab,nsym,i_time_rev
  use R_lattice,      ONLY:bz_samp,qindx_C
- use BS_solvers,     ONLY:io_BSS_diago,BS_mat,BSS_eh_table,BSS_free
+ use BS_solvers,     ONLY:io_BSS_diago,BS_mat,BSS_eh_table_m1,BSS_eh_table,BSS_free
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL, &
 &                         deliver_IO_error_message,manage_action,RD
  use IO_int,         ONLY:io_control
@@ -41,7 +41,7 @@ subroutine EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
  use BS,             ONLY:BS_H_dim,BS_bands
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,FAN_deltaE_treshold,GKKP,Q_io_map,K_io_map
  use EXCPH,          ONLY:BS_mat_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,BSS_eh_table_in,&
-&                         EXCPH_states,EXCPH_sum,BSS_eh_table_m1,k_plus_q_table,&
+&                         EXCPH_states,EXCPH_sum,k_plus_q_table,&
 &                         l_const_elph,l_abs_elph,l_abs_exc,l_elec_only,l_hole_only
  !
 #include<memory.h>
@@ -124,7 +124,7 @@ subroutine EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
          !
          if (l_elec_only) exit
          !
-         i_Hp=BSS_eh_table_m1(ip_bz,ivp,ic)
+         i_Hp=BSS_eh_table_m1(ip_bz,ivp,ic,1,1)
          if (i_Hp==0) cycle
          !
          ! [NB] Here we apply the conj and SWAP band indices in the matrix elements
@@ -163,7 +163,7 @@ subroutine EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
          !
          if (l_hole_only) exit
          !
-         i_Hp=BSS_eh_table_m1(ip_bz,iv,icp)
+         i_Hp=BSS_eh_table_m1(ip_bz,iv,icp,1,1)
          if (i_Hp==0) cycle
          ! [NB] Here we apply the conj and SWAP band indices in the matrix elements
          !      Notes: (icp,ic) => Code: (ic,icp)

@@ -12,7 +12,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  use pars,           ONLY:cZERO,cONE,SP,pi
  use X_m,            ONLY:Resp_ii,Joint_DOS,BS_E_sorted,&
-&                         global_gauge,skip_cond_sum_rule,i_G_shift
+&                         global_gauge,i_G_shift
  use electrons,      ONLY:n_sp_pol,n_spinor
  use frequency,      ONLY:w_samp
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index
@@ -20,7 +20,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  use LIVE_t,         ONLY:live_timing
  use BS,             ONLY:BS_perturbative_SOC,BS_res_ares_n_mat,l_BS_abs,l_BS_jdos,l_BS_esort,&
 &                         BS_K_anti_resonant,l_BS_ares_from_res,BS_K_coupling
- use BS_solvers,     ONLY:BSS_n_eig,Co_factor,diam_term_exact
+ use BS_solvers,     ONLY:BSS_n_eig,Co_factor
  use R_lattice,      ONLY:bare_qpg
  use units,          ONLY:HA2EV
  use vec_operate,    ONLY:degeneration_finder,sort

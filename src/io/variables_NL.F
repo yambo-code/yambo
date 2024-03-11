@@ -10,7 +10,7 @@ integer function variables_NL(ID)
  use pars,           ONLY:SP,IP,LP,IP_YIO,LP_YIO,CR_YIO
  use units,         ONLY:AUT2FS, HA2EV, AU2KWCMm2
  use nl_optics,     ONLY:NL_damping,l_use_DIPOLES,NL_correlation,NL_er,NL_correlation,n_frequencies,      &
-&                        n_order,NL_desc,NL_rot_axis,n_angles,NL_initial_versor
+&                        NL_desc,NL_rot_axis,n_angles,NL_initial_versor
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx
  use real_time,     ONLY:Integrator_name,NE_steps,RT_step,l_RT_induced_field,RT_bands,RAD_LifeTime
  use electric,      ONLY:l_force_SndOrd

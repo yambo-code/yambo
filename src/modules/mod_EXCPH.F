@@ -69,6 +69,7 @@ module EXCPH
  complex(SP), allocatable :: BS_E_in(:),BS_E(:)
  real(SP),    allocatable :: BS_all_E(:,:)
  complex(SP), allocatable :: BS_mat_in(:,:)
+ complex(SP), allocatable :: BS_mat_out(:,:)
  integer,     allocatable :: BSS_eh_table_in(:,:)
  complex(SP), pointer :: BS_R_left(:),BS_R_right(:)
  real(SP),    allocatable :: BS_R(:)

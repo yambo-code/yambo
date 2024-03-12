@@ -44,7 +44,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message, &
 &                         REP,VERIFY,WR_CL,OP_WR,WR_CL_IF_END,manage_action
  use IO_int,         ONLY:io_control
- use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,BS_E_in,BS_E,BSS_eh_table_m1_in,&
+ use EXCPH,          ONLY:BS_mat_in,BS_mat_out,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,BS_E_in,BS_E,BSS_eh_table_m1_in,&
 &                         EXCPH_states,EXCPH_sum,k_plus_q_table,build_Q_map,EXCPH_q, &
 &                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,l_const_elph,l_abs_elph,l_abs_exc,l_elec_only,l_hole_only, &
 &                         n_exc_in,EXCPH_kind,EXCPH_kind_name,PALEARI,BERNARDI,BSE_alloc,BSE_free
@@ -61,6 +61,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! Work Space
  !
  integer, external :: io_ELPH,io_EXCPH_gkkp,io_RIM
+ integer  :: S_index(EXCPH_states(1):EXCPH_States(2)),ID_phases
  integer  :: ID_gkkp,ID_exc_gkkp,io_err,io_ID,IO_ACT
  integer  :: il,iq_bz,iq,i_star,iq_s,iq_db,elph_branches_save(2)
  ! Debug
@@ -73,6 +74,10 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! Define n_exc_in
  !
  n_exc_in=EXCPH_states(2)-EXCPH_states(1)+1
+ ! Sorting index is trivial, no sorting done in exc-ph.
+ do il=EXCPH_states(1),EXCPH_States(2)
+   S_index(il)=il
+ enddo
  !
  ! Check if Lout and Lin are present
  ! and read their kind
@@ -147,6 +152,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! Alloc BS_in variables
  ! 
  call BSE_in_alloc()
+ call BSE_out_alloc()
  !
  ! Alloage EXCPH_gkkp
  !
@@ -170,6 +176,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! Save the Lin in information
  ! 
  BS_mat_in         =BS_mat(:,EXCPH_states(1):EXCPH_states(2))
+ !
  BSS_eh_table_in   =BSS_eh_table
  BSS_eh_table_m1_in=BSS_eh_table_m1(:,:,:,1,1)
  BS_E_in           =BS_E
@@ -199,14 +206,17 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call live_timing('Excitonic Gkkp',q%nbz*(elph_branches(2)-elph_branches(1)+1))
  !
  do iq=1,q%nibz
-   ! 
+   !
    if(iq>1) call EXCPH_load_L(iq,X,'check','Lout')
    call EXCPH_load_L(iq,X,'load','Lout')
    !
    do i_star=1,q%nstar(iq)
      !
      iq_s=q%star(iq,i_star)
-     iq_bz = q%k_table(iq, iq_s)
+     iq_bz = q%k_table(iq,iq_s)
+     !
+     BS_mat_out=cZERO
+     call EXC_WF_symm_qpoint(k,q,EXCPH_states(1),n_exc_in,iq,iq_s,1,ID_phases,S_index,BS_mat_out,.false.)
      !
      EXCPH_gkkp          =cZERO
      EXCPH_gkkp_sq       =rZERO
@@ -278,6 +288,14 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      BSS_eh_table_m1_in  = 0
      !
    end subroutine BSE_in_alloc
+   !
+   subroutine BSE_out_alloc()
+     implicit none
+     !
+     YAMBO_ALLOC(BS_mat_out,(BS_H_dim,EXCPH_states(1):EXCPH_states(2)))
+     BS_mat_out=cZERO
+     !
+   end subroutine BSE_out_alloc
    !
    subroutine BSE_in_free
      implicit none

@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 ! --- Theory ---
-! (5) Figure out rotations/symmetry of exciton eigenvectors and EPC m.e.
+! (5) Figure out rotations/symmetry of EPC m.e.
 ! - FP
 !
 ! GKKP formulation following the F. Paleari PhD thesis
@@ -33,14 +33,14 @@ subroutine EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
  !use electrons,      ONLY:levels
  use D_lattice,      ONLY:i_time_rev,sop_inv,sop_tab,nsym,i_time_rev
  use R_lattice,      ONLY:bz_samp,qindx_C
- use BS_solvers,     ONLY:io_BSS_diago,BS_mat,BSS_eh_table_m1,BSS_eh_table,BSS_free
+ use BS_solvers,     ONLY:io_BSS_diago,BSS_eh_table_m1,BSS_eh_table,BSS_free
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL, &
 &                         deliver_IO_error_message,manage_action,RD
  use IO_int,         ONLY:io_control
  !use X_m,            ONLY:X_t
  use BS,             ONLY:BS_H_dim,BS_bands
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,FAN_deltaE_treshold,GKKP,Q_io_map,K_io_map
- use EXCPH,          ONLY:BS_mat_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,BSS_eh_table_in,&
+ use EXCPH,          ONLY:BS_mat_in,BS_mat_out,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,BSS_eh_table_in,&
 &                         EXCPH_states,EXCPH_sum,k_plus_q_table,&
 &                         l_const_elph,l_abs_elph,l_abs_exc,l_elec_only,l_hole_only
  !
@@ -115,7 +115,7 @@ subroutine EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
        ! ip_bz = R_iq_s^-1 ik_bz
        !       = R_iq_s^-1 R_ik_s ik_ibz
        !
-       ip_bz = elemental_scattering(iq_s,ik_bz)
+       ip_bz = ik_bz ! elemental_scattering(iq_s,ik_bz)
        !
        ! 1=DOWN (hole contribution)
        !========
@@ -144,17 +144,17 @@ subroutine EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
          !write(iq_bz*1000+i_beta,*) i_Hp,ik_bz,ivp,ic,abs(BS_mat(i_Hp,i_beta)),ip_bz,ik_db,k%ptbz(ik_bz,:)
          !
          if (l_abs_exc) then
-           Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*abs(BS_mat(i_Hp,i_beta))
+           Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*abs(BS_mat_out(i_Hp,i_beta))
          else
-           if(.not.t_rev) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
-           if(     t_rev) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*      BS_mat(i_Hp,i_beta)
+           if(.not.t_rev) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*conjg(BS_mat_out(i_Hp,i_beta))
+           if(     t_rev) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*      BS_mat_out(i_Hp,i_beta)
          endif
          !
        enddo
        !
        ! ip_bz = R_iq_s^-1 R_ik_s ik_ibz
        !
-       ip_bz = elemental_scattering(iq_s,ik_plus_iq_bz)
+       ip_bz = ik_plus_iq_bz !elemental_scattering(iq_s,ik_plus_iq_bz)
        !
        ! 2=UP (electron contribution)
        !======
@@ -176,10 +176,10 @@ subroutine EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
            !elph_gkkp=GKKP%dVc(il,ic,icp,ik_db,1)/sqrt(2._SP*ph_E)
          endif
          if (l_abs_exc) then
-           Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*abs(BS_mat(i_Hp,i_beta))
+           Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*abs(BS_mat_out(i_Hp,i_beta))
          else
-           if(.not.t_rev) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
-           if(     t_rev) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*      BS_mat(i_Hp,i_beta)
+           if(.not.t_rev) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*conjg(BS_mat_out(i_Hp,i_beta))
+           if(     t_rev) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*      BS_mat_out(i_Hp,i_beta)
          endif
          !
        enddo

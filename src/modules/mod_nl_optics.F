@@ -133,19 +133,6 @@ module nl_optics
  !
  integer, parameter :: DephMult=6 
  !
- ! Wavefunction sampling
- !
- type NLsampleWF
-   integer              :: n_order     ! Sampling NL order
-   integer              :: n_size      ! Size of sampling
-   integer              :: n_val(2)    ! Number of valence per spin channel
-   integer              :: n_k         ! Number of kpoints
-   logical              :: ison        ! WF sample logical switch 
-   integer, allocatable :: indx_T(:)   ! indexes of time sampling
- end type NLsampleWF
- !
- integer  :: n_order
- !
  ! Databases input/output
  !
  integer                  :: ID(3)

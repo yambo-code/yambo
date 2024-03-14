@@ -81,7 +81,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _NL
  use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha, &
-&                        NL_verb_name,n_order,n_angles,NL_rot_axis 
+&                        NL_verb_name,n_angles,NL_rot_axis 
 #endif 
 #if defined _NL | defined _SC
  use fields,        ONLY:Efield
@@ -522,8 +522,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_nl_optics)
  call it('f',defs,'EvalCurrent','[NL] Evaluate the current')
  !
- call it(defs,'NLSampleWF',  '[NL] Sample the WFs (sampling NL order)',n_order,verb_level=V_nl_optics)
- !
 #endif
  !
 #if defined _RT || defined _NL
@@ -922,7 +920,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      !
      ! Bands
      !
-     bands=-1
+     bands=-1 
      do i1=1,11
        if(.not.(is_def(i1))) cycle
        if(i1< 6) tmp_bands=X(i1)%ib

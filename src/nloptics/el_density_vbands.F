@@ -7,7 +7,8 @@
 !
 subroutine el_density_vbands(en,Xk,rho,VAL_BANDS)
  !
- !Electronic density.
+ !Electronic density from the time-dependent valence bands 
+ !(much faster than the standard el_density_vbands() subsoutine)
  !
  !Note that here the identity
  !
@@ -22,7 +23,7 @@ subroutine el_density_vbands(en,Xk,rho,VAL_BANDS)
  !        = 1/nkibz \sum_{S} \sum_{n k} f_{n k}/R_k |wf_{n k}(S^-1 r)|^2 =
  !        = 1/nsym \sum_{S} ( \sum_{n k} f_{n k} w_k |wf_{n k}(S^-1 r)|^2 )
  !
- !where we have used the relation
+ ! where we have used the relation
  !
  ! w_k = nsym/(nkibz * rank(k))
  !

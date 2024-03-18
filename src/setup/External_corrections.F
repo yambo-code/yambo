@@ -38,7 +38,7 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  integer  :: QP_PH_n_G_bands_save(2)
  character(schlen) :: db_name
  !
-#if defined _RT 
+#if defined _RT
  logical           :: l_apply_RT_corrections
 #endif
 #if defined _ELPH
@@ -89,13 +89,7 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  bands_to_correct=(/1,n_bands/)
  if (l_gw0)                  call QP_apply(bands_to_correct,en,k,"G",msg_fmt='rs',main_section=.TRUE.)
  !
-#if defined _RT && defined _ELPH
-# define _FAN_EXTERNAL_CORRECTIONS
-#endif
-#if defined _ELPH || (defined _RT && defined _ELPH)
-# define _FAN_EXTERNAL_CORRECTIONS
-#endif
-#if defined _FAN_EXTERNAL_CORRECTIONS
+#if defined _ELPH
  ! 
  ! AM, March 2024. When levels are corrected it may happen that the databases used to correct (QP or carriers)
  ! have been produced WITHOUT e-p. In this case the E-P related variables may be erroneously overwritten
@@ -134,6 +128,9 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
    !
  endif
  !
+ elph_branches  =elph_branches_save
+ QP_PH_n_G_bands=QP_PH_n_G_bands_save
+ !
 #endif
  !
 #if defined _RT
@@ -149,10 +146,5 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  enddo
  !
  call section('r',' ')
- !
-#if defined _FAN_EXTERNAL_CORRECTIONS
- elph_branches  =elph_branches_save
- QP_PH_n_G_bands=QP_PH_n_G_bands_save
-#endif
  !
 end subroutine

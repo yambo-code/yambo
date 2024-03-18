@@ -128,14 +128,16 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
    !
  endif
  !
- elph_branches  =elph_branches_save
- QP_PH_n_G_bands=QP_PH_n_G_bands_save
- !
 #endif
  !
 #if defined _RT
  l_apply_RT_corrections=l_cohsex.or.l_ppa.or.l_gw0
  if (l_apply_RT_corrections) call RT_apply(bands_to_correct,en,k,what="G",VERBOSE=.true.)
+#endif
+ !
+#if defined _ELPH
+ elph_branches  =elph_branches_save
+ QP_PH_n_G_bands=QP_PH_n_G_bands_save
 #endif
  !
  call E_duplicate(en,DIPen)

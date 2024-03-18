@@ -32,7 +32,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp,    &
-&                     molecule_position
+&                     molecule_position,l_0D,l_1D,l_2D,l_3D
  use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
@@ -102,8 +102,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use plasma,     ONLY:PLASMA_redux_percent
 #endif
 #if defined _NL
- use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,         &
-&                     NL_verb_name,NL_bands,n_order,NL_desc
+ use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,NL_initial_versor,     &
+&                     NL_verb_name,NL_bands,NL_desc,n_angles,NL_rot_axis
  use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _SC
@@ -255,6 +255,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  molecule_position=0._SP
  lattice='Unknown'
  Bose_Temp=-1./HA2EV
+ l_3D=.TRUE.
+ l_2D=.FALSE.
+ l_1D=.FALSE.
+ l_0D=.FALSE.
  !
  ! R_lattice
  !
@@ -674,8 +678,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NL_bands      =(/0,0/)
  NL_correlation="IPA"
  NL_er         =(/-1._SP,-1._SP/)/HA2EV
- n_frequencies =1
- n_order    = 0
+ n_frequencies =0
+ n_angles      =0
+ NL_rot_axis   =(/0._SP,0._SP,0._SP/)
+ NL_initial_versor=(/0._SP,0._SP,0._SP/)
  NL_damping    =0.2_SP/HA2EV
  NL_LRC_alpha  =0._SP
  !

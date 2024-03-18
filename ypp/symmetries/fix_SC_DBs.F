@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): CA DS
 !
-subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
+subroutine fix_SC_DBs(k,k_save,kpoints_map)
  !
  use pars,                ONLY:SP,lchlen
  use drivers,             ONLY:l_sc_run
@@ -24,8 +24,6 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  type(bz_samp),intent(in) :: k_save
  integer,intent(in)       :: kpoints_map(2,k%nibz)
  !
- integer,intent(in)       :: action_kind
- !
  ! Work space
  !
  type(levels)          :: en_sc,en_sc_expanded
@@ -42,8 +40,6 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  !
  integer, external :: io_SC_components
  !
- !
- if(action_kind==2) return
  !
  core_io_path_save=core_io_path
  !

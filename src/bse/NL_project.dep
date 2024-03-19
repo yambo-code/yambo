@@ -1,4 +1,5 @@
  K_diago_driver.o
  K_driver_init.o
  K_observables.o
+ objects.o
 

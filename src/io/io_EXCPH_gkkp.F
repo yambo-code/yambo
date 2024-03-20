@@ -27,9 +27,9 @@ integer function io_EXCPH_gkkp(ID)
  use IO_m,           ONLY:io_sec,read_is_on,frag_ELPH,io_status
  use IO_int,         ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header,&
 &                         def_variable_bulk,io_variable_bulk,io_fragment
- use EXCPH,          ONLY:EXCPH_Gkkp,EXCPH_Gkkp_sq,EXCPH_kind,EXCPH_sum,EXCPH_states,&
+ use EXCPH,          ONLY:EXCPH_Gkkp,EXCPH_Gkkp_sq,EXCPH_sum,EXCPH_states,&
 &                         BS_EXCPH_E,ph_EXCPH_E,EXCPH_q,L_kind_in,L_kind_out,Sat_alloc, &
-&                         EXCPH_gkkp_alloc,EXCPH_kind
+&                         EXCPH_gkkp_alloc
  use IO_int,         ONLY:io_variable_elemental,def_variable_elemental
  use ELPH,           ONLY:ph_modes
  use stderr,         ONLY:intc
@@ -71,9 +71,6 @@ integer function io_EXCPH_gkkp(ID)
    !
    call io_elemental(ID,&
 &       VAR=" Exciton sum (scattered)  :",I1=EXCPH_sum,CHECK=.true.,OP=(/"==","=="/))
-   !
-   call io_elemental(ID,&
-&       VAR=" Exciton-phonon kind      :",I0=EXCPH_kind,CHECK=.true.,OP=(/"=="/))
    !
    call io_elemental(ID,&
 &       VAR=" Phonon modes            :",I0=ph_modes,CHECK=.true.,OP=(/"=="/))

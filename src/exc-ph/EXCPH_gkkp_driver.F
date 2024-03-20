@@ -47,7 +47,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use EXCPH,          ONLY:BS_mat_in,BS_mat_out,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,BS_E_in,BS_E,BSS_eh_table_m1_in,&
 &                         EXCPH_states,EXCPH_sum,k_plus_q_table,build_Q_map,EXCPH_q, &
 &                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,l_const_elph,l_abs_elph,l_abs_exc,l_elec_only,l_hole_only, &
-&                         n_exc_in,EXCPH_kind,EXCPH_kind_name,PALEARI,BERNARDI,BSE_alloc,BSE_free
+&                         n_exc_in,BSE_alloc,BSE_free
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
  use com,            ONLY:msg
@@ -99,19 +99,6 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  if(l_abs_exc)  call warning('Absolute value of exciton-phonon coupling  ') 
  call parser('ElectronContributionOnly', l_elec_only)
  call parser('HoleContributionOnly', l_hole_only)
- !
- ! Exciton-phonon kind
- !
- select case (trim(EXCPH_kind_name))
-    case('PALEARI')
-        EXCPH_kind=PALEARI
-    case('BERNARDI')
-        call error("Bernardi formulation not implemented")
-    case default
-        call error("Unknow exciton-phonon coupling type")
- end select
- !
- call msg('rs','Use coupling convention from',trim(EXCPH_kind_name)) 
  !
  elph_branches_save  =elph_branches
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_gkkp)
@@ -223,15 +210,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      !
      do il=elph_branches(1),elph_branches(2)
        !
-       if(EXCPH_kind==PALEARI) then
-         !      
-         call EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
-         ! 
-       elseif(EXCPH_kind==BERNARDI) then
-         !      
-!         call EXCPH_gkkp_eval_ber(iq_s,iq_bz,il,k,q,ID_gkkp)
-         !
-       endif
+       call EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
        !
        call live_timing(steps=1)
        !

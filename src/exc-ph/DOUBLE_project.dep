@@ -5,8 +5,7 @@
  EXCPH_eval_renorm.o
  EXCPH_eval_sat.o
  EXCPH_gkkp_driver.o
- EXCPH_gkkp_eval_ber.o
- EXCPH_gkkp_eval_pal.o
+ EXCPH_gkkp_eval.o
  EXCPH_lifetime.o
  EXCPH_load_L.o
  EXCPH_optics.o

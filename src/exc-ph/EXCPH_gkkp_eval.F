@@ -27,7 +27,7 @@
 !
 ! GKKP formulation following the F. Paleari PhD thesis
 !
-subroutine EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
+subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  !
  use pars,           ONLY:SP,cZERO,rZERO,cONE
  !use electrons,      ONLY:levels

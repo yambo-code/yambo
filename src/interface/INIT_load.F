@@ -42,7 +42,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  &                       BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_matrix_format
 #endif
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
-&                        FXC_SVD_digits,FXC_PF_alpha,ALDA_cut_scheme
+&                        FXC_SVD_digits,FXC_PF_alpha,FXC_mode
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use functions,     ONLY:bose_E_cut
  use parallel_m,    ONLY:n_log_CPUs
@@ -287,7 +287,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSENGfxc','[BSK] Fxc components', BS_n_g_fxc,G_unit,verb_level=V_resp)
- call it(defs,'FxcCutScheme', '[TDDFT] ("none","lower_Gmax","lower_GmGp","full_grid") ',ALDA_cut_scheme,verb_level=V_resp)
+ call it(defs,'FxcMode', '[TDDFT] ("G-XXX" or "R-XXX" with XXX=def/full/cut_Gmax/cut_GmGp") ',FXC_mode,verb_level=V_resp)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  call it(defs,'BSKCut',  '[BSK] Cutoff on the BSE Kernel, 0=full 1=none',BS_K_cutoff,verb_level=V_resp)
  call it(defs,'BSKIOmode','[BSK] ("1D_linear"/"2D_standard" + "norestart")',BSK_IO_mode,verb_level=V_resp)

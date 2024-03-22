@@ -40,8 +40,11 @@ configure: uncompress
 	@if test -d $(PACKAGE) && ! test -f configured.stamp; then \
          echo "\t[$(PACKAGE)] configuration"; \
 	 cd $(PACKAGE);  \
+	 echo "unset PETSC_DIR;" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
+	 echo "unset PETSC_ARCH;" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
 	 unset PETSC_DIR; \
 	 unset PETSC_ARCH; \
+	 echo "python3 ./configure $(CONFFLAGS)" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
 	 python3 ./configure $(CONFFLAGS) >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
 	 touch ../configured.stamp; \
 	fi

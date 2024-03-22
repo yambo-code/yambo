@@ -8,12 +8,12 @@
 subroutine NL_ypp_driver(en,k)
  !
  use YPP_real_time,  ONLY:X_order,RT_conf,RT_time,Pol,l_skip_OBS_IO,Pump_path
- use pars,           ONLY:SP,pi,lchlen
+ use pars,           ONLY:SP,pi,lchlen,cZERO
  use units,          ONLY:HA2EV,AUT2FS
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
- use nl_optics,      ONLY:n_frequencies,NL_P_t
+ use nl_optics,      ONLY:n_frequencies,NL_P_t,loop_on_frequencies,loop_on_angles,n_runs,n_angles
  use fields,         ONLY:Efield,EtoT,Divide_by_Field,ext_field,Efield_duplicate,Efield_strength
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
@@ -35,7 +35,7 @@ subroutine NL_ypp_driver(en,k)
  integer  :: i_f,i_d,i_order
  character(9) :: dbname
  real(SP) :: W_step,T_period,time_range_save(2)
- real(SP),    allocatable  :: RT_P_probe(:,:,:),Harmonic_Frequency(:,:),Probe_frequency(:)
+ real(SP),    allocatable  :: RT_P_probe(:,:,:),Harmonic_Frequency(:,:),Probe_frequency(:),Probe_versors(:,:)
  complex(SP), allocatable  :: X_effective(:,:,:),Susceptibility(:,:,:)
  logical  :: Probe_consistency_error,l_print_pwr_spectrum
  type(ext_field)   :: Efield_probe
@@ -69,20 +69,33 @@ subroutine NL_ypp_driver(en,k)
  !
  l_skip_OBS_IO=.false.
  !
- YAMBO_ALLOC(RT_P_probe,(NE_steps,n_frequencies,3))
- YAMBO_ALLOC(Probe_frequency,(n_frequencies))
- RT_P_probe=0._SP
- Probe_frequency=0._SP
- !
  ! Reads the polarization from dbs containing simulation at different frequencies 
  !
  Probe_consistency_error=.FALSE.
  i_Probe=1
  !
- allocate(runs_ok(n_frequencies))
+ if(n_frequencies>=1) then
+   loop_on_frequencies=.true.
+   n_runs=n_frequencies
+ elseif(n_angles>=1) then
+   loop_on_angles=.true.
+   n_runs=n_angles
+   YAMBO_ALLOC(Probe_versors,(3,n_runs))
+   Probe_versors=0._SP
+ else
+   n_runs=1
+ endif
+ !
+ YAMBO_ALLOC(Probe_frequency,(n_runs))
+ Probe_frequency=0._SP
+ !
+ YAMBO_ALLOC(RT_P_probe,(NE_steps,n_runs,3))
+ RT_P_probe=0._SP
+ !
+ allocate(runs_ok(n_runs))
  runs_ok=.true.
  !
- do i_f=1,n_frequencies
+ do i_f=1,n_runs
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1+i_f/),MODE=DUMP,ID=ID)
    io_Nonlinear=io_NL(dbname,ID)
    !
@@ -107,6 +120,7 @@ subroutine NL_ypp_driver(en,k)
    enddo
    !
    Probe_frequency(i_f)=Efield(i_Probe)%frequency(1)
+   if(loop_on_angles) Probe_versors(:,i_f)=Efield(i_Probe)%versor(:)
    !
    if(io_Nonlinear_REF==0) then
      call warning("removing reference polarization/current")
@@ -125,7 +139,7 @@ subroutine NL_ypp_driver(en,k)
    !
  enddo
  !
- if (Probe_consistency_error) call error(' Not all probes have consistent parameters')
+ if (Probe_consistency_error)  call error(' Not all probes have consistent parameters')
  if (any(runs_ok.eqv..false.)) call warning(' Incomplete runs')
  if (all(runs_ok.eqv..false.)) call error(' Error reading non-linear databases!')
  !
@@ -156,9 +170,9 @@ subroutine NL_ypp_driver(en,k)
    !
    case('SIN','SOFTSIN','ANTIRES')
      !  
-     YAMBO_ALLOC(X_effective,(0:X_order,n_frequencies,3))
-     YAMBO_ALLOC(Susceptibility,(0:X_order,n_frequencies,3))
-     YAMBO_ALLOC(Harmonic_Frequency,(0:X_order,n_frequencies))
+     YAMBO_ALLOC(X_effective,(0:X_order,n_runs,3))
+     YAMBO_ALLOC(Susceptibility,(0:X_order,n_runs,3))
+     YAMBO_ALLOC(Harmonic_Frequency,(0:X_order,n_runs))
      !
      do i_order=0,X_order
        Harmonic_Frequency(i_order,:)=real(i_order,SP)*Probe_Frequency(:)
@@ -170,11 +184,11 @@ subroutine NL_ypp_driver(en,k)
      !
      call msg('s','[RT] Effective max time period     ',T_period*AUT2FS,"[fs]")
      !
-     call live_timing('X effective ', n_frequencies)
+     call live_timing('X effective ', n_runs)
      !
      time_range_save=RT_conf%T_range
      !
-     do i_f = 1, n_frequencies
+     do i_f = 1, n_runs
        !
        if(.not.runs_ok(i_f)) cycle
        !
@@ -197,13 +211,14 @@ subroutine NL_ypp_driver(en,k)
      !
      do i_order=0,X_order
        !
-       do i_f=1,n_frequencies
+       do i_f=1,n_runs
          !
          if(.not.runs_ok(i_f)) cycle
          !
          if (i_order==1) then
            Susceptibility(i_order,i_f,1)=4._SP*pi*dot_product( Efield(i_Probe)%versor(:),X_effective(i_order,i_f,:) )*&
 &                                        Divide_by_Field(Efield(i_Probe),i_order)
+	   Susceptibility(i_order,i_f,2:3)=cZERO
          else 
            Susceptibility(i_order,i_f,:)=X_effective(i_order,i_f,:)*Divide_by_Field(Efield(i_Probe),i_order)
          end if
@@ -214,12 +229,15 @@ subroutine NL_ypp_driver(en,k)
      !
      ! Plot
      !
-     call plot_X_effective()
+     if(loop_on_frequencies) call plot_X_effective()
+     if(loop_on_angles)      call plot_X_angle()
      YAMBO_FREE(X_effective)
      YAMBO_FREE(Susceptibility)
      YAMBO_FREE(Harmonic_Frequency)
      !
    case ('DELTA','PULSE')
+     !
+     ! Linear response case
      !
      allocate(Pol(1))
      YAMBO_ALLOC(Pol(1)%F_t,(RT_conf%T_n_steps,3))
@@ -232,6 +250,7 @@ subroutine NL_ypp_driver(en,k)
      deallocate(Pol)
      !
   case default 
+     !
      ! OTHER CASES NOT YET WORKING
      !
      call error('Analysis not available for the '//trim((Efield_probe%ef_name))//' field')
@@ -241,6 +260,94 @@ subroutine NL_ypp_driver(en,k)
  !
  contains
    !
+   subroutine plot_X_angle()
+       !
+     ! ... ordering and frequency step (defines the P(t) periodicity)
+     !
+     use pars,           ONLY:SP,lchlen,schlen,pi
+     use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1
+     use YPP_real_time,  ONLY:max_n_of_paths
+     use RT_control,     ONLY:RT_output
+     use com,            ONLY:msg,of_open_close
+     use vec_operate,    ONLY:sort
+     use interfaces,     ONLY:DESC_write
+     use nl_optics,      ONLY:NL_desc
+     use stderr,         ONLY:intc,real2ch
+     !
+     ! Working Space
+     !
+     character(schlen) :: X_file_name
+     integer           :: i_fp,i_dsc
+     real(SP)          :: Unit_of_Measure,VALUEs(11),angle
+     integer           :: f_indx(max_n_of_paths),n_headings
+     character(schlen) :: headings(11,0:X_order),oexp
+     !
+     Harmonic_Frequency(1,:)=Probe_Frequency(:)
+     !
+     n_headings=7
+     !
+     headings(1,:)="Angle [grad]"
+     !
+     ! X^1 is adimensional
+     ! X^0 I don't know :-)
+     ! X^n n>2 [cm/stV]^{n-1}
+     !
+     headings(2:7,0)=(/'X/Im(x)','X/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
+     headings(2:7,1)=(/'X/Im(x)','X/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
+     if(X_order>=2)  headings(2:7,2)=(/'X/Im[cm/stV](x)','X/Re[cm/stV](x)','X/Im[cm/stV](y)', &
+&                                      'X/Re[cm/stV](y)','X/Im[cm/stV](z)','X/Re[cm/stV](z)'/)
+     do i_order=3,X_order,1
+       oexp=trim(intc(i_order-1))
+       headings(2:7,i_order)=(/'X/Im[cm/stV]^'//oexp//'(x)','X/Re[cm/stV]^'//oexp//'(x)',&
+&                              'X/Im[cm/stV]^'//oexp//'(y)','X/Re[cm/stV]^'//oexp//'(y)',&
+&                              'X/Im[cm/stV]^'//oexp//'(z)','X/Re[cm/stV]^'//oexp//'(z)'/)
+     enddo
+     !
+     do i_order=0,X_order,1
+       !
+       X_file_name="YPP-X_angle_order_"//trim(intc(i_order))
+       !
+       call of_open_close(trim(X_file_name),'ot')
+       !
+       call DESC_write('o probe','#',NL_desc)
+       !
+       call msg('o angle','#')
+       call msg('o angle','#','Laser frequency : '//real2ch(Probe_frequency(1)*HA2EV)//'[eV]')
+       call msg('o angle','#')
+       !
+       call msg('o angle','#')
+       call msg('o angle','#',headings(1:n_headings,i_order),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o angle','#')
+       !
+       do i_f=1,n_runs
+         !
+         if(.not.runs_ok(i_f)) cycle
+         !
+         angle=360.0/real(n_angles,SP)*(i_f-1.0)
+         !
+         Unit_of_Measure = 1._SP
+         !
+         if (i_order==0) Unit_of_Measure =  SVCMm12VMm1/AU2VMm1
+         if (i_order> 1) Unit_of_Measure = (SVCMm12VMm1/AU2VMm1)**(i_order-1)  
+         !
+         VALUEs(1)  =angle
+         VALUEs(2:7)=(/aimag(Susceptibility(i_order,i_f,1)*Unit_of_Measure),&
+&                       real(Susceptibility(i_order,i_f,1)*Unit_of_Measure),&
+                       aimag(Susceptibility(i_order,i_f,2)*Unit_of_Measure),&
+&                       real(Susceptibility(i_order,i_f,2)*Unit_of_Measure),&
+&                      aimag(Susceptibility(i_order,i_f,3)*Unit_of_Measure),&
+&                       real(Susceptibility(i_order,i_f,3)*Unit_of_Measure)/)
+         !
+         call msg('o angle','',VALUEs(1:n_headings),USE_TABS=.TRUE.)
+         !
+       enddo 
+       !
+       call of_open_close(trim(X_file_name))
+       !
+     enddo
+
+   end
+     !  
    subroutine plot_X_effective()
      !
      ! ... ordering and frequency step (defines the P(t) periodicity)
@@ -259,12 +366,9 @@ subroutine NL_ypp_driver(en,k)
      !
      character(schlen) :: X_file_name
      integer           :: i_fp,i_dsc
-     logical           :: l_prt_err
      real(SP)          :: Unit_of_Measure,VALUEs(11)
      integer           :: f_indx(max_n_of_paths),n_headings
      character(schlen) :: headings(11,0:X_order),oexp
-     !
-     l_prt_err=.false.
      !
      Harmonic_Frequency(1,:)=Probe_Frequency(:)
      call sort(Harmonic_Frequency(1,:),indx=f_indx(:n_frequencies))
@@ -279,8 +383,8 @@ subroutine NL_ypp_driver(en,k)
      !
      headings(2:7,0)=(/'X/Im(x)','X/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
      headings(2:7,1)=(/'X/Im(x)','X/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
-     headings(2:7,2)=(/'X/Im[cm/stV](x)','X/Re[cm/stV](x)','X/Im[cm/stV](y)','X/Re[cm/stV](y)',&
-&                      'X/Im[cm/stV](z)','X/Re[cm/stV](z)'/)
+     if(X_order>=2)  headings(2:7,2)=(/'X/Im[cm/stV](x)','X/Re[cm/stV](x)','X/Im[cm/stV](y)',   &
+&                                      'X/Re[cm/stV](y)','X/Im[cm/stV](z)','X/Re[cm/stV](z)'/)
      do i_order=3,X_order,1
        oexp=trim(intc(i_order-1))
        headings(2:7,i_order)=(/'X/Im[cm/stV]^'//oexp//'(x)','X/Re[cm/stV]^'//oexp//'(x)',&
@@ -331,7 +435,7 @@ subroutine NL_ypp_driver(en,k)
    !
    real(SP) function T_range_nl(i_n,i_f)
      !
-     integer :: i_n,i_f
+     integer, intent(in) :: i_n,i_f
      !
      RT_conf%T_range=time_range_save
      !

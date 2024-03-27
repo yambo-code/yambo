@@ -22,6 +22,16 @@ if ! test -e configured.stamp && test -d $(PACKAGE); then \
 fi
 endef
 #
+define autoconf
+if ! test -e autoconf.stamp && test -d $(PACKAGE); then \
+ echo "\t[$(PACKAGE)] autoconf"; \
+ rm -f ${compdir}/log/autoconf_$(PACKAGE).log; \
+ CWD=`pwd`;\
+ cd $(PACKAGE);  ./autoreconf -i >> ${compdir}/log/autoconf_$(PACKAGE).log 2>&1 ; \
+ touch $$CWD/autoconf.stamp;\
+fi
+endef
+#
 define compile
 if ! test -e compiled.stamp && test -d $(PACKAGE); then \
  echo "\t[$(PACKAGE)] $(1) compilation"; \

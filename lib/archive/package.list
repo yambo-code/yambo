@@ -94,12 +94,12 @@ url_netcdff=https://github.com/Unidata/netcdf-fortran/archive/refs/tags/$(tarbal
 #
 url_slepc=https://gitlab.com/slepc/slepc/-/archive/v$(version_slepc)/$(tarball_slepc)
 url_petsc=https://gitlab.com/petsc/petsc/-/archive/v$(version_petsc)/$(tarball_petsc)
-url_libxc=https://gitlab.com/libxc/libxc/-/archive/$(version_libxc)/$(tarball_libxc)  # this would require to run "autoreconf -i"
+#url_libxc=https://gitlab.com/libxc/libxc/-/archive/$(version_libxc)/$(tarball_libxc)  # this would require to run "autoreconf -i"
 #
 # External URL's More
 #
 url_fftw=https://fftw.org/$(tarball_fftw)
-#url_libxc=https://www.tddft.org/programs/libxc/down/$(version_libxc)/$(tarball_libxc)
+url_libxc=https://www.tddft.org/programs/libxc/down/$(version_libxc)/$(tarball_libxc)
 #
 # Internal URL's
 #

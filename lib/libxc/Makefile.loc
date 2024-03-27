@@ -32,6 +32,8 @@ uncompress:
 	@$(uncompress)
 
 configure: uncompress
+	@echo "\t[$(PACKAGE)] autoconf"; \
+	cd $(pkgname_libxc); autoreconf -i >> ${compdir}/log/autoreconfig_$(PACKAGE).log  2>&1;
 	@$(configure)
 
 compile: uncompress configure

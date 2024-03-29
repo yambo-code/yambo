@@ -134,7 +134,7 @@ void options_yambo(struct options_struct options[],int *i_opt)
  strcpy(options[*i_opt].long_desc[1],"(h)aydock/(d)iagonalization");
  strcpy(options[*i_opt].long_desc[2],"(pi) perturbative inversion/ (fi) full inversion");
 #if defined _SLEPC && !defined _NL
- strcpy(options[*i_opt].long_desc[2]="(s)lepc partial diagonalization");
+ strcpy(options[*i_opt].long_desc[2],"(s)lepc partial diagonalization");
 #endif
  options[*i_opt].long_opt="Ksolver";
  options[*i_opt].short_opt='y';

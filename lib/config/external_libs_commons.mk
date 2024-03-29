@@ -39,10 +39,10 @@ if ! test -e compiled.stamp && test -d $(PACKAGE); then \
  CWD=`pwd`;\
  FLGS="$(MAKEFLAGS)";\
  if [ "$(PACKAGE)" = "$(pkgname_scalapack)" ]; then \
-  FLGS=`echo "$(MAKEFLAGS)" | sed 's/-j//g'`; \
+  FLGS="-j1";\
  fi;\
  cd $(PACKAGE); \
- $(make) $(MAKEFLAGS) $(1) >> ${compdir}/log/compile_$(PACKAGE).log 2>&1;  \
+ $(make) $$FLGS $(1) >> ${compdir}/log/compile_$(PACKAGE).log 2>&1;  \
  if [ ! "$(1)" = "blaslib" ] &&  [ ! "$(1)" = "loclib_only" ]; then touch $$CWD/compiled.stamp; fi;\
 fi
 endef

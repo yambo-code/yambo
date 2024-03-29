@@ -34,8 +34,8 @@ version_libxc=5.2.3
 version_lapack=3.12.0
 version_blacs=missing
 version_scalapack=2.2.1
-version_slepc=3.20.1
-version_petsc=3.20.2
+version_slepc=3.20.2
+version_petsc=3.20.5
 version_fftw=3.3.10
 version_fftqe=missing
 version_yaml=0.2.2
@@ -88,18 +88,22 @@ url_scalapack=https://github.com/Reference-ScaLAPACK/scalapack/archive/refs/tags
 url_hdf5=https://github.com/HDFGroup/hdf5/archive/refs/tags/$(tarball_hdf5)
 url_netcdf=https://github.com/Unidata/netcdf-c/archive/refs/tags/$(tarball_netcdf)
 url_netcdff=https://github.com/Unidata/netcdf-fortran/archive/refs/tags/$(tarball_netcdff)
-#url_fftw=https://github.com/FFTW/fftw3/archive/refs/tags/$(tarball_fftw)  # this would not work, since the repo contains the code generator
 #
 # External URL's on Gitlab
 #
 url_slepc=https://gitlab.com/slepc/slepc/-/archive/v$(version_slepc)/$(tarball_slepc)
 url_petsc=https://gitlab.com/petsc/petsc/-/archive/v$(version_petsc)/$(tarball_petsc)
+#
+#...libxc...
+#...this requires to run "autoreconf -i" (coded)
 url_libxc=https://gitlab.com/libxc/libxc/-/archive/$(version_libxc)/$(tarball_libxc)  # this would require to run "autoreconf -i"
+#
+#...this at the moment does not work
+#url_libxc=https://www.tddft.org/programs/libxc/down/$(version_libxc)/$(tarball_libxc)
 #
 # External URL's More
 #
 url_fftw=https://fftw.org/$(tarball_fftw)
-#url_libxc=https://www.tddft.org/programs/libxc/down/$(version_libxc)/$(tarball_libxc)
 #
 # Internal URL's
 #

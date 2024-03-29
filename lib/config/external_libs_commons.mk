@@ -38,7 +38,7 @@ if ! test -e compiled.stamp && test -d $(PACKAGE); then \
  rm -f ${compdir}/log/compile_$(PACKAGE).log; \
  CWD=`pwd`;\
  FLGS="$(MAKEFLAGS)";\
- if [ "$(PACKAGE)" = "scalapack-2.1.0" ]; then \
+ if [ "$(PACKAGE)" = "$(pkgname_scalapack)" ]; then \
   FLGS=`echo "$(MAKEFLAGS)" | sed 's/-j//g'`; \
  fi;\
  cd $(PACKAGE); \

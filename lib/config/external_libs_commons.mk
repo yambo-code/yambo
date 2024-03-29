@@ -27,7 +27,7 @@ if ! test -e autoconf.stamp && test -d $(PACKAGE); then \
  echo "\t[$(PACKAGE)] autoconf"; \
  rm -f ${compdir}/log/autoconf_$(PACKAGE).log; \
  CWD=`pwd`;\
- cd $(PACKAGE);  ./autoreconf -i >> ${compdir}/log/autoconf_$(PACKAGE).log 2>&1 ; \
+ cd $(PACKAGE);  autoreconf -i >> ${compdir}/log/autoconf_$(PACKAGE).log 2>&1 ; \
  touch $$CWD/autoconf.stamp;\
 fi
 endef

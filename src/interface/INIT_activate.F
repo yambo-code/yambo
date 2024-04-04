@@ -423,6 +423,7 @@ subroutine INIT_activate()
 #if defined  _ELPH 
    !
    if (l_elph_corr) then
+     call INIT_QP_ctl_switch('G')
      call initactivate(1,'DysSolver')
      call initactivate(1,'GphBRnge FANdEtresh DWdEtresh ElPhModes GDamping dScStep ExtendOut ElPhRndNq RandQpts')
      call initactivate(1,'GkkpDB WRgFsq NewtDchk OnMassShell')
@@ -507,6 +508,11 @@ subroutine INIT_activate()
 #endif
  !
 #if defined _RT
+ !
+ ! AM March 2024: the following line has been added in order to perform
+ ! e-p calculations on top of RT carriers distribution.
+ !
+ if (l_elph_corr) call INIT_RT_ctl_switch('G')
  !
  if (l_real_time) then
    !

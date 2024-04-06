@@ -6,7 +6,6 @@
   Authors (see AUTHORS file for details): AM
 
 */
-#include <string.h>
 #include <stdio.h>
 #include <kind.h>
 
@@ -17,7 +16,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  */
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="BZ Grid generator";
- strcpy(options[*i_opt].long_desc[0],"<string>=(k)pt,(q)pt,(s)hifted,(h)igh symmetry,(r)andom,r(e)gular");
+ options[*i_opt].long_desc[0]="<string>=(k)pt,(q)pt,(s)hifted,(h)igh symmetry,(r)andom,r(e)gular";
  options[*i_opt].long_opt="grid";
  options[*i_opt].short_opt='k';
  options[*i_opt].bin="ypp";
@@ -62,8 +61,8 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].section="Convertions";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Quasiparticle Databases";
- strcpy(options[*i_opt].long_desc[0],"<string>=(g)enerate-modify/(m)erge/(e)xpand");
- strcpy(options[*i_opt].long_desc[1],"         (e)xpand uses the symmetries to generate a BZ-expanded QP database");
+ options[*i_opt].long_desc[0]="<string>=(g)enerate-modify/(m)erge/(e)xpand";
+ options[*i_opt].long_desc[1]="         (e)xpand uses the symmetries to generate a BZ-expanded QP database";
  options[*i_opt].long_opt="qpdb";
  options[*i_opt].bin="ypp";
  options[*i_opt].yambo_string="QPDBs";
@@ -77,7 +76,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp_ph";
  options[*i_opt].yambo_string="gkkp"  ;
  options[*i_opt].section="Convertions";
- strcpy(options[*i_opt].long_desc[0],"<string>=(g)kkp,(d)ouble grid,(p)lot gkkp");
+ options[*i_opt].long_desc[0]="<string>=(g)kkp,(d)ouble grid,(p)lot gkkp";
  options[*i_opt].char_var=1;
 #endif
  /* 
@@ -100,13 +99,13 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].section="Plots";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Electronic properties";
- strcpy(options[*i_opt].long_desc[0],"<string>=(h)artree,(f)ock,(coh),(sex),(cohsex),(exx),(exxc),(srpa),(d)ef,(ip)");
+ options[*i_opt].long_desc[0]="<string>=(h)artree,(f)ock,(coh),(sex),(cohsex),(exx),(exxc),(srpa),(d)ef,(ip)";
 #if defined _ELPH  
- strcpy(options[*i_opt].long_desc[0],"<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent,(e)lias");
+ options[*i_opt].long_desc[0]="<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent,(e)lias";
 #elif defined _YPP_MAGNETIC 
- strcpy(options[*i_opt].long_desc[0],"<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent,angu(l)ar,(p)osition");
+ options[*i_opt].long_desc[0]="<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent,angu(l)ar,(p)osition";
 #else
- strcpy(options[*i_opt].long_desc[0],"<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent");
+ options[*i_opt].long_desc[0]="<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent";
 #endif
  options[*i_opt].long_opt="electron";
  options[*i_opt].short_opt='s';
@@ -120,10 +119,10 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].short_opt='e';
  options[*i_opt].bin="ypp ypp_ph";
 #if defined _ELPH  
- strcpy(options[*i_opt].long_desc[0],"<string>=(s)ort,(sp)in,(a)mplitude,(w)ave,(i)nterpolate,");
- strcpy(options[*i_opt].long_desc[1],"         (e)lias,(g)kkp,(p)h-assisted dos");
+ options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave,(i)nterpolate,";
+ options[*i_opt].long_desc[1]="         (e)lias,(g)kkp,(p)h-assisted dos";
 #else
- strcpy(options[*i_opt].long_desc[0],"<string>=(s)ort,(sp)in,(a)mplitude,(w)ave,(i)nterpolate");
+ options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave,(i)nterpolate";
 #endif
  options[*i_opt].yambo_string="excitons";
  options[*i_opt].section="Plots";
@@ -132,9 +131,9 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].short_desc="Dipole properties";
  options[*i_opt].long_opt="dipoles";
  options[*i_opt].bin="ypp";
- strcpy(options[*i_opt].long_desc[0],"<string>=(exc)itonic,(ip)independent-particle");
+ options[*i_opt].long_desc[0]="<string>=(exc)itonic,(ip)independent-particle";
 #if defined _YPP_RT  
- strcpy(options[*i_opt].long_desc[0],"<string>=(exc)itonic,(ip)independent-particle,(m)ask");
+ options[*i_opt].long_desc[0]="<string>=(exc)itonic,(ip)independent-particle,(m)ask";
 #endif
  options[*i_opt].yambo_string="dipoles";
  options[*i_opt].section="Plots";
@@ -154,7 +153,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
 #if !defined _YPP_RT  
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Phononic properties";
- strcpy(options[*i_opt].long_desc[0],"<string>=(d)os,(e)lias,(a)mplitude");
+ options[*i_opt].long_desc[0]="<string>=(d)os,(e)lias,(a)mplitude";
  options[*i_opt].long_opt=  "phonon";
  options[*i_opt].short_opt='p';
  options[*i_opt].bin="ypp_ph";
@@ -174,7 +173,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].section="Real-Time";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Carriers database generation";
- strcpy(options[*i_opt].long_desc[0],"<string>=(e)nergy,(f)ermi");
+ options[*i_opt].long_desc[0]="<string>=(e)nergy,(f)ermi";
  options[*i_opt].long_opt=  "rtdb";
  options[*i_opt].short_opt='c';
  options[*i_opt].bin="ypp_rt";
@@ -189,12 +188,12 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp_rt";
  options[*i_opt].yambo_string="TDplots"; /* TDplots */
  options[*i_opt].section="Real-Time";
- strcpy(options[*i_opt].long_desc[0],"<string>=(X)response,(a)bsorption,(o)ccupations,(l)ifetimes,(d)ensity,(p)olariazion,(g)reen-function");
- strcpy(options[*i_opt].long_desc[1]," ");
- strcpy(options[*i_opt].long_desc[2],"(X) response calculates the response via the time-resolved polarization");
- strcpy(options[*i_opt].long_desc[3],"(a) absorption amends the Kubo expression with the time-dependent occupations");
- strcpy(options[*i_opt].long_desc[4],"(p) polarization evaluates the k-resolved components of the time-dependent polarization");
- strcpy(options[*i_opt].long_desc[5],"(g) evaluates the two-times Green`s function");
+ options[*i_opt].long_desc[0]="<string>=(X)response,(a)bsorption,(o)ccupations,(l)ifetimes,(d)ensity,(p)olariazion,(g)reen-function";
+ options[*i_opt].long_desc[1]=" ";
+ options[*i_opt].long_desc[2]="(X) response calculates the response via the time-resolved polarization";
+ options[*i_opt].long_desc[3]="(a) absorption amends the Kubo expression with the time-dependent occupations";
+ options[*i_opt].long_desc[4]="(p) polarization evaluates the k-resolved components of the time-dependent polarization";
+ options[*i_opt].long_desc[5]="(g) evaluates the two-times Green`s function";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="TD plot control";
  options[*i_opt].char_var=1;
@@ -203,9 +202,9 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp_rt";
  options[*i_opt].yambo_string="TDplotmode"; /* TDpol */
  options[*i_opt].section="Real-Time";
- strcpy(options[*i_opt].long_desc[0],"rtplot=X/a => <string>=(t)ime");
- strcpy(options[*i_opt].long_desc[1],"rtplot=o   => <string>=(b)ands,(t)ime,(e)nergy,(d)os");
- strcpy(options[*i_opt].long_desc[2],"rtplot=l   => <string>=(b)ands,(t)ime,(e)nergy");
- strcpy(options[*i_opt].long_desc[3],"rtplot=d   => <string>=(t)ime");
- strcpy(options[*i_opt].long_desc[4],"rtplot=p   => <string>=(t)ime");
+ options[*i_opt].long_desc[0]="rtplot=X/a => <string>=(t)ime";
+ options[*i_opt].long_desc[1]="rtplot=o   => <string>=(b)ands,(t)ime,(e)nergy,(d)os";
+ options[*i_opt].long_desc[2]="rtplot=l   => <string>=(b)ands,(t)ime,(e)nergy";
+ options[*i_opt].long_desc[3]="rtplot=d   => <string>=(t)ime";
+ options[*i_opt].long_desc[4]="rtplot=p   => <string>=(t)ime";
 };

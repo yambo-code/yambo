@@ -6,7 +6,6 @@
   Authors (see AUTHORS file for details): AM
 
 */
-#include <string.h>
 #include <stdio.h>
 #include <kind.h>
 
@@ -29,7 +28,7 @@ void options_control(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="yambo ypp a2y e2y";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Input file variables verbosity";
- strcpy(options[*i_opt].long_desc[0],"<string> can be RL,kpt,sc,qp,io,gen,resp/X,ph,rt,par,nl,all");
+ options[*i_opt].long_desc[0]="<string> can be RL,kpt,sc,qp,io,gen,resp/X,ph,rt,par,nl,all";
  options[*i_opt].short_opt='V';
  options[*i_opt].long_opt="Verbosity"; 
  options[*i_opt].char_var=1;
@@ -68,7 +67,7 @@ void options_control(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Walltime";
- strcpy(options[*i_opt].long_desc[0],"Format is DdHhMm with D=days, H=hours and M=minutes");
+ options[*i_opt].long_desc[0]="Format is DdHhMm with D=days, H=hours and M=minutes";
  options[*i_opt].long_opt="walltime";
  options[*i_opt].int_var=1;
  options[*i_opt].yambo_string="wallt";
@@ -76,7 +75,7 @@ void options_control(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Memory";
- strcpy(options[*i_opt].long_desc[0],"The value is per processor. The value can be provided in Mb/Gb. E.g. 1Gb");
+ options[*i_opt].long_desc[0]="The value is per processor. The value can be provided in Mb/Gb. E.g. 1Gb";
  options[*i_opt].long_opt="memory";
  options[*i_opt].int_var=1;
  options[*i_opt].yambo_string="memorylimit";

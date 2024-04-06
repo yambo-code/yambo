@@ -6,7 +6,6 @@
   Authors (see AUTHORS file for details): AM
 
 */
-#include <string.h>
 #include <stdio.h>
 #include <kind.h>
 
@@ -24,14 +23,14 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="GW approximation";
- strcpy(options[*i_opt].long_desc[i_desc],"<string>=(p)PA/(m)PA/(c)HOSEX/(r)eal-axis");
+ options[*i_opt].long_desc[i_desc]="<string>=(p)PA/(m)PA/(c)HOSEX/(r)eal-axis";
 #if defined _ELPH
  i_desc=i_desc+1;
- strcpy(options[*i_opt].long_desc[i_desc],"<string>=fan");
+ options[*i_opt].long_desc[i_desc]="<string>=fan";
 #endif
 #if defined _ELPH
  i_desc=i_desc+1;
- strcpy(options[*i_opt].long_desc[i_desc],"<string>=X");
+ options[*i_opt].long_desc[i_desc]="<string>=X";
 #endif
  options[*i_opt].long_opt="gw0";
  options[*i_opt].short_opt='p';
@@ -41,10 +40,10 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Dyson Equation solver";
- strcpy(options[*i_opt].long_desc[0],"<string>=(g)reen [any scattering]");
- strcpy(options[*i_opt].long_desc[1],"<string>=(n)ewton [order 1]/(s)ecant [e-e scattering]");
+ options[*i_opt].long_desc[0]="<string>=(g)reen [any scattering]";
+ options[*i_opt].long_desc[1]="<string>=(n)ewton [order 1]/(s)ecant [e-e scattering]";
 #if defined _PHEL
- strcpy(options[*i_opt].long_desc[2],"<string>=(n)ewton [order 2] [p-e scattering]");
+ options[*i_opt].long_desc[2]="<string>=(n)ewton [order 2] [p-e scattering]";
 #endif
  options[*i_opt].long_opt="dyson";
  options[*i_opt].short_opt='g';
@@ -87,8 +86,8 @@ void options_yambo(struct options_struct options[],int *i_opt)
  desc="Response Functions";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Linear Response optical properties";
- strcpy(options[*i_opt].long_desc[0],"<string>=c Reciprocal-Space");
- strcpy(options[*i_opt].long_desc[1],"<string>=b for Transition-Space Bethe-Salpeter");
+ options[*i_opt].long_desc[0]="<string>=c Reciprocal-Space";
+ options[*i_opt].long_desc[1]="<string>=b for Transition-Space Bethe-Salpeter";
  options[*i_opt].long_opt="optics";
  options[*i_opt].short_opt='o';
  options[*i_opt].bin="yambo";
@@ -102,8 +101,8 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="yambo";
  options[*i_opt].yambo_string="screen";
  options[*i_opt].section=desc;
- strcpy(options[*i_opt].long_desc[0],"<string>=(s)static/(p)PA/m(PA)/(d)ynamical dielectric matrix");
- strcpy(options[*i_opt].long_desc[1],"<string>=(X) dynamical response matrix");
+ options[*i_opt].long_desc[0]="<string>=(s)static/(p)PA/m(PA)/(d)ynamical dielectric matrix";
+ options[*i_opt].long_desc[1]="<string>=(X) dynamical response matrix";
  options[*i_opt].char_var=1;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Oscillator strenghts (or dipoles)";
@@ -114,8 +113,8 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Kernel";
- strcpy(options[*i_opt].long_desc[0],"<string>=hartree/alda/lrc/hf/sex/bsfxc");
- strcpy(options[*i_opt].long_desc[1],"hf/sex only eh-space; lrc only G-space");
+ options[*i_opt].long_desc[0]="<string>=hartree/alda/lrc/hf/sex/bsfxc";
+ options[*i_opt].long_desc[1]="hf/sex only eh-space; lrc only G-space";
  options[*i_opt].long_opt="kernel";
  options[*i_opt].short_opt='k';
  options[*i_opt].bin="yambo";
@@ -127,14 +126,14 @@ void options_yambo(struct options_struct options[],int *i_opt)
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="BSE solver";
 #if defined _SLEPC && !defined _NL
- strcpy(options[*i_opt].long_desc[0],"<string>=h/d/s/(p/f)i");
+ options[*i_opt].long_desc[0]="<string>=h/d/s/(p/f)i";
 #else
- strcpy(options[*i_opt].long_desc[0],"<string>=h/d/(p/f)i");
+ options[*i_opt].long_desc[0]="<string>=h/d/(p/f)i";
 #endif
- strcpy(options[*i_opt].long_desc[1],"(h)aydock/(d)iagonalization");
- strcpy(options[*i_opt].long_desc[2],"(pi) perturbative inversion/ (fi) full inversion");
+ options[*i_opt].long_desc[1]="(h)aydock/(d)iagonalization";
+ options[*i_opt].long_desc[2]="(pi) perturbative inversion/ (fi) full inversion";
 #if defined _SLEPC && !defined _NL
- strcpy(options[*i_opt].long_desc[2],"(s)lepc partial diagonalization");
+ options[*i_opt].long_desc[2]="(s)lepc partial diagonalization";
 #endif
  options[*i_opt].long_opt="Ksolver";
  options[*i_opt].short_opt='y';

@@ -71,7 +71,6 @@ lib/*/bin
 lib/*/tmp
 lib/*/etsf_io*
 lib/*/netcdf-*
-lib/*/pnetcdf-*
 lib/*/iotk*
 lib/*/libxc-*
 lib/*/lapack-*

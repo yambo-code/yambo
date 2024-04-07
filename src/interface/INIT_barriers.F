@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2014 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine INIT_barriers()
  !
@@ -33,6 +17,7 @@ subroutine INIT_barriers()
  use electrons,  ONLY:n_spin,n_met_bands,n_full_bands
  use QP_m,       ONLY:QP_solver
  use it_tools,   ONLY:switch_off_runlevel
+ !
  implicit none
  ! 
  ! Additional logicals ...
@@ -79,80 +64,80 @@ subroutine INIT_barriers()
 #if defined _PHEL
    on_runlevels=trim(on_runlevels)//' ph_el_scatt'
 #endif
-   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_on_runlevels))
+   call switch_off_runlevel('all',except=trim(on_runlevels)//' '//trim(always_on_runlevels))
    goto 1
  endif
  !
  if (l_nl_optics) then
    on_runlevels='chi tddft bse ss ppa em1s dipoles em1d nloptics'
-   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_on_runlevels))
+   call switch_off_runlevel('all',except=trim(on_runlevels)//' '//trim(always_on_runlevels))
    goto 1
  endif
  !
  if (l_eval_collisions) then
    on_runlevels='scrun HF_and_locXC cohsex em1s dipoles collisions el_el_corr el_ph_corr ph_el_corr el_el_scatt '//&
 &               'el_ph_scatt el_photon_scatt el_photon_corr'
-   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_on_runlevels))
+   call switch_off_runlevel('all',except=trim(on_runlevels)//' '//trim(always_on_runlevels))
    goto 1
  endif
  !
  if (l_sc_run) then
    on_runlevels='scrun HF_and_locXC cohsex em1s dipoles negf magnetic electric el_el_corr collisions '
-   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_on_runlevels))
+   call switch_off_runlevel('all',except=trim(on_runlevels)//' '//trim(always_on_runlevels))
    goto 1
  endif
  !
  if (gw0_cohsex) then
-   call switch_off_runlevel('all',on_name='dyson gw0 em1s dipoles cohsex el_el_corr el_ph_corr ph_el_corr HF_and_locXC '//&
+   call switch_off_runlevel('all',except='dyson gw0 em1s dipoles cohsex el_el_corr el_ph_corr ph_el_corr HF_and_locXC '//&
 &                            trim(always_on_runlevels))
    goto 1
  endif
  !
  if (l_acfdt) then
-   call switch_off_runlevel('all',on_name='acfdt HF_and_locXC '//trim(always_on_runlevels))
+   call switch_off_runlevel('all',except='acfdt HF_and_locXC '//trim(always_on_runlevels))
    goto 1
  endif
  !
  if (l_life) then
-   call switch_off_runlevel('all',on_name='life dipoles em1d el_el_corr ph_el_corr el_photon_corr '//trim(always_on_runlevels))
+   call switch_off_runlevel('all',except='life dipoles em1d el_el_corr ph_el_corr el_photon_corr '//trim(always_on_runlevels))
    goto 1
  endif
  !
  if (gw0_raxis) then
    on_runlevels='dyson gw0 em1d el_el_corr el_ph_corr ph_el_corr el_photon_corr HF_and_locXC'
-   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_on_runlevels))
+   call switch_off_runlevel('all',except=trim(on_runlevels)//' '//trim(always_on_runlevels))
    goto 1
  endif
  !
  if (gw0_ppa) then
    on_runlevels='dyson gw0 ppa em1d el_el_corr el_ph_corr ph_el_corr HF_and_locXC rim_w'
-   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_on_runlevels))
+   call switch_off_runlevel('all',except=trim(on_runlevels)//' '//trim(always_on_runlevels))
    goto 1
  endif
  if (gw0_mpa) then
    on_runlevels='dyson gw0 mpa em1d el_el_corr el_ph_corr HF_and_locXC'
-   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_on_runlevels))
+   call switch_off_runlevel('all',except=trim(on_runlevels)//' '//trim(always_on_runlevels))
    goto 1
  endif
  if (tddft_g_space) then
-   call switch_off_runlevel('all',on_name='optics chi tddft '//trim(always_on_runlevels))
+   call switch_off_runlevel('all',except='optics chi tddft '//trim(always_on_runlevels))
    goto 1
  endif
  if (tddft_r_space) then
-   call switch_off_runlevel('all',on_name='optics bse bss tddft '//trim(always_on_runlevels))
+   call switch_off_runlevel('all',except='optics bse bss tddft '//trim(always_on_runlevels))
    goto 1
  endif
  !
  l_flag=l_bss.or.l_bse
  if (l_flag) then
    on_runlevels='optics bse bss tddft em1s dipoles em1d ppa photolum rim_w'
-   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_on_runlevels))
+   call switch_off_runlevel('all',except=trim(on_runlevels)//' '//trim(always_on_runlevels))
    goto 1
  endif
  !
  if (l_screen) then
    on_runlevels='em1s dipoles em1d ppa X'
-   call switch_off_runlevel('',on_name=trim(on_runlevels)//' '//trim(always_on_runlevels))
+   call switch_off_runlevel('',except=trim(on_runlevels)//' '//trim(always_on_runlevels))
    goto 1
  endif
  !
@@ -167,7 +152,7 @@ subroutine INIT_barriers()
    on_runlevels='optics chi bse bss negf'
    if (l_elph_corr) on_runlevels='optics chi bse bss el_ph_corr ph_el_corr dyson gw0'
    if (tddft_r_space.or.bse_sex.or.bse_bsfxc) BSK_mode='hartree'    
-   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_on_runlevels))
+   call switch_off_runlevel('all',except=trim(on_runlevels)//' '//trim(always_on_runlevels))
  endif 
  !
  ! SPIN
@@ -175,7 +160,7 @@ subroutine INIT_barriers()
  if (n_spin>2) then
    on_runlevels='optics chi bse bss em1s dipoles em1d ppa mpa HF_and_locXC cohsex dyson gw0 magnetic electric scrun'
    on_runlevels=trim(on_runlevels)//' negf collisions el_el_corr el_ph_corr ph_el_corr el_el_scatt el_ph_scatt'
-   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_on_runlevels))
+   call switch_off_runlevel('all',except=trim(on_runlevels)//' '//trim(always_on_runlevels))
  endif 
  !
  ! MORE

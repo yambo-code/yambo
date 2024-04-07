@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2014 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 #include<dev_defs.h>
 !
@@ -68,12 +52,10 @@ integer function io_DB1(E,k,ID)
  !
  ! Work Space
  !
- integer :: code_version_local(3),code_revision_local,MENU
+ integer :: code_version_local(3),code_revision_local
  !
  io_DB1 =io_connect(desc="db1",type=0,ID=ID)
  if (io_DB1/=0) goto 1
- !
- MENU=1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
@@ -225,8 +207,7 @@ integer function io_DB1(E,k,ID)
      io_code_revision(ID,2)=code_GPL_revision
    endif
    !
-   call io_elemental(ID, VAR="",VAR_SZ=0,MENU=MENU)
-   MENU=0
+   call io_elemental(ID, VAR="",VAR_SZ=0,MENU=1)
    !
    ! Exporting E%nb/k%nibz when in DUMP
    !

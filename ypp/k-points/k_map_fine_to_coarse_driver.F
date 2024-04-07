@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
@@ -144,7 +128,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  ! .. restoring of built-in value of nkibz to be used in io_header 
  nkibz=Xk%nibz
  !
- call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=REP,ID=ID)
+ call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),COM=REP,ID=ID)
  i_err=io_Double_Grid(Xen,Xk,ID,'electrons')
  !
  ! CLEAN

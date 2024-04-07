@@ -1,31 +1,16 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2010 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM CA DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  !
  ! This subroutine add the vector potential to the Hamiltonian
  !
  use pars,           ONLY:SP,cI
+ use drivers,        ONLY:l_nl_optics
  use electrons,      ONLY:n_spinor
  use units,          ONLY:SPEED_OF_LIGHT
  use fields,         ONLY:gauge_field
@@ -62,18 +47,32 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    ! in case of complex Efield puts the correct Hermitian matrix
    ! and the intraband optical matrix elements have been set to zero
    !
+!$omp parallel do default(shared), private(i1,Jtot,A_dot_J)
    do i1=RT_bands(1),RT_bands(2)
      !
      ! Case A: the pseudo-potential is correctly gauged, so A*p enters the hamiltonian
-     if (     l_velocity_gauge_corr) Jtot(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)+A_vec_pot(1:3)/2._SP
+     if (     l_velocity_gauge_corr) Jtot(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)
      ! Case b: the pseudo-potential is   *not*   gauged, so A*v enters the hamiltonian.
      !         A*v accounts for the linear expansion of the gauge correction to the non local potential
-     if (.not.l_velocity_gauge_corr) Jtot(1:3)= -DIP_v(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)+A_vec_pot(1:3)/2._SP
+     if (.not.l_velocity_gauge_corr) Jtot(1:3)= -DIP_v(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)
+     !	   
+     if(.not.l_nl_optics) then
+       !	   
+       ! This term can be set to zero with the freedom of the velocity gauge
+       ! see discussion in sec. 4.A of  J. of Optical Society B, 39(2), 535 (2022)
+       ! we do not include it in yambo_nl
+       !	   
+       Jtot(1:3)=Jtot(1:3)+A_vec_pot(1:3)/2._SP
+       !	   
+     endif
+     !
      A_dot_J(1)=sum(A_vec_pot(1:3)*      Jtot(1:3) )
      A_dot_J(2)=sum(A_vec_pot(1:3)*conjg(Jtot(1:3)))
      H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(A_dot_J(1),SP)
    enddo
+!$omp end parallel do
    !
+!$omp parallel do default(shared), private(i1,i2,Jtot,A_dot_J)
    do i1=RT_bands(1),RT_bands(2)
      do i2=i1+1,RT_bands(2)
        !
@@ -93,6 +92,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
        !
      enddo
    enddo
+!$omp end parallel do
    !
  case('length')
    !

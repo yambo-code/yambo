@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2017 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
  !
@@ -99,7 +83,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
      call msg(' r','             (FIT, actual)     ',fit_scissor*HA2EV,"[eV]")
    endif
    !
-   if (any(E/=(/0._SP,1._SP,0._SP,1._SP/))) then
+   if (any(E/=(/10._SP,10._SP,10._SP,10._SP/))) then
      call msg(' r',' Energies 0th order            ',(/E(1),E(3)/)*HA2EV,"[eV]")
      call msg(' r',' Energies 1st order            ',(/E(2),E(4)/))
      if (any((/E_err/=0._SP/)))then

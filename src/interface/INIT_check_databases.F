@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2019 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
 &                               io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,&
@@ -70,7 +54,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
 &                     io_HF_and_locXC,io_QP_and_GF,io_DB1,io_KB_abinit,io_KB_pwscf,&
-&                     io_COL_CUT,io_E_SOC_map,io_ATMPROJ_pwscf
+&                     io_COL_CUT,io_E_SOC_map,io_ATMPROJ_pwscf,io_Double_Grid
 #if !defined _PAR_IO
  integer, external :: io_BS
 #endif
@@ -144,7 +128,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  if ((io_err==-1.or.io_QINDX_err==-1).and.infile_editing) then
    !
    ! switch off all logicals loaded in read_command_line
-   call switch_off_runlevel('all',on_name="")
+   call switch_off_runlevel('all',except="")
    !
    ! force a setup run
    instr="setup"
@@ -238,7 +222,6 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  ! BS
  !
- !
  if (nqibz>0) then
    YAMBO_ALLOC(BSqpts,(3,nqibz))
    do i_io=1,nqibz
@@ -274,6 +257,10 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_BS_Fxc_err=io_BS_Fxc(1,Xxcw,io_ID,X=Xbsk)
+ !
+ ! DbGd (electrons)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_err=io_Double_Grid(en,k,io_ID,'electrons')
  !
  ! ELPH 
  !
@@ -321,4 +308,3 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
 #endif
  !
 end subroutine
-

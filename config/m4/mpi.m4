@@ -2,27 +2,11 @@
 # Original version Available from the GNU Autoconf Macro Archive at:
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
-#        Copyright (C) 2000-2022 the YAMBO team
-#              http://www.yambo-code.org
+# License-Identifier: GPL
 #
-# Authors (see AUTHORS file for details): AM, DS
+# Copyright (C) 2017 The Yambo Team
 #
-# This file is distributed under the terms of the GNU
-# General Public License. You can redistribute it and/or
-# modify it under the terms of the GNU General Public
-# License as published by the Free Software Foundation;
-# either version 2, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will
-# be useful, but WITHOUT ANY WARRANTY; without even the
-# implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
-#
-# You should have received a copy of the GNU General Public
-# License along with this program; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+# Authors (see AUTHORS file for details): AM DS
 #
 
 mpibuild="yes" 
@@ -30,7 +14,6 @@ AC_ARG_ENABLE(mpi, AS_HELP_STRING([--enable-mpi],[Enable mpi parallelization . D
 if test "$enable_mpi" = "no"; then mpibuild="no"; fi
 #
 CC_serial=$CC
-#CXX_serial=$CXX
 F77_serial=$F77
 FC_serial=$FC
 #
@@ -68,18 +51,20 @@ if test "$mpibuild" = "yes"; then
   #
   def_mpi="-D_MPI"
   ACX_GET_MPI_KIND()
+  MPI_PATH=`which $CC |sed "s/bin\/$CC//g"`
   #
 else
   #
   def_mpi=""
   #
   CC=$CC_serial
-  #CXX=$CXX_serial
   F77=$F77_serial
   FC=$FC_serial
+  MPI_PATH=""
   #
 fi
 #
+AC_SUBST(MPI_PATH)
 AC_SUBST(def_mpi)
 AC_SUBST(mpibuild)
 

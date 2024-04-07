@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine QP_of(qp,en,QPdb_read_err,what)
  !
@@ -27,10 +11,8 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  use drivers,       ONLY:l_life,l_elph_corr
  use com,           ONLY:msg
  use electrons,     ONLY:levels,spin,n_sp_pol
- use QP_m,          ONLY:QP_t,QP_Vxc,QP_Sc,QP_Vnl_xc,QP_table,&
-&                        QP_solver,QP_n_states,Vxc_kind,l_extended_output,&
-&                        use_GreenF_to_eval_QP,Vnlxc_kind,report_Vxc,&
-&                        report_Vnlxc,QP_G_amplitude_integral,&
+ use QP_m,          ONLY:QP_t,QP_Vxc,QP_Sc,QP_Vnl_xc,QP_table,QP_solver,QP_n_states,Vxc_kind,l_extended_output,&
+&                        use_GreenF_to_eval_QP,Vnlxc_kind,report_Vxc,report_Vnlxc,QP_G_amplitude_integral,&
 &                        QP_states_simmetrize,QP_G_info,QP_dSc,report_Sc
  use OUTPUT,        ONLY:OUTPUT_driver
  use interfaces,    ONLY:DESC_write
@@ -214,7 +196,8 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      endif
      !
      do i_w=1,qp%GreenF_n_steps
-       call OUTPUT_driver(trim(G_sc_name),TITLES=(/"Energy"/),R_VALUES=(/real(qp%GreenF_W(i_qp,i_w))/),UNIT="eV")
+       call OUTPUT_driver(trim(G_sc_name),TITLES=(/"Energy","IM(En)"/),&
+                              R_VALUES=(/real(qp%GreenF_W(i_qp,i_w)),aimag(qp%GreenF_W(i_qp,i_w))/),UNIT="eV")
        call OUTPUT_driver(trim(G_sc_name),TITLES=(/"Re(G)","Im(G)"/),&
 &                         R_VALUES=(/real(qp%GreenF(i_qp,i_w)),aimag(qp%GreenF(i_qp,i_w))/),UNIT="eVm1")
        if (allocated(QP_Vxc).and.allocated(QP_Vnl_xc)) then
@@ -224,7 +207,8 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
        call OUTPUT_driver(trim(G_sc_name),TITLES=(/"Re(S_tot)","Im(S_c)  "/),&
 &                         R_VALUES=(/real(qp%S_total(i_qp,i_w)),aimag(qp%S_total(i_qp,i_w))/),UNIT="eV")
        !
-       call OUTPUT_driver(trim(G_sc_name),ORDER=(/"Energ","Re(G)","Im(G)"/))
+       call OUTPUT_driver(trim(G_sc_name),ORDER=(/"Energy","Im(En)"/))
+       call OUTPUT_driver(trim(G_sc_name),ORDER=(/"Re(G)","Im(G)"/))
        call OUTPUT_driver(trim(G_sc_name),ORDER=(/"Re(S_tot)","Im(S_c)  "/))
        if (report_Vnlxc) call OUTPUT_driver(trim(G_sc_name),ORDER=(/"Re(S_c)"/))
        !

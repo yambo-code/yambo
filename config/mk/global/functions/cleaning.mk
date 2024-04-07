@@ -1,4 +1,10 @@
 #
+# License-Identifier: GPL
+#
+# Copyright (C) 2020 The Yambo Team
+#
+# Authors (see AUTHORS file for details): AM
+#
 # Drivers (top)
 #
 define clean_driver

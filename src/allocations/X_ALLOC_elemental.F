@@ -1,32 +1,16 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2021 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 #include<dev_defs.h>
 !
 subroutine X_ALLOC_elemental(WHAT,DIM)
  !
  use pars,          ONLY:rZERO,cZERO
- use X_m,           ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,Epsilon_ij,X_magnons,X_dichroism,&
+ use X_m,           ONLY:Resp_ii,Resp_ij,Epsilon_ii,Joint_DOS,BS_E_sorted,Epsilon_ij,X_magnons,X_dichroism,&
 &                        X_fxc,EEL,Alpha,X_mat,DEV_VAR(X_mat),X_drude_term,X_RLcomp_ig
  use PHOTOLUM,      ONLY:PL
  use gpu_m,         ONLY:have_gpu
@@ -39,13 +23,20 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
  !
  if (present(DIM)) then
    select case(what)
+   case('RESP')
+     if (allocated(Resp_ii)) return
+     YAMBO_ALLOC(Resp_ii,(DIM(1),DIM(2))) !2(int)3(nonint)4(n-1 Haydock/inv shifted)
+     Resp_ii   = cZERO
+     YAMBO_ALLOC(X_drude_term,(DIM(1)))
+     X_drude_term = cZERO
    case('EPS')
      if (allocated(Epsilon_ii)) return
      YAMBO_ALLOC(Epsilon_ii,(DIM(1),DIM(2))) !2(int)3(nonint)4(n-1 Haydock/inv shifted)
-     YAMBO_ALLOC(X_drude_term,(DIM(1)))
      Epsilon_ii   = cZERO
-     X_drude_term = cZERO
    case('OFF')
+     if (allocated(Resp_ij)) return
+     YAMBO_ALLOC(Resp_ij,(DIM(1),DIM(2)))
+     Resp_ij=cZERO
      YAMBO_ALLOC(Epsilon_ij,(DIM(1),DIM(2)))
      Epsilon_ij=cZERO
    case('MAGNONS')
@@ -58,10 +49,9 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
      YAMBO_ALLOC(EEL,(DIM(1),DIM(2)))
      EEL=cZERO
    case('ALPHA')
-     if (.not.allocated(Alpha)) then
-       YAMBO_ALLOC(Alpha,(DIM(1),DIM(2)))
-       Alpha=cZERO
-     endif
+     if (allocated(Alpha)) return
+     YAMBO_ALLOC(Alpha,(DIM(1),DIM(2)))
+     Alpha=cZERO
    case('JDOS')
      YAMBO_ALLOC(Joint_DOS,(DIM(1),DIM(2)))
      Joint_DOS=cZERO
@@ -85,11 +75,15 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
    return
  endif
  !
+ if (STRING_match(WHAT,"RESP").or.STRING_match(WHAT,"ALL")) then
+   YAMBO_FREE(Resp_ii)
+ endif
  if (STRING_match(WHAT,"EPS").or.STRING_match(WHAT,"ALL")) then
    YAMBO_FREE(Epsilon_ii)
    YAMBO_FREE(X_drude_term)
  endif
  if (STRING_match(WHAT,"OFF").or.STRING_match(WHAT,"ALL")) then
+   YAMBO_FREE(Resp_ij)
    YAMBO_FREE(Epsilon_ij)
  endif
  if (STRING_match(WHAT,"MAGNONS").or.STRING_match(WHAT,"ALL")) then
@@ -102,7 +96,7 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
    YAMBO_FREE(EEL)
  endif
  if (STRING_match(WHAT,"ALPHA").or.STRING_match(WHAT,"ALL")) then
-   YAMBO_FREE(ALPHA)
+   YAMBO_FREE(Alpha)
  endif
  if (STRING_match(WHAT,"JDOS").or.STRING_match(WHAT,"ALL")) then
    YAMBO_FREE(Joint_DOS)

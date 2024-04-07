@@ -1,26 +1,10 @@
 #! /bin/tcsh -f
 #
-#        Copyright (C) 2000-2018 the YAMBO team
-#              http://www.yambo-code.org
+# License-Identifier: GPL
+#
+# Copyright (C) 2008 The Yambo Team
 #
 # Authors (see AUTHORS file for details): AM
-# 
-# This file is distributed under the terms of the GNU 
-# General Public License. You can redistribute it and/or 
-# modify it under the terms of the GNU General Public 
-# License as published by the Free Software Foundation; 
-# either version 2, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will 
-# be useful, but WITHOUT ANY WARRANTY; without even the 
-# implied warranty of MERCHANTABILITY or FITNESS FOR A 
-# PARTICULAR PURPOSE.  See the GNU General Public License 
-# for more details.
-#
-# You should have received a copy of the GNU General Public 
-# License along with this program; if not, write to the Free 
-# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 #==================================================
 set awk     = awk
@@ -78,15 +62,9 @@ endif
 set v_string_old=$version_old"."$subver_old"."$patch_old" r."$revision_old" h."$hash_old
 set v_string_new=$version_new"."$subver_new"."$patch_new" r."$revision_new" h."$hash_new
 #
-if ( "$argv[1]" != "save" ) then
-  echo 
-  echo $v_string_old "=>" $v_string_new
-  echo 
-else
- set source_dir="yambo-"$version_new"."$subver_new"."$patch_new
- set file_name=$source_dir"-"$revision_new".tar"
- echo "archive of " $source_dir " is " "../"$file_name".gz"
-endif
+echo 
+echo $v_string_old "=>" $v_string_new
+echo 
 #
 set update = 0
 if ( "$argv[1]" == "v" || "$argv[1]" == "s" || "$argv[1]" == "p" ) then
@@ -102,14 +80,7 @@ endif
 set use_rev_old=$revision_old
 set use_rev_new=$revision_new
 #
-if ( $version_old != $version_new ) then
-cat << EOF > configure.awk
-{
- gsub("version $version_old","version $version_new",\$0)
- print \$0
-}
-EOF
-endif
+#
 cat << EOF > version.m4.awk
 {
  gsub("$v_string_old","$v_string_new",\$0)
@@ -121,16 +92,15 @@ cat << EOF > version.m4.awk
 }
 EOF
 #
-if ( "$argv[1]" != "save" ) then
- if (  $version_old != $version_new ) then
-   $awk -f configure.awk configure
-   mv NEW configure
-   chmod a+x configure
- endif
- $awk -f version.m4.awk include/version/version.m4
- mv NEW include/version/version.m4
-endif
-rm -fr version.*.awk configure.awk 
+# Update the version.m4 and the configure...
+#
+$awk -f version.m4.awk include/version/version.m4
+mv NEW include/version/version.m4
+$awk -f version.m4.awk configure
+mv NEW configure
+chmod a+x configure
+#
+rm -f version.m4.awk 
 #
 exit 0
 

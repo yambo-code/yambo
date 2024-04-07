@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module frequency
  !
@@ -56,6 +40,7 @@ module frequency
    real(SP)     :: per_memstps
    complex(SP),allocatable :: p(:)
    character(2) :: samp_type
+   character(2) :: samp_grid
    character(2) :: mpa_solver
    character(16):: grid_type
  end type w_samp
@@ -75,6 +60,7 @@ module frequency
        Wo%p=Wi%p
      endif
      Wo%samp_type=Wi%samp_type
+     Wo%samp_grid=Wi%samp_grid
      Wo%mpa_solver=Wi%mpa_solver
      Wo%grid_type=Wi%grid_type
    end subroutine W_duplicate
@@ -93,8 +79,9 @@ module frequency
      W%damp_reference=0._SP
      YAMBO_FREE(W%p)
      W%samp_type="2l"
+     W%samp_grid="lP"
      W%mpa_solver="PT"
-     W%grid_type="" ! DALV: conflict with FF real axis in FREQUENCIES_setup
+     W%grid_type="ra"
    end subroutine W_reset
    !
 end module frequency

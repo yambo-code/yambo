@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM CA DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !> @brief Calculate the average value of an operator
 !
@@ -28,11 +12,11 @@
 ! Symmetry operatoration are applied if necessary
 !
 subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,&
-&                              V_MATRIX,PV_MATRIX,V_bands,k,en,TRANS,nK_mem)
+&                              V_MATRIX,PV_MATRIX,V_bands,dG,k,en,TRANS,nK_mem)
  !
- use pars,           ONLY:SP,cZERO,cONE
+ use pars,           ONLY:SP,cZERO,cONE,cI
  use nl_optics,      ONLY:NL_bands,NL_nbands
- use R_lattice,      ONLY:bz_samp 
+ use R_lattice,      ONLY:bz_samp,nXkibz 
  use QP_m,           ONLY:QP_nk
  use electrons,      ONLY:n_sp_pol,n_spin,levels,spin_occ
  use FFT_m,          ONLY:fft_size
@@ -46,7 +30,6 @@ subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,&
  !
  type(bz_samp), intent(in) :: k
  type(levels),  intent(in) :: en
- complex(SP),   intent(in) :: V_bands(NL_bands(2),maxval(en%nbf),QP_nk, n_sp_pol)
  integer,       intent(in) :: nK_mem
  !
  ! Optionals
@@ -56,6 +39,8 @@ subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,&
  complex(SP),     optional, intent(in) ::  V_MATRIX(3,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),nK_mem,n_sp_pol)
  complex(SP),     optional, intent(in) ::  O_MATRIX(  NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),nK_mem,n_sp_pol)
  real(SP),        optional, intent(in) :: O_REAL(fft_size,n_spin)
+ complex(SP),     optional, intent(in) :: V_bands(NL_bands(2),maxval(en%nbf),QP_nk, n_sp_pol)
+ complex(SP),     optional, intent(in) :: dG(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),nXkibz)
  logical,         optional, intent(in) :: TRANS
  !
  ! Work Space
@@ -97,11 +82,20 @@ subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,&
      if(OUTPUT_dim==1) Hk(1,:,:)    =Hk_tmp(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
      if(OUTPUT_dim==3) Hk(i_dir,:,:)=Hk_vec_tmp(i_dir,:,:)
      !
-     do iv=1,en%nbf(i_sp_pol)
-       call M_by_V_omp(op,NL_nbands,NL_nbands,cONE,Hk(i_dir,:,:),NL_nbands,V_bands(NL_bands(1):,iv,ik_ibz,i_sp_pol) &
+     if(present(V_bands)) then
+       !
+       do iv=1,en%nbf(i_sp_pol)
+         call M_by_V_omp(op,NL_nbands,NL_nbands,cONE,Hk(i_dir,:,:),NL_nbands,V_bands(NL_bands(1):,iv,ik_ibz,i_sp_pol) &
 &               ,1,cZERO,V_tmp,1)
-       VALUE_tmp(i_dir)=VALUE_tmp(i_dir)+spin_occ*Vstar_dot_V_omp(NL_nbands,V_bands(NL_bands(1):,iv,ik_ibz,i_sp_pol),V_tmp) 
-     enddo
+         VALUE_tmp(i_dir)=VALUE_tmp(i_dir)+spin_occ*Vstar_dot_V_omp(NL_nbands,V_bands(NL_bands(1):,iv,ik_ibz,i_sp_pol),V_tmp) 
+       enddo
+     else if(present(dG)) then
+       	 if(op=='T') then
+           VALUE_tmp(i_dir)=-cI*Vstar_dot_V_omp(NL_bands2,transpose(Hk(i_dir,:,:)),dG(:,:,ik_ibz))
+	 else
+           VALUE_tmp(i_dir)=-cI*Vstar_dot_V_omp(NL_bands2,Hk(i_dir,:,:),dG(:,:,ik_ibz))
+	 endif
+     endif
      !
      if(OUTPUT_dim==1) O_VALUE       =O_VALUE       +VALUE_tmp(i_dir)*k%weights(ik_ibz)
      if(OUTPUT_dim==3) V_VALUE(i_dir)=V_VALUE(i_dir)+VALUE_tmp(i_dir)*k%weights(ik_ibz)
@@ -150,8 +144,8 @@ subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,&
      integer, intent(in) :: ik,i_sp_pol
      !
      integer     :: ik_mem,i_star,is
-     real(SP)    :: R_s(3,3)
-     complex(SP) :: V3(3)
+     real(SP)    :: R_s(OUTPUT_dim,OUTPUT_dim)
+     complex(SP) :: V_N(OUTPUT_dim)
      !
      ik_mem=ik
      if (k%nibz/=nK_mem) ik_mem=PAR_Xk_ibz_index(ik)
@@ -163,8 +157,13 @@ subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,&
        Hk_tmp=cZERO
        !
        if (present(O_MATRIX)) then
-              Hk_tmp(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))= &
-            O_MATRIX(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),ik_mem,i_sp_pol) 
+         do ib=NL_bands(1),NL_bands(2)
+           do ibp=NL_bands(1),NL_bands(2)
+             !
+             Hk_tmp(ib,ibp)=O_MATRIX(ib,ibp,ik_mem,i_sp_pol) 
+             !
+           enddo
+         enddo
        endif
        !
        ! Warning: for nspinor=2 the Vxc countribution could be wrong
@@ -173,38 +172,55 @@ subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,&
        !
      endif
      !
-     ! B: Average of a vector
-     !========================
-     if (OUTPUT_dim==3) then
+     if (OUTPUT_dim>1) then
        !
        Hk_vec_tmp=cZERO
        !
        do ib=NL_bands(1),NL_bands(2)
          do ibp=NL_bands(1),NL_bands(2)
              !
-             V3=cZERO
+             V_N=cZERO
              !
              do i_star=1,k%nstar(ik)
                 !
                 is = sop_inv(k%star(ik,i_star))
                 !
-                ! This procedure is correct for polar-vectors
-                !
-                if (present( V_MATRIX)) then
-                  R_s= dl_sop(:,:,is)
-                  V3(:)=V3(:)+matmul(R_s, V_MATRIX(:,ib,ibp,ik_mem,i_sp_pol))
+                if (OUTPUT_dim == 3) then
+                  !
+                  ! B: Average of a Chartesian vector
+                  !===================================
+                  !
+                  ! This procedure is correct for polar-vectors
+                  !
+                  if (present( V_MATRIX)) then
+                    R_s= dl_sop(:,:,is)
+                    V_N(:)=V_N(:)+matmul(R_s, V_MATRIX(:,ib,ibp,ik_mem,i_sp_pol))
+                  endif
+                  !
+                  ! This procedure is correct for axial-vectors
+                  !
+                  if (present(PV_MATRIX)) then
+                    R_s=dl_sop(:,:,is)*m3det(dl_sop(:,:,is))
+                    V_N(:)=V_N(:)+matmul(R_s,PV_MATRIX(:,ib,ibp,ik_mem,i_sp_pol))
+                  endif
+                  !
+                else 
+                  !
+                  ! C: Average of a Multi-dim operator
+                  !====================================
+                  !
+                  ! Here I assume that V_MATRIX(:,:,:,R_is K_ik,:) = V_MATRIX(:,:,:,K_ik,:)
+                  !
+                  if (present( V_MATRIX)) then
+                    V_N(:)=V_N(:)+V_MATRIX(:,ib,ibp,ik_mem,i_sp_pol)
+                  endif
+                  if (present(PV_MATRIX)) then
+                    V_N(:)=V_N(:)+PV_MATRIX(:,ib,ibp,ik_mem,i_sp_pol)
+                  endif
                 endif
-                !
-                ! This procedure is correct for axial-vectors
-                !
-                if (present(PV_MATRIX)) then
-                  R_s=dl_sop(:,:,is)*m3det(dl_sop(:,:,is))
-                  V3(:)=V3(:)+matmul(R_s,PV_MATRIX(:,ib,ibp,ik_mem,i_sp_pol))
-                endif
-                !
              enddo
              !
-             Hk_vec_tmp(:,ib ,ibp)=V3(:)/real(k%nstar(ik),SP)
+             Hk_vec_tmp(:,ib ,ibp)=V_N(:)/real(k%nstar(ik),SP)
              !
          enddo
        enddo

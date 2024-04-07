@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2006 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AM DS
 !
 module IO_m
  !
@@ -112,10 +96,6 @@ module IO_m
  !
 #if defined _PAR_IO && defined _HDF5_IO
  integer, parameter:: PAR_IO_CREATE_MODE=ior(nf90_mpiio,nf90_netcdf4)
- integer, parameter:: PAR_IO_WRITE_MODE =ior(nf90_mpiio,nf90_write)
-#endif
-#if defined _PAR_IO && !defined _HDF5_IO
- integer, parameter:: PAR_IO_CREATE_MODE=ior(nf90_mpiio,nf90_64bit_offset)
  integer, parameter:: PAR_IO_WRITE_MODE =ior(nf90_mpiio,nf90_write)
 #endif
  !
@@ -365,6 +345,38 @@ module IO_m
      if (len_trim(filename_old)==0) return
      call irename( cstr(trim(filename_old)), cstr(trim(filename_new)) )
    end subroutine
+   !
+   function where_is_file(desc,subfolder)
+     !
+     use pars,         ONLY:num_of_alternative_locations,lchlen
+     use IO_int,       ONLY:all_locations
+     !
+     character(*)           :: desc
+     character(*), optional :: subfolder
+     character(lchlen)      :: where_is_file
+     !
+     ! Work Space
+     !
+     integer            :: i_f
+     character(lchlen)  :: possible_locations(num_of_alternative_locations)
+     character(schlen)  :: subfolder_
+     !
+     logical, external :: file_exists
+     !
+     subfolder_=' '
+     if (present(subfolder)) subfolder_=subfolder
+     !
+     possible_locations=all_locations(desc,subfolder_)
+     !
+     where_is_file="none"
+     do i_f=1,num_of_alternative_locations
+       if( file_exists(trim( possible_locations(i_f) )  ) ) then
+         where_is_file=trim(possible_locations(i_f))
+         return
+       endif
+     enddo
+     !
+   end function where_is_file
    !
    logical function file_is_present(desc,subfolder)
      !

@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine FREQUENCIES_set_reference_point(omega,n_freq,iw_ref)
  !
@@ -52,8 +36,8 @@ subroutine FREQUENCIES_set_reference_point(omega,n_freq,iw_ref)
  !endif
  !
  do iw=1,n_freq
-   if(abs(real(omega(iw)))>0.01) cycle
-   if(abs(omega(iw))<abs(omega(iw_ref))) iw_ref=iw
+   if (  abs(omega(iw)) < abs(omega(iw_ref)) ) iw_ref=iw
+   if ( real(omega(iw)) > abs(omega(iw_ref)) ) exit
  enddo
  !
  if(trim(global_gauge)=="velocity" .and. abs(real(omega(iw_ref)))==0._SP) omega(iw_ref)=cmplx(1.E-10,aimag(omega(iw_ref)))

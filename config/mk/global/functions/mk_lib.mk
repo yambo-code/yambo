@@ -1,3 +1,10 @@
+#
+# License-Identifier: GPL
+#
+# Copyright (C) 2021 The Yambo Team
+#
+# Authors (see AUTHORS file for details): AM
+#
 define mk_lib
  for lib in $$LIBS; do \
   if test ! -f $(compdir)/config/stamps_and_lists/lib$$LAB$$lib.a.stamp; then \

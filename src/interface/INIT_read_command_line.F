@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2019 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM DS
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine INIT_read_command_line(rstr,init_)
  !
@@ -231,7 +215,7 @@ subroutine INIT_read_command_line(rstr,init_)
        ! With and ALDA Fxc the t solver is not permitted
        !
        if (l_alda_fxc.and.STRING_match(BSS_mode,'t')) BSS_mode='h'
-       if (BSK_mode=='IP') call switch_off_runlevel('bss',on_name=' ')
+       if (BSK_mode=='IP') call switch_off_runlevel('bss',except=' ')
        if (BSK_mode==' ') then
          BSK_mode="SEX"
          Chi_mode="HARTREE"
@@ -425,7 +409,7 @@ subroutine INIT_read_command_line(rstr,init_)
      !
      if ( trim(rstr_piece(i1)) == 'nloptics' ) then
        !
-       if ( trim(rstr_piece(i1+1)) == 'n'   ) n_ext_fields=1
+       if ( trim(rstr_piece(i1+1)) == 'n'   ) n_ext_fields=3
        if ( trim(rstr_piece(i1+1)) == 'p'   ) then
           n_ext_fields=3
           l_nl_p_and_p=.TRUE.

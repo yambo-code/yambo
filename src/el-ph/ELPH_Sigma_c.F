@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2020 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine ELPH_Sigma_c(en,k,q,qp)
  !
@@ -58,6 +42,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        INTERPOLATE_is_quiet    
  use stderr,        ONLY:STRING_same
  use timing_m,      ONLY:timing
+#if defined _RT
+ use RT_control,    ONLY:RT_apply
+#endif
  !
 #include<y_memory.h>
  !
@@ -302,6 +289,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        if (io_err<0) call error('Missing Q-database')
        !
      endif
+
      !
      if (.not.elph_use_q_grid.or.elph_grids_are_expanded) then
        !
@@ -310,6 +298,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        call setup_k_plus_q_levels(iq_db,E_random_shift)
        !
        call QP_apply((/1,elph_nb/),GKKP%E_kpq(iq_db),k,"G",msg_fmt=' ')
+#if defined _RT
+       call RT_apply((/1,elph_nb/),GKKP%E_kpq(iq_db),k,"G",VERBOSE=iq_bz==1)
+#endif
        !
      endif
      !

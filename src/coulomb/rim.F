@@ -1,34 +1,18 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-subroutine rim(mode)
+subroutine rim(mode,Xw)
  !
  use pars,          ONLY:SP,pi,DP
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,        ONLY:live_timing
- use vec_operate,   ONLY:v_norm2
+ use vec_operate,   ONLY:v_norm_square
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,nqbz,&
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
@@ -36,16 +20,18 @@ subroutine rim(mode)
 &                        RIM_id_epsm1_reference,RIM_anisotropy,RIM_W,&
 &                        cut_is_slab,idir
  use timing_m,      ONLY:timing
+ use frequency,     ONLY:w_samp
  !
 #include<y_memory.h>
  !
- character(1)       :: mode
+ character(1)   :: mode
+ type(w_samp)   :: Xw
  !
  ! Work Space
  !
- type(PP_indexes)::px
- integer   :: iq
- real(SP)  :: em1_anis(3),G_radii,G_circ
+ type(PP_indexes)      ::px
+ integer               :: iq
+ real(SP)              :: em1_anis(3),G_radii,G_circ
  !
  ! Random generator
  !
@@ -117,7 +103,7 @@ subroutine rim(mode)
  enddo
  ! Precompute the neighbours distances
  do inn1=1,26
-  fn_dist(inn1)=v_norm2(first_neighbour(inn1,:))  
+  fn_dist(inn1)=v_norm_square(first_neighbour(inn1,:))  
  end do
  !
  ! Loop setup
@@ -138,13 +124,13 @@ subroutine rim(mode)
    ! From rlu in the k_grid_b units (v2) to Cartesian (v1)
    !
    v1=matmul(transpose(k_grid_b),v2) 
-   !v1_norm(1)=v_norm2(v1)
+   !v1_norm(1)=v_norm_square(v1)
    do inn1=1,26
      v1_norm(2)=(v1(1)* first_neighbour(inn1,1) &
                 +v1(2)* first_neighbour(inn1,2) &
                 +v1(3)* first_neighbour(inn1,3))*2._SP
      if (fn_dist(inn1)<v1_norm(2))  cycle loop
-     !v1_norm(2)=v_norm2(v1-first_neighbour(inn1,:))
+     !v1_norm(2)=v_norm_square(v1-first_neighbour(inn1,:))
      !if (v1_norm(2)<v1_norm(1)) cycle loop
      !if (v1_norm(2)<v1_norm(1)-1.E-5) cycle loop
      !
@@ -178,7 +164,7 @@ subroutine rim(mode)
    G_circ=0._SP
    N_out_G=0
  else if (mode == "c") then
-   YAMBO_ALLOC(RIM_W,(nqibz,RIM_W_ng,RIM_W_ng))
+   YAMBO_ALLOC(RIM_W,(Xw%n_freqs,nqibz,RIM_W_ng,RIM_W_ng))
    RIM_W=0._SP
  end if
  !
@@ -191,7 +177,7 @@ subroutine rim(mode)
    if (mode == "x") then
      call rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
    else
-     call rim_integrate_w(iq,qr,N_out,em1_anis)
+     call rim_integrate_w(iq,qr,N_out,em1_anis,Xw)
    endif
    call live_timing(steps=1)
    !

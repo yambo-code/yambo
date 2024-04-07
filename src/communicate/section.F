@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine section(mode,name)
  !
@@ -96,6 +80,7 @@ subroutine section(mode,name)
  !
  ! Get HostName date & time etc...
  !
+ ch=" "
  if (depth==-1) then
    ch=date_and_time_string(dt_out=date_time_at_start)
    if (write_to_report) write (repfile_unit,'(1x,a)') trim(ch)
@@ -122,6 +107,7 @@ subroutine section(mode,name)
      write (ch,'(6a)') 'Timing [Min/Max/Average]: ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
      call msg('nr',trim(ch))
    endif
+   ch=" "
    call ct(INIT_SEC=.true.)
  case ('+','+P')
    depth=depth+1
@@ -159,10 +145,10 @@ subroutine section(mode,name)
  write (chs,'(3a)') trim(secnm),'] ',trim(name)
  secnm=chs
  call msg('nrs',trim(secnm))
- call msg('rn',repeat('=',len_trim(secnm)))
+ if (len_trim(ch)==0) call msg('rn',repeat('=',len_trim(secnm)))
+ if (len_trim(ch)> 0) call msg('rn',repeat('=',len_trim(ch)))
  !
 #if defined _YAML_OUTPUT
- !if(depth_yaml>0) call yaml_newline(unit=of_yaml_IDs(repfile_index))
  if(depth_yaml>0) call yaml_comment(" ",unit=of_yaml_IDs(repfile_index))
  call yaml_sequence_open(mapname=trim(name),unit=of_yaml_IDs(repfile_index))
  depth_yaml=depth_yaml+1

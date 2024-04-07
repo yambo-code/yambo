@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): DS,AM,AF,IM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2015 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): DS AM AF IM
 !
 #include<dev_defs.h>
 !
@@ -165,6 +149,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
        !DEV_OMPGPU target map(present,alloc:g_rot,rhotw_save,Xo_scatt_rhotw_p)
        !DEV_OMPGPU teams loop private(ig2)
        !DEV_OMP parallel do default(shared), private(ig1,ig2)
+       !
        do ig1=2,X_ng
          ig2=DEV_VAR(g_rot)(ig1,sop_inv_l)
          Xo_scatt_rhotw_p(ig1)=rhotw_save(ig2)
@@ -240,7 +225,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
    !
 #else
    !
-   !$omp parallel do default(shared), private(ig2)
+   !DEV_OMP parallel do default(shared), private(ig2)
    do ig2=X_cols(1),X_cols(2)
      ROWS=(/X_rows(1),min(ig2,X_rows(2))/)
      call V_plus_alpha_V(ROWS(2)-ROWS(1)+1,Z_eh_occ*Xo_scatt%rhotw(ig2),&

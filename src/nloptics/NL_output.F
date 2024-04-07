@@ -1,55 +1,39 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,       _
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-subroutine NL_output(i_time,i_freq)
+subroutine NL_output(i_time,i_run)
  !
- use pars,         ONLY:SP,schlen
+ use pars,         ONLY:SP,schlen,pi
  use units,        ONLY:FS2AUT,HA2EV,SPEED_OF_LIGHT
- use fields,       ONLY:A_tot,A_ext
+ use fields,       ONLY:A_tot,A_ext,Efield
  use com,          ONLY:msg,of_open_close
  use stderr,       ONLY:intc
  use real_time,    ONLY:NE_steps,RT_step
  use nl_optics,    ONLY:NL_er,NL_estep,VERB_LOW,NL_verbosity,NL_J,l_eval_CURRENT,NL_P,NL_desc, &
-&                       l_pump_and_probe         
+&                       l_pump_and_probe,loop_on_angles,loop_on_frequencies,n_angles 
  use interfaces,   ONLY:DESC_write
  !
  implicit none
  !
- integer, intent(in) :: i_time,i_freq
+ integer, intent(in) :: i_time,i_run
  !
  ! Working space
  !
  character(schlen)  :: file_name(4),short_file_name(4)
  character(schlen)  :: headings(4,10)
- real(SP)           :: data_to_dump(4,11)
+ real(SP)           :: data_to_dump(4,11),angle
  integer            :: n_files,n_headings(4),i_f
  !
  if(NL_verbosity==VERB_LOW) return
  !
- file_name(1)='external_potential_F'//intc(i_freq)
- file_name(2)='polarization_F'//intc(i_freq)
- file_name(3)='e_total_F'//intc(i_freq)
- file_name(4)='current_F'//intc(i_freq)
+ file_name(1)='external_potential_F'//intc(i_run)
+ file_name(2)='polarization_F'//intc(i_run)
+ file_name(3)='e_total_F'//intc(i_run)
+ file_name(4)='current_F'//intc(i_run)
  !
  n_files=1
  short_file_name(n_files)='external_potential'
@@ -94,10 +78,14 @@ subroutine NL_output(i_time,i_freq)
      call msg('o '//trim(short_file_name(i_f)),'#')
      if(l_pump_and_probe) then
        call msg('o '//trim(short_file_name(i_f)),'# Pump and probe mode')
-     else
-       call msg('o '//trim(short_file_name(i_f)),'# Frequency number    ',i_freq,INDENT=0)
+     else if(loop_on_frequencies) then
+       call msg('o '//trim(short_file_name(i_f)),'# Frequency number    ',i_run,INDENT=0)
        call msg('o '//trim(short_file_name(i_f)),'# Frequency value [ev]',&
-&            (NL_er(1)+real((i_freq-1),SP)*NL_estep)*HA2EV,INDENT=0)
+&            (NL_er(1)+real((i_run-1),SP)*NL_estep)*HA2EV,INDENT=0)
+     else if(loop_on_angles) then
+       call msg('o '//trim(short_file_name(i_f)),'# Angle number        ',i_run,INDENT=0)
+       angle=2.0*pi/real(n_angles,SP)*(i_f-1.0)
+       call msg('o '//trim(short_file_name(i_f)),'# Angle value [grad]  ',angle,INDENT=0)
      endif
      call msg('o '//trim(short_file_name(i_f)),'#')
      call msg('o '//trim(short_file_name(i_f)),'#',headings(i_f,1:n_headings(i_f)),INDENT=0,USE_TABS=.TRUE.)

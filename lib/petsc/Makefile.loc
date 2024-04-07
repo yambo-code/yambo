@@ -26,7 +26,7 @@ CONFFLAGS=--prefix="$(LIBPATH)" \
          --with-blaslapack-lib="$(llapackpetsc) $(lblaspetsc)" \
          --with-scalar-type="complex" \
          --with-precision="${yprecision}" \
-         --with-cc=$(cc) --with-fc=$(fc)
+         --with-mpi-dir=$(mpipath)
 #
 # MAIN target
 #
@@ -58,7 +58,6 @@ install: uncompress configure compile
 	@if ! test -f installed.stamp ; then \
          echo "\t[$(PACKAGE)] installation"; \
          ( cd $(PACKAGE); $(make) PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) install >> ${compdir}/log/install_$(PACKAGE).log 2>&1 ); \
-         #chmod u+x $(LIBPATH)/lib/*petsc*.a; \
 	 touch installed.stamp; \
 	fi
 

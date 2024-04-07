@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module X_m
  !
@@ -58,7 +42,10 @@ module X_m
  ! Large Q-vector support 
  !
  real(SP)                 :: q_plus_G_direction(3)
+ real(SP)                 :: Q_plus_G_pt(3)
+ real(SP)                 :: Q_plus_G_sq_modulus
  integer                  :: Q_Shift_Order
+ integer                  :: i_G_shift
  !
  ! Double Grid
  !
@@ -75,6 +62,8 @@ module X_m
  !
  integer                  :: N_BS_E_sorted=0
  complex(SP), allocatable :: BS_E_sorted(:,:,:)
+ complex(SP), allocatable :: Resp_ii(:,:)
+ complex(SP), allocatable :: Resp_ij(:,:)
  complex(SP), allocatable :: Epsilon_ii(:,:)
  complex(SP), allocatable :: Epsilon_ij(:,:)
  complex(SP), allocatable :: Joint_DOS(:,:) 
@@ -203,15 +192,6 @@ module X_m
      type(bz_fine_grid),intent(in) :: k_FGbz
      real(SP),            optional :: nTrans_percent,Radius
    end subroutine
-   !
-   logical function EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel)
-     use pars,          ONLY:SP
-     integer              :: nw 
-     complex(SP)          :: wv(nw)
-     logical              :: be_verbose
-     character(2)         :: ordering
-     complex(SP) ,optional:: eps(nw),eel(nw)
-   end function
    !
    subroutine X_ALLOC_elemental(WHAT,DIM)
      character(*)      :: WHAT

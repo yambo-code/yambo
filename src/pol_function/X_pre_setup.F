@@ -74,7 +74,10 @@ subroutine X_pre_setup(Xen,Xk,X)
  ! of the alpha from X
  !
  if (l_col_cut) then
-   if ( trim(X%ordering) == 'a' .or. trim(X%ordering) == 'r' )  X%ordering='T'
+   if ( trim(X%ordering) == 'a' .or. trim(X%ordering) == 'r' )  then
+      X%ordering='T'
+      call warning(" Anti/Resonant ordering not compatible with Coulomb cutoff, set to 'T' ")
+   endif
  endif
  !
  ! Finite temperature X MUST be causal. This is because in X_eh_setup the

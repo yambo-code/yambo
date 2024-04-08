@@ -17,7 +17,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  use timing_m,       ONLY:timing
  use openmp,         ONLY:OPENMP_update,master_thread
  use collision_el,   ONLY:elemental_collision_free,elemental_collision_alloc
- use devxlib,        ONLY:devxlib_memcpy_h2h,devxlib_memcpy_d2d,devxlib_memcpy_h2d,devxlib_conjg
+ use devxlib,        ONLY:devxlib_memcpy_d2d,devxlib_memcpy_h2d,devxlib_conjg
  !
 #include<dev_defs.h>
  !

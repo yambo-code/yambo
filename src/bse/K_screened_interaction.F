@@ -37,7 +37,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  type(elemental_collision), target ::isc
  complex(SP), pointer DEV_ATTR :: gamp_p(:,:)
  complex(SP), pointer DEV_ATTR :: X_mat_p(:,:,:)
- real(SP),    pointer DEV_ATTR :: RIM_W_p(:,:,:)
+ complex(SP), pointer DEV_ATTR :: RIM_W_p(:,:,:)
  real(SP)   :: rtmp
  integer    :: nibz
  !
@@ -121,7 +121,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  !
  gamp_p => DEV_VAR(isc%gamp)
  X_mat_p => DEV_VAR(X_mat)
- RIM_W_p => DEV_VAR(RIM_W(1,:,:,:))
+ RIM_W_p => DEV_VAR(RIM_W)(1,:,:,:)
  nibz=q%nibz
  !
  if (.not.W_is_unscreened) then
@@ -160,7 +160,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
        !DEV_CUF kernel do(2) <<<*,*>>>
        do i_g3=1,RIM_W_ng
          do i_g2=1,RIM_W_ng
-           RIM_vpW(i_g2,i_g3)= RIM_W_p(iq_W,i_g2,i_g3)
+           RIM_vpW(i_g2,i_g3)= real(RIM_W_p(iq_W,i_g2,i_g3),SP)
            if(i_g2==i_g3) RIM_vpW(i_g2,i_g2)=RIM_vpW(i_g2,i_g2)+2._SP*gamp_p(i_g2,i_g2)
          enddo
        enddo

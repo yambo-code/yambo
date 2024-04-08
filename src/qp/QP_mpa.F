@@ -41,8 +41,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
- use deviceXlib_m,  ONLY:dev_memcpy
- use cuda_m,        ONLY:have_cuda
+ use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memcpy_d2d
+ use gpu_m,         ONLY:have_gpu
  !
 #include<dev_defs.h>
 #include<y_memory.h>
@@ -260,7 +260,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
      !
      call DEV_SUB(scatter_Gamp)(isc,'c')
-     if (have_cuda) call dev_memcpy(isc%gamp,isc%gamp_d)
+     if (have_gpu) call devxlib_memcpy_d2h(isc%gamp,isc%gamp_d)
      !
      ! I/O
      !
@@ -371,9 +371,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      X_is_TR_rotated=.true.
    endif
    !
-   if (have_cuda) then
-     call dev_memcpy(MPA_E_mat_d,MPA_E_mat)
-     call dev_memcpy(MPA_R_mat_d,MPA_R_mat)
+   if (have_gpu) then
+     call devxlib_memcpy_h2d(MPA_E_mat_d,MPA_E_mat)
+     call devxlib_memcpy_h2d(MPA_R_mat_d,MPA_R_mat)
    endif
    !
    MPA_E_mat_p=>DEV_VAR(MPA_E_mat)
@@ -415,7 +415,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        if (any(isc%is/=iscp%is))  then
          call scatter_Bamp(iscp)
        else
-         call dev_memcpy(iscp_rhotw_p, isc_rhotw_p)
+         if (     have_gpu) call devxlib_memcpy_d2d(iscp_rhotw_p, isc_rhotw_p)
+         if (.not.have_gpu) iscp_rhotw_p=isc_rhotw_p
        endif
        !
        dc=cZERO
@@ -494,7 +495,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          !DEV_OMP end parallel do
          !
-         if (have_cuda) dp_dummy=cmplx(dp_dummy_r,dp_dummy_i,kind=DP)
+         if (have_gpu) dp_dummy=cmplx(dp_dummy_r,dp_dummy_i,kind=DP)
          !
          dc(i_w) = cmplx(dp_dummy,KIND=SP)
          !

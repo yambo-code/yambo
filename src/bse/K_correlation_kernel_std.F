@@ -16,7 +16,7 @@
 !
 #include<dev_defs.h>
 !
-function K_correlation_kernel(i_block,i_p,i_pmq,                               &
+function K_correlation_kernel_std(i_block,i_p,i_pmq,                               &
 &                                 i_k_s,i_kp_s,i_n_k,i_n_p,i_kmq_s,i_kp_mq_s,i_m_k,i_m_p,  &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_n,i_p_sp_pol_n,i_k_sp_pol_m,i_p_sp_pol_m, &
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)

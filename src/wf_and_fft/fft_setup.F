@@ -16,7 +16,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_rot_r_inv,&
 &                         fft_norm,fft_g_table,fft_multiplier,modx,&
 &                         DEV_VAR(fft_g_table),DEV_VAR(fft_rot_r),DEV_VAR(fft_rot_r_inv)
- use FFT_m,          ONLY:fftw_plan,cufft_plan,hipfft_plan,mklgpu_desc
+ use FFT_m,          ONLY:fftw_plan,cufft_plan,hipfft_plan
 #if defined _FFTQE
  use fft_base,       ONLY:dffts
 #endif
@@ -27,6 +27,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use iso_c_binding,  ONLY:c_null_ptr
 #if defined _MKLGPU
  use mkl_dfti_omp_offload
+ use FFT_m,          ONLY:mklgpu_desc
 #endif
  !
 #include<y_memory.h>

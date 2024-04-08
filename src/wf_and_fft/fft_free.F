@@ -16,7 +16,7 @@ subroutine fft_free()
  use FFT_m,    ONLY:fftw_plan
 #endif
 #if defined _GPU
- use FFT_m,    ONLY:cufft_plan,hipfft_plan,mklgpu_desc, &
+ use FFT_m,    ONLY:cufft_plan,hipfft_plan, &
 &                   DEV_VAR(fft_g_table),DEV_VAR(fft_rot_r),DEV_VAR(fft_rot_r_inv)
 #  if defined _CUDAF
  use cufft
@@ -26,6 +26,7 @@ subroutine fft_free()
  use hipfft_m
 #  elif defined _MKLGPU
  use mkl_dfti_omp_offload
+ use FFT_m,    ONLY:mklgpu_desc
 #  endif
 #endif
  !

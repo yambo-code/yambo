@@ -21,6 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#if defined _OPENMP_GPU
 !=====================================================================
 ! Driver to 3D FFT: FFTW, Goedecker
 !
@@ -104,4 +105,6 @@ subroutine fft_3d_mklgpu(c_d,n,fft_sign,mklgpu_desc)
  !DEV_OMPGPU end target data
  !
 end subroutine fft_3d_mklgpu
+!
 endmodule mklfft_gpu
+#endif

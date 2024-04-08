@@ -128,7 +128,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  if (l_Hbare.and..not.use_covariant_approach) then
    if(.not.exp_user) call error(' Dipoles approach should be set to Covariant for BareH calculations')
    if(     exp_user) call warning(' Dipoles approach should be set to Covariant for BareH calculations')
-   endif
  endif
  !
  call parser('PDirect'  ,Dip%force_v_g_space)

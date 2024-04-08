@@ -66,7 +66,7 @@ use devxlib,       ONLY:devxlib_xGEMM_gpu
 end subroutine DIPOLE_kb_project
 !
 !
-subroutine DIPOLE_kb_sum(rho,XXv,XXc)
+subroutine DIPOLE_kb_sum(rho,pp_dim_yambo,ib_range,iv,ic,XX)
  !
  use pars,          ONLY:SP
  use electrons,     ONLY:n_spinor

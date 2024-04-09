@@ -23,11 +23,12 @@ lib/archive/git.list
 
 # Compiled source #
 ###################
+src/*/*.o_to_save
+ypp/*/*.o_to_save
 *.com
 *.class
 *.dll
 *.o
-*.o_to_save # temporary
 *.a
 *.so
 *.mod

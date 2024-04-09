@@ -72,7 +72,7 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].yambo_string="ElPhHam";
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
- options[*i_opt].short_desc="Exction-phonon";
+ options[*i_opt].short_desc="Exciton-phonon";
  options[*i_opt].long_desc[0]="<string>=(o)ptical spectra,(l)ife times";
  options[*i_opt].long_opt="excph";
  options[*i_opt].char_var=1;

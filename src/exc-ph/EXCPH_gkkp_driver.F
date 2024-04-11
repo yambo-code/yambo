@@ -251,38 +251,6 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  contains
    !
-   !  subroutine BSE_in_alloc()
-   !    implicit none
-   !    !      
-   !    ! pre-allocs...
-   !    !
-   !    !AMBO_ALLOC(BS_E_in,(BSS_n_eig))
-   !    !AMBO_ALLOC(BS_mat_in,(BS_H_dim,EXCPH_states(1):EXCPH_states(2)))
-   !    !AMBO_ALLOC(BSS_eh_table_in,(BS_H_dim,3+n_sp_pol-1))
-   !    !AMBO_ALLOC(BSS_eh_table_m1_in,(k%nbz,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2)))
-   !    !
-   !    BS_mat_in=cZERO
-   !    BS_E_in  =cZERO
-   !    BSS_eh_table_in     = 0
-   !    BSS_eh_table_m1_in  = 0
-   !    !
-   !  end subroutine BSE_in_alloc
-   !
-   !  subroutine BSE_out_alloc()
-   !    implicit none
-   !    !
-   !    !AMBO_ALLOC(BS_mat_out,(BS_H_dim,EXCPH_states(1):EXCPH_states(2)))
-   !    BS_mat_out=cZERO
-   !    !
-   !  end subroutine BSE_out_alloc
-   !
-   !  subroutine BSE_in_free
-   !    implicit none
-   !    !AMBO_FREE(BS_mat_in)
-   !    !AMBO_FREE(BSS_eh_table_in)
-   !    !AMBO_FREE(BSS_eh_table_m1_in)
-   !  end subroutine BSE_in_free
-   !
    subroutine get_excph_q_momenta()
      !    
      integer iq,i_star,iq_s,iq_bz

@@ -30,6 +30,7 @@ subroutine EXC_WF_symm_qpoint(Xk,qpt,first_state,nstates,iq,isq,igq,&
  !
  ! Work space
  !
+ logical                 :: t_rev
  integer :: iexc,il,ik,istark,isk,ikbz,ipbz,ipmqbz,ipmqg0,iv1,ic1,iv2,ic2,&
  &          i_v1_bnd,i_v1_grp,i_c1_bnd,i_c1_grp,i_v2_bnd,i_v2_grp,i_c2_bnd,i_c2_grp,&
  &          ikmqbz,ikmqg0,iqbz,i_sp_pol,ip,ipmq,istarp,istarpmq,i1,i2,&
@@ -44,6 +45,8 @@ subroutine EXC_WF_symm_qpoint(Xk,qpt,first_state,nstates,iq,isq,igq,&
    enddo
    return
  endif
+ !
+ t_rev= (isq>nsym/(i_time_rev+1))
  !
  iqbz=qpt%k_table(iq,isq)
  !
@@ -172,7 +175,8 @@ subroutine EXC_WF_symm_qpoint(Xk,qpt,first_state,nstates,iq,isq,igq,&
                    phase_cc=      WF_phases(i_c1_bnd,i_c2_bnd,i_c1_grp,isq,i2)
                  endif
                  !
-                 EXC_WFs(neh1,iexc)=EXC_WFs(neh1,iexc)+BS_mat(neh2,il)*phase_vv*phase_cc
+                 if(.not.t_rev) EXC_WFs(neh1,iexc)=EXC_WFs(neh1,iexc)+BS_mat(neh2,il)*phase_vv*phase_cc
+                 if(t_rev)      EXC_WFs(neh1,iexc)=EXC_WFs(neh1,iexc)+conjg(BS_mat(neh2,il))*phase_vv*phase_cc
                  !
                enddo
              enddo

@@ -46,7 +46,6 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  !
  ! Work Space
  !
- logical                 :: t_rev
  integer                 :: io_err,i_H,i_Hp,i_alpha,iq_db,ik_db,&
 &                           iv,ic,ik_bz,ivp,icp,i_beta,ip_bz,ik_plus_iq_bz,ik_minus_iq_bz,IO_ACT, &
 &                           iv_in,ic_in,ik_bz_in
@@ -62,8 +61,6 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  Xi=cZERO
  !
  elph_gkkp=cONE
- !
- t_rev= (iq_s>nsym/(i_time_rev+1))
  !
    !
    ! elph_gkkp(:,ib,ob,ik_bz) = < ib k | dV_ql | ob k - q >
@@ -130,12 +127,8 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
          !
          !write(iq_bz*1000+i_beta,*) i_Hp,ik_bz,ivp,ic,abs(BS_mat(i_Hp,i_beta)),ip_bz,ik_db,k%ptbz(ik_bz,:)
          !
-         if (l_abs_exc) then
-           Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*abs(BS_mat_out(i_Hp,i_beta))
-         else
-           if(.not.t_rev) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*conjg(BS_mat_out(i_Hp,i_beta))
-           if(     t_rev) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*      BS_mat_out(i_Hp,i_beta)
-         endif
+         if (l_abs_exc)      Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*abs(BS_mat_out(i_Hp,i_beta))
+         if (.not.l_abs_exc) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*    BS_mat_out(i_Hp,i_beta)
          !
        enddo
        !
@@ -163,12 +156,9 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
            !if(.not.l_abs_elph) elph_gkkp=conjg(GKKP%dVc(il,ic,icp,ik_db,1))/sqrt(2._SP*ph_E)
            !if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,ic,icp,ik_db,1))/sqrt(2._SP*ph_E)
          endif
-         if (l_abs_exc) then
-           Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*abs(BS_mat_out(i_Hp,i_beta))
-         else
-           if(.not.t_rev) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*conjg(BS_mat_out(i_Hp,i_beta))
-           if(     t_rev) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*      BS_mat_out(i_Hp,i_beta)
-         endif
+         !
+         if (l_abs_exc)      Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*abs(BS_mat_out(i_Hp,i_beta))
+         if (.not.l_abs_exc) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*    BS_mat_out(i_Hp,i_beta) 
          !
        enddo
        !

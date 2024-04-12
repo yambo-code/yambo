@@ -430,6 +430,7 @@ fi
 if test x"$enable_debug_flags" = "xyes"; then 
  FCFLAGS="$DEBUG_FLAGS"  
  FCUFLAGS="$DEBUG_FLAGS"  
+ CFLAGS="$CFLAGS -g"
  HDF5_MODE="debug";
 fi
 #

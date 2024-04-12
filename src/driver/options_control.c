@@ -31,7 +31,7 @@ void options_control(struct options_struct options[],int *i_opt)
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Input file variables verbosity";
  s_size=sizeof("<string> can be RL,kpt,sc,qp,io,gen,resp/X,ph,rt,par,nl,all");
- strlcpy(options[*i_opt].long_desc[0],"<string> can be RL,kpt,sc,qp,io,gen,resp/X,ph,rt,par,nl,all",s_size);
+ snprintf(options[*i_opt].long_desc[0],s_size,"%s","<string> can be RL,kpt,sc,qp,io,gen,resp/X,ph,rt,par,nl,all");
  options[*i_opt].short_opt='V';
  options[*i_opt].long_opt="Verbosity"; 
  options[*i_opt].char_var=1;
@@ -71,7 +71,7 @@ void options_control(struct options_struct options[],int *i_opt)
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Walltime";
  s_size=sizeof("Format is DdHhMm with D=days, H=hours and M=minutes");
- strlcpy(options[*i_opt].long_desc[0],"Format is DdHhMm with D=days, H=hours and M=minutes",s_size);
+ snprintf(options[*i_opt].long_desc[0],s_size,"%s","Format is DdHhMm with D=days, H=hours and M=minutes");
  options[*i_opt].long_opt="walltime";
  options[*i_opt].int_var=1;
  options[*i_opt].yambo_string="wallt";
@@ -80,7 +80,7 @@ void options_control(struct options_struct options[],int *i_opt)
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Memory";
  s_size=sizeof("The value is per processor. The value can be provided in Mb/Gb. E.g. 1Gb");
- strlcpy(options[*i_opt].long_desc[0],"The value is per processor. The value can be provided in Mb/Gb. E.g. 1Gb",s_size);
+ snprintf(options[*i_opt].long_desc[0],s_size,"%s","The value is per processor. The value can be provided in Mb/Gb. E.g. 1Gb");
  options[*i_opt].long_opt="memory";
  options[*i_opt].int_var=1;
  options[*i_opt].yambo_string="memorylimit";

@@ -11,7 +11,7 @@
 !
 !! @param[out]      WF_phases_S            Phase matrices
 !
-! #include<dev_defs.h>
+#include<dev_defs.h>
 !
 subroutine WF_phase_matrices(En,Xk,blim,klim)
  !    
@@ -22,7 +22,8 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  use D_lattice,         ONLY:nsym,sop_tab
  use electrons,         ONLY:levels,n_max_deg
  use wave_func,         ONLY:WAVEs,io_WF_phases,WF_phases_b_map
- use wave_func,         ONLY:wf_ng_overlaps,wf_ng_1st_BZ,WF_copy
+ use wave_func,         ONLY:wf_ng_overlaps,wf_ng_1st_BZ,WF_copy,wf_nc_k,wf_igk
+ use stderr,        ONLY:intc
  use electrons,         ONLY:n_spinor,n_sp_pol
  use wrapper,           ONLY:Vstar_dot_V
  use hamiltonian,       ONLY:B_mat_index
@@ -44,7 +45,7 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  ! Work Space
  !
  integer           :: first_el(blim(2)-blim(1)+1),n_of_el(blim(2)-blim(1)+1),&
- &                    blim_n(2),n_deg_grp,i_grp,g0_idx(3,2),nsz(5)
+ &                    blim_n(2),n_deg_grp,i_grp,g0_idx(3,2),nsz(5),max_igk
  real(SP)          :: g0_length(3)
  integer           :: ikbz,iRkbz,isk,isloop,isk_c,isk_y,iGk_y,iGk_c,istark,&
  &                    iby,ibc,iby_phase,ibc_phase,i_sp_pol,ik,&
@@ -92,6 +93,12 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  do i_sp_pol=1,n_sp_pol
    !
    do ik=klim(1),klim(2)
+     !
+     max_igk = wf_igk(wf_nc_k(ik),ik)
+     if (max_igk > ng_tmp) then
+       call error("wf_igk ("//trim(intc(max_igk))//") > wf_ng ("//trim(intc(ng_tmp))//"), it's not possible to get WF phases."& 
+                  &//" Is FFTGvecs too low? You need to rerun the BSE step with at least max(wf_igk) G-vectors.") 
+     endif
      !
      ifrag=ifrag+1
      !

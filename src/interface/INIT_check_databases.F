@@ -18,7 +18,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  use BS,             ONLY:BS_n_g_exch,BS_n_g_fxc,BS_q,BSqpts
  use R_lattice,      ONLY:ng_closed,nqibz,bz_samp
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_ng_Vxc
- use wave_func,      ONLY:io_WF,wf_ng,cutoff_ng
+ use wave_func,      ONLY:io_WF
  use TDDFT,          ONLY:io_BS_Fxc
  use it_tools,       ONLY:switch_off_runlevel
  use IO_int,         ONLY:io_control
@@ -143,7 +143,6 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  ! cutoff
  !
- cutoff_ng=wf_ng
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_err=io_COL_CUT(io_ID) 
  !

@@ -7,7 +7,7 @@
 !
 integer function io_COL_CUT(ID)
  !
- use wave_func,      ONLY:cutoff_ng
+ use wave_func,      ONLY:wf_ng,cutoff_ng
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,CUTOFF_plus_RIM,&
 &                         cyl_ph_radius,box_length,cyl_length,cut_geometry,&
 &                         ng_closed,nqibz,bare_qpg,cut_description
@@ -21,6 +21,8 @@ integer function io_COL_CUT(ID)
  ! Work Space
  !
  integer             ::CUT_RIM_ng,CUT_RIM_npts,cutoff_ng_db
+ !
+ cutoff_ng = wf_ng ! when writing, the cutoff_ng is the same as the wavefunction ng
  !
  call timing('io_COL_CUT',OPR='start')
  io_COL_CUT=io_connect(desc="cutoff",type=2,ID=ID)

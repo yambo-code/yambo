@@ -9,7 +9,7 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID
  !
  use pars,          ONLY:schlen,lchlen,num_of_alternative_locations
  use stderr,        ONLY:STRING_pack
- use parallel_m,    ONLY:ncpu,mpi_comm_null,myid
+ use parallel_m,    ONLY:ncpu,mpi_comm_null
  use IO_int,        ONLY:get_name,all_locations
  use IO_m,          ONLY:read_is_on,write_is_on,open_is_on,io_reset,io_file,io_unit,io_type,&
 &                        io_raw_extension,mk_dir,io_extension,io_folder,netcdf_call,&

@@ -16,7 +16,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  use wave_func,     ONLY:WF
  use interfaces,    ONLY:WF_load,WF_free
  use electrons,     ONLY:levels,spin
- use X_m,           ONLY:X_t,global_gauge,i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus
+ use X_m,           ONLY:X_t,global_gauge,i_G_shift
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_rotated
  use BS_solvers,    ONLY:BSS_Vnl_included
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BSE_L_kind,BS_bands,&
@@ -91,8 +91,6 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
    !
  endif
  !
- if (trim(global_gauge)=='length'  ) BS_field_direction=BS_field_direction*q0_def_norm
- !
  call live_timing('BSE dipoles',PAR_BS_nT_col_grps)
  !
  do i_T_g=1,BS_nT_grps
@@ -129,7 +127,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
        !
      endif
      !
-     ! *length*   : DIP(c,v,k) is     q*<v|r|c> while I need     q*<c|r|v> = conjg(    q*<v|r|c>)
+     ! *length*   : DIP(c,v,k) is q_ver*<v|r|c> while I need q_ver*<c|r|v> = conjg(q_ver*<v|r|c>)
      ! *velocity* : DIP(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> = conjg(q_ver*<v|r|c>)
      !
      ! Absorption, KERR, PL, Dichroism
@@ -140,6 +138,8 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
          do i_dip=1,BS_dip_size
            DIP_projected(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
          enddo
+         ! This is needed to have something consistent with the definiion from scatter_Bamp at finite-q
+         if (trim(global_gauge)=="length") DIP_projected=DIP_projected*q0_def_norm
        else
          if(trim(global_gauge)=="length")   call scatter_Bamp(BSE_scatt)
          if(trim(global_gauge)=="velocity") call scatter_Bamp_using_the_gradient(BSE_scatt,"o")
@@ -160,7 +160,6 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
          do i_dip=1,BS_dip_size
            DIP_projected(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
          enddo
-         if (trim(global_gauge)=='length'  ) DIP_projected=DIP_projected/q0_def_norm
        else
          call error(' finite q not implemented for dichroism')
        endif

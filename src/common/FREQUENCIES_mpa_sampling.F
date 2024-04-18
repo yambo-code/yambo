@@ -26,7 +26,7 @@
 !---------------------------------------------------------------
 
  subroutine FREQUENCIES_mpa_sampling(np, w1, w2, d, ps, gs, w) 
-   use pars,     ONLY:SP,DP,cI
+   use pars,     ONLY:SP,cI
    implicit none
    !
    integer,      intent(in)  :: np       ! number of desired frequency pairs/poles
@@ -38,7 +38,6 @@
    !
    integer     :: i,ex
    integer(SP) :: lp,r,c,p
-   real(SP)    :: aux
    complex(SP) :: ws
    real(SP), parameter :: log2=0.693147180560_SP
    !

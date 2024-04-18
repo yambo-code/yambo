@@ -381,7 +381,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'QpgFull', '[F RIM] Coulomb interaction: Full matrix',verb_level=V_RL)
  !
  ! RIM-W
- !call it(defs,'RandGvecW','[RIM-W] Screened interaction RS components',RIM_W_ng,G_unit,verb_level=V_RL)
  call it(defs,'RandGvecW','[RIM-W] Screened interaction RS components',RIM_W_ng,G_unit)
  call it(defs,'rimw_type','[RIM-W] Screened interaction limit metal/semiconductor/graphene',rimw_type)
  !
@@ -481,7 +480,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! EE scattering
  !
- call it(defs,'PlasmaPerc', '[RT] Plasma approx (0-100): % of eh pair considered',PLASMA_redux_percent,Verb_level=V_real_time)
+ call it(defs,'PlasmaPerc', '[RT] % (0-100) of PLASMA eh pair reduction. =0 correspond to no reduction.',&
+&        PLASMA_redux_percent,Verb_level=V_real_time)
  call it(defs,'EERimPerc',  '[RT] EE Double Grid (0-100): % of the points used in EE scatt',DbGd_EE_percent,Verb_level=V_real_time)
  call it('f',defs,'RTskipImposeE',   '[RT] Conservation of E (e-e channel) imposed by hand on-the-fly')
  !
@@ -920,7 +920,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      !
      ! Bands
      !
-     bands=-1
+     bands=(/1,E_in%nb/)
      do i1=1,11
        if(.not.(is_def(i1))) cycle
        if(i1< 6) tmp_bands=X(i1)%ib

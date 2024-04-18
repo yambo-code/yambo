@@ -155,6 +155,7 @@ subroutine NL_initialize(E,k)
  else
    call msg('sr','[NL] Non-linear optics configuration')
    call msg('sr','[NL] Loop on frequencies of the first field ')
+   if(NL_er(1)==0._SP) call error("NLEnRange cannot start from zero (simulation time equal to infinity!!) ")
    call warning('Variables Field1_Freq and Field1_NFreqs ignored')
  endif
  !

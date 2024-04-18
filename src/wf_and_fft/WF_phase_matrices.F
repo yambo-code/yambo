@@ -22,7 +22,7 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  use D_lattice,         ONLY:nsym,sop_tab
  use electrons,         ONLY:levels,n_max_deg
  use wave_func,         ONLY:WAVEs,io_WF_phases,WF_phases_b_map
- use wave_func,         ONLY:wf_ng_overlaps,wf_ng_1st_BZ,WF_copy,wf_nc_k,wf_igk
+ use wave_func,         ONLY:wf_ng_overlaps,wf_ng_1st_BZ,WF_copy,wf_nc_k
  use stderr,        ONLY:intc
  use electrons,         ONLY:n_spinor,n_sp_pol
  use wrapper,           ONLY:Vstar_dot_V
@@ -49,7 +49,7 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  real(SP)          :: g0_length(3)
  integer           :: ikbz,iRkbz,isk,isloop,isk_c,isk_y,iGk_y,iGk_c,istark,&
  &                    iby,ibc,iby_phase,ibc_phase,i_sp_pol,ik,&
- &                    ifrag,s_count,i_wf_y,i_wf_c,iGp,ng_tmp,nb
+ &                    ifrag,s_count,i_wf_y,i_wf_c,iGp,ng_tmp,nb,NG_max
  complex(SP)       :: det,charac(blim(2)-blim(1)+1,nsym)
  complex(SP), allocatable :: WF_phases(:,:,:,:,:)
  !
@@ -90,15 +90,14 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  !
  ifrag=0
  !
+ if (maxval(wf_nc_k)>ng_tmp) then
+  call error("MAX(wf_nc_k) ("//trim(intc(maxval(wf_nc_k)))//") > wf_ng ("//trim(intc(ng_tmp))&
+             &//"), it's not possible to compute WF phases.")
+ endif
+ !
  do i_sp_pol=1,n_sp_pol
    !
    do ik=klim(1),klim(2)
-     !
-     max_igk = wf_igk(wf_nc_k(ik),ik)
-     if (max_igk > ng_tmp) then
-       call error("wf_igk ("//trim(intc(max_igk))//") > wf_ng ("//trim(intc(ng_tmp))//"), it's not possible to get WF phases."& 
-                  &//" Is FFTGvecs too low? You need to rerun the BSE step with at least max(wf_igk) G-vectors.") 
-     endif
      !
      ifrag=ifrag+1
      !

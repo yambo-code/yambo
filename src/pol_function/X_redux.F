@@ -34,7 +34,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  use wrapper,       ONLY:M_by_M
  use interfaces,    ONLY:LINEAR_ALGEBRA_driver,MATRIX_transfer
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t,X_use_lin_sys,X_use_gpu,X_par_lower_triangle
+ use X_m,           ONLY:X_t,X_use_lin_sys,X_use_gpu,X_par_lower_triangle,X_redux_build_kernel
  use TDDFT,         ONLY:FXC_n_g_corr,F_xc_gspace,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
  use timing_m,      ONLY:timing
  use devxlib,       ONLY:devxlib_memset_d,devxlib_memcpy_h2d,devxlib_memcpy_d2d,&

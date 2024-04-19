@@ -206,6 +206,14 @@ module X_m
      integer, optional :: DIM(:)
    end subroutine
    !
+   subroutine X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols,compute_on_gpu,iq)
+     use matrix,        ONLY:PAR_matrix
+     implicit none
+     type(PAR_matrix), target :: KERNEL,Xo
+     integer, intent(in)      :: Xo_rows(2),Xo_cols(2),iq
+     logical, intent(in)      :: compute_on_gpu
+   end subroutine
+   !
  end interface
  !
  contains

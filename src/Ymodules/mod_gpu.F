@@ -29,8 +29,8 @@ module gpu_m
   use devxlib_cublas
   use devxlib_memcpy
   use devxlib_linalg
-  !use cusolverdn
-  use cusolverdn_y
+  use cusolverdn
+  !use cusolverdn_y
 # if defined _CUDAF
   use cufft
 # elif defined _OPENACC

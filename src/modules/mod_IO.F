@@ -346,6 +346,38 @@ module IO_m
      call irename( cstr(trim(filename_old)), cstr(trim(filename_new)) )
    end subroutine
    !
+   function where_is_file(desc,subfolder)
+     !
+     use pars,         ONLY:num_of_alternative_locations,lchlen
+     use IO_int,       ONLY:all_locations
+     !
+     character(*)           :: desc
+     character(*), optional :: subfolder
+     character(lchlen)      :: where_is_file
+     !
+     ! Work Space
+     !
+     integer            :: i_f
+     character(lchlen)  :: possible_locations(num_of_alternative_locations)
+     character(schlen)  :: subfolder_
+     !
+     logical, external :: file_exists
+     !
+     subfolder_=' '
+     if (present(subfolder)) subfolder_=subfolder
+     !
+     possible_locations=all_locations(desc,subfolder_)
+     !
+     where_is_file="none"
+     do i_f=1,num_of_alternative_locations
+       if( file_exists(trim( possible_locations(i_f) )  ) ) then
+         where_is_file=trim(possible_locations(i_f))
+         return
+       endif
+     enddo
+     !
+   end function where_is_file
+   !
    logical function file_is_present(desc,subfolder)
      !
      use pars,         ONLY:num_of_alternative_locations

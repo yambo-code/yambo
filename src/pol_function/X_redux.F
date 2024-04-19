@@ -5,6 +5,8 @@
 !
 ! Authors (see AUTHORS file for details): AM AF 
 !
+#include<dev_defs.h>
+!
 subroutine X_redux(iq,what,X_par,Xw,X)
  !
  ! Here we solve the Dyson equation using a combination of Serial(SER)/Parallel(PAR)/SLK environments.
@@ -40,7 +42,6 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  use devxlib_async, ONLY:devxlib_async_synchronize
  use gpu_m
  !
-#include<dev_defs.h>
 #include<y_memory.h>
  !
  type(PAR_matrix) :: X_par
@@ -227,7 +228,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    !
    ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
-   call X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
+   call X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols,compute_on_gpu,iq)
    !
    ! X(g,gp)=Sum_gpp[KERNEL]^-1_(g,gpp)*Xo(gpp,gp)
    !
@@ -362,14 +363,17 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  YAMBO_FREE(PAR_FREQS_index)
  call PP_indexes_reset(PAR_IND_freqs)
  !
-contains
-   !
-   subroutine X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
+end subroutine
+!
+   subroutine X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols,compute_on_gpu,iq)
      use R_lattice,     ONLY:bare_qpg, DEV_VAR(bare_qpg)
-     use pars,          ONLY:pi,cONE
+     use pars,          ONLY:pi,cONE,SP
+     use matrix,        ONLY:PAR_matrix
      implicit none
      type(PAR_matrix), target :: KERNEL,Xo
-     integer, intent(in)      :: Xo_rows(2),Xo_cols(2)
+     integer, intent(in)      :: Xo_rows(2),Xo_cols(2),iq
+     logical, intent(in)      :: compute_on_gpu
+     !
      integer :: ig1,ig2
      !
      complex(SP), pointer DEV_ATTR :: KERNEL_p(:,:,:)
@@ -407,5 +411,3 @@ contains
      endif
      !
    end subroutine X_redux_build_kernel
-   !
-end subroutine

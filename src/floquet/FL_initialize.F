@@ -91,6 +91,7 @@ subroutine FL_initialize(E,k,q)
  l_P_periodic = .true.
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
+ if(l_FL_dephase)  call warning(' Dephase in Floquet is only for testing purposes.')
  !
  ! Check double-precision and other possible errors
  ! ================================================

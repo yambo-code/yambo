@@ -23,7 +23,7 @@
 !
 subroutine FL_dephasing(en,Xk,ik,i_sp,FL_V_bands,H_nl_sc)
  !
- ! Dephasing only for testing purposes - not working properly
+ ! Dephasing in Floquet is only for testing purposes - not working properly
  !
  use pars,           ONLY:SP,cI,cZERO,pi,cONE
  use units,          ONLY:SPEED_OF_LIGHT

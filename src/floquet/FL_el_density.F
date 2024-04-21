@@ -70,7 +70,7 @@ subroutine FL_el_density(en,Xk,rho,FL_V_bands,lowest_band)
    !
    do i_m=lowest_band,en%nbf(i_sp)
      !
-     do i1_extra=max_extra_mode+1,n_tot_extra_modes !aim137 prelim - this can be reduced to half as rho must be real
+     do i1_extra=max_extra_mode+1,n_tot_extra_modes
        !
        do i1=1,NL_bands(2)
          do i2=1,NL_bands(2)

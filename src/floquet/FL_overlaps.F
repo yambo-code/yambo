@@ -216,7 +216,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_time_S
        enddo
        !
        !
-       if (l_eval_det) then !aim137 I can add (.and. istep == 1) here. And make FL_time_S_det(3), not 6.
+       if (l_eval_det) then
          !
          call FL_determinants(en,ik_ibz,ikp_ibz,i_sp,FL_S_plus(:,:,:,id+(istep-1)*3),FL_time_S_det(:,id+(istep-1)*3))
          !

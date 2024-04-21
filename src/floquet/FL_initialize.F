@@ -171,12 +171,12 @@ subroutine FL_initialize(E,k,q)
         Correlation=HARTREE
         RT_potential='HARTREE'
         eval_HARTREE =.true.
-        call error ('  [FL] HARTREE not yet implemented in Floquet')
+        call warning ('  [FL] HARTREE implementation in Floquet is still under development')
     case('HARTREE')
         Correlation=HARTREE
         RT_potential='HARTREE'
         eval_HARTREE =.true.
-        call error ('  [FL] HARTREE not yet implemented in Floquet')
+        call warning ('  [FL] HARTREE implementation in Floquet is still under development')
     case('TDDFT')  
         Correlation=TDDFT
         RT_potential='default'

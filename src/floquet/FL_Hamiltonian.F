@@ -95,7 +95,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  FL_V_Hartree = rZERO
  FL_V_Hartree_KS = cZERO
  FL_V_Hartree_KS_time = cZERO
- !aim137 check - should I only allocate these variables if Corr != IPA ?
  !
  if (iter_num > 1) then
    !

@@ -714,6 +714,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
 #if defined _FL
  !
+ Efield(1)%ef_name="SIN"
  FL_Chi_order = 2
  FL_Chi_thr_1 = 1.E-1_SP
  FL_Chi_thr_2 = 1.E-1_SP

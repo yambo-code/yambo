@@ -34,13 +34,12 @@ subroutine FL_initialize(E,k,q)
  use R_lattice,      ONLY:bz_samp,k_map
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field, &
-&                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential
+&                         Phase_LifeTime,RT_dyn_step,NE_i_time,RT_potential
  use RT_control,     ONLY:SETUP_RT_IO_type,OBS_RT_IO_t
  use real_time,      ONLY:RT_nbands,RT_bands
- use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
-&                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
-&                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_nbands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity, &
-&                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT
+ use nl_optics,      ONLY:l_use_DIPOLES,NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,&
+&                         IPA,TDDFT,HARTREE,LRC,JGM,LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_nbands,&
+&                         NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity,l_eval_CURRENT
  use electric,       ONLY:l_force_SndOrd,l_P_periodic
  use fl_optics,      ONLY:l_FL_dephase,FL_Chi_order,FL_add_mode,max_time_step,max_fl_mode,max_extra_mode,max_duffin_mode, &
 &                         FL_states,FL_space_dim,n_tot_time_steps,n_tot_fl_modes,n_tot_extra_modes,n_tot_duffin_modes,&
@@ -54,7 +53,6 @@ subroutine FL_initialize(E,k,q)
  !
  ! Working space
  !
- real(SP) :: Time, WF_sample_range(2),W_0,T_0,sigma 
  integer  :: i1
  !
  ! Input variables: FL_Chi_order, FL_add_mode, NL_bands
@@ -106,32 +104,6 @@ subroutine FL_initialize(E,k,q)
  if(.not.allocated(k_map%k_map_dir)) call k_map_nearest_by_dir(k,k_map)
  if(.not.allocated(k%k_table))       call k_build_up_BZ_tables(k)
  !
- ! Integrator ! ============
- !
- select case (trim(Integrator_name))
-    case('EULER')
-        Integrator=EULER
-    case('EULEREXP')
-        Integrator=EULEREXP
-    case('RK2')  
-        Integrator=RK2
-    case('RK4')
-        Integrator=RK4
-    case('RK2EXP')
-        Integrator=RK2EXP
-    case('RK4EXP')
-        Integrator=RK4EXP
-    case('HEUN')
-        Integrator=HEUN
-        call error("HEUN integrator not yet available")
-    case('INVINT')
-        Integrator=INVINT
-    case('CRANKNIC')
-        Integrator=CRANK_NICOLSON
-    case default
-        call error("Unknow integrator")
- end select
- !
  ! Verbosity Level
  ! 
  select case (trim(NL_verb_name))
@@ -175,59 +147,10 @@ subroutine FL_initialize(E,k,q)
  if(Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
     call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only!')
  !
- ! For short pulses field (PULSE, QSSIN, QSFIELD, SPULSE)
- ! calcualte the T_0
- !
- W_0=Efield(1)%frequency(1)
- sigma=Efield(1)%width
- T_0=pi/W_0*(real(nint(W_0/pi*3._SP*sigma),SP))
- if(Efield(1)%ef_name=='SPULSE') T_0=sigma
- !
- ! Important in the Time-dependent Schrodinger Eq.
- ! the Phase_LifeTime is 1/2 of the one used in the 
- ! Non-Equilibrium Green's Function
- !
- Phase_LifeTime=2._SP/NL_damping
- !
- ! Determine the total time from the damping or from T_0
- !
- if(NE_tot_time<=0._SP) then
-   !
-   if(Efield(1)%ef_name=='SOFTSIN'.or.Efield(1)%ef_name=='SIN') then
-     !  
-     ! Run lenght is 6*Phase_lifeTime + 4 fs for response analysis
-     !
-     if(NL_damping<zero_dfl) call error(" Error damping=0 and NLtime<0!! ") 
-     !
-     ! Dephasing Time
-     !
-     NE_tot_time=Phase_LifeTime*5._SP
-     !
-     ! Add time to sample the response
-     !
-     NE_tot_time=NE_tot_time+EtoT(E=NL_er(1))+5._SP*RT_step
-     !
-     call msg('sr','Dephasing Time              ',5._SP*Phase_LifeTime*AUT2FS,"[fs]")
-     call msg('sr','Sampling  Time              ',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS,"[fs]")
-     !
-   elseif(Efield(1)%ef_name=='PULSE'.or.Efield(1)%ef_name=='QSSIN' &
-&     .or.Efield(1)%ef_name=='QSFIELD'.or.Efield(1)%ef_name=='SPULSE') then
-     !
-     NE_tot_time=3*T_0
-     call msg('sr','Time T_0                    ',T_0*AUT2FS,"[fs]")
-     call msg('sr','Dephasing                   ',Phase_LifeTime*AUT2FS,"[fs]")
-     !
-   else
-     call error("Negative total simulation time! ")
-   endif
-   ! 
- else
-   call msg('s',' Total simulation time read from input') 
+ if(Efield(1)%ef_name/='SIN') then
+    Efield(1)%ef_name = 'SIN'
+    call warning(' Chainging to SIN field as Floquet assumes a SIN field by definition')
  endif
- !
- call msg('sr','Total simulation time       ',NE_tot_time*AUT2FS,"[fs]")
- !
- NE_steps=int(NE_tot_time/RT_step)+1
  !
  ! Correlation
  ! ========================
@@ -303,49 +226,15 @@ subroutine FL_initialize(E,k,q)
  ! =========================
  NL_estep=(NL_er(2)-NL_er(1))/real(n_frequencies,SP)
  !
- ! Initialize Time variables
- ! =========================
- ! At present only a constant time-step for all non-linear
- ! frequencies is supported
- !
- RT_dyn_step=RT_step
- OBS_RT_IO_t%INTERVAL_time     =RT_step
- OBS_RT_IO_t%INTERVAL_time_INPUT=RT_step
- call SETUP_RT_IO_type(OBS_RT_IO_t,who="OBS",what="INIT")
- YAMBO_ALLOC(OBS_RT_IO_t%Time,(NE_steps))
- do NE_i_time=1,NE_steps
-   Time=real(NE_i_time-1,SP)*RT_step
-   OBS_RT_IO_t%Time(NE_i_time)=Time
- enddo
- !
- ! WFs sampling
- ! =========================
- !
- call NL_INIT_WF_sample(WF_sample)
- WF_sample_range  = (/OBS_RT_IO_t%Time(NE_steps) - EtoT(E=NL_er(1))+5._SP*RT_step,OBS_RT_IO_t%Time(NE_steps)/)
- call NL_set_WF_sample(WF_sample,n_order,RT_step,WF_sample_range,v=E%nbf,k=k%nibz)
- if (Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') WF_sample%ison = .false.
- if (n_order > 0) then
-   if (WF_sample%ison.eqv..false.) call warning('WF sampling switched off (only available with SOFTSIN/SIN field')
-   if (WF_sample%n_order < n_order) call warning('WF sampling analysis order set to the maximum of 7')
- end if
- !
  ! LOG
  ! ===
  !
  call section('+','Messaging')
  !
  call msg( 'r','---General---')
- call msg( 'r', 'Integrator                 ',trim(Integrator_name))
- call msg( 'r', 'Simulation time            ',real(NE_steps-1)*RT_step*AUT2FS,"[fs]")
- call msg( 'r', 'Step length                ',RT_step*AUT2FS,"[fs]")
- call msg( 'r', 'NE Steps                   ',NE_steps)
  call msg( 'r', 'Correlation                '//trim(NL_correlation))
  call msg( 'r', 'Damping                    ',NL_damping*HA2EV,"[eV]")
- call msg( 'r', 'Dephasing                  ',Phase_LifeTime*AUT2FS,"[fs]")
  call msg( 'r', 'Efield                     '//trim(Efield(1)%ef_name))
- call msg( 'r', 'Efield width               ',Efield(1)%width*AUT2FS,"[fs]")
- call msg( 'r', 'Efield T_0                 ',T_0,"[fs]")
  call msg( 'r', 'Efield Amplitude      [V/m]',Efield(1)%amplitude*AU2VMm1)
  call msg( 'r', 'Frequencies range          ',NL_er*HA2EV)
  call msg( 'sr','Frequencies steps          ',n_frequencies)
@@ -354,6 +243,5 @@ subroutine FL_initialize(E,k,q)
  call msg( 'r', 'Induced Field              ',l_RT_induced_field)
  call msg( 'r', 'Force Snd Order Dipoles    ',l_force_SndOrd)
  call msg( 'r', 'Evaluate Current           ',l_eval_CURRENT)
- call msg( 'r', 'WF sampling                ',WF_sample%ison) 
  !
 end subroutine FL_initialize

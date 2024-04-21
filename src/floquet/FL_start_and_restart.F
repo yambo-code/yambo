@@ -78,9 +78,9 @@ subroutine FL_start_and_restart(E,k,Dip)
  if(allocated(full_rho))        full_rho    =rZERO
  if(allocated(V_xc_sc))         V_xc_sc     =rZERO
  if(allocated(V_hartree_sc))    V_hartree_sc=rZERO
- H_nl_sc           =cZERO
- I_relax           =cZERO
- V_bands           =cZERO
+ H_nl_sc=cZERO
+ I_relax=cZERO
+ V_bands=cZERO
  !
  if(NL_bands(2)<=maxval(E%nbf).or.NL_bands(1)>minval(E%nbf)) &
      & call error(" Wrong bands range!")

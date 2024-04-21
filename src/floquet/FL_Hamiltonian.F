@@ -47,7 +47,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma,FL_beta,&
 &                         FL_Ho_lift_degeneracy,max_extra_mode,n_tot_extra_modes,FL_Pade_damping,&
 &                         FL_delta_rho,FL_delta_rho_hist,l_FL_conv_Rho,l_FL_conv_Chi,FL_FT_extra_Mm1,&
-&                         FL_dG,FL_dG_time,FL_Sigma,l_FL_dephase,l_FL_precond,l_Broyden_mixing,FL_FT_extra_M
+&                         FL_dG,FL_dG_time,FL_Sigma,l_FL_dephase,l_FL_precond,FL_FT_extra_M
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
  use parallel_m,     ONLY:master_cpu
@@ -113,25 +113,13 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
          !
          FL_delta_rho(:,i_t) = FL_delta_rho(:,i_t) - rho_reference(:)
          !
-         if (.not. l_Broyden_mixing) then
-           !
-           FL_res_rho_at_t = FL_delta_rho(:,i_t) &
-                         & - FL_delta_rho_hist(:,i_t)
-           !
-           if (l_FL_precond) call FL_precondition(FL_res_rho_at_t)
-           !
-           FL_delta_rho(:,i_t) = FL_res_rho_at_t * FL_beta + &
-                               & FL_delta_rho_hist(:,i_t)
-           !
-         else
-           !
-           if (l_FL_precond) call FL_precondition(FL_delta_rho(:,i_t))
-           !
-           call FL_Broyden(FL_delta_rho(:,i_t),&
-           &               FL_delta_rho_hist(:,i_t),&
-           &               FL_beta,iter_num-1)
-           !
-         endif
+         FL_res_rho_at_t = FL_delta_rho(:,i_t) &
+                       & - FL_delta_rho_hist(:,i_t)
+         !
+         if (l_FL_precond) call FL_precondition(FL_res_rho_at_t)
+         !
+         FL_delta_rho(:,i_t) = FL_res_rho_at_t * FL_beta + &
+                             & FL_delta_rho_hist(:,i_t)
          !
        enddo
        !

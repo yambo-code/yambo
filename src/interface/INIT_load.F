@@ -103,7 +103,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _FL
  use fl_optics,     ONLY:FL_Chi_order,FL_Chi_thr_1,FL_Chi_thr_2,FL_Chi_thr_3,FL_deg_thrs,FL_deg_lift,&
 &                        FL_solver_mode,FL_S_inv_mode,FL_max_iterations,FL_beta,FL_add_mode,&
-&                        FL_avE_degen,FL_ild,FL_Pade_damping
+&                        FL_ild,FL_Pade_damping
 #endif 
 #if defined _NL | defined _SC
  use fields,        ONLY:Efield
@@ -548,13 +548,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'Xthresh_1', '[FL] Self-consistent threshold on 1st order response function',FL_Chi_thr_1)
  call it(defs,'Xthresh_2', '[FL] Self-consistent threshold on 2nd order response function',FL_Chi_thr_2)
  call it(defs,'Xthresh_3', '[FL] Self-consistent threshold on 3rd order response function',FL_Chi_thr_3)
- call it(defs,'FL_solver',    '[FL] Eigenproblem solver mode ("(D)IAGONALIZATION/(L)ANCZOS")',FL_solver_mode)
+ call it(defs,'FL_solver',    '[FL] Eigenproblem solver mode ("(D)IAGONALIZATION")',FL_solver_mode)
  call it(defs,'FL_deg_thresh','[FL] Degeneracy threshold in KS band structure',FL_deg_thrs,verb_level=V_fl_optics)
  call it(defs,'FL_deg_lift',  '[FL] Degeneracy lifting of KS band structure',FL_deg_lift,verb_level=V_fl_optics)
  call it(defs,'S_inv_mode',   '[FL] Inversion method ("(N)UMERICAL/(P)ERTURBATIVE")',FL_S_inv_mode,verb_level=V_fl_optics)
  call it(defs,'FL_beta',     '[FL] Mixing beta',FL_beta,verb_level=V_fl_optics)
  call it(defs,'FL_max_it',   '[FL] Maximum number of iterations',FL_max_iterations,verb_level=V_fl_optics)
- call it(defs,'AvE_deg_thresh', '[FL] Degeneracy threshold for average energy subspace',FL_avE_degen,verb_level=V_fl_optics)
  call it(defs,'FL_2D_ild',   '[FL] Interlayer distance [Bohr] (-1 for bulk)',FL_ild,verb_level=V_fl_optics)
  call it(defs,'FL_Pade',   '[FL] Additional Floquet-mode-dependent damping',FL_Pade_damping,unit=E_unit,verb_level=V_fl_optics)
  !

@@ -52,11 +52,6 @@ module fl_optics
  complex(SP), allocatable :: FL_dG_time(:,:,:,:)  ! Density matrix at different time steps
  complex(SP), allocatable :: FL_dG(:,:,:,:)  ! Density matrix at different Floquet modes
  complex(SP), allocatable :: FL_Sigma(:,:,:,:)  ! Self-energy in FKS space
- real(SP),    allocatable :: Broyden_prev_n_out(:)
- real(SP),    allocatable :: Broyden_prev_n_in(:)
- real(SP),    allocatable :: Broyden_delta_F(:,:)
- real(SP),    allocatable :: Broyden_u(:,:)
- real(SP),    allocatable :: Broyden_a(:,:)
  !
  integer  :: max_fl_mode
  integer  :: FL_add_mode
@@ -79,7 +74,6 @@ module fl_optics
  integer  :: FL_Chi_order,FL_max_iterations
  character(1) :: FL_S_inv_mode,FL_loc_S_inv_mode,FL_solver_mode
  logical   :: l_FL_conv_Chi,l_FL_conv_Rho,l_FL_dephase,l_FL_precond
- logical   :: l_Broyden_mixing,l_FL_avEnergy,l_FL_foldBZ
  !
  type(IO_desc)    :: FL_desc
  !

@@ -286,7 +286,7 @@ subroutine FL_driver(E,X,k,q,Dip)
        !
      endif
      !
-     FL_loc_S_inv_mode = FL_S_inv_mode ! D=Duffin / N=numerical / P=perturbative
+     FL_loc_S_inv_mode = FL_S_inv_mode ! N=numerical / P=perturbative
      !
    enddo
    !

@@ -83,13 +83,6 @@ subroutine FL_build_tilde_V_bands(en,Xk,ikbz,i_sp,istep,id_red,FL_V_bands,FL_V_t
  !
  select case(FL_loc_S_inv_mode)
    !
-   case("D") !Duffin approach
-     !
-     call warning('   [FL] Duffin inversion of S only for testing. &
-        & Check your results against the Numerical inversion approach')
-     !
-     call FL_Duffin(en,Xk,FL_Sm1_plus,FL_Sm1_minus,id_red,istep,i_sp,ikbz)
-     !
    case("N") !Numerical approach
      !
      i1_extra = -max_extra_mode + (max_duffin_mode+1) 

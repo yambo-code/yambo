@@ -36,7 +36,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
  use nl_optics,      ONLY:NL_bands,E_full,NL_damping
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
 &                         FL_states,FL_Ho_plus_Sigma,FL_QE_hist,FL_ac_phase,&
-&                         FL_eigenvectors,FL_eigenvalues,FL_beta,l_FL_avEnergy
+&                         FL_eigenvectors,FL_eigenvalues,FL_beta
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
  use parallel_int,   ONLY:PP_redux_wait
 #if defined _TIMING
@@ -147,15 +147,6 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
        trial_vec(FL_states(1):FL_states(2)) = &
                     & FL_eigenvectors(FL_states(1):FL_states(2),FL_chosen_bands(i_m),ik_mem,is)
        trial_val = FL_eigenvalues(FL_chosen_bands(i_m),ik_bz,is)
-       !
-       ! Average Energy eigenproblem
-       !
-       if (l_FL_avEnergy) call FL_average_energy(&
-       &    FL_Ho_plus_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is),&
-       &     FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is),&
-       &      FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is),&
-       &           trial_vec(FL_states(1):FL_states(2)),&
-       &           FL_chosen_bands(i_m))
        !
        ! Detect population inversion
        !

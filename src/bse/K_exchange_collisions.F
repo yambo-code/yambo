@@ -1,3 +1,6 @@
+
+HERE TO CHECK
+
 !
 !        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
@@ -33,7 +36,8 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  use timing_m,       ONLY:timing
  use openmp,         ONLY:OPENMP_update,master_thread
  use collision_el,   ONLY:elemental_collision_free,elemental_collision_alloc
- use devxlib,        ONLY:devxlib_memcpy_h2h,devxlib_memcpy_d2d,devxlib_memcpy_h2d,devxlib_conjg
+ use devxlib,        ONLY:devxlib_memcpy_h2h,devxlib_memcpy_d2d,devxlib_memcpy_h2d,&
+&                         devxlib_conjg,devxlib_memset_d
  !
 #include<dev_defs.h>
  !
@@ -100,8 +104,12 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
      ! G==0 term
      !
-     if (STRING_match(BSE_L_kind,"full")) BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_opt(1,i_T_el,1)
-     if (STRING_match(BSE_L_kind,"bar"))  BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=cZERO
+     ! set terms on CPU and update GPU afterwards
+     if (STRING_match(BSE_L_kind,"full")) BS_T_grp(i_T_grp)%O_x(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_opt(1,i_T_el,1)
+     if (STRING_match(BSE_L_kind,"bar"))  BS_T_grp(i_T_grp)%O_x(1,i_T_el)=cZERO
+     !
+     call devxlib_memcpy_h2d( BS_T_grp(i_T_grp)%DEV_VAR(O_x), BS_T_grp(i_T_grp)%O_x, &
+&                             range1=[1,1],range2=[i_T_el,i_T_el])
      !
      ! G/=0 terms
      !
@@ -136,7 +144,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        O_x_sym_p => DEV_VAR(BS_T_grp(i_T_grp_last_with_identity_sym)%O_x)
        !
        !DEV_ACC data present(O_x_p,O_x_sym_p,g_rot,sop_inv)
-       !DEV_ACC parallel loop async
+       !DEV_ACC parallel loop private(i_g1,i_g2)
        !DEV_CUF kernel do (1) <<<*,*>>>
        !DEV_OMP parallel do default(shared), private(i_g1,i_g2)
        do i_g1=2,BS_n_g_exch
@@ -153,7 +161,8 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
      call DEV_SUB(scatter_Bamp)(K_EXCH_collision)
      !
-     BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=cZERO
+     ! BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=cZERO
+     call devxlib_memset_d(BS_T_grp(i_T_grp)%DEV_VAR(O_x)(:,i_T_el),val=cZERO,range1=[1,1])
      !
      if (STRING_match(BSE_L_kind,"full")) i_g0=1
      if (STRING_match(BSE_L_kind,"bar"))  i_g0=2

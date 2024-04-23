@@ -34,7 +34,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use FFT_m,         ONLY:fft_size
  use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G,TDDFT_ALDA_R_space
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,     ONLY:G_m_G,qindx_B,bz_samp,RIM_W,&
+ use R_lattice,     ONLY:G_m_G,qindx_B,bz_samp,RIM_W,RIM_W_d,&
 &                        qindx_X,qindx_B_max,qindx_B_load,&
 &                        RIM_ng,RIM_W_is_diagonal,RIM_W_ng
  use com,           ONLY:msg
@@ -67,6 +67,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use PHOTOLUM,      ONLY:BSS_PL_free
  use parser_m,      ONLY:parser
  !
+#include<dev_defs.h>
 #include<y_memory.h>
  !
  type(levels)  ::Ken 
@@ -220,7 +221,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call BSS_MAGN_free( )
    call BSS_PL_free( )
    !
+   YAMBO_FREE_GPU(BS_W)
    YAMBO_FREE(BS_W)
+   YAMBO_FREE_GPU(DEV_VAR(RIM_W))
    YAMBO_FREE(RIM_W)
    !
    return
@@ -585,6 +588,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          if (BS_res_K_exchange) H_x=K_exchange_kernel_resonant(iq, BS_n_g_exch,               &
 &                                   BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
          !
+write(0,*)
+write(0,*) "BS_res_K_exchange"
+write(0,"(8f15.9)") H_x
          ! ALDA
          if (BS_K_is_ALDA)      H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'RES')
          !
@@ -594,6 +600,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                                   i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
 &                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
          !         
+write(0,*)
+write(0,*) "BS_res_K_corr"
+write(0,"(8f15.9)") H_c
+
        case ("C","Q")
          !
          ! :::COUPLING TERM:::
@@ -697,8 +707,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
  !
+ YAMBO_FREE_GPU(BS_W)
  YAMBO_FREE(BS_W)
+ YAMBO_FREE_GPU(DEV_VAR(RIM_W))
  YAMBO_FREE(RIM_W)
+ !
  call WF_free(WF)
  !
  call timing('X T_space Kernel',OPR='stop')

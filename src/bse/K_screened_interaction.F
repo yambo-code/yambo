@@ -39,7 +39,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use IO_int,       ONLY:io_control
  use IO_m,         ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,&
 &                       OP_RD,RD,RD_CL,RD_CL_IF_END
- use devxlib,      ONLY:devxlib_memcpy_d2d,devxlib_memcpy_h2d
+ use devxlib,      ONLY:devxlib_memcpy_d2d,devxlib_memcpy_h2d,devxlib_memcpy_d2h
  use gpu_m,        ONLY:have_gpu
  !
 #include<y_memory.h>
@@ -54,7 +54,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  complex(SP), pointer DEV_ATTR :: gamp_p(:,:)
  complex(SP), pointer DEV_ATTR :: X_mat_p(:,:,:)
  real(SP),    pointer DEV_ATTR :: RIM_W_p(:,:,:)
- real(SP)   :: rtmp
+ complex(SP):: ctmp(1)
  integer    :: nibz
  !
  integer    :: BS_W_size2,i_g2,i_g3,i_g2_mat,i_g3_mat,iq_W
@@ -172,7 +172,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      if(l_rim_w) then
        !
        !DEV_ACC data present(RIM_vpW,RIM_W_p,gamp_p)
-       !DEV_ACC parallel loop async
+       !DEV_ACC parallel loop collapse(2)
        !DEV_CUF kernel do(2) <<<*,*>>>
        do i_g3=1,RIM_W_ng
        do i_g2=1,RIM_W_ng
@@ -187,7 +187,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      if (BS_W_is_diagonal) then
        !
        !DEV_ACC data present(BS_W,X_mat_p,gamp_p)
-       !DEV_ACC parallel loop async
+       !DEV_ACC parallel loop private(i_g2_mat)
        !DEV_CUF kernel do(1) <<<*,*>>>
        do i_g2=1, BS_n_g_W
          i_g2_mat=min(i_g2,X%ng)
@@ -198,7 +198,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      else if (.not.BS_W_is_diagonal) then
        !
        !DEV_ACC data present(BS_W,RIM_vpW,X_mat_p,gamp_p)
-       !DEV_ACC parallel loop async
+       !DEV_ACC parallel loop private(i_g3,i_g3_mat,i_g2,i_g2_mat,l_RIM_W_g)
        !DEV_CUF kernel do(1) <<<*,*>>>
        do i_g3=1,BS_n_g_W
          i_g3_mat=min(i_g3,X%ng)
@@ -243,11 +243,13 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  !
  if (RIM_anisotropy/=0.) then
  !
- ! AF: GPU using _OPENACC to be fixed
 #ifdef _GPU
-   rtmp=BS_W(1,1,1)
-   rtmp=rtmp+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
-   BS_W(1,1,1)=rtmp
+   ! d2h: ctmp=BS_W(1,1,1)
+   call devxlib_memcpy_d2h(ctmp,BS_W(:,1,1),range1=(/1,1/))
+   ! update
+   ctmp=ctmp+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
+   ! h2d: BS_W(1,1,1)=ctmp
+   call devxlib_memcpy_h2d(BS_W(:,1,1),ctmp,range1=(/1,1/))
 #else
    BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
 #endif

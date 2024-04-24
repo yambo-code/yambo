@@ -3,22 +3,22 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MF, AF
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !================
@@ -29,8 +29,8 @@ module gpu_m
   use devxlib_cublas
   use devxlib_memcpy
   use devxlib_linalg
-  !use cusolverdn
-  use cusolverdn_y
+  use cusolverdn
+  !use cusolverdn_y
 # if defined _CUDAF
   use cufft
 # elif defined _OPENACC
@@ -38,6 +38,10 @@ module gpu_m
 # elif defined _OPENMP_GPU && defined _HIP
   use hip_m
   use hipfft_m
+  use omp_lib
+# elif defined _OPENMP_GPU && defined _MKLGPU
+  use omp_lib
+  use mkl_dfti_omp_offload
 # endif
   use parallel_m,   ONLY:myid,host_name,PAR_COM_HOST
   use iso_c_binding
@@ -61,6 +65,11 @@ module gpu_m
   logical, parameter:: have_hip=.true.
 #else
   logical, parameter:: have_hip=.false.
+#endif
+#ifdef _MKLGPU
+  logical, parameter:: have_mklgpu=.true.
+#else
+  logical, parameter:: have_mklgpu=.false.
 #endif
   !
 #ifdef _CUDAF
@@ -90,7 +99,7 @@ module gpu_m
   type(cusolverDnHandle)   :: cusolv_h
   public :: cusolv_h
 #endif
-  
+
   !
   ! Streams
   !
@@ -190,6 +199,11 @@ contains
     ierr = hipDeviceSynchronize()
     if (ierr/=0) call error("[GPU] cannot device-sync")
 #endif
+#if defined _MKLGPU && defined _OPENMP_GPU
+    ndev = omp_get_num_devices()
+    if (ndev==0) call error("[GPU] cannot get DeviceCount")
+    call omp_set_default_device(mod(myid_host_loc, ndev))
+#endif
     !
     gpu_subscription=PAR_COM_HOST%n_CPU / ndev
     !
@@ -199,7 +213,7 @@ contains
     !
 #endif
     !
-    have_gpu_devices=.false. 
+    have_gpu_devices=.false.
     if (have_gpu) then
       !
       call get_environment_variable("CUDA_VISIBLE_DEVICES",gpu_visible_devices)
@@ -212,6 +226,12 @@ contains
       if (.not.have_gpu_devices) then
          call get_environment_variable("HIP_VISIBLE_DEVICES",gpu_visible_devices)
          if (len_trim(gpu_visible_devices) >0) have_gpu_devices=.true.
+      endif
+      if (.not.have_gpu_devices) then
+#if defined _OPENMP_GPU
+         ndev = omp_get_num_devices()
+         if (ndev >0) have_gpu_devices=.true.
+#endif
       endif
       !
     endif
@@ -266,8 +286,8 @@ contains
   !
   subroutine gpu_linalg_setup()
     implicit none
-#if defined _CUDAF || defined  _OPNEACC 
-    integer :: istat 
+#if defined _CUDAF || defined  _OPNEACC
+    integer :: istat
     istat = cublasInit()
     if(istat/=0) call error('cublasInit failed')
     istat = cusolverDnCreate(cusolv_h)
@@ -294,7 +314,7 @@ contains
   function gpu_devsync() result(ierr)
     implicit none
     integer :: ierr
-    ierr = 0 
+    ierr = 0
 #if ( defined _CUDAF || defined  _OPNEACC ) && defined _CUDA
     ierr = CudaDeviceSynchronize()
 #endif
@@ -303,19 +323,22 @@ contains
 #endif
     return
   end function
-  
+
   function gpu_GetDevice(i_dev) result(ierr)
     implicit none
     integer :: ierr, i_dev
-    ierr = 0 
+    ierr = 0
 #if ( defined _CUDAF || defined  _OPNEACC ) && defined _CUDA
     ierr = cudaGetDevice(i_dev)
 #endif
 #if defined _OPENMP_GPU && defined _HIP
     ierr = hipGetDevice(i_dev)
 #endif
+#if defined _OPENMP_GPU && defined _MKLGPU
+    i_dev = omp_get_default_device()
+#endif
     return
   end function
-  
+
 end module gpu_m
 

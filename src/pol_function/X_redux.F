@@ -1,25 +1,11 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM (AF)
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2006 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
+! Authors (see AUTHORS file for details): AM AF 
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+#include<dev_defs.h>
 !
 subroutine X_redux(iq,what,X_par,Xw,X)
  !
@@ -48,7 +34,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  use wrapper,       ONLY:M_by_M
  use interfaces,    ONLY:LINEAR_ALGEBRA_driver,MATRIX_transfer
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t,X_use_lin_sys,X_use_gpu,X_par_lower_triangle
+ use X_m,           ONLY:X_t,X_use_lin_sys,X_use_gpu,X_par_lower_triangle,X_redux_build_kernel
  use TDDFT,         ONLY:FXC_n_g_corr,F_xc_gspace,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
  use timing_m,      ONLY:timing
  use devxlib,       ONLY:devxlib_memset_d,devxlib_memcpy_h2d,devxlib_memcpy_d2d,&
@@ -56,7 +42,6 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  use devxlib_async, ONLY:devxlib_async_synchronize
  use gpu_m
  !
-#include<dev_defs.h>
 #include<y_memory.h>
  !
  type(PAR_matrix) :: X_par
@@ -78,17 +63,17 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  complex(SP), pointer DEV_ATTR :: KERNEL_p(:,:,:)
  complex(SP), pointer DEV_ATTR :: Xo_p(:,:,:)
  !
- ! Setup 
+ ! Setup
  !
  call timing(what//' (procedure)',OPR='start')
  !
- ! Barrier... 
+ ! Barrier...
  !
  call PP_wait(COMM=PAR_COM_X_WORLD%COMM)
  !
  ! compute X on GPU if compiled with GPU support,
  ! unless GPU-usage is switch-off from input
- ! 
+ !
  ! Main logic:
  ! if SLK are present .and. ncpu_SLK >1 .and. CUDA => SLK on CPU
  ! otherwise a problem is obtained since SLK doesn't work on GPU yet
@@ -102,6 +87,9 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  !
  ! AMD-GPUs + GPU linalg not yet implemented
  if (have_hip) compute_on_gpu=.false.
+ !
+ ! Intel-GPUs + GPU linalg not yet implemented
+ if (have_mklgpu) compute_on_gpu=.false.
  !
  if (have_gpu) call msg('s','[LA] '//what//' compute_on_gpu ',compute_on_gpu )
  !
@@ -132,7 +120,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    YAMBO_ALLOC_GPU(DEV_VAR(Xo%blc),(Xo%BLCrows(1):Xo%BLCrows(2),Xo%BLCcols(1):Xo%BLCcols(2),1))
    call devxlib_memset_d(DEV_VAR(KERNEL%blc),cZERO)
    call devxlib_memset_d(DEV_VAR(BUFFER%blc),cZERO)
-   call devxlib_memset_d(DEV_VAR(Xo%blc),cZERO)   
+   call devxlib_memset_d(DEV_VAR(Xo%blc),cZERO)
  endif
  !
  if (l_alda_fxc.and.Xo%kind=="SLK") then
@@ -197,7 +185,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    !
    if (FXC_SVD_digits>0) INV_MODE=SVD_INV
    !
-   ! TDDFT Kernel. Different procedure depending on the kernel 
+   ! TDDFT Kernel. Different procedure depending on the kernel
    !
    ! Kind: BS,ALDA,LRC.
    !
@@ -240,7 +228,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    !
    ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
-   call X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
+   call X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols,compute_on_gpu,iq)
    !
    ! X(g,gp)=Sum_gpp[KERNEL]^-1_(g,gpp)*Xo(gpp,gp)
    !
@@ -332,7 +320,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    !
  endif
  !
- ! Now the interfaces. 
+ ! Now the interfaces.
  !
  ! From all CPU of the SLK group to one of the RL group.
  !
@@ -349,7 +337,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
      call PP_redux_wait(iw_X,COMM=PAR_COM_X_WORLD%COMM)
      !
      ! iw_par is used ONLY by the CPU's that SEND the matrix (i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1)
-     ! All other CPU's do not use the BUFFER and can set INDEX_in as a dummy 1. This is needed as 
+     ! All other CPU's do not use the BUFFER and can set INDEX_in as a dummy 1. This is needed as
      ! BUFFER is dimensioned with the PAR #of freqs.
      !
      iw=iw_par
@@ -375,14 +363,17 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  YAMBO_FREE(PAR_FREQS_index)
  call PP_indexes_reset(PAR_IND_freqs)
  !
-contains
-   !
-   subroutine X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
+end subroutine
+!
+   subroutine X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols,compute_on_gpu,iq)
      use R_lattice,     ONLY:bare_qpg, DEV_VAR(bare_qpg)
-     use pars,          ONLY:pi,cONE
+     use pars,          ONLY:pi,cONE,SP
+     use matrix,        ONLY:PAR_matrix
      implicit none
      type(PAR_matrix), target :: KERNEL,Xo
-     integer, intent(in)      :: Xo_rows(2),Xo_cols(2)
+     integer, intent(in)      :: Xo_rows(2),Xo_cols(2),iq
+     logical, intent(in)      :: compute_on_gpu
+     !
      integer :: ig1,ig2
      !
      complex(SP), pointer DEV_ATTR :: KERNEL_p(:,:,:)
@@ -420,5 +411,3 @@ contains
      endif
      !
    end subroutine X_redux_build_kernel
-   !
-end subroutine

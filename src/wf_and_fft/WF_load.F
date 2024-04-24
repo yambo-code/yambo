@@ -1,24 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, AF
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version, g_ve
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
+! Copyright (C) 2006 The Yambo Team
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AM AF
 !
 #include<dev_defs.h>
 !
@@ -26,15 +11,15 @@
 !!
 !! @param[in]       iG_in                       max-number of G-vectors
 !! @param[in]       iGo_max_in                  ???
-!! @param[in]       bands_to_load               bands range 
-!! @param[in]       kpts_to_load                k-points range 
-!! @param[in]       sp_pol_to_load              spin-polarization range 
+!! @param[in]       bands_to_load               bands range
+!! @param[in]       kpts_to_load                k-points range
+!! @param[in]       sp_pol_to_load              spin-polarization range
 !! @param[in]       space                       R = real-space,  G = G-space, C = ?, B = ?
 !! @param[in]       title                       purpose of the wave-function loading
-!! @param[in]       impose_free_and_alloc       force deallocation of already loaded WF 
+!! @param[in]       impose_free_and_alloc       force deallocation of already loaded WF
 !! @param[in]       force_WFo                   do not rotate the WF (for yambo_sc)
-!! @param[in]       keep_states_to_load         keep (.TRUE.) or not (.FALSE.) states already loaded 
-!! @param[in]       quiet                       turn off report and log for the WF_laod 
+!! @param[in]       keep_states_to_load         keep (.TRUE.) or not (.FALSE.) states already loaded
+!! @param[in]       quiet                       turn off report and log for the WF_laod
 !!
 !! @param[out]      WF                  Wave-function object
 !
@@ -51,8 +36,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use electrons,     ONLY:nel,n_spinor,n_sp_pol
  use R_lattice,     ONLY:nkibz,k_pt,b
  use interfaces,    ONLY:WF_free
- use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size,&
-&                        fftw_plan,cufft_plan,hipfft_plan,DEV_VAR(fft_g_table)
+ use FFT_m
+! use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size,&
+!&                        fftw_plan,cufft_plan,hipfft_plan,mklgpu_desc,DEV_VAR(fft_g_table)
  use wave_func,     ONLY:wf_nc_k,wf_igk,DEV_VAR(wf_igk),WF_buffer,&
 &                        wf_ng,wf_norm_test,wf_ncx,io_WF,wf_b_indx,&
 &                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,WAVEs,states_to_load
@@ -138,7 +124,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    free_and_alloc=impose_free_and_alloc
  endif
  !
- ! [1]: check that loaded bounds are larger(equal) then bounds 
+ ! [1]: check that loaded bounds are larger(equal) then bounds
  !      asked now
  !
  call check_bounds(WF,loaded_bounds_ok)
@@ -187,7 +173,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      if (iG_bounds_loaded(1)>=iG_max.and.&
 &        iG_bounds_loaded(2)>=iGo_max) then
        !
-       ! Reset dimensions to fft dim loaded 
+       ! Reset dimensions to fft dim loaded
        !
        fft_dim=fft_dim_loaded
        fft_size=product(fft_dim)
@@ -217,7 +203,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  WF%space=wf_space_here
  !
  ! If the cpu has no WF to load %state must be set to .FALSE. before returning.
- ! This is needed, for example, when in a group of cpus some of them do not 
+ ! This is needed, for example, when in a group of cpus some of them do not
  ! read the DB
  !
  if (allocated(states_to_load)) then
@@ -242,7 +228,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
 #if defined _SC
  !
- ! First check and fix the number of bands 
+ ! First check and fix the number of bands
  !
  call load_SC_components('check_WF_DB',n_bands=bands_to_load(2))
  !
@@ -253,7 +239,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      call warning(' [WF'//trim(wf_title)//'] WF-distribution turned off, not compatible with SC wave functions')
    endif
    !
-   if (any ( WF%b/=(/1,SC_bands(2)/) )) then 
+   if (any ( WF%b/=(/1,SC_bands(2)/) )) then
      call warning(' [WF'//trim(wf_title)//'] Forced '//trim(intc(SC_bands(2)))//' bands to be loaded')
      if(allocated(states_to_load)) states_to_load(WF%b(2)+1:SC_bands(2),:,:)=.TRUE.
    endif
@@ -426,6 +412,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               call fft_3d_cuda( DEV_VAR(wf_DP),fft_dim,+1,cufft_plan)
 #elif defined _HIP
               call fft_3d_hip( DEV_VAR(wf_DP),fft_dim,+1,hipfft_plan)
+#elif defined _MKLGPU
+              call fft_3d_mklgpu( DEV_VAR(wf_DP),fft_dim,+1,mklgpu_desc)
 #endif
               WF_N = WF%N
               !
@@ -523,14 +511,14 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 
  !
  ! The states_to_load is a temporary array that points to the states to be loaded
- ! here. It is defined in PARALLEL_WF_distribute and, therefore, only by calling 
- ! WF_load after a PARALLEL_WF_distribute OR by using the buffered components 
+ ! here. It is defined in PARALLEL_WF_distribute and, therefore, only by calling
+ ! WF_load after a PARALLEL_WF_distribute OR by using the buffered components
  ! the states_to_load are used.
  !
- ! With the next lines I assume that whatever next call of WF_load will 
+ ! With the next lines I assume that whatever next call of WF_load will
  ! occur AFTER a PARALLEL_WF_distribute. But this is not true when I call
  ! WF_load with the same distribution of states but different spaces ("G" or "R").
- ! 
+ !
  ! This is the reason of the KEEP_STATES_TO_LOAD logical
  !
  if(allocated(states_to_load)) then
@@ -624,9 +612,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      i_sp_pol=WF_%sp_pol(1)
      do while(i_sp_pol<=WF_%sp_pol(2).and.flag_)
        ikibz=WF_%k(1)
-       do while(ikibz<=WF_%k(2).and.flag_) 
+       do while(ikibz<=WF_%k(2).and.flag_)
          ib   =WF_%b(1)
-         do while(ib<=WF_%b(2).and.flag_) 
+         do while(ib<=WF_%b(2).and.flag_)
            flag_=states_to_load(ib,ikibz,i_sp_pol).eqv.WF_%state(ib,ikibz,i_sp_pol)
            ib=ib+1
          enddo

@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM DS AF
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
@@ -90,10 +74,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &               i_kmq_s,i_kmq_s_m1,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,& 
 &               i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,I_Tgrp_k_st,I_Tgrp_p_st,H_pos(2),& 
 &               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,iq_W_bz,iq_W_s,ig_W,& 
-&               i_kmq_t,i_pmq_t,i_k_bz_mem,i_kmq_bz_mem,qindx_tmp(2) 
+&               i_kmq_t,i_pmq_t,i_k_bz_mem,i_kmq_bz_mem,qindx_tmp(2)
  ! OMP LAST DEF
  integer ::     i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & 
-&               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last 
+&               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last,ig_W_final 
  !
  integer    :: i_block,O_ng_shift,NG,&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
@@ -102,12 +86,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP):: sqrt_f_itk,sqrt_f_itp
  real(SP), allocatable :: BS_max_val_CPU(:)
  !
- complex(SP),   external ::K_correlation_kernel
+ complex(SP),   external ::K_correlation_kernel_std,K_correlation_kernel_dir
  complex(SP),   external ::K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
  ! Oscillators
  !
- logical    :: load_O_X
+ logical    :: load_O_X,l_std_alg,l_dir_alg
  !
  ! I/O
  !
@@ -172,6 +156,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (load_O_X) call msg('r','[BSE] Exchange components ',BS_n_g_exch)
  !
+ if (iq/=1 .and. n_spinor==2 .and. nsym>1) then
+   ! Default is direct algorithm, unless imposed from input
+   call parser('ImposeStdAlg',l_std_alg)
+   l_dir_alg=.not.l_std_alg
+ else         
+   ! Default is standard algorithm, unless imposed from input
+   call parser('ImposeDirAlg',l_dir_alg)
+   l_std_alg=.not.l_dir_alg
+ endif 
+ !
  ! Oscillators Setup
  !===================
  O_ng=1
@@ -208,7 +202,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !Check if RIM_W is diagonal
  call parser('RIM_W_diag',RIM_W_is_diagonal)
  if(l_rim_w .and. RIM_W_ng == 0) RIM_W_ng = RIM_ng
- if (l_rim_w) call interpolate_W(X,Xw,q,'BSE')
+ if (l_rim_w) call QP_interpolate_W(X,Xw,q,'BSE')
  !
  io_X_err=0
  if (BS_res_K_corr) call K_screened_interaction(X,Xw,q,io_X_err)
@@ -263,7 +257,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Wave Functions Phases
  !=======================
- call K_WF_phases(Xk)
+ if(l_std_alg) call K_WF_phases(Xk)
  ! 
  ! Spatial Inversion Test
  !========================
@@ -423,10 +417,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if (i_Tgrp_k/=i_Tgrp_p) call K_exchange_collisions(iq,Xk,i_Tgrp_p)
    !
-   ! Exchange oscillators
+   ! Correlation oscillators
    !----------------------
-   ! 
-   call K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
+   if (l_std_alg) call K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
+   if (l_dir_alg) call K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
    !
    ! Transition Loops
    !------------------
@@ -476,6 +470,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        i_kmq_bz=qindx_X(iq,i_k_bz,1) 
        i_pmq_bz=qindx_X(iq,i_p_bz,1) 
+       !
+       ig_kmq    = qindx_X(iq,i_k_bz,2)
+       ig_pmq    = qindx_X(iq,i_p_bz,2)
        !
        i_kmq   =Xk%sstar(i_kmq_bz,1) 
        i_pmq   =Xk%sstar(i_pmq_bz,1) 
@@ -527,10 +524,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        i_k_sp_pol_v=BS_T_grp(i_Tgrp_k)%table(i_Tk,5) 
        i_p_sp_pol_v=BS_T_grp(i_Tgrp_p)%table(i_Tp,5) 
        !
-       ! 
-       ig_kmq    = qindx_X(iq,i_k_bz,2) 
-       ig_pmq    = qindx_X(iq,i_p_bz,2) 
-       !        
        if ((BS_res_K_corr.or.BS_cpl_K_corr)) then 
          i_kmq_bz_mem=PAR_K_scheme%bz_index(i_kmq_bz) 
          if (i_pmq_bz_last/=i_pmq_bz.or.i_kmq_bz_last/=i_kmq_bz) then 
@@ -551,9 +544,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          else 
            iq_W_bz_mq=iq_W_bz_mq_last 
            ig_W_mq   =ig_W_mq_last    
-         endif 
+         endif
+         !
          iq_W_mq   =q%sstar( iq_W_bz_mq,1) 
          iq_W_s_mq =q%sstar( iq_W_bz_mq,2) 
+         !
+         !if (iq==1) ig_W_final=      ig_W_mq
+         !if (iq> 1) ig_W_final=G_m_G(ig_W_mq,g_rot(G_m_G(ig_pmq,ig_kmq),iq_W_s_mq))
+         !
        endif 
        ! 
        if (BS_K_is_ALDA) then 
@@ -566,6 +564,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        if (BS_res_K_corr.or.BS_cpl_K_corr) then 
          !
          if (iq_W_bz/=iq_W_bz_mq.or.iq_W/=iq_W_mq.or.iq_W_s/=iq_W_s_mq) call error("Wrong transferred momentum")
+         !
+         !if ( G_m_G(ig_W,ig_W_mq) /= G_m_G(ig_kmq,ig_pmq) )             call error("Wrong gvector shifts")
          !
          if ( (.not.BS_W_is_diagonal) .and. iq_W_s>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
          !
@@ -595,10 +595,16 @@ write(0,"(8f15.9)") H_x
          if (BS_K_is_ALDA)      H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'RES')
          !
          ! Correlations
-         if (BS_res_K_corr)     H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
+         if (BS_res_K_corr) then
+           if (l_std_alg)       H_c=K_correlation_kernel_std(i_block,i_p,i_pmq, &
 &                                   i_k_s,i_kp_s,i_c_k,i_c_p,i_kmq_s,i_kp_mq_s,i_v_k,i_v_p,     &
 &                                   i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
 &                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+           if (l_dir_alg)       H_c=K_correlation_kernel_dir(i_block,i_p,i_pmq, &
+&                                   i_k_s,i_p_s, i_c_k,i_c_p,i_kmq_s,i_pmq_s  ,i_v_k,i_v_p,     &
+&                                   i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
+&                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+         endif
          !         
 write(0,*)
 write(0,*) "BS_res_K_corr"
@@ -617,10 +623,16 @@ write(0,"(8f15.9)") H_c
          if (BS_K_is_ALDA)      H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'CPL')
          !
          ! Correlations
-         if (BS_cpl_K_corr)     H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
+         if (BS_cpl_K_corr) then
+           if (l_std_alg)       H_c=K_correlation_kernel_std(i_block,i_p,i_pmq, &
 &                                 i_k_s,i_kp_s,i_c_k,i_v_p,i_kmq_s,i_kp_mq_s,i_v_k,i_c_p,    &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+           if (l_dir_alg)       H_c=K_correlation_kernel_dir(i_block,i_p,i_pmq, &
+&                                 i_k_s,i_p_s ,i_c_k,i_v_p,i_kmq_s,i_pmq_s  ,i_v_k,i_c_p,    &
+&                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
+&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+         endif
          !
        end select
        !
@@ -685,7 +697,7 @@ write(0,"(8f15.9)") H_c
  !
  call BS_oscillators_free(BS_nT_grps,0)
  !
- if (BS_res_K_corr.or.BS_cpl_K_corr) then
+ if ( (BS_res_K_corr.or.BS_cpl_K_corr) .and. l_std_alg) then
    YAMBO_FREE(WF_phase)
  endif
  !

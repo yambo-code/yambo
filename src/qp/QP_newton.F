@@ -1,45 +1,25 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !@brief Newton solver for the quasi-particle equation
 !
 subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
- use pars,          ONLY:SP,cZERO,schlen
+ use pars,          ONLY:SP,cZERO
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_ppa,l_mpa,l_elel_corr,l_cohsex,l_rim_w
  use com,           ONLY:msg
  use DIPOLES,       ONLY:DIPOLE_t
- use X_m,           ONLY:X_t,current_iq,l_recalculate_X
- use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,QP_table,&
-&                        QP_n_states,QP_dSc,QP_dSc_delta,report_Sc,&
-&                        On_Mass_Shell_approx
+ use X_m,           ONLY:X_t
+ use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,&
+&                        QP_n_states,QP_dSc,QP_dSc_delta,On_Mass_Shell_approx
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels,n_bands,spin
+ use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
- use interfaces,    ONLY:OCCUPATIONS_Fermi
- use stderr,        ONLY:intc
- use IO_int,        ONLY:IO_and_Messaging_switch
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr
 #endif
@@ -47,6 +27,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use drivers,       ONLY:l_elphoton_corr
 #endif
  implicit none
+ !
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
  type(X_t)    ::X
@@ -57,7 +38,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  ! Work Space
  !
  integer     :: i1,i2,iter
- integer     :: ik,is,ib
+ integer     :: is
  complex(SP) :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
  !
  ! Dyson equation: Newton solver 
@@ -69,7 +50,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    !
  endif
  !
- ! Self-consisnte GW or GWo can be performed using external scripts
+ ! Self-consistent GW or GWo can be performed using external scripts
  ! see the wiki 
  ! https://www.yambo-code.eu/wiki/index.php/Self-consistent_GW_on_eigenvalues_only
  ! in this subroutine iter is always 0
@@ -78,20 +59,21 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  if (l_elel_corr) then
    !
-   ! AF,DALV: use of RIM_W to be extended beyond PPA
+   ! AF,DALV: use of RIM_W implemented for PPA and MPA
    !
    if (l_ppa) then
      !
-     if (l_rim_w) call interpolate_W(X,Xw,q,'PPA')
-     call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter)
+     if (l_rim_w) call QP_interpolate_W(X,Xw,q,'PPA')
+     call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
      !
    else if (l_mpa) then
      !
-     call QP_mpa(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter) 
+     if (l_RIM_W) call QP_interpolate_W(X,Xw,q,'MPA')
+     call QP_mpa(X,Xk,en,k,q,qp,Xw,iter) 
      !
    else if (l_cohsex) then
      !
-     call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter)
+     call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
      !
    else 
      !
@@ -171,4 +153,3 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  enddo
  !
 end subroutine
-

@@ -55,7 +55,9 @@ module cusolverdn_y
   end enum
 
   ! types
-
+  ! DEBUG <
+  !type :: cusolverDnHandle
+  ! DEBUG >
   type, bind(c) :: cusolverDnHandle
      type(c_ptr) :: handle
   end type cusolverDnHandle

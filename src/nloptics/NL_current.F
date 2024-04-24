@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2018 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM CA DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
 subroutine NL_current(k,E,V_input,NL_J)
  !
@@ -31,9 +15,9 @@ subroutine NL_current(k,E,V_input,NL_J)
  !
  use pars,           ONLY:SP,cZERO
  use units,          ONLY:SPEED_OF_LIGHT
- use R_lattice,      ONLY:bz_samp,k_map
+ use R_lattice,      ONLY:bz_samp,k_map,nXkibz
  use D_lattice,      ONLY:DL_vol
- use electrons,      ONLY:nel,levels,n_sp_pol
+ use electrons,      ONLY:nel,levels,n_sp_pol,spin_occ
  use fields,         ONLY:A_ext
  use X_m,            ONLY:global_gauge
  use DIPOLES,        ONLY:DIP_v
@@ -51,6 +35,8 @@ subroutine NL_current(k,E,V_input,NL_J)
  !
  ! Work Space
  !
+ integer  :: nel_effect ! Effective number of electrons        
+ !
  NL_J=cZERO
  !
  ! A : Current
@@ -58,13 +44,22 @@ subroutine NL_current(k,E,V_input,NL_J)
  call NL_average_operator(V_VALUE=NL_J(4:6), V_MATRIX=DIP_v(:,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),:,:),  &
      &  V_bands=V_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  !
+ ! DEBUG <
+ ! Calculate current using density matrix
+ ! call NL_average_operator(V_VALUE=NL_J(4:6), V_MATRIX=DIP_v(:,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),:,:),  &
+ !     &  dG=dG,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ ! DEBUG >
+ !
  if(trim(global_gauge)=='velocity') then
+   !
+   nel_effect=nel-(NL_bands(1)-1)*spin_occ
    !
    ! Velocity gauge I must use the correct definition of the J operator
    !
-   NL_J(4:6)=NL_J(4:6)+A_ext%vecpot(:)*real(nel,SP)/(2._SP*SPEED_OF_LIGHT)
+   NL_J(1:3)=NL_J(4:6)+A_ext%vecpot(:)*real(nel_effect,SP)/(2._SP*SPEED_OF_LIGHT)
    !
-   NL_J(1:3)=NL_J(4:6)
+   ! In velocity gauge J(1:3) is the full current
+   ! while J(4:6) is the current without the diamagnetic term
    !
  else
    !

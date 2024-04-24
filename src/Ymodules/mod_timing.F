@@ -1,11 +1,10 @@
 ! 
 ! Copyright (C) 2004 WanT Group
-! Copyright (C) 2000-2022 the YAMBO team
-! 
-! This file is distributed under the terms of the 
-! GNU General Public License. See the file `License' 
-! in the root directory of the present distribution, 
-! or http://www.gnu.org/copyleft/gpl.txt . 
+! License-Identifier: GPL
+!
+! Copyright (C) 2013 The Yambo Team
+!
+! Authors (see AUTHORS file for details):
 ! 
 ! <INFO>
 !

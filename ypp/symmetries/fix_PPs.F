@@ -1,27 +1,11 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): CA DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
+subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  !
  use pars,                ONLY:SP,lchlen
  use com,                 ONLY:msg,core_io_path,more_io_path
@@ -54,8 +38,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  real(SP),intent(in)      :: old_dl_sop(3,3,old_nsym)
  integer,intent(in)       :: old_sop_inv(old_nsym)
  logical,intent(in)       :: S_contains_TR(old_nsym)
- !
- integer,intent(in)       :: action_kind
  !
  ! Work space
  !
@@ -189,8 +171,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  core_io_path_save=core_io_path
  core_io_path=more_io_path
  !
- select case(action_kind)
- case(1)
    !
    if(io_KB_abinit_err==0) then
      !
@@ -434,83 +414,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      !
    endif
    !
- case(2)
-   !
-   if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0.or.io_Vnl_err==0) call msg('s',' PPs reduction...')
-   !
-   if(io_KB_abinit_err==0) then
-     !
-     call PP_free()
-     call PP_alloc_abinit()
-     pp_kb=0._SP
-     pp_kbd=0._SP
-     pp_kbs=pp_kbs_store
-     !
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
-     io_KB_abinit_err=io_KB_abinit(ID) 
-     !
-     do ik=1,k%nibz
-       !
-       pp_kb(:wf_ncx,:,:,:) =pp_kb_store(:wf_ncx,:,:,:,kpoints_map(1,ik))
-       pp_kbd(:wf_ncx,:,:,:)=pp_kbd_store(:wf_ncx,:,:,:,kpoints_map(1,ik))
-       !
-       call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ik+1/),ID=ID)      
-       io_KB_abinit_err=io_KB_abinit(ID)
-       !
-     enddo
-     !
-     YAMBO_FREE(pp_kb_store)
-     YAMBO_FREE(pp_kbd_store)
-     YAMBO_FREE(pp_kbs_store)
-     call PP_free()
-     !
-   endif
-   !
-   if(io_KB_pwscf_err==0) then
-     !
-     call PP_free()
-     call PP_alloc_pwscf()
-     pp_kb=0._SP
-     pp_kbd=0._SP
-     pp_kbs=pp_kbs_store
-     !
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
-     io_KB_pwscf_err=io_KB_pwscf(ID) 
-     !
-     do ik=1,k%nibz
-       !
-       pp_kb(:wf_ncx,:,:,:) =pp_kb_store(:wf_ncx,:,:,:,kpoints_map(1,ik))
-       pp_kbd(:wf_ncx,:,:,:)=pp_kbd_store(:wf_ncx,:,:,:,kpoints_map(1,ik))     
-       !
-       call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ik+1/),ID=ID)      
-       io_KB_pwscf_err=io_KB_pwscf(ID)
-       !
-     enddo
-     !
-     YAMBO_FREE(pp_kb_store)
-     YAMBO_FREE(pp_kbd_store)
-     YAMBO_FREE(pp_kbs_store)
-     call PP_free()
-     !
-   endif
-   !
-   if(io_Vnl_err==0) then
-     !
-     YAMBO_ALLOC(Vnl,(3,E%nb,maxval(E%nbm),k%nibz,n_sp_pol))
-     !
-     forall(ik=1:k%nibz) Vnl(:,:,:,ik,:) = Vnl_store(:,:,:,kpoints_map(1,ik),:)
-     !
-     Dip%ng=wf_ng
-     !
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-     io_Vnl_err=io_Vnl(Dip,E,ID)
-     !
-     YAMBO_FREE(Vnl_store)
-     YAMBO_FREE(Vnl)
-     !
-   endif
-   !
- end select
  !
  YAMBO_FREE(wf_nc_k_reduced)
  YAMBO_FREE(wf_igk_reduced)

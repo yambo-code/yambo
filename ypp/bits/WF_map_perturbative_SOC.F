@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine WF_map_perturbative_SOC(kpt,En)
  !
@@ -58,7 +42,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
 &                        i_sp_pol,n_miss,n_tot,i_sorted,i_deg,i_fft,i_fft_rot,i_k_SOC,i_k_SOC_bz,i_symm,i_star,&
 &                        i_spinor,SOC_bands_to_point(2)
  integer              :: n_spin_save,n_spinor_save,n_sp_pol_save,fft_size_save,NB_to_map,NK_to_map,NB_up
- logical              :: group_already_mapped(En%nb*n_sp_pol),DB_is_ok,map_up,map_dw,kpoint_to_map(kpt%nibz)
+ logical              :: group_already_mapped(En%nb*n_sp_pol),DB_is_OK,map_up,map_dw,kpoint_to_map(kpt%nibz)
  real(SP)             :: sq2,proj_up,proj_dw,mapping_tresh,min_sq(kpt%nibz),max_overlap,&
 &                        kpt_diff(3),a_save(3,3),alat_save(3)
  !
@@ -88,10 +72,10 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  !
  call fft_setup(0,1,.true.)
  !
- DB_is_ok=(kpt_SOC%nibz==kpt%nibz).and.(fft_size_save==fft_size).and. &
+ DB_is_OK=(kpt_SOC%nibz==kpt%nibz).and.(fft_size_save==fft_size).and. &
 &         (all(a==a_save)).and.(all(alat==alat_save))
  !
- if (.not.DB_is_ok) call error(' SOC DBs and without SOC DB do not match')
+ if (.not.DB_is_OK) call error(' SOC DBs and without SOC DB do not match')
  !
  call k_build_up_BZ_tables(kpt_SOC)
  call k_ibz2bz(kpt_SOC,'i',.false.)

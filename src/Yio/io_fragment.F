@@ -1,27 +1,11 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2015 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr)
+subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,extension,ierr)
  !
  ! This routine opens the fragment.
  !
@@ -41,11 +25,12 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr)
  !
  implicit none
  !
- integer, intent(in)   :: ID
- integer, intent(out)  :: ID_frag
- integer, optional     :: i_fragment
- integer, optional     :: j_fragment
- integer, optional     :: ierr
+ integer,      intent(in)   :: ID
+ integer,      intent(out)  :: ID_frag
+ integer,      optional     :: i_fragment
+ integer,      optional     :: j_fragment
+ integer,      optional     :: ierr
+ character(*), optional     :: extension
  !
  ! Work Space
  !
@@ -99,10 +84,14 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr)
  !
  io_file(ID_frag)=' '
  !
- fragment_filename=trim(io_extension(ID))//"_fragment_"//trim(intc(i_frag))
- if (present(j_fragment)) then
-   fragment_filename=trim(io_extension(ID)) &
-&                    //"_fragments_"//trim(intc(i_frag))//"_"//trim(intc(j_fragment))
+ if (present(extension)) then
+   fragment_filename=trim(io_extension(ID))//"_fragment_"//trim(extension)
+ else
+   fragment_filename=trim(io_extension(ID))//"_fragment_"//trim(intc(i_frag))
+   if (present(j_fragment)) then
+     fragment_filename=trim(io_extension(ID)) &
+&                      //"_fragments_"//trim(intc(i_frag))//"_"//trim(intc(j_fragment))
+   endif
  endif
  !
  ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID_frag)

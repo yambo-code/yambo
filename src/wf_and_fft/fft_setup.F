@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 #include<dev_defs.h>
 !
@@ -41,15 +25,19 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use gpu_m,          ONLY:have_gpu,gpu_devsync
  use devxlib,        ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memset_d
  use iso_c_binding,  ONLY:c_null_ptr
+#if defined _MKLGPU
+ use mkl_dfti_omp_offload
+ use FFT_m,          ONLY:mklgpu_desc
+#endif
  !
 #include<y_memory.h>
  !
- integer :: iG_max,iGo_max
+ integer :: iG_max,iGo_max,ierr
  logical :: ONLY_SIZE
 #if defined _FFTQE
  integer, external :: fft_setmap
 #endif
- ! 
+ !
  ! Work Space
  !
  integer  :: i1,i2,i3,i4,iv(3),ln(3),is,space_inv(3,3)
@@ -63,13 +51,13 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  integer,  allocatable :: ivec_GmG(:,:,:)
  integer,  allocatable DEV_ATTR :: ivec_GmG_d(:,:,:)
 #endif
- 
+
  call timing("FFT_setup",opr="start")
  !
  space_inv=reshape((/-1, 0, 0, 0,-1, 0, 0, 0,-1/),(/3,3/))
  call m3inv(transpose(b),mat)
  scal(:)=2._SP*pi/alat(:)
- ! 
+ !
  mat(:,1)=scal(1)*mat(:,1)
  mat(:,2)=scal(2)*mat(:,2)
  mat(:,3)=scal(3)*mat(:,3)
@@ -135,9 +123,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
        iv_3 = nint(DEV_VAR(g_vec_rot)(i1,3) - DEV_VAR(g_vec_rot)(i2,3))
        !
        if (i2==1.or.i1<=iG_max) then
-         DEV_VAR(ivec_GmG(i2,i1,1))=iv_1
-         DEV_VAR(ivec_GmG(i2,i1,2))=iv_2
-         DEV_VAR(ivec_GmG(i2,i1,3))=iv_3
+         DEV_VAR(ivec_GmG)(i2,i1,1)=iv_1
+         DEV_VAR(ivec_GmG)(i2,i1,2)=iv_2
+         DEV_VAR(ivec_GmG)(i2,i1,3)=iv_3
          !ln_1=max(ln_1,iv_1)
          !ln_2=max(ln_2,iv_2)
          !ln_3=max(ln_3,iv_3)
@@ -234,18 +222,18 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    !
    !Remember
    !-------
-   ! 
+   !
    ! r_j= (I_i-1)/Ni a(j,i) = at(j,i) (i-1)/Ni
    !
    ! at=transpose(a)
    !
-   ! a(i,j)*b(k,j)=b(k,j)*at(j,i)=d_ik 2 pi 
+   ! a(i,j)*b(k,j)=b(k,j)*at(j,i)=d_ik 2 pi
    ! atm1=inverse(transpose(a))=b/2./pi
    !
-   ! r(s)_j=at(i,l) (I_l-1)/Nl = (R_s r)_i = R_s(i,k) at(k,j) (j-1)/Nj 
+   ! r(s)_j=at(i,l) (I_l-1)/Nl = (R_s r)_i = R_s(i,k) at(k,j) (j-1)/Nj
    !
    ! => (I_l-1)/Nl = atm1(l,i) R_s(i,k) at(k,j) (j-1)/Nj
-   ! 
+   !
    ! Now I want to rewrite wf_ks(r)= wf_k(r(s^-1))
    !
    do is=1,nsym+1
@@ -281,13 +269,16 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    endif
    !
  enddo
- ! 
+ !
 #if defined _FFTW
  fftw_plan=0
 #endif
 #if defined _GPU
  cufft_plan=0
  hipfft_plan=c_null_ptr
+#if defined _MKLGPU
+ ierr = DftiFreeDescriptor(mklgpu_desc)
+#endif
 #endif
  !
  YAMBO_FREE_GPU(DEV_VAR(g_vec_rot))
@@ -304,7 +295,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      !
      implicit none
      integer :: test_fft_size(3)
-     ! 
+     !
      ! Work Space
      !
      integer, parameter :: nn=82

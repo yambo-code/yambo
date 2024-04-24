@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 #include<dev_defs.h>
 !
@@ -32,13 +16,17 @@ subroutine fft_free()
  use FFT_m,    ONLY:fftw_plan
 #endif
 #if defined _GPU
- use FFT_m,    ONLY:cufft_plan,hipfft_plan,DEV_VAR(fft_g_table),DEV_VAR(fft_rot_r),DEV_VAR(fft_rot_r_inv)
+ use FFT_m,    ONLY:cufft_plan,hipfft_plan, &
+&                   DEV_VAR(fft_g_table),DEV_VAR(fft_rot_r),DEV_VAR(fft_rot_r_inv)
 #  if defined _CUDAF
  use cufft
 #  elif defined _OPENACC && defined _CUDA
  use cufft_m
 #  elif defined _HIP
  use hipfft_m
+#  elif defined _MKLGPU
+ use mkl_dfti_omp_offload
+ use FFT_m,    ONLY:mklgpu_desc
 #  endif
 #endif
  !
@@ -56,11 +44,13 @@ subroutine fft_free()
  YAMBO_FREE_GPU(DEV_VAR(fft_rot_r))
  YAMBO_FREE_GPU(DEV_VAR(fft_rot_r_inv))
 #  if defined _CUDA
- ierr=cufftDestroy(cufft_plan) 
+ ierr=cufftDestroy(cufft_plan)
  cufft_plan=0
 #  elif defined _HIP
- ierr=hipfftDestroy(hipfft_plan) 
+ ierr=hipfftDestroy(hipfft_plan)
  hipfft_plan=c_null_ptr
+#  elif defined _MKLGPU
+ ierr = DftiFreeDescriptor(mklgpu_desc)
 #  endif
 #endif
  !

@@ -62,30 +62,112 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  !
  elph_gkkp=cONE
  !
+ !
+ ! elph_gkkp(:,ib,ob,ik_bz) = < ib k | dV_ql | ob k - q >
+ !
+ ! with k and q in the BZ
+ !
+ ! El-ph rotated or nosym. The wfc gauge and rotation phases must match WF_phases. 
+ !
+ iq_db=Q_io_map(iq_bz)
+ IO_ACT=RD
+ if(il==elph_branches(2)) IO_ACT=manage_action(RD_CL_IF_END,iq_bz,1,q%nbz)
+ !
+ call io_control(ACTION=IO_ACT,SEC=(/iq_db+1/),ID=ID_gkkp)
+ io_err=io_ELPH(ID_gkkp,'gkkp_expanded')
+ if(io_err/=0) call error(" Error reading gkkp_expanded") 
+ !
+ ph_E=sqrt(abs(ph_freqs_sq(iq_db,il)))
+ !
+ if (ph_E<FAN_deltaE_treshold) return
+ !
+ do i_beta=EXCPH_sum(1),EXCPH_sum(2)
    !
-   ! elph_gkkp(:,ib,ob,ik_bz) = < ib k | dV_ql | ob k - q >
+   Xi=cZERO
    !
-   ! with k and q in the BZ
+   !write(iq_bz*1000+i_beta,*) iq_bz,i_beta,iq_s
    !
-   ! El-ph rotated or nosym. The wfc gauge and rotation phases must match WF_phases. 
-   !
-   iq_db=Q_io_map(iq_bz)
-   IO_ACT=RD
-   if(il==elph_branches(2)) IO_ACT=manage_action(RD_CL_IF_END,iq_bz,1,q%nbz)
-   !
-   call io_control(ACTION=IO_ACT,SEC=(/iq_db+1/),ID=ID_gkkp)
-   io_err=io_ELPH(ID_gkkp,'gkkp_expanded')
-   if(io_err/=0) call error(" Error reading gkkp_expanded") 
-   !
-   ph_E=sqrt(abs(ph_freqs_sq(iq_db,il)))
-   !
-   if (ph_E<FAN_deltaE_treshold) return
-   !
-   do i_beta=EXCPH_sum(1),EXCPH_sum(2)
+   do i_H=1,BS_H_dim
      !
-     Xi=cZERO
+     ! K = (ik_bz,iv,ic)
      !
-     !write(iq_bz*1000+i_beta,*) iq_bz,i_beta,iq_s
+     ik_bz = BSS_eh_table(i_H,1)
+     iv    = BSS_eh_table(i_H,2)
+     ic    = BSS_eh_table(i_H,3)
+     !
+     ik_minus_iq_bz = qindx_C(ik_bz,iq_bz,1)      ! K_bz-Q_bz
+     !
+     ik_plus_iq_bz  = k_plus_q_table(ik_bz,iq_bz) ! K_bz+Q_bz
+     !
+     ip_bz = ik_bz ! elemental_scattering(iq_s,ik_bz)
+     !
+     ! 1=DOWN (hole contribution)
+     !========
+     !
+     do ivp=BS_bands(1),BS_bands(2)
+       !
+       if (l_elec_only) exit
+       !
+       i_Hp=BSS_eh_table_m1(ip_bz,ivp,ic,1,1)
+       if (i_Hp==0) cycle
+       !
+       ! [NB] If the el-ph matrix elements are obtained bypassing the old el-ph interface,
+       !      such as with LetzElPhC+yambopy, then we don't need anymore to apply the conjg
+       !      and SWAP band indices in the matrix elements: we use the NOTES indexing. 
+       !      !!!Notes: (iv,ivp) => Code: (ivp,iv)
+       !      !!!See issues #690 and #609
+       if (.not.l_const_elph) then
+         ik_db=K_io_map(ik_bz)
+         !ik_db=K_io_map(ik_minus_iq_bz)
+         if(.not.l_abs_elph) elph_gkkp=GKKP%dVc(il,iv,ivp,ik_db,1) /sqrt(2._SP*ph_E)
+         if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,iv,ivp,ik_db,1))/sqrt(2._SP*ph_E)
+         !if(.not.l_abs_elph) elph_gkkp=conjg(GKKP%dVc(il,ivp,iv,ik_db,1)) /sqrt(2._SP*ph_E)
+         !if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,ivp,iv,ik_db,1))/sqrt(2._SP*ph_E)
+       endif
+       !
+       !write(iq_bz*1000+i_beta,*) i_Hp,ik_bz,ivp,ic,abs(BS_mat(i_Hp,i_beta)),ip_bz,ik_db,k%ptbz(ik_bz,:)
+       !
+       if (l_abs_exc)      Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*abs(BS_mat_out(i_Hp,i_beta))
+       if (.not.l_abs_exc) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*    BS_mat_out(i_Hp,i_beta)
+       !
+     enddo
+     !
+     ip_bz = ik_plus_iq_bz !elemental_scattering(iq_s,ik_plus_iq_bz)
+     !
+     ! 2=UP (electron contribution)
+     !======
+     !
+     do icp=BS_bands(1),BS_bands(2)
+       !
+       if (l_hole_only) exit
+       !
+       i_Hp=BSS_eh_table_m1(ip_bz,iv,icp,1,1)
+       if (i_Hp==0) cycle
+       ! [NB] If the el-ph matrix elements are obtained bypassing the old el-ph interface,
+       !      such as with LetzElPhC+yambopy, then we don't need anymore to apply the conjg
+       !      and SWAP band indices in the matrix elements: we use the NOTES indexing. 
+       !      !!!Notes: (icp,ic) => Code: (ic,icp)
+       !      !!!See issues #690 and #609         
+       if (.not.l_const_elph) then
+         ik_db=K_io_map(ik_plus_iq_bz)
+         !ik_db=K_io_map(ik_bz)
+         if(.not.l_abs_elph) elph_gkkp=conjg(GKKP%dVc(il,icp,ic,ik_db,1))/sqrt(2._SP*ph_E)
+         if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,icp,ic,ik_db,1))/sqrt(2._SP*ph_E)
+         !if(.not.l_abs_elph) elph_gkkp=conjg(GKKP%dVc(il,ic,icp,ik_db,1))/sqrt(2._SP*ph_E)
+         !if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,ic,icp,ik_db,1))/sqrt(2._SP*ph_E)
+       endif
+       !
+       if (l_abs_exc)      Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*abs(BS_mat_out(i_Hp,i_beta))
+       if (.not.l_abs_exc) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*    BS_mat_out(i_Hp,i_beta) 
+       !
+     enddo
+     !
+   enddo
+   !
+   ! Gkkp m.e.
+   !=============
+   !
+   do i_alpha=EXCPH_states(1),EXCPH_states(2)
      !
      do i_H=1,BS_H_dim
        !
@@ -95,112 +177,30 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
        iv    = BSS_eh_table(i_H,2)
        ic    = BSS_eh_table(i_H,3)
        !
-       ik_minus_iq_bz = qindx_C(ik_bz,iq_bz,1)      ! K_bz-Q_bz
+       ! K_in = (ik_bz,iv,ic)
        !
-       ik_plus_iq_bz  = k_plus_q_table(ik_bz,iq_bz) ! K_bz+Q_bz
+       ik_bz_in = BSS_eh_table_in(i_H,1)
+       iv_in    = BSS_eh_table_in(i_H,2)
+       ic_in    = BSS_eh_table_in(i_H,3)
        !
-       ip_bz = ik_bz ! elemental_scattering(iq_s,ik_bz)
+       if (ik_bz /= ik_bz_in) call error(" Wrong k correspondence")
+       if (iv    /= iv_in   ) call error(" Wrong iv correspondence")
+       if (ic    /= ic_in   ) call error(" Wrong ic correspondence")
        !
-       ! 1=DOWN (hole contribution)
-       !========
+       ! "Left" part of exciton-phonon coupling. The "right" part is its conjugate
        !
-       do ivp=BS_bands(1),BS_bands(2)
-         !
-         if (l_elec_only) exit
-         !
-         i_Hp=BSS_eh_table_m1(ip_bz,ivp,ic,1,1)
-         if (i_Hp==0) cycle
-         !
-         ! [NB] If the el-ph matrix elements are obtained bypassing the old el-ph interface,
-         !      such as with LetzElPhC+yambopy, then we don't need anymore to apply the conjg
-         !      and SWAP band indices in the matrix elements: we use the NOTES indexing. 
-         !      !!!Notes: (iv,ivp) => Code: (ivp,iv)
-         !      !!!See issues #690 and #609
-         if (.not.l_const_elph) then
-           ik_db=K_io_map(ik_bz)
-           !ik_db=K_io_map(ik_minus_iq_bz)
-           if(.not.l_abs_elph) elph_gkkp=GKKP%dVc(il,iv,ivp,ik_db,1) /sqrt(2._SP*ph_E)
-           if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,iv,ivp,ik_db,1))/sqrt(2._SP*ph_E)
-           !if(.not.l_abs_elph) elph_gkkp=conjg(GKKP%dVc(il,ivp,iv,ik_db,1)) /sqrt(2._SP*ph_E)
-           !if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,ivp,iv,ik_db,1))/sqrt(2._SP*ph_E)
-         endif
-         !
-         !write(iq_bz*1000+i_beta,*) i_Hp,ik_bz,ivp,ic,abs(BS_mat(i_Hp,i_beta)),ip_bz,ik_db,k%ptbz(ik_bz,:)
-         !
-         if (l_abs_exc)      Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*abs(BS_mat_out(i_Hp,i_beta))
-         if (.not.l_abs_exc) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*    BS_mat_out(i_Hp,i_beta)
-         !
-       enddo
-       !
-       ip_bz = ik_plus_iq_bz !elemental_scattering(iq_s,ik_plus_iq_bz)
-       !
-       ! 2=UP (electron contribution)
-       !======
-       !
-       do icp=BS_bands(1),BS_bands(2)
-         !
-         if (l_hole_only) exit
-         !
-         i_Hp=BSS_eh_table_m1(ip_bz,iv,icp,1,1)
-         if (i_Hp==0) cycle
-         ! [NB] If the el-ph matrix elements are obtained bypassing the old el-ph interface,
-         !      such as with LetzElPhC+yambopy, then we don't need anymore to apply the conjg
-         !      and SWAP band indices in the matrix elements: we use the NOTES indexing. 
-         !      !!!Notes: (icp,ic) => Code: (ic,icp)
-         !      !!!See issues #690 and #609         
-         if (.not.l_const_elph) then
-           ik_db=K_io_map(ik_plus_iq_bz)
-           !ik_db=K_io_map(ik_bz)
-           if(.not.l_abs_elph) elph_gkkp=conjg(GKKP%dVc(il,icp,ic,ik_db,1))/sqrt(2._SP*ph_E)
-           if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,icp,ic,ik_db,1))/sqrt(2._SP*ph_E)
-           !if(.not.l_abs_elph) elph_gkkp=conjg(GKKP%dVc(il,ic,icp,ik_db,1))/sqrt(2._SP*ph_E)
-           !if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,ic,icp,ik_db,1))/sqrt(2._SP*ph_E)
-         endif
-         !
-         if (l_abs_exc)      Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*abs(BS_mat_out(i_Hp,i_beta))
-         if (.not.l_abs_exc) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*    BS_mat_out(i_Hp,i_beta) 
-         !
-       enddo
+       if (l_abs_exc) then
+         EXCPH_Gkkp(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)+&
+ &                                        abs(BS_mat_in(i_H,i_alpha))*(Xi(i_H,1)-Xi(i_H,2))
+       else
+         EXCPH_Gkkp(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)+&
+ &                                        BS_mat_in(i_H,i_alpha)*(Xi(i_H,1)-Xi(i_H,2))
+       endif
        !
      enddo
-     !
-     ! Gkkp m.e.
-     !=============
-     !
-     do i_alpha=EXCPH_states(1),EXCPH_states(2)
-       !
-       do i_H=1,BS_H_dim
-         !
-         ! K = (ik_bz,iv,ic)
-         !
-         ik_bz = BSS_eh_table(i_H,1)
-         iv    = BSS_eh_table(i_H,2)
-         ic    = BSS_eh_table(i_H,3)
-         !
-         ! K_in = (ik_bz,iv,ic)
-         !
-         ik_bz_in = BSS_eh_table_in(i_H,1)
-         iv_in    = BSS_eh_table_in(i_H,2)
-         ic_in    = BSS_eh_table_in(i_H,3)
-         !
-         if (ik_bz /= ik_bz_in) call error(" Wrong k correspondence")
-         if (iv    /= iv_in   ) call error(" Wrong iv correspondence")
-         if (ic    /= ic_in   ) call error(" Wrong ic correspondence")
-         !
-         ! "Left" part of exciton-phonon coupling. The "right" part is its conjugate
-         !
-         if (l_abs_exc) then
-           EXCPH_Gkkp(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)+&
-&                                        abs(BS_mat_in(i_H,i_alpha))*(Xi(i_H,1)-Xi(i_H,2))
-         else
-           EXCPH_Gkkp(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)+&
-&                                        BS_mat_in(i_H,i_alpha)*(Xi(i_H,1)-Xi(i_H,2))
-         endif
-         !
-       enddo
-     enddo
-     !
-   enddo !Loop i_beta
+   enddo
+   !
+ enddo !Loop i_beta
  !
  ! Compute the squared couplings
  !

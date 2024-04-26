@@ -262,10 +262,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! FL
  !====
  !
- driver_now=l_fl_optics
- !
- if (driver_now) call FL_driver(en,X(:2),k,q,Dip)
- if (driver_now) call mem_manager_report
+ if (l_fl_optics) call FL_driver(en,X(:2),k,q,Dip)
+ if (l_fl_optics) call mem_manager_report
  !
 #endif
  !

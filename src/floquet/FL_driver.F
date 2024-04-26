@@ -42,8 +42,8 @@ subroutine FL_driver(E,X,k,q,Dip)
  use R_lattice,      ONLY:qindx_S
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P,E_full, &
-&                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
-&                         HF,SEX,NL_bands,WF_sample,V_bands_t,NL_alloc_k_distributed
+&                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,runs_done,n_runs_todo,l_eval_CURRENT,&
+&                         HF,SEX,NL_bands,V_bands_t,NL_alloc_k_distributed
  use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_FT_matrices,FL_free,FL_V_bands,&
 &                         FL_S_plus,FL_S_minus,FL_time_S_det,n_tot_fl_modes,FL_Chi_pol,&
 &                         FL_Chi_order,FL_S_inv_mode,FL_loc_S_inv_mode,FL_space_dim,FL_QE,FL_V_bands_hist,&
@@ -187,7 +187,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  !
  ! Check if calculation was already done
  ! =====================================
- if(n_freqs_todo==0) return
+ if(n_runs_todo==0) return
  !
  ! Initialize IO
  ! ==================
@@ -213,7 +213,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    !
    if(.not.PAR_IND_freqs%element_1D(i_f)) cycle
    !
-   if(freqs_done(i_f)) then
+   if(runs_done(i_f)) then
      call live_timing(steps=NE_steps)
      cycle
    endif

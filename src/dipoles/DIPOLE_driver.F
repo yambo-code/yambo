@@ -39,6 +39,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  use parser_m,       ONLY:parser
  use DIPOLES,        ONLY:DIP_spin,DIP_orbital,P_square
  use electrons,      ONLY:n_spin,n_spinor
+#if defined _NL
+ use nl_optics,      ONLY:l_use_DIPOLES
+#endif
 #if defined _RT
  use DIPOLES,        ONLY:DIP_P_spinor
 #endif

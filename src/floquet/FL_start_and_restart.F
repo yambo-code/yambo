@@ -47,8 +47,8 @@ subroutine FL_start_and_restart(E,k,Dip)
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use fields,         ONLY:A_tot,A_ext,A_vecpot_reset
  use parallel_m,     ONLY:master_cpu
- use nl_optics,      ONLY:Correlation,IPA,E_full,full_rho,V_bands,TDDFT,n_freqs_todo,NL_LRC_alpha,NL_bands, &
-&                         V_xc_0,NL_initial_P,l_use_DIPOLES,n_frequencies,freqs_done,JGM,E_xc_0,I_relax,l_use_DIPOLES, &
+ use nl_optics,      ONLY:Correlation,IPA,E_full,full_rho,V_bands,TDDFT,n_runs_todo,NL_LRC_alpha,NL_bands, &
+&                         V_xc_0,NL_initial_P,l_use_DIPOLES,n_runs,runs_done,JGM,E_xc_0,I_relax,l_use_DIPOLES, &
 &                         VAL_BANDS,l_eval_CURRENT,NL_initial_J,NL_P
  use fl_optics,      ONLY:max_fl_mode,FL_QE,FL_QE_hist,FL_Ho_lift_degeneracy,n_tot_fl_modes,FL_deg_thrs,FL_deg_lift
  use IO_int,         ONLY:io_control
@@ -174,9 +174,9 @@ endif
  !
  ! Restart
  ! ====================================
- YAMBO_ALLOC(freqs_done,(n_frequencies))
+ YAMBO_ALLOC(runs_done,(n_runs))
  !
- freqs_done=.false.
+ runs_done=.false.
  !
  if(master_cpu) then
    !      
@@ -184,16 +184,16 @@ endif
    io_Floquet=io_FL(ID)
    !
    if(io_Floquet==0) then
-     do i_f=1,n_frequencies
-        if(file_is_present('Floquet_fragment_'//intc(i_f))) freqs_done(i_f)=.true.
+     do i_f=1,n_runs
+        if(file_is_present('Floquet_fragment_'//intc(i_f))) runs_done(i_f)=.true.
      enddo                                                                    
     endif
     !
  endif
  !
- call PP_redux_wait(freqs_done,imode=3)
+ call PP_redux_wait(runs_done,imode=3)
  !
- n_freqs_todo=n_frequencies-count(freqs_done)
- if(n_freqs_todo/=n_frequencies) call msg('s','RESTART, remaining frequencies ',n_freqs_todo)
+ n_runs_todo=n_runs-count(runs_done)
+ if(n_runs_todo/=n_runs) call msg('s','RESTART, remaining frequencies/angles ',n_runs_todo)
  !
 end subroutine FL_start_and_restart

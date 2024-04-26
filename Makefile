@@ -80,7 +80,11 @@ ifneq (,$(wildcard $(compdir)/config/stamps_and_lists/compilation_objects_in_DOU
  STAMP_DBLE=-D_DOUBLE
 else ifneq (,$(wildcard $(compdir)/config/stamps_and_lists/compiling_yambo_nl.stamp))
  STAMP_DBLE=-D_DOUBLE
+else ifneq (,$(wildcard $(compdir)/config/stamps_and_lists/compiling_yambo_fl.stamp))
+ STAMP_DBLE=-D_DOUBLE
 else ifneq (,$(wildcard $(compdir)/config/stamps_and_lists/compiling_ypp_nl.stamp))
+ STAMP_DBLE=-D_DOUBLE
+else ifneq (,$(wildcard $(compdir)/config/stamps_and_lists/compiling_ypp_fl.stamp))
  STAMP_DBLE=-D_DOUBLE
 endif
 #

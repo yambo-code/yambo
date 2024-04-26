@@ -37,6 +37,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
 #endif
 #if defined _YPP_FL
  use YPP_real_time,       ONLY:l_FL_bands
+#endif
 #if defined _YPP_SC
  ! DS This is needed otherwise ypp_sc fails if compiling after ypp_ph and later yambo_sc
  !    The reason os that SC locks are set inside driver folder dispite

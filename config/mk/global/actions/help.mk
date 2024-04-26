@@ -24,13 +24,9 @@ help:
 	@$(ECHO)  " yambo_rt     =  Real-time dynamics project"
 	@$(ECHO)  "                 http://www.yambo-code.eu/wiki/index.php?title=Linear_response_from_real_time_simulations\n"
 	@$(ECHO)  " yambo_nl     =  Non-linear optics project "
-<<<<<<< HEAD
 	@$(ECHO)  "                 http://www.yambo-code.org/wiki/index.php?title=Tutorials#Non_linear_response\n"
 	@$(ECHO)  " yambo_fl     =  Floquet approach to non-linear optics project "
-	@$(ECHO)  "                 http://www.yambo-code.org/"
-=======
-	@$(ECHO)  "                 http://www.yambo-code.eu/wiki/index.php?title=Tutorials#Non_linear_response\n"
->>>>>>> develop
+	@$(ECHO)  "                 "
 	@$(ECHO)  " yambo_ph     =  Electron-phonon coupling project "
 	@$(ECHO)  "                 http://www.yambo-code.eu/wiki/index.php?title=Tutorials#Electron_phonon_coupling"
 	@$(ECHO)  "\nCleaning: " ;

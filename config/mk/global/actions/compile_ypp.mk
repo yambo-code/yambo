@@ -24,7 +24,7 @@ else ifneq (,$(findstring ypp_nl,$(MAKECMDGOALS)))
  Y_PRECMP=-D_YPP_RT -D_YPP_NL -D_RT -D_NL -D_DOUBLE
  YPP_PRECMP=-D_YPP_RT -D_YPP_NL -D_DOUBLE
 else ifneq (,$(findstring ypp_fl,$(MAKECMDGOALS)))
- Y_PRECMP=-D_YPP_RT -D_YPP_NL -D_RT -D_FL -D_NL -D_DOUBLE
+ Y_PRECMP=-D_YPP_RT -D_YPP_NL -D_YPP_FL -D_RT -D_NL -D_FL -D_DOUBLE
  YPP_PRECMP=-D_YPP_RT -D_YPP_NL -D_YPP_FL -D_DOUBLE
 endif
 #

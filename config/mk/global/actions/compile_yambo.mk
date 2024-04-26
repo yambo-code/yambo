@@ -21,7 +21,7 @@ else ifneq (,$(findstring yambo_ph,$(MAKECMDGOALS)))
 else ifneq (,$(findstring yambo_nl,$(MAKECMDGOALS)))
  PRECMP=-D_NL -D_RT -D_DOUBLE
 else ifneq (,$(findstring yambo_fl,$(MAKECMDGOALS)))
- PRECMP=-D_NL -D_RT -D_FL -D_DOUBLE
+ PRECMP=-D_FL -D_NL -D_RT -D_DOUBLE
 else ifneq (,$(findstring yambo_qed,$(MAKECMDGOALS)))
  PRECMP=-D_QED -D_RT -D_RT_SCATT -D_ELPH
 endif

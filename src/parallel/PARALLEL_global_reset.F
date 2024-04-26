@@ -174,7 +174,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
 #endif
  call COMM_reset(PAR_COM_freqs_INDEX)
  call COMM_reset(PAR_COM_freqs)
-#if defined _RT || defined _SC || defined _QED || defined _NL
+#if defined _RT || defined _SC || defined _QED || defined _NL || defined _FL
  call PARALLEL_collisions_reset(HXC_collisions)
  call PARALLEL_collisions_reset(COH_collisions)
  call PARALLEL_collisions_reset(GW_NEQ_collisions)

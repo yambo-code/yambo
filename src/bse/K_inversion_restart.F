@@ -1,30 +1,14 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K_inversion_restart(iq,W)
  !
  use pars,           ONLY:SP,cZERO
- use X_m,            ONLY:Epsilon_ii
+ use X_m,            ONLY:Resp_ii
  use BS_solvers,     ONLY:BSS_dr,BSS_er,BSS_n_freqs,K_Inversion_data,K_INV_EPS
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:NONE,OP_RD_CL,REP,VERIFY
@@ -86,9 +70,9 @@ subroutine K_inversion_restart(iq,W)
    allocate(K_INV_EPS%err(W%n_freqs),K_INV_EPS%spectra(W%n_freqs,3))
    K_INV_EPS%err    =-1
    K_INV_EPS%spectra=cZERO
-   K_INV_EPS%spectra(:,2:3)=Epsilon_ii(:,3:4)
-   Epsilon_ii     =cZERO
-   Epsilon_ii(:,1)=W%p(:)
+   K_INV_EPS%spectra(:,2:3)=Resp_ii(:,3:4)
+   Resp_ii     =cZERO
+   Resp_ii(:,1)=W%p(:)
    if(l_BS_photolum) then
      allocate(K_INV_PL%err(W%n_freqs),K_INV_PL%spectra(W%n_freqs,2))
      K_INV_PL%err    =-1
@@ -157,7 +141,7 @@ subroutine K_inversion_restart(iq,W)
        else
          TYP%spectra(iw,1)=cZERO
          if (TYP%what=="EPS") then
-           TYP%spectra(iw,2:3)=Epsilon_ii(iabs(iw_tab),3:4)
+           TYP%spectra(iw,2:3)=Resp_ii(iabs(iw_tab),3:4)
          endif
          if(l_BS_photolum) then
            if (TYP%what=="PLS") TYP%spectra(iw,2)=PL(iabs(iw_tab),3)
@@ -170,15 +154,15 @@ subroutine K_inversion_restart(iq,W)
      call msg('rs','[BSE INV@'//TYP%what//']                          ',real(count(inv_err_db==0))/real(W%n_freqs)*100._SP,"[o/o]")
      call msg('rs','[BSE INV@'//TYP%what//'] Frequencies used         ',W%n_freqs)
      !
-     ! De/Allocate Epsilon_ii/PL
+     ! De/Allocate Resp_ii/PL
      !
      if (TYP%what=="EPS") then
-       YAMBO_FREE(Epsilon_ii)
-       YAMBO_ALLOC(Epsilon_ii,(BSS_n_freqs,4))
-       Epsilon_ii(:,1)=W%p(:)
-       Epsilon_ii(:,2)=TYP%spectra(:,1)/real(PAR_COM_SLK_INDEX_local%n_CPU,SP)
-       Epsilon_ii(:,3)=TYP%spectra(:,2)
-       Epsilon_ii(:,4)=TYP%spectra(:,3)
+       YAMBO_FREE(Resp_ii)
+       YAMBO_ALLOC(Resp_ii,(BSS_n_freqs,4))
+       Resp_ii(:,1)=W%p(:)
+       Resp_ii(:,2)=TYP%spectra(:,1)/real(PAR_COM_SLK_INDEX_local%n_CPU,SP)
+       Resp_ii(:,3)=TYP%spectra(:,2)
+       Resp_ii(:,4)=TYP%spectra(:,3)
      endif
      if(l_BS_photolum) then
        if (TYP%what=="PLS") then

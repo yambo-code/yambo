@@ -1,4 +1,10 @@
 #
+# License-Identifier: GPL
+#
+# Copyright (C) 2020 The Yambo Team
+#
+# Authors (see AUTHORS file for details): AM
+#
 # BLACS& SLK : Parallel compilation of blacs and scalapack fails
 # SLEPC&PETSC: The internal build system of petsc and slepc already compiles the two libraries in parallel.
 #
@@ -20,8 +26,6 @@ iotk:
 	@+if test "$(do_iotk)" = yes ; then LIBS="iotk" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) iotk-dl; $(mk_external_lib); fi
 hdf5: 
 	@+if test "$(do_hdf5)" = yes ; then LIBS="hdf5" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) hdf5-dl; $(mk_external_lib); fi
-pnetcdf: netcdf
-	@+if test "$(do_pnetcdf)" = yes ; then LIBS="pnetcdf" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) pnetcdf-dl ; $(mk_external_lib); fi
 netcdf: hdf5
 	@+if test "$(do_netcdf)" = yes ; then LIBS="netcdf"; BASE="lib"; $(MAKE) $(MAKEFLAGS) netcdf-dl ; $(mk_external_lib); fi
 netcdff: netcdf

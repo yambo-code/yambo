@@ -1,31 +1,17 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2020 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine RT_alloc(en,what)
  !
  use pars,           ONLY:SP,cZERO
  use parallel_m,     ONLY:PAR_G_k_range
+#if defined _ELPH || defined _PHEL
  use ELPH,           ONLY:elph_branches
+#endif
  use drivers,        ONLY:l_use_Hxc_collisions
  use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
  use FFT_m,          ONLY:fft_size
@@ -58,7 +44,9 @@ subroutine RT_alloc(en,what)
  !
  if (RT_is_dynamically_dephased) then
    call RT_EL_lifetimes_alloc(RT_bands,RT_nk)
+#if defined _PHEL
    call RT_PH_lifetimes_alloc(elph_branches,nqibz)
+#endif
  endif
  !
  nk=PAR_G_k_range
@@ -73,7 +61,9 @@ subroutine RT_alloc(en,what)
  !
  if( l_all .or. l_carriers) then
    call RT_EL_occupations_alloc(RT_bands,RT_nk)
+#if defined _ELPH || defined _PHEL
    call RT_PH_occupations_alloc(elph_branches,nqibz)
+#endif
  endif
  !
  if (l_all) then

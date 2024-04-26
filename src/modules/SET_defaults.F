@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
@@ -40,8 +24,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
-&                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
-&                     GWo_SC_done,GWo_iterations,GW_iterations,&
+&                     QP_Sc_steps,QP_G_er,QP_G_ir,QP_G_dr,SC_band_mixing,QP_G_solver,&
 &                     COHSEX_use_empties,On_Mass_Shell_approx,&
 &                     Vnlxc_kind,Vxc_kind,l_extended_output,l_GW_terminator,&
 &                     GW_terminator_E
@@ -49,16 +32,16 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp,    &
-&                     molecule_position
+&                     molecule_position,l_0D,l_1D,l_2D,l_3D
  use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
-&                     RIM_anisotropy,RIM_ng,RIM_W_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
-&                     cutoff_presets,k_map
+&                     RIM_anisotropy,RIM_ng,RIM_W_ng,rimw_type,RIM_n_rand_pts,nqibz,q0_def_norm,&
+&                     cutoff_presets,k_map,qindx_S_max_Go
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn
  use parallel_m, ONLY:ncpu,CPU_str_reset,CREATE_hosts_COMM
  use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
-&                     more_io_path,core_io_path,com_path,repfile,grid_paths,fat_log
+&                     more_io_path,core_io_path,com_path,repfile,grid_paths,fat_log,exp_user
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
@@ -67,7 +50,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
-&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH
+&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH,BSS_desc
  use descriptors,ONLY:IO_desc_reset
 #if defined _SLEPC && !defined _NL
  use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_maxit,&
@@ -119,8 +102,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use plasma,     ONLY:PLASMA_redux_percent
 #endif
 #if defined _NL
- use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,         &
-&                     NL_verb_name,NL_bands,n_order,NL_desc
+ use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,NL_initial_versor,     &
+&                     NL_verb_name,NL_bands,NL_desc,n_angles,NL_rot_axis
  use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _FL
@@ -158,6 +141,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  fat_log    = .FALSE.
  if (index(INSTR,'fatlog')>0) fat_log=.TRUE.
+ !
+ ! Experienced User
+ !
+ exp_user    = .FALSE.
+ if (index(INSTR,'expuser')>0) exp_user=.TRUE.
  !
  ! CPU structures
  !
@@ -272,6 +260,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  molecule_position=0._SP
  lattice='Unknown'
  Bose_Temp=-1./HA2EV
+ l_3D=.TRUE.
+ l_2D=.FALSE.
+ l_1D=.FALSE.
+ l_0D=.FALSE.
  !
  ! R_lattice
  !
@@ -285,6 +277,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  k_map%g0_idx  =-1
  k_map%q_step  =-1
  k_map%max_kdir= 0
+ qindx_S_max_Go=-1
  !
  ! RIM
  !
@@ -297,6 +290,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  ! RIM-W
  !
  RIM_W_ng=0
+ RIMW_type="default"
  !
  ! CUTOFF
  !
@@ -322,7 +316,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  n_spinor=1
  n_spin_den=1
  l_spin_orbit       = .FALSE.
- filled_tresh=0.00001
+ filled_tresh       =0.00001_SP
  !
  ! Magnetization and density
  !
@@ -394,12 +388,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  QP_solver=' '
  QP_G_damp=0.1/HA2EV
  QP_dSc_delta=0.1/HA2EV
+ QP_G_solver='ra'
  QP_G_er=(/-10._SP/HA2EV,10._SP/HA2EV/)
+ QP_G_ir=(/0._SP/HA2EV,0._SP/HA2EV/)
  QP_G_dr=0.1/HA2EV
  QP_cg_percent=100._SP
- GWo_iterations=0
- GW_iterations =0
- GWo_SC_done=.FALSE.
  COHSEX_use_empties=.FALSE.
  On_Mass_Shell_approx=.FALSE.
  SC_E_threshold=0.01/HA2EV
@@ -480,6 +473,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  K_INV_EPS%max_treshold=40._SP
  BSS_n_freqs=100
  MAX_BSK_LIN_size=45000*45000 ! 46341 is the sqare root of the maximum integer in IP: 2147483647
+ !
+ call IO_desc_reset(BSS_desc)
  !
 #if defined _SLEPC && !defined _NL
  BSS_slepc_approach='none'
@@ -688,8 +683,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NL_bands      =(/0,0/)
  NL_correlation="IPA"
  NL_er         =(/-1._SP,-1._SP/)/HA2EV
- n_frequencies =1
- n_order    = 0
+ n_frequencies =0
+ n_angles      =0
+ NL_rot_axis   =(/0._SP,0._SP,0._SP/)
+ NL_initial_versor=(/0._SP,0._SP,0._SP/)
  NL_damping    =0.2_SP/HA2EV
  NL_LRC_alpha  =0._SP
  !

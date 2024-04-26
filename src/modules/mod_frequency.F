@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module frequency
  !
@@ -50,10 +34,15 @@ module frequency
  type w_samp
    integer      :: n_freqs
    real(SP)     :: er(2)
+   real(SP)     :: ir(2)
    real(SP)     :: damp_reference
    real(SP)     :: dr(2)
    real(SP)     :: per_memstps
    complex(SP),allocatable :: p(:)
+   character(2) :: samp_type
+   character(2) :: samp_grid
+   character(2) :: mpa_solver
+   character(16):: grid_type
  end type w_samp
  !
  contains
@@ -63,12 +52,17 @@ module frequency
      Wo%n_freqs=Wi%n_freqs
      Wo%per_memstps=Wi%per_memstps
      Wo%er=Wi%er
+     Wo%ir=Wi%ir
      Wo%dr=Wi%dr
      Wo%damp_reference=Wi%damp_reference
      if (allocated(Wi%p)) then
        YAMBO_ALLOC(Wo%p,(Wo%n_freqs))
        Wo%p=Wi%p
      endif
+     Wo%samp_type=Wi%samp_type
+     Wo%samp_grid=Wi%samp_grid
+     Wo%mpa_solver=Wi%mpa_solver
+     Wo%grid_type=Wi%grid_type
    end subroutine W_duplicate
    !
    subroutine W_reset(W,damping)
@@ -80,9 +74,14 @@ module frequency
      W%n_freqs=100
      W%per_memstps=100._SP
      W%er=(/0._SP,10._SP/)/HA2EV
+     W%ir=(/1._SP,1._SP/)!/HA2EV
      W%dr=(/local_damping,local_damping/)/HA2EV
      W%damp_reference=0._SP
      YAMBO_FREE(W%p)
+     W%samp_type="2l"
+     W%samp_grid="lP"
+     W%mpa_solver="PT"
+     W%grid_type="ra"
    end subroutine W_reset
    !
 end module frequency

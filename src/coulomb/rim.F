@@ -1,34 +1,18 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-subroutine rim(mode)
+subroutine rim(mode,Xw)
  !
  use pars,          ONLY:SP,pi,DP
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,        ONLY:live_timing
- use vec_operate,   ONLY:v_norm2
+ use vec_operate,   ONLY:v_norm_square
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,nqbz,&
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
@@ -36,16 +20,18 @@ subroutine rim(mode)
 &                        RIM_id_epsm1_reference,RIM_anisotropy,RIM_W,&
 &                        cut_is_slab,idir
  use timing_m,      ONLY:timing
+ use frequency,     ONLY:w_samp
  !
 #include<memory.h>
  !
- character(1)       :: mode
+ character(1)   :: mode
+ type(w_samp)   :: Xw
  !
  ! Work Space
  !
- type(PP_indexes)::px
- integer   :: iq
- real(SP)  :: em1_anis(3),G_radii,G_circ
+ type(PP_indexes)      ::px
+ integer               :: iq
+ real(SP)              :: em1_anis(3),G_radii,G_circ
  !
  ! Random generator
  !
@@ -56,11 +42,8 @@ subroutine rim(mode)
  integer            :: iseed(8)
  real(DP), external :: dlaran
  ! 
- if (mode == "x") then
-   call timing('RIM',OPR='start')
- else
-   call timing('RIM-W',OPR='start')
- end if
+ if (mode == "x") call timing('RIM',OPR='start')
+ if (mode == "c") call timing('RIM-W',OPR='start')
  !
  call PP_indexes_reset(px)
  !
@@ -120,7 +103,7 @@ subroutine rim(mode)
  enddo
  ! Precompute the neighbours distances
  do inn1=1,26
-  fn_dist(inn1)=v_norm2(first_neighbour(inn1,:))  
+  fn_dist(inn1)=v_norm_square(first_neighbour(inn1,:))  
  end do
  !
  ! Loop setup
@@ -141,13 +124,13 @@ subroutine rim(mode)
    ! From rlu in the k_grid_b units (v2) to Cartesian (v1)
    !
    v1=matmul(transpose(k_grid_b),v2) 
-   !v1_norm(1)=v_norm2(v1)
+   !v1_norm(1)=v_norm_square(v1)
    do inn1=1,26
      v1_norm(2)=(v1(1)* first_neighbour(inn1,1) &
                 +v1(2)* first_neighbour(inn1,2) &
                 +v1(3)* first_neighbour(inn1,3))*2._SP
      if (fn_dist(inn1)<v1_norm(2))  cycle loop
-     !v1_norm(2)=v_norm2(v1-first_neighbour(inn1,:))
+     !v1_norm(2)=v_norm_square(v1-first_neighbour(inn1,:))
      !if (v1_norm(2)<v1_norm(1)) cycle loop
      !if (v1_norm(2)<v1_norm(1)-1.E-5) cycle loop
      !
@@ -177,8 +160,11 @@ subroutine rim(mode)
  if (mode == "x") then
    YAMBO_ALLOC(RIM_qpg,(nqibz,RIM_ng,RIM_ng))
    RIM_qpg=0._SP
+   G_radii=0._SP
+   G_circ=0._SP
+   N_out_G=0
  else if (mode == "c") then
-   YAMBO_ALLOC(RIM_W,(nqibz,RIM_W_ng,RIM_W_ng))
+   YAMBO_ALLOC(RIM_W,(Xw%n_freqs,nqibz,RIM_W_ng,RIM_W_ng))
    RIM_W=0._SP
  end if
  !
@@ -190,22 +176,8 @@ subroutine rim(mode)
    !
    if (mode == "x") then
      call rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
-     !
-     if (iq==1) then
-       call msg('r','Gamma point sphere radius             ',G_radii,"[a.u.]")
-       call msg('r','Points outside the sphere             ',n_out_G)
-       call msg('r','[Int_sBZ(q=0) 1/q^2]*(Vol_sBZ)^(-1/3) =',&
-&                     4.*pi**3.*RIM_qpg(1,1,1)*k_grid_uc_vol**(-1./3.))
-       call msg('r','                               should be <',7.7956_SP)
-       if (RIM_id_epsm1_reference/=0) call &
-&           msg('r','Anisotropy correction            [o/o]',&
-&                   (RIM_anisotropy-RIM_qpg(iq,1,1))/RIM_qpg(iq,1,1)*100.)
-     endif
-     !
    else
-     !
-     call rim_integrate_w(iq,qr,N_out,em1_anis)
-     !
+     call rim_integrate_w(iq,qr,N_out,em1_anis,Xw)
    endif
    call live_timing(steps=1)
    !
@@ -213,22 +185,34 @@ subroutine rim(mode)
  !
  call live_timing()
  !
- if (mode == "x") then
-   call PP_redux_wait(RIM_qpg)
- else if (mode == "c") then
-   call PP_redux_wait(RIM_W)
- end if
+ if (mode == "x") call PP_redux_wait(RIM_qpg)
+ if (mode == "c") call PP_redux_wait(RIM_W)
+ !
  call PP_redux_wait(RIM_anisotropy)
+ !
+ if (mode == "x") then
+   !
+   call PP_redux_wait(G_radii)
+   call PP_redux_wait(N_out_G)
+   !
+   call msg('r','Gamma point sphere radius             ',G_radii,"[a.u.]")
+   call msg('r','Points outside the sphere             ',N_out_G)
+   call msg('r','[Int_sBZ(q=0) 1/q^2]*(Vol_sBZ)^(-1/3) =',&
+&               4._SP*pi**3*RIM_qpg(1,1,1)*k_grid_uc_vol**(-1._SP/3._SP))
+   call msg('r','                               should be <',7.7956_SP)
+   if (RIM_id_epsm1_reference/=0) then
+     call msg('r','Anisotropy correction            [o/o]',&
+&               (RIM_anisotropy-RIM_qpg(1,1,1))/RIM_qpg(1,1,1)*100._SP)
+   endif
+   !
+ endif
  !
  ! CLEAN
  !
  call PP_indexes_reset(px)
  YAMBO_FREE(qr)
  !
- if (mode == "x") then
-   call timing('RIM',OPR='stop')
- else
-   call timing('RIM-W',OPR='stop')
- end if
+ if (mode == "x") call timing('RIM',OPR='stop')
+ if (mode == "c") call timing('RIM-W',OPR='stop')
  !
 end subroutine

@@ -1,29 +1,14 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 function com_compose_msg(pre,body,post)
  !
- use pars,       ONLY:msg_len
+ use pars,      ONLY:msg_len
+ use com,       ONLY:msg_length
  !
  implicit none
  !
@@ -57,16 +42,14 @@ function com_compose_msg(pre,body,post)
    post_len=len_trim(post)
  endif
  !
- if (body_len>msg_len) body_len=msg_len
- if (post_len+pre_len+body_len>msg_len) body_len=msg_len-post_len-pre_len
+ if (body_len>msg_length) body_len=msg_length
+ if (post_len+pre_len+body_len>msg_length) body_len=msg_length-post_len-pre_len
  !
  com_compose_msg=" "
  if (present(pre)) then
    com_compose_msg(1:pre_len)=pre
  endif
- if (body_start==0) return
- com_compose_msg(pre_len+1:pre_len+body_len-body_start+1)=trim(body(body_start:body_len))
- if (post_start==0) return
- com_compose_msg(msg_len-post_len+post_start:msg_len)=trim(post(post_start:post_len))
+ if (body_start>0) com_compose_msg(pre_len+1:pre_len+body_len-body_start+1)=trim(body(body_start:body_len))
+ if (post_start>0) com_compose_msg(msg_length-post_len+post_start:msg_length)=trim(post(post_start:post_len))
  !
 end function

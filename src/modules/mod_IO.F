@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2006 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AM DS
 !
 module IO_m
  !
@@ -48,6 +32,7 @@ module IO_m
  character(lchlen) :: DBs_IO_control_string = "none"
  logical           :: io_DIP
  logical           :: io_RESPONSE
+ logical           :: io_MULTIPOLE
  logical           :: io_HF
  logical           :: io_COLLs
  logical           :: io_OBSERVABLES
@@ -61,6 +46,7 @@ module IO_m
  logical           :: frag_DIP
  logical           :: frag_DG
  logical           :: frag_RESPONSE
+ logical           :: frag_MULTIPOLE
  logical           :: frag_WF
  logical           :: frag_QINDX
  logical           :: frag_HF
@@ -112,16 +98,17 @@ module IO_m
  integer, parameter:: PAR_IO_CREATE_MODE=ior(nf90_mpiio,nf90_netcdf4)
  integer, parameter:: PAR_IO_WRITE_MODE =ior(nf90_mpiio,nf90_write)
 #endif
-#if defined _PAR_IO && !defined _HDF5_IO
- integer, parameter:: PAR_IO_CREATE_MODE=ior(nf90_mpiio,nf90_64bit_offset)
- integer, parameter:: PAR_IO_WRITE_MODE =ior(nf90_mpiio,nf90_write)
-#endif
  !
 #if defined _DOUBLE
  complex(DP), parameter :: YAMBO_CMPLX_NO_FILL = cmplx(nf90_fill_double,nf90_fill_double)
 #else
  complex(SP), parameter :: YAMBO_CMPLX_NO_FILL = cmplx(nf90_fill_real,  nf90_fill_real)
 #endif
+ !
+ ! Netcdf chunking
+ ! For SP, we chunk in 2MB and double 4MB. These are in general small chunk sizes. 
+ ! For more information see https://www.unidata.ucar.edu/software/netcdf/workshops/2011/nc4chunking/
+ integer, parameter :: YAMBO_DEF_CHUNK = 512
  !
  ! Units
  !
@@ -253,12 +240,14 @@ module IO_m
      manage_action=IO_ACTION
      !
      if (IO_ACTION== OP_IF_START_RD_CL_IF_END.and.NOW> start_.and.NOW< end_) manage_action=    RD
+     if (IO_ACTION==             RD_CL_IF_END.and.                NOW< end_) manage_action=    RD
      if (IO_ACTION== OP_IF_START_RD_CL_IF_END.and.NOW==start_              ) manage_action= OP_RD
      if (IO_ACTION== OP_IF_START_RD_CL_IF_END.and.                NOW==end_) manage_action=    RD_CL
      if (IO_ACTION==             RD_CL_IF_END.and.                NOW==end_) manage_action=    RD_CL
      if (IO_ACTION== OP_IF_START_RD_CL_IF_END.and.NOW==start_.and.NOW==end_) manage_action= OP_RD_CL
      !
      if (IO_ACTION== OP_IF_START_WR_CL_IF_END.and.NOW> start_.and.NOW< end_) manage_action=    WR
+     if (IO_ACTION==             WR_CL_IF_END.and.                NOW< end_) manage_action=    WR
      if (IO_ACTION== OP_IF_START_WR_CL_IF_END.and.NOW==start_              ) manage_action= OP_WR
      if (IO_ACTION== OP_IF_START_WR_CL_IF_END.and.                NOW==end_) manage_action=    WR_CL
      if (IO_ACTION==             WR_CL_IF_END.and.                NOW==end_) manage_action=    WR_CL
@@ -356,6 +345,38 @@ module IO_m
      if (len_trim(filename_old)==0) return
      call irename( cstr(trim(filename_old)), cstr(trim(filename_new)) )
    end subroutine
+   !
+   function where_is_file(desc,subfolder)
+     !
+     use pars,         ONLY:num_of_alternative_locations,lchlen
+     use IO_int,       ONLY:all_locations
+     !
+     character(*)           :: desc
+     character(*), optional :: subfolder
+     character(lchlen)      :: where_is_file
+     !
+     ! Work Space
+     !
+     integer            :: i_f
+     character(lchlen)  :: possible_locations(num_of_alternative_locations)
+     character(schlen)  :: subfolder_
+     !
+     logical, external :: file_exists
+     !
+     subfolder_=' '
+     if (present(subfolder)) subfolder_=subfolder
+     !
+     possible_locations=all_locations(desc,subfolder_)
+     !
+     where_is_file="none"
+     do i_f=1,num_of_alternative_locations
+       if( file_exists(trim( possible_locations(i_f) )  ) ) then
+         where_is_file=trim(possible_locations(i_f))
+         return
+       endif
+     enddo
+     !
+   end function where_is_file
    !
    logical function file_is_present(desc,subfolder)
      !

@@ -1,27 +1,11 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): CA DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
+subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  !
  use pars,                ONLY:SP
  use com,                 ONLY:msg
@@ -42,15 +26,13 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  integer, intent(out)   :: old_sop_inv(nsym)
  logical, intent(out)   :: S_contains_TR(nsym)
  !
- integer, intent(inout) :: action_kind
- !
  ! Work space
  !
  integer                :: spatial_nsym,old_spatial_nsym,old_trev_nsym
  integer                :: symm_M_factor,symm_B_factor
  real(SP), allocatable  :: dl_sop_tmp(:,:,:)
  real(SP)               :: B_cart(3)
- logical                :: Expand_syms,Reduce_syms
+ logical                :: Reduce_syms
  logical                :: Rm_all_syms,Rm_TR,Rm_INV
  logical                :: use_E_field,use_B_field,has_magnetization
  !
@@ -69,8 +51,6 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  if (B_field/=0.)      use_B_field=.TRUE.
  if (any(Spin_magn>1.E-3).and.n_spinor==2)  has_magnetization=.TRUE.
  !
- call parser('ExpandSymm',Expand_syms)
- !
  call parser('RmAllSymm',Rm_all_syms)
  !
  call parser('RmTimeRev',Rm_TR)
@@ -87,20 +67,6 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
 &           .and. (i_time_rev==1) .and. (.not.Rm_TR)
  !
  if (mag_syms) call msg('s','There is T-rev with (a) [a magnetic field] or (b) [SOC in a magnetic system]')
- !
- if (Expand_syms) then
-   call msg('s','Expand symmetries selected. All other options will be discarded')
-   if(n_spinor/=2) then
-     call msg('s','Expand symmetries meaningful only if n_spinor=2. End program')
-     return
-   endif
-   Rm_TR=.false.
-   Rm_all_syms=.false.
-   use_E_field=.false.
-   use_B_field=.false.
-   E_field=0.
-   B_field=0.
- endif
  !
  if (Rm_all_syms) then
    call section('*',"== Remove all Symmetries ==")
@@ -126,10 +92,6 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  !
  if (use_B_field.and.has_magnetization) call warning('Magnetic field in magnetic system')
  !
- action_kind=0
- if(Reduce_syms) action_kind=1
- if(Expand_syms) action_kind=2
- ! 
  ! Time-reversal related Symmetries
  !
  forall (is=1:nsym) S_contains_TR(is)=is>nsym/(1+i_time_rev)
@@ -148,17 +110,14 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
    B_cart(3)=B_field*cos(B_theta)
  endif
  !
- if(action_kind==0) return
+ if(.not.Reduce_syms) return
  !
  call section('+',"Symmetries")
  !=============================
  !
- select case(action_kind)
- !
  !*********************
  ! Remove Symmetries  *
  !*********************
- case(1)
    !
    ! First replace (or remove) Time reversal
    if(Rm_TR) then
@@ -249,99 +208,6 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
    dl_sop=dl_sop_tmp
    YAMBO_FREE(dl_sop_tmp)
    !
- !*********************
- ! Expand Symmetries
- !*********************
- case(2)
-   !
-   ! Add the spatial inversion or the time reversal if possible
-   ! For systems without magnetization
-   if (  (i_space_inv==1.and.inv_index==-1)  .or.                        &
-&         i_time_rev==0 .and..not.has_magnetization.and.i_space_inv==0 ) then
-     nsym=2*nsym
-     if(i_space_inv==1) then
-       spatial_nsym=2*spatial_nsym
-       call msg('s','Spatial inversion is now a symmetry of the system')
-     else
-       i_time_rev=1
-       call msg('s','T-rev is now a symmetry of the system')
-     endif
-     !
-     YAMBO_FREE(dl_sop)
-     YAMBO_FREE(rl_sop)
-     YAMBO_ALLOC(dl_sop,(3,3,nsym))
-     YAMBO_ALLOC(rl_sop,(3,3,nsym))
-     dl_sop(1:3,1:3,1:nsym/2)=old_dl_sop(1:3,1:3,1:nsym/2)
-     do is=nsym/2+1,nsym
-       dl_sop(1:3,1:3,is)=-old_dl_sop(1:3,1:3,is-nsym/2)
-     enddo
-     !
-   endif
-   !
-   ! Add magnetic symmetries if possible
-   ! For systems with magnetization
-   if(.not.mag_syms.and.has_magnetization) then
-     ! Fake symm for the moment, for future use
-     symm_to_check=0.
-     n_syms_to_check=0
-     found_symm=.false.
-     !
-     ! I check if a (simple) inversion in the plane
-     ! perperndicular to the magnetization exists
-     if(all(abs(Spin_magn(1:2))<1.E-5)) then
-       symm_to_check(:,:,1)=reshape((/-1.,0.,0.,0., 1.,0.,0.,0., 1./),(/3,3/))
-       symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0.,-1.,0.,0.,0., 1./),(/3,3/))
-       n_syms_to_check=2
-     endif
-     if(all(abs(Spin_magn(2:3))<1.E-5)) then
-       symm_to_check(:,:,1)=reshape((/ 1.,0.,0.,0.,-1.,0.,0.,0., 1./),(/3,3/))
-       symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0., 1.,0.,0.,0.,-1./),(/3,3/))
-       n_syms_to_check=2
-     endif
-     if(abs(Spin_magn(1))<1.E-5.and.abs(Spin_magn(3))<1.E-5) then
-       symm_to_check(:,:,1)=reshape((/-1.,0.,0.,0., 1.,0.,0.,0., 1./),(/3,3/))
-       symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0., 1.,0.,0.,0.,-1./),(/3,3/))
-       n_syms_to_check=2
-     endif
-     !
-     do i1=1,n_syms_to_check
-       do i2=1,nsym
-         if(.not.all(abs(symm_to_check(:,:,i1)-dl_sop(:,:,i2))<1.E-5) ) cycle
-         n_syms_to_check=n_syms_to_check-1
-       enddo
-     enddo
-     !
-     if(n_syms_to_check>0) call atoms_check_symm(symm_to_check,n_syms_to_check,found_symm)
-     !
-     if(found_symm) then
-       mag_syms=.true.
-       i_time_rev=1
-       nsym=2*nsym
-       call msg('s','Magnetic symmetries are now included in the symm group')
-       !
-       YAMBO_ALLOC(dl_sop_tmp,(3,3,nsym/2))
-       dl_sop_tmp(1:3,1:3,1:nsym/2)=dl_sop(1:3,1:3,1:nsym/2)
-       YAMBO_FREE(dl_sop)
-       YAMBO_FREE(rl_sop)
-       YAMBO_ALLOC(dl_sop,(3,3,nsym))
-       YAMBO_ALLOC(rl_sop,(3,3,nsym))
-       dl_sop(1:3,1:3,1:nsym/2)=dl_sop_tmp(1:3,1:3,1:nsym/2)
-       do is=nsym/2+1,nsym
-         dl_sop(1:3,1:3,is)=matmul(dl_sop_tmp(1:3,1:3,is-nsym/2),-symm_to_check(1:3,1:3,1))
-       enddo
-       YAMBO_FREE(dl_sop_tmp)
-       !
-     endif
-     !
-   endif
-   !
-   if(nsym<=old_nsym) then
-     call msg('s','Symmetries cannot be expanded. Exit program')
-     action_kind=0
-     return
-   endif
-   !
- end select
  !
  if(.not.RM_all_syms)&
 & call msg('s',trim(intc(old_spatial_nsym))//' spatial symmetries reduced/increased to ...'//trim(intc(spatial_nsym)))

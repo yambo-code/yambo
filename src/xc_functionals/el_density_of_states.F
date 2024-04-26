@@ -1,25 +1,9 @@
 ! 
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): DS AM
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,&
 &                               USE_the_DbGd,USE_Eo,USE_W,USE_occupations,WF_fac,PDOS_fac)
@@ -40,8 +24,8 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  integer,            intent(in) :: DOS_bands(2)
  real(SP),          intent(out) :: dos_value(n_spin)
  logical,  optional, intent(in) :: USE_Eo,USE_W,USE_the_DbGd,USE_occupations
- real(SP), optional, intent(in) :: WF_fac(:,:,:)
- real(SP), optional, intent(in) :: PDOS_fac(:,:,:)
+ real(SP), pointer, optional, intent(in) :: WF_fac(:,:,:)
+ real(SP), pointer, optional, intent(in) :: PDOS_fac(:,:,:)
  !
  ! Work space
  !
@@ -65,8 +49,11 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  USE_occ=.FALSE.
  if (present(USE_occupations)) USE_occ=USE_occupations
  !
- USE_WFs =present(WF_fac)
- USE_PDOS=present(PDOS_fac)
+ USE_WFs =.FALSE.
+ if(present(WF_fac)) USE_WFs = associated(WF_fac)
+ !
+ USE_PDOS =.FALSE.
+ if(present(PDOS_fac)) USE_PDOS = associated(PDOS_fac)
  !
  DOS_broadening_=DOS_broadening
  !
@@ -109,8 +96,8 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
        !
        if (n_spinor==2) then
          if (USE_WFs) then
-           proj_fac(1)=proj_fac(1)*WF_fac(ib-DOS_bands(1)+1,ik,1)
-           proj_fac(2)=proj_fac(2)*WF_fac(ib-DOS_bands(1)+1,ik,2)
+           proj_fac(1)=proj_fac(1)*WF_fac(ib,ik,1)
+           proj_fac(2)=proj_fac(2)*WF_fac(ib,ik,2)
          else
            proj_fac   =proj_fac*0.5_SP
          endif
@@ -118,7 +105,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
        !
        ! Project on PSOC coefficients
        !
-       if (USE_PDOS) proj_fac=proj_fac*PDOS_fac(ib-DOS_bands(1)+1,ik,i_sp_pol)
+       if (USE_PDOS) proj_fac=proj_fac*PDOS_fac(ib,ik,i_sp_pol)
        !
        ! Sum-up
        !

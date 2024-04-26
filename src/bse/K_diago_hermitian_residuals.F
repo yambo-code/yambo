@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, MG, DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2016 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AM MG DS
 !
 subroutine K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right) 
  !
@@ -35,7 +19,7 @@ subroutine K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right)
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,         ONLY:live_timing
  use X_m,            ONLY:global_gauge
- use BS_solvers,     ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f,BS_mat,BSS_n_eig
+ use BS_solvers,     ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f_RES,BS_mat,BSS_n_eig
  use BS,             ONLY:BS_K_dim
  !
  implicit none
@@ -59,8 +43,9 @@ subroutine K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right)
  BS_R_right=cZERO
  call live_timing('EPS R residuals',px%n_of_elements(myid+1))
  !
- tmp_res = BSS_dipoles_opt(1,i_range(1):i_range(2))*sqrt(cmplx(BSS_eh_f(i_range(1):i_range(2)),kind=SP))
+ tmp_res = BSS_dipoles_opt(1,i_range(1):i_range(2))*sqrt(cmplx(BSS_eh_f_RES(i_range(1):i_range(2)),kind=SP))
  !
+ ! DS. Note. Velocity gauge fixing does not work if neq occupations are loaded. Not sure why.
  if (trim(global_gauge)=="velocity") tmp_res =tmp_res/BSS_eh_E(i_range(1):i_range(2))
  if (allocated(BSS_eh_Z))            tmp_res =tmp_res*sqrt(BSS_eh_Z(i_range(1):i_range(2)))
  !

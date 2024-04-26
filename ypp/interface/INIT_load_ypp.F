@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2015 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine INIT_ypp_load(defs)
  !
@@ -60,7 +44,7 @@ subroutine INIT_ypp_load(defs)
 #if defined _YPP_ELPH
  use YPP_ELPH,      ONLY:elph_dbs_path,elph_Ef,elph_gamma_broad,elph_residual_treshold,elph_steps,&
 &                        ph_broad,ph_freqs_file,ph_modes_file
- use ELPH,          ONLY:EkplusQ_mode
+ use ELPH,          ONLY:EkplusQ_mode,elph_branches
 #endif
  !
  implicit none
@@ -309,6 +293,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'DBsPATH',  'Path to the PW el-ph databases',elph_dbs_path)
  call it(defs,'PHfreqF',  'PWscf format file containing the phonon frequencies',ph_freqs_file)
  call it(defs,'PHmodeF',  'PWscf format file containing the phonon modes',ph_modes_file)
+ call it(defs,'ElPhModes', '[ELPH] Phonon modes included',elph_branches)
  call it(defs,'EkplusQmode',  'E(k+q) energies calculation mode (interp | dftp)',EkplusQ_mode)
  call it(defs,'EfGbroad', 'Fermi surface broadening (Gamma)',elph_gamma_broad,E_unit)
  call it(defs,'PhBroad','Phonon broadening (Eliashberg & DOS)',ph_broad,E_unit)

@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): CH DS HM
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine a2y_db1(en,k,ncid)
  !
@@ -114,17 +98,21 @@ contains
   !
   subroutine import_geometry_group
     use vec_operate,          only : cross_product
+    use matrix_operate,       only : m3det_i
+    use units,                only : Da2AU
     use R_lattice,            only : b
     use D_lattice,            only : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                    DL_vol, a, alat, &
 &                                    n_atomic_species,n_atoms_species,atoms_map, &
 &                                    n_atoms_species_max,atom_pos, n_atoms, Z_species
-    use mod_com2y,            only : symmetries_check_and_load, alat_mult_factor
+    use mod_com2y,            only : symmetries_check_and_load, alat_mult_factor,force_noSYMM
+    !
     implicit none
+    !
     logical                       :: l_identity, l_inversion
     real(SP)                      :: lsop(3,3), cp(3)
-    integer                       :: a_nsym, a_species
-    integer, allocatable          :: asop(:,:,:)
+    integer                       :: a_nsym, a_species, kptopt, det_s
+    integer, allocatable          :: asop(:,:,:),symafm(:),trev(:)
     character(3), allocatable     :: atom_species_names(:)
     integer,  allocatable, target :: atom_species_(:)
     real(SP), allocatable, target :: reduced_atom_positions_(:,:)
@@ -205,10 +193,19 @@ contains
     varid = netcdf_inquire_varid(ncid, "amu")
     netcdf_error = nf90_get_var(ncid, varid, atom_mass)
     call netcdf_check(ncid,netcdf_error,varid)
+    do i1 = 1, n_atomic_species
+     atom_mass(i1) = real(atom_mass(i1),SP)*Da2AU   ! Mass are stored in Atomic Units
+    enddo
 
     !
     ! Symmetry 
     !
+    varid = netcdf_inquire_varid(ncid, "kptopt")
+    netcdf_error = nf90_get_var(ncid, varid, kptopt)
+    call netcdf_check(ncid,netcdf_error,varid)
+    !
+    force_noSYMM= ( kptopt==3 )
+
     netcdf_error = nf90_inq_dimid(ncid, "number_of_symmetry_operations", dimid)
     netcdf_error = nf90_inquire_dimension(ncid, dimid, len = a_nsym)
 
@@ -217,7 +214,25 @@ contains
     netcdf_error = nf90_get_var(ncid, varid, asop)
     call netcdf_check(ncid,netcdf_error,varid)
 
-    call symmetries_check_and_load(asop,a_nsym)
+    YAMBO_ALLOC( symafm, (a_nsym) )
+    varid = netcdf_inquire_varid(ncid, "symafm")
+    netcdf_error = nf90_get_var(ncid, varid, symafm)
+    call netcdf_check(ncid,netcdf_error,varid)
+
+    YAMBO_ALLOC( trev, (a_nsym) )
+    trev=0
+    if (any(symafm==-1)) then
+      trev=-99
+      do is=1,a_nsym
+        write(*,*) symafm(is)
+        det_s=m3det_i(asop(:,:,is))
+        if (symafm(is)*det_s==-1)  trev(is)=1
+        if (symafm(is)*det_s== 1)  trev(is)=0
+      enddo
+      if (any(trev==-99)) call error(" some symmetry has determinant different from 1 or -1")
+    endif
+
+    call symmetries_check_and_load(asop,a_nsym,t_rev=trev)
 
     return
   end subroutine import_geometry_group
@@ -578,6 +593,7 @@ contains
   !end if
 
   ! TODO: handle the istwfk /= 1 cases
+  if (istwf_k/=1) call error("istwf_k different from 1")
   ! create mapping from G sphere to box
   if (present(map))     map = -1
   if (present(inv_map)) inv_map = -1

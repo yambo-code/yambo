@@ -1,2 +1,4 @@
-objs = ELPH_alloc.o X_ALLOC_parallel.o X_ALLOC_global.o X_ALLOC_elemental.o
-
+#if defined _ELPH
+ELPH_objs = ELPH_alloc.o
+#endif
+objs = $(ELPH_objs) X_ALLOC_parallel.o X_ALLOC_global.o X_ALLOC_elemental.o

@@ -1,31 +1,17 @@
 #
-#        Copyright (C) 2000-2022 the YAMBO team
-#              http://www.yambo-code.org
+# License-Identifier: GPL
 #
-# Authors (see AUTHORS file for details): AM, DS
+# Copyright (C) 2006 The Yambo Team
 #
-# This file is distributed under the terms of the GNU
-# General Public License. You can redistribute it and/or
-# modify it under the terms of the GNU General Public
-# License as published by the Free Software Foundation;
-# either version 2, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will
-# be useful, but WITHOUT ANY WARRANTY; without even the
-# implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
-#
-# You should have received a copy of the GNU General Public
-# License along with this program; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+# Authors (see AUTHORS file for details): AM DS
 #
 ifeq ($(wildcard config/mk/global/defs.mk),config/mk/global/defs.mk)
  include config/mk/global/defs.mk
  include config/mk/defs.mk
 else ifeq ($(MAKECMDGOALS), download)
-else ifeq ($(MAKECMDGOALS), check)
+else ifeq ($(MAKECMDGOALS), veryclean)
+else ifeq ($(MAKECMDGOALS), check-files)
+else ifeq ($(MAKECMDGOALS), check-packages)
 else
  include config/mk/global/no_configure_help.mk
 endif
@@ -38,7 +24,7 @@ include config/mk/global/targets.mk
 # Libraries (ordered for compiling & linking)
 include config/mk/global/libraries.mk
 
-.PHONY: interfaces ypp
+.PHONY: interfaces ypp 
 
 nothing: 
 	@$(call yambo_help,"header")
@@ -66,6 +52,8 @@ fl-project:
 	@for target in $(FL_PROJ)  ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 rtext-project:
 	@for target in $(RTE_PROJ) ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+mod-project:
+	@for target in $(MOD_PROJ) ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 kerr-project:
 	@for target in $(KERR_PROJ); do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 main:
@@ -78,7 +66,7 @@ int-libs:
 	@for target in $(INT_LIBS) ; do $(MAKE) $(MAKEFLAGS) $$target; done
 yambo-int-libs: 
 	@for target in $(YAMBO_INT_LIBS) ; do $(MAKE) $(MAKEFLAGS) $$target; done
-conf-check:
+check-packages:
 	@$(global_check)
 #
 #=====================
@@ -89,6 +77,10 @@ conf-check:
 #
 STAMP_DBLE=
 ifneq (,$(wildcard $(compdir)/config/stamps_and_lists/compilation_objects_in_DOUBLE_precision.stamp))
+ STAMP_DBLE=-D_DOUBLE
+else ifneq (,$(wildcard $(compdir)/config/stamps_and_lists/compiling_yambo_nl.stamp))
+ STAMP_DBLE=-D_DOUBLE
+else ifneq (,$(wildcard $(compdir)/config/stamps_and_lists/compiling_ypp_nl.stamp))
  STAMP_DBLE=-D_DOUBLE
 endif
 #
@@ -112,7 +104,7 @@ libs: ext-libs int-libs
 # Yambo 
 include config/mk/global/actions/compile_yambo.mk
 #
-# Interfaces #
+# Interfaces 
 include config/mk/global/actions/compile_interfaces.mk
 #
 # YPP 
@@ -125,7 +117,7 @@ include config/mk/global/actions/clean.mk
 # Functions
 #===========
 #
-# Global Configuration Check (DOUBLE, FFTW ...)
+# Global Configuration Check 
 include config/mk/global/functions/global_check.mk
 #
 # Libraries download/clone/checkout

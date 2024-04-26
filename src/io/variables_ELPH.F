@@ -1,37 +1,21 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2022 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM AC
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function variables_ELPH(ID,what)
  !
  use pars,           ONLY:SP
  use IO_m,           ONLY:io_status,read_is_on,write_is_on,io_mode,DUMP,IO_INCOMPATIBLE_VAR
  use IO_int,         ONLY:ver_is_gt_or_eq,io_variable_elemental,io_bulk,def_variable_elemental
- use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,elph_nk_bz,ELPH_desc,elph_grids_are_expanded, &
+ use ELPH,           ONLY:ph_modes,elph_nb,elph_nk_bz,ELPH_desc,elph_grids_are_expanded, &
 &                         QP_PH_n_G_bands,PH_W_debye,elph_nQ,PH_kpt_bz,l_GKKP_hosts_bare_dV,&
-&                         elph_use_q_grid,PH_qpt,elph_nQ_used,PH_pol_vector,elph_Ham_bands,elph_branches
+&                         elph_use_q_grid,PH_qpt,elph_nQ_used,elph_Ham_bands,elph_branches
  use interfaces,     ONLY:ELPH_alloc
  use R_lattice,      ONLY:nkbz,nqibz,q_pt
- use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk,QP_table
+ use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk
  use vec_operate,    ONLY:rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
  use descriptors,    ONLY:IO_desc_reset

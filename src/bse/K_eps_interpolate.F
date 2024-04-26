@@ -1,31 +1,15 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2007 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K_eps_interpolate(nW,W,err)
  !
  use pars,         ONLY:SP,cI
  use vec_operate,  ONLY:sort
- use X_m,          ONLY:Epsilon_ii
+ use X_m,          ONLY:Resp_ii
  use POL_FIT_m,    ONLY:POL_LK_fit
  !
  implicit none
@@ -67,13 +51,13 @@ subroutine K_eps_interpolate(nW,W,err)
        Pol_coeff=0._SP
        do iw_fit=1,n_pts
          Dx(iw_fit)=W( fit_pt(iw_fit) )-W(iw)
-         if (i1==1) Dy(iw_fit)=aimag( Epsilon_ii(fit_pt(iw_fit),2) )
-         if (i1==2) Dy(iw_fit)= real( Epsilon_ii(fit_pt(iw_fit),2) )
+         if (i1==1) Dy(iw_fit)=aimag( Resp_ii(fit_pt(iw_fit),2) )
+         if (i1==2) Dy(iw_fit)= real( Resp_ii(fit_pt(iw_fit),2) )
        enddo
        call POL_LK_fit(n_pts,Dx(:n_pts),Dy(:n_pts),order,Pol_coeff(:order+1),EPS,0._SP)
        !
-       if (i1==1) Epsilon_ii(iw,2)=cI*pol_eval(0._SP)
-       if (i1==2) Epsilon_ii(iw,2)=Epsilon_ii(iw,2)+pol_eval(0._SP)
+       if (i1==1) Resp_ii(iw,2)=cI*pol_eval(0._SP)
+       if (i1==2) Resp_ii(iw,2)=Resp_ii(iw,2)+pol_eval(0._SP)
        !
      enddo
      !

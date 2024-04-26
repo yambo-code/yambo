@@ -1,3 +1,10 @@
+#
+# License-Identifier: GPL
+#
+# Copyright (C) 2021 The Yambo Team
+#
+# Authors (see AUTHORS file for details): AM
+#
 define yambo_help
   $(ECHO) "\n This is $(y_version)";
   if [ "$(1)" = "header" ] || [ -z "$(1)" ] ; then \
@@ -18,6 +25,7 @@ define yambo_help
    $(ECHO) -n " [nl-project]    "; for target in $(NL_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) -n " [fl-project]    "; for target in $(FL_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) -n " [rtext-project] "; for target in $(RTE_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
+   $(ECHO) -n " [mod-project]   "; for target in $(MOD_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) "\n *** GPL components *** ";\
    $(ECHO) -n " [gpl]           "; for target in $(GPL); do $(ECHO) -n "$$target" ; done;$(ECHO) ;\
    $(ECHO) "\n *** Libraries ***"; \
@@ -27,20 +35,24 @@ define yambo_help
    $(ECHO) -n " [yambo-int-libs]"; for target in $(YAMBO_INT_LIBS); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) "\n *** Utils ***";\
    $(ECHO) -n " [utils]         "; for target in $(UTILS); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
+   $(ECHO)  "\n *** Files & Packages ***" ;\
+   $(ECHO)  " make check-packages      =  check the packages required (and optional) for Yambo to compile correctly";\
+   $(ECHO)  " make check-files         =  list all git untracked files and empty directories.";\
    $(ECHO)  "\n *** Cleaning ***" ;\
    $(ECHO)  " The cleaning procedure of yambo is divided in several modules: bin int-libs driver Ydriver src ypp interfaces conf dep";\
    $(ECHO)  " Each of these module can be called by using";\
    $(ECHO)  " make clean what=<MODULE> \n";\
    $(ECHO)  " make clean               =  remove all modules except int-libs, ext-libs, Ydriver, dependencies and configure files.";\
    $(ECHO)  " make clean_all           =  remove all modules. Complete cleaning.";\
-   $(ECHO)  " make reset               =  clean  + int-libs.";\
+   $(ECHO)  " make reset               =  clean + int-libs.";\
+   $(ECHO)  " make gitclean            =  clean all git untracked files.";\
    $(ECHO);\
   fi
   if [ "$(1)" = "intro" ] ; then \
    $(ECHO)  "\n *** Interfaces ***\n " ; \
    $(ECHO)  " a2y =  ABINIT to Yambo interface ";\
    $(ECHO)  " p2y =  QuantumEspresso to Yambo interface ";\
-   $(ECHO)  "        http://www.yambo-code.org/wiki/index.php?title=Bulk_material:_h-BN ";\
+   $(ECHO)  "        http://www.yambo-code.eu/wiki/index.php?title=Bulk_material:_h-BN ";\
    $(ECHO)  " c2y =  CPMD to Yambo interface";\
    $(ECHO)  "\n *** Main Components***\n" ;\
    $(ECHO)  " yambo =  main Yambo code ";\
@@ -48,12 +60,12 @@ define yambo_help
    $(ECHO)  "\n *** Other projects ***\n" ;\
    $(ECHO)  " yambo_sc =  Self-consistent (COHSEX, HF, DFT) project";\
    $(ECHO)  " yambo_rt =  Real-time dynamics project";\
-   $(ECHO)  "             http://www.yambo-code.org/wiki/index.php?title=Linear_response_from_real_time_simulations";\
+   $(ECHO)  "             http://www.yambo-code.eu/wiki/index.php?title=Linear_response_from_real_time_simulations";\
    $(ECHO)  " yambo_nl =  Non-linear optics project ";\
-   $(ECHO)  "             http://www.yambo-code.org/wiki/index.php?title=Tutorials#Non_linear_response";\
+   $(ECHO)  "             http://www.yambo-code.eu/wiki/index.php?title=Tutorials#Non_linear_response";\
    $(ECHO)  " yambo_fl =  Floquet approach to non-linear optics project ";\
-   $(ECHO)  "             http://www.yambo-code.org/ ";\
+   $(ECHO)  "             			    ";\
    $(ECHO)  " yambo_ph =  Electron-phonon coupling project ";\
-   $(ECHO)  "             http://www.yambo-code.org/wiki/index.php?title=Tutorials#Electron_phonon_coupling\n";\
+   $(ECHO)  "             http://www.yambo-code.eu/wiki/index.php?title=Tutorials#Electron_phonon_coupling\n";\
   fi
 endef

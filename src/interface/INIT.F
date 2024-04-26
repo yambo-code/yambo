@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
@@ -30,10 +14,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! INIT = 2  : DB listing mode
  !
  use drivers,        ONLY:infile_editing,l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bss,&
-&                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
+&                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,l_rim_w,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr,l_X,l_screen,l_fl_optics
+&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_mpa,l_phel_corr,l_X,l_screen,l_fl_optics
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
@@ -80,9 +64,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  type(levels)    ::en
  type(bz_samp)   ::q,k
- type(X_t)       ::X(4)
+ type(X_t)       ::X(5)
  type(DIPOLE_t)  ::Dip
- type(w_samp)    ::Xw(4)
+ type(w_samp)    ::Xw(5)
  integer         ::lnstr
  character(lnstr)::instr
  logical         ::CLOSE_Gs,FINALIZE,QP_field
@@ -98,13 +82,19 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(QP_t)       ::qp
  type(w_samp)     ::Xxcw
  type(levels)     ::en_sc
- integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2),io_SC_E_err,i_r
+ integer          ::io_X_err(5),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2),io_SC_E_err,i_r
  !
  logical, external:: file_exists
  !
  ! Presets
  !
  INIT = 0
+ io_X_err     =-1
+ io_BS_err    =-1
+ io_BS_Fxc_err=-1
+ io_QINDX_err =-1
+ io_ELPH_err  =-1
+ io_SC_E_err  =-1
  !
  if (.not.FINALIZE.and..not.CLOSE_Gs) then
    !
@@ -122,10 +112,12 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    call W_reset(Xw(2),damping=0.001_SP)
    call W_reset(Xw(3))
    call W_reset(Xw(4))
+   call W_reset(Xw(5))
    call X_reset(X(1),type=1)
    call X_reset(X(2),type=2)
    call X_reset(X(3),type=3)
    call X_reset(X(4),type=4)
+   call X_reset(X(5),type=5)
    Xw(2)%n_freqs=1
    Xw(4)%n_freqs=2
    call DIPOLES_reset(Dip)
@@ -196,7 +188,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    return
  endif
  !
- !Runlevels variables activation (Logicals from stdin)
+ ! Runlevels variables activation (Logicals from stdin)
  call LOCAL_from_runlevels_to_logicals()
  !
  ! Given the stding vars here I fix/check the 
@@ -320,13 +312,15 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')
        l_ppa=runlevel_is_on('ppa')
+       l_mpa=runlevel_is_on('mpa')
+       l_cohsex=runlevel_is_on('cohsex')
        l_dipoles=runlevel_is_on('dipoles')
        l_HF_and_locXC=runlevel_is_on('HF_and_locXC')
        l_gw0=runlevel_is_on('gw0')
        l_life=runlevel_is_on('life')
        l_rim=runlevel_is_on('rim_cut')
-       l_col_cut=runlevel_is_on('rim_cut')
-       l_cohsex=runlevel_is_on('cohsex')
+       l_rim_w=runlevel_is_on('rim_w')
+       l_col_cut=l_rim.or.l_rim_w
        l_acfdt=runlevel_is_on('acfdt')
 #if defined _SCALAPACK
        l_slk_test =runlevel_is_on('slktest')
@@ -336,6 +330,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_elel_scatt =runlevel_is_on('el_el_scatt')
        l_elph_scatt=runlevel_is_on('el_ph_scatt')
        l_elphoton_scatt=runlevel_is_on('el_photon_scatt')
+#endif
+#if defined _SC && defined _MODELS
+       l_sc_run=runlevel_is_on('scrun')
 #endif
 #if defined _SC && !defined _RT
        l_sc_run=runlevel_is_on('scrun')
@@ -351,7 +348,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _FL
        l_fl_optics=runlevel_is_on('floptics')
 #endif
-#if defined  _ELPH || defined _PHEL
+#if defined _ELPH || defined _PHEL
        l_elph_Hamiltonian=runlevel_is_on('ElPhHam')
        l_elph_corr=runlevel_is_on('el_ph_corr')
        l_phel_corr=runlevel_is_on('ph_el_corr')
@@ -421,13 +418,19 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
      !
-     if (any((/l_em1s,l_em1d,l_X,l_optics,l_ppa/)))   call initactivate(1,'dipoles')
+     if (any((/l_em1s,l_em1d,l_X,l_optics,l_ppa,l_mpa/)))   call initactivate(1,'dipoles')
      if (l_ppa)    call initactivate(1,'em1d')
-     if (l_gw0.and..not.any((/l_ppa,l_cohsex,l_HF_and_locXC,&
-&                             l_elph_corr,l_phel_corr,l_elphoton_corr/))) call initactivate(1,'em1d dipoles')
+     if (l_mpa)    call initactivate(1,'em1d')
+     if (l_gw0.and..not.any((/l_ppa,l_cohsex,l_HF_and_locXC,l_mpa,&
+&                                     l_elph_corr,l_phel_corr,l_elphoton_corr/))) call initactivate(1,'em1d dipoles')
      if (l_cohsex) call initactivate(1,'em1s dipoles')
      if (l_bss)    call initactivate(1,'optics dipoles bse')
      if (l_bs_fxc) BSS_mode="t"
+     !
+     if (l_mpa) then
+       Xw(5)%n_freqs=4
+       Xw(5)%dr=(/0._SP,0.1_SP/) !MPA damping
+     endif
      !
      if (l_bse) then
        !
@@ -459,12 +462,13 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_dipoles) then
        n_threads_DIP=0
      endif
-     if (any((/l_optics,l_em1s,l_em1d,l_ppa,l_bse,l_X/))) then
+     if (any((/l_optics,l_em1s,l_em1d,l_ppa,l_mpa,l_bse,l_X/))) then
        n_threads_K=0
        n_threads_X=0
        n_threads_DIP=0
      endif
-     if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run) n_threads_SE=0
+     if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run&
+&                               .or.l_ppa.or.l_mpa)       n_threads_SE=0
      if (l_real_time)                                     n_threads_RT=0
      if (l_nl_optics)                                     n_threads_NL=0
      if (l_fl_optics)                                     n_threads_FL=0
@@ -497,12 +501,12 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        BS_K_coupling    =index(BSE_mode,'coupling')>0
        if (BS_K_coupling) then
          BS_cpl_K_exchange=BS_res_K_exchange  
-         BS_cpl_K_corr    =BS_res_K_corr      
+         BS_cpl_K_corr    =BS_res_K_corr.and..not.index(BSE_mode,'x_coupling')>0
        endif
        call parser('WehDiag',dummy_logical)
        if (     dummy_logical) BS_W_is_diagonal=.TRUE. 
        call parser('WehCpl' ,dummy_logical )
-       if (.not.dummy_logical) BS_cpl_K_corr=.FALSE.
+       if (.not.(dummy_logical.or.index(BSE_mode,'xc_coupling')>0)) BS_cpl_K_corr=.FALSE.
      endif
      !
      if (l_bse) then
@@ -520,12 +524,14 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        if (io_BS_err==0) then
          if (     l_ppa) call X_duplicate(Xbsk,X(4))
-         if (.not.l_ppa) call X_duplicate(Xbsk,X(2))
+         if (     l_mpa) call X_duplicate(Xbsk,X(5))
+         if (.not.l_ppa.and..not.l_mpa) call X_duplicate(Xbsk,X(2))
        endif
        !
      endif
      !
-     if ((l_gw0.or.l_life).and..not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr,l_phel_corr/))) call initactivate(1,'el_el_corr')
+     if ((l_gw0.or.l_life).and.&
+&        .not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr,l_phel_corr/))) call initactivate(1,'el_el_corr')
      !
    end subroutine LOCAL_after_input_IO
    !
@@ -536,8 +542,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_life) call initactivate(1,'el_el_corr')
 #endif
      !
-     if (io_ELPH_err(1)<0.and.io_ELPH_err(2)<0) call switch_off_runlevel('el_ph_corr ph_el_corr',on_name=' ')
-     if (io_ELPH_err(2)<0                     ) call switch_off_runlevel('el_ph_scatt ph_el_scatt',on_name=' ')
+     if (io_ELPH_err(1)<0.and.io_ELPH_err(2)<0) call switch_off_runlevel('el_ph_corr ph_el_corr',except=' ')
+     if (io_ELPH_err(2)<0                     ) call switch_off_runlevel('el_ph_scatt ph_el_scatt',except=' ')
      !
    end subroutine LOCAL_scatt_and_correlation_logicals
    !

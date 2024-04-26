@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM IMA
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
@@ -28,10 +12,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_t
- use BS_solvers,     ONLY:BSS_desc,BSS_free,BS_mat,run_Haydock,run_inversion,run_Diago
-#if defined _SLEPC && !defined _NL
- use BS_solvers,     ONLY:run_Slepc
-#endif
+ use BS_solvers,     ONLY:BSS_desc,BSS_free,BS_mat,run_Haydock,&
+&                         run_inversion,run_Diago,run_Slepc
  use BS,             ONLY:BS_K_has_been_calculated_loaded,&
 &                         BS_blks_free,l_BS_abs,l_BS_kerr,l_BS_magnons
  use parallel_m,     ONLY:master_cpu,CPU_structure
@@ -78,9 +60,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
  endif
  !
-#if defined _SLEPC && !defined _NL
  if (run_Slepc) call K_diago_driver(iq,W_bss,X_static)
-#endif
  !
  ! Inversion
  !

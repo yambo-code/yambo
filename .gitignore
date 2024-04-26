@@ -30,18 +30,20 @@ lib/archive/git.list
 *.a
 *.so
 *.mod
-*.dep
+*modules.dep
+*.save
 *.f90
 *.s
-*.sw*
+*.swp*
 *dSYM
 *bk
 
 # source #
 ##########
-lib/archive/yambo-libraries-1.0/
-lib/yambo/driver/yambo/include/editor.h
-lib/yambo/driver/yambo/include/version.h
+lib/archive/Ydriver
+lib/yambo/Ydriver/yambo/include/editor.h
+lib/yambo/Ydriver/yambo/include/version.h
+include/version/version.h
 include/driver/editor.h
 include/branch.inc
 src/tools/.objects
@@ -66,7 +68,6 @@ lib/*/bin
 lib/*/tmp
 lib/*/etsf_io*
 lib/*/netcdf-*
-lib/*/pnetcdf-*
 lib/*/iotk*
 lib/*/libxc-*
 lib/*/lapack-*
@@ -105,6 +106,7 @@ commit.msg
 *.jar
 *.rar
 *.tar
+*.pulled
 *.zip
 
 # Logs and databases #

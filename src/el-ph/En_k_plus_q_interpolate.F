@@ -1,32 +1,16 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2021 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): CA
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  !
  use pars,                ONLY:pi,rZERO
  use electrons,           ONLY:levels,n_sp_pol,E_reset,spin_occ
  use R_lattice,           ONLY:bz_samp,bz_samp_reset
- use ELPH,                ONLY:elph_nb,ID_E_kpq,GKKP,FineGd_E_kpq_alloc
+ use ELPH,                ONLY:elph_nb,ID_E_kpq,GKKP,FineGd_E_kpq_alloc,Efermi_DbGd
  use interpolate,         ONLY:INTERPOLATION_BZ
  !
 #include<memory.h>
@@ -36,8 +20,8 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  !
  ! Work space
  !
- integer               :: iqbz,ik,n_k_plus_q,ic,iq_fine,iq_idx
- integer               :: nq_around
+ integer       :: iqbz,ik,n_k_plus_q,ic,iq_fine,iq_idx
+ integer       :: nq_around
  type(bz_samp) :: k_plus_q
  type(levels)  :: E_kpq
  !
@@ -80,15 +64,23 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  YAMBO_ALLOC(E_kpq%E,(E%nb,n_k_plus_q, n_sp_pol))
  call INTERPOLATION_BZ(K=k_plus_q,NK=n_k_plus_q,ID=ID_E_kpq,E=E_kpq)
  !
- ! Calculate the new occupations (only for semiconductors) 
+ ! Calculate the new occupations 
  ! ==============================
- ! This part has to be generilized to metals, taking into account 
- ! the fact the the Fermi energy can change due to the presence of E(k+q) states
- ! For the moment I set all valence occupations to 1(or 2 without spin)
+ ! For semiconductors I do not recalculate occupations
+ ! I supposed fine and course grid have the same metallicity
+ ! and I set all valence occupations to 1(or 2 without spin)
  !
  YAMBO_ALLOC(E_kpq%f,(E%nb,n_k_plus_q, n_sp_pol))
- E_kpq%f(1:E%nbf(1),:,1)=spin_occ
- E_kpq%f(E%nbf(1)+1:,:,1)=rZERO
+ if(all(E%nbm==E%nbf)) then
+   E_kpq%f(1:E%nbf(1),:,1) =spin_occ
+   E_kpq%f(E%nbf(1)+1:,:,1)=rZERO
+ else 
+   !
+   ! For metals occuations are recalculated
+   ! using the Fine-grid fermi energy
+   !
+   call f_build_ext(E_kpq,Efermi_DbGd) ! Interpolate levels are already aligned
+ endif
  !
  ! Store E(k+q) energies in the GKKP
  ! ==========================================

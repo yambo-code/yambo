@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): CH HM
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine a2y_kb_pp( ikibz, ncid )
   !
@@ -92,7 +76,7 @@ end subroutine a2y_kb_pp
 
 
 
-subroutine a2y_kb_pp_wfk( ikibz, ncid )
+subroutine a2y_kb_pp_wfk( ikibz, i_sp_pol, ncid )
   !
   ! Structure of KB form factors in WFK file
   !   vkb(  max_number_of_coefficients,    
@@ -122,7 +106,7 @@ subroutine a2y_kb_pp_wfk( ikibz, ncid )
   !
   implicit none
   !
-  integer, intent(in)   :: ncid, ikibz
+  integer, intent(in)   :: ncid, ikibz, i_sp_pol
   ! 
   ! Work Space
   !
@@ -148,7 +132,7 @@ subroutine a2y_kb_pp_wfk( ikibz, ncid )
     do ip=1,pp_n_l_times_proj_max
       do ic=1,wf_nc_k(ikibz)
         ig=wf_igk_indx(ic)
-        pp_kb(ic,ia,ip,1) = pp_section(ig,ip,ia)
+        pp_kb(ic,ia,ip,i_sp_pol) = pp_section(ig,ip,ia)
       end do
     end do
   end do
@@ -164,7 +148,7 @@ subroutine a2y_kb_pp_wfk( ikibz, ncid )
     do ip=1,pp_n_l_times_proj_max
       do ic=1,wf_nc_k(ikibz)
         ig=wf_igk_indx(ic)
-        pp_kbd(ic,ia,ip,1) = pp_section(ig,ip,ia)
+        pp_kbd(ic,ia,ip,i_sp_pol) = pp_section(ig,ip,ia)
       end do
     end do
   end do

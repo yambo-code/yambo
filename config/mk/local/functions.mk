@@ -1,21 +1,28 @@
 #
+# License-Identifier: GPL
+#
+# Copyright (C) 2021 The Yambo Team
+#
+# Authors (see AUTHORS file for details): AM
+#
 # Functions
 #===========
 #
 # Driver
 #--------
 define driver
- $(PREFIX)(echo "$(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(srcdir)/lib/yambo/driver/src/driver/driver.c" >> $(STDLOG) )
- $(PREFIX)(eval $(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(srcdir)/lib/yambo/driver/src/driver/driver.c >> $(STDLOG) 2>&1  )
+ $(PREFIX)(echo "$(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(srcdir)/lib/yambo/Ydriver/src/driver/driver.c" >> $(STDLOG) )
+ $(PREFIX)(eval $(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(srcdir)/lib/yambo/Ydriver/src/driver/driver.c >> $(STDLOG) 2>&1  )
 endef
 #
 # Linking
 #---------
 define link
- $(PREFIX)(echo "$(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs)" >> $(STDLOG) ;\
+ $(PREFIX)(echo "$(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs)" >> $(STDLOG)  ;\
  eval $(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs) >> $(STDLOG) 2>&1;\
  $(ECHO) "\t[$(wdir)] $(target) (link)";\
  if test -f $(target); then \
+   rm driver.o \
    rm -f $(compdir)/config/stamps_and_lists/compiling_$(target).stamp; \
    touch $(compdir)/config/stamps_and_lists/$(target).stamp; \
  fi )
@@ -69,14 +76,24 @@ define F90_elemental_compilation
  $(msg)
 endef
 define modmove
- $(PREFIX)MODS=`find . -name '*.mod'`;for modfile in $$MODS ; do mv $$modfile $(compdir)/include; done
+ $(PREFIX)(MODS=`find $(compdir)/$(wdir) -name '*.mod' -not -path "$(compdir)/$(wdir)/*objects.save/*"`;\
+ for modfile in $$MODS ; do \
+  modfname=`basename $$modfile` ;\
+  rm -f $(compdir)/include/$$modfname ;\
+  cp $$modfile $(compdir)/include/ ;\
+ done)
 endef
 define mk_lib
- $(PREFIX)(echo "$(ar) $(arflags) $(target) $(objs)"  >> $(STDLOG) )
- $(PREFIX)(eval $(ar) $(arflags) $(target) $(objs)  >> $(STDLOG) 2>&1  )
- $(PREFIX)(mv $(target) $(libdir))
- $(PREFIX)(chmod u+x $(libdir)/$(target))
- $(PREFIX)($(ECHO) "\t[$(wdir)] $(target) (lib)")
+ $(PREFIX)(for object in $(objs); do if test -f $$object; then \
+  echo "$(ar) $(arflags) $(target) $$object" >> $(STDLOG); \
+  eval $(ar) $(arflags) $(target) $$object  >> $(STDLOG) 2>&1 ; \
+ fi; done)
+ $(PREFIX)(if test -f $(target); then \
+  echo "mv $(target) $(libdir)" >> $(STDLOG); \
+  mv $(target) $(libdir); \
+  chmod u+x $(libdir)/$(target); \
+  $(ECHO) "\t[$(wdir)] $(target) (lib)"; \
+ fi)
  $(PREFIX)(touch $(compdir)/config/stamps_and_lists/$(target).stamp)
 endef
 #

@@ -12,7 +12,8 @@ objs =	K_blocks.o K_driver_init.o K_dipoles.o K_IP.o K_IP_sort.o \
         K_Transitions_setup.o K_Transition_check.o \
         K_driver.o \
         K_WF_phases.o \
-        K.o $(PARIO_objects) K_correlation_collisions.o K_exchange_collisions.o K_correlation_kernel.o K_exchange_kernel.o \
+        K.o $(PARIO_objects) K_correlation_collisions_dir.o K_correlation_collisions_std.o K_exchange_collisions.o \
+        K_correlation_kernel_dir.o K_correlation_kernel_std.o K_exchange_kernel.o \
         K_restart.o K_solvers.o K_Haydock.o K_Haydock_response.o K_Haydock_gather.o K_Haydock_scatter.o K_screened_interaction.o \
         K_inversion_do_it_full.o EPS_via_perturbative_inversion.o \
         K_inversion_driver.o K_diagonal.o K_inversion_Lo.o  K_inversion_restart.o K_inversion_engine.o \

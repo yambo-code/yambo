@@ -1,27 +1,11 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): CA DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
+subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym)
  !
  use com,                 ONLY:msg
  use vec_operate,         ONLY:v_norm,sort
@@ -40,8 +24,6 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  type(bz_samp),intent(in)    :: k_save
  integer,intent(in)          :: kpoints_map(2,k%nibz)
  integer,intent(in)          :: old_nsym
- !
- integer,intent(in)          :: action_kind
  !
  ! Work space
  !
@@ -90,8 +72,6 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  YAMBO_ALLOC(wf_nc_k,(k%nibz))
  YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))
  !
- select case(action_kind)
- case(1)
    !
    wf_igk=-1
    !
@@ -115,28 +95,6 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
      !
    enddo
    !
- case(2)
-   !
-   wf_igk=-1
-   do ik=1,k%nibz
-     wf_igk(1:wf_ncx,ik) = wf_igk_reduced(1:wf_ncx,kpoints_map(1,ik))
-     wf_nc_k(ik)         = wf_nc_k_reduced(kpoints_map(1,ik))
-   enddo
-   !
-   ! Close the G-vectors shell
-   !
-   if(nsym>old_nsym) then
-     !
-     call msg('s','Closing shells...')
-     !============================
-     !
-     do is=old_nsym+1,nsym
-       call G_rot_grid(is,'extend_grid')
-     enddo
-     !
-   endif
-   !
- end select
  !
  wf_ng=maxval(wf_igk)
  !

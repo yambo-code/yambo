@@ -1,3 +1,10 @@
+#
+# License-Identifier: GPL
+#
+# Copyright (C) 2020 The Yambo Team
+#
+# Authors (see AUTHORS file for details): AM
+#
 ifeq ($(do_p2y),yes)
   p2y   = p2y
 endif
@@ -8,15 +15,15 @@ INTERFCS = a2y c2y $(p2y) $(e2y)
 CORE     = yambo ypp $(INTERFCS)
 GPL      = yambo_rt_gpl
 UTILS    = help changelog dependencies
-CLEANS   = clean clean_all
+CLEANS   = clean distclean clean_all gitclean
 PH_PROJ  = yambo_ph ypp_ph 
 SC_PROJ  = yambo_sc ypp_sc
 RT_PROJ  = yambo_rt ypp_rt
 NL_PROJ  = yambo_nl ypp_nl
 FL_PROJ  = yambo_fl ypp_fl
 RTE_PROJ = yambo_rt yambo_rt_iterative yambo_qed ypp_rt
-MAIN     = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RT_PROJ)  $(NL_PROJ)
-ALL      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RTE_PROJ) $(NL_PROJ) $(GPL)
+MAIN     = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RT_PROJ)         $(NL_PROJ)
+ALL      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RTE_PROJ) $(GPL) $(NL_PROJ)
 BROKEN   = yambo_phdyn
 SCRIPTS  = ydb.pl
-EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RTE_PROJ) $(NL_PROJ) $(BROKEN) $(SCRIPTS)
+EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RTE_PROJ) $(GPL) $(NL_PROJ) $(BROKEN) $(SCRIPTS)

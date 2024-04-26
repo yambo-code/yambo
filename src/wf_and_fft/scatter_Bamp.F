@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM,DS,AF
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2006 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AMDSAF
 !
 subroutine DEV_SUB(scatter_Bamp)(isc)
  !
@@ -41,8 +25,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  use D_lattice,      ONLY:idt_index
  use R_lattice,      ONLY:DEV_VAR(g_rot)
  use pseudo,         ONLY:pp_is_uspp
- use FFT_m,          ONLY:fft_size,fft_dim,DEV_VAR(fft_g_table)
- use FFT_m,          ONLY:fftw_plan,cufft_plan
+ use FFT_m,          ONLY:fftw_plan,cufft_plan,fft_size,fft_dim,DEV_VAR(fft_g_table)
  use interfaces,     ONLY:WF_apply_symm
  !
  implicit none
@@ -55,7 +38,6 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  complex(SP), pointer DEV_ATTR :: rhotw_p(:)
  complex(DP), pointer DEV_ATTR :: rho_tw_rs_p(:)
  logical :: have_cuda_loc
-
  !
  ! define pointers to enable CUF kernels
  ! when compiling using CUDA-Fortran
@@ -69,14 +51,12 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
 #ifdef _CUDA_LOC
  have_cuda_loc=.true.
 #endif
-
  !
  ! |ib ik_is i_sp>
  call WF_apply_symm(isc%is,WF_symm_i_p)
  !
  ! | ob ok_os o_sp>   
  call WF_apply_symm(isc%os,WF_symm_o_p)
-
  !
  ! \tilde{\rho} in Real Space
  !
@@ -127,8 +107,6 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
 #endif
  !
 #endif
-
-
  !
  ! perform the actual FFT
  !
@@ -230,4 +208,3 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  if (isc%qs(2)==1 .and. isc%is(1)/=isc%os(1)) rhotw_p(1)=cZERO
 
 end subroutine DEV_SUB(scatter_Bamp)
-

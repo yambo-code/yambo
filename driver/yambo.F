@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, DS
-! 
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2006 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AM DS
 !
 integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
@@ -31,7 +15,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !   /   /      Y88b /          Y888b 888__/    `88_-~   
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
-&                        l_optics,l_chi,l_em1s,l_ppa,l_bss,l_bse,l_em1d,l_X,&
+&                        l_optics,l_chi,l_em1s,l_ppa,l_mpa,l_bss,l_bse,l_em1d,l_X,&
 &                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_phel_corr,l_fl_optics
 #if defined _SCALAPACK
  use drivers,       ONLY:l_slk_test
@@ -57,8 +41,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! 
  ! 4 response function & energies types: x s d p
  !
- type(X_t)    ::X(4) 
- type(w_samp) ::Xw(4)
+ type(X_t)    ::X(5) 
+ type(w_samp) ::Xw(5)
  !
  type(DIPOLE_t) :: Dip
  !
@@ -74,7 +58,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! Local Variables
  !
  integer           ::i_err,i_X_kind
- logical           ::driver_now
+ logical           ::launch_me
  !
  ! Externals
  !
@@ -144,8 +128,10 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! COLOUMB DRIVER
  !================
+ ! In non-linear optics we do not need bare_qpg
+ ! it will be loaded only if required
  !
- call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
+ if(.not.l_nl_optics) call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
  !
  ! reset the section numbering
  !=============================
@@ -160,20 +146,25 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! DIPOLES
  !=========
  !
+<<<<<<< HEAD
 !aim137: adding l_fl_optics here
  driver_now= any((/l_em1d,l_em1s,l_ppa,l_optics,l_life.and.l_elel_corr,l_dipoles,l_real_time,&
 &                  l_sc_run,l_nl_optics,l_fl_optics/)).and.Dip%iq(1)==1
+=======
+ launch_me= any((/l_em1d,l_em1s,l_ppa,l_mpa,l_optics,l_life.and.l_elel_corr,l_dipoles,l_real_time,&
+&                    l_sc_run,l_nl_optics/)).and.Dip%iq(1)==1
+>>>>>>> develop
  !
- if (driver_now) call DIPOLE_driver(DIPen, Xk, q, Dip)
- if (driver_now) call mem_manager_report
+ if (launch_me) call DIPOLE_driver(DIPen, Xk, q, Dip)
+ if (launch_me) call mem_manager_report
  !
  ! OPTICS
  !========
  !
- driver_now=l_optics.and.l_chi
+ launch_me=l_optics.and.l_chi
  !
- if (driver_now) call OPTICS_driver(Xen,Xk,q,Xw(3),X(3),Dip)
- if (driver_now) call mem_manager_report
+ if (launch_me) call OPTICS_driver(Xen,Xk,q,Xw(3),X(3),Dip)
+ if (launch_me) call mem_manager_report
  !
  ! INVERSE DIELECTRIC FUNCTIONS
  !===============================
@@ -184,70 +175,68 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if ( l_em1s                              ) i_X_kind=2
  if ( l_em1d .or.(l_life.and.l_elel_corr) ) i_X_kind=3
  if ( l_ppa                               ) i_X_kind=4
+ if ( l_mpa                               ) i_X_kind=5
  if ( i_X_kind==0 ) then
    i_X_kind=1
    if ( i_X_kind_existing_DB >0 ) i_X_kind=i_X_kind_existing_DB
  endif
  !
- driver_now=l_em1s.or.(l_em1d.and..not.l_life).or.l_ppa.or.l_X
+ launch_me=l_em1s.or.(l_em1d.and..not.l_life).or.l_ppa.or.l_X.or.l_mpa
+
  !
- if (driver_now) i_err=X_dielectric_matrix(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
- if (driver_now) call mem_manager_report
+ if (l_nl_optics.and.launch_me) call error('Please run the calculation of em1s/d/x in a separate run')
+ !
+ if (launch_me) i_err=X_dielectric_matrix(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
+ if (launch_me) call mem_manager_report
  !
  ! HARTREE-FOCK AND VXC
  !======================
  !
- driver_now=l_HF_and_locXC.and..not.any((/l_sc_run,l_eval_collisions,l_real_time/))
+ launch_me=l_HF_and_locXC.and..not.any((/l_sc_run,l_eval_collisions,l_real_time/))
  !
- if (driver_now) call XCo_driver(en,k,Xk,q)
- if (driver_now) call mem_manager_report
+ if (launch_me) call XCo_driver(en,k,Xk,q)
+ if (launch_me) call mem_manager_report
  !
  ! EXTENDED COLLISIONS 
  !=====================
  !
- driver_now=l_eval_collisions
- !
 #if defined _SC || defined _RT
- if (driver_now) call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2),Dip)
- if (driver_now) call mem_manager_report
+ if (l_eval_collisions) call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2),Dip)
+ if (l_eval_collisions) call mem_manager_report
 #endif
  !
  ! SELF-ENERGIES
  !===============
  !
- driver_now=l_gw0.or.l_life
- !
- if (driver_now.and..not.l_phel_corr) call QP_driver(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
+ launch_me=(l_gw0.or.l_life).and..not.l_phel_corr
+ if (launch_me) call QP_driver(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
 #if defined _PHEL
- if (driver_now.and.     l_phel_corr) call PHEL_driver(en,k,q)
+ launch_me=(l_gw0.or.l_life).and.     l_phel_corr
+ if (launch_me) call PHEL_driver(en,k,q)
 #endif
- if (driver_now) call mem_manager_report
+ if (launch_me) call mem_manager_report
  !
  ! BETHE-SALPETER
  !================
  !
- driver_now=(l_optics.and.l_bse).or.l_bss
+ launch_me=(l_optics.and.l_bse).or.l_bss
  !
- if (driver_now) call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip)
- if (driver_now) call mem_manager_report
+ if (launch_me) call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip)
+ if (launch_me) call mem_manager_report
  !
  ! ACFDT
  !=======
  !
- driver_now=l_acfdt
- !
- if (driver_now) call acfdt_tot_energy(Xen,Xk,En,k,q,X(1),Dip)
- if (driver_now) call mem_manager_report
+ if (l_acfdt) call acfdt_tot_energy(Xen,Xk,En,k,q,X(1),Dip)
+ if (l_acfdt) call mem_manager_report
  !
 #if defined _SC
  !
  ! SC
  !====
  !
- driver_now=l_sc_run
- !
- if (driver_now) call SC_driver(X(:2),Xw(:2),Xk,en,k,q,Dip)
- if (driver_now) call mem_manager_report
+ if (l_sc_run) call SC_driver(X(:2),Xw(:2),Xk,en,k,q,Dip)
+ if (l_sc_run) call mem_manager_report
  !
 #endif
  !
@@ -256,10 +245,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! RT
  !====
  !
- driver_now=l_real_time
- !
- if (driver_now) call RT_driver(en,X(:2),k,q,Dip)
- if (driver_now) call mem_manager_report
+ if (l_real_time) call RT_driver(en,X(:2),k,q,Dip)
+ if (l_real_time) call mem_manager_report
  !
 #endif
  !
@@ -268,10 +255,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! RT
  !====
  !
- driver_now=l_nl_optics
- !
- if (driver_now) call NL_driver(en,X(:2),k,q,Dip)
- if (driver_now) call mem_manager_report
+ if (l_nl_optics) call NL_driver(en,X(:2),k,q,Dip)
+ if (l_nl_optics) call mem_manager_report
  !
 #endif
  !
@@ -295,10 +280,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! Electron-Phonon Hamiltonian
  !=============================
  !
- driver_now=l_elph_Hamiltonian
- !
- if (driver_now) call ELPH_Hamiltonian(en,k,q)
- if (driver_now) call mem_manager_report
+ if (l_elph_Hamiltonian) call ELPH_Hamiltonian(en,k,q)
+ if (l_elph_Hamiltonian) call mem_manager_report
  !
 #endif
  !
@@ -307,10 +290,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! SLK TESTER
  !============
  !
- driver_now=l_slk_test
- !
- if (driver_now) call SLK_test(en,k,q)
- if (driver_now) call mem_manager_report
+ if (l_slk_test) call SLK_test(en,k,q)
+ if (l_slk_test) call mem_manager_report
  !
 #endif
  ! 

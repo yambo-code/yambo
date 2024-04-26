@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AF
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 #if defined _P2Y_QEXSD_HDF5
 #   define _QE_HDF5
@@ -1480,7 +1464,7 @@ CONTAINS
       integer :: nbnd_, nkpts_, nspin_, ik, ndim
       integer :: nbnd_up_, nbnd_dw_
       logical :: lsda_, noncolin_, lfound
-      real(dbl) :: rvec(3)
+      real(dbl) :: rvec(3),fermi_energy_updw_(2)
       real(dbl), allocatable :: eig_(:), occ_(:)
       character(256) :: chval
       !
@@ -1560,10 +1544,19 @@ CONTAINS
          if (.not.lfound) homo_energy=-100000
       endif
       !
+      call iotk_scan_dat( iunit, "two_fermi_energies",fermi_energy_updw_, FOUND=lfound, IERR=ierr)
+      if ( lfound ) then
+	 chval=' two_fermi_energis. Action: run pwscf without fixed_magnetization.'
+	 if ( abs(fermi_energy_updw_(2)-fermi_energy_updw_(1)) > 1.E-5 ) then
+           call errore('qexsd_read_band_structure',chval,1)
+	 else
+           call warning('qexsd_read_band_structure:'//trim(chval))
+	 endif
+      endif
+      if (ierr/=0) return
       if (present(fermi_energy_updw)) then
-         call iotk_scan_dat( iunit, "two_fermi_energies", fermi_energy_updw, FOUND=lfound, IERR=ierr)
-         if (ierr/=0) return
-         if (.not.lfound) fermi_energy_updw=-100000
+        if (     lfound) fermi_energy_updw=fermi_energy_updw_
+        if (.not.lfound) fermi_energy_updw=-100000
       endif
       !
       if (present(nk) .or. present(sk)) then
@@ -1872,7 +1865,11 @@ CONTAINS
 ! This file is distributed under the terms of the
 ! GNU General Public License. See the file `License'
 ! in the root directory of the present distribution,
-! or http://www.gnu.org/copyleft/gpl.txt .
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
+!
+! Authors (see AUTHORS file for details): AF
 !
 !----------------------------------------------
   !

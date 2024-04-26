@@ -1,27 +1,12 @@
 /*
-         Copyright (C) 2000-2022 the YAMBO team
-               http://www.yambo-code.org
+  License-Identifier: GPL
+ 
+  Copyright (C) 2020 The Yambo Team
  
   Authors (see AUTHORS file for details): AM
-  
-  This file is distributed under the terms of the GNU 
-  General Public License. You can redistribute it and/or 
-  modify it under the terms of the GNU General Public 
-  License as published by the Free Software Foundation; 
-  either version 2, or (at your option) any later version.
- 
-  This program is distributed in the hope that it will 
-  be useful, but WITHOUT ANY WARRANTY; without even the 
-  implied warranty of MERCHANTABILITY or FITNESS FOR A 
-  PARTICULAR PURPOSE.  See the GNU General Public License 
-  for more details.
- 
-  You should have received a copy of the GNU General Public 
-  License along with this program; if not, write to the Free 
-  Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-  MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 
 */
+#include <string.h>
 #include <stdio.h>
 #include <kind.h>
 
@@ -39,14 +24,14 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="GW approximation";
- options[*i_opt].long_desc[i_desc]="<string>=(p)PA/(c)HOSEX/(r)eal-axis";
+ strcpy(options[*i_opt].long_desc[i_desc],"<string>=(p)PA/(m)PA/(c)HOSEX/(r)eal-axis");
 #if defined _ELPH
  i_desc=i_desc+1;
- options[*i_opt].long_desc[i_desc]="<string>=fan";
+ strcpy(options[*i_opt].long_desc[i_desc],"<string>=fan");
 #endif
 #if defined _ELPH
  i_desc=i_desc+1;
- options[*i_opt].long_desc[i_desc]="<string>=X";
+ strcpy(options[*i_opt].long_desc[i_desc],"<string>=X");
 #endif
  options[*i_opt].long_opt="gw0";
  options[*i_opt].short_opt='p';
@@ -56,10 +41,10 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Dyson Equation solver";
- options[*i_opt].long_desc[0]="<string>=(g)reen [any scattering]";
- options[*i_opt].long_desc[1]="<string>=(n)ewton [order 1]/(s)ecant [e-e scattering]";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(g)reen [any scattering]");
+ strcpy(options[*i_opt].long_desc[1],"<string>=(n)ewton [order 1]/(s)ecant [e-e scattering]");
 #if defined _PHEL
- options[*i_opt].long_desc[2]="<string>=(n)ewton [order 2] [p-e scattering]";
+ strcpy(options[*i_opt].long_desc[2],"<string>=(n)ewton [order 2] [p-e scattering]");
 #endif
  options[*i_opt].long_opt="dyson";
  options[*i_opt].short_opt='g';
@@ -90,12 +75,20 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="yambo";
  options[*i_opt].yambo_string="rim_cut";
  options[*i_opt].section=desc;
+ *i_opt=*i_opt+1;
+ options[*i_opt].short_desc="Screened coulomb potential";
+ options[*i_opt].long_opt="rw";
+ options[*i_opt].short_opt='w';
+ options[*i_opt].bin="yambo";
+ options[*i_opt].yambo_string="rim_w";
+ options[*i_opt].section=desc;
+
 
  desc="Response Functions";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Linear Response optical properties";
- options[*i_opt].long_desc[0]="<string>=c Reciprocal-Space";
- options[*i_opt].long_desc[1]="<string>=b for Transition-Space Bethe-Salpeter";
+ strcpy(options[*i_opt].long_desc[0],"<string>=c Reciprocal-Space");
+ strcpy(options[*i_opt].long_desc[1],"<string>=b for Transition-Space Bethe-Salpeter");
  options[*i_opt].long_opt="optics";
  options[*i_opt].short_opt='o';
  options[*i_opt].bin="yambo";
@@ -109,8 +102,8 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="yambo";
  options[*i_opt].yambo_string="screen";
  options[*i_opt].section=desc;
- options[*i_opt].long_desc[0]="<string>=(s)static/(p)PA/(d)ynamical dielectric matrix";
- options[*i_opt].long_desc[1]="<string>=(X) dynamical response matrix";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(s)static/(p)PA/m(PA)/(d)ynamical dielectric matrix");
+ strcpy(options[*i_opt].long_desc[1],"<string>=(X) dynamical response matrix");
  options[*i_opt].char_var=1;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Oscillator strenghts (or dipoles)";
@@ -121,8 +114,8 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Kernel";
- options[*i_opt].long_desc[0]="<string>=hartree/alda/lrc/hf/sex/bsfxc";
- options[*i_opt].long_desc[1]="hf/sex only eh-space; lrc only G-space";
+ strcpy(options[*i_opt].long_desc[0],"<string>=hartree/alda/lrc/hf/sex/bsfxc");
+ strcpy(options[*i_opt].long_desc[1],"hf/sex only eh-space; lrc only G-space");
  options[*i_opt].long_opt="kernel";
  options[*i_opt].short_opt='k';
  options[*i_opt].bin="yambo";
@@ -133,8 +126,16 @@ void options_yambo(struct options_struct options[],int *i_opt)
  desc="Bethe-Salpeter Equation";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="BSE solver";
- options[*i_opt].long_desc[0]="<string>=h/d/s/(p/f)i/t";
- options[*i_opt].long_desc[1]="(h)aydock/(d)iagonalization/(i)nversion";
+#if defined _SLEPC && !defined _NL
+ strcpy(options[*i_opt].long_desc[0],"<string>=h/d/s/(p/f)i");
+#else
+ strcpy(options[*i_opt].long_desc[0],"<string>=h/d/(p/f)i");
+#endif
+ strcpy(options[*i_opt].long_desc[1],"(h)aydock/(d)iagonalization");
+ strcpy(options[*i_opt].long_desc[2],"(pi) perturbative inversion/ (fi) full inversion");
+#if defined _SLEPC && !defined _NL
+ strcpy(options[*i_opt].long_desc[2],"(s)lepc partial diagonalization");
+#endif
  options[*i_opt].long_opt="Ksolver";
  options[*i_opt].short_opt='y';
  options[*i_opt].bin="yambo";

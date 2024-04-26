@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM,DS,AF,FA
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2013 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AMDSAFFA
 !
 !> @callgraph
 !> @callergraph
@@ -121,9 +105,9 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  skip_WF_load= (iq==1.and.X%ng==1)
  !
- ! Drude term
+ ! Drude term  !DALV: this should be move to point ### for avoiding a shift of the frequency grid in FF real-axis GW calculations 
  !============
- if (iq==1) call X_drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF)
+ !if (iq==1) call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF)
  !
  ! Dipoles
  !=========
@@ -179,6 +163,9 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
    if (io_RESPONSE.or.(.not.io_RESPONSE.and..not.l_life)) call FREQUENCIES_setup(Xw)
    !
  endif
+ !
+ !DALV: ### the call to X_drude should be moved here, after redefining the frequency grid
+ if (iq==1) call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF)
  !
 #if defined _ELPH
  !
@@ -259,7 +246,11 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
      if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
      !
      call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt)
+     !
      ctmp = DEV_VAR(Xo_res)(1,1)
+     !
+     ! DALV: we must guarantee that ctmp is always 1 and that we enter the loop just
+     !       once to avoid an inconsistency with the Drude frequency given by input
      !
      X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)
      !

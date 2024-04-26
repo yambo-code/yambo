@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2019 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AM DS
 !
 subroutine of_open_close(of_name_extension,mode)
  !
@@ -216,15 +200,20 @@ subroutine warning(mesg)
 #if !defined _io_lib
  use LIVE_t,     ONLY:LIVE_message
 #endif
+ use pars,       ONLY:lchlen
  use stderr,     ONLY:STRING_pack
  use com,        ONLY:msg
  !
  implicit none
  !
  character(*) :: mesg
- call msg('nr',STRING_pack('[WARNING] ',trim(mesg)))
+ character(lchlen)  :: mesg_loc
+ !
+ mesg_loc=mesg
+ if (mesg(1:1)/=" ") mesg_loc=" "//mesg
+ call msg('nr',STRING_pack('[WARNING] ',trim(mesg_loc)))
 #if !defined _io_lib
- call LIVE_message(STRING_pack('[WARNING] ',trim(mesg)),"n","","%s")
+ call LIVE_message(STRING_pack('[WARNING] ',trim(mesg_loc)),"n","","%s")
 #endif
  !
 end subroutine warning
@@ -234,6 +223,7 @@ subroutine error(mesg)
 #if !defined _io_lib
  use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
 #endif
+ use pars,       ONLY:lchlen
  use stderr,     ONLY:STRING_pack,logfile_unit,log_as_a_file
  use com,        ONLY:secnm,msg
 #if defined _MPI
@@ -245,9 +235,13 @@ subroutine error(mesg)
 #if defined _MPI
  integer         :: ierr
 #endif
- character(*)    :: mesg
+ character(*)       :: mesg
+ character(lchlen)  :: mesg_loc
  !
  live_timing_is_on=.FALSE.
+ !
+ mesg_loc=mesg
+ if (mesg(1:1)/=" ") mesg_loc=" "//mesg
  !
  if (len_trim(secnm)>0) then
    call msg('nr',STRING_pack('[ERROR] STOP signal received while in ',trim(secnm)))
@@ -255,9 +249,9 @@ subroutine error(mesg)
    call LIVE_message(STRING_pack('[ERROR] STOP signal received while in ',trim(secnm)),"nn","","%s")
 #endif
  endif
- call msg('nr',STRING_pack('[ERROR] ',trim(mesg)))
+ call msg('nr',STRING_pack('[ERROR] ',trim(mesg_loc)))
 #if !defined _io_lib
- call LIVE_message(STRING_pack('[ERROR] ',trim(mesg)),"n","","%s")
+ call LIVE_message(STRING_pack('[ERROR] ',trim(mesg_loc)),"n","","%s")
  call LIVE_message("","n","","%s")
 #endif
  if(log_as_a_file) call yambo_flush(logfile_unit)

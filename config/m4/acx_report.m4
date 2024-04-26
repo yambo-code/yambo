@@ -1,25 +1,9 @@
 #
-#        Copyright (C) 2000-2022 the YAMBO team
-#              http://www.yambo-code.org
+# License-Identifier: GPL
+#
+# Copyright (C) 2006 The Yambo Team
 #
 # Authors (see AUTHORS file for details): AM
-#
-# This file is distributed under the terms of the GNU
-# General Public License. You can redistribute it and/or
-# modify it under the terms of the GNU General Public
-# License as published by the Free Software Foundation;
-# either version 2, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will
-# be useful, but WITHOUT ANY WARRANTY; without even the
-# implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
-#
-# You should have received a copy of the GNU General Public
-# License along with this program; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 AC_DEFUN([ACX_REPORT],
 [
@@ -156,8 +140,6 @@ if test "$enable_yambopy" = "yes" ; then YPY_check="X"; fi
 #
 # - I/O -
 #
-HDF5_PAR_IO_check="-"
-PNETCDF_check="-"
 NETCDF_check="-"
 if test "$internal_netcdf" = "yes" ; then
   if test "$compile_netcdf" = "yes" ; then NETCDF_check="C"; fi
@@ -172,38 +154,26 @@ else
   NETCDF_info="${NETCDF_info}, Version 4"
 fi
 #
-PNETCDF_check="-"
-if test "$enable_netcdf_par_io" = "yes";  then
-  PNETCDF_check="X"
-  NETCDF_info="${NETCDF_info}, Version 4"
-fi
 #
 PARIO_check="-"
-if ! test "$PARIO_info" = " " ; then
- PARIO_check="X"
-fi
-#
 HDF5_check="-"
-HDF5_PAR_IO_check="X"
-HDF5_PAR_IO_info=" "
+HDF5_info="none"
 if test "$hdf5" = "yes" ; then
   if test "$internal_hdf5" = "yes" ; then
     if test "$compile_hdf5" = "yes" ; then HDF5_check="C"; fi
     if test "$compile_hdf5" = "no"  ; then HDF5_check="I"; fi
   else
     HDF5_check="E"
+    HDF5_info="external"
   fi
-  if test "$IO_LIB_VER" = "parallel" ; then HDF5_info="Parallel_lib" ; fi
   if ! test "$enable_netcdf_classic" = "yes"  ; then
-    if test "$enable_hdf5_compression" = "yes"; then
-      HDF5_PAR_IO_info="Data Compression enabled" ;
+    if test "$IO_LIB_VER" = "parallel" ; then
+      HDF5_info="Parallel_lib" ;
     else
-      HDF5_PAR_IO_info="NO Data Compression" ;
+      HDF5_info="Serial_lib" ;
     fi
-    if ! test "$enable_hdf5_par_io" = "yes"; then
-      HDF5_PAR_IO_check="-"
-      HDF5_PAR_IO_info=" "
-    fi
+    if test "$enable_hdf5_par_io" = "yes"; then      PARIO_check="X"; fi
+    if test "$enable_hdf5_compression" = "yes"; then HDF5_info="${HDF5_info}, Data Compression enabled"; fi
   fi
 fi
 #
@@ -217,9 +187,6 @@ AC_SUBST(OPENMP_check)
 AC_SUBST(PARIO_check)
 AC_SUBST(HDF5_check)
 AC_SUBST(HDF5_info)
-AC_SUBST(HDF5_PAR_IO_check)
-AC_SUBST(HDF5_PAR_IO_info)
-AC_SUBST(PNETCDF_check)
 AC_SUBST(NETCDF_check)
 AC_SUBST(NETCDF_info)
 #
@@ -242,4 +209,126 @@ AC_SUBST(YPY_check)
 AC_SUBST(LIBXC_check)
 AC_SUBST(MPI_check)
 AC_SUBST(MPI_info)
+#
+# STRIPE [LIB] from paths
+#
+ACX_STRIPE_SUBPATH($IOTK_LIBS,"LIB")
+IOTK_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($IOTK_INCS,"INC")
+IOTK_INCS_R=$STRIPE
+AC_SUBST(IOTK_LIBS_R)
+AC_SUBST(IOTK_INCS_R)
+#
+ACX_STRIPE_SUBPATH($YAML_LIBS,"LIB")
+YAML_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($YAML_INCS,"INC")
+YAML_INCS_R=$STRIPE
+AC_SUBST(YAML_LIBS_R)
+AC_SUBST(YAML_INCS_R)
+#
+ACX_STRIPE_SUBPATH($FUTILE_LIBS,"LIB")
+FUTILE_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($FUTILE_INCS,"INC")
+FUTILE_INCS_R=$STRIPE
+AC_SUBST(FUTILE_LIBS_R)
+AC_SUBST(FUTILE_INCS_R)
+#
+ACX_STRIPE_SUBPATH($ETSF_LIBS,"LIB")
+ETSF_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($ETSF_INCS,"INC")
+ETSF_INCS_R=$STRIPE
+AC_SUBST(ETSF_LIBS_R)
+AC_SUBST(ETSF_INCS_R)
+#
+ACX_STRIPE_SUBPATH($NETCDFF_LIBS,"LIB")
+NETCDFF_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($NETCDFF_INCS,"INC")
+NETCDFF_INCS_R=$STRIPE
+AC_SUBST(NETCDFF_LIBS_R)
+AC_SUBST(NETCDFF_INCS_R)
+#
+ACX_STRIPE_SUBPATH($NETCDF_LIBS,"LIB")
+NETCDF_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($NETCDF_INCS,"INC")
+NETCDF_INCS_R=$STRIPE
+AC_SUBST(NETCDF_LIBS_R)
+AC_SUBST(NETCDF_INCS_R)
+#
+ACX_STRIPE_SUBPATH($HDF5_LIBS,"LIB")
+HDF5_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($HDF5_INCS,"INC")
+HDF5_INCS_R=$STRIPE
+AC_SUBST(HDF5_LIBS_R)
+AC_SUBST(HDF5_INCS_R)
+#
+ACX_STRIPE_SUBPATH($FFT_LIBS,"LIB")
+FFT_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($FFT_INCS,"INC")
+FFT_INCS_R=$STRIPE
+AC_SUBST(FFT_LIBS_R)
+AC_SUBST(FFT_INCS_R)
+#
+ACX_STRIPE_SUBPATH($BLAS_LIBS,"LIB")
+BLAS_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($BLAS_INCS,"INC")
+BLAS_INCS_R=$STRIPE
+AC_SUBST(BLAS_LIBS_R)
+AC_SUBST(BLAS_INCS_R)
+#
+ACX_STRIPE_SUBPATH($LAPACK_LIBS,"LIB")
+LAPACK_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($LAPACK_INCS,"INC")
+LAPACK_INCS_R=$STRIPE
+AC_SUBST(LAPACK_LIBS_R)
+AC_SUBST(LAPACK_INCS_R)
+#
+ACX_STRIPE_SUBPATH($SCALAPACK_LIBS,"LIB")
+SCALAPACK_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($SCALAPACK_INCS,"INC")
+SCALAPACK_INCS_R=$STRIPE
+AC_SUBST(SCALAPACK_LIBS_R)
+AC_SUBST(SCALAPACK_INCS_R)
+#
+ACX_STRIPE_SUBPATH($BLACS_LIBS,"LIB")
+BLACS_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($BLACS_INCS,"INC")
+BLACS_INCS_R=$STRIPE
+AC_SUBST(BLACS_LIBS_R)
+AC_SUBST(BLACS_INCS_R)
+#
+ACX_STRIPE_SUBPATH($PETSC_LIBS,"LIB")
+PETSC_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($PETSC_INCS,"INC")
+PETSC_INCS_R=$STRIPE
+AC_SUBST(PETSC_LIBS_R)
+AC_SUBST(PETSC_INCS_R)
+#
+ACX_STRIPE_SUBPATH($SLEPC_LIBS,"LIB")
+SLEPC_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($SLEPC_INCS,"INC")
+SLEPC_INCS_R=$STRIPE
+AC_SUBST(SLEPC_LIBS_R)
+AC_SUBST(SLEPC_INCS_R)
+#
+ACX_STRIPE_SUBPATH($LIBXC_LIBS,"LIB")
+LIBXC_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($LIBXC_INCS,"INC")
+LIBXC_INCS_R=$STRIPE
+AC_SUBST(LIBXC_LIBS_R)
+AC_SUBST(LIBXC_INCS_R)
+#
+ACX_STRIPE_SUBPATH($BLAS_PETSC_LIBS,"LIB")
+BLAS_PETSC_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($BLAS_PETSC_INCS,"INC")
+BLAS_PETSC_INCS_R=$STRIPE
+AC_SUBST(BLAS_PETSC_LIBS_R)
+AC_SUBST(BLAS_PETSC_INCS_R)
+#
+ACX_STRIPE_SUBPATH($LAPACK_PETSC_LIBS,"LIB")
+LAPACK_PETSC_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($LAPACK_PETSC_INCS,"INC")
+LAPACK_PETSC_INCS_R=$STRIPE
+AC_SUBST(LAPACK_PETSC_LIBS_R)
+AC_SUBST(LAPACK_PETSC_INCS_R)
+#
 ])

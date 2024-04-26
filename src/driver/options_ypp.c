@@ -1,27 +1,12 @@
 /*
-         Copyright (C) 2000-2022 the YAMBO team
-               http://www.yambo-code.org
+  License-Identifier: GPL
+ 
+  Copyright (C) 2020 The Yambo Team
  
   Authors (see AUTHORS file for details): AM
-  
-  This file is distributed under the terms of the GNU 
-  General Public License. You can redistribute it and/or 
-  modify it under the terms of the GNU General Public 
-  License as published by the Free Software Foundation; 
-  either version 2, or (at your option) any later version.
- 
-  This program is distributed in the hope that it will 
-  be useful, but WITHOUT ANY WARRANTY; without even the 
-  implied warranty of MERCHANTABILITY or FITNESS FOR A 
-  PARTICULAR PURPOSE.  See the GNU General Public License 
-  for more details.
- 
-  You should have received a copy of the GNU General Public 
-  License along with this program; if not, write to the Free 
-  Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-  MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 
 */
+#include <string.h>
 #include <stdio.h>
 #include <kind.h>
 
@@ -32,7 +17,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  */
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="BZ Grid generator";
- options[*i_opt].long_desc[0]="<string>=(k)pt,(q)pt,(s)hifted,(h)igh symmetry,(r)andom,r(e)gular";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(k)pt,(q)pt,(s)hifted,(h)igh symmetry,(r)andom,r(e)gular");
  options[*i_opt].long_opt="grid";
  options[*i_opt].short_opt='k';
  options[*i_opt].bin="ypp";
@@ -77,8 +62,8 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].section="Convertions";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Quasiparticle Databases";
- options[*i_opt].long_desc[0]="<string>=(g)enerate-modify/(m)erge/(e)xpand";
- options[*i_opt].long_desc[1]="         (e)xpand uses the symmetries to generate a BZ-expanded QP database";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(g)enerate-modify/(m)erge/(e)xpand");
+ strcpy(options[*i_opt].long_desc[1],"         (e)xpand uses the symmetries to generate a BZ-expanded QP database");
  options[*i_opt].long_opt="qpdb";
  options[*i_opt].bin="ypp";
  options[*i_opt].yambo_string="QPDBs";
@@ -92,7 +77,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp_ph";
  options[*i_opt].yambo_string="gkkp"  ;
  options[*i_opt].section="Convertions";
- options[*i_opt].long_desc[0]="<string>=(g)kkp,(d)ouble grid,(p)lot gkkp";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(g)kkp,(d)ouble grid,(p)lot gkkp");
  options[*i_opt].char_var=1;
 #endif
  /* 
@@ -115,13 +100,13 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].section="Plots";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Electronic properties";
- options[*i_opt].long_desc[0]="<string>=(h)artree,(f)ock,(coh),(sex),(cohsex),(exx),(exxc),(srpa),(d)ef,(ip)";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(h)artree,(f)ock,(coh),(sex),(cohsex),(exx),(exxc),(srpa),(d)ef,(ip)");
 #if defined _ELPH  
- options[*i_opt].long_desc[0]="<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent,(e)lias";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent,(e)lias");
 #elif defined _YPP_MAGNETIC 
- options[*i_opt].long_desc[0]="<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent,angu(l)ar,(p)osition";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent,angu(l)ar,(p)osition");
 #else
- options[*i_opt].long_desc[0]="<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent");
 #endif
  options[*i_opt].long_opt="electron";
  options[*i_opt].short_opt='s';
@@ -135,10 +120,10 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].short_opt='e';
  options[*i_opt].bin="ypp ypp_ph";
 #if defined _ELPH  
- options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave,(i)nterpolate,";
- options[*i_opt].long_desc[1]="         (e)lias,(g)kkp,(p)h-assisted dos";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(s)ort,(sp)in,(a)mplitude,(w)ave,(i)nterpolate,");
+ strcpy(options[*i_opt].long_desc[1],"         (e)lias,(g)kkp,(p)h-assisted dos");
 #else
- options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave,(i)nterpolate";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(s)ort,(sp)in,(a)mplitude,(w)ave,(i)nterpolate");
 #endif
  options[*i_opt].yambo_string="excitons";
  options[*i_opt].section="Plots";
@@ -147,9 +132,9 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].short_desc="Dipole properties";
  options[*i_opt].long_opt="dipoles";
  options[*i_opt].bin="ypp";
- options[*i_opt].long_desc[0]="<string>=(exc)itonic,(ip)independent-particle";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(exc)itonic,(ip)independent-particle");
 #if defined _YPP_RT  
- options[*i_opt].long_desc[0]="<string>=(exc)itonic,(ip)independent-particle,(m)ask";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(exc)itonic,(ip)independent-particle,(m)ask");
 #endif
  options[*i_opt].yambo_string="dipoles";
  options[*i_opt].section="Plots";
@@ -169,7 +154,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
 #if !defined _YPP_RT  
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Phononic properties";
- options[*i_opt].long_desc[0]="<string>=(d)os,(e)lias,(a)mplitude";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(d)os,(e)lias,(a)mplitude");
  options[*i_opt].long_opt=  "phonon";
  options[*i_opt].short_opt='p';
  options[*i_opt].bin="ypp_ph";
@@ -197,7 +182,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].section="Real-Time";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Carriers database generation";
- options[*i_opt].long_desc[0]="<string>=(e)nergy,(f)ermi";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(e)nergy,(f)ermi");
  options[*i_opt].long_opt=  "rtdb";
  options[*i_opt].short_opt='c';
  options[*i_opt].bin="ypp_rt";
@@ -212,12 +197,12 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp_rt";
  options[*i_opt].yambo_string="TDplots"; /* TDplots */
  options[*i_opt].section="Real-Time";
- options[*i_opt].long_desc[0]="<string>=(X)response,(a)bsorption,(o)ccupations,(l)ifetimes,(d)ensity,(p)olariazion,(g)reen-function";
- options[*i_opt].long_desc[1]=" ";
- options[*i_opt].long_desc[2]="(X) response calculates the response via the time-resolved polarization";
- options[*i_opt].long_desc[3]="(a) absorption amends the Kubo expression with the time-dependent occupations";
- options[*i_opt].long_desc[4]="(p) polarization evaluates the k-resolved components of the time-dependent polarization";
- options[*i_opt].long_desc[5]="(g) evaluates the two-times Green`s function";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(X)response,(a)bsorption,(o)ccupations,(l)ifetimes,(d)ensity,(p)olariazion,(g)reen-function");
+ strcpy(options[*i_opt].long_desc[1]," ");
+ strcpy(options[*i_opt].long_desc[2],"(X) response calculates the response via the time-resolved polarization");
+ strcpy(options[*i_opt].long_desc[3],"(a) absorption amends the Kubo expression with the time-dependent occupations");
+ strcpy(options[*i_opt].long_desc[4],"(p) polarization evaluates the k-resolved components of the time-dependent polarization");
+ strcpy(options[*i_opt].long_desc[5],"(g) evaluates the two-times Green`s function");
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="TD plot control";
  options[*i_opt].char_var=1;
@@ -226,9 +211,9 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp_rt";
  options[*i_opt].yambo_string="TDplotmode"; /* TDpol */
  options[*i_opt].section="Real-Time";
- options[*i_opt].long_desc[0]="rtplot=X/a => <string>=(t)ime";
- options[*i_opt].long_desc[1]="rtplot=o   => <string>=(b)ands,(t)ime,(e)nergy,(d)os";
- options[*i_opt].long_desc[2]="rtplot=l   => <string>=(b)ands,(t)ime,(e)nergy";
- options[*i_opt].long_desc[3]="rtplot=d   => <string>=(t)ime";
- options[*i_opt].long_desc[4]="rtplot=p   => <string>=(t)ime";
+ strcpy(options[*i_opt].long_desc[0],"rtplot=X/a => <string>=(t)ime");
+ strcpy(options[*i_opt].long_desc[1],"rtplot=o   => <string>=(b)ands,(t)ime,(e)nergy,(d)os");
+ strcpy(options[*i_opt].long_desc[2],"rtplot=l   => <string>=(b)ands,(t)ime,(e)nergy");
+ strcpy(options[*i_opt].long_desc[3],"rtplot=d   => <string>=(t)ime");
+ strcpy(options[*i_opt].long_desc[4],"rtplot=p   => <string>=(t)ime");
 };

@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2019 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine XCo_report(qp,E,k)
  !
@@ -45,7 +29,7 @@ subroutine XCo_report(qp,E,k)
  !
  type(levels)      ::E_dummy
  integer           ::i_qp,ib,ik,ibp,ikp,i_s
- character(schlen) ::sec_mode_and_message(2),ch,ch_spin,nloc_fmt,loc_fmt
+ character(schlen) ::ch,ch_spin,nloc_fmt,loc_fmt
  logical           ::l_Vxc,l_Vnl_xc
  !
  ! Logicals
@@ -126,10 +110,12 @@ subroutine XCo_report(qp,E,k)
    !
  enddo
  !
- ! Direct GAP
+ ! Direct GAP (only if all IBZ corrections have been calculated 
  !
- call section('+',trim(Vnlxc_kind)//' occupations report')
- call REPORT_Occupations(trim(Vnlxc_kind),E_dummy)
+ if (QP_table(1,3)==1.and.QP_table(QP_n_states,3)==k%nibz) then
+   call section('+',trim(Vnlxc_kind)//' occupations report')
+   call REPORT_Occupations(trim(Vnlxc_kind),E_dummy)
+ endif
  !
  ! Output 
  !

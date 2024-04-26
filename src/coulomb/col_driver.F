@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 ! DESCRIPTION :
 ! 
@@ -51,11 +35,12 @@ subroutine col_driver(bare_NG,q)
  use stderr,        ONLY:STRING_pack,intc,gen_fmt,STRING_split
  use com,           ONLY:msg
  use vec_operate,   ONLY:iku_v_norm,sort
+ use frequency,     ONLY:w_samp
  use D_lattice,     ONLY:DL_vol
  use R_lattice,     ONLY:d3q_factor,RIM_is_diagonal,RIM_qpg,bare_qpg,&
 &                        nqibz,g_vec,q_pt,nqbz,RIM_ng,RIM_n_rand_pts,&
 &                        bz_samp,q_norm,cutoff_presets,bare_qpg_d,&
-&                        cut_geometry,cut_is_slab,idir
+&                        cut_geometry,cut_is_slab,idir,q0_def_norm
  use wave_func,     ONLY:wf_ng
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,REP,VERIFY
@@ -67,6 +52,7 @@ subroutine col_driver(bare_NG,q)
  !
  ! Work Space
  !
+ type(w_samp) :: Xw
  logical          :: l_RandQpts,is_cut(3)
  integer          :: ig,iq,ID,io_err
  integer, external:: io_RIM
@@ -145,7 +131,7 @@ subroutine col_driver(bare_NG,q)
      if (cut_is_slab) then
        call msg('nr','Performing RIM of v_slab')
      endif
-     call rim("x")
+     call rim("x",Xw)
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
      io_err=io_RIM(ID)
    endif
@@ -179,19 +165,16 @@ subroutine col_driver(bare_NG,q)
  ! CUTOFF
  !
  if (.not.l_col_cut) then
+   !
    call cutoff_presets()
+   if (allocated(bare_qpg) .and. size(bare_qpg)>0) bare_qpg(1,1)=q0_def_norm
    !
-   if (have_cuda) then
-     YAMBO_FREE(bare_qpg_d)
-     if (size(bare_qpg)>0) then
-       YAMBO_ALLOC_SOURCE(bare_qpg_d,bare_qpg)
-     endif
-   endif
+ else
    !
-   return
+   call cutoff_driver(q)
+   q_norm(1)=q0_def_norm
+   !
  endif
- !
- call cutoff_driver(q)
  !
  ! copy again,
  ! bare_qpg is modified by cutff_driver

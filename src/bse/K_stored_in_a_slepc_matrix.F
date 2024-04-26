@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2018 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): HM DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  !
@@ -34,6 +18,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling,&
  &                        BS_res_ares_n_mat,l_BS_ares_from_res
  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width
+ use cuda_m,         ONLY:have_cuda
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
@@ -53,7 +38,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  Mat,     intent(out) :: slepc_mat
  !
  integer     :: i_c,i_r,i_Tk,i_Tp,i_B,H_shift(2)
- PetscScalar         :: Mij
+ PetscScalar         :: Mij,Mij_star
  PetscInt            :: H_pos(2),SL_K_dim(2),SL_H_dim
  PetscErrorCode      :: ierr
  !
@@ -66,6 +51,11 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  call MatCreate(PETSC_COMM_WORLD,slepc_mat,ierr)
  call MatSetSizes(slepc_mat,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim,SL_H_dim,ierr)
  call MatSetType(slepc_mat, MATMPIDENSE,ierr)
+
+#if defined(PETSC_HAVE_CUDA)
+ if(have_cuda) call MatSetType(slepc_mat,MATDENSECUDA,ierr)
+#endif
+
  call MatSetUp(slepc_mat,ierr)
  ! 
  ! filling of the slepc_mat
@@ -95,14 +85,17 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
        if (H_pos(1)+H_shift(1)>H_pos(2)+H_shift(2)) cycle
        if (l_BS_ares_from_res.and.H_pos(1)>H_pos(2)) cycle
        !
-       Mij=BS_blk(i_B)%mat(i_r,i_c)
+       Mij     =      BS_blk(i_B)%mat(i_r,i_c)
+       Mij_star= real(BS_blk(i_B)%mat(i_r,i_c))-cI*aimag(BS_blk(i_B)%mat(i_r,i_c))
        !
        ! Add energies to the diagonal
        !
        if(H_pos(1)+H_shift(1)==H_pos(2)+H_shift(2)) then
-         Mij=real(Mij)+BSS_eh_E(H_pos(1)+H_shift(1)+1)*cONE
+         Mij     =real(Mij)     +BSS_eh_E(H_pos(1)+H_shift(1)+1)*cONE
+         Mij_star=real(Mij_star)+BSS_eh_E(H_pos(1)+H_shift(1)+1)*cONE
          if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
-           Mij=Mij+cI*BSS_eh_W(H_pos(1)+H_shift(1)+1)
+           Mij     =Mij            +cI*BSS_eh_W(H_pos(1)+H_shift(1)+1)
+           Mij_star=Mij_star       -cI*BSS_eh_W(H_pos(1)+H_shift(1)+1)
          endif
        endif
        !
@@ -110,35 +103,35 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
        case("R")
            call MatSetValue( slepc_mat, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
            ! The resonant block is hermitial
-           call MatSetValue( slepc_mat, H_pos(2), H_pos(1), conjg(Mij), INSERT_VALUES, ierr )
+           call MatSetValue( slepc_mat, H_pos(2), H_pos(1),   Mij_star, INSERT_VALUES, ierr )
          if (l_BS_ares_from_res.and.BS_K_coupling) then
            ! The anti-resonant block is A=-R*
-           call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1),-conjg(Mij), INSERT_VALUES, ierr )
+           call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1), -Mij_star, INSERT_VALUES, ierr )
            ! The anti-resonant block is hermitian
            call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1)+SL_K_dim(1),      -Mij, INSERT_VALUES, ierr )
          endif
        case("C")
            call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
            ! Anti-coupling from coupling: the whole BSE matrix is Pseudo-HErmitian
-           call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1),-conjg(Mij), INSERT_VALUES, ierr )
+           call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1), -Mij_star , INSERT_VALUES, ierr )
            if (l_BS_ares_from_res) then
              ! The coupling block and the anti-coupling block are symmetric
              call MatSetValue( slepc_mat, H_pos(2), H_pos(1)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
-             call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2),-conjg(Mij), INSERT_VALUES, ierr )
+             call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2), -Mij_star , INSERT_VALUES, ierr )
            endif
        case("A")
          ! The anti-resonant block is hermitial
          if(BS_res_ares_n_mat==1) then
            call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
-           call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1)+SL_K_dim(1), conjg(Mij), INSERT_VALUES, ierr )
+           call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1)+SL_K_dim(1),  Mij_star , INSERT_VALUES, ierr )
          else
            call MatSetValue( slepc_mat, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
-           call MatSetValue( slepc_mat, H_pos(2), H_pos(1), conjg(Mij), INSERT_VALUES, ierr )
+           call MatSetValue( slepc_mat, H_pos(2), H_pos(1),  Mij_star , INSERT_VALUES, ierr )
          endif
        case("Q")
            call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
            ! Coupling from anti-coupling: the whole BSE matrix is Pseudo-HErmitian
-           call MatSetValue( slepc_mat, H_pos(2), H_pos(1)+SL_K_dim(1),-conjg(Mij), INSERT_VALUES, ierr )
+           call MatSetValue( slepc_mat, H_pos(2), H_pos(1)+SL_K_dim(1), -Mij_star , INSERT_VALUES, ierr )
        end select
        !
      enddo

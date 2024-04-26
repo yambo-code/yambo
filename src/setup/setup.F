@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine setup(en,Xen,Ken,k,Xk)
  !
@@ -28,7 +12,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use drivers,        ONLY:l_setup
  use C_driver,       ONLY:code_bin
  use parser_m,       ONLY:parser
- use wave_func,      ONLY:wf_ng,wf_ncx
+ use wave_func,      ONLY:wf_ng,wf_ncx,wf_igk
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,atom_mass,atom_pos,atoms_map,&
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
@@ -257,6 +241,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call G_shells_finder()
  !
+ if ( wf_ng > maxval(wf_igk) ) then
+   call warning("wf_ng > maxval(wf_igk), probably because FFTGvecs in input. Reducing it")
+   wf_ng=maxval(wf_igk)
+ endif
+ !
  call msg('r','nG shells         ',n_g_shells)
  call msg('r','nG charge         ',ng_closed)
  call msg('r','nG WFs            ',wf_ng)
@@ -315,7 +304,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! 
  ! E_dbgd
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID)
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=DUMP,ID=ID)
  i_err=io_Double_Grid(en,k,ID,'electrons')
  !
  call bz_samp_duplicate_Fg(k%FGibz,Xk%FGibz,k%nibz) 

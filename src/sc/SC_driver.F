@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM MG
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
@@ -383,6 +367,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      do ik = 1, QP_nk 
        !
+       i_frag=ik+(i_sp_pol-1)*QP_nk
+       !
        H_nl_sc=cZERO
        !
        ! Build H_nl_sc
@@ -403,7 +389,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
          ! 
          ! I/O [H_nl_sc]
          !
-         call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(3))
+         IO_ACT=manage_action(WR_CL_IF_END,i_frag,1,QP_nk*n_sp_pol)
+	 call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/i_frag+1/),ID=ID(3))
          io_V=io_SC_components('V',E,ID(3))
          !
          ! Mixing for non-local self-energies
@@ -425,7 +412,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        !
        if (l_sc_XC_is_local.and..not.l_use_collisions) call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WFo,'xc ',Vxc=V_xc_sc)
        !
-       i_frag=ik+(i_sp_pol-1)*QP_nk
        IO_ACT=manage_action(WR_CL_IF_END,i_frag,1,QP_nk*n_sp_pol)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1+i_frag/),ID=ID(3))
        io_V=io_SC_components('V',E,ID(3))

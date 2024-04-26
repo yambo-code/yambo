@@ -15,7 +15,6 @@
 ############################################################################
 #
 PRECISIONS = single double complex complex16
-#PRECISIONS = single complex 
 #
 #  C preprocessor definitions:  set CDEFS to one of the following:
 #
@@ -32,7 +31,7 @@ CDEFS         = -DAdd_
 FC            = $(fc)
 CC            = $(cc) 
 NOOPT         = $(fcuflags)
-FCFLAGS       = $(fcflags)
+FCFLAGS       = $(fcflags) $(slkfcflags)
 CCFLAGS       = $(ccflags)
 FCLOADER      = $(fc)
 CCLOADER      = $(cc)

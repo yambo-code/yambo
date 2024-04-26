@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!            http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AC MG 
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
  !
@@ -44,10 +28,10 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
  use pars,           ONLY:SP,cZERO
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:RK2,EULEREXP,RK2EXP,INVINT,RK4,RK4EXP,HEUN,CRANK_NICOLSON,I_relax,&
-&                         NL_bands 
+&                         NL_bands,NL_correlation,l_velocity_IPA 
  use real_time,      ONLY:RT_step,Ho_plus_Sigma
  use electrons,      ONLY:levels,n_sp_pol
- use X_m,            ONLY:X_t
+ use X_m,            ONLY:X_t,global_gauge
  use R_lattice,      ONLY:bz_samp
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index
  use parallel_int,   ONLY:PP_redux_wait
@@ -85,6 +69,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
  call timing('NL Integrator',OPR='start')
 #endif
  !
+ !
  Time=real(i_time-1._SP)*RT_step
  !  
  select case(Integrator)
@@ -105,7 +90,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
        V_bands(:,:nb,ik,is) = V_bands(:,:nb,ik,is) + Ktmp(:,:nb)
      enddo
    enddo
-   call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    !
  case(INVINT)
    !  
@@ -122,7 +107,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
        call INVINT_step(V_bands(:,:nb,ik,is),Ktmp(:,:nb),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),nb,RT_step)
      enddo
    enddo
-   call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    !
  case(CRANK_NICOLSON) 
    !  
@@ -137,7 +122,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
 &                                                                 I_relax(:,:,:E%nbf(is),ik_mem,is),E%nbf(is),RT_step/2._SP)
      enddo
    enddo
-   call PP_redux_wait(K_all,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(K_all,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    !
    ! Recalculate H(t+dt/2) using  V(t+dt/2) 
    !
@@ -164,7 +149,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
 &                                                                 I_relax(:,:,:E%nbf(is),ik_mem,is),E%nbf(is),RT_step)
      enddo
    enddo
-   call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    !
  case(RK2EXP) 
    !
@@ -180,7 +165,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
        K_all(:,:E%nbf(is),ik,is) = V_bands(:,:E%nbf(is),ik,is) + Ktmp(:,:E%nbf(is))
      enddo
    enddo
-   call PP_redux_wait(K_all,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(K_all,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    !
    ! Recalculate H(t) using  V(t+dt/2) 
    !
@@ -206,7 +191,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
        V_bands(:,:nb,ik,is) = V_bands(:,:nb,ik,is) + RK2_bpar*RT_step*Ktmp(:,:nb)
      enddo
    enddo
-   call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    !
  case(RK2) 
    !
@@ -222,7 +207,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
        K_all(:,:nb,ik,is) = V_bands(:,:nb,ik,is) + RK2_apar*RT_step*Ktmp(:,:nb)
      enddo
    enddo
-   call PP_redux_wait(K_all,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(K_all,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    !
    ! Recalculate H(t) using  V(t+dt/2) 
    !
@@ -248,7 +233,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
        V_bands(:,:nb,ik,is) = V_bands(:,:nb,ik,is) + RK2_bpar*RT_step*Ktmp(:,:nb)
      enddo
    enddo
-   call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    !
  case(HEUN) 
    !
@@ -296,7 +281,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
        V_tmp(:,:nb,ik,is) = V_bands(:,:nb,ik,is) + Heun_apar(2)*RT_step*Ktmp(:,:nb)
      enddo
    enddo
-   call PP_redux_wait(V_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(V_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    !
    ! Recalculate H(t) using  V(t+2dt/3) 
    !
@@ -318,7 +303,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
        V_bands(:,:E%nbf(is),ik,is) = V_bands(:,:E%nbf(is),ik,is) + RT_step*K_all(:,:E%nbf(is),ik,is)
      enddo
    enddo
-   call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    !
    deallocate(V_tmp)
    !
@@ -344,7 +329,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
        enddo
      enddo
    enddo
-   call PP_redux_wait(V_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(V_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    if(NL_bands(1)/=1) V_tmp(1:NL_bands(1)-1,:,:,:)=V_bands(1:NL_bands(1)-1,:,:,:)
    !
    ! Recalculate H(t) using  V(t+dt/2) 
@@ -371,7 +356,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
        enddo
      enddo
    enddo
-   call PP_redux_wait(V_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(V_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    if(NL_bands(1)/=1) V_tmp(1:NL_bands(1)-1,:,:,:)=V_bands(1:NL_bands(1)-1,:,:,:)
    !
    ! Recalculate H(t) using  V'(t+dt/2) 
@@ -398,7 +383,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
        enddo
      enddo
    enddo
-   call PP_redux_wait(V_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(V_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    if(NL_bands(1)/=1) V_tmp(1:NL_bands(1)-1,:,:,:)=V_bands(1:NL_bands(1)-1,:,:,:)
    !
    ! Recalculate H(t) using  V'(t+dt) 
@@ -429,7 +414,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
        enddo
      enddo
    enddo
-   call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    !
    deallocate(U_tot,U_tmp,V_tmp)
    !
@@ -451,7 +436,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
        K_all(:,:E%nbf(is),ik,is) = RK4_bpar(1)*Ktmp(:,:E%nbf(is))
      enddo
    enddo
-   call PP_redux_wait(V_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(V_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    !
    ! Recalculate H(t) using  V(t+dt/2) 
    !
@@ -478,7 +463,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
        K_all(:,:E%nbf(is),ik,is) = K_all(:,:E%nbf(is),ik,is)   + RK4_bpar(2)*Ktmp(:,:E%nbf(is))
      enddo
    enddo
-   call PP_redux_wait(V_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(V_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    !
    ! Recalculate H(t) using  V'(t+dt/2) 
    !
@@ -505,7 +490,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
        K_all(:,:E%nbf(is),ik,is) = K_all(:,:E%nbf(is),ik,is) + RK4_bpar(3)*Ktmp(:,:E%nbf(is))
      enddo
    enddo
-   call PP_redux_wait(V_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(V_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    !
    ! Recalculate H(t) using  V'(t+dt) 
    !
@@ -532,7 +517,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
        V_bands(:,:E%nbf(is),ik,is) = V_bands(:,:E%nbf(is),ik,is) + RT_step*K_all(:,:E%nbf(is),ik,is)
      enddo
    enddo
-   call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+   if(.not.l_velocity_IPA) call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
    ! 
    deallocate(V_tmp)
    !

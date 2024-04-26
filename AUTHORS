@@ -1,27 +1,59 @@
+
+ACTIVE DEVELOPERS
+==================
+
+   NAME SURNAME                 (INITIALS)    (since year)
+   ------------			----------    ------------
+ * Andrea Marini                   (AM)  	 (2001)
+ * Myrta Gruening                  (MG)  	 (2004)
+ * Daniele Varsano                 (DV)  	 (2004)
+ * Conor Hogan                     (CH)  	 (2005)
+ * Maurizia Palummo                (MP)  	 (2005)
+ * Claudio Attaccalite             (CA)  	 (2009)
+ * Davide Sangalli                 (DS)  	 (2009)
+ * Elena Cannuccia                 (EC)  	 (2011)
+ * Andrea Ferretti                 (AF)  	 (2013)
+ * Alejandro Molina-Sánchez        (AMS) 	 (2015)
+ * Miki Bonacci                    (MB)  	 (2018)
+ * Dario Alejandro Leon-Valido     (DALV)	 (2018)
+ * Fulvio Paleari                  (FP)  	 (2018)
+ * Nicola Spallanzani              (NS)  	 (2019)
+ * Ignacio Martin Alliati          (IMA) 	 (2020)
+ * Pino D’Amico                    (PDA)  	 (2020) 
+ * Alberto Guandalini              (AG)  	 (2020)
+ * Riccardo Reho                   (RR)  	 (2022)
+ * Giacomo Sesti                   (GS)  	 (2022)
+
+FORMER DEVELOPERS
+==================
+
+   NAME SURNAME 		(INITIALS)   (period of activity)
+   ------------			----------   --------------------
+ * David Kammerlader               (DK)  	 (2010-2012)
+ * Fabio Affinito                  (FA)  	 (2013-2019)
+ * Pedro Melo                      (PM)  	 (2013-2022)
+ * Ivan Marri                      (IM)  	 (2014-2018)
+ * Margherita Marsili              (MM)  	 (2014-2022)
+ * Mike Atambo                     (MA)  	 (2015-2018)
+ * Pietro Bonfa’                   (PB)  	 (2015-2018)
+ * Ryan McMillan                   (RM)  	 (2015-2017)
+ * Antimo Marrazzo                 (AR)  	 (2016-2020)
+ * Henrique Miranda                (HM)  	 (2016-2018)
+ * Elena Molteni                   (EM)  	 (2019-2021)
+
+
+ACKNOWLEDGEMENTS
+=================
+
 In all source files the Yambo developers are included with their initials.
+Andrea Marini is the original developer of the code and still the main responsible for the code development.
 
-(AM) stands for Andrea Marini, the original developer of the code and still
-     the main responsible for the code development.
+For aknowledging the Yambo Team please refer to the following published articles:
 
-The other developers are
+- A Marini, et al. "Yambo: an ab initio tool for excited state calculations",
+  Computer Physics Communications 180 (8), 1392 (2009)
 
- * Myrta Gruening           (MG)  (active)
- * Daniele Varsano          (DV)  (active)
- * Davide Sangalli          (DS)  (active)
- * Conor Hogan              (CH)  (active)
- * Andrea Ferretti          (AF)  (active)
- * Pedro Melo               (PM)  (active)
- * Maurizia Palummo         (MP)  (active)
- * Ryan McMillan            (RM)  (active)
- * Henrique Miranda         (HM)  (active)
- * Ivan Marri               (IM)  (active)
- * Antimo Marrazzo          (AR)  (active)
- * Claudio Attaccalite      (CA)  (active)
- * Fabio Affinito           (FB)  (active)
- * Fulvio Paleari           (FP)  (active)
- * Alejandro Molina-Sánchez (FP)  (active)
- * Ignacio Martin Alliati   (IMA) (active)
+- D Sangalli, et al. "Many-body perturbation theory calculations using the yambo code",
+  Journal of physics: Condensed matter 31 (32), 325902 (2019)
 
- * Margherita Marsili  (MM) (currently inactive)
- * Elena Cannuccia     (EC) (currently inactive)
- * David Kammerlader   (DK) (currently inactive)
+For more info please refer to the README file

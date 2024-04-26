@@ -1,4 +1,10 @@
 #
+# License-Identifier: GPL
+#
+# Copyright (C) 2020 The Yambo Team
+#
+# Authors (see AUTHORS file for details): AM
+#
 # Variable definitions
 #
 I_PRECMP=
@@ -23,8 +29,8 @@ $(GOALS):
 	@$(MAKE) $(MAKEFLAGS) dependencies
 	@$(MAKE) $(MAKEFLAGS) ext-libs
 	@$(MAKE) $(MAKEFLAGS) int-libs
-	@+LIBS="$(YLIBDRIVER)";LAB="$@_Ydriver_";BASE="lib/yambo/driver/src";ADF="$(I_PRECMP) -D_$@";$(todo_lib);$(mk_lib)
-	@+LIBS="$(2YLIBS)";BASE="src";ADF="$(I_PRECMP)";$(todo_lib);$(mk_lib)
+	@+LIBS="$(YLIBDRIVER)";LAB="$@_Ydriver_";BASE="lib/yambo/Ydriver/src";ADF="$(I_PRECMP) -D_$@";$(todo_lib);$(mk_lib)
+	@+LIBS="$(Y_LIBS)";BASE="src";ADF="$(I_PRECMP)";$(todo_lib);$(mk_lib)
 	@+LIBS="int_modules";BASE="interfaces";ADF="$(I_PRECMP)";$(todo_lib);$(mk_lib)
-	@+X2DO="$@";BASE="interfaces/$@";XLIBS="$(2YLIBS_LD)";ADF="$(I_PRECMP)";$(todo_driver)
-	@+X2DO="$@";BASE="interfaces/$@";XLIBS="$(2YLIBS_LD)";ADF="$(I_PRECMP)";$(mk_exe)
+	@+X2DO="$@";BASE="interfaces/$@";XLIBS="$(Y_LIBS_LD)";ADF="$(I_PRECMP)";$(todo_driver)
+	@+X2DO="$@";BASE="interfaces/$@";XLIBS="$(Y_LIBS_LD)";ADF="$(I_PRECMP)";$(mk_exe)

@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2021 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
  !
@@ -75,15 +59,35 @@ subroutine Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
  else if (n_sp_pol==2) then
    !
    if (.not.l_BS_magnons) then
+     !
      F_xc_mat(:,1,1,1,1)= F_xc(:,1,1)
      F_xc_mat(:,1,1,2,2)= F_xc(:,1,2)
      F_xc_mat(:,2,2,1,1)= F_xc(:,2,1)
      F_xc_mat(:,2,2,2,2)= F_xc(:,2,2)
+     !
    else
-     F_xc_mat(:,1,2,1,2)= F_xc(:,2,1)  ! This is zero
-     F_xc_mat(:,1,2,2,1)= F_xc(:,1,1)
-     F_xc_mat(:,2,1,1,2)= F_xc(:,2,2)
-     F_xc_mat(:,2,1,2,1)= F_xc(:,1,1)  ! This is zero
+     !
+     ! The following is in principle ok
+     ! In practice, due to numerical noise, it gives wrong results
+     ! 
+     !Vxc_mag(:)  =(V_xc(:,1)-V_xc(:,2))/2._SP
+     !!
+     !do ifft=1,fft_size
+     !  mod_mag=abs(magn(ifft,3))
+     !  if(mod_mag==0._SP) magn_inv(ifft)=0._SP
+     !  if(mod_mag/=0._SP) magn_inv(ifft)=1._SP/mod_mag
+     !enddo
+     !!
+     !F_xc_mat(:,1,2,1,2)= cZERO
+     !F_xc_mat(:,1,2,2,1)= F_xc(:,1,2) !2*Vxc_mag*magn_inv
+     !F_xc_mat(:,2,1,1,2)= F_xc(:,2,1) !2*Vxc_mag*magn_inv
+     !F_xc_mat(:,2,1,2,1)= cZERO
+     !
+     F_xc_mat(:,1,2,1,2)= F_xc(:,1,1)
+     F_xc_mat(:,1,2,2,1)= F_xc(:,1,2)
+     F_xc_mat(:,2,1,1,2)= F_xc(:,2,1)
+     F_xc_mat(:,2,1,2,1)= F_xc(:,2,2)
+     !
    endif
    !
  else if (n_spinor==2) then
@@ -110,8 +114,8 @@ subroutine Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
    !
    F_xc_mat(:,1,2,1,2) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)-cI*magn_versor(:,2))**2                      !  (mag)
    F_xc_mat(:,1,2,2,1) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)**2+magn_versor(:,2)**2)+2*Vxc_mag*magn_inv   !  (mag)
-   F_xc_mat(:,2,1,2,1) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)**2+magn_versor(:,2)**2)+2*Vxc_mag*magn_inv   !  (mag)
-   F_xc_mat(:,2,2,1,1) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)+cI*magn_versor(:,2))**2                      !  (mag)
+   F_xc_mat(:,2,1,1,2) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)**2+magn_versor(:,2)**2)+2*Vxc_mag*magn_inv   !  (mag)
+   F_xc_mat(:,2,1,2,1) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)+cI*magn_versor(:,2))**2                      !  (mag)
    !
    ! TO DO !!
    !

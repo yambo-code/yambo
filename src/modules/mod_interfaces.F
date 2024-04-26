@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2013 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 ! headers
 !
@@ -158,8 +142,8 @@ module interfaces
      integer,       intent(in)  :: DOS_bands(2)
      real(SP),      intent(out) :: dos_value(n_spin)
      logical,  optional, intent(in) :: USE_Eo,USE_W,USE_occupations,USE_the_DbGd
-     real(SP), optional, intent(in) :: WF_fac(:,:,:)
-     real(SP), optional, intent(in) :: PDOS_fac(:,:,:)
+     real(SP), pointer, optional, intent(in) :: WF_fac(:,:,:)
+     real(SP), pointer, optional, intent(in) :: PDOS_fac(:,:,:)
    end subroutine el_density_of_states
    !
 #if defined _SLEPC && !defined _NL
@@ -274,12 +258,23 @@ module interfaces
      type(QP_t),optional ::qp              
    end subroutine
    !
+#if defined _ELPH || defined _PHEL
    subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
      use ELPH,          ONLY:GKKP_me
      character(*)      :: what
      type(GKKP_me), optional:: GKKP
      integer,       optional:: Nb(2),Nk_mem,Nm(2),Nq_mem
    end subroutine
+#endif
+   !
+   function TDDFT_ALDA_R_space(is,os,isp,osp,tddft_wf,mode)
+     use pars,           ONLY:SP
+     use TDDFT,          ONLY:tddft_wf_t
+     complex(SP) :: TDDFT_ALDA_R_space
+     integer,          intent(in)  :: is(4),os(4),isp(4),osp(4)
+     character(3),     intent(in)  :: mode
+     type(tddft_wf_t), target, intent(inout) :: tddft_wf
+   end function TDDFT_ALDA_R_space
    !
  end interface
  !

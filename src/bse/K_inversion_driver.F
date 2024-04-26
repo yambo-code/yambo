@@ -1,37 +1,21 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2007 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K_inversion_driver(iq,W,E,k,q) 
  !
- use pars,           ONLY:SP,pi
- use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude,X_OUTPUT_driver
+ use pars,           ONLY:SP
+ use X_m,            ONLY:Resp_ii,X_OUTPUT_driver
  use BS_solvers,     ONLY:BSS_inversion_mode,BSS_desc,K_INV_PL,K_INV_EPS,&
-&                         K_Inversion_data,K_slk,K_inv_slk,BSS_eels_to_eps
+&                         K_Inversion_data,K_slk,K_inv_slk
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk,l_BS_ares_from_res,&
 &                         BS_K_anti_resonant,l_BS_photolum,BS_res_ares_n_mat
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
- use R_lattice,      ONLY:bare_qpg,bz_samp
+ use R_lattice,      ONLY:bz_samp
  use com,            ONLY:isec,msg
  use LIVE_t,         ONLY:live_timing
  use parallel_int,   ONLY:PP_wait,PP_redux_wait,PARALLEL_index,PARALLEL_live_message
@@ -165,7 +149,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
  endif
  !
- ! IP-part Lo [also recompute Epsilon_xx(:,3) OR PL (needed in case of DbG)]
+ ! IP-part Lo [also recompute Resp_xx(:,3) OR PL (needed in case of DbG)]
  !===========================================================================
  Lo_dim=1
  if (BS_K_anti_resonant.and.l_BS_ares_from_res) Lo_dim=2
@@ -203,7 +187,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    call K_inversion_engine("any",1,W%n_freqs,iq,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
    !
    call PP_redux_wait(K_INV_EPS%err,COMM=PAR_COM_SLK_INDEX_local%COMM)
-   call PP_redux_wait(Epsilon_ii(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
+   call PP_redux_wait(Resp_ii(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
    if (l_BS_photolum) then
      call PP_redux_wait(K_INV_PL%err,COMM=PAR_COM_SLK_INDEX_local%COMM)
      call PP_redux_wait(PL(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
@@ -211,7 +195,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
    ! I/O [after pert inversion]
    !
-   K_INV_EPS%spectra(:,1)=Epsilon_ii(:,2)
+   K_INV_EPS%spectra(:,1)=Resp_ii(:,2)
    if (l_BS_photolum) then
      K_INV_PL%spectra(:,1)=PL(:,2)
      !
@@ -264,7 +248,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! I/O [after full inversion]
  !=====
- K_INV_EPS%spectra(:,1)=Epsilon_ii(:,2)
+ K_INV_EPS%spectra(:,1)=Resp_ii(:,2)
  if (l_BS_photolum) K_INV_PL%spectra(:,1)=PL(:,2)
  !
  if (l_BS_photolum) then
@@ -277,9 +261,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Final Output
  !==============
- !
- if (BSS_eels_to_eps) Epsilon_ii(:,2)=(1._SP-Epsilon_ii(:,2))**(-1)-1._SP
- if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*4._SP*pi/bare_qpg(iq,1)**2
  !
  ratio=real(count(K_INV_EPS%err==0))/real(W%n_freqs)*100._SP
  !
@@ -323,7 +304,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      !
      call live_timing()
      call PP_redux_wait(TYP%err,imode=2)
-     if (TYP%what=="EPS") call PP_redux_wait(Epsilon_ii(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
+     if (TYP%what=="EPS") call PP_redux_wait(Resp_ii(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
      if (TYP%what=="PLS") call PP_redux_wait(PL(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
      !
      nw_conv=count(TYP%err==0)
@@ -383,7 +364,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      enddo
      !
      if (TYP%n_full_inv_freqs>0.and.FULL) then 
-       if (TYP%what=="EPS") Epsilon_ii(:,2)=Epsilon_ii(:,2)/real(PAR_COM_SLK_INDEX_local%n_CPU,SP)
+       if (TYP%what=="EPS") Resp_ii(:,2)=Resp_ii(:,2)/real(PAR_COM_SLK_INDEX_local%n_CPU,SP)
        if (TYP%what=="PLS") PL(:,2)=PL(:,2)/real(PAR_COM_SLK_INDEX_local%n_CPU,SP)
      endif
      !

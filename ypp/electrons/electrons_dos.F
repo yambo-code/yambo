@@ -1,25 +1,9 @@
 ! 
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, DS
+! Copyright (C) 2015 The Yambo Team
 !
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AM DS
 !
 subroutine electrons_dos(Xk,Xen)
  !
@@ -48,8 +32,12 @@ subroutine electrons_dos(Xk,Xen)
  real(SP)              :: dos_E(DOS_E_steps),values(DOS_bands(2)+4),dos_integral(2)
  real(SP), external    :: RIntegrate
  real(SP), allocatable :: el_dos(:,:,:)
- integer               :: i_E,i_f,N_files,is,ib,ik,ikbz,ID_E,ID_f,ID_spin,ID_pdos,ID_bare_spin,ID_bare_pdos,ik_path,n_t
- character(schlen)     :: titles(DOS_bands(2)+4)
+ real(SP), pointer     :: spin_fac(:,:,:) => null()
+ real(SP), pointer     :: magn_fac(:,:,:) => null()
+ real(SP), pointer     :: pdos_fac(:,:,:) => null()
+ integer               :: i_E,i_f,N_files,N_grid_files,ival,is,ib,ik,ikbz,ID_E,ID_f, &
+ &                        ID_spin,ID_magn,ID_pdos,ik_path,n_t
+ character(schlen)     :: base_fname,titles(DOS_bands(2)+4)
  logical               :: l_DbGd
  type(levels)          :: GRID_E
  integer, external     :: PROJECTION_k_on_the_path_or_plane
@@ -91,28 +79,25 @@ subroutine electrons_dos(Xk,Xen)
  ! Use the INTERPOLATE structure to pass the arrays to the el_density_of_states via the
  ! intermediate electrons_dos_elemental.
  !
- ID_bare_pdos=0
  if (l_PROJECT_atom) then
-   ID_bare_pdos=1
-   INTERP_obj(ID_bare_pdos)%in_use=.TRUE.
-   YAMBO_ALLOC(INTERP_obj(ID_bare_pdos)%INTERP,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_sp_pol))
-   call electrons_pdos_factors((/1,Xk%nibz/),DOS_bands,INTERP_obj(ID_bare_pdos)%INTERP)
+   YAMBO_ALLOC_P(pdos_fac,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_sp_pol))
+   call electrons_pdos_factors((/1,Xk%nibz/),DOS_bands,pdos_fac)
  endif
  !
- ID_bare_spin=0
  if (n_spinor==2) then
-   ID_bare_spin=ID_bare_pdos+1
-   INTERP_obj(ID_bare_spin)%in_use=.TRUE.
-   YAMBO_ALLOC(INTERP_obj(ID_bare_spin)%INTERP,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_spinor))
-   call electrons_spin_factors((/1,Xk%nibz/),DOS_bands,INTERP_obj(ID_bare_spin)%INTERP)
+   YAMBO_ALLOC_P(spin_fac,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_spinor))
+   call electrons_spin_factors((/1,Xk%nibz/),DOS_bands,spin_fac)
+   YAMBO_ALLOC_P(magn_fac,(DOS_bands(1):DOS_bands(2),Xk%nibz,3))
+   call electrons_magn_factors((/1,Xk%nibz/),DOS_bands,magn_fac)
  endif
  !
  if (.not.l_PROJECT_line) then
-   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,ID_bare_spin,ID_bare_pdos,USE_the_DbGd=l_DbGD)
+   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,spin_fac,pdos_fac,USE_the_DbGd=l_DbGD)
  endif
  !
  ! Define the regular grid for interpolation if (all(interp_grid>0))
  !===================================================================
+ N_grid_files=1
  N_files=1
  ID_E   =0
  ID_f   =0
@@ -134,46 +119,68 @@ subroutine electrons_dos(Xk,Xen)
    !
    ID_pdos=0
    if (l_PROJECT_atom) then
-     call INTERPOLATION_driver_seed("PDOS_factors_on_built_in",ID_pdos,DOS_bands,Xk,SEED_R3=INTERP_obj(ID_bare_pdos)%INTERP)
+     call INTERPOLATION_driver_seed("PDOS_factors_on_built_in",ID_pdos,DOS_bands,Xk,SEED_R3=pdos_fac)
      call INTERPOLATION_driver_do("PDOS_factors_on_built_in",ID_pdos,GRID_k)
    endif
    !
    ID_spin=0
+   ID_magn=0
    if (n_spinor==2) then
-     call INTERPOLATION_driver_seed("SPIN_factors_on_built_in",ID_spin,DOS_bands,Xk,SEED_R3=INTERP_obj(ID_bare_spin)%INTERP)
+     N_grid_files=N_grid_files+2
+     call INTERPOLATION_driver_seed("SPIN_factors_on_built_in",ID_spin,DOS_bands,Xk,SEED_R3=spin_fac)
      call INTERPOLATION_driver_do("SPIN_factors_on_built_in",ID_spin,GRID_k)
+     N_grid_files=N_grid_files+3
+     call INTERPOLATION_driver_seed("MAGN_factors_on_built_in",ID_magn,DOS_bands,Xk,SEED_R3=magn_fac)
+     call INTERPOLATION_driver_do("MAGN_factors_on_built_in",ID_magn,GRID_k)
    endif
    !
+   do i_f=1,N_grid_files
    do is=1,n_sp_pol
      !
      if (DOS_bands(2)-DOS_bands(1)>10) cycle
      if (.not.allocated(GRID_k%ptbz)) cycle
      !
-     output_fname="grid"
-     if (n_sp_pol>1.and.is==1) output_fname="grid_spin-up"
-     if (n_sp_pol>1.and.is==2) output_fname="grid_spin-db"
+     if (i_f==1) base_fname="Egrid"
+     if (i_f>=2) base_fname="Sgrid"
+     if (i_f>=4) base_fname="Mgrid"
+     !
+     output_fname=trim(base_fname)
+     !
+     if (i_f==2) output_fname=trim(base_fname)//"_spin-up"
+     if (i_f==3) output_fname=trim(base_fname)//"_spin-dn"
+     if (i_f==4) output_fname=trim(base_fname)//"_Mx"
+     if (i_f==5) output_fname=trim(base_fname)//"_My"
+     if (i_f==6) output_fname=trim(base_fname)//"_Mz"
+     if (n_sp_pol==2.and.is==1) output_fname=trim(base_fname)//"_spin-up"
+     if (n_sp_pol==2.and.is==2) output_fname=trim(base_fname)//"_spin-dn"
      !
      call of_open_close(trim(output_fname),'ot')
      !
      titles(1)  =  " ik  "
      titles(2:4)=(/" kx [iku]"," ky [iku]"," kz [iku]"/)
      do ib=DOS_bands(1),DOS_bands(2)
-       titles(4+ib-DOS_bands(1)+1)=' b'//trim(intc(ib))//' [eV]'
+       ival=4+ib-DOS_bands(1)+1
+       titles(ival)=' b'//trim(intc(ib))
+       if (i_f==1) titles(ival)=trim(titles(ival))//' [eV]'
      enddo
-     call msg('o grid','#',titles(:DOS_bands(2)-DOS_bands(1)+5),INDENT=0,USE_TABS=.true.)    
-     call msg('o grid',"#")
+     call msg('o '//trim(base_fname),'#',titles(:DOS_bands(2)-DOS_bands(1)+5),INDENT=0,USE_TABS=.true.)
+     call msg('o '//trim(base_fname),"#")
      !
      do ikbz=1,GRID_k%nbz
        values(2:4)=GRID_k%ptbz(ikbz,:)
        call K_transform(values(2:4),"iku")
        ik=GRID_k%sstar(ikbz,1)
        values(1)=real(ik,SP)
-       values(1+4:DOS_bands(2)-DOS_bands(1)+5)=GRID_E%E(DOS_bands(1):DOS_bands(2),ik,is)*HA2EV
-       call msg('o grid',' ',values(:DOS_bands(2)-DOS_bands(1)+5),INDENT=0,USE_TABS=.true.)
+       ival=DOS_bands(2)-DOS_bands(1)
+       if (i_f==1) values(5:ival+5)=GRID_E%E(DOS_bands(1):DOS_bands(2),ik,is)*HA2EV
+       if (i_f>=2.and.i_f<=3) values(5:ival+5)=INTERP_obj(ID_spin)%INTERP(DOS_bands(1):DOS_bands(2),ik,i_f-1)
+       if (i_f>=4           ) values(5:ival+5)=INTERP_obj(ID_magn)%INTERP(DOS_bands(1):DOS_bands(2),ik,i_f-3)
+       call msg('o '//trim(base_fname),' ',values(:ival+5),INDENT=0,USE_TABS=.true.)
      enddo
      !
      call of_open_close(trim(output_fname))
      !
+   enddo
    enddo
    !
    if (l_PROJECT_line) then
@@ -184,7 +191,7 @@ subroutine electrons_dos(Xk,Xen)
        SLICE_E%E=GRID_E%E(DOS_bands(1):DOS_bands(2),PROJECT_N_perp*(ik_path-1)+1:PROJECT_N_perp*ik_path,:)
        SLICE_E%f=GRID_E%f(DOS_bands(1):DOS_bands(2),PROJECT_N_perp*(ik_path-1)+1:PROJECT_N_perp*ik_path,:)
        call electrons_dos_elemental(SLICE_k,SLICE_E,DOS_bands,el_dos(ik_path,:,:),dos_E,&
-&                                   ID_spin,ID_pdos,USE_the_DbGd=.FALSE.,QUIET=.TRUE.)
+&                                   spin_fac,pdos_fac,USE_the_DbGd=.FALSE.,QUIET=.TRUE.)
        call live_timing(steps=1)
      enddo
      call live_timing( )
@@ -193,7 +200,7 @@ subroutine electrons_dos(Xk,Xen)
      !
      ! DOS
      !
-     call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,ID_spin,ID_pdos,USE_the_DbGd=.FALSE.)
+     call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,spin_fac,pdos_fac,USE_the_DbGd=.FALSE.)
      !
    endif
  endif

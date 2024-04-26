@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2020 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine ELPH_Sigma_c(en,k,q,qp)
  !
@@ -51,13 +35,16 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,ph_modes,PH_freqs,FineGd_E_kpq_components_reset,&
 &                        QP_PH_n_G_bands,PH_W_debye,use_PH_DbGd,EkplusQ_mode,gkkp_db,elph_grids_are_expanded, &
 &                        elph_nQ,elph_use_q_grid,setup_k_plus_q_levels,elph_nQ_used,&
-&                        E_kpq_sh_fact,gsqF_energy_steps,eval_G_using_KK,PH_qpt,ID_E_kpq,ID_E_kpq_obj, &
+&                        E_kpq_sh_fact,Efermi_DbGd,gsqF_energy_steps,eval_G_using_KK,PH_qpt,ID_E_kpq,ID_E_kpq_obj, &
 &                        elph_branches,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold
  use interfaces,    ONLY:QP_state_print,ELPH_alloc
  use interpolate,   ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
 &                        INTERPOLATE_is_quiet    
  use stderr,        ONLY:STRING_same
  use timing_m,      ONLY:timing
+#if defined _RT
+ use RT_control,    ONLY:RT_apply
+#endif
  !
 #include<memory.h>
  !
@@ -76,6 +63,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  real(SP)         ::ph_E,factor,elph_gkkp_sq,E_random_shift
  logical          ::l_WRgFsq,l_GF_from_CA,load_gkkp_DB
  real(SP), allocatable :: q_weight(:)
+ real(SP), external :: Eval_Efermi_DbGd
  ! 
  call timing('GW(e-p)',OPR='start')
  !
@@ -231,6 +219,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      call msg('sr','PH-double-grid not yet compatible with Random q-grids and Eliashberg functions!')
      use_PH_DbGd=.FALSE.
    endif
+   !
  endif
  !
  ! Interpolate the E(k+q) energies for the double-grid
@@ -244,6 +233,10 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    call INTERPOLATION_BZ_setup(k)
    INTERP_obj(ID_E_kpq_obj)%what="E(k+q)"
    call INTERPOLATION_coefficients(E=en,k=k,ID=ID_E_kpq,ID_obj=ID_E_kpq_obj)
+   !
+   ! Evaluate the new Fermi-Energy
+   !
+   if(any(en%nbm/=en%nbf)) Efermi_DbGd=Eval_Efermi_DbGd(k,q,en)
    !
    call En_k_plus_q_interpolate(k,q,en,1)  ! I need them for the DW term
    !
@@ -296,6 +289,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        if (io_err<0) call error('Missing Q-database')
        !
      endif
+
      !
      if (.not.elph_use_q_grid.or.elph_grids_are_expanded) then
        !
@@ -304,6 +298,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        call setup_k_plus_q_levels(iq_db,E_random_shift)
        !
        call QP_apply((/1,elph_nb/),GKKP%E_kpq(iq_db),k,"G",msg_fmt=' ')
+#if defined _RT
+       call RT_apply((/1,elph_nb/),GKKP%E_kpq(iq_db),k,"G",VERBOSE=iq_bz==1)
+#endif
        !
      endif
      !
@@ -394,9 +391,10 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          elph_gkkp_sq=real(conjg(GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1))*&
 &                           GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1)/2._SP/ph_E,SP)
          !
-         ! ELPH_GreenF evaluate real and imaginary part of the electron-phonon self-energy
+         ! ELPH_Sigma_c_engine evaluates real and imaginary part of the electron-phonon self-energy
          !
-         call ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_W(i_qp),q_weight(iq_bz))
+         call ELPH_Sigma_c_engine(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,& 
+&                                 Sc_W(i_qp),q_weight(iq_bz))
          !
        enddo
        !

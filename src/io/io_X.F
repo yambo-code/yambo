@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2014 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function io_X(X,Xw,ID)
  !
@@ -64,7 +48,7 @@ integer function io_X(X,Xw,ID)
    return
  endif
  !
- ! I assume that he RL ordering used to build X is not different
+ ! I assume that the RL ordering used to build X is not different
  ! from the one in DB1
  !
  different_db_RL_order=.false.
@@ -75,6 +59,7 @@ integer function io_X(X,Xw,ID)
  if (X%whoami==2) db_desc='em1s'
  if (X%whoami==3) db_desc='em1d'
  if (X%whoami==4) db_desc='pp'
+ if (X%whoami==5) db_desc='Xmpa'
  if (STRING_same(X%KERNEL,"IP")) db_desc='Xo'
  !
  io_X=io_connect(desc=trim(db_desc),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))).and.frag_RESPONSE)
@@ -88,6 +73,7 @@ integer function io_X(X,Xw,ID)
    if (X%whoami==2) local_XC_KIND="Xs"
    if (X%whoami==3) local_XC_KIND="Xd"
    if (X%whoami==4) local_XC_KIND="Xp"
+   if (X%whoami==5) local_XC_KIND="Xm"
    !
    EM1S_NOSOC=.TRUE.
    !
@@ -149,7 +135,7 @@ integer function io_X(X,Xw,ID)
  io_X=io_err
  if (io_err/=0) goto 1
  !
- !  type(X_t)    ::X(4)  x s d p
+ !  type(X_t)    ::X(5)  x s d p m
  !
  if (any((/io_sec(ID,:)==2*iq/)) ) then
    !

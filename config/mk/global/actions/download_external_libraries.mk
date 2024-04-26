@@ -1,3 +1,10 @@
+#
+# License-Identifier: GPL
+#
+# Copyright (C) 2021 The Yambo Team
+#
+# Authors (see AUTHORS file for details): AM
+#
 download:  
 	@LIB2DO="all"; $(get_external_libraries)
 libxc-dl: 
@@ -18,8 +25,6 @@ hdf5-dl:
 	@LIB2DO="hdf5"; $(get_external_libraries)
 netcdf-dl: 
 	@LIB2DO="netcdf"; $(get_external_libraries)
-pnetcdf-dl: 
-	@LIB2DO="pnetcdf"; $(get_external_libraries)
 netcdff-dl: 
 	@LIB2DO="netcdff"; $(get_external_libraries)
 etsf_io-dl: 

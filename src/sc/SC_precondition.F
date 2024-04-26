@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2007 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): DV
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine SC_precondition(delta_rho)
   !
@@ -46,8 +30,8 @@ subroutine SC_precondition(delta_rho)
  !
  ! Define Qtf 
  !
- rs = (3.*DL_vol/4./pi/nel)**(1./3.)
- qtf2 = (12/pi)**(2./3.)/rs 
+ rs = (3._SP*DL_vol/4./pi/nel)**(1._SP/3._SP)
+ qtf2 = (12._SP/pi)**(2._SP/3._SP)/rs
  !
  ! FFT call: delta_rho in reciprocal space
  !
@@ -58,8 +42,8 @@ subroutine SC_precondition(delta_rho)
  call fft_3d(D_rho_G,fft_dim,-1)
 #endif
  !
- D_rho_G(fft_g_table(2:wf_ng,1))=D_rho_G(fft_g_table(2:wf_ng,1))*bare_qpg(1,2:wf_ng)**2./(bare_qpg(1,2:wf_ng)**2.+qTF2)
- D_rho_G(1) = (0.,0.)
+ D_rho_G(fft_g_table(2:wf_ng,1))=D_rho_G(fft_g_table(2:wf_ng,1))*bare_qpg(1,2:wf_ng)**2/(bare_qpg(1,2:wf_ng)**2+qTF2)
+ D_rho_G(1) = (0._DP,0._DP)
  !
  ! FFT call: delta_rho in direct space
  !
@@ -72,6 +56,6 @@ subroutine SC_precondition(delta_rho)
  !
  fftw_plan = 0
  !
- delta_rho = real(D_rho_G)/fft_size
+ delta_rho = real(D_rho_G,SP)/fft_size
  !
 end subroutine SC_precondition

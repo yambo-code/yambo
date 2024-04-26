@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2014 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  !
@@ -104,13 +88,18 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  ! ====================================================
  bands_to_correct=(/1,n_bands/)
  if (l_gw0)                  call QP_apply(bands_to_correct,en,k,"G",msg_fmt='rs',main_section=.TRUE.)
+ !
 #if defined _ELPH
+ ! 
+ ! AM, March 2024. When levels are corrected it may happen that the databases used to correct (QP or carriers)
+ ! have been produced WITHOUT e-p. In this case the E-P related variables may be erroneously overwritten
+ !
+ elph_branches_save  =elph_branches
+ QP_PH_n_G_bands_save=QP_PH_n_G_bands
  !
  ! Green's Function (k+q levels loaded for the _ELPH)
  !
  if (l_gw0.and.l_elph_corr) then
-   elph_branches_save  =elph_branches
-   QP_PH_n_G_bands_save=QP_PH_n_G_bands
    !
    ! Check which databases are present
    ! =================================
@@ -129,11 +118,13 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
    do iq=1,elph_nQ
      call io_control(ACTION=manage_action(OP_IF_START_RD_CL_IF_END,iq,1,elph_nQ),COM=NONE,SEC=(/iq+1/),ID=ID)
      io_err=io_ELPH(ID,db_name//' no_matrix_elements')
-     if (iq>0.and.io_err==0) call QP_apply(GKKP%Nb,GKKP%E_kpq(iq),k,"G",msg_fmt='rs',main_section=.TRUE.)
+     if (iq>0.and.io_err==0) then
+       call QP_apply(GKKP%Nb,GKKP%E_kpq(iq),k,"G",msg_fmt='rs',main_section=.TRUE.)
+#if defined _RT 
+       if (l_apply_RT_corrections) call RT_apply(GKKP%Nb,GKKP%E_kpq(iq),k,what="G",VERBOSE=.true.)
+#endif
+     endif
    enddo
-   !
-   elph_branches  =elph_branches_save
-   QP_PH_n_G_bands=QP_PH_n_G_bands_save
    !
  endif
  !
@@ -142,6 +133,11 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
 #if defined _RT
  l_apply_RT_corrections=l_cohsex.or.l_ppa.or.l_gw0
  if (l_apply_RT_corrections) call RT_apply(bands_to_correct,en,k,what="G",VERBOSE=.true.)
+#endif
+ !
+#if defined _ELPH
+ elph_branches  =elph_branches_save
+ QP_PH_n_G_bands=QP_PH_n_G_bands_save
 #endif
  !
  call E_duplicate(en,DIPen)

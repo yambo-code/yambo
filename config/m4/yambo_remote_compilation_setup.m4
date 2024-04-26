@@ -1,25 +1,9 @@
 #
-#        Copyright (C) 2000-2022 the YAMBO team
-#              http://www.yambo-code.org
+# License-Identifier: GPL
+#
+# Copyright (C) 2021 The Yambo Team
 #
 # Authors (see AUTHORS file for details): DS AM
-#
-# This file is distributed under the terms of the GNU
-# General Public License. You can redistribute it and/or
-# modify it under the terms of the GNU General Public
-# License as published by the Free Software Foundation;
-# either version 2, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will
-# be useful, but WITHOUT ANY WARRANTY; without even the
-# implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
-#
-# You should have received a copy of the GNU General Public
-# License along with this program; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 # Folders
 #
@@ -44,6 +28,7 @@ if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  rsync -az --exclude="$basecomp/"  --include='*/' --include='*.h.F'        --exclude='*' $srcdir/ $compdir
  rsync -az --exclude="$basecomp/"  --include='*/' --include='*.h'          --exclude='*' $srcdir/ $compdir
  rsync -az --exclude="$basecomp/"  --include='*/' --include='*.objects'    --exclude='*' $srcdir/ $compdir
+ rsync -az --exclude="$basecomp/"  --include='*/' --include='*.dep'        --exclude='*' $srcdir/ $compdir
  rsync -az --exclude="$basecomp/"  --include='*/' --include='*Makefile.lo' --exclude='*' $srcdir/ $compdir
  rsync -az --exclude="$basecomp/"  --include='*/' --include='*Makefile*'   --exclude='*' $srcdir/lib $compdir/
  rsync -az --exclude="$basecomp/"  --include='*/' --include='*list*'       --exclude='*' $srcdir/lib $compdir/
@@ -52,8 +37,8 @@ if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  #
  if test ! -d "$compdir/log"        ; then mkdir "$compdir/log"; fi
  if test ! -d "$compdir/lib/archive"; then mkdir "$compdir/lib/archive"; fi
- if test ! -d "$compdir/lib/archive"; then mkdir "$compdir/lib/archive"; fi
- cp     $srcdir/lib/archive/*         $compdir/lib/archive
- cp     $srcdir/lib/config/*          $compdir/lib/config
+ if test ! -d "$compdir/lib/config";  then mkdir "$compdir/lib/config"; fi
+ cp -r  $srcdir/lib/archive/*         $compdir/lib/archive/
+ cp     $srcdir/lib/config/*          $compdir/lib/config/
  #
 fi

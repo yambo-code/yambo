@@ -1,24 +1,25 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, AF
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version, g_ve
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
+! Copyright (C) 2006 The Yambo Team
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AM AF
+!
+!> @brief Load wave-function in different forms
+!!
+!! @param[in]       iG_in                       max-number of G-vectors
+!! @param[in]       iGo_max_in                  ???
+!! @param[in]       bands_to_load               bands range 
+!! @param[in]       kpts_to_load                k-points range 
+!! @param[in]       sp_pol_to_load              spin-polarization range 
+!! @param[in]       space                       R = real-space,  G = G-space, C = ?, B = ?
+!! @param[in]       title                       purpose of the wave-function loading
+!! @param[in]       impose_free_and_alloc       force deallocation of already loaded WF 
+!! @param[in]       force_WFo                   do not rotate the WF (for yambo_sc)
+!! @param[in]       keep_states_to_load         keep (.TRUE.) or not (.FALSE.) states already loaded 
+!! @param[in]       quiet                       turn off report and log for the WF_laod 
+!!
+!! @param[out]      WF                  Wave-function object
 !
 subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load,&
 &                  space,title,impose_free_and_alloc,force_WFo,keep_states_to_load,quiet)

@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module BS_solvers
  !
@@ -34,7 +18,8 @@ module BS_solvers
  !==================
  real(SP)    :: Co_factor
  complex(SP) :: diam_term_exact
- complex(SP) :: A_drude(2)
+ complex(SP) :: para_term_w0(3)
+ complex(SP) :: A_drude(3)
  complex(SP) :: B_Hall(2)
  !
  ! Haydock
@@ -78,14 +63,14 @@ module BS_solvers
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
  logical  :: BSS_perturbative_width
- logical  :: BSS_eels_to_eps
+ logical  :: l_abs_prop_chi_bse=.TRUE.
+ logical  :: l_eels_can_be_computed=.TRUE.
+ logical  :: l_eels_from_inversion=.TRUE.
  logical  :: BSS_uses_pert_SOC=.FALSE.
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.
  logical  :: run_Diago=.FALSE.
-#if defined _SLEPC && !defined _NL
  logical  :: run_Slepc=.FALSE.
-#endif
  !
  ! Solvers (Diago)
  !=========
@@ -144,6 +129,7 @@ module BS_solvers
  real(SP)   , allocatable :: BSS_eh_f(:)
  real(SP)   , allocatable :: BSS_eh_W(:)
  complex(SP), allocatable :: BSS_eh_Z(:)
+ real(SP)   , allocatable :: BSS_eh_f_RES(:)
  real(SP)   , allocatable :: BSS_eh_E_SOC_corr(:,:)
  complex(SP), allocatable :: BSS_dipoles_opt(:,:)
  !
@@ -312,7 +298,7 @@ module BS_solvers
    subroutine BSS_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
-     use BS,        ONLY:BS_dip_size,l_BS_abs,l_BS_kerr,l_BS_dichroism
+     use BS,        ONLY:BS_dip_size,l_BS_optics
      integer :: i_g,i_size
      logical :: W_is_allocated,Z_is_allocated,E_SOC_is_allocated
      YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,5))
@@ -321,7 +307,7 @@ module BS_solvers
      BSS_eh_table = 0
      BSS_eh_E     = rZERO
      BSS_eh_f     = rZERO
-     if (l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism) then
+     if (l_BS_optics) then
        YAMBO_ALLOC(BSS_dipoles_opt,(BS_dip_size,BS_H_dim))
        BSS_dipoles_opt = cZERO
      endif
@@ -341,6 +327,8 @@ module BS_solvers
        YAMBO_ALLOC(BSS_eh_Z,(BS_H_dim))
        BSS_eh_Z = cZERO
      endif
+     YAMBO_ALLOC(BSS_eh_f_RES,(BS_H_dim))
+     BSS_eh_f_RES = rZERO
      if (E_SOC_is_allocated) then
        YAMBO_ALLOC(BSS_eh_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
        BSS_eh_E_SOC_corr = rZERO
@@ -354,6 +342,7 @@ module BS_solvers
      YAMBO_FREE(BSS_eh_W)
      YAMBO_FREE(BSS_eh_f)
      YAMBO_FREE(BSS_eh_Z)
+     YAMBO_FREE(BSS_eh_f_RES)
      YAMBO_FREE(BSS_eh_E_SOC_corr)
    end subroutine
    !

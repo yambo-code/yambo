@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2015 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
@@ -48,9 +32,9 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
  ! In the SLK case the default = nxn (with n=2,4,6)
  !
- if (ncpu>=4 ) n_par_la=4
- if (ncpu>=16) n_par_la=16
- if (ncpu>=36) n_par_la=36
+ if (ncpu>=8 ) n_par_la=4
+ if (ncpu>=32) n_par_la=16
+ if (ncpu>=64) n_par_la=36
  !
 #endif
  !
@@ -66,7 +50,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
  if ((.not.PARALLEL_ENV_uses_default(i_PAR_structure)).and.ncpu_now/=ncpu.and.ENVIRONMENT=="BZ_Indexes") then
    call warning("MPI for BZ indexes is "//trim(intc(ncpu_now))//&
-   &" while number of cores is"//trim(intc(ncpu))//". Assuming expert user.")
+   &" while number of cores is "//trim(intc(ncpu))//". Assuming expert user.")
    return
  endif
  !
@@ -86,7 +70,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
    case("Phonon_Self_Energy") 
      call GIMME_a_parallel_proposal(3,(/"q","k","b"/))
    case("Non_Linear") 
-     call GIMME_a_parallel_proposal(2,(/" w"," k"/))
+     call GIMME_a_parallel_proposal(2,(/" k"," w"/))
    case("ScaLapacK") 
      CPU_structure(i_PAR_structure)%ROLE(1)="p"
      CPU_structure(i_PAR_structure)%CPU(1)=ncpu

@@ -374,11 +374,8 @@ function num_xmlsphbes(x,l)
   ! we deal the x->0 case first. This case is manually treated as 
   ! the 0th order term in the series expansion (x**(0)) is undefined when x ==0
   if( abs(x) < 1.E-6 ) then
-    if( l .eq. 0) then
-      num_xmlsphbes = 1.0 ! for l = 0 , J_0(x->0) = 1
-    else
-      num_xmlsphbes = 0.0 ! rest J_l(x->0) = 0 for l > 0
-    end if
+    ! x^(-l)*j_l (x->0) = sqrt(pi)/gamma(l+3/2)/2**(l+1)
+    num_xmlsphbes = 0.8862269254527579 * 2.0**(-l)/gamma(real(l)+1.5)
   else if(abs(x) < .01) then ! do a series expansion
     t = 0.0
     do is=15,0,-1

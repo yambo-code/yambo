@@ -371,18 +371,13 @@ function num_xmlsphbes(x,l)
   integer :: is
   real(dbl) :: t
   if(l>3 .or. l<0) call errore("num_sphbes","Bad l value",1)
-  ! we deal the x->0 case first. This case is manually treated as 
-  ! the 0th order term in the series expansion (x**(0)) is undefined when x ==0
-  if( abs(x) < 1.E-6 ) then
-    ! x^(-l)*j_l (x->0) = sqrt(pi)/gamma(l+3/2)/2**(l+1)
-    num_xmlsphbes = 0.8862269254527579 * 2.0**(-l)/gamma(real(l)+1.5)
-  else if(abs(x) < .01) then ! do a series expansion
-    t = 0.0
-    do is=15,0,-1
+  if(abs(x) < .01) then
+    t = coeff(0,l)
+    do is=15,1,-1
       t = t + x**(2*is) * coeff(is,l)
     end do
     num_xmlsphbes = real(t,sgl)
-  else ! just use the analytical function
+  else
     select case(l)
     case(0)
       num_xmlsphbes = sin(x)/x

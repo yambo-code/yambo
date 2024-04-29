@@ -29,8 +29,9 @@ module gpu_m
   use devxlib_cublas
   use devxlib_memcpy
   use devxlib_linalg
-  use cusolverdn
-  !use cusolverdn_y
+  use devxlib_async,     ONLY:devxlib_async2stream
+  !use cusolverdn
+  use cusolverdn_y
 # if defined _CUDAF
   use cufft
 # elif defined _OPENACC
@@ -251,9 +252,10 @@ contains
     !
     ! 2022-02-02 DS and AF TO BE FIXED
     !stream_default=acc_async_noval
-    stream_default=acc_get_cuda_stream(acc_async_sync)
-    async_default=acc_get_cuda_stream(acc_async_sync)
+    stream_default=devxlib_async2stream(acc_async_sync)
+    async_default=devxlib_async2stream(acc_async_sync)
     !call dev_stream_create(stream_default,default_stream=.true.)
+    !
     stream_h2d=1001
     stream_d2h=1002
     stream_d=10

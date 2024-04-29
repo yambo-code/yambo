@@ -277,7 +277,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    ! ####> LINEAR SYSTEM SOLUTION
    !
    if (idriver==LIN_SYS) then
-#ifdef _GPU
+#if defined _GPU && defined _PGI
      call SERIAL_lin_system_gpu(N,N,DEV_VAR(M_slk%blc)(:,:,M_slk%I),DEV_VAR(B_slk%blc)(:,:,B_slk%I))
 #else
      call error('[LA] GPU support required but not present')

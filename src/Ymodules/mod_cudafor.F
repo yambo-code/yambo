@@ -86,6 +86,9 @@
 !Start cudafor module
 module cudafor_m_y
 use iso_c_binding
+#if defined _OPENACC
+use devxlib_environment
+#endif
 implicit none
 private
 

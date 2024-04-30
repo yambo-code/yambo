@@ -19,7 +19,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
 &                       RIM_W_ng
  use D_lattice,    ONLY:i_time_rev,i_space_inv
  use X_m,          ONLY:X_ALLOC_elemental,X_t,X_mat,DEV_VAR(X_mat)
- use BS,           ONLY:BS_n_g_W,BS_W_is_diagonal,BS_W
+ use BS,           ONLY:BS_n_g_W,BS_W_is_diagonal,BS_W,O1,O2,O_times_W
  use IO_int,       ONLY:io_control
  use IO_m,         ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,&
 &                       OP_RD,RD,RD_CL,RD_CL_IF_END
@@ -40,7 +40,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  complex(SP):: ctmp(1)
  integer    :: nibz
  !
- integer    :: BS_W_size2,i_g2,i_g3,i_g2_mat,i_g3_mat,iq_W
+ integer    :: BS_W_size2,i_g2,i_g3,i_g2_mat,i_g3_mat,iq_W,NQ
  logical    :: W_is_em1s,W_is_pp,W_is_unscreened,l_RIM_W_g
  !
  real(SP), allocatable DEV_ATTR :: RIM_vpW(:,:)
@@ -96,19 +96,18 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  ! When TR is present but not the SI X_mat indexes need to be exchanged 
  ! when the TR is applied
  !
- if (i_space_inv==0.and.i_time_rev==1.and..not.BS_W_is_diagonal) then
-   if (have_gpu) then
-     YAMBO_ALLOC_GPU(BS_W,(BS_n_g_W,BS_W_size2,2*q%nibz))
-   else
-     YAMBO_ALLOC(BS_W,(BS_n_g_W,BS_W_size2,2*q%nibz))
-   endif
+ NQ=q%nibz
+ if (i_space_inv==0.and.i_time_rev==1.and..not.BS_W_is_diagonal) NQ=2*NQ
+ !
+ if (have_gpu) then
+   YAMBO_ALLOC_GPU(BS_W,(BS_n_g_W,BS_W_size2,NQ))
  else
-   if (have_gpu) then
-     YAMBO_ALLOC_GPU(BS_W,(BS_n_g_W,BS_W_size2,q%nibz))
-   else
-     YAMBO_ALLOC(BS_W,(BS_n_g_W,BS_W_size2,q%nibz))
-   endif
+   YAMBO_ALLOC(BS_W,(BS_n_g_W,BS_W_size2,NQ))
  endif
+ !
+ YAMBO_ALLOC_GPU(O1,(BS_n_g_W))
+ YAMBO_ALLOC_GPU(O2,(BS_n_g_W))
+ YAMBO_ALLOC_GPU(O_times_W,(BS_n_g_W))
  !
  YAMBO_ALLOC(isc%gamp,(BS_n_g_W,BS_W_size2))
  if (have_gpu) then

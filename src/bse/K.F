@@ -34,7 +34,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                        BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                        BS_nT_grps,BS_blks_free,l_BS_ares_from_res,&
 &                        l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
-&                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val
+&                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val,&
+&                        O1,O2,O_times_W
  use collision_el,  ONLY:elemental_collision_free
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
@@ -217,6 +218,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    YAMBO_FREE_GPU(BS_W)
    YAMBO_FREE(BS_W)
+   !
+   YAMBO_FREE_GPU(O1)
+   YAMBO_FREE_GPU(O2)
+   YAMBO_FREE_GPU(O_times_W)
+   YAMBO_FREE(O1)
+   YAMBO_FREE(O2)
+   YAMBO_FREE(O_times_W)
+   !
    YAMBO_FREE_GPU(DEV_VAR(RIM_W))
    YAMBO_FREE(RIM_W)
    !
@@ -588,9 +597,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          if (BS_res_K_exchange) H_x=K_exchange_kernel_resonant(iq, BS_n_g_exch,               &
 &                                   BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
          !
-write(0,*)
-write(0,*) "BS_res_K_exchange"
-write(0,"(8f15.9)") H_x
+!write(0,*)
+!write(0,*) "BS_res_K_exchange"
+!write(0,"(8f15.9)") H_x
          ! ALDA
          if (BS_K_is_ALDA)      H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'RES')
          !
@@ -606,9 +615,9 @@ write(0,"(8f15.9)") H_x
 &                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
          endif
          !         
-write(0,*)
-write(0,*) "BS_res_K_corr"
-write(0,"(8f15.9)") H_c
+!write(0,*)
+!write(0,*) "BS_res_K_corr"
+!write(0,"(8f15.9)") H_c
 
        case ("C","Q")
          !
@@ -721,6 +730,14 @@ write(0,"(8f15.9)") H_c
  !
  YAMBO_FREE_GPU(BS_W)
  YAMBO_FREE(BS_W)
+ !
+ YAMBO_FREE_GPU(O1)
+ YAMBO_FREE_GPU(O2)
+ YAMBO_FREE_GPU(O_times_W)
+ YAMBO_FREE(O1)
+ YAMBO_FREE(O2)
+ YAMBO_FREE(O_times_W)
+ !
  YAMBO_FREE_GPU(DEV_VAR(RIM_W))
  YAMBO_FREE(RIM_W)
  !

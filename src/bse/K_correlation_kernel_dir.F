@@ -13,7 +13,7 @@ function K_correlation_kernel_dir(i_block,i_p,i_pmq,                            
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
  !
  use pars,         ONLY:SP,cZERO,pi
- use BS,           ONLY:BS_blk,BS_n_g_W,BS_W,BS_W_is_diagonal
+ use BS,           ONLY:BS_blk,BS_n_g_W,BS_W,BS_W_is_diagonal,O1,O2,O_times_W
  use R_lattice,    ONLY:DEV_VAR(G_m_G),DEV_VAR(g_rot)
  use wrapper,      ONLY:DEV_SUB(V_by_V_pwise),M_by_V,DEV_SUB(Vstar_dot_V)
  !
@@ -27,7 +27,6 @@ function K_correlation_kernel_dir(i_block,i_p,i_pmq,                            
  complex(SP)  :: K_correlation_kernel_dir
  !
  integer      :: iO1,iO2,i_g1,i_g2,i_g3
- complex(SP) DEV_ATTR  :: O1(BS_n_g_W),O2(BS_n_g_W),O_times_W(BS_n_g_W)
  complex(SP), pointer DEV_ATTR :: O_c_d_iO1(:)
  complex(SP), pointer DEV_ATTR :: O_c_d_iO2(:)
  !

@@ -22,7 +22,8 @@ function K_correlation_kernel_std(i_block,i_p,i_pmq,                            
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
  !
  use pars,         ONLY:SP,cZERO,cONE,pi
- use BS,           ONLY:BS_blk,BS_n_g_W,BS_W,BS_W_is_diagonal,WF_phase
+ use BS,           ONLY:BS_blk,BS_n_g_W,BS_W,BS_W_is_diagonal,WF_phase,&
+&                       O1,O2,O_times_W
  use D_lattice,    ONLY:nsym,i_time_rev
  use R_lattice,    ONLY:DEV_VAR(G_m_G),DEV_VAR(g_rot)
  use wrapper,      ONLY:V_by_V_pwise_gpu,Vstar_dot_V_gpu
@@ -39,20 +40,12 @@ function K_correlation_kernel_std(i_block,i_p,i_pmq,                            
  !
  integer      :: iO1,i_block_1,iO2,i_block_2,i_g1,i_g2,i_g3
  complex(SP)  :: PHASE_1,PHASE_2
- complex(SP), allocatable DEV_ATTR :: O1(:),O2(:),O_times_W(:)
  complex(SP), pointer DEV_ATTR :: O_c1_p(:,:), O_c2_p(:,:)
  !
  if (i_k_sp_pol_n/=i_p_sp_pol_n .or. i_k_sp_pol_m/=i_p_sp_pol_m) then
    K_correlation_kernel_std=cZERO
    return
  endif
- !
- ! AF: this would be best moved into
- !     a workspace module and pre-allocated
- !
- YAMBO_ALLOC_GPU(O1,(BS_n_g_W))
- YAMBO_ALLOC_GPU(O2,(BS_n_g_W))
- YAMBO_ALLOC_GPU(O_times_W,(BS_n_g_W))
  !
  !
  iO1       = BS_blk(i_block)%O_table(1,i_kp_s,1,1,i_n_k,i_n_p,i_k_sp_pol_n)
@@ -94,12 +87,5 @@ function K_correlation_kernel_std(i_block,i_p,i_pmq,                            
 &                                        BS_W(:,:,iq_W),BS_n_g_W,O1,1,cZERO,O_times_W,1)
  !
  K_correlation_kernel_std=Vstar_dot_V_gpu(BS_n_g_W,O2,O_times_W)*4._SP*pi
- !
- YAMBO_FREE_GPU(O1)
- YAMBO_FREE_GPU(O2)
- YAMBO_FREE_GPU(O_times_W)
- YAMBO_FREE(O1)
- YAMBO_FREE(O2)
- YAMBO_FREE(O_times_W)
  !
 end function K_correlation_kernel_std

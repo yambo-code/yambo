@@ -62,7 +62,11 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
 #ifdef _OPENACC
    ! 2022-02-02 DS and AF TO BE FIXED
    !istat = cufftSetStream( cufft_plan, acc_get_cuda_stream(acc_async_sync) )
-   istat = cufftSetStream( cufft_plan, devxlib_async2stream(acc_async_noval) )
+   istat = cufftSetStream( cufft_plan, acc_get_cuda_stream(acc_async_noval) )
+   ! The following lines, in place of the one above,
+   ! is needed to compile with gfortran
+   ! However they give an error with nvfortran
+   !istat = cufftSetStream( cufft_plan, devxlib_async2stream(acc_async_noval) )
    !istat = cufftSetStream( cufft_plan, stream_default )
    !istat = gpu_devsync()
 #endif

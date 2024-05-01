@@ -104,11 +104,13 @@ public :: cudaGetDevice
 
 !Start types
 
+#if !defined _OPENACC
 !Start c_devptr
 type, bind(c) :: c_devptr
 type(c_ptr) :: member
 end type c_devptr
 !End c_devptr
+#endif
 
 !Start cuda_stream_kind
 integer(c_intptr_t), parameter :: cuda_stream_kind = c_intptr_t

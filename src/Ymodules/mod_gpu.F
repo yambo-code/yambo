@@ -252,8 +252,13 @@ contains
     !
     ! 2022-02-02 DS and AF TO BE FIXED
     !stream_default=acc_async_noval
-    stream_default=devxlib_async2stream(acc_async_sync)
-    async_default=devxlib_async2stream(acc_async_sync)
+    stream_default=acc_get_cuda_stream(acc_async_sync)
+    async_default=acc_get_cuda_stream(acc_async_sync)
+    ! The following 2 lines, in place of the 2 above,
+    ! are needed to compile with gfortran
+    ! However they give an error with nvfortran
+    !stream_default=devxlib_async2stream(acc_async_sync)
+    !async_default=devxlib_async2stream(acc_async_sync)
     !call dev_stream_create(stream_default,default_stream=.true.)
     !
     stream_h2d=1001

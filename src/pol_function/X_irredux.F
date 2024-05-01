@@ -312,6 +312,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
    !
    ! 3) Finally multiply residual and frequency dependent term
    !===========================================================
+   !DEV_ACC data present(X_par_p,Xo_res_p,X_par_lowtri_p,Xo_res_p)
    freq_loop:&
    do iw=1,Xw%n_freqs
      !
@@ -324,8 +325,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
      !
      GreenF_iw=GreenF(iw)
      !
-     !DEV_ACC data present(X_par_p,Xo_res_p)
-     !DEV_ACC parallel loop 
+     !DEV_ACC parallel loop collapse(2)
      !DEV_CUF kernel do(2) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:X_par_p,Xo_res_p)
      !DEV_OMPGPU teams loop collapse(2)
@@ -335,7 +335,6 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
        enddo
      enddo
      !DEV_OMPGPU end target
-     !DEV_ACC end data
      !
 #else
      !
@@ -372,7 +371,6 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
        !
        if (PAR_COM_RL_INDEX_n_CPU>1) then
          !
-         !DEV_ACC data present(X_par_lowtri_p,Xo_res_p)
          !DEV_ACC parallel loop collapse(2) 
          !DEV_CUF kernel do(2)
          !DEV_OMPGPU target map(present,alloc:X_par_lowtri_p,Xo_res_p)
@@ -389,11 +387,9 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
          enddo
          enddo
          !DEV_OMPGPU end target
-         !DEV_ACC end data
          !
        else
          !
-         !DEV_ACC data present(X_par_p,Xo_res_p)
          !DEV_ACC parallel loop collapse(2) 
          !DEV_CUF kernel do(2)
          !DEV_OMPGPU target map(present,alloc:X_par_p,Xo_res_p)
@@ -409,7 +405,6 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
          enddo
          enddo
          !DEV_OMPGPU end target
-         !DEV_ACC end data
          !
        endif
 #else
@@ -450,6 +445,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
      endif
      !
    enddo freq_loop
+   !DEV_ACC end data
    !
    if (master_thread) call live_timing(steps=1)
    !

@@ -26,7 +26,7 @@
 subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  !
  use pars,           ONLY:SP,cZERO,rZERO,cONE
- use D_lattice,      ONLY:i_time_rev,sop_inv,sop_tab,nsym,i_time_rev
+ !use D_lattice,      ONLY:sop_inv,sop_tab
  use R_lattice,      ONLY:bz_samp,qindx_C
  use BS_solvers,     ONLY:io_BSS_diago,BSS_eh_table_m1,BSS_eh_table,BSS_free
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL, &

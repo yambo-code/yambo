@@ -34,8 +34,9 @@
 subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  use pars,           ONLY:SP,cZERO,rZERO,schlen
- use electrons,      ONLY:levels!,n_sp_pol
- use R_lattice,      ONLY:bz_samp,qindx_B !_load
+ use electrons,      ONLY:levels
+ use R_lattice,      ONLY:bz_samp,qindx_B
+ use D_lattice,      ONLY:nsym
  use parser_m,       ONLY:parser
  use X_m,            ONLY:X_t
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BSS_eh_table_m1,BSS_alloc,BSS_free!,BS_H_dim,BSS_n_eig
@@ -131,7 +132,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call k_build_up_BZ_tables(q)
  !
  ! Pre-requisite: calculate electronic phases (needed to rotate the excitonic wavefunctions)
- call ELEC_WF_phases(E,k)
+ if(nsym>1) call ELEC_WF_phases(E,k)
  !
  call EXCPH_load_L(1,X,'check','Lin') ! At present the Lin can be only gamma iq=1
  !
@@ -209,7 +210,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      !
      BS_mat_out=cZERO
      ! Here we obtain the rotated BS_mat_out at iq_bz
-     call EXC_WF_symm_qpoint(k,q,EXCPH_states(1),n_exc_in,iq,iq_s,1,ID_phases,S_index,BS_mat_out,.false.)
+     if(nsym>1) call EXC_WF_symm_qpoint(k,q,EXCPH_states(1),n_exc_in,iq,iq_s,1,ID_phases,S_index,BS_mat_out,.false.)
+     if(nsym==1) BS_mat_out=BS_mat(:,EXCPH_sum(1):EXCPH_sum(2))
      !
      EXCPH_gkkp          =cZERO
      EXCPH_gkkp_sq       =rZERO

@@ -48,6 +48,8 @@ rt-project:
 	@for target in $(RT_PROJ)  ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 nl-project: 
 	@for target in $(NL_PROJ)  ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+fl-project: 
+	@for target in $(FL_PROJ)  ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 main:
 	@for target in $(MAIN)     ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 all:
@@ -73,7 +75,11 @@ ifneq (,$(wildcard $(compdir)/config/stamps_and_lists/compilation_objects_in_DOU
  STAMP_DBLE=-D_DOUBLE
 else ifneq (,$(wildcard $(compdir)/config/stamps_and_lists/compiling_yambo_nl.stamp))
  STAMP_DBLE=-D_DOUBLE
+else ifneq (,$(wildcard $(compdir)/config/stamps_and_lists/compiling_yambo_fl.stamp))
+ STAMP_DBLE=-D_DOUBLE
 else ifneq (,$(wildcard $(compdir)/config/stamps_and_lists/compiling_ypp_nl.stamp))
+ STAMP_DBLE=-D_DOUBLE
+else ifneq (,$(wildcard $(compdir)/config/stamps_and_lists/compiling_ypp_fl.stamp))
  STAMP_DBLE=-D_DOUBLE
 endif
 #

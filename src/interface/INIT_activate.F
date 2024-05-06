@@ -15,7 +15,7 @@ subroutine INIT_activate()
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,l_rim_w,&
 &                         l_real_time,l_ppa,l_mpa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr,l_nl_p_and_p,l_X
+&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr,l_nl_p_and_p,l_X,l_fl_optics
 #if defined _SC || defined _RT
  use hamiltonian,    ONLY:H_potential
 #endif
@@ -100,10 +100,17 @@ subroutine INIT_activate()
  endif
 #endif
  !
-#if defined _NL
- if (l_nl_optics) then
+#if defined _NL 
+ if (l_nl_optics .or. l_fl_optics) then
    call CPU_activate("NL")
    call CPU_activate("DIP")
+   call initactivate(1,'DIP_Threads NL_Threads')
+ endif
+#endif
+!
+#if defined _FL
+ if (l_fl_optics) then
+   call CPU_activate("FL")
    call initactivate(1,'DIP_Threads NL_Threads')
  endif
 #endif
@@ -558,7 +565,17 @@ subroutine INIT_activate()
  do i1=1,n_ext_fields
    call Afield_activate(i1)
  enddo
+#endif
  !
+#if defined _FL
+ if (l_fl_optics) then
+   call initactivate(1,'NLBands NLEnRange NLEnSteps NLDamping NLCorrelation')
+   call initactivate(1,'FFTGvecs HARRLvcs EXXRLvcs Dephase FL_2D_ild')
+   call initactivate(1,'Field1_Dir Field1_Int Field1_Phase')
+   call initactivate(1,'Xorder Xadd_mode Xthresh_1 Xthresh_2 Xthresh_3 FL_solver &
+           &            FL_deg_thresh FL_deg_lift S_inv_mode FL_beta FL_max_it')
+   call initactivate(1,'Field1_Phase,FL_2D_ild, FL_Pade')
+ endif
 #endif
  !
 #if defined _SC

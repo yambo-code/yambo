@@ -1,0 +1,359 @@
+!
+!        Copyright (C) 2000-2021 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): MG IA
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine FL_driver(E,X,k,q,Dip)
+ !
+ use pars,           ONLY:SP,DP,cZERO,cONE
+ use units,          ONLY:HA2EV
+ use com,            ONLY:msg
+ use drivers,        ONLY:l_use_Hxc_collisions
+ use QP_m,           ONLY:QP_ng_SH,QP_ng_Sx 
+ use LIVE_t,         ONLY:live_timing 
+ use electrons,      ONLY:levels,n_sp_pol
+ use X_m,            ONLY:X_t
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S
+ use wave_func,      ONLY:WF,wf_ng
+ use interfaces,     ONLY:WF_load,WF_free
+ use hamiltonian,    ONLY:WF_Go_indx,H_QP_table_setup,H_potential
+ use R_lattice,      ONLY:bz_samp,qindx_free
+ use fields,         ONLY:Efield
+ use QP_m,           ONLY:QP_nk
+ use QP_CTL_m,       ONLY:QP_apply
+ use R_lattice,      ONLY:qindx_S
+ use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
+&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P,E_full, &
+&                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,runs_done,n_runs_todo,l_eval_CURRENT,&
+&                         HF,SEX,NL_bands,V_bands_t,NL_alloc_k_distributed
+ use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_free,FL_V_bands,&
+&                         FL_S_plus,FL_S_minus,FL_time_S_det,n_tot_fl_modes,FL_Chi_pol,&
+&                         FL_Chi_order,FL_S_inv_mode,FL_loc_S_inv_mode,FL_space_dim,FL_QE,FL_V_bands_hist,&
+&                         FL_ac_phase,FL_max_iterations,l_FL_conv_Chi,l_FL_conv_Rho,FL_states,FL_build_table
+ use real_time,      ONLY:RT_step,NE_steps,NE_i_time,eval_DFT
+ use IO_m,           ONLY:io_COLLs,OP_WR_CL,OP_APP_CL,VERIFY,REP
+ use IO_int,         ONLY:io_control
+ use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,PP_redux_wait,PP_wait
+ use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,&
+&                         PAR_COM_freqs_INDEX,PAR_COM_Xk_bz_INDEX,PAR_COM_Xk_ibz_INDEX,myid,master_cpu
+ use collision_ext,  ONLY:COLLISIONS_have_HARTREE
+ !
+#include<memory.h>
+ !
+ ! Notice that E is never changed!
+ !
+ type(levels)      :: E
+ type(bz_samp)     :: k,q
+ type(X_t)         :: X(2)
+ type(DIPOLE_t)    :: Dip
+ !
+ logical, external :: stop_now
+ ! 
+ ! Work Space
+ !
+ integer  :: i_f,i1,N_sample_size,wf_ng_save,io_err,i_k_bz,i_sp_pol,i_err
+ integer  :: FL_iteration,fl_shifted_zero_mode,ID_FL
+ logical  :: l_FL_sc_reached
+ integer  :: iterations(n_frequencies)
+ logical  :: converged(n_frequencies)
+ complex(SP) :: accuracy(n_frequencies)
+ character(4) :: filename
+ integer     :: line_counter,i_m
+ !
+ integer, external  :: io_FL
+ !
+ ! Initialize
+ !=========
+ call FL_initialize(E,k,q)
+ !
+ ! Switch 
+ !========
+ call XC_potentials(H_potential)
+ call XC_additional_SC_potentials()
+ !
+ ! Dipoles & WF dimensions
+ !=========================
+ call WF_and_dipole_dimensions(X,k)
+ !
+ ! Deallocate qindx_S (used only in previous subroutine)
+ ! ========================
+ YAMBO_FREE(qindx_S)
+ !
+ ! QP dimensions
+ !================
+ call H_QP_table_setup(E)
+ !
+ ! Non_Linear parallization
+ ! ===================================
+ call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,Dip=Dip,X=X(1))
+ call PARALLEL_global_indexes(E,k,q,"Non_Linear",Dip=Dip,X=X(1))
+ call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_index( )
+ !
+ !Load Dipole after the NL parallelization
+ ! ========================================
+ call DIPOLE_dimensions(E,Dip,NL_bands,(/0._SP,0._SP,0._SP/))
+ call DIPOLE_IO(k,E,Dip,'read ',io_err,'NL')
+ if(io_err/=0) call error("Error in DIPOLES! ")
+ !
+ ! Free memory: qindx_* and unused DIPOLES
+ ! =====================================================
+ call qindx_free('ALL')
+ !
+ call DIP_alloc('P_square')
+ if(l_use_DIPOLES) then
+   call DIP_alloc('DIP_S')
+ else
+   call DIP_alloc('DIP_R')
+   if(.not.l_eval_CURRENT) then
+     call DIP_alloc('DIP_R')
+     call DIP_alloc('DIP_v')
+   endif
+ endif
+ !
+ ! WFs loading
+ !=============
+ !
+ wf_ng_save =wf_ng
+ if(eval_DFT) then
+   wf_ng      =max(QP_ng_Sx,QP_ng_SH)
+ else
+   wf_ng      =QP_ng_SH
+ endif
+ WF_Go_indx =1
+ !
+ if(io_COLLs) then
+   !      
+   ! check if they exist      
+   !
+   call COLLISIONS_load(.true.)
+   !
+   if(.not.l_use_Hxc_collisions .and. (Correlation==SEX.or.Correlation==HF)) &
+&    call error(' HF / SEX need Collisions. Cannot be computed on the fly.')
+   !
+ endif
+ !
+ if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE)  then
+   call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
+ endif
+ !
+ ! Load Collisions if necessary
+ ! ============================
+ !
+ if(l_use_Hxc_collisions.and.io_COLLs) then
+   !
+   eval_dG=.true.
+   !
+   call COLLISIONS_load(.false.)
+   !
+ endif
+ !
+ ! QP-corrections 
+ !================
+ call QP_apply(NL_bands,E,k,"G",msg_fmt='s')
+ !
+ ! Allocation
+ ! ==================
+  call FL_alloc(E) 
+  call FL_alloc_k_distributed(E)
+  call FL_FT_matrices()
+  call FL_build_table()
+ !
+ if (FL_Chi_order < 0) call error('    [FL] Probe order must be positive or zero')
+ if (FL_Chi_order > max_fl_mode) call warning('    [FL] Probe order greater than max Floquet mode')
+ !
+ ! Initialization
+ ! ==================
+ call section('*','FL Start and Restart')
+ call FL_start_and_restart(E,k,Dip)
+ !
+ ! Check if calculation was already done
+ ! =====================================
+ if(n_runs_todo==0) return
+ !
+ ! Initialize IO
+ ! ==================
+ if (master_cpu) then
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_FL)
+   i_err=io_FL(ID_FL)
+ endif
+ !
+ call PP_wait()
+ !
+ ! Start-Up & Timing
+ !===================
+ !
+ call live_timing('[FL] Frequencies ',PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1))
+ !
+ FL_Chi_pol(:,:,:,:) = cZERO
+ converged = .false.
+ iterations = 0
+ accuracy = cZERO
+ !
+ call section('*','FL self-consistency')
+ do i_f=1,n_frequencies
+   !
+   if(.not.PAR_IND_freqs%element_1D(i_f)) cycle
+   !
+   if(runs_done(i_f)) then
+     call live_timing(steps=NE_steps)
+     cycle
+   endif
+   !
+   ! Re-initialization
+   ! ================
+   FL_V_bands=cZERO
+   FL_V_bands_hist=cZERO
+   FL_ac_phase=cZERO
+   do i_sp_pol=1,n_sp_pol
+     do i1=1,E%nbf(i_sp_pol)
+       !
+       fl_shifted_zero_mode = max_fl_mode+1
+       FL_V_bands(i1,fl_shifted_zero_mode,i1,:,i_sp_pol)=cONE
+       !
+     enddo
+   enddo
+   !
+   FL_S_minus=cZERO
+   FL_S_plus =cZERO
+   FL_time_S_det =cZERO
+   !
+   do i_sp_pol=1,n_sp_pol
+     do i_k_bz=1,k%nbz
+       !
+       if(.not.PAR_IND_Xk_bz%element_1D(i_k_bz)) cycle
+       !
+       call FL_overlaps(E,k,i_sp_pol,i_k_bz,FL_V_bands(:,:,:E%nbf(i_sp_pol),:,i_sp_pol), &
+                                        &   FL_S_plus(:E%nbf(i_sp_pol),:E%nbf(i_sp_pol),:,:,i_k_bz,i_sp_pol),&
+                                        &   FL_S_minus(:E%nbf(i_sp_pol),:E%nbf(i_sp_pol),:,:,i_k_bz,i_sp_pol),&
+                                        &   FL_time_S_det(:,:,i_k_bz,i_sp_pol),.false.) 
+     enddo
+     !
+     call PP_redux_wait(FL_S_plus(:,:,:,:,:,i_sp_pol) , COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     call PP_redux_wait(FL_S_minus(:,:,:,:,:,i_sp_pol), COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     !
+   enddo
+   !
+   l_FL_sc_reached = .false.
+   l_FL_conv_Chi = .false.
+   l_FL_conv_Rho = .true.
+   FL_iteration = 0
+   FL_loc_S_inv_mode = "0" !for first iteration
+   !
+   ! Efield
+   ! ================
+   Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
+   !
+   do while(.not.l_FL_sc_reached)
+     !
+     FL_iteration=FL_iteration+1
+     !
+     FL_Chi_pol(i_f,:,:,2) = FL_Chi_pol(i_f,:,:,1)
+     !
+     call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency,FL_iteration)
+     !
+     call FL_diagonalization(E,k,FL_V_bands,FL_QE,FL_iteration)
+     !
+     call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
+     !
+     if (FL_iteration>1)&
+&    call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_conv_Chi,accuracy(i_f))
+     !
+     l_FL_sc_reached = l_FL_conv_Chi .and. l_FL_conv_Rho
+     if (l_FL_sc_reached) converged(i_f) = .true.
+     !
+     if (FL_iteration >= FL_max_iterations) then
+       !
+       l_FL_sc_reached = .true.
+       !
+     endif
+     !
+     FL_loc_S_inv_mode = FL_S_inv_mode ! N=numerical / P=perturbative
+     !
+   enddo
+   !
+   iterations(i_f) = FL_iteration
+   !
+   call live_timing(steps=1)
+   !
+   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/i_f+1/),MODE=VERIFY,ID=ID_FL)
+   i_err=io_FL(ID_FL)
+   !
+ enddo
+ !
+ call PP_redux_wait( FL_Chi_pol ,COMM=PAR_COM_freqs_INDEX%COMM )
+ call PP_redux_wait( iterations ,COMM=PAR_COM_freqs_INDEX%COMM )
+ call PP_redux_wait( converged  ,COMM=PAR_COM_freqs_INDEX%COMM )
+ call PP_redux_wait( accuracy   ,COMM=PAR_COM_freqs_INDEX%COMM )
+ !
+ do i_f=1,n_frequencies
+   call msg('r','Frequency step    :',i_f)
+   call msg('r','Frequency [eV]    :',(NL_er(1)+real(i_f-1,SP)*NL_estep)*HA2EV)
+   call msg('r','No. of iterations :',iterations(i_f))
+   call msg('r','Absolute error    :',abs(accuracy(i_f)))
+   call msg('r','Converged         : ',converged(i_f))
+   call msg('r','------------------------------------')
+ enddo
+ call msg('r','Total       frequencies :',n_frequencies)
+ call msg('r','Unconverged frequencies :',count(.not. converged))
+ !
+ call FL_output
+ !
+ call live_timing()
+ !
+ ! Deallocation
+ ! ==========================
+ !
+ wf_ng     = wf_ng_save
+ !
+ call WF_free(WF)
+ call FL_free()
+ call DIP_alloc('DIP_S')
+ call DIP_alloc('DIP_R')
+ call DIP_alloc('DIP_v')
+ !
+end subroutine FL_driver
+   !
+   !
+   subroutine FL_FT_matrices()
+     !
+     use pars,           ONLY:SP,cI,pi
+     use fl_optics
+     !
+     implicit none
+     !
+     complex(SP)  :: dummy_det
+     integer      :: i_t,i1_extra,i1_shift_extra
+     !
+     do i_t=1,n_tot_extra_modes ! loop on time
+       do i1_extra=1,n_tot_extra_modes
+         !
+         i1_shift_extra = i1_extra -(max_extra_mode+1)
+         !
+         FL_FT_extra_M(i_t,i1_extra) = exp(-1._SP*cI*i1_shift_extra*2._SP*pi*(i_t-1._SP)/n_tot_extra_modes)
+         !
+       enddo
+     enddo ! loop on time
+     !
+     FL_FT_extra_Mm1 = FL_FT_extra_M
+     call SERIAL_inversion(n_tot_extra_modes,FL_FT_extra_Mm1,dummy_det,.false.)     !
+     !
+   end subroutine FL_FT_matrices

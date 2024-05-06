@@ -1,4 +1,4 @@
 objs = yambo.o 
-#if defined _ypp || _ypp_ph || _ypp_rt || _ypp_surf || _ypp_magnetic || _ypp_sc || _ypp_nl
+#if defined _ypp || _ypp_ph || _ypp_rt || _ypp_surf || _ypp_magnetic || _ypp_sc || _ypp_nl || _ypp_fl
 objs = ypp.o 
 #endif

@@ -53,6 +53,9 @@ PJ_NLLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
                tddft dipoles pol_function qp acfdt bse hamiltonian collisions \
                real_time_hamiltonian real_time_propagation \
                real_time_initialize real_time_drivers nloptics
+
+PJ_FLLIBS    = $(PJ_NLLIBS) floquet
+PJ_FLLIBS_LD = $(PJ_NLLIBS_LD) floquet
 #
 # Yambo folders needed by Interfaces
 #=====================================

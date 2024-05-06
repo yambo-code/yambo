@@ -37,7 +37,7 @@ $cpp $cppflags $precomp_flags objects.c  > no_pj.mk
 #
 # Projects 
 #==========
-for PJ in _SC _RT _RT_SCATT _ELPH _ELPH_ITERATIVE _PHEL _NL _QED _YPP_ELPH _YPP_RT _YPP_NL _YPP_SC _yambo _ypp _a2y _p2y _c2y _DOUBLE _MODELS
+for PJ in _SC _RT _ELPH _NL _FL _YPP_ELPH _YPP_RT _YPP_NL _YPP_FL _YPP_SC _yambo _ypp _a2y _p2y _c2y _DOUBLE
 do
  #
  $cpp $cppflags $precomp_flags -D$PJ objects.c  > $PJ.mk
@@ -49,6 +49,11 @@ do
   if [ "$PJ" == "_DOUBLE" ] ; then
     sources_pj_dependent+=" ${obj}\n"
     continue
+  elif [ "$PJ" == "_FL"  ] ; then
+    if test `grep $PJ $file | grep '#' | grep -v _YPP_FL | wc -l` -ge 1 ; then
+      sources_pj_dependent+=" ${obj}\n"
+      continue
+    fi
   elif [ "$PJ" == "_NL"  ] ; then
     if test `grep $PJ $file | grep '#' | grep -v _YPP_NL | wc -l` -ge 1 ; then
       sources_pj_dependent+=" ${obj}\n"

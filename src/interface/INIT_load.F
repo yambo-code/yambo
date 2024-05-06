@@ -15,7 +15,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use it_tools,      ONLY:it,runlevel_is_on
  use it_m,          ONLY:initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,V_ph,&
-&                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time,V_nl_optics
+&                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time,V_nl_optics,&
+&                        V_fl_optics
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,&
 &                        global_gauge,Chi_linalg_mode, &
 &                        X_terminator_Kind,X_terminator_E,X_DbGd_percentual
@@ -82,6 +83,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _NL
  use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha, &
 &                        NL_verb_name,n_angles,NL_rot_axis 
+#endif 
+#if defined _FL
+ use fl_optics,     ONLY:FL_Chi_order,FL_Chi_thr_1,FL_Chi_thr_2,FL_Chi_thr_3,FL_deg_thrs,FL_deg_lift,&
+&                        FL_solver_mode,FL_S_inv_mode,FL_max_iterations,FL_beta,FL_add_mode,&
+&                        FL_ild,FL_Pade_damping
 #endif 
 #if defined _NL | defined _SC
  use fields,        ONLY:Efield
@@ -521,6 +527,26 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'UseDipoles','[NL] Use Covariant Dipoles (just for test purpose)',verb_level=V_nl_optics)
  call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_nl_optics)
  call it('f',defs,'EvalCurrent','[NL] Evaluate the current')
+ !
+#endif
+ !
+#if defined _FL
+ !
+ ! Floquet optics
+ !
+ call it(defs,'Xorder',    '[FL] Max order of the response/exc functions',FL_Chi_order)
+ call it(defs,'Xadd_mode', '[FL] Additional modes to ensure convercence',FL_add_mode,verb_level=V_fl_optics)
+ call it(defs,'Xthresh_1', '[FL] Self-consistent threshold on 1st order response function',FL_Chi_thr_1)
+ call it(defs,'Xthresh_2', '[FL] Self-consistent threshold on 2nd order response function',FL_Chi_thr_2)
+ call it(defs,'Xthresh_3', '[FL] Self-consistent threshold on 3rd order response function',FL_Chi_thr_3)
+ call it(defs,'FL_solver',    '[FL] Eigenproblem solver mode ("(D)IAGONALIZATION")',FL_solver_mode)
+ call it(defs,'FL_deg_thresh','[FL] Degeneracy threshold in KS band structure',FL_deg_thrs,verb_level=V_fl_optics)
+ call it(defs,'FL_deg_lift',  '[FL] Degeneracy lifting of KS band structure',FL_deg_lift,verb_level=V_fl_optics)
+ call it(defs,'S_inv_mode',   '[FL] Inversion method ("(N)UMERICAL/(P)ERTURBATIVE")',FL_S_inv_mode,verb_level=V_fl_optics)
+ call it(defs,'FL_beta',     '[FL] Mixing beta',FL_beta,verb_level=V_fl_optics)
+ call it(defs,'FL_max_it',   '[FL] Maximum number of iterations',FL_max_iterations,verb_level=V_fl_optics)
+ call it(defs,'FL_2D_ild',   '[FL] Interlayer distance [Bohr] (-1 for bulk)',FL_ild,verb_level=V_fl_optics)
+ call it(defs,'FL_Pade',   '[FL] Additional Floquet-mode-dependent damping',FL_Pade_damping,unit=E_unit,verb_level=V_fl_optics)
  !
 #endif
  !

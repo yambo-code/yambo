@@ -23,7 +23,7 @@ lIO="\$(liotk) \$(letsf) \$(lnetcdff) \$(lnetcdf) \$(lhdf5)"
 lextlibs="\$(llibxc) \$(lfft) \$(lfutile) \$(lyaml)"
 #
 case $target in
-  yambo_nl)
+  yambo_nl|yambo_fl)
    libs="$libs $llocal $lPLA $lIO $lextlibs -lm"
     ;;
   yambo*)

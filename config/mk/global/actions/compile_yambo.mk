@@ -26,11 +26,15 @@ else ifneq (,$(findstring yambo_nl,$(MAKECMDGOALS)))
  PRECMP=-D_NL -D_RT -D_DOUBLE
  SRC_LIBS=$(PJ_NLLIBS)
  EXE_LIBS=$(PJ_NLLIBS_LD)
+else ifneq (,$(findstring yambo_fl,$(MAKECMDGOALS)))
+ PRECMP=-D_FL -D_NL -D_RT -D_DOUBLE
+ SRC_LIBS=$(PJ_FLLIBS)
+ EXE_LIBS=$(PJ_FLLIBS_LD)
 endif
 #
 # Compilation
 #
-yambo yambo_ph yambo_sc yambo_rt yambo_nl: 
+yambo yambo_ph yambo_sc yambo_rt yambo_nl yambo_fl: 
 	@rm -f ${compdir}/log/"compile_"$@".log"
 	@rm -f ${compdir}/config/stamps_and_lists/compilation_stop_$@.stamp
 	@touch ${compdir}/config/stamps_and_lists/compiling_$@.stamp

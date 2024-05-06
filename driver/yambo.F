@@ -16,7 +16,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_mpa,l_bss,l_bse,l_em1d,l_X,&
-&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_phel_corr
+&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_phel_corr,l_fl_optics
 #if defined _SCALAPACK
  use drivers,       ONLY:l_slk_test
 #endif
@@ -147,7 +147,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !=========
  !
  launch_me= any((/l_em1d,l_em1s,l_ppa,l_mpa,l_optics,l_life.and.l_elel_corr,l_dipoles,l_real_time,&
-&                    l_sc_run,l_nl_optics/)).and.Dip%iq(1)==1
+&                    l_sc_run,l_nl_optics,l_fl_optics/)).and.Dip%iq(1)==1
  !
  if (launch_me) call DIPOLE_driver(DIPen, Xk, q, Dip)
  if (launch_me) call mem_manager_report
@@ -247,6 +247,19 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (l_nl_optics) call NL_driver(en,X(:2),k,q,Dip)
  if (l_nl_optics) call mem_manager_report
+ !
+#endif
+ !
+ !aim137:this is to tell make to compile FL subroutines 
+ !aim137:see actions in make files.
+ !
+#if defined _FL
+ !
+ ! FL
+ !====
+ !
+ if (l_fl_optics) call FL_driver(en,X(:2),k,q,Dip)
+ if (l_fl_optics) call mem_manager_report
  !
 #endif
  !

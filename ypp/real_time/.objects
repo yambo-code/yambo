@@ -12,4 +12,7 @@ RT_objects = RT_ypp_driver.o \
 #if defined _YPP_NL
 NL_objects = NL_ypp_driver.o RT_coefficients_Inversion.o NL_exc_driver.o
 #endif
-objs = $(RT_objects) $(NL_objects)
+#if defined _YPP_FL
+FL_objects = FL_bands_interpolation.o
+#endif
+objs = $(RT_objects) $(NL_objects) $(FL_objects)

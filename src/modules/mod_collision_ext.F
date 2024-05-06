@@ -89,6 +89,13 @@ module collision_ext
  type(COLLISIONS_element), allocatable :: HXC_COLL_element(:)
  type(COLLISIONS_element), allocatable :: P_COLL_element(:)
  !
+ ! On the fly long-range SEX (LSEX) collisions
+ ! ====================================
+ integer :: ng_oscll                  ! number of G-vectors in the Oscillators
+ complex(SP), allocatable :: W(:,:,:) ! screened interaction
+ complex(SP), allocatable :: OSCLL(:,:,:,:,:) ! Oscillators
+ complex(SP), allocatable :: OSCLL_k(:,:,:,:) ! Oscillators in k, just for the evaluation
+ !
  contains
    !
    subroutine COLLISIONS_naming( H_SE_kind , what )

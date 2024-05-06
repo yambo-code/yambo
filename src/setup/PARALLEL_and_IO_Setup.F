@@ -22,7 +22,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use parallel_int,   ONLY:PP_bcast,PP_redux_wait 
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:WF_buffered_IO
- use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads
+ use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads,n_threads_OSCLL
  use memory,         ONLY:USER_MEM_limit_string
  use LIVE_t,         ONLY:USER_wall_time_string
  use cuda_m,         ONLY:cuda_visible_devices,have_cuda_devices,cuda_gpu_subscription
@@ -84,7 +84,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! CPU structure REPORT
  !======================
  !
- n_max_threads=maxval((/n_threads,n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL/))
+ n_max_threads=maxval((/n_threads,n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads_OSCLL/))
  !
  if (ncpu>1.or.n_max_threads>1) then
    !

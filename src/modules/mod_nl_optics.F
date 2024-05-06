@@ -99,8 +99,11 @@ module nl_optics
  integer, parameter :: LRCW   = 6
  integer, parameter :: HF     = 7
  integer, parameter :: SEX    = 8
+ integer, parameter :: LSEX   = 9
+ integer, parameter :: LHF    = 10
  !
  logical :: eval_COLLISIONS
+ logical :: eval_OSCLL
  logical :: eval_dG
  !
  ! Non-linear spectra parameters
@@ -141,6 +144,7 @@ module nl_optics
  !
  logical  :: l_use_DIPOLES   ! Use standard dipoles (valid only for linear response)
  logical  :: l_eval_CURRENT  ! Evaluate current using the commutator v=[H,r] and the IP formulation
+ logical  :: l_test_OSCLL    ! Test collisions built using OSCLLs vs standard Collisions
  !
  ! IO variables
  !
@@ -185,9 +189,14 @@ module nl_optics
      if(eval_dG) then
        YAMBO_ALLOC(dG,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk))
      endif
+     !
      if(l_use_Hxc_collisions) then
        YAMBO_ALLOC(RT_Vnl_xc,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_sp_pol))
      endif          
+     !
+     if(eval_dG) then
+       YAMBO_ALLOC(dG,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk))
+     endif
      !
      ! Reference energies
      !
@@ -266,6 +275,9 @@ module nl_optics
      !
      if(l_use_Hxc_collisions) then
        YAMBO_FREE(RT_Vnl_xc)
+     endif
+     if(eval_dG) then
+       YAMBO_FREE(dG)
      endif
      !
    end subroutine NL_free

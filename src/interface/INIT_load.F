@@ -52,7 +52,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _SC || defined _RT || defined _QED
  use hamiltonian,   ONLY:H_ref_bands,H_potential
- use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands
+ use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands,ng_oscll
 #endif
  use QP_m,          ONLY:SC_E_threshold
 #if defined _SC
@@ -94,7 +94,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,E_kpq_sh_fact,gkkp_db
 #endif
 #if defined _OPENMP
- use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads_NL
+ use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads_NL, &
+&                        n_threads_OSCLL
 #endif
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_test_H_dim
@@ -208,6 +209,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'K_Threads',       '[OPENMP/BSK] Number of threads for response functions',n_threads_K)
  call it(defs,'X_Threads',       '[OPENMP/X] Number of threads for response functions',n_threads_X)
  call it(defs,'DIP_Threads',     '[OPENMP/X] Number of threads for dipoles',n_threads_DIP)
+ call it(defs,'OSCLL_Threads',    '[OPENMP/X] Number of threads for Oscillators',n_threads_OSCLL)
  call it(defs,'SE_Threads',      '[OPENMP/GW] Number of threads for self-energy',n_threads_SE)
  call it(defs,'RT_Threads',      '[OPENMP/RT] Number of threads for real-time',n_threads_RT)
  call it(defs,'NL_Threads',      '[OPENMP/NL] Number of threads for nl-optics',n_threads_NL)
@@ -410,7 +412,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic QP_secant (HS)',Gr_kind,Verb_level=V_real_time)
- call it(defs,'RADLifeTime','[RT] Radiative life-time (if negative Yambo sets it equal to Phase_LifeTime in NL)', &
+ call it(defs,'RADLifeTime','[RT] Radiative life-time (if negative RADLifeTime=Phase_LifeTime)', &
 &         RAD_LifeTime,unit=Time_unit(1))
  call it(defs,'RADmagnific','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
  call it(defs,'PhLifeTime', '[RT] Constant Dephasing Time',Phase_LifeTime,unit=Time_unit(1))
@@ -511,7 +513,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'NLstep',       '[NL] Time step length',RT_step,unit=Time_unit(1),Verb_level=V_nl_optics)
  call it(defs,'NLtime',       '[NL] Simulation Time',NE_tot_time,unit=Time_unit(1))
  call it(defs,'NLintegrator', '[NL] Integrator ("EULEREXP/RK2/RK4/RK2EXP/HEUN/INVINT/CRANKNIC")',Integrator_name)
- call it(defs,'NLCorrelation','[NL] Correlation ("IPA/HARTREE/TDDFT/LRC/LRW/JGM/SEX") ',NL_correlation)
+ call it(defs,'NLCorrelation','[NL] Correlation ("IPA/HARTREE/TDDFT/LRC/LRW/JGM/SEX/LSEX/LHF") ',NL_correlation)
  call it(defs,'NLLrcAlpha',   '[NL] Long Range Correction',NL_LRC_alpha)
  call it(defs,'NLDamping',    '[NL] Damping (or dephasing)',NL_damping,unit=E_unit)
  call it(defs,'NLEnRange',    '[NL] Energy range (for loop on frequencies NLEnSteps/=0',NL_er,E_unit)
@@ -519,6 +521,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'NLrotaxis',    '[NL] Rotation axis (for the loop on angles NLAngSteps/=0)',NL_rot_axis)
  call it(defs,'NLEnSteps',    '[NL] Energy steps for the loop on frequencies',n_frequencies)
  call it('f',defs,'UseDipoles','[NL] Use Covariant Dipoles (just for test purpose)',verb_level=V_nl_optics)
+ call it('f',defs,'TestOSCLL','[NL] Test Oscillators vs Full Collisions [for testing purposes]',verb_level=V_nl_optics)
  call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_nl_optics)
  call it('f',defs,'EvalCurrent','[NL] Evaluate the current')
  !
@@ -778,6 +781,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        if (i_s==8) possible_fields='(w,k) '      ! NL
        if (i_s==9) possible_fields='(k) '        ! BZ
        if (i_s==10)possible_fields='(q,k,b) '    ! PH_SE
+       if (i_s==11)possible_fields='(k) '        ! OSCLL
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
        name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"

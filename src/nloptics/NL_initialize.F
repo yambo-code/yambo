@@ -17,15 +17,17 @@ subroutine NL_initialize(E,k)
  use X_m,            ONLY:global_gauge
  use zeros,          ONLY:zero_dfl
  use com,            ONLY:msg
+ use QP_m,           ONLY:QP_ng_Sc,QP_ng_Sx
+ use collision_ext,  ONLY:ng_oscll
  use R_lattice,      ONLY:bz_samp,k_map
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field,l_NE_with_fields, &
 &                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential,RAD_LifeTime
  use RT_control,     ONLY:SETUP_RT_IO_type,OBS_RT_IO_t
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
-&                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
-&                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity, &
-&                         l_eval_CURRENT,l_pump_and_probe,DephMult,l_velocity_IPA,n_angles, &
+&                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM,  &
+&                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity,LSEX,&
+&                         l_eval_CURRENT,l_pump_and_probe,DephMult,l_velocity_IPA,n_angles,l_test_OSCLL,LHF,eval_OSCLL,  &
 &                         NL_ang_step,n_runs,NL_rot_axis,loop_on_frequencies,loop_on_angles,NL_initial_versor
  use electric,       ONLY:l_force_SndOrd,l_P_periodic
  use parser_m,       ONLY:parser
@@ -49,6 +51,7 @@ subroutine NL_initialize(E,k)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('EvalCurrent' ,         l_eval_CURRENT)
  call parser('FrPolPerdic' ,         l_P_periodic)
+ call parser('TestOSCLL',            l_test_OSCLL)
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
  if(l_P_periodic)  call msg('sr','[NL] Enforce periodicity of the polarization repect to Efield')
@@ -275,6 +278,7 @@ subroutine NL_initialize(E,k)
  eval_DFT       =.false.
  eval_dG        =.false.
  eval_COLLISIONS=.false.
+ eval_OSCLL     =.false.
  !
  ! NB.: This part duplicates what is in
  !      INIT.F 
@@ -316,6 +320,17 @@ subroutine NL_initialize(E,k)
         eval_COLLISIONS=.true.
         l_sc_coh       =.true.
         l_sc_sex       =.true.
+    case('LSEX')
+        Correlation    = LSEX
+        RT_potential   ='LSEX'
+        eval_HARTREE   =.true.
+        eval_OSCLL     =.true.
+        eval_dG        =.true.
+    case('LHF')
+        Correlation    = LHF
+        RT_potential   ='LHF'
+        eval_HARTREE   =.true.
+        eval_OSCLL     =.true.
     case('HF')
         Correlation=HF
         RT_potential   ='HARTREE+FOCK'
@@ -327,6 +342,38 @@ subroutine NL_initialize(E,k)
     case default
         call error("Unknow correlation in the response function")
  end select
+ !
+ if(l_test_OSCLL.and.(Correlation==LSEX.or.Correlation==LHF)) then
+   !      
+   eval_COLLISIONS=.TRUE.
+   eval_dG        =.TRUE.
+   !
+   ! I force loading collision for testing porpouse
+   !
+   if(Correlation==LHF) then
+     RT_potential='FOCK'
+   elseif(Correlation==LSEX) then
+     RT_potential='SEX'
+   endif
+   !
+   call msg('s','')
+   call msg('s','*****************************************')
+   call msg('s','**** TEST TEST Oscillators TEST TEST ****')
+   call msg('s','*****************************************')
+   call msg('s','')
+   !
+ endif
+ !
+ ! Set the number of g-vectors for oscillators and W(q,G,G')
+ !
+ if(Correlation==LHF) ng_oscll=QP_ng_Sx
+ if(Correlation==LSEX) then
+   if(QP_ng_Sx/=QP_ng_Sc) call warning(' EXXRLvcs /= CORRLvcs not possible with oscillator, largest value will be used') 
+   ng_oscll=maxval((/QP_ng_Sx,QP_ng_Sc/))
+   QP_ng_Sx=ng_oscll
+   QP_ng_Sc=ng_oscll
+   call msg('rs','Number of G-vectors in oscillators :',ng_oscll)
+ endif
  !
  if(eval_COLLISIONS.and.COLLISIONS_CV_only) call warning(' ONLY cv scattering in COLLISIONS! ')
  ! 

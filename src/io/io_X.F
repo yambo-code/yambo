@@ -106,7 +106,10 @@ integer function io_X(X,Xw,ID)
      YAMBO_FREE(X_RLcomp_ig)
      YAMBO_ALLOC(X_RLcomp_ig,(X%ng))
      i_err = X_RLcomp_table() 
-     if ( i_err < 0 ) io_status(ID) = IO_INCOMPATIBLE_VAR
+     if ( i_err < 0 ) then
+	io_status(ID) = IO_INCOMPATIBLE_VAR
+	call warning("RL vectors in PP/Em1s database not compatible with the Yambo ones")
+     endif
      if ( i_err > 0 ) different_db_RL_order=.true.
    endif
    YAMBO_FREE(RL_vecs_disk)

@@ -324,12 +324,16 @@ subroutine NL_initialize(E,k)
         Correlation    = LSEX
         RT_potential   ='LSEX'
         eval_HARTREE   =.true.
+ 	! Turn off Hartree if required
+	if(QP_ng_SH<=1) eval_HARTREE=.false.
         eval_OSCLL     =.true.
         eval_dG        =.true.
     case('LHF')
         Correlation    = LHF
         RT_potential   ='LHF'
         eval_HARTREE   =.true.
+ 	! Turn off Hartree if required
+	if(QP_ng_SH<=1) eval_HARTREE=.false.
         eval_OSCLL     =.true.
     case('HF')
         Correlation=HF

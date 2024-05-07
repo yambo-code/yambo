@@ -17,7 +17,7 @@ subroutine NL_initialize(E,k)
  use X_m,            ONLY:global_gauge
  use zeros,          ONLY:zero_dfl
  use com,            ONLY:msg
- use QP_m,           ONLY:QP_ng_Sc,QP_ng_Sx
+ use QP_m,           ONLY:QP_ng_Sc,QP_ng_Sx,QP_ng_Sh
  use collision_ext,  ONLY:ng_oscll
  use R_lattice,      ONLY:bz_samp,k_map
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT

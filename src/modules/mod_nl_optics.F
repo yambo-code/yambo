@@ -186,10 +186,6 @@ module nl_optics
        YAMBO_ALLOC(V_xc_0,(fft_size,n_spin))
      endif          
      !
-     if(eval_dG) then
-       YAMBO_ALLOC(dG,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk))
-     endif
-     !
      if(l_use_Hxc_collisions) then
        YAMBO_ALLOC(RT_Vnl_xc,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_sp_pol))
      endif          

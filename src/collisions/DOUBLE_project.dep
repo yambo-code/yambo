@@ -1,3 +1,4 @@
+ Build_LSEX_collisions.o
  COLLISIONS_HXC.o
  COLLISIONS_NEQ_GW_static.o
  COLLISIONS_alloc_and_free.o
@@ -10,6 +11,12 @@
  COLLISIONS_load.o
  COLLISIONS_map_to_QP_table.o
  COLLISIONS_momentum.o
+ LSEX_potential.o
+ OSCLL_compose_collision.o
+ OSCLL_compose_nl.o
+ OSCLL_eval.o
+ OSCLL_load.o
+ OSCLL_old_compose_nl.o
  PLASMA_build_up.o
  PLASMA_parallel_setup.o
  PLASMA_tables_and_dimensions.o

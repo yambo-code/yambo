@@ -36,6 +36,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                        l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
 &                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val,&
 &                        O1,O2,O_times_W
+ use BS_interfaces, ONLY:K_exchange_kernel_resonant,K_exchange_kernel_coupling
  use collision_el,  ONLY:elemental_collision_free
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
@@ -88,7 +89,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  real(SP), allocatable :: BS_max_val_CPU(:)
  !
  complex(SP),   external ::K_correlation_kernel_std,K_correlation_kernel_dir
- complex(SP),   external ::K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
  ! Oscillators
  !

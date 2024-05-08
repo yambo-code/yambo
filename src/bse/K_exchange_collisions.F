@@ -17,7 +17,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  use timing_m,       ONLY:timing
  use openmp,         ONLY:OPENMP_update,master_thread
  use collision_el,   ONLY:elemental_collision_free,elemental_collision_alloc
- use devxlib,        ONLY:devxlib_memcpy_d2d,devxlib_memcpy_h2d,&
+ use devxlib,        ONLY:devxlib_memcpy_d2d,devxlib_memcpy_h2d,devxlib_memcpy_d2h,&
 &                         devxlib_conjg,devxlib_memset_d
  !
 #include<dev_defs.h>
@@ -137,6 +137,9 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        if (i_s>nsym/(i_time_rev+1)) call devxlib_conjg(BS_T_grp(i_T_grp)%DEV_VAR(O_x)(:,i_T_el),range1=(/2,BS_n_g_exch/) )
        !
      endif
+     !
+     call devxlib_memcpy_d2h( BS_T_grp(i_T_grp)%DEV_VAR(O_x), BS_T_grp(i_T_grp)%O_x, &
+     &                             range1=[1,1],range2=[i_T_el,i_T_el])   
      !
    else
      !

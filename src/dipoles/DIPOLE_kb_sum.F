@@ -46,7 +46,7 @@ use devxlib,       ONLY:devxlib_xGEMM_gpu
 #elif defined _OPENACC || defined _OPENMP_GPU
  !
  call c_f_pointer(c_loc(kbv), kbv_p, (/wf_ncx,dim_flat/) )
- call c_f_pointer(c_loc(XX(:,:,:,pp_range(1):pp_range(2),ib)),     XX_p, (/n_spinor,dim_flat/) )
+ call c_f_pointer(c_loc(XX(:,:,:,pp_range(1):pp_range(2),ib)),  XX_p, (/n_spinor,dim_flat/) )
  !
 #else
  !

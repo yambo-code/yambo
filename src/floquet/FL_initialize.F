@@ -66,9 +66,8 @@ subroutine FL_initialize(E,k,q)
  n_tot_extra_modes  = 2*max_extra_mode+1
  n_tot_duffin_modes = 2*max_duffin_mode+1
  !
- n_runs=1
+ n_runs=n_frequencies
  n_angles=1
- n_frequencies=1
  !
  NL_nbands=NL_bands(2)-NL_bands(1)+1
  !

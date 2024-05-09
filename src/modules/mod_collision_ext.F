@@ -11,7 +11,7 @@ module collision_ext
  ! EXTENDED COLLISION
  !====================
  !
- use pars,       ONLY:SP,LP,schlen
+ use pars,       ONLY:SP,SP6,LP,schlen
  use parallel_m, ONLY:PP_indexes
  !
  implicit none
@@ -50,7 +50,7 @@ module collision_ext
    integer               :: I=0         ! State Index 
    integer               :: N=0         ! Linear Dimension
    character,   allocatable  :: table(:,:,:)
-   complex(SP), allocatable  :: v_c(:)       ! SEX and HF
+   complex(SP6), allocatable :: v_c(:)       ! SEX and HF only in single precision
    complex(SP), allocatable  :: v3_c(:,:,:)
    real(SP)   , allocatable  :: v_r(:)       ! GW NEQ collisions
    real(SP)   , allocatable  :: v3_r(:,:,:)

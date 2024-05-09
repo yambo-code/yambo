@@ -7,7 +7,7 @@
 !
 integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
- use pars,          ONLY:schlen,IP,SP,IP_YIO,CR_YIO
+ use pars,          ONLY:schlen,IP,SP,SP6,IP_YIO,CR_YIO
  use parallel_m,    ONLY:master_cpu
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use collision_ext, ONLY:COLLISIONS_element,COLLISIONS_group,LAST_COLL_sync,PAR_COLL_min
@@ -30,7 +30,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  integer, intent(in)     ,optional         :: i_coll_
  !
  real(SP),   pointer :: tmp_link_real(:,:)
- complex(SP),pointer :: tmp_link_complex(:,:)
+ complex(SP6),pointer :: tmp_link_complex(:,:)
  !
  character(1)      :: TMP_VAR(1)
  character(schlen) :: db_name

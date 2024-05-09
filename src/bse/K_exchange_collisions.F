@@ -138,8 +138,8 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        !
      endif
      !
-     call devxlib_memcpy_d2h( BS_T_grp(i_T_grp)%DEV_VAR(O_x), BS_T_grp(i_T_grp)%O_x, &
-     &                             range1=[1,1],range2=[i_T_el,i_T_el])   
+     call devxlib_memcpy_d2h( BS_T_grp(i_T_grp)%O_x, BS_T_grp(i_T_grp)%DEV_VAR(O_x), &
+     &                             range1=[1,BS_n_g_exch],range2=[i_T_el,i_T_el])   
      !
    else
      !

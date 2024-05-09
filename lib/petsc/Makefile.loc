@@ -60,6 +60,7 @@ install: uncompress configure compile
 	@if ! test -f installed.stamp ; then \
          echo "\t[$(PACKAGE)] installation"; \
          ( cd $(PACKAGE); $(make) PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) install >> ${compdir}/log/install_$(PACKAGE).log 2>&1 ); \
+         ( cd $(PACKAGE); cp lib/petsc/conf/rules.utils $(LIBPATH)/lib/petsc/conf/ ); \ 
 	 touch installed.stamp; \
 	fi
 

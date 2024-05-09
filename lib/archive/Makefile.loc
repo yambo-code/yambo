@@ -6,8 +6,7 @@ ifeq ($(wildcard ./git.list),./git.list)
   include ./git.list
   include ../../config/setup
 else
- git_Ydriver=git@github.com:yambo-code/Ydriver.git
- branch_Ydriver=none
+  include ./git.list.def
 endif
 #
 WGETFLAGS=--no-check-certificate -v
@@ -46,7 +45,7 @@ scalapack:
 petsc:
 	@+URL="$(url_petsc)"    ; LIB="$(pkgname_petsc)"; $(getsrc)
 slepc:
-	@+URL="$(url_slepc)"    ; LIB="$(pkgname_slepc)"; $(getsrc)
+	@+URL="$(url_slepc)"    ; LIB="$(pkgname_slepc)";  GBRANCH="$(branch_slepc)"  ;  GIT="$(git_slepc)" ;  $(call getsrc_git,"slepc");
 fftw:
 	@+URL="$(url_fftw)"     ; LIB="$(pkgname_fftw)"; $(getsrc)
 fftqe:

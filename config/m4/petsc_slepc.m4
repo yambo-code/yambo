@@ -21,6 +21,7 @@ AC_ARG_WITH(petsc_path, AS_HELP_STRING([--with-petsc-path=<path>],[Path to the P
 AC_ARG_WITH(petsc_libdir,AS_HELP_STRING([--with-petsc-libdir=<path>],[Path to the Petsc lib directory],[32]))
 AC_ARG_WITH(petsc_includedir,AS_HELP_STRING([--with-petsc-includedir=<path>],[Path to the Petsc include directory],[32]))
 
+AC_ARG_WITH(slepc-branch,[AS_HELP_STRING([--with-slepc-branch=<branch>],[Use the <branch> of the slepc repository.],[32])],,[with_slepc_branch=none])
 #
 def_slepc=""
 petsc="no"
@@ -293,5 +294,6 @@ AC_SUBST(compile_petsc)
 AC_SUBST(compile_slepc)
 AC_SUBST(internal_petsc)
 AC_SUBST(internal_slepc)
+AC_SUBST(with_slepc_branch)
 #
 ])

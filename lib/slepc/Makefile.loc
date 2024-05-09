@@ -24,10 +24,14 @@ all: $(LIBRARY)
 #
 uncompress:
 	@$(get_the_lib)
-	@$(uncompress)
+	@if test -d ../archive/slepc-src && ! test -e $(PACKAGE) ; then \
+         (ln -s ../archive/slepc-src ./$(PACKAGE)); \
+	else \
+	 $(uncompress) \
+	fi
 
 configure: uncompress
-	@if test -d $(PACKAGE) && ! test -f configured.stamp; then \
+	@if test -e $(PACKAGE) && ! test -f configured.stamp; then \
          echo "\t[$(PACKAGE)] configuration"; \
 	 cd $(PACKAGE); \
 	 echo "PETSC_DIR=$(LIBPATH)" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
@@ -40,7 +44,7 @@ configure: uncompress
 	fi
 	
 compile: uncompress configure
-	@if test -d $(PACKAGE) && ! test -f compiled.stamp ; then \
+	@if test -e $(PACKAGE) && ! test -f compiled.stamp ; then \
          echo "\t[$(PACKAGE)] compilation"; \
 	 cd $(PACKAGE); \
          $(make) -j1 SLEPC_DIR=$(PWD)/$(PACKAGE) PETSC_DIR=$(LIBPATH)  >> ${compdir}/log/compile_$(PACKAGE).log 2>&1; \

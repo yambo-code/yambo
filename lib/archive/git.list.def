@@ -1,0 +1,8 @@
+#
+# GIT's repositories and branches
+#
+git_Ydriver=git@github.com:yambo-code/yambo-libraries.git
+branch_Ydriver=none
+#
+git_slepc=git@gitlab.com:slepc/slepc.git
+branch_slepc=none

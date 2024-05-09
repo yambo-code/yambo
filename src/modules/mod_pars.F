@@ -60,7 +60,8 @@ module pars
  !=======
  integer, parameter  :: DP = selected_real_kind(14,200)
 #if defined _DOUBLE
- integer, parameter  :: SP = selected_real_kind(14,200)
+ integer, parameter  :: SP  = selected_real_kind(14,200)
+ integer, parameter  :: SP6 = selected_real_kind(6,30)
 #else
  integer, parameter  :: SP = selected_real_kind(6,30)
 #endif

@@ -21,7 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-! GKKP formulation following the F. Paleari PhD thesis
+! ======================================================================
+! GKKP formulation following the F. Paleari PhD thesis (Pg. 109, Eq : 4.25)
+! The exciton phonon matrix elements are defined as <q=Q,S'|dV_{Q}|q=0,S>
+!
+! MN : We compute ex-ph matrix elements for phonon absoption i.e <q=Q|dV_{Q}|q=0>
+! In case of phonon emission, we need <q=0|dv^\dagger|q=Q>, this can 
+! be obtained by conjugating the phonon-absorption matrix elements 
+! i.e <q=0|dv^\dagger|q=Q> = conjg(<q=Q|dv|q=0>)
 !
 subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  !
@@ -128,7 +135,7 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
        !write(iq_bz*1000+i_beta,*) i_Hp,ik_bz,ivp,ic,abs(BS_mat(i_Hp,i_beta)),ip_bz,ik_db,k%ptbz(ik_bz,:)
        !
        if (l_abs_exc)      Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*abs(BS_mat_out(i_Hp,i_beta))
-       if (.not.l_abs_exc) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*    BS_mat_out(i_Hp,i_beta)
+       if (.not.l_abs_exc) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*conjg(BS_mat_out(i_Hp,i_beta))
        !
      enddo
      !
@@ -151,14 +158,14 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
        if (.not.l_const_elph) then
          ik_db=K_io_map(ik_plus_iq_bz)
          !ik_db=K_io_map(ik_bz)
-         if(.not.l_abs_elph) elph_gkkp=conjg(GKKP%dVc(il,icp,ic,ik_db,1))/sqrt(2._SP*ph_E)
+         if(.not.l_abs_elph) elph_gkkp=GKKP%dVc(il,icp,ic,ik_db,1)/sqrt(2._SP*ph_E)
          if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,icp,ic,ik_db,1))/sqrt(2._SP*ph_E)
          !if(.not.l_abs_elph) elph_gkkp=conjg(GKKP%dVc(il,ic,icp,ik_db,1))/sqrt(2._SP*ph_E)
          !if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,ic,icp,ik_db,1))/sqrt(2._SP*ph_E)
        endif
        !
        if (l_abs_exc)      Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*abs(BS_mat_out(i_Hp,i_beta))
-       if (.not.l_abs_exc) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*    BS_mat_out(i_Hp,i_beta) 
+       if (.not.l_abs_exc) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*conjg(BS_mat_out(i_Hp,i_beta)) 
        !
      enddo
      !
@@ -189,6 +196,7 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
        !
        ! "Left" part of exciton-phonon coupling. The "right" part is its conjugate
        !
+       ! MN : FIX ME ! Any reason why we use hole-electron instead of the standard elec-hole?
        if (l_abs_exc) then
          EXCPH_Gkkp(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)+&
  &                                        abs(BS_mat_in(i_H,i_alpha))*(Xi(i_H,1)-Xi(i_H,2))

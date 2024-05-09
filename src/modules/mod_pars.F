@@ -64,6 +64,7 @@ module pars
  integer, parameter  :: SP6 = selected_real_kind(6,30)
 #else
  integer, parameter  :: SP = selected_real_kind(6,30)
+ integer, parameter  :: SP6 = selected_real_kind(6,30)
 #endif
  !
  integer, parameter  :: IP  = int32      ! 4 bytes integer, == selected_int_kind(8)

@@ -60,7 +60,7 @@ subroutine COLLISIONS_compose_nl(G_in)
          !
          if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)=="t") then
            RT_Vnl_xc(i_n,i_m,i_k_NL,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_NL,i_spin) &
-&                                               -cI*HXC_COLL_element(i_coll_mem)%v_c(i_comp)*G_in(ib,ibp,i_kmq)
+&                                               -cI*dcmplx(HXC_COLL_element(i_coll_mem)%v_c(i_comp))*G_in(ib,ibp,i_kmq)
            i_comp=i_comp+1
          endif
          !
@@ -79,7 +79,7 @@ subroutine COLLISIONS_compose_nl(G_in)
    i_n       =HXC_collisions%state(i_coll,1)
    i_m       =HXC_collisions%state(i_coll,2)
    !
-   RT_Vnl_xc(i_n,i_n,i_k,:) =real(RT_Vnl_xc(i_n,i_n,i_k,:))
+   RT_Vnl_xc(i_n,i_n,i_k,:) =real(RT_Vnl_xc(i_n,i_n,i_k,:),SP)
    RT_Vnl_xc(i_m,i_n,i_k,:)=conjg(RT_Vnl_xc(i_n,i_m,i_k,:))
    ! 
  enddo

@@ -31,7 +31,6 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
  use QP_m,           ONLY:QP_nk
  use fields,         ONLY:Efield
  use linear_algebra, ONLY:DIAGO
- use interfaces,     ONLY:LINEAR_ALGEBRA_driver
  use wrapper,        ONLY:M_by_V,V_plus_alpha_V,Vstar_dot_V
  use nl_optics,      ONLY:NL_bands,E_full,NL_damping
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
@@ -55,7 +54,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
  !
  real(SP)    :: min_projection,trial_projection,trial_val,trial_proj
  real(SP)    :: energy_difference(FL_states(1):FL_states(2))
- integer     :: ik_bz,i_sp_pol,is,size_Hamiltonian,i_m,ik_mem
+ integer     :: ik_bz,i_sp_pol,is,size_Hamiltonian,i_m,ik_mem,FL_n_states
  integer     :: i1,i2,i1_fl,i2_fl,i1_fks,i2_fks,i3_fks
  integer     :: FL_chosen_bands(NL_bands(1):maxval(E%nbf)),i1_fks_eigenvec
  character(4) :: filename,filename2
@@ -80,6 +79,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
  l_assume_Hermitian = .false.
  !
  FL_V_bands_hist = FL_V_bands
+ FL_n_states = FL_states(2)-FL_states(1)+1
  !
  do ik_bz=1,QP_nk
    !
@@ -102,9 +102,9 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
        !
        FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is) = &
 &      FL_Ho_plus_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is)
-       call LINEAR_ALGEBRA_driver(DIAGO,&
-       & M=FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is),&
-       & E_real=FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is)) 
+       call SERIAL_HERMITIAN_diagonalization(FL_n_states, &
+       & FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is),&
+       & FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is)) 
        !
      else
        ! Non-Hermitian Diagonalization
@@ -116,11 +116,11 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
        !
        NHM_Mat(FL_states(1):FL_states(2),FL_states(1):FL_states(2)) = &
 &      FL_Ho_plus_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is)
-       call LINEAR_ALGEBRA_driver(DIAGO,&
-                                & M=NHM_Mat(FL_states(1):FL_states(2),FL_states(1):FL_states(2)),&
-                                & V_left=NHM_Left_Vec(FL_states(1):FL_states(2),FL_states(1):FL_states(2)),&
-                                & V_right=NHM_Right_Vec(FL_states(1):FL_states(2),FL_states(1):FL_states(2)),&
-                                & E_cmpl=NHM_Cmpl_Val(FL_states(1):FL_states(2)))
+       call SERIAL_diagonalization(FL_n_states, &
+                                & NHM_Mat(FL_states(1):FL_states(2),FL_states(1):FL_states(2)),&
+                                & NHM_Cmpl_Val(FL_states(1):FL_states(2)),&
+                                & NHM_Left_Vec(FL_states(1):FL_states(2),FL_states(1):FL_states(2)),&
+                                & NHM_Right_Vec(FL_states(1):FL_states(2),FL_states(1):FL_states(2)) )
 
        ! discard imaginary part of eigenvalues
        FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is) = real(NHM_Cmpl_Val(FL_states(1):FL_states(2)))
@@ -154,7 +154,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
        !
        do i1_fks=FL_states(1),FL_states(2)
          !
-         if (abs(trial_vec(i1_fks)) > 0.05_SP .and. i1_fks /= i_central_fks) then
+         if (abs(trial_vec(i1_fks)) > 0.15_SP .and. i1_fks /= i_central_fks) then
            !
            i1 = nint(real(i1_fks/n_tot_fl_modes,SP))+1
            i1_fl = mod(i1_fks,n_tot_fl_modes)

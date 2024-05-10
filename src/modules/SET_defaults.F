@@ -79,7 +79,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     l_SC_nl_mix,SC_kind,SC_perturbation,SC_desc,SC_neq_kind,SC_last_coh_it
 #endif
 #if defined _SC || defined _RT || defined _QED || defined _NL
- use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff,COLLISIONS_CV_only
+ use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff,COLLISIONS_CV_only,COLLISIONS_load_SP
  use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
@@ -540,6 +540,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  COLLISIONS_cutoff=0.0005_SP
 # endif
  COLLISIONS_CV_only=.FALSE.
+ COLLISIONS_load_SP=.FALSE.
  !
  H_potential="NONE"
  !

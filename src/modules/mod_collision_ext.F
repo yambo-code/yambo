@@ -33,6 +33,7 @@ module collision_ext
  logical :: COLLISIONS_HXC_MB=.FALSE.
  logical :: COLLISIONS_HXC_use_TDDFT=.FALSE.
  logical :: COLLISIONS_CV_only=.FALSE.
+ logical :: COLLISIONS_load_SP=.FALSE. ! Force loading of collision in single precision
  !
  ! Elements used in the code
  !
@@ -50,7 +51,8 @@ module collision_ext
    integer               :: I=0         ! State Index 
    integer               :: N=0         ! Linear Dimension
    character,   allocatable  :: table(:,:,:)
-   complex(SP6), allocatable :: v_c(:)       ! SEX and HF only in single precision
+   complex(SP),  allocatable  :: v_c(:)      
+   complex(SP6), allocatable  :: v_c_SP(:)    ! SEX and HF only in single precision
    complex(SP), allocatable  :: v3_c(:,:,:)
    real(SP)   , allocatable  :: v_r(:)       ! GW NEQ collisions
    real(SP)   , allocatable  :: v3_r(:,:,:)

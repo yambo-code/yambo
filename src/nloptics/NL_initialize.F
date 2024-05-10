@@ -28,6 +28,7 @@ subroutine NL_initialize(E,k)
 &                         l_eval_CURRENT,l_pump_and_probe,DephMult,l_velocity_IPA,n_angles, &
 &                         NL_ang_step,n_runs,NL_rot_axis,loop_on_frequencies,loop_on_angles,NL_initial_versor
  use electric,       ONLY:l_force_SndOrd,l_P_periodic
+ use collision_ext,  ONLY:COLLISIONS_load_SP
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  !
@@ -41,6 +42,7 @@ subroutine NL_initialize(E,k)
  real(SP) :: Time,W_0,T_0,sigma,E_dot_rot_axis 
  integer  :: i1,n_active_fields
  real(SP) :: Sampling_Time
+ logical  :: l_COLL_DP
  !
  ! Parser
  ! ============
@@ -49,9 +51,12 @@ subroutine NL_initialize(E,k)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('EvalCurrent' ,         l_eval_CURRENT)
  call parser('FrPolPerdic' ,         l_P_periodic)
+ call parser('LoadCollDP',           l_COLL_DP)
+ COLLISIONS_load_SP=.not.l_COLL_DP
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
  if(l_P_periodic)  call msg('sr','[NL] Enforce periodicity of the polarization repect to Efield')
+ if(SP/=DP.and.COLLISIONS_load_SP) call msg('sr','COLLISIONS in single precisions')
  !
  ! Velocity gauge mode
  ! =======================================

@@ -7,7 +7,7 @@
 !
 module memory
  !
- use pars,          ONLY:SP,schlen,IP,IPL,DP,LP,N_MEM_max,N_MEM_SAVE_max,&
+ use pars,          ONLY:SP,schlen,IP,IPL,DP,LP,SP6,N_MEM_max,N_MEM_SAVE_max,&
 &                        N_MEM_shelf_max,N_MEM_LIBs_max,N_MEM_max_element_components
  use openmp,        ONLY:master_thread
  use iso_c_binding, ONLY:c_int
@@ -84,12 +84,12 @@ module memory
 &                             MEM_r1_d, MEM_r2_d, MEM_r3_d, MEM_r4_d, MEM_r5_d,             &
 &                             MEM_c1_d, MEM_c2_d, MEM_c3_d, MEM_c4_d, MEM_c5_d, MEM_c6_d,   &
 #ifndef _DOUBLE
-&                             MEM_cd1_d,MEM_cd2_d,MEM_cd3_d,MEM_cd4_d,MEM_cd5_d,MEM_cd6_d,  &
+&                             MEM_cd1_d,MEM_cd2_d,MEM_cd3_d,MEM_cd4_d,MEM_cd5_d,MEM_cd6_d,MEM_cd1_s,&
 #endif
 #endif
 &                             MEM_i1,  MEM_i2,  MEM_i3,  MEM_i4,  MEM_i5,  MEM_i6,  MEM_i7, &
 &                             MEM_r1,  MEM_r2,  MEM_r3,  MEM_r4,  MEM_r5,                   &
-&                             MEM_c1,  MEM_c2,  MEM_c3,  MEM_c4,  MEM_c5,  MEM_c6,          &
+&                             MEM_c1,  MEM_c2,  MEM_c3,  MEM_c4,  MEM_c5,  MEM_c6, MEM_c1_s,&
 #ifndef _DOUBLE
 &                             MEM_rd1, MEM_rd2, MEM_rd3, MEM_rd4, MEM_rd5,                  &
 &                             MEM_cd1, MEM_cd2, MEM_cd3, MEM_cd4, MEM_cd5, MEM_cd6,         &
@@ -340,6 +340,11 @@ module memory
      complex(SP) ::c(:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1)),HOST_)
    end subroutine
+   subroutine MEM_c1_s(name,c)
+     character(*)::name
+     complex(SP6) ::c(:)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1)),HOST_)
+   end subroutine
    subroutine MEM_c2(name,c)
      character(*)::name
      complex(SP) ::c(:,:)
@@ -432,6 +437,11 @@ module memory
    subroutine MEM_cd1_d(name,c)
      character(*)::name
      complex(DP), device ::c(:)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1)),DEV_)
+   end subroutine
+   subroutine MEM_cd1_s(name,c)
+     character(*)::name
+     complex(SP6), device ::c(:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1)),DEV_)
    end subroutine
    subroutine MEM_cd2_d(name,c)

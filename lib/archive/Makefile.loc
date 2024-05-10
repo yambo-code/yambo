@@ -2,11 +2,10 @@
 # Package List
 #
 include ./package.list
+#
 ifeq ($(wildcard ./git.list),./git.list)
   include ./git.list
   include ../../config/setup
-else
-  include ./git.list.def
 endif
 #
 WGETFLAGS=--no-check-certificate -v
@@ -43,7 +42,7 @@ blacs:
 scalapack:
 	@+URL="$(url_scalapack)"; LIB="$(pkgname_scalapack)"; $(getsrc)
 petsc:
-	@+URL="$(url_petsc)"    ; LIB="$(pkgname_petsc)"; $(getsrc)
+	@+URL="$(url_petsc)"    ; LIB="$(pkgname_petsc)";  GBRANCH="$(branch_petsc)"  ;  GIT="$(git_petsc)" ;  $(call getsrc_git,"petsc");
 slepc:
 	@+URL="$(url_slepc)"    ; LIB="$(pkgname_slepc)";  GBRANCH="$(branch_slepc)"  ;  GIT="$(git_slepc)" ;  $(call getsrc_git,"slepc");
 fftw:

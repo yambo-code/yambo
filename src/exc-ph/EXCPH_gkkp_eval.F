@@ -24,7 +24,7 @@
 ! ======================================================================
 ! GKKP formulation following the F. Paleari PhD thesis (Pg. 109, Eq : 4.25)
 ! The exciton phonon matrix elements are defined as <q=Q,S'|dV_{Q}|q=0,S>
-! These are phonon absorption
+! These is for phonon absorption
 !
 subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  !

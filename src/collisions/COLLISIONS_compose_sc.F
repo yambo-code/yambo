@@ -59,10 +59,10 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
      !
      if (.not.PAR_IND_G_k%element_1D(i_kmq)) then 
        if (l_sc_coh) then
-         ic1=ic1+count(COH_COLL_element(i_coll_mem)%table(COLL_bands(1):QP_nb,COLL_bands(1):QP_nb,i_kmq)=='t')
+         ic1=ic1+count(COH_COLL_element(i_coll_mem)%table(COLL_bands(1):QP_nb,COLL_bands(1):QP_nb,i_kmq))
        endif
        if (l_sex) then
-         ic2=ic2+count(HXC_COLL_element(i_coll_mem)%table(COLL_bands(1):QP_nb,COLL_bands(1):QP_nb,i_kmq)=='t')
+         ic2=ic2+count(HXC_COLL_element(i_coll_mem)%table(COLL_bands(1):QP_nb,COLL_bands(1):QP_nb,i_kmq))
        endif
        cycle
      endif
@@ -73,7 +73,7 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
          ! COH part
          !
          if (l_sc_coh) then
-           if (COH_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)=='t') then
+           if (COH_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)) then
              QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*COH_COLL_element(i_coll_mem)%v_c(ic1)*G_coh(ib,ibp,i_kmq)
              ic1=ic1+1
            endif
@@ -82,7 +82,7 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
          ! SEX/HF/HARTREE parts
          !
          if (l_sex) then
-           if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)=='t') then
+           if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)) then
              QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*HXC_COLL_element(i_coll_mem)%v_c(ic2)*G_sex(ib,ibp,i_kmq)
              ic2=ic2+1
            endif

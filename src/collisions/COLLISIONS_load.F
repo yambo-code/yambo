@@ -303,6 +303,12 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        !
        call live_timing(steps=1)
        !
+#if defined _PAR_IO
+#if defined _NL
+       call COLLISIONS_compress(HXC_COLL_element(i_coll_mem))
+#endif
+#endif
+       !
      end do
      !
 #if defined _PAR_IO

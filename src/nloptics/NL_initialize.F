@@ -10,7 +10,7 @@ subroutine NL_initialize(E,k)
  use pars,           ONLY:SP,DP,pi
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
  use vec_operate,    ONLY:normalize_v,v_norm,cross_product
- use collision_ext,  ONLY:COLLISIONS_CV_only
+ use collision_ext,  ONLY:COLLISIONS_CV_only,COLLISIONS_load_SP,COLLISIONS_compress
  use hamiltonian,    ONLY:H_potential
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
@@ -28,7 +28,6 @@ subroutine NL_initialize(E,k)
 &                         l_eval_CURRENT,l_pump_and_probe,DephMult,l_velocity_IPA,n_angles, &
 &                         NL_ang_step,n_runs,NL_rot_axis,loop_on_frequencies,loop_on_angles,NL_initial_versor
  use electric,       ONLY:l_force_SndOrd,l_P_periodic
- use collision_ext,  ONLY:COLLISIONS_load_SP
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  !
@@ -51,8 +50,10 @@ subroutine NL_initialize(E,k)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('EvalCurrent' ,         l_eval_CURRENT)
  call parser('FrPolPerdic' ,         l_P_periodic)
- call parser('LoadCollDP',           l_COLL_DP)
- COLLISIONS_load_SP=.not.l_COLL_DP
+ call parser('NoComprCOLL',          l_no_compress_COLL)
+ !
+ COLLISIONS_load_SP =.not.l_no_compress_COLL
+ COLLISIONS_compress=.not.l_no_compress_COLL
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
  if(l_P_periodic)  call msg('sr','[NL] Enforce periodicity of the polarization repect to Efield')
@@ -333,7 +334,17 @@ subroutine NL_initialize(E,k)
         call error("Unknow correlation in the response function")
  end select
  !
- if(eval_COLLISIONS.and.COLLISIONS_CV_only) call warning(' ONLY cv scattering in COLLISIONS! ')
+ if(eval_COLLISIONS) then
+   !      
+   if(COLLISIONS_CV_only) call warning(' ONLY cv scattering in COLLISIONS! ')
+   !
+   if(l_no_compress_COLL) then
+     call msg('sr','Full collisions in double-precision ')
+   else
+     call msg('sr','Compressesd collisions in single-precision ')
+   endif
+ endif
+ !
  ! 
  H_potential = RT_potential
  !

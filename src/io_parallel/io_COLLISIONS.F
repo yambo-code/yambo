@@ -98,7 +98,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
      if(io3 ) then
        call C_F_POINTER(C_LOC(COLL_element%v_c),tmp_link_complex,(/COLL_element%N,1/))
        call  io_variable_bulk(ID,2,C2=tmp_link_complex,IPOS=(/1,1,i_coll/))
-       if(SP/=DP.and.COLLISIONS_load_SP) then
+       if(SP==DP.and.COLLISIONS_load_SP) then
          COLL_element%v_c_SP=cmplx(COLL_element%v_c)
          YAMBO_FREE(COLL_element%v_c)
        endif

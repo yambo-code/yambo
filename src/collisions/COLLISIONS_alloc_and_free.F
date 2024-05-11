@@ -191,7 +191,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
            YAMBO_ALLOC(COLL(J)%v_c,(COLL(J)%N))
            COLL(J)%v_c=cZERO
            mem_size(4)=mem_size(4)+size(COLL(J)%v_c)
-           if(SP/=DP.and.COLLISIONS_load_SP) then
+           if(SP==DP.and.COLLISIONS_load_SP) then
              YAMBO_ALLOC(COLL(J)%v_c_SP,(COLL(J)%N))
              COLL(J)%v_c_SP=cZERO
              mem_size(4)=mem_size(4)+size(COLL(J)%v_c_SP)

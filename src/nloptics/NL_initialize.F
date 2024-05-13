@@ -41,7 +41,7 @@ subroutine NL_initialize(E,k)
  real(SP) :: Time,W_0,T_0,sigma,E_dot_rot_axis 
  integer  :: i1,n_active_fields
  real(SP) :: Sampling_Time
- logical  :: l_COLL_DP
+ logical  :: l_no_compress_COLL
  !
  ! Parser
  ! ============

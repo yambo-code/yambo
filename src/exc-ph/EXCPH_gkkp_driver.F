@@ -198,6 +198,9 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !call k_ibz2bz(k,"i",.false.)
  call live_timing('Excitonic Gkkp',q%nbz*(elph_branches(2)-elph_branches(1)+1))
  !
+ !open(47, file = 'BS_mat_q.dat')
+ !write (47,*) "# BS_mat_q rotated: each q, each exciton state alpha, all transitions" 
+ !
  do iq=1,q%nibz
    !
    if(iq>1) call EXCPH_load_L(iq,X,'check','Lout')
@@ -213,6 +216,12 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      if(nsym>1) call EXC_WF_symm_qpoint(k,q,EXCPH_states(1),n_exc_in,iq,iq_s,1,ID_phases,S_index,BS_mat_out,.false.)
      if(nsym==1) BS_mat_out=BS_mat(:,EXCPH_sum(1):EXCPH_sum(2))
      !
+     !write(47,*) "#q = ",iq_bz
+     !write(47,*) "#    alpha = ", EXCPH_sum(1),EXCPH_sum(1)+1
+     !do ik=1,k%nbz
+     !  write(47,*) BS_mat_out(ik,EXCPH_sum(1)), BS_mat_out(ik,EXCPH_sum(1)+1)
+     !end do
+     !
      EXCPH_gkkp          =cZERO
      EXCPH_gkkp_sq       =rZERO
      !
@@ -225,6 +234,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      enddo
      !
      iq_db=Q_io_map(iq_bz)
+     !if (iq_db/=iq_bz) write(*,*) "WARNING: iq_db/=iq_bz",iq_db,iq_bz
      !
      ! I/O
      !=====
@@ -235,6 +245,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
    enddo
    !
  enddo
+ !
+ !close(47)
  !
  call live_timing( )
  !

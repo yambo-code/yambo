@@ -10,7 +10,7 @@ subroutine NL_initialize(E,k)
  use pars,           ONLY:SP,DP,pi
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
  use vec_operate,    ONLY:normalize_v,v_norm,cross_product
- use collision_ext,  ONLY:COLLISIONS_CV_only,COLLISIONS_load_SP,COLLISIONS_compress
+ use collision_ext,  ONLY:COLLISIONS_CV_only,COLLISIONS_load_SP,COLLISIONS_compr
  use hamiltonian,    ONLY:H_potential
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
@@ -53,7 +53,7 @@ subroutine NL_initialize(E,k)
  call parser('NoComprCOLL',          l_no_compress_COLL)
  !
  COLLISIONS_load_SP =.not.l_no_compress_COLL
- COLLISIONS_compress=.not.l_no_compress_COLL
+ COLLISIONS_compr   =.not.l_no_compress_COLL
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
  if(l_P_periodic)  call msg('sr','[NL] Enforce periodicity of the polarization repect to Efield')

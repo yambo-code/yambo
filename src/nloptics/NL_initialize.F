@@ -341,7 +341,7 @@ subroutine NL_initialize(E,k)
    if(l_no_compress_COLL) then
      call msg('sr','Full collisions in double-precision ')
    else
-     call msg('sr','Compressesd collisions in single-precision ')
+     call msg('sr','Compressed collisions in single-precision ')
    endif
  endif
  !

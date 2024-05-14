@@ -347,9 +347,9 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 #if defined _NL
      if(COLLISIONS_compr) then
        if(COLLISIONS_load_SP)      call msg('sl','Collisions compression: ' &
- &              //real2ch(COLL_compr/COLL_full*50.0)//'%')
+ &              //trim(real2ch(100.0-COLL_compr/COLL_full*50.0))//' %')
        if(.not.COLLISIONS_load_SP) call msg('sl','Collisions compression: ' &
-&               //real2ch(COLL_compr/COLL_full*100.0)//'%')
+&               //trim(real2ch(100.0-COLL_compr/COLL_full*100.0))//' %')
      endif
 #endif
 #endif

@@ -35,10 +35,11 @@ subroutine COLLISIONS_compress(COLL)
  !
  ! Search for non-zero collisions
  !
- YAMBO_ALLOC(COLL%v3_c,(1:nXkibz,COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2)))
+ YAMBO_ALLOC(COLL%v3_c,(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),1:nXkibz))
  !
  ic=0
  !
+ COLL%table=.TRUE.
  do i_kmq=1,nXkibz
    do ibp=COLL_bands(1),COLL_bands(2)
      do ib=COLL_bands(1),COLL_bands(2)
@@ -66,6 +67,7 @@ subroutine COLLISIONS_compress(COLL)
  !
  ! Fill collisions again
  !
+ ic=0
  do i_kmq=1,nXkibz
    do ibp=COLL_bands(1),COLL_bands(2)
      do ib=COLL_bands(1),COLL_bands(2)

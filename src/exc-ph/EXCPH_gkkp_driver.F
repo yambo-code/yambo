@@ -41,7 +41,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use X_m,            ONLY:X_t
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BSS_eh_table_m1,BSS_alloc,BSS_free!,BS_H_dim,BSS_n_eig
  !use BS,             ONLY:BSqpts,BS_H_dim,BS_bands
- use ELPH,           ONLY:elph_branches,Q_io_map,l_GKKP_expanded_DB_exists
+ use ELPH,           ONLY:elph_branches,l_GKKP_expanded_DB_exists!,Q_io_map
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message, &
 &                         REP,VERIFY,WR_CL,OP_WR,WR_CL_IF_END,manage_action
  use IO_int,         ONLY:io_control
@@ -64,7 +64,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  integer, external :: io_ELPH,io_EXCPH_gkkp,io_RIM
  integer  :: S_index(EXCPH_states(1):EXCPH_States(2)),ID_phases
  integer  :: ID_gkkp,ID_exc_gkkp,io_err,io_ID,IO_ACT
- integer  :: il,iq_bz,iq,i_star,iq_s,iq_db,elph_branches_save(2)
+ integer  :: il,iq_bz,iq,i_star,iq_s,elph_branches_save(2)!,iq_db
  ! Debug
  !integer :: ik
  !open(1, file='K_grid_bz.dat')
@@ -95,11 +95,14 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  call parser('ConstElph',l_const_elph)
  call parser('AbsElph',  l_abs_elph)
- if(l_abs_elph) call warning('Absolute value of electron-phonon coupling ')
  call parser('AbsExc',   l_abs_exc)
- if(l_abs_exc)  call warning('Absolute value of exciton-phonon coupling  ') 
  call parser('ElectronContributionOnly', l_elec_only)
  call parser('HoleContributionOnly', l_hole_only)
+ if (l_const_elph) call warning('Constant electron-phonon coupling')
+ if(l_abs_elph) call warning('Absolute value of electron-phonon coupling ')
+ if(l_abs_exc)  call warning('Absolute value of exciton wave functions  ')
+ if(l_elec_only) call warning('Only electron contribution to the exciton-phonon coupling')
+ if(l_hole_only) call warning('Only hole contribution to the exciton-phonon coupling')
  !
  elph_branches_save  =elph_branches
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_gkkp)
@@ -233,7 +236,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
        !
      enddo
      !
-     iq_db=Q_io_map(iq_bz)
+     !iq_db=Q_io_map(iq_bz)
      !if (iq_db/=iq_bz) write(*,*) "WARNING: iq_db/=iq_bz",iq_db,iq_bz
      !
      ! I/O

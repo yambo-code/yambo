@@ -30,7 +30,7 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  !
  use pars,           ONLY:SP,cZERO,rZERO,cONE
  !use D_lattice,      ONLY:sop_inv,sop_tab
- use R_lattice,      ONLY:bz_samp,qindx_C
+ use R_lattice,      ONLY:bz_samp!,qindx_C
  use BS_solvers,     ONLY:io_BSS_diago,BSS_eh_table_m1,BSS_eh_table,BSS_free
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL, &
 &                         deliver_IO_error_message,manage_action,RD
@@ -50,17 +50,18 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  ! Work Space
  !
  integer                 :: io_err,i_H,i_Hp,i_alpha,iq_db,ik_db,&
-&                           iv,ic,ik_bz,ivp,icp,i_beta,ip_bz,ik_plus_iq_bz,ik_minus_iq_bz,IO_ACT, &
-&                           iv_in,ic_in,ik_bz_in
+&                           iv,ic,ik_bz,ivp,icp,i_beta,ip_bz,ik_plus_iq_bz,IO_ACT, &
+&                           iv_in,ic_in,ik_bz_in!,ik_minus_iq_bz
  real(SP)                :: ph_E
  complex(SP)             :: elph_gkkp
  integer, external       :: io_ELPH
  !
- ! Loop scheme:
- !  i_l ->i_beta ->i_star [load gkkp] ->i_H
- !                                    ->ivp [Calculate Xi(1)]
- !                                    ->icp [Calculate Xi(2)]
- !                                    ->i_alpha ->i_H [Calculate Gkkp]
+ ! Loop scheme: 
+ !  for each (iq_bz, il) from gkkp_driver:
+ !  -> i_beta  ->i_H
+ !             ->ivp [Calculate Xi(1), sum over ivp, hole contribution]
+ !             ->icp [Calculate Xi(2), sum over icp, elec contribution]
+ !             ->i_alpha ->i_H [Calculate Gkkp(iq,il;i_beta,i_alpha), sum over i_H]
  Xi=cZERO
  !
  elph_gkkp=cONE
@@ -98,14 +99,14 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
      iv    = BSS_eh_table(i_H,2)
      ic    = BSS_eh_table(i_H,3)
      !
-     ik_minus_iq_bz = qindx_C(ik_bz,iq_bz,1)      ! K_bz-Q_bz
+     !ik_minus_iq_bz = qindx_C(ik_bz,iq_bz,1)      ! K_bz-Q_bz
      !
      ik_plus_iq_bz  = k_plus_q_table(ik_bz,iq_bz) ! K_bz+Q_bz
      !
-     ip_bz = ik_bz ! elemental_scattering(iq_s,ik_bz)
-     !
      ! 1=DOWN (hole contribution)
      !========
+     !
+     ip_bz = ik_bz ! elemental_scattering(iq_s,ik_bz)
      !
      do ivp=BS_bands(1),BS_bands(2)
        !
@@ -135,10 +136,10 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
        !
      enddo
      !
-     ip_bz = ik_plus_iq_bz !elemental_scattering(iq_s,ik_plus_iq_bz)
-     !
      ! 2=UP (electron contribution)
      !======
+     !
+     ip_bz = ik_plus_iq_bz !elemental_scattering(iq_s,ik_plus_iq_bz)
      !
      do icp=BS_bands(1),BS_bands(2)
        !

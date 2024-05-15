@@ -39,7 +39,7 @@ subroutine COLLISIONS_compress(COLL)
  !
  ic=0
  !
- COLL%table=.TRUE.
+ COLL%table='t'
  do i_kmq=1,nXkibz
    do ibp=COLL_bands(1),COLL_bands(2)
      do ib=COLL_bands(1),COLL_bands(2)
@@ -55,7 +55,7 @@ subroutine COLLISIONS_compress(COLL)
    enddo
  enddo
  !
- COLL%N=count(COLL%table(:,:,:).eqv..TRUE.)
+ COLL%N=count(COLL%table(:,:,:)=='t')
  !      
  if(l_coll_SP) then
    YAMBO_FREE(COLL%v_c_SP)

@@ -209,7 +209,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
 &                             COLL%D(2,2)-COLL%D(2,1)+1,&
 &                             COLL%D(3,2)-COLL%D(3,1)+1/),0,silent=.true.)
    !
-   call  io_variable_bulk(ID_frag,1,L3=COLL_element%table(COLL%D(1,1):COLL%D(1,2),&
+   call  io_variable_bulk(ID_frag,1,CH3=COLL_element%table(COLL%D(1,1):COLL%D(1,2),&
 &                                                    COLL%D(2,1):COLL%D(2,2),&
 &                                                    COLL%D(3,1):COLL%D(3,2)))
    !

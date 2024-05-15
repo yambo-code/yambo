@@ -58,7 +58,7 @@ subroutine COLLISIONS_compose_nl(G_in)
       do ibp=COLL_bands(1),COLL_bands(2)
        do ib=COLL_bands(1),COLL_bands(2)
          !
-         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)) then
+         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)=='t') then
            if(COLLISIONS_load_SP) then
              COLL=dcmplx(HXC_COLL_element(i_coll_mem)%v_c_SP(i_comp))
            else

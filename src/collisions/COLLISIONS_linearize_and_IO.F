@@ -73,7 +73,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,C
  !
  if ( l_HXC .or. l_COH ) COLLISIONS_max=maxval(abs(COLL_element(1)%v3_c(:,:,:)))        
  !
- COLL_element(i_ref)%table(:,:,:)=.FALSE.
+ COLL_element(i_ref)%table(:,:,:)='f'
  store_it=.true.
  !
  do i_cycle=1,2
@@ -100,7 +100,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,C
            ic=ic+1
            if (i_cycle==2) then
              !
-             COLL_element(i_ref)%table(i1,i2,i3)=.TRUE.
+             COLL_element(i_ref)%table(i1,i2,i3)='t'
              if (l_HXC   .or.l_COH   ) COLL_element(i_ref)%v_c(ic) = COLL_element(1)%v3_c(i1,i2,i3)
              if (l_GW_NEQ.or.l_QED_P ) COLL_element(i_ref)%v_r(ic) = COLL_element(1)%v3_r(i1,i2,i3)
              !

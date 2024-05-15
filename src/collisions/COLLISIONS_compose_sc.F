@@ -59,10 +59,10 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
      !
      if (.not.PAR_IND_G_k%element_1D(i_kmq)) then 
        if (l_sc_coh) then
-         ic1=ic1+count(COH_COLL_element(i_coll_mem)%table(COLL_bands(1):QP_nb,COLL_bands(1):QP_nb,i_kmq))
+         ic1=ic1+count(COH_COLL_element(i_coll_mem)%table(COLL_bands(1):QP_nb,COLL_bands(1):QP_nb,i_kmq)=='t')
        endif
        if (l_sex) then
-         ic2=ic2+count(HXC_COLL_element(i_coll_mem)%table(COLL_bands(1):QP_nb,COLL_bands(1):QP_nb,i_kmq))
+         ic2=ic2+count(HXC_COLL_element(i_coll_mem)%table(COLL_bands(1):QP_nb,COLL_bands(1):QP_nb,i_kmq)=='t')
        endif
        cycle
      endif

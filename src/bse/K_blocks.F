@@ -133,8 +133,14 @@ subroutine K_blocks( )
    YAMBO_ALLOC(BS_blk(iB)%mat,(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
    allocate(BS_blk(iB)%done(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
    BS_blk(iB)%mat=cZERO
-   bs_blk(iB)%done(:,:)="f"
- enddo
+   BS_blk(iB)%done(:,:)="f"
+   if (BS_blk(iB)%coordinate(1)==BS_blk(iB)%coordinate(2)) then 
+    allocate(BS_blk(iB)%table(5,BS_blk(iB)%size(1)))
+    allocate(BS_blk(iB)%E(BS_blk(iB)%size(1)))
+    BS_blk(iB)%E=-1._SP
+    BS_blk(iB)%table=0
+  endif
+enddo
  !
  ! Live Timing Blocks
  !====================

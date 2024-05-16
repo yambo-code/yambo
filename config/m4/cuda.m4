@@ -16,7 +16,7 @@ if test x"$enable_nvtx" = "x";  then enable_nvtx="no" ; fi
 #
 def_cuda=""
 CUDA_FLAGS=""
-CUDA_LIBS="-Mcudalib=cufft,cublas,cusolver"
+CUDA_LIBS="-cudalib=cufft,cublas,cusolver"
 
 # Available cc options:
 #    cc20            Compile for compute capability 2.0
@@ -37,11 +37,11 @@ CUDA_LIBS="-Mcudalib=cufft,cublas,cusolver"
 AC_MSG_CHECKING([for CUDA support])
 if test x"$enable_cuda" = "xyes" ; then
   def_cuda="-D_CUDA"
-  CUDA_FLAGS="-Mcuda=cuda9.0,cc70,nollvm $CUDA_LIBS"
+  CUDA_FLAGS="-cuda -gpu=cuda9.0,cc70,nollvm $CUDA_LIBS"
   AC_MSG_RESULT($CUDA_FLAGS)
 elif ! test x"$enable_cuda" = "x" ; then
   def_cuda="-D_CUDA"
-  CUDA_FLAGS="-Mcuda=$enable_cuda $CUDA_LIBS"
+  CUDA_FLAGS="-cuda -gpu=$enable_cuda $CUDA_LIBS"
   AC_MSG_RESULT($CUDA_FLAGS)
 fi
 #

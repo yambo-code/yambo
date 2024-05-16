@@ -670,6 +670,27 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        BS_blk(i_block)%done(i_Tk,i_Tp)="t"
        !
+       i_v_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,2) 
+       i_c_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,3) 
+       !
+       i_v_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,2) 
+       i_c_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,3) 
+       !
+       i_k_sp_pol_c=BS_T_grp(i_Tgrp_k)%table(i_Tk,4) 
+       i_p_sp_pol_c=BS_T_grp(i_Tgrp_p)%table(i_Tp,4) 
+       i_k_sp_pol_v=BS_T_grp(i_Tgrp_k)%table(i_Tk,5) 
+       i_p_sp_pol_v=BS_T_grp(i_Tgrp_p)%table(i_Tp,5) 
+
+       if (H_pos(1)==H_pos(2)) then
+         BS_blk(i_block)%table(:,i_Tk)=BS_T_grp(i_Tgrp_k)%table(i_Tk,:)
+         BS_blk(i_block)%E(i_Tk)      =BS_T_grp(i_Tgrp_k)%E(i_Tk,1)
+         if (mode_now=="C") then
+           ! Swap c and v
+           BS_blk(i_block)%table(2,i_Tk)=BS_T_grp(i_Tgrp_k)%table(i_Tk,3)
+           BS_blk(i_block)%table(3,i_Tk)=BS_T_grp(i_Tgrp_k)%table(i_Tk,2)
+         endif
+       endif
+       !
      enddo   ! i_Tk
    enddo     ! i_Tp
 #if defined _OPENMP && ! defined _CUDA

@@ -200,7 +200,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
        endif
        if (l_clean.and.(l_v1.or.l_all)) then
          YAMBO_FREE(COLL(J)%v_c)
-         if(SP/=DP.and.allocated(COLL(J)%v_c_SP)) then
+         if(SP==DP.and.allocated(COLL(J)%v_c_SP)) then
             YAMBO_FREE(COLL(J)%v_c_SP)
          endif
          YAMBO_FREE(COLL(J)%v_r)

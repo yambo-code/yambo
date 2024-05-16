@@ -535,7 +535,14 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! COLLISIONS I/O
  !
+ # if defined _PAR_IO
+ COLLISIONS_cutoff=0.0000_SP
+ #else
  COLLISIONS_cutoff=0.0005_SP
+ #endif
+ #if defined _NL
+ COLLISIONS_cutoff=0.0005_SP
+ #endif
  COLLISIONS_CV_only=.FALSE.
  COLLISIONS_load_SP=.FALSE.
  COLLISIONS_compr  =.FALSE.

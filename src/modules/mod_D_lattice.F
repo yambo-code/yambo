@@ -284,7 +284,11 @@ module D_lattice
      enddo
      enddo
      !
-     if (any(map(:,:)==0)) call error(' [Atoms] incomplete mapping found')
+     ![FP] old check was wrong if n_atoms_species has different values
+     !if (any(map(:,:)==0)) call error(' [Atoms] incomplete mapping found')
+     do is=1,n_atomic_species
+       if (any(map(1:n_atoms_species(is),is)==0)) call error(' [Atoms] incomplete mapping found')
+     end do
      !
      YAMBO_FREE(tau_)
      !

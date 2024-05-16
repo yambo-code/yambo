@@ -46,7 +46,7 @@ subroutine COLLISIONS_compress(COLL)
        !
        ic=ic+1
        !
-       if(l_coll_SP)      COLL%v3_c(ib,ibp,i_kmq)=COLL%v_c_SP(ic)
+       if(l_coll_SP)      COLL%v3_c(ib,ibp,i_kmq)=cmplx(COLL%v_c_SP(ic),kind=SP)
        if(.not.l_coll_SP) COLL%v3_c(ib,ibp,i_kmq)=COLL%v_c(ic)
        !
        if(abs(COLL%v3_c(ib,ibp,i_kmq))<COLLISIONS_max*COLLISIONS_cutoff)  COLL%table(ib,ibp,i_kmq)='f'
@@ -74,7 +74,7 @@ subroutine COLLISIONS_compress(COLL)
        !
        if(COLL%table(ib,ibp,i_kmq)=='t') then
          ic=ic+1
-         if(l_coll_SP)      COLL%v_c_SP(ic)=COLL%v3_c(ib,ibp,i_kmq)
+         if(l_coll_SP)      COLL%v_c_SP(ic)=cmplx(COLL%v3_c(ib,ibp,i_kmq),kind=SP6)
          if(.not.l_coll_SP) COLL%v_c(ic)   =COLL%v3_c(ib,ibp,i_kmq)
          !
        endif

@@ -60,9 +60,9 @@ subroutine COLLISIONS_compose_nl(G_in)
          !
          if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)=='t') then
            if(COLLISIONS_load_SP) then
-             COLL=dcmplx(HXC_COLL_element(i_coll_mem)%v_c_SP(i_comp))
+             COLL=cmplx(HXC_COLL_element(i_coll_mem)%v_c_SP(i_comp),kind=SP)
            else
-             COLL=dcmplx(HXC_COLL_element(i_coll_mem)%v_c(i_comp))
+             COLL=cmplx(HXC_COLL_element(i_coll_mem)%v_c(i_comp),kind=SP)
            endif
            RT_Vnl_xc(i_n,i_m,i_k_NL,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_NL,i_spin)-cI*COLL*G_in(ib,ibp,i_kmq)
            i_comp=i_comp+1

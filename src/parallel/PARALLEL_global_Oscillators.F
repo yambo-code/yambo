@@ -57,18 +57,16 @@ subroutine PARALLEL_global_Oscillators(E,Xk,q,ENVIRONMENT)
 ! CALL PARALLEL_structure(1,(/"k ","b "/))
  CALL PARALLEL_structure(1,(/"k "/))
  !
-! call PARALLEL_assign_chains_and_COMMs(2,COMM_index_1=PAR_COM_Xk_ibz_INDEX, &
-!&                                        COMM_index_2=PAR_COM_G_b_INDEX,&
-!&                                        COMM_A2A_1=PAR_COM_Xk_ibz_A2A)
- call PARALLEL_assign_chains_and_COMMs(1,COMM_index_1=PAR_COM_Xk_ibz_INDEX, &
+ call PARALLEL_assign_chains_and_COMMs(2,COMM_index_1=PAR_COM_Xk_ibz_INDEX, &
+&                                        COMM_index_2=PAR_COM_G_b_INDEX,&
 &                                        COMM_A2A_1=PAR_COM_Xk_ibz_A2A)
  !
  ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
  ! A2A when there is no internal distribution
  !
-! if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) then
-!   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_G_b_A2A)
-! endif
+if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) then
+   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_G_b_A2A)
+ endif
  !
  ! K-points
  ! 
@@ -85,19 +83,19 @@ subroutine PARALLEL_global_Oscillators(E,Xk,q,ENVIRONMENT)
  !
  ! Bands
  !
-! nb_mat=(COLL_bands(2)-COLL_bands(1)+1)**2
+ nb_mat=(COLL_bands(2)-COLL_bands(1)+1)**2
  !
-! n_WF_bands_to_load=PAR_n_bands(2)
+ n_WF_bands_to_load=PAR_n_bands(2)
  !
-! call PARALLEL_index(PAR_IND_G_b,(/nb_mat/),COMM=PAR_COM_G_b_INDEX)
-! PAR_IND_G_b_ID=PAR_COM_G_b_INDEX%CPU_id
-! PAR_nG_bands=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1)
-! YAMBOALLOC(PAR_G_bands_INDEX,(PAR_n_bands(2)))
-! call PAR_build_index(PAR_IND_G_b,PAR_n_bands(2),PAR_G_bands_index,PAR_nG_bands)
-!! !
-! call PARALLEL_live_message("OSCL bands",ENVIRONMENT=ENVIRONMENT,&
-!&                             LOADED=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1),&
-!&                             TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
+ call PARALLEL_index(PAR_IND_G_b,(/nb_mat/),COMM=PAR_COM_G_b_INDEX)
+ PAR_IND_G_b_ID=PAR_COM_G_b_INDEX%CPU_id
+ PAR_nG_bands=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1)
+ YAMBO_ALLOC(PAR_G_bands_INDEX,(PAR_n_bands(2)))
+ call PAR_build_index(PAR_IND_G_b,PAR_n_bands(2),PAR_G_bands_index,PAR_nG_bands)
+ !
+ call PARALLEL_live_message("OSCL bands",ENVIRONMENT=ENVIRONMENT,&
+&                             LOADED=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1),&
+&                             TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
  !
  ! Copy to WF
  !
@@ -106,10 +104,10 @@ subroutine PARALLEL_global_Oscillators(E,Xk,q,ENVIRONMENT)
  !
  ! Io and messaging
  !
-! call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_G_b_INDEX%CPU_id==0)
-! !
-! call IO_and_Messaging_switch("+output",CONDITION=PAR_COM_G_b_INDEX%CPU_id==0)
-! !
+ call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_G_b_INDEX%CPU_id==0)
+ !
+ call IO_and_Messaging_switch("+output",CONDITION=PAR_COM_G_b_INDEX%CPU_id==0)
+ !
  call OPENMP_set_threads(n_threads_in=n_threads_OSCLL) 
  !
 end subroutine PARALLEL_global_Oscillators

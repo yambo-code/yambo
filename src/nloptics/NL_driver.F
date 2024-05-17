@@ -326,7 +326,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
    !
    call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
    call PARALLEL_global_indexes(E,k,q,"Oscillators",X=X(1))
-!   call PARALLEL_WF_distribute(B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_distribute(B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
    call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
    call PARALLEL_WF_index( )
    !

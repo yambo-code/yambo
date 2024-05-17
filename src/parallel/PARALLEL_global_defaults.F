@@ -72,9 +72,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
    case("Non_Linear") 
      call GIMME_a_parallel_proposal(2,(/" k"," w"/))
    case("Oscillators") 
-!     call GIMME_a_parallel_proposal(2,(/" k"," b"/))
-     CPU_structure(i_PAR_structure)%ROLE(1)="k"
-     CPU_structure(i_PAR_structure)%CPU(1)=ncpu
+     call GIMME_a_parallel_proposal(2,(/" k"," b"/))
    case("ScaLapacK") 
      CPU_structure(i_PAR_structure)%ROLE(1)="p"
      CPU_structure(i_PAR_structure)%CPU(1)=ncpu

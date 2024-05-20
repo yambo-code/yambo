@@ -14,6 +14,14 @@
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
 !
+module ContextSTShell
+#include <slepc/finclude/slepceps.h>
+  use slepceps
+  implicit none
+
+  Mat :: S,R_factor
+end module
+!
 subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cmpl)
  !
  ! 10/06/2016 HM
@@ -56,6 +64,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  ! slepc
  !
  external :: MyEPSMonitor !function to monitor the convergence
+ external :: STSetUp_User,STApply_User,STApplyHermitianTranspose_User,STBackTransform_User,STDestroy_User
  ! 
  EPS                                :: eps
  ST                                 :: st    ! spectral transformation context
@@ -89,28 +98,28 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  ! Non hermitian not implemented yet!
  !
- call MatGetSize(M_slepc,n,j,ierr)
+ PetscCallA(MatGetSize(M_slepc,n,j,ierr))
  call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
  !
- call MatCreateVecs(M_slepc,xr,xr_left,ierr)
+ PetscCallA(MatCreateVecs(M_slepc,xr,xr_left,ierr))
  !
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Create the eigensolver and display info
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !
  !Create eigensolver context
- call EPSCreate(PETSC_COMM_WORLD,eps,ierr)
+ PetscCallA(EPSCreate(PETSC_COMM_WORLD,eps,ierr))
  !
  !Set operators. In this case, it is a standard eigenvalue problem
  !
- call EPSSetOperators(eps,M_slepc,PETSC_NULL_MAT,ierr) 
+ PetscCallA(EPSSetOperators(eps,M_slepc,PETSC_NULL_MAT,ierr))
  if(     present(V_left)) then
    ! To do: to check if it can be cast in the form of a generalized hermitian problem
-   call EPSSetProblemType(eps,EPS_NHEP,ierr)
-   call EPSSetFromOptions(eps,ierr)
-   call EPSSetTwoSided(eps,PETSC_TRUE,ierr)
+   PetscCallA(EPSSetProblemType(eps,EPS_NHEP,ierr))
+   PetscCallA(EPSSetFromOptions(eps,ierr))
+   PetscCallA(EPSSetTwoSided(eps,PETSC_TRUE,ierr))
  else
-   call EPSSetProblemType(eps,EPS_HEP,ierr)
+   PetscCallA(EPSSetProblemType(eps,EPS_HEP,ierr))
  endif
  !
  ! See end of file for options
@@ -129,6 +138,18 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  epskind=EPSKRYLOVSCHUR
  ! From user
  if(BSS_slepc_approach=="Krylov-Schur")          epskind=EPSKRYLOVSCHUR
+ if(BSS_slepc_approach=="KS-sinvert") then
+   epskind=EPSKRYLOVSCHUR
+   PetscCallA(EPSSetWhichEigenpairs(eps,EPS_SMALLEST_MAGNITUDE,ierr))
+   PetscCallA(EPSGetST(eps,st,ierr))
+   stkind=STSHELL
+   PetscCallA(STSetType(st,stkind,ierr))
+   PetscCallA(STShellSetApply(st,STApply_User,ierr))
+   PetscCallA(STShellSetApplyHermitianTranspose(st,STApplyHermitianTranspose_User,ierr))
+   PetscCallA(STShellSetBackTransform(st,STBackTransform_User,ierr))
+   PetscCallA(PetscObjectSetName(st,"STShellTransformation",ierr))
+   PetscCallA(STSetUp_User(st,ierr))
+ endif
  if(BSS_slepc_approach=="Generalized-Davidson")  epskind=EPSGD
  if(BSS_slepc_approach=="Jacobi-Davidson")       epskind=EPSJD
  !if(BSS_slepc_approach=="Scalapack")             epskind=EPSSCALAPACK
@@ -142,7 +163,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  call msg( 'sr', '[SLEPC] Approach                          ',BSS_slepc_approach)
  !
- call EPSSetType(eps,epskind,ierr)
+ PetscCallA(EPSSetType(eps,epskind,ierr))
  !
  l_precondition=BSS_slepc_precondition/="none"
  !
@@ -177,13 +198,13 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    !
    call msg( 'sr', '[SLEPC] Precondition method               ',BSS_slepc_precondition)
    !
-   call EPSGetST(eps,st,ierr)
-   call STGetKSP(st,ksp,ierr)
-   call KSPGetPC(ksp,pc,ierr)
+   PetscCallA(EPSGetST(eps,st,ierr))
+   PetscCallA(STGetKSP(st,ksp,ierr))
+   PetscCallA(KSPGetPC(ksp,pc,ierr))
    !
-   call STSetType(st,stkind,ierr)
-   call KSPSetType(ksp,kspkind,ierr)
-   call PCSetType(pc,pckind,ierr)
+   PetscCallA(STSetType(st,stkind,ierr))
+   PetscCallA(KSPSetType(ksp,kspkind,ierr))
+   PetscCallA(PCSetType(pc,pckind,ierr))
    !
  endif
  !
@@ -197,7 +218,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  if (BSS_slepc_extraction == 'refined')           extr = EPS_REFINED
  if (BSS_slepc_extraction == 'refined_harmonic')  extr = EPS_REFINED_HARMONIC
  !
- call EPSSetExtraction(eps, extr, ierr)
+ PetscCallA(EPSSetExtraction(eps, extr, ierr))
  !
  call msg( 'sr', '[SLEPC] Number of requested eigenvalues   ', n_eig ) 
  !
@@ -205,11 +226,11 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    target_energy=0._SP
    if(l_target_energy) target_energy=BSS_slepc_target_E
    call msg( 'nsr', '[SLEPC] Criterion is target energy        ', real(target_energy,SP)*HA2EV,'[eV]')
-   call EPSSetTarget(eps,target_energy,ierr)
-   call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)
+   PetscCallA(EPSSetTarget(eps,target_energy,ierr))
+   PetscCallA(EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr))
  else
    call msg( 'nsr', '[SLEPC] Criterion is smaller eigenvalues')
-   call EPSSetWhichEigenpairs(eps,EPS_SMALLEST_MAGNITUDE,ierr)
+   PetscCallA(EPSSetWhichEigenpairs(eps,EPS_SMALLEST_MAGNITUDE,ierr))
  endif
  !
  ! Set solver parameters at runtime
@@ -218,37 +239,37 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  if ( BSS_slepc_ncv/=0 ) ncv = BSS_slepc_ncv
  if ( BSS_slepc_ncv==0 ) ncv = PETSC_DECIDE
  !
- call EPSSetDimensions(eps,nev,ncv,PETSC_DECIDE,ierr)
+ PetscCallA(EPSSetDimensions(eps,nev,ncv,PETSC_DECIDE,ierr))
  !
  if ( BSS_slepc_maxit/=0 ) maxit = BSS_slepc_maxit
  if ( BSS_slepc_maxit==0 ) maxit = PETSC_DECIDE
  !
  tol      = BSS_slepc_tol
- call EPSSetTolerances(eps,tol,maxit, ierr)
+ PetscCallA(EPSSetTolerances(eps,tol,maxit, ierr))
  !
  !
  !free the M_slepc matrix
- call MatDestroy(M_slepc,ierr)
+ PetscCallA(MatDestroy(M_slepc,ierr))
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Optional: Get some information from the solver and display it
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
- !call EPSGetType(eps,tname,ierr)
- call EPSGetTolerances(eps,tol,maxit,ierr)
+ !PetscCallA(EPSGetType(eps,tname,ierr))
+ PetscCallA(EPSGetTolerances(eps,tol,maxit,ierr))
  !
  call msg( 'sr', '[SLEPC] Stopping condition tolerance      ', real(tol,SP) )
  call msg( 'sr', '[SLEPC] Stopping condition max iterations ', int(maxit) )
 
  !Set monitor
- call EPSMonitorSet(eps,MyEPSMonitor,0,PETSC_NULL_FUNCTION,ierr)
+ PetscCallA(EPSMonitorSet(eps,MyEPSMonitor,0,PETSC_NULL_FUNCTION,ierr))
  !
 
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Solve the eigensystem
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
- call EPSSolve(eps,ierr)
- call EPSGetIterationNumber(eps,its,ierr)
+ PetscCallA(EPSSolve(eps,ierr))
+ PetscCallA(EPSGetIterationNumber(eps,its,ierr))
  call msg( 'sr', '[SLEPC] Number of iterations              ', int(its) )
- call EPSGetDimensions(eps,nev,ncv,mpd,ierr)
+ PetscCallA(EPSGetDimensions(eps,nev,ncv,mpd,ierr))
  call msg( 'sr', '[SLEPC] Number of eigenvalues        [NEV]', int(nev) )
  call msg( 'sr', '[SLEPC] Max. subspace size of solver [NCV]', int(ncv) )
  call msg( 'sr', '[SLEPC] Max. allowed dim             [MPD]', int(mpd) )
@@ -257,7 +278,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !     Display solution and clean up
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !
- call EPSGetConverged(eps,nconv,ierr)
+ PetscCallA(EPSGetConverged(eps,nconv,ierr))
  call msg( 'srn', '[SLEPC] Number of converged states        ', int(nconv))
  if ( nconv < n_eig ) then
    call warning(' [SLEPC] requested '//trim(intc(n_eig))//' but converged '//trim(intc(int(nconv,4)))//' eigenvalues')
@@ -281,12 +302,12 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    !Get converged eigenpairs: i-th eigenvalue is stored in kr
    !(real part) and ki (imaginary part)
    if(present(V_left)) then
-     !call EPSGetEigenpair(eps,i,kr,ki,xr,xi,ierr)
-     call EPSGetEigenpair(eps,i,kr,PETSC_NULL_SCALAR,xr,PETSC_NULL_VEC,ierr)
-     !call EPSGetLeftEigenvector(eps,i,xr_left,xi_left,ierr)
-     call EPSGetLeftEigenvector(eps,i,xr_left,PETSC_NULL_VEC,ierr)
+     !PetscCallA(EPSGetEigenpair(eps,i,kr,ki,xr,xi,ierr))
+     PetscCallA(EPSGetEigenpair(eps,i,kr,PETSC_NULL_SCALAR,xr,PETSC_NULL_VEC,ierr))
+     !PetscCallA(EPSGetLeftEigenvector(eps,i,xr_left,xi_left,ierr))
+     PetscCallA(EPSGetLeftEigenvector(eps,i,xr_left,PETSC_NULL_VEC,ierr))
    else
-     call EPSGetEigenpair(eps,i,kr,PETSC_NULL_SCALAR,xr,PETSC_NULL_VEC,ierr)
+     PetscCallA(EPSGetEigenpair(eps,i,kr,PETSC_NULL_SCALAR,xr,PETSC_NULL_VEC,ierr))
    endif
    !
    !save the eigenvalues and eigenvectors in the matrix of the hamiltonian
@@ -294,63 +315,63 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    if(present(E_cmpl)) E_cmpl(i+1) = cmplx(kr,kind=SP)
    !
    ! this is to write the vector to hdf5 directly
-   !call VecView(xr,hdf5v,ierr)
+   !PetscCallA(VecView(xr,hdf5v,ierr))
    !
    if (present(V_left)) then
      !save the eigenvectors
-     call VecScatterCreateToAll(xr,ctxr(i+1),voutr(i+1),ierr)
-     !call VecScatterCreateToAll(xi,ctxi,vouti,ierr)
+     PetscCallA(VecScatterCreateToAll(xr,ctxr(i+1),voutr(i+1),ierr))
+     !PetscCallA(VecScatterCreateToAll(xi,ctxi,vouti,ierr))
      ! scatter as many times as you need
-     call VecScatterBegin(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
-     call VecScatterEnd(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
-     !call VecScatterBegin(ctxi,xi,vouti,INSERT_VALUES,SCATTER_FORWARD,ierr)
-     !call VecScatterEnd(ctxi,xi,vouti,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     PetscCallA(VecScatterBegin(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr))
+     PetscCallA(VecScatterEnd(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr))
+     !PetscCallA(VecScatterBegin(ctxi,xi,vouti,INSERT_VALUES,SCATTER_FORWARD,ierr))
+     !PetscCallA(VecScatterEnd(ctxi,xi,vouti,INSERT_VALUES,SCATTER_FORWARD,ierr))
      !
-     call VecGetArrayReadF90(voutr(i+1),xsr,ierr)
-     !call VecGetArrayReadF90(vouti,xsi,ierr)
+     PetscCallA(VecGetArrayReadF90(voutr(i+1),xsr,ierr))
+     !PetscCallA(VecGetArrayReadF90(vouti,xsi,ierr))
      V_right(:, i+1) = cmplx(xsr,kind=SP)
      !if (BSS_slepc_double_grp) V_right(BS_K_dim(1)+1:,i+1) =cI*V_right(BS_K_dim(1)+1:,i+1)
-     call VecRestoreArrayReadF90(voutr(i+1),xsr,ierr)
-     !call VecRestoreArrayReadF90(vouti,xsi,ierr)
+     PetscCallA(VecRestoreArrayReadF90(voutr(i+1),xsr,ierr))
+     !PetscCallA(VecRestoreArrayReadF90(vouti,xsi,ierr))
      !
-     call VecScatterDestroy(ctxr(i+1),ierr)
-     call VecDestroy(voutr(i+1),ierr)
-     !call VecScatterDestroy(ctxi,ierr)
-     !call VecDestroy(vouti,ierr)
+     PetscCallA(VecScatterDestroy(ctxr(i+1),ierr))
+     PetscCallA(VecDestroy(voutr(i+1),ierr))
+     !PetscCallA(VecScatterDestroy(ctxi,ierr))
+     !PetscCallA(VecDestroy(vouti,ierr))
      !
      !save the eigenvectors
-     call VecScatterCreateToAll(xr_left,ctxr_left(i+1),voutr_left(i+1),ierr)
-     !call VecScatterCreateToAll(xi_left,ctxi_left,vouti_left,ierr)
+     PetscCallA(VecScatterCreateToAll(xr_left,ctxr_left(i+1),voutr_left(i+1),ierr))
+     !PetscCallA(VecScatterCreateToAll(xi_left,ctxi_left,vouti_left,ierr))
      ! scatter as many times as you need
-     call VecScatterBegin(ctxr_left(i+1),xr_left,voutr_left(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
-     call VecScatterEnd(ctxr_left(i+1),xr_left,voutr_left(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
-     !call VecScatterBegin(ctxi_left,xi_left,vouti_left,INSERT_VALUES,SCATTER_FORWARD,ierr)
-     !call VecScatterEnd(ctxi_left,xi_left,vouti_left,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     PetscCallA(VecScatterBegin(ctxr_left(i+1),xr_left,voutr_left(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr))
+     PetscCallA(VecScatterEnd(ctxr_left(i+1),xr_left,voutr_left(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr))
+     !PetscCallA(VecScatterBegin(ctxi_left,xi_left,vouti_left,INSERT_VALUES,SCATTER_FORWARD,ierr))
+     !PetscCallA(VecScatterEnd(ctxi_left,xi_left,vouti_left,INSERT_VALUES,SCATTER_FORWARD,ierr))
      !
-     call VecGetArrayReadF90(voutr_left(i+1),xsr_left,ierr)
-     !call VecGetArrayReadF90(vouti_left,xsi_left,ierr)
+     PetscCallA(VecGetArrayReadF90(voutr_left(i+1),xsr_left,ierr))
+     !PetscCallA(VecGetArrayReadF90(vouti_left,xsi_left,ierr))
      V_left(:, i+1) = cmplx(xsr_left,kind=SP)
      !if (BSS_slepc_double_grp) V_left(BS_K_dim(1)+1:,i+1) =cI*V_left(BS_K_dim(1)+1:,i+1)
-     call VecRestoreArrayReadF90(voutr_left(i+1),xsr_left,ierr)
-     !call VecRestoreArrayReadF90(vouti_left,xsi_left,ierr)
+     PetscCallA(VecRestoreArrayReadF90(voutr_left(i+1),xsr_left,ierr))
+     !PetscCallA(VecRestoreArrayReadF90(vouti_left,xsi_left,ierr))
      !
      !
-     call VecScatterDestroy(ctxr_left(i+1),ierr)
-     call VecDestroy(voutr_left(i+1),ierr)
-     !call VecScatterDestroy(ctxi_left,ierr)
-     !call VecDestroy(vouti_left,ierr)
+     PetscCallA(VecScatterDestroy(ctxr_left(i+1),ierr))
+     PetscCallA(VecDestroy(voutr_left(i+1),ierr))
+     !PetscCallA(VecScatterDestroy(ctxi_left,ierr))
+     !PetscCallA(VecDestroy(vouti_left,ierr))
    else
      !save the eigenvectors
-     call VecScatterCreateToAll(xr,ctxr(i+1),voutr(i+1),ierr)
+     PetscCallA(VecScatterCreateToAll(xr,ctxr(i+1),voutr(i+1),ierr))
      ! scatter as many times as you need
-     call VecScatterBegin(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
-     call VecScatterEnd(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
+     PetscCallA(VecScatterBegin(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr))
+     PetscCallA(VecScatterEnd(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr))
      !
-     call VecGetArrayReadF90(voutr(i+1),xsr,ierr)
+     PetscCallA(VecGetArrayReadF90(voutr(i+1),xsr,ierr))
      V_right(:, i+1) = xsr
-     call VecRestoreArrayReadF90(voutr(i+1),xsr,ierr)
-     call VecScatterDestroy(ctxr(i+1),ierr)
-     call VecDestroy(voutr(i+1),ierr)
+     PetscCallA(VecRestoreArrayReadF90(voutr(i+1),xsr,ierr))
+     PetscCallA(VecScatterDestroy(ctxr(i+1),ierr))
+     PetscCallA(VecDestroy(voutr(i+1),ierr))
    endif
    !
  enddo
@@ -366,6 +387,234 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  call VecDestroy(xr,ierr)
  call VecDestroy(xr_left,ierr)
  !
+end subroutine
+!
+subroutine STSetUp_User(st,ierr)
+#include <slepc/finclude/slepceps.h>
+  use slepceps
+  use ContextSTShell
+  use cuda_m,         ONLY:have_cuda
+  !
+  implicit none
+  !
+  ST                    :: st
+  Mat                   :: M,R,C,W,Rt
+  Mat, dimension(2,2)   :: M_submats
+  IS                    :: perm,iperm
+  PetscScalar           :: mone
+  PetscReal             :: info(MAT_FACTORINFO_SIZE)
+  PetscErrorCode        :: ierr
+  PetscBool             :: flg
+  !
+  PetscCall(STGetMatrix(st,0,M,ierr))
+  PetscCall(MatNestGetSubMats(M, PETSC_NULL_INTEGER, PETSC_NULL_INTEGER, M_submats,ierr))
+  R = M_submats(1,1)
+  C = M_submats(2,1)
+
+  PetscCall(MatViewFromOptions(R,PETSC_NULL_MAT,"-view_R",ierr))
+  PetscCall(MatViewFromOptions(C,PETSC_NULL_MAT,"-view_C",ierr))
+
+  PetscCall(MatDuplicate(R,MAT_COPY_VALUES,R_factor,ierr))
+  PetscCall(MatSetOption(R_factor,MAT_HERMITIAN,PETSC_TRUE,ierr))
+  !PetscCall(MatSetOption(R_factor,MAT_SPD,PETSC_TRUE,ierr))
+  PetscCall(MatGetOrdering(R_factor,MATORDERINGNATURAL,perm,iperm,ierr))
+  PetscCall(MatFactorInfoInitialize(info,ierr))
+  PetscCall(PetscObjectTypeCompare(R,MATSCALAPACK,flg,ierr))
+#if defined(PETSC_HAVE_CUDA)
+  if(have_cuda) PetscCall(MatLUFactor(R_factor,perm,iperm,info,ierr))
+#else
+  if(flg) then
+    PetscCall(MatLUFactor(R_factor,perm,iperm,info,ierr))
+  else
+    PetscCall(MatCholeskyFactor(R_factor,perm,info,ierr))
+  end if
+#endif
+  !
+  ! S = -R^T + (C^*)*(R^-1)*C
+  !
+  ! W = (R^-1)*C
+  PetscCall(MatDuplicate(C,MAT_DO_NOT_COPY_VALUES,W,ierr))
+  PetscCall(MatMatSolve(R_factor,C,W,ierr))
+  PetscCall(MatViewFromOptions(C,PETSC_NULL_MAT,"-view_WLU",ierr))
+  !
+  ! S_temp = (C^*)*W
+  PetscCall(MatConjugate(C,ierr))
+  !PetscCall(MatMatMult(C,W,MAT_INITIAL_MATRIX,PETSC_DEFAULT,S,ierr)) !No support Scalapack -> MatProduct?
+  PetscCall(MatProductCreate(C,W,PETSC_NULL_MAT,S,ierr))
+  PetscCall(MatProductSetType(S,MATPRODUCT_AtB,ierr))
+  PetscCall(MatProductSetFromOptions(S,ierr))
+  PetscCall(MatProductSymbolic(S,ierr))
+  PetscCall(MatProductNumeric(S,ierr))
+  PetscCall(MatConjugate(C,ierr))
+  PetscCall(MatViewFromOptions(S,PETSC_NULL_MAT,"-view_Stemp",ierr))
+  !
+  ! S = (-R^T) + S_temp
+  PetscCall(MatCreateTranspose(R,Rt,ierr))
+  mone = -1
+  PetscCall(MatAXPY(S,mone,Rt,SAME_NONZERO_PATTERN,ierr))
+  PetscCall(MatViewFromOptions(S,PETSC_NULL_MAT,"-view_S",ierr))
+  PetscCall(MatSetOption(S,MAT_HERMITIAN,PETSC_TRUE,ierr))
+  PetscCall(PetscObjectTypeCompare(S,MATSCALAPACK,flg,ierr))
+#if defined(PETSC_HAVE_CUDA)
+  if(have_cuda) PetscCall(MatLUFactor(S,perm,iperm,info,ierr))
+#else
+  if(flg) then
+    PetscCall(MatLUFactor(S,perm,iperm,info,ierr))
+  else
+    PetscCall(MatCholeskyFactor(S,perm,info,ierr))
+  end if
+#endif
+  !
+  PetscCall(MatDestroy(W,ierr))
+  !
+  ierr=0
+  return
+end subroutine
+!
+subroutine STApply_User(st,vin,vout,ierr)
+#include <slepc/finclude/slepceps.h>
+  use slepceps
+  use ContextSTShell
+  implicit none
+  !
+  Mat                :: M,R,C,Cht
+  Mat,dimension(2,2) :: M_submats
+  Vec                :: f,g,x,y,y_tilde,w,vin,vout
+  ST                 :: st
+  IS,dimension(2)    :: rows
+  PetscScalar        :: mone
+  PetscErrorCode     :: ierr
+  !
+  PetscCall(STGetMatrix(st,0,M,ierr))
+  PetscCall(MatNestGetSubMats(M,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,M_submats,ierr))
+  R = M_submats(1,1)
+  C = M_submats(2,1) 
+  !
+  ! Solve
+  PetscCall(MatNestGetISs(M,rows,PETSC_NULL_INTEGER,ierr))
+  PetscCall(VecGetSubVector(vin,rows(1),f,ierr))
+  PetscCall(VecGetSubVector(vin,rows(2),g,ierr))
+  PetscCall(VecGetSubVector(vout,rows(1),x,ierr))
+  PetscCall(VecGetSubVector(vout,rows(2),y,ierr))
+  !
+  ! 1 : y = (S^-1)(g + (C^*)*(R^-1)*f) 
+  PetscCall(VecDuplicate(y,y_tilde,ierr))
+  PetscCall(VecDuplicate(y,w,ierr))
+  !
+  ! w = (R^-1)*f
+  PetscCall(MatSolve(R_factor,f,w,ierr))
+  !
+  ! y_tilde = g + (C^*)*w
+  PetscCall(MatCreateHermitianTranspose(C,Cht,ierr))
+  PetscCall(MatMultAdd(Cht,w,g,y_tilde,ierr)) 
+  !
+  ! y = (S^-1)*y_tilde
+  PetscCall(MatSolve(S,y_tilde,y,ierr))
+  !
+  ! 2 : x = (R^-1)*(f-C*y)
+  !
+  ! w = f - C*y
+  PetscCall(VecCopy(y,y_tilde,ierr))
+  mone=-1
+  PetscCall(VecScale(y_tilde,mone,ierr))
+  PetscCall(MatMultAdd(C,y_tilde,f,w,ierr)) 
+  !
+  ! x = (R^-1)*w
+  PetscCall(MatSolve(R_factor,w,x,ierr)) 
+  !
+  PetscCall(VecDestroy(f,ierr))
+  PetscCall(VecDestroy(g,ierr))
+  PetscCall(VecDestroy(x,ierr))
+  PetscCall(VecDestroy(y,ierr))
+  PetscCall(VecDestroy(w,ierr))
+  PetscCall(VecDestroy(y_tilde,ierr))
+  !
+  ierr=0
+  return
+end subroutine
+!
+subroutine STApplyHermitianTranspose_User(st,vin,vout,ierr)
+#include <slepc/finclude/slepceps.h>
+  use slepceps
+  use ContextSTShell
+  implicit none
+  !
+  Mat                :: M,R,C,Cht
+  Mat,dimension(2,2) :: M_submats
+  Vec                :: f,g,x,y,y_tilde,w,vin,vout
+  ST                 :: st
+  IS,dimension(2)    :: rows
+  PetscScalar        :: mone
+  PetscErrorCode     :: ierr
+  !
+  PetscCall(STGetMatrix(st,0,M,ierr))
+  PetscCall(MatNestGetSubMats(M,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,M_submats,ierr))
+  R = M_submats(1,1)
+  C = M_submats(2,1) 
+  !
+  PetscCall(MatNestGetISs(M,rows,PETSC_NULL_INTEGER,ierr))
+  PetscCall(VecGetSubVector(vin,rows(1),f,ierr))
+  PetscCall(VecGetSubVector(vin,rows(2),g,ierr))
+  PetscCall(VecGetSubVector(vout,rows(1),x,ierr))
+  PetscCall(VecGetSubVector(vout,rows(2),y,ierr))
+  !
+  ! 1
+  PetscCall(VecDuplicate(y,y_tilde,ierr))
+  PetscCall(VecDuplicate(y,w,ierr))
+  !
+  PetscCall(MatSolve(R_factor,f,w,ierr))
+  !
+  PetscCall(MatCreateHermitianTranspose(C,Cht,ierr))
+  mone=-1
+  PetscCall(VecScale(w,mone,ierr))
+  PetscCall(MatMultAdd(Cht,w,g,y_tilde,ierr)) ! g - (C^*)*w
+  PetscCall(MatSolve(S,y_tilde,y,ierr))
+  !
+  ! 2
+  PetscCall(VecCopy(y,y_tilde,ierr))
+  PetscCall(MatMultAdd(C,y_tilde,f,w,ierr)) ! f + C*y
+  PetscCall(MatSolve(R_factor,w,x,ierr)) 
+  !
+  PetscCall(VecDestroy(f,ierr))
+  PetscCall(VecDestroy(g,ierr))
+  PetscCall(VecDestroy(x,ierr))
+  PetscCall(VecDestroy(y,ierr))
+  PetscCall(VecDestroy(w,ierr))
+  PetscCall(VecDestroy(y_tilde,ierr))
+  !
+  ierr=0
+  return
+end subroutine
+!
+subroutine STBackTransform_User(st,n,eigr,eigi,ierr)
+#include <slepc/finclude/slepceps.h>
+  use slepceps
+  use ContextSTShell
+
+  ST                       :: st
+  PetscInt                 :: n
+  PetscScalar,dimension(n) :: eigr,eigi
+  PetscErrorCode           :: ierr
+  PetscInt                 :: j
+
+  do j=1,n,1 
+    eigr(j) = 1.0 / eigr(j)
+  end do
+
+  ierr=0
+  return
+end subroutine
+!
+subroutine STDestroy_User(ierr)
+#include <slepc/finclude/slepceps.h>
+  use slepceps
+  use ContextSTShell
+
+  PetscCall(MatDestroy(R_factor,ierr))
+  PetscCall(MatDestroy(S,ierr))
+
+  ierr=0
+  return
 end subroutine
 !
 subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
@@ -564,4 +813,3 @@ end subroutine
  !PCDEFLATION       "deflation"
  !PCHPDDM           "hpddm"
  !PCHARA            "hara"
- 

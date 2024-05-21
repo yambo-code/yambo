@@ -185,8 +185,9 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
    !
  endif
  !
- if(eval_HARTREE.or.eval_DFT) &
-&   call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
+ if(eval_HARTREE.or.eval_DFT) then
+   call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
+ endif
  !
  ! Load Collisions if necessary
  ! ============================
@@ -329,7 +330,6 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
    call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
    call PARALLEL_global_indexes(E,k,q,"Oscillators",X=X(1))
    call PARALLEL_WF_distribute(B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
-   call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
    call PARALLEL_WF_index( )
    !
  end subroutine setup_OSCLL_parallelization
@@ -343,7 +343,9 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
    !
    X(1)%ib       =(/NL_bands(1),NL_bands(2)/)
    !
-   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,Dip=Dip,X=X(1))
+   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
+   call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
+   ! 
    call PARALLEL_global_indexes(E,k,q,"Non_Linear",Dip=Dip,X=X(1))
    call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,CLEAN_UP=.TRUE.)
    call PARALLEL_WF_index( )

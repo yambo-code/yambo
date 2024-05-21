@@ -72,30 +72,26 @@ subroutine OSCLL_compose_collision(k,q,i_n,i_m,i_k,COLL)
    !
    if(Correlation==LSEX) then
      !      
-     do ibp=NL_bands(1),NL_bands(2)
-       do ib=NL_bands(1),NL_bands(2)
-         !$omp parallel do default(shared), private(ig1,ig2), reduction(+:COLL)
-         do ig1=1,ng_oscll
-           do ig2=1,ng_oscll
-             COLL(ib,ibp,i_kmq)=COLL(ib,ibp,i_kmq)+OSCLL(i_n,ib ,ik_mem,iqbz,ig2) &
-&                                           *conjg(OSCLL(i_m,ibp,ik_mem,iqbz,ig1))*W(iqbz,ig2,ig1) 
-           enddo
-         enddo
-         !$omp end parallel do
+     do ig1=1,ng_oscll
+       do ig2=1,ng_oscll
+!$OMP WORKSHARE	 
+	 forall(ibp=NL_bands(1):NL_bands(2),ib=NL_bands(1):NL_bands(2)) 
+           COLL(ib,ibp,i_kmq)=COLL(ib,ibp,i_kmq)+OSCLL(i_n,ib ,ik_mem,iqbz,ig2)*conjg(OSCLL(i_m,ibp,ik_mem,iqbz,ig1)) &
+& 			      *W(iqbz,ig2,ig1) 
+         end forall
+!$OMP END WORKSHARE 
        enddo
      enddo
      !
    elseif(Correlation==LHF) then
-     do ibp=NL_bands(1),NL_bands(2)
-       do ib=NL_bands(1),NL_bands(2)
-         !$omp parallel do default(shared), private(ig1), reduction(+:COLL)
-         do ig1=1,ng_oscll
-           COLL(ib,ibp,i_kmq)=COLL(ib,ibp,i_kmq)+OSCLL(i_n,ib ,ik_mem,iqbz,ig1) &
-&                                         *conjg(OSCLL(i_m,ibp,ik_mem,iqbz,ig1))*W(iqbz,ig1,ig1) 
-         enddo
-         !$omp end parallel do
-       enddo
-     enddo
+    do ig1=1,ng_oscll
+!$OMP WORKSHARE	 
+      forall(ibp=NL_bands(1):NL_bands(2),ib=NL_bands(1):NL_bands(2)) 
+        COLL(ib,ibp,i_kmq)=COLL(ib,ibp,i_kmq)+OSCLL(i_n,ib ,ik_mem,iqbz,ig1)*conjg(OSCLL(i_m,ibp,ik_mem,iqbz,ig1)) &
+& 			      *W(iqbz,ig1,ig1) 
+      end forall
+!$OMP END WORKSHARE 
+    enddo
    endif
    !
  enddo  ! loop in iqbz

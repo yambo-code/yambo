@@ -65,9 +65,9 @@ subroutine OSCLL_compose_nl(dG,H_nl_sc,k,q,E,i_k,i_sp_pol)
     call OSCLL_compose_collision(k,q,i_n,i_m,i_k,COLL)
     !
 #if defined _DOUBLE
-        H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)-cI*ZDOTU(NL_nbands*2*QP_nk,COLL,1,dG,1)
+        H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)-cI*ZDOTU(NL_nbands**2*QP_nk,COLL,1,dG,1)
 #else
-        H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)-cI*CDOTU(NL_nbands*2*QP_nk,COLL,1,dG,1)
+        H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)-cI*CDOTU(NL_nbands**2*QP_nk,COLL,1,dG,1)
 #endif
     !
    enddo

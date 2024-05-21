@@ -47,8 +47,10 @@ subroutine el_density_vbands(en,Xk,rho,VAL_BANDS)
  integer     :: i1,ik,is,rho_syms,ir,ik_mem
  real(SP)    :: rho_no_sym(fft_size)
  !
+!$OMP WORKSHARE  
  rho=rZERO
  rho_no_sym=rZERO
+!$OMP END WORKSHARE 
  !
  do ik=1,Xk%nibz
    !  

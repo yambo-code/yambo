@@ -76,7 +76,7 @@ subroutine OSCLL_compose_nl(dG,H_nl_sc,k,q,E,i_k,i_sp_pol)
  ! Symmetrization
  ! 
  do i_n=NL_bands(1),NL_bands(2)
-   do i_m=i_n,NL_bands(2)
+   do i_m=i_n+1,NL_bands(2)
      H_nl_sc(i_m,i_n)=conjg(H_nl_sc(i_n,i_m))
    enddo
    H_nl_sc(i_n,i_n)=real(H_nl_sc(i_n,i_n))

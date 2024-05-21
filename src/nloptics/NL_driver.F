@@ -28,7 +28,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P,loop_on_angles,n_angles,&
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,runs_done,n_runs_todo,l_eval_CURRENT,NL_rot_axis,&
 &                         HF,SEX,NL_bands,NL_nbands,NL_alloc_k_distributed,NL_J_t,n_runs,loop_on_frequencies, &
-&                         l_pump_and_probe,eval_OSCLL,l_test_OSCLL
+&                         l_pump_and_probe,eval_OSCLL,l_test_OSCLL,LSEX,LHF
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT,eval_HARTREE
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -100,7 +100,8 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  !
  ! Generate bare_qpg if required
  !=============================
- if(eval_HARTREE.or.CORRELATION==JGM) call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
+ if(eval_HARTREE.or.CORRELATION==JGM.or.CORRELATION==LSEX.or.CORRELATION==LHF) &
+&  call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
  !
  ! Free memory: qindx_* and unused DIPOLES
  ! =====================================================

@@ -54,8 +54,7 @@ subroutine PARALLEL_global_Oscillators(E,Xk,q,ENVIRONMENT)
  !
  integer      :: nb_mat 
  !
-! CALL PARALLEL_structure(1,(/"k ","b "/))
- CALL PARALLEL_structure(1,(/"k "/))
+ CALL PARALLEL_structure(1,(/"k ","b "/))
  !
  call PARALLEL_assign_chains_and_COMMs(2,COMM_index_1=PAR_COM_Xk_ibz_INDEX, &
 &                                        COMM_index_2=PAR_COM_G_b_INDEX,&
@@ -76,9 +75,8 @@ if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) then
  call PARALLEL_live_message("K-points",ENVIRONMENT=ENVIRONMENT,         &
 &                           LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1), &
 &                           TOTAL=Xk%nibz,NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
-
  !
- allocate(PAR_Xk_ibz_index(Xk%nibz))
+ YAMBO_ALLOC(PAR_Xk_ibz_index,(Xk%nibz))
  call PAR_build_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
  !
  ! Bands
@@ -90,8 +88,8 @@ if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) then
  call PARALLEL_index(PAR_IND_G_b,(/nb_mat/),COMM=PAR_COM_G_b_INDEX)
  PAR_IND_G_b_ID=PAR_COM_G_b_INDEX%CPU_id
  PAR_nG_bands=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1)
- YAMBO_ALLOC(PAR_G_bands_INDEX,(PAR_n_bands(2)))
- call PAR_build_index(PAR_IND_G_b,PAR_n_bands(2),PAR_G_bands_index,PAR_nG_bands)
+ YAMBO_ALLOC(PAR_G_bands_INDEX,(nb_mat))
+ call PAR_build_index(PAR_IND_G_b,nb_mat,PAR_G_bands_index,PAR_nG_bands)
  !
  call PARALLEL_live_message("OSCL bands",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1),&

@@ -23,10 +23,13 @@ module mod_wf2y
      ! Work Space
      !
      real(SP),parameter :: max_wf_block_size=1000._SP ! MB
-     real(SP) :: array_sz
+     real(SP) :: array_sz,mem_one_wf
      !
      wf_nb_io_groups=1
      wf_nb_io=n_bands
+     !
+     mem_one_wf= real(2*wf_ncx*SP,SP)
+     !
      if (wf_nb_io_user>0) then
        !
        wf_nb_io=wf_nb_io_user
@@ -34,7 +37,7 @@ module mod_wf2y
        !
      else
        !
-       array_sz = real(2*n_bands*wf_ncx*n_spin*SP,SP)/Megabyte
+       array_sz = real(n_bands*n_spin,SP)*mem_one_wf/Megabyte
        !
        ! No memory problems: no blocks
        ! 
@@ -50,9 +53,10 @@ module mod_wf2y
        !
      endif
      !
-     array_sz = real(2*wf_nb_io*wf_ncx*n_spin*SP,SP)/Megabyte
+     array_sz = real(wf_nb_io*n_spin,SP)*mem_one_wf/Megabyte
      !
-     call msg('s',' WF splitter Blocks/bands/block size(Mb)',(/real(wf_nb_io_groups,SP),real(wf_nb_io,SP),array_sz/))
+     call msg('s',' WF splitter   Blocks/bands',(/wf_nb_io_groups,wf_nb_io/))
+     call msg('s',' WF splitter Block size(Mb)',array_sz)
      !
    end subroutine
    !

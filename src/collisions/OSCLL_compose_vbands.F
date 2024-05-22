@@ -31,7 +31,7 @@ subroutine OSCLL_compose_vbands(V_input,H_nl_sc,k,q,E,i_k,i_sp_pol)
  use collision_ext,  ONLY:ng_oscll,OSCLL,W
  use QP_m,           ONLY:QP_nk
  use R_lattice,      ONLY:bz_samp,qindx_S,nXkibz
- use wrapper_omp,    ONLY:Vstar_dot_V_omp
+ use wrapper_omp,    ONLY:Vstar_dot_V_omp,V_dot_V_omp
  use parallel_m,     ONLY:PAR_Xk_ibz_index
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -48,13 +48,16 @@ subroutine OSCLL_compose_vbands(V_input,H_nl_sc,k,q,E,i_k,i_sp_pol)
  ! Work Space
  !
  complex(SP) :: COLL(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk)
+ complex(SP) :: V_kmq(NL_bands(1):NL_bands(2),maxval(E%nbf),q%nbz)
+ complex(SP) :: OSCLL_val(NL_bands(1):NL_bands(2),maxval(E%nbf),ng_oscll,q%nbz)
+ complex(SP) :: OSCLL_sum(q%nbz,ng_oscll,ng_oscll)
+ ! 
 #if defined _DOUBLE
  complex(SP), external :: ZDOTU
 #else
  complex(SP), external :: CDOTU
 #endif
- complex(SP) :: COLL_val
- integer :: ib,ibp,i_kmq,i_n,i_m,iv,iqbz,ig1,ig2,ik_mem
+ integer :: i_kmq,i_n,i_m,iv,iqbz,ig1,ig2,ik_mem
  !
  ik_mem=PAR_Xk_ibz_index(i_k)
  !
@@ -62,51 +65,61 @@ subroutine OSCLL_compose_vbands(V_input,H_nl_sc,k,q,E,i_k,i_sp_pol)
  call timing('OSCLL compose NL',OPR='start')
 #endif
  !
+ ! Wave-function for each q-scattering
+ !
+!$omp parallel do default(shared), private(iqbz,i_kmq)
+ do iqbz=1,q%nbz
+   i_kmq           = k%sstar(qindx_S(i_k,iqbz,1),1)
+   V_kmq(:,:,iqbz) = V_input(NL_bands(1):,:,i_kmq,i_sp_pol)
+ enddo
+!$omp end parallel do
+ !
+ ! Build Oscillators for the time-dependent valence bands
+ ! 
+!$OMP WORKSHARE  
+ forall(iv=1:E%nbf(i_sp_pol),iqbz=1:q%nbz,i_n=NL_bands(1):NL_bands(2),ig1=1:ng_oscll)
+   OSCLL_val(i_n,iv,ig1,iqbz)=sum(OSCLL(i_n,:,ik_mem,iqbz,ig1)*V_input(NL_bands(1):,iv,iqbz,i_sp_pol))
+ end forall
+!$OMP END WORKSHARE  
+ !
  do i_n=NL_bands(1),NL_bands(2)
    do i_m=i_n,NL_bands(2)
     !
+!$OMP WORKSHARE  
+    forall(iqbz=1:q%nbz,ig1=1:ng_oscll,ig2=1:ng_oscll)
+      OSCLL_sum(iqbz,ig1,ig2)=sum(OSCLL_val(i_n,:,ig1,iqbz)*conjg(OSCLL_val(i_m,:,ig2,iqbz)))
+    end forall
+!$OMP END WORKSHARE  
+    !
+#if defined _DOUBLE
+    H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)+spin_occ*ZDOTU(ng_oscll**2*q%nbz,W,1,OSCLL_sum,1)
+#else
+    H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)+spin_occ*CDOTU(ng_oscll**2*q%nbz,W,1,OSCLL_sum,1)
+#endif
+    ! 
+   enddo
+ enddo
+ !
+ do i_n=NL_bands(1),NL_bands(2)
+   do i_m=i_n,NL_bands(2)
     call OSCLL_compose_collision(k,q,i_n,i_m,i_k,COLL)
-    !
-    do iv=1,E%nbf(i_sp_pol)
-     COLL_val=cZERO
-     !
-     do iqbz=1,q%nbz 
-       i_kmq   = k%sstar(qindx_S(i_k,iqbz,1),1)
-       do ib=NL_bands(1),NL_bands(2)
-         do ibp=NL_bands(1),NL_bands(2)
-           do ig1=1,ng_oscll
-             do ig2=1,ng_oscll
-                COLL_val=COLL_val+conjg(V_input(ibp,iv,i_kmq,i_sp_pol))*V_input(ib,iv,i_kmq,i_sp_pol)* & 
-                        OSCLL(i_n,ib ,ik_mem,iqbz,ig2)*conjg(OSCLL(i_m,ibp,ik_mem,iqbz,ig1)) &
-&                             *W(iqbz,ig2,ig1)
-              
-             enddo
-           enddo
-           
-!           COLL_val=COLL_val+COLL(ib,ibp,i_kmq)* &
-!&                   conjg(V_input(ibp,iv,i_kmq,i_sp_pol))*V_input(ib,iv,i_kmq,i_sp_pol)
-         enddo
-      enddo
-     enddo
-     !
-     H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)+COLL_val*spin_occ
-    enddo
-    !
     do ib=NL_bands(1),E%nbf(i_sp_pol)
       H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)-sum(COLL(ib,ib,:))*spin_occ
     enddo
-    !
    enddo
  enddo
  !
  ! Symmetrization
  ! 
+!$omp parallel do default(shared), private(i_n,i_m)
  do i_n=NL_bands(1),NL_bands(2)
    do i_m=i_n+1,NL_bands(2)
      H_nl_sc(i_m,i_n)=conjg(H_nl_sc(i_n,i_m))
    enddo
    H_nl_sc(i_n,i_n)=real(H_nl_sc(i_n,i_n))
  enddo
+!$omp end parallel do
+
  !
 #if defined _TIMING
  call timing('OSCLL compose NL',OPR='stop')

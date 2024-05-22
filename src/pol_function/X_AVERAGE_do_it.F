@@ -14,7 +14,7 @@ subroutine X_AVERAGE_do_it(what,X_par)
  use pars,          ONLY:cZERO,SP
  use gpu_m,         ONLY:have_gpu
  use X_m,           ONLY:X_par_average,n_OPTICAL_dir_to_eval
- use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2d
+ use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2d,devxlib_memset_d
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
  !
 #include<dev_defs.h>
@@ -32,7 +32,7 @@ subroutine X_AVERAGE_do_it(what,X_par)
      !        It should be the case here, since blc_d is computed on the Device
      !        in X_redux, and then transferred to the Host before exiting 
      call devxlib_memcpy_h2d(DEV_VAR(X_par_average%blc),X_par_average%blc)
-     X_par%blc_d=cZERO
+     call devxlib_memset_d(DEV_VAR(X_par%blc),cZERO)
    endif
    return
  endif

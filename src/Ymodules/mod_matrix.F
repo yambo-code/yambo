@@ -9,6 +9,7 @@ module matrix
  !
  use pars,       ONLY:schlen,SP
  use parallel_m, ONLY:yMPI_comm
+ use devxlib,    ONLY:devxlib_mapped,devxlib_memset_d
  !
 #include<dev_defs.h>
 #include<y_memory.h>
@@ -94,9 +95,9 @@ module matrix
        YAMBO_ALLOC(M_out%blc,(M_out%rows(1):M_out%rows(2),M_out%cols(1):M_out%cols(2),NW))
        M_out%blc=cZERO
      endif
-     if (allocated(M_in%blc_d)) then
-       YAMBO_ALLOC(M_out%blc_d,(M_out%rows(1):M_out%rows(2),M_out%cols(1):M_out%cols(2),NW))
-       M_out%blc_d=cZERO
+     if (devxlib_mapped(DEV_VAR(M_in%blc))) then
+       YAMBO_ALLOC_GPU(DEV_VAR(M_out%blc),(M_out%rows(1):M_out%rows(2),M_out%cols(1):M_out%cols(2),NW))
+       call devxlib_memset_d(DEV_VAR(M_out%blc),cZERO)
      endif
    end subroutine 
    !
@@ -128,8 +129,8 @@ module matrix
      call COMM_reset(M_par%INTER_comm)
      call COMM_reset(M_par%INTRA_comm)
      !
+     YAMBO_FREE_GPU(DEV_VAR(M_par%blc))
      YAMBO_FREE(M_par%blc)
-     YAMBO_FREE(M_par%blc_d)
      !
    end subroutine
    !

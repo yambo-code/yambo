@@ -57,7 +57,7 @@ subroutine OSCLL_compose_vbands(V_input,H_nl_sc,k,q,E,i_k,i_sp_pol)
 #else
  complex(SP), external :: CDOTU
 #endif
- integer :: i_kmq,i_n,i_m,iv,iqbz,ig1,ig2,ik_mem
+ integer :: i_kmq,ib,i_n,i_m,iv,iqbz,ig1,ig2,ik_mem
  !
  ik_mem=PAR_Xk_ibz_index(i_k)
  !

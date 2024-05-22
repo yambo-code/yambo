@@ -64,6 +64,9 @@ module nl_optics
  ! Density matrix
  complex(SP), allocatable :: dG(:,:,:) 
  !
+ ! Sigma sex at equilibrium (for oscillators)
+ complex(SP), allocatable :: Sigma_SEX_EQ(:,:,:,:)
+ !
  ! Integrator Variables
  !
  integer, parameter :: EULER    = 1
@@ -231,6 +234,10 @@ module nl_optics
      endif
      YAMBO_ALLOC(I_relax,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),maxval(en%nbf),PAR_Xk_nibz,n_sp_pol))
      YAMBO_ALLOC(Ho_plus_Sigma,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),PAR_Xk_nibz,n_sp_pol))
+     !
+     if(Correlation==LSEX.or.Correlation==LHF) then
+       YAMBO_ALLOC(Sigma_SEX_EQ,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_sp_pol,PAR_Xk_nibz))
+     endif          
      !
    end subroutine NL_alloc_k_distributed
    !

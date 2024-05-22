@@ -20,7 +20,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OSCLL_compose_vbands(dG,H_nl_sc,k,q,E,i_k,i_sp_pol) 
+subroutine OSCLL_compose_vbands(V_input,H_nl_sc,k,q,E,i_k,i_sp_pol) 
  !
  ! This subroutine calculate the long-range part of the Screened exchange
  !
@@ -31,7 +31,7 @@ subroutine OSCLL_compose_vbands(dG,H_nl_sc,k,q,E,i_k,i_sp_pol)
  use collision_ext,  ONLY:ng_oscll,OSCLL,W
  use QP_m,           ONLY:QP_nk
  use R_lattice,      ONLY:bz_samp,qindx_S,nXkibz
- use wrapper_omp,    ONLY:V_dot_V
+ use wrapper_omp,    ONLY:Vstar_dot_V_omp
  use parallel_m,     ONLY:PAR_Xk_ibz_index
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -43,7 +43,7 @@ subroutine OSCLL_compose_vbands(dG,H_nl_sc,k,q,E,i_k,i_sp_pol)
  integer,     intent(in)    :: i_k,i_sp_pol
  type(bz_samp), intent(in)  :: k,q
  type(levels),  intent(in)  :: E
- complex(SP),  intent(in)   :: dG(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk)
+ complex(SP),  intent(in)  :: V_input(NL_bands(2),maxval(E%nbf),QP_nk,n_sp_pol)
  !
  ! Work Space
  !
@@ -53,7 +53,7 @@ subroutine OSCLL_compose_vbands(dG,H_nl_sc,k,q,E,i_k,i_sp_pol)
 #else
  complex(SP), external :: CDOTU
 #endif
- integer :: i1,i2,i_n,i_m
+ integer :: ib,ibp,i_kmq,i_n,i_m,iv
  !
 #if defined _TIMING
  call timing('OSCLL compose NL',OPR='start')
@@ -64,11 +64,23 @@ subroutine OSCLL_compose_vbands(dG,H_nl_sc,k,q,E,i_k,i_sp_pol)
     !
     call OSCLL_compose_collision(k,q,i_n,i_m,i_k,COLL)
     !
-#if defined _DOUBLE
-        H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)-cI*ZDOTU(NL_nbands**2*QP_nk,COLL,1,dG,1)
-#else
-        H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)-cI*CDOTU(NL_nbands**2*QP_nk,COLL,1,dG,1)
-#endif
+!    call NL_build_dG_lesser(E,V_input,dG)
+    !
+    do i_kmq=1,QP_nk
+     !
+     do ib=NL_bands(1),NL_bands(2)
+      do ibp=NL_bands(1),NL_bands(2)
+         do iv=1,E%nbf(i_sp_pol)
+           H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)+COLL(ib,ibp,i_kmq)*spin_occ* &
+&                   conjg(V_input(ibp,iv,i_kmq,i_sp_pol))*V_input(ib,iv,i_kmq,i_sp_pol)
+         enddo
+      enddo
+     enddo
+     !
+     do ib=NL_bands(1),E%nbf(i_sp_pol)
+        H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)-COLL(ib,ib,i_kmq)*spin_occ
+      enddo
+    enddo
     !
    enddo
  enddo

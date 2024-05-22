@@ -10,7 +10,7 @@ RT_objs = COLLISIONS_compose_rt.o
 #if defined _NL
 NL_objs = COLLISIONS_compose_nl.o
 LSEX_objs = Build_LSEX_collisions.o LSEX_potential.o OSCLL_eval.o OSCLL_load.o \
-            OSCLL_compose_collision.o OSCLL_compose_nl.o OSCLL_compose_nl_fast.o 
+            OSCLL_compose_collision.o OSCLL_compose_nl.o OSCLL_compose_vbands.o 
 #endif
 #if defined _QED || defined _SC || defined _RT || defined _NL 
 objs= PLASMA_parallel_setup.o COLLISIONS_basic_operations.o \

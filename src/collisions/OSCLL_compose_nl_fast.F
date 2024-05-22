@@ -20,7 +20,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OSCLL_compose_nl_fast(V_input,dG,H_nl_sc,k,q,E,i_k,i_sp_pol) 
+subroutine OSCLL_compose_nl_fast(V_input,H_nl_sc,k,q,E,i_k,i_sp_pol) 
  !
  ! This subroutine calculate the long-range part of the Screened exchange
  !
@@ -43,8 +43,7 @@ subroutine OSCLL_compose_nl_fast(V_input,dG,H_nl_sc,k,q,E,i_k,i_sp_pol)
  integer,     intent(in)    :: i_k,i_sp_pol
  type(bz_samp), intent(in)  :: k,q
  type(levels),  intent(in)  :: E
- complex(SP),  intent(in)   :: dG(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk)
- complex(SP),  intent(in)  :: V_input(NL_bands(2),maxval(E%nbf),QP_nk,n_sp_pol)
+ complex(SP),  intent(in)   :: V_input(NL_bands(2),maxval(E%nbf),QP_nk,n_sp_pol)
  !
  ! Work Space
  !

@@ -220,7 +220,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    endif                                                         
    !
 !   if(Correlation==LSEX.or.Correlation==LHF) call OSCLL_compose_nl(dG,H_nl_sc,k,q,E,ik,i_sp_pol)
-   if(Correlation==LSEX.or.Correlation==LHF) call OSCLL_compose_nl_fast(V_bands,dG,H_nl_sc,k,q,E,ik,i_sp_pol)
+   if(Correlation==LSEX.or.Correlation==LHF) call OSCLL_compose_nl_fast(V_bands,H_nl_sc,k,q,E,ik,i_sp_pol)
    !
    if(l_use_Hxc_collisions) then
      call M_plus_alpha_M_omp(RT_nbands,cONE,RT_Vnl_xc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),ik,i_sp_pol),&

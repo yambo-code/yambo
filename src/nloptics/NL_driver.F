@@ -24,15 +24,16 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  use fields,         ONLY:Efield
  use frequency,      ONLY:w_samp
  use QP_CTL_m,       ONLY:QP_apply
+ use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J,NL_initial_versor, &
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P,loop_on_angles,n_angles,&
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,runs_done,n_runs_todo,l_eval_CURRENT,NL_rot_axis,&
 &                         HF,SEX,NL_bands,NL_nbands,NL_alloc_k_distributed,NL_J_t,n_runs,loop_on_frequencies, &
-&                         l_pump_and_probe,eval_OSCLL,l_test_OSCLL,LSEX,LHF
+&                         l_pump_and_probe,eval_OSCLL,l_test_OSCLL,LSEX,LHF,Sigma_SEX_EQ
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT,eval_HARTREE
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz
+ use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,PAR_Xk_ibz_index
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
 #include<memory.h>
@@ -49,7 +50,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  ! 
  ! Work Space
  !
- integer           :: i_f,i1,i_sp_pol,wf_ng_save,io_err
+ integer           :: i_f,i1,i_sp_pol,wf_ng_save,io_err,ik,ik_mem
  character(schlen) :: l_message
  logical           :: l_dynamics_is_over
  integer           :: ID_RESTART
@@ -182,6 +183,15 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
    call OSCLL_load(q,k)
    !
    call setup_NL_parallelization()
+   !
+   Sigma_SEX_EQ=cZERO
+   do ik=1,QP_nk
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+     ik_mem=PAR_Xk_ibz_index(ik)
+     do i_sp_pol=1,n_sp_pol
+!       call OSCLL_compose_nl_fast(V_bands,Sigma_SEX_EQ(:,:,i_sp_pol,ik_mem),k,q,E,ik,i_sp_pol) 
+     enddo
+   enddo
    !
  endif
  !

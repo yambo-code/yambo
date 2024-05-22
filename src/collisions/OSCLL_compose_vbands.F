@@ -53,7 +53,10 @@ subroutine OSCLL_compose_vbands(V_input,H_nl_sc,k,q,E,i_k,i_sp_pol)
 #else
  complex(SP), external :: CDOTU
 #endif
- integer :: ib,ibp,i_kmq,i_n,i_m,iv
+ complex(SP) :: COLL_val
+ integer :: ib,ibp,i_kmq,i_n,i_m,iv,iqbz,ig1,ig2,ik_mem
+ !
+ ik_mem=PAR_Xk_ibz_index(i_k)
  !
 #if defined _TIMING
  call timing('OSCLL compose NL',OPR='start')
@@ -64,22 +67,33 @@ subroutine OSCLL_compose_vbands(V_input,H_nl_sc,k,q,E,i_k,i_sp_pol)
     !
     call OSCLL_compose_collision(k,q,i_n,i_m,i_k,COLL)
     !
-!    call NL_build_dG_lesser(E,V_input,dG)
-    !
-    do i_kmq=1,QP_nk
+    do iv=1,E%nbf(i_sp_pol)
+     COLL_val=cZERO
      !
-     do ib=NL_bands(1),NL_bands(2)
-      do ibp=NL_bands(1),NL_bands(2)
-         do iv=1,E%nbf(i_sp_pol)
-           H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)+COLL(ib,ibp,i_kmq)*spin_occ* &
-&                   conjg(V_input(ibp,iv,i_kmq,i_sp_pol))*V_input(ib,iv,i_kmq,i_sp_pol)
+     do iqbz=1,q%nbz 
+       i_kmq   = k%sstar(qindx_S(i_k,iqbz,1),1)
+       do ib=NL_bands(1),NL_bands(2)
+         do ibp=NL_bands(1),NL_bands(2)
+           do ig1=1,ng_oscll
+             do ig2=1,ng_oscll
+                COLL_val=COLL_val+conjg(V_input(ibp,iv,i_kmq,i_sp_pol))*V_input(ib,iv,i_kmq,i_sp_pol)* & 
+                        OSCLL(i_n,ib ,ik_mem,iqbz,ig2)*conjg(OSCLL(i_m,ibp,ik_mem,iqbz,ig1)) &
+&                             *W(iqbz,ig2,ig1)
+              
+             enddo
+           enddo
+           
+!           COLL_val=COLL_val+COLL(ib,ibp,i_kmq)* &
+!&                   conjg(V_input(ibp,iv,i_kmq,i_sp_pol))*V_input(ib,iv,i_kmq,i_sp_pol)
          enddo
       enddo
      enddo
      !
-     do ib=NL_bands(1),E%nbf(i_sp_pol)
-        H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)-COLL(ib,ib,i_kmq)*spin_occ
-      enddo
+     H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)+COLL_val*spin_occ
+    enddo
+    !
+    do ib=NL_bands(1),E%nbf(i_sp_pol)
+      H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)-sum(COLL(ib,ib,:))*spin_occ
     enddo
     !
    enddo

@@ -71,12 +71,13 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  !
  if (.not.ONLY_SIZE) then
    !
+   YAMBO_FREE_GPU(DEV_VAR(fft_g_table))
    YAMBO_FREE(fft_g_table)
+   !
    YAMBO_ALLOC(fft_g_table,(max(iG_max,wf_ng),iGo_max))
    fft_g_table=0
    !
    if (have_gpu) then
-     YAMBO_FREE_GPU(DEV_VAR(fft_g_table))
      YAMBO_ALLOC_GPU(DEV_VAR(fft_g_table),(max(iG_max,wf_ng),iGo_max))
      call devxlib_memset_d(DEV_VAR(fft_g_table),val=0)
    endif

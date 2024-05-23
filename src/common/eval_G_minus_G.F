@@ -55,6 +55,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
      eval_G_minus_G=size(G_m_G,1)
      return
    else
+     YAMBO_FREE_GPU(DEV_VAR(G_m_G))
      YAMBO_FREE(G_m_G)
    endif
  endif

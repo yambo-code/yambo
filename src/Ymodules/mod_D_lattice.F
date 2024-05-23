@@ -102,8 +102,10 @@ module D_lattice
      integer  :: i1,i2,i3
      real(SP) :: m(3,3)
      !
-     YAMBO_FREE(sop_tab)
+     YAMBO_FREE_GPU(DEV_VAR(sop_inv))
      YAMBO_FREE(sop_inv)
+     YAMBO_FREE(sop_tab)
+     !
      YAMBO_ALLOC(sop_tab,(nsym,nsym))
      YAMBO_ALLOC(sop_inv,(nsym))
      sop_tab=0
@@ -125,7 +127,6 @@ module D_lattice
      call msg(msg_where,'Group table correct   ',.true.)
      !
      if (have_gpu) then
-       YAMBO_FREE_GPU(DEV_VAR(sop_inv))
        YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(sop_inv),sop_inv)
      endif
      !

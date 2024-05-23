@@ -23,6 +23,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR)
 &                              wf_nc_k_new,wf_igk_new,&
 &                              wf_nc_k_new,wf_ncx_new,wf_ncx_save,wf_ng_new,wf_ng_save
  !
+#include<dev_defs.h>
 #include<y_memory.h>
  !
  type(levels),intent(in)  :: E
@@ -94,6 +95,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR)
  ! to make sure that WF_load works properly
  !
  YAMBO_FREE(wf_nc_k)
+ YAMBO_FREE_GPU(DEV_VAR(wf_igk))
  YAMBO_FREE(wf_igk)
  YAMBO_ALLOC(wf_nc_k,(k_save%nibz))
  YAMBO_ALLOC(wf_igk,(wf_ncx_save,k_save%nibz))
@@ -257,6 +259,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR)
  !
  ! Finally I save again the new WFs_shells to be used by fix_PPs
  YAMBO_FREE(wf_nc_k)
+ YAMBO_FREE_GPU(DEV_VAR(wf_igk))
  YAMBO_FREE(wf_igk)
  YAMBO_ALLOC(wf_nc_k,(k%nibz))
  YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))

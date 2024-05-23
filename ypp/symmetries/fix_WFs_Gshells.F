@@ -18,6 +18,7 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym)
 &                              wf_nc_k_new,l_wf_nc_k_red,ng_vec_new,ng_vec_save,wf_igk_new,&
 &                              wf_nc_k_new,wf_ncx_new,wf_ncx_save,wf_ng_new,wf_ng_save,wf_ng_cut
  !
+#include<dev_defs.h>
 #include<y_memory.h>
  !
  type(bz_samp),intent(inout) :: k
@@ -67,6 +68,7 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym)
  wf_igk_reduced =wf_igk(:wf_ncx,:)
  !
  YAMBO_FREE(wf_nc_k)
+ YAMBO_FREE_GPU(DEV_VAR(wf_igk))
  YAMBO_FREE(wf_igk)
  !
  YAMBO_ALLOC(wf_nc_k,(k%nibz))

@@ -130,7 +130,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
    call devxlib_memset_d(V3g_p,cZERO_DP)
    !
    !DEV_ACC data present(Vr_p,V3g_p,fft_g_table,g_vec)
-   !DEV_ACC parallel loop collapse(2) async
+   !DEV_ACC parallel loop collapse(2)
    !DEV_CUF kernel do(2) <<<*,*>>>
    !DEV_OMPGPU target map(present,alloc:Vr_p,V3g_p,fft_g_table,g_vec)
    !DEV_OMPGPU teams loop collapse(2)
@@ -147,7 +147,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
      call devxlib_memset_d(Vr_p,cZERO_DP)
      !
      !DEV_ACC data present(Vr_p,V3g_p,fft_g_table)
-     !DEV_ACC parallel loop async
+     !DEV_ACC parallel loop
      !DEV_CUF kernel do(1) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:Vr_p,V3g_p,fft_g_table)
      !DEV_OMPGPU teams loop

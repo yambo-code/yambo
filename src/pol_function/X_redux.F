@@ -261,7 +261,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
      if (compute_on_gpu) then
         !
         !DEV_ACC data present(BUFFER_p,bare_qpg)
-        !DEV_ACC parallel loop collapse(2) async
+        !DEV_ACC parallel loop collapse(2)
         !DEV_CUF kernel do(2)
         !DEV_OMPGPU target map(present,alloc:BUFFER_p,bare_qpg)
         !DEV_OMPGPU teams loop collapse(2)
@@ -385,7 +385,7 @@ end subroutine
        Xo_p     => DEV_VAR(Xo%blc)(:,:,:)
        !
        !DEV_ACC data present(KERNEL_p,Xo_p,bare_qpg)
-       !DEV_ACC parallel loop collapse(2) async
+       !DEV_ACC parallel loop collapse(2)
        !DEV_CUF kernel do(2) <<<*,*>>>
        !DEV_OMPGPU target map(present,alloc:KERNEL_p,Xo_p,bare_qpg)
        !DEV_OMPGPU teams loop collapse(2)

@@ -65,7 +65,7 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
        if (n_spinor==1) then
          !
          !DEV_ACC data present(WF_k_out,g_rot,WF_p)
-         !DEV_ACC parallel loop collapse(2) async
+         !DEV_ACC parallel loop collapse(2)
          !DEV_CUF kernel do(2) <<<*,*>>>
          !DEV_OMPGPU target map(present,alloc:WF_k_out,g_rot,WF_p)
          !DEV_OMPGPU teams loop collapse(2)
@@ -80,7 +80,7 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
        else
          !
          !DEV_ACC data present(WF_k_out,g_rot,WF_p,spin_sop)
-         !DEV_ACC parallel loop async
+         !DEV_ACC parallel loop
          !DEV_CUF kernel do(1) <<<*,*>>>
          !DEV_OMPGPU target map(present,alloc:WF_k_out,g_rot,WF_p,spin_sop)
          !DEV_OMPGPU teams loop

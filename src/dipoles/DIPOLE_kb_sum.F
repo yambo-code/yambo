@@ -90,7 +90,7 @@ subroutine DIPOLE_kb_sum(rho,pp_dim_yambo,ib_range,iv,ic,XX)
  if (pp_dim_yambo==0) return
  !
  !DEV_ACC data present(drho,XX)
- !DEV_ACC parallel loop collapse(3) async
+ !DEV_ACC parallel loop collapse(3)
  !DEV_CUF kernel do(3)
  !DEV_OMPGPU target map(present,alloc:drho,XX)
  !DEV_OMPGPU teams loop collapse(3)

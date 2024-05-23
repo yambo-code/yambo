@@ -553,7 +553,7 @@ module wrapper
      ctmp=0.0_SP
      !
      !DEV_ACC data present(CX,CY,CZ)
-     !DEV_ACC parallel loop async
+     !DEV_ACC parallel loop
      !DEV_CUF kernel do(1) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:CX,CY,CZ) map(tofrom:ctmp)
      !DEV_OMPGPU teams loop reduction(+:ctmp)

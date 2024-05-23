@@ -53,7 +53,7 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
  if(n_spinor==1) then
    !
    !DEV_ACC data present(WF_p,WF_symm,fft_rot_r)
-   !DEV_ACC parallel loop async
+   !DEV_ACC parallel loop
    !DEV_CUF kernel do(1) <<<*,*>>>
    !DEV_OMPGPU target map(present,alloc:WF_p,WF_symm,fft_rot_r)
    !DEV_OMPGPU teams loop
@@ -69,7 +69,7 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
  if (n_spinor==2) then
    !
    !DEV_ACC data present(WF_p,WF_symm,fft_rot_r,spin_sop)
-   !DEV_ACC parallel loop async
+   !DEV_ACC parallel loop
    !DEV_CUF kernel do(1) <<<*,*>>>
    !DEV_OMPGPU target map(present,alloc:WF_p,WF_symm,fft_rot_r,spin_sop)
    !DEV_OMPGPU teams loop

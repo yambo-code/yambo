@@ -81,7 +81,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  ! ordinary implementation
  !
  !DEV_ACC data present(rho_tw_rs_p,WF_symm_i_p,WF_symm_o_p)
- !DEV_ACC parallel loop async
+ !DEV_ACC parallel loop
  !DEV_CUF kernel do(1) <<<*,*>>>
  !DEV_OMPGPU target map(present,alloc:rho_tw_rs_p,WF_symm_i_p,WF_symm_o_p)
  !DEV_OMPGPU teams loop
@@ -93,7 +93,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  !DEV_OMPGPU end target
  !
  if (n_spinor==2) then
-   !DEV_ACC parallel loop async
+   !DEV_ACC parallel loop
    !DEV_CUF kernel do(1) <<<*,*>>>
    !DEV_OMPGPU target map(present,alloc:rho_tw_rs_p,WF_symm_i_p,WF_symm_o_p)
    !DEV_OMPGPU teams loop
@@ -170,7 +170,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  if (qs==idt_index) then
    !
    !DEV_ACC data present(rhotw_p,rho_tw_rs_p,fft_g_table)
-   !DEV_ACC parallel loop async
+   !DEV_ACC parallel loop
    !DEV_CUF kernel do(1) <<<*,*>>>
    !DEV_OMPGPU target map(present,alloc:rhotw_p,rho_tw_rs_p,fft_g_table)
    !DEV_OMPGPU teams loop
@@ -184,7 +184,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  else
    !
    !DEV_ACC data present(rhotw_p,rho_tw_rs_p,fft_g_table,g_rot)
-   !DEV_ACC parallel loop async
+   !DEV_ACC parallel loop
    !DEV_CUF kernel do(1) <<<*,*>>>
    !DEV_OMPGPU target map(present,alloc:rhotw_p,rho_tw_rs_p,fft_g_table,g_rot)
    !DEV_OMPGPU teams loop

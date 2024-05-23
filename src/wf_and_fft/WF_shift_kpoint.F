@@ -57,7 +57,7 @@ subroutine DEV_SUB(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out
      g0_idx_val=k_map%g0_idx(id,WF_shift(id))
      !
      !DEV_ACC data present(WF_tmp,G_m_G,WF_k_out)
-     !DEV_ACC parallel loop async collapse(4)
+     !DEV_ACC parallel loop collapse(4)
      !DEV_CUF kernel do(4) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:WF_tmp,G_m_G,WF_k_out)
      !DEV_OMPGPU teams loop collapse(4)

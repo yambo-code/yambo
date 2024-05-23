@@ -211,26 +211,27 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
    return
  endif
  !
-! if(eval_OSCLL) then
-   !      
-   ! If I use oscillators I store the equilibrium part of long-range SEX
-   !
-!   Sigma_SEX_EQ=cZERO
-!   !
-!   do ik=1,QP_nk
-!     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
-!     ik_mem=PAR_Xk_ibz_index(ik)
-!     do i_sp_pol=1,n_sp_pol
-!       call OSCLL_compose_nl_fast(V_bands,Sigma_SEX_EQ(:,:,i_sp_pol,ik_mem),k,q,E,ik,i_sp_pol) 
-!     enddo
-!   enddo
-   !
-! endif
- !
  ! Initialization
  ! ==================
  call section('*','NL Start and Restart')
  call NL_start_and_restart(E,k,Dip)
+ !
+ !
+ if(eval_OSCLL) then
+   !      
+   ! If I use oscillators I store the equilibrium part of long-range SEX
+   !
+   Sigma_SEX_EQ=cZERO
+   !
+   do ik=1,QP_nk
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+     ik_mem=PAR_Xk_ibz_index(ik)
+     do i_sp_pol=1,n_sp_pol
+       call OSCLL_compose_vbands(V_bands,Sigma_SEX_EQ(:,:,i_sp_pol,ik_mem),k,q,E,ik,i_sp_pol) 
+     enddo
+   enddo
+   !
+ endif
  !
  ! Check if calculation was already done
  ! =====================================

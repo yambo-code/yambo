@@ -18,7 +18,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  use stderr,        ONLY:STRING_remove
  use BS,            ONLY:BS_blk,BSK_IO_mode,MAX_BSK_LIN_size,n_BS_blks_min,BS_K_dim
  use timing_m,      ONLY:timing
- use IO_m,          ONLY:io_unit,netcdf_call,nf90_sync,&
+ use IO_m,          ONLY:io_unit,netcdf_call,nf90_sync,variable_exist,&
 &                        write_is_on,read_is_on,io_BS_K,YAMBO_CMPLX_NO_FILL
  use IO_int,        ONLY:io_variable_bulk
  !
@@ -194,9 +194,11 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  end select
  !
  if ((x1==x2.or.BS_blk(i_block)%size(2)==BS_K_dim(1)) .and. .not.trim(mode)=="matonly") then
-   if (BS_blk(i_block)%mode=="C" .or. BS_blk(i_block)%mode=="A") x1=x1+BS_K_dim(1)
-   call io_variable_bulk(ID, ID_energ,  R1=BS_blk(i_block)%E,     IPOS=(/x1/) )
-   call io_variable_bulk(ID, ID_table,  I2=BS_blk(i_block)%table, IPOS=(/1,x1/) )
+   if (  write_is_on(ID) .or. variable_exist(ID,"BS_TABLE") ) then
+     if (BS_blk(i_block)%mode=="C" .or. BS_blk(i_block)%mode=="A") x1=x1+BS_K_dim(1)
+     call io_variable_bulk(ID, ID_energ,  R1=BS_blk(i_block)%E,     IPOS=(/x1/) )
+     call io_variable_bulk(ID, ID_table,  I2=BS_blk(i_block)%table, IPOS=(/1,x1/) )
+   endif
  endif
  !
  ! nf90_sync is performed up to n_BS_blks_min and at steps of 5% of BSE kernel

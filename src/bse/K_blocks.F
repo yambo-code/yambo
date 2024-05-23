@@ -36,7 +36,7 @@ subroutine K_blocks( )
  !
  ! Work Space
  !
- integer      :: i_T,j_T,i_T_start,j_T_start,i_block,iB,i_res_ares,j_res_ares,n_new_blocks,n_BS_blks_CPUs(ncpu)
+ integer      :: i_T,j_T,i_T_start,j_T_start,i_block,diag_size,iB,i_res_ares,j_res_ares,n_new_blocks,n_BS_blks_CPUs(ncpu)
  integer(IPL) :: local_steps
  real(SP)     :: N_Ts_total,N_Ts_local
  !
@@ -134,9 +134,10 @@ subroutine K_blocks( )
    allocate(BS_blk(iB)%done(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
    BS_blk(iB)%mat=cZERO
    BS_blk(iB)%done(:,:)="f"
-   if (BS_blk(iB)%coordinate(1)==BS_blk(iB)%coordinate(2)) then 
-    allocate(BS_blk(iB)%table(5,BS_blk(iB)%size(1)))
-    allocate(BS_blk(iB)%E(BS_blk(iB)%size(1)))
+   if (BS_blk(iB)%coordinate(1)==BS_blk(iB)%coordinate(2)) then
+    diag_size=minval(BS_blk(iB)%size(:))
+    allocate(BS_blk(iB)%table(5,diag_size))
+    allocate(BS_blk(iB)%E(diag_size))
     BS_blk(iB)%E=-1._SP
     BS_blk(iB)%table=0
   endif

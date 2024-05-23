@@ -312,7 +312,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
    !
    ! 3) Finally multiply residual and frequency dependent term
    !===========================================================
-   !DEV_ACC data present(X_par_p,Xo_res_p,X_par_lowtri_p,Xo_res_p)
+   !DEV_ACC_DEBUG data present(X_par_p,Xo_res_p,X_par_lowtri_p)
    freq_loop:&
    do iw=1,Xw%n_freqs
      !
@@ -445,7 +445,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
      endif
      !
    enddo freq_loop
-   !DEV_ACC end data
+   !DEV_ACC_DEBUG end data
    !
    if (master_thread) call live_timing(steps=1)
    !

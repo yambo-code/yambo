@@ -63,7 +63,7 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  if (.not.gpu_linalg_init) call gpu_linalg_setup()
  !
 #if defined _CUDA
- !DEV_ACC data present(A_d)
+ !DEV_ACC_DEBUG data present(A_d)
  !DEV_ACC host_data use_device(A_d)
  !
 #  if defined _DOUBLE
@@ -74,13 +74,13 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  if(i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnZgetrf_bufferSize failed')
  !
  !DEV_ACC end host_data
- !DEV_ACC end data
+ !DEV_ACC_DEBUG end data
 #endif
  !
  YAMBO_ALLOC_GPU(v_cmplx,(lwork))
  !
 #if defined _CUDA
- !DEV_ACC data present(A_d,B_d,v_cmplx,v_int,vp_int)
+ !DEV_ACC_DEBUG data present(A_d,B_d,v_cmplx,v_int,vp_int)
  !DEV_ACC host_data use_device(A_d,B_d,v_cmplx,v_int,vp_int)
  !
 #  if defined _DOUBLE
@@ -98,7 +98,7 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  if(i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnZgetrs failed')
  !
  !DEV_ACC end host_data
- !DEV_ACC end data
+ !DEV_ACC_DEBUG end data
 #endif
  !
  if(.not.(l_nl_optics.or.l_real_time)) call timing(trim(subname),OPR='stop')

@@ -89,7 +89,7 @@ subroutine DIPOLE_kb_sum(rho,pp_dim_yambo,ib_range,iv,ic,XX)
  !
  if (pp_dim_yambo==0) return
  !
- !DEV_ACC data present(drho,XX)
+ !DEV_ACC_DEBUG data present(drho,XX)
  !DEV_ACC parallel loop collapse(3)
  !DEV_CUF kernel do(3)
  !DEV_OMPGPU target map(present,alloc:drho,XX)
@@ -104,7 +104,7 @@ subroutine DIPOLE_kb_sum(rho,pp_dim_yambo,ib_range,iv,ic,XX)
    enddo
  enddo
  !DEV_OMPGPU end target
- !DEV_ACC end data
+ !DEV_ACC_DEBUG end data
  !
  call devxlib_memcpy_d2h(drho_loc,drho)
  forall(i1=1:3) rho(i1)=rho(i1)+sum(drho_loc(:,i1,:))

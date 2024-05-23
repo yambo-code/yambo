@@ -72,7 +72,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
          rho_acc_r=0.0_SP
          rho_acc_i=0.0_SP
          !
-         !DEV_ACC data present(WF_p,g_vec,wf_igk)
+         !DEV_ACC_DEBUG data present(WF_p,g_vec,wf_igk)
          !DEV_ACC parallel loop private(ig,rho_acc) reduction(+:rho_acc_r,rho_acc_i)
          !DEV_CUF kernel do(1)
          !DEV_OMPGPU target map(present,alloc:WF_p,g_vec,wf_igk) map(tofrom:rho_acc_r,rho_acc_i)
@@ -85,7 +85,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
            rho_acc_i=rho_acc_i + aimag(rho_acc)
          enddo
          !DEV_OMPGPU end target
-         !DEV_ACC end data
+         !DEV_ACC_DEBUG end data
          !
          rho_spinor(i1,i_spinor,j_spinor)=cmplx(rho_acc_r,rho_acc_i,SP)
        enddo
@@ -97,7 +97,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
      rho_acc_r=0.0_SP
      rho_acc_i=0.0_SP
      ! 
-     !DEV_ACC data present(WF_p,g_vec,wf_igk)
+     !DEV_ACC_DEBUG data present(WF_p,g_vec,wf_igk)
      !DEV_ACC parallel loop collapse(2) private(ig,rho_acc) reduction(+:rho_acc_r,rho_acc_i)
      !DEV_CUF kernel do(2)
      !DEV_OMPGPU target map(present,alloc:WF_p,g_vec,wf_igk) map(tofrom:rho_acc_r,rho_acc_i)
@@ -112,7 +112,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
      enddo
      enddo
      !DEV_OMPGPU end target
-     !DEV_ACC end data
+     !DEV_ACC_DEBUG end data
      !
      rho(i1)=cmplx(rho_acc_r,rho_acc_i,SP)
      !

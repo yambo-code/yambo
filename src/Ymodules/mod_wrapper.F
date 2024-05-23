@@ -459,7 +459,7 @@ module wrapper
      Vstar_dot_VV_c1_gpu=0.0_SP
      ctmp=0.0
      !
-     !DEV_ACC data present(CX,CY,CZ)
+     !DEV_ACC_DEBUG data present(CX,CY,CZ)
      !DEV_ACC parallel loop
      !DEV_CUF kernel do(1) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:CX,CY,CZ) map(tofrom:ctmp)
@@ -468,7 +468,7 @@ module wrapper
        ctmp=ctmp+conjg(CX(i))*CY(i)*CZ(i)
      enddo
      !DEV_OMPGPU end target
-     !DEV_ACC end data
+     !DEV_ACC_DEBUG end data
      !
      Vstar_dot_VV_c1_gpu=ctmp
      !
@@ -552,7 +552,7 @@ module wrapper
      V_dot_VV_c1_gpu=0.0_SP
      ctmp=0.0_SP
      !
-     !DEV_ACC data present(CX,CY,CZ)
+     !DEV_ACC_DEBUG data present(CX,CY,CZ)
      !DEV_ACC parallel loop
      !DEV_CUF kernel do(1) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:CX,CY,CZ) map(tofrom:ctmp)
@@ -561,7 +561,7 @@ module wrapper
        ctmp=ctmp+CX(i)*CY(i)*CZ(i)
      enddo
      !DEV_OMPGPU end target
-     !DEV_ACC end data
+     !DEV_ACC_DEBUG end data
      !
      V_dot_VV_c1_gpu=ctmp
    end function V_dot_VV_c1_gpu
@@ -608,7 +608,7 @@ module wrapper
      complex(SP) DEV_ATTR, intent(out):: CZ(N)
      !
      integer :: i
-     !DEV_ACC data present(CX,CY,CZ)
+     !DEV_ACC_DEBUG data present(CX,CY,CZ)
      !DEV_ACC parallel loop
      !DEV_CUF kernel do(1) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:CX,CY,CZ)
@@ -617,7 +617,7 @@ module wrapper
         CZ(i)=CX(i)*CY(i)
      enddo
      !DEV_OMPGPU end target
-     !DEV_ACC end data
+     !DEV_ACC_DEBUG end data
    end subroutine V_by_V_pwise_gpu
    !
 end module

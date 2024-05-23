@@ -41,7 +41,7 @@ function K_correlation_kernel_dir(i_block,i_p,i_pmq,                            
  O_c_d_iO1 => DEV_VAR(BS_blk(i_block)%O_c)(:,iO1)
  O_c_d_iO2 => DEV_VAR(BS_blk(i_block)%O_c)(:,iO2)
  !
- !DEV_ACC data present(O_c_d_iO1,O_c_d_iO2,G_m_G,g_rot,O1,O2)
+ !DEV_ACC_DEBUG data present(O_c_d_iO1,O_c_d_iO2,G_m_G,g_rot,O1,O2)
  !DEV_ACC parallel loop
  !DEV_CUF kernel do(1) <<<*,*>>>
  !DEV_OMP parallel do default(shared), private(i_g1,i_g2,i_g3)
@@ -52,7 +52,7 @@ function K_correlation_kernel_dir(i_block,i_p,i_pmq,                            
    O2(i_g1)=O_c_d_iO2(i_g3)
  enddo
  !DEV_OMP end parallel do
- !DEV_ACC end data
+ !DEV_ACC_DEBUG end data
  !
  if (     BS_W_is_diagonal) call DEV_SUB(V_by_V_pwise)(BS_n_g_W,O_times_W,O1,BS_W(:,1,iq_W))
  ! AF: to be fixed

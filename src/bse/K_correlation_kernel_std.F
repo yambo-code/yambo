@@ -64,7 +64,7 @@ function K_correlation_kernel_std(i_block,i_p,i_pmq,                            
  O_c1_p => DEV_VAR(BS_blk(i_block_1)%O_c)(:,:)
  O_c2_p => DEV_VAR(BS_blk(i_block_2)%O_c)(:,:)
  !
- !DEV_ACC data present(O_c1_p,O_c2_p,G_m_G,g_rot,O1,O2)
+ !DEV_ACC_DEBUG data present(O_c1_p,O_c2_p,G_m_G,g_rot,O1,O2)
  !DEV_ACC parallel loop private(i_g2,i_g3)
  !DEV_CUF kernel do(1) <<<*,*>>>
  !DEV_OMP parallel do default(shared), private(i_g1,i_g2,i_g3)
@@ -74,7 +74,7 @@ function K_correlation_kernel_std(i_block,i_p,i_pmq,                            
    O1(i_g1)=O_c1_p(i_g2,iO1)*PHASE_1
    O2(i_g1)=O_c2_p(i_g3,iO2)*PHASE_2
  enddo
- !DEV_ACC end data
+ !DEV_ACC_DEBUG end data
  !
  !
  if (i_k_s  >nsym/(i_time_rev+1)) call devxlib_conjg(O1,range1=(/1,BS_n_g_W/))

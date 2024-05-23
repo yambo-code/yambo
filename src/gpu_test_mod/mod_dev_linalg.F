@@ -35,7 +35,7 @@ contains
     integer i
     !
     !DEV_CUF kernel do
-    !DEV_ACC data present(x,y)
+    !DEV_ACC_DEBUG data present(x,y)
     !DEV_ACC parallel loop
     !DEV_OMPGPU target map(tofrom:x,y)
     !DEV_OMPGPU parallel do
@@ -43,7 +43,7 @@ contains
       y(i) = y(i) + a * x(i)
     end do
     !DEV_OMPGPU end target 
-    !DEV_ACC end data
+    !DEV_ACC_DEBUG end data
     !
   end subroutine saxpy_gpu
   !
@@ -57,7 +57,7 @@ contains
     !
 #if defined _CUDAF || defined _OPENACC || defined _OPENMP_GPU
     !DEV_OMPGPU target data map(tofrom:x,y), use_device_ptr(x,y)
-    !DEV_ACC data present(x,y)
+    !DEV_ACC_DEBUG data present(x,y)
     !DEV_ACC host_data use_device(x,y)
 #if defined _CUDA
     call cublasSaxpy(N, a, x, inc_x, y, inc_y)
@@ -65,7 +65,7 @@ contains
 !    call hipblasSaxpy(N, a, x, inc_x, y, inc_y)
 #endif
     !DEV_ACC end host_data
-    !DEV_ACC end data
+    !DEV_ACC_DEBUG end data
     !DEV_OMPGPU end target data
 #else
     call saxpy(N, a, x, inc_x, y, inc_y)

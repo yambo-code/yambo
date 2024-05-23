@@ -96,7 +96,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  !
  gamp_p => DEV_VAR(isc%gamp)
  !
- !DEV_ACC data present(gamp_p,RIM_qpg,bare_qpg)
+ !DEV_ACC_DEBUG data present(gamp_p,RIM_qpg,bare_qpg)
  !DEV_ACC parallel loop collapse(2)
  !DEV_CUF kernel do(2)
  !DEV_OMPGPU target map(present,alloc:gamp_p,RIM_qpg,bare_qpg)
@@ -172,18 +172,18 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
    enddo
  enddo
  !DEV_OMPGPU end target
- !DEV_ACC end data
+ !DEV_ACC_DEBUG end data
  !
  ! Anisotropy correction
  !
  if (.not.l_col_cut) then
-   !DEV_ACC data present(gamp_p)
+   !DEV_ACC_DEBUG data present(gamp_p)
    !DEV_ACC serial
    !DEV_OMPGPU target map(present,alloc:gamp_p)
    if (all((/iq==1,RIM_ng>0,mode=='c',RIM_anisotropy/=0._SP/))) gamp_p(1,1)=RIM_anisotropy/2._SP
    !DEV_OMPGPU end target
    !DEV_ACC end serial
-   !DEV_ACC end data
+   !DEV_ACC_DEBUG end data
  endif
  !
  call timing(subname,opr="stop")

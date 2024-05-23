@@ -30,7 +30,7 @@ subroutine saxpy_explicit(N, a, x, y)
     integer i
     !
     !DEV_CUF kernel do
-    !DEV_ACC data present(x,y)
+    !DEV_ACC_DEBUG data present(x,y)
     !DEV_ACC parallel loop
     !DEV_OMPGPU target map(tofrom:x,y)
     !DEV_OMPGPU parallel do
@@ -39,7 +39,7 @@ subroutine saxpy_explicit(N, a, x, y)
       y(i) = y(i) + a * x(i)
     end do
     !DEV_OMPGPU end target 
-    !DEV_ACC end data
+    !DEV_ACC_DEBUG end data
     !
   end subroutine saxpy_explicit
   

@@ -86,7 +86,7 @@ subroutine fft_3d_hip(c_d,n,fft_sign,hipfft_plan)
  !DEV_ACC wait(acc_async_noval)
  !!!!DEV_OMPGPU ???
  !
- !DEV_ACC data present(c_d)
+ !DEV_ACC_DEBUG data present(c_d)
  !DEV_ACC host_data use_device(c_d)
  !DEV_OMPGPU target data use_device_ptr(c_d)
  !
@@ -94,7 +94,7 @@ subroutine fft_3d_hip(c_d,n,fft_sign,hipfft_plan)
  !
  !DEV_OMPGPU end target data
  !DEV_ACC end host_data
- !DEV_ACC end data
+ !DEV_ACC_DEBUG end data
  !
  !DEV_ACC wait(acc_async_noval)
  !!!!DEV_OMPGPU wait ???

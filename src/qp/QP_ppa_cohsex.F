@@ -553,7 +553,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            dp_dummy_r = 0.0_DP
            dp_dummy_i = 0.0_DP
            !
-           !DEV_ACC data present(X_mat,RIM_W,isc_gamp_p,isc_rhotw_p,iscp_rhotw_p)
+           !DEV_ACC_DEBUG data present(X_mat,RIM_W,isc_gamp_p,isc_rhotw_p,iscp_rhotw_p)
            !DEV_ACC parallel loop collapse(2) private(PPA_E,PPA_R,l_rim_W_g,bose_PPA_E,ctmp) &
            !DEV_ACC               reduction(+:dp_dummy_r,dp_dummy_i)
            !DEV_CUF kernel do(2)
@@ -601,7 +601,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              enddo
            enddo
            !DEV_OMPGPU end target
-           !DEV_ACC end data
+           !DEV_ACC_DEBUG end data
            !
            dp_dummy%re = dp_dummy_r
            dp_dummy%im = dp_dummy_i

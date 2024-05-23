@@ -80,7 +80,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  !
  ! ordinary implementation
  !
- !DEV_ACC data present(rho_tw_rs_p,WF_symm_i_p,WF_symm_o_p)
+ !DEV_ACC_DEBUG data present(rho_tw_rs_p,WF_symm_i_p,WF_symm_o_p)
  !DEV_ACC parallel loop
  !DEV_CUF kernel do(1) <<<*,*>>>
  !DEV_OMPGPU target map(present,alloc:rho_tw_rs_p,WF_symm_i_p,WF_symm_o_p)
@@ -105,7 +105,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
    !
  endif
  !DEV_OMP end parallel
- !DEV_ACC end data
+ !DEV_ACC_DEBUG end data
  !
 #endif
  !
@@ -169,7 +169,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  !
  if (qs==idt_index) then
    !
-   !DEV_ACC data present(rhotw_p,rho_tw_rs_p,fft_g_table)
+   !DEV_ACC_DEBUG data present(rhotw_p,rho_tw_rs_p,fft_g_table)
    !DEV_ACC parallel loop
    !DEV_CUF kernel do(1) <<<*,*>>>
    !DEV_OMPGPU target map(present,alloc:rhotw_p,rho_tw_rs_p,fft_g_table)
@@ -178,12 +178,12 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
    do ig = 1, isc_ngrho
      rhotw_p(ig)= cmplx(rho_tw_rs_p(DEV_VAR(fft_g_table)(ig,iGo)),kind=SP)
    enddo
-   !DEV_ACC end data
+   !DEV_ACC_DEBUG end data
    !DEV_OMPGPU end target
    !
  else
    !
-   !DEV_ACC data present(rhotw_p,rho_tw_rs_p,fft_g_table,g_rot)
+   !DEV_ACC_DEBUG data present(rhotw_p,rho_tw_rs_p,fft_g_table,g_rot)
    !DEV_ACC parallel loop
    !DEV_CUF kernel do(1) <<<*,*>>>
    !DEV_OMPGPU target map(present,alloc:rhotw_p,rho_tw_rs_p,fft_g_table,g_rot)
@@ -192,7 +192,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
    do ig = 1, isc_ngrho
      rhotw_p(ig)= cmplx(rho_tw_rs_p(DEV_VAR(fft_g_table)(DEV_VAR(g_rot)(ig,qs),iGo)),kind=SP)
    enddo
-   !DEV_ACC end data
+   !DEV_ACC_DEBUG end data
    !DEV_OMPGPU end target
    !
  endif

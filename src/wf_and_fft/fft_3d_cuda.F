@@ -81,11 +81,11 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  istat = gpu_devsync()
 #endif
  !
- !DEV_ACC data present(c_d)
+ !DEV_ACC_DEBUG data present(c_d)
  !DEV_ACC host_data use_device(c_d)
  istat = cufftExecZ2Z( cufft_plan, c_d, c_d, i_sign )
  !DEV_ACC end host_data
- !DEV_ACC end data
+ !DEV_ACC_DEBUG end data
  !
 #ifdef _OPENACC
  !DEV_ACC wait(acc_async_noval)

@@ -52,7 +52,7 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
  !
  if(n_spinor==1) then
    !
-   !DEV_ACC data present(WF_p,WF_symm,fft_rot_r)
+   !DEV_ACC_DEBUG data present(WF_p,WF_symm,fft_rot_r)
    !DEV_ACC parallel loop
    !DEV_CUF kernel do(1) <<<*,*>>>
    !DEV_OMPGPU target map(present,alloc:WF_p,WF_symm,fft_rot_r)
@@ -62,13 +62,13 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
      WF_symm(ifft,1)=WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),1,i_wf)
    enddo
    !DEV_OMPGPU end target
-   !DEV_ACC end data
+   !DEV_ACC_DEBUG end data
    !
  endif
  !
  if (n_spinor==2) then
    !
-   !DEV_ACC data present(WF_p,WF_symm,fft_rot_r,spin_sop)
+   !DEV_ACC_DEBUG data present(WF_p,WF_symm,fft_rot_r,spin_sop)
    !DEV_ACC parallel loop
    !DEV_CUF kernel do(1) <<<*,*>>>
    !DEV_OMPGPU target map(present,alloc:WF_p,WF_symm,fft_rot_r,spin_sop)
@@ -81,7 +81,7 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
                      DEV_VAR(spin_sop)(2,2,isymm)*WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),2,i_wf)
    enddo
    !DEV_OMPGPU end target
-   !DEV_ACC end data
+   !DEV_ACC_DEBUG end data
    !
  endif
  !

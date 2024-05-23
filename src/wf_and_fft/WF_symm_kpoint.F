@@ -64,7 +64,7 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
        !
        if (n_spinor==1) then
          !
-         !DEV_ACC data present(WF_k_out,g_rot,WF_p)
+         !DEV_ACC_DEBUG data present(WF_k_out,g_rot,WF_p)
          !DEV_ACC parallel loop collapse(2)
          !DEV_CUF kernel do(2) <<<*,*>>>
          !DEV_OMPGPU target map(present,alloc:WF_k_out,g_rot,WF_p)
@@ -75,11 +75,11 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
          enddo
          enddo
          !DEV_OMPGPU end target
-         !DEV_ACC end data
+         !DEV_ACC_DEBUG end data
          !
        else
          !
-         !DEV_ACC data present(WF_k_out,g_rot,WF_p,spin_sop)
+         !DEV_ACC_DEBUG data present(WF_k_out,g_rot,WF_p,spin_sop)
          !DEV_ACC parallel loop
          !DEV_CUF kernel do(1) <<<*,*>>>
          !DEV_OMPGPU target map(present,alloc:WF_k_out,g_rot,WF_p,spin_sop)
@@ -91,7 +91,7 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
 &                                                         DEV_VAR(spin_sop)(2,2,is)*WF_p(i_g,2,iwf)
          enddo
          !DEV_OMPGPU end target
-         !DEV_ACC end data
+         !DEV_ACC_DEBUG end data
        endif
        !
      enddo

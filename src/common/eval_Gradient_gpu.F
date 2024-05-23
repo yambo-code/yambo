@@ -129,7 +129,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
    !
    call devxlib_memset_d(V3g_p,cZERO_DP)
    !
-   !DEV_ACC data present(Vr_p,V3g_p,fft_g_table,g_vec)
+   !DEV_ACC_DEBUG data present(Vr_p,V3g_p,fft_g_table,g_vec)
    !DEV_ACC parallel loop collapse(2)
    !DEV_CUF kernel do(2) <<<*,*>>>
    !DEV_OMPGPU target map(present,alloc:Vr_p,V3g_p,fft_g_table,g_vec)
@@ -140,13 +140,13 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
    enddo
    enddo
    !DEV_OMPGPU end target
-   !DEV_ACC end data
+   !DEV_ACC_DEBUG end data
    !
    do ic = 1,3
      !
      call devxlib_memset_d(Vr_p,cZERO_DP)
      !
-     !DEV_ACC data present(Vr_p,V3g_p,fft_g_table)
+     !DEV_ACC_DEBUG data present(Vr_p,V3g_p,fft_g_table)
      !DEV_ACC parallel loop
      !DEV_CUF kernel do(1) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:Vr_p,V3g_p,fft_g_table)
@@ -155,7 +155,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
        Vr_p(DEV_VAR(fft_g_table)(ig,1)) = V3g_p(ig,ic)
      enddo
      !DEV_OMPGPU end target
-     !DEV_ACC end data
+     !DEV_ACC_DEBUG end data
      !
 #if defined _CUDA
      call fft_3d_cuda(Vr_p,fft_dim,1,cufft_plan)

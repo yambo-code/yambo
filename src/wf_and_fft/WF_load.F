@@ -391,7 +391,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               !
               npwk=wf_nc_k(ikibz)
               !
-              !DEV_ACC data present(wf_igk,fft_g_table,wf_DP,wf_disk)
+              !DEV_ACC_DEBUG data present(wf_igk,fft_g_table,wf_DP,wf_disk)
               !DEV_ACC parallel loop
               !DEV_CUF kernel do(1) <<<*,*>>>
               !DEV_OMPGPU target map(present,alloc:wf_igk,fft_g_table,wf_DP,wf_disk)
@@ -406,7 +406,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
                 !
               enddo
               !DEV_OMPGPU end target
-              !DEV_ACC end data
+              !DEV_ACC_DEBUG end data
               !
 #ifdef _CUDA
               call fft_3d_cuda( DEV_VAR(wf_DP),fft_dim,+1,cufft_plan)
@@ -417,7 +417,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 #endif
               WF_N = WF%N
               !
-              !DEV_ACC data present(wfc_p,wf_DP)
+              !DEV_ACC_DEBUG data present(wfc_p,wf_DP)
               !DEV_ACC parallel loop
               !DEV_CUF kernel do(1)
               !DEV_OMPGPU target map(present,alloc:wfc_p,wf_DP)
@@ -426,7 +426,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
                 wfc_p(ic,i_spinor,WF_N)=cmplx(DEV_VAR(wf_DP)(ic),kind=SP)*fft_norm
               enddo
               !DEV_OMPGPU end target
-              !DEV_ACC end data
+              !DEV_ACC_DEBUG end data
               !
             enddo  ! i_spinor
             !

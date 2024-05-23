@@ -260,7 +260,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
      !
      if (compute_on_gpu) then
         !
-        !DEV_ACC data present(BUFFER_p,bare_qpg)
+        !DEV_ACC_DEBUG data present(BUFFER_p,bare_qpg)
         !DEV_ACC parallel loop collapse(2)
         !DEV_CUF kernel do(2)
         !DEV_OMPGPU target map(present,alloc:BUFFER_p,bare_qpg)
@@ -271,7 +271,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
         enddo
         enddo
         !DEV_OMPGPU end target
-        !DEV_ACC end data
+        !DEV_ACC_DEBUG end data
         !
         call devxlib_async_synchronize(async_default)
         !call devxlib_memcpy_d2h(BUFFER%blc(:,:,BUFFER%I),BUFFER_p(:,:,BUFFER%I), async_d2h)
@@ -384,7 +384,7 @@ end subroutine
        KERNEL_p => DEV_VAR(KERNEL%blc)(:,:,:)
        Xo_p     => DEV_VAR(Xo%blc)(:,:,:)
        !
-       !DEV_ACC data present(KERNEL_p,Xo_p,bare_qpg)
+       !DEV_ACC_DEBUG data present(KERNEL_p,Xo_p,bare_qpg)
        !DEV_ACC parallel loop collapse(2)
        !DEV_CUF kernel do(2) <<<*,*>>>
        !DEV_OMPGPU target map(present,alloc:KERNEL_p,Xo_p,bare_qpg)
@@ -396,7 +396,7 @@ end subroutine
        enddo
        enddo
        !DEV_OMPGPU end target
-       !DEV_ACC end data
+       !DEV_ACC_DEBUG end data
        !
      else
        !

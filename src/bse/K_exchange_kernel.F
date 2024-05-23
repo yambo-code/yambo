@@ -42,7 +42,7 @@ function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   H_x_r=rZERO
   H_x_i=rZERO
   !
-  !DEV_ACC data present(BS_T_grp_ip_O_x_p,BS_T_grp_ik_O_x_p,bare_qpg)
+  !DEV_ACC_DEBUG data present(BS_T_grp_ip_O_x_p,BS_T_grp_ik_O_x_p,bare_qpg)
   !DEV_ACC parallel loop private(ig,H_x) reduction(+:H_x_r,H_x_i)
   !DEV_CUF kernel do(1) <<<*,*>>>
   !DEV_OMPGPU target map(present,alloc:BS_T_grp_ip_O_x_p,BS_T_grp_ik_O_x_p,bare_qpg)
@@ -53,7 +53,7 @@ function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
     H_x_i=H_x_i+aimag(H_x)
   enddo
   !DEV_OMPGPU end target
-  !DEV_ACC end data
+  !DEV_ACC_DEBUG end data
   !
   H_x=cmplx(H_x_r,H_x_i,kind=SP)
   !
@@ -103,7 +103,7 @@ function K_exchange_kernel_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   H_x_r=rZERO
   H_x_i=rZERO
   !
-  !DEV_ACC data present(BS_T_grp_ip_O_x_p,BS_T_grp_ik_O_x_p,minus_G,bare_qpg)
+  !DEV_ACC_DEBUG data present(BS_T_grp_ip_O_x_p,BS_T_grp_ik_O_x_p,minus_G,bare_qpg)
   !DEV_ACC parallel loop private(ig,H_x) reduction(+:H_x_r,H_x_i)
   !DEV_CUF kernel do(1) <<<*,*>>>
   !DEV_OMPGPU target map(present,alloc:BS_T_grp_ip_O_x_p,BS_T_grp_ik_O_x_p,minus_G,bare_qpg)
@@ -114,7 +114,7 @@ function K_exchange_kernel_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
     H_x_i=H_x_i+aimag(H_x)
   enddo
   !DEV_OMPGPU end target
-  !DEV_ACC end data
+  !DEV_ACC_DEBUG end data
   !
   H_x=cmplx(H_x_r,H_x_i,SP)
   !

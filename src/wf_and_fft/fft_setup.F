@@ -109,7 +109,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    YAMBO_ALLOC_GPU(DEV_VAR(ivec_GmG),(iGo_max,i1_max,3))
    call devxlib_memset_d(DEV_VAR(ivec_GmG),val=-1)
    !
-   !DEV_ACC data present(g_vec_rot,fft_g_table)
+   !DEV_ACC_DEBUG data present(g_vec_rot,fft_g_table)
    !DEV_ACC parallel loop collapse(2)
    !DEV_CUF kernel do(2)
    !DEV_OMPGPU target map(present,alloc:g_vec_rot,fft_g_table)
@@ -147,7 +147,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      enddo
    enddo
    !DEV_OMPGPU end target
-   !DEV_ACC end data
+   !DEV_ACC_DEBUG end data
    !
    if (i4>0.and..not.ONLY_SIZE) then
      ! D2H fft_g_table <= fft_g_table_d

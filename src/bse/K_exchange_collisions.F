@@ -124,7 +124,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        O_x_p     => DEV_VAR(BS_T_grp(i_T_grp)%O_x)
        O_x_sym_p => DEV_VAR(BS_T_grp(i_T_grp_last_with_identity_sym)%O_x)
        !
-       !DEV_ACC data present(O_x_p,O_x_sym_p,g_rot,sop_inv)
+       !DEV_ACC_DEBUG data present(O_x_p,O_x_sym_p,g_rot,sop_inv)
        !DEV_ACC parallel loop private(i_g1,i_g2)
        !DEV_CUF kernel do (1) <<<*,*>>>
        !DEV_OMP parallel do default(shared), private(i_g1,i_g2)
@@ -132,7 +132,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
          i_g2=DEV_VAR(g_rot)(i_g1,DEV_VAR(sop_inv)(i_s))
          O_x_p(i_g1,i_T_el) = O_x_sym_p(i_g2,i_T_el_last_with_identity_sym)
        enddo
-       !DEV_ACC end data
+       !DEV_ACC_DEBUG end data
        !
        if (i_s>nsym/(i_time_rev+1)) call devxlib_conjg(BS_T_grp(i_T_grp)%DEV_VAR(O_x)(:,i_T_el),range1=(/2,BS_n_g_exch/) )
        !

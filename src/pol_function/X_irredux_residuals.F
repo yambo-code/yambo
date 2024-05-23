@@ -143,7 +143,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
        !
        sop_inv_l=sop_inv(is)
        !
-       !DEV_ACC data present(g_rot,rhotw_save,Xo_scatt_rhotw_p)
+       !DEV_ACC_DEBUG data present(g_rot,rhotw_save,Xo_scatt_rhotw_p)
        !DEV_ACC parallel loop private(ig2)
        !DEV_CUF kernel do(1) <<<*,*>>>
        !DEV_OMPGPU target map(present,alloc:g_rot,rhotw_save,Xo_scatt_rhotw_p)
@@ -155,7 +155,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
          Xo_scatt_rhotw_p(ig1)=rhotw_save(ig2)
        enddo
        !DEV_OMPGPU end target
-       !DEV_ACC end data
+       !DEV_ACC_DEBUG end data
        !
        if (is>nsym/(i_time_rev+1)) then
          call devxlib_conjg( Xo_scatt_rhotw_p )
@@ -177,7 +177,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      !       Only using also <psi_nk+q | = <psi_nk | (1 + O(q) ) we recover the correct result.
      !
      !
-     !DEV_ACC data present(Xo_scatt_rhotw_p)
+     !DEV_ACC_DEBUG data present(Xo_scatt_rhotw_p)
      !DEV_ACC serial
      !DEV_OMPGPU target map(present,alloc:Xo_scatt_rhotw_p)
      !
@@ -188,7 +188,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      !
      !DEV_OMPGPU end target
      !DEV_ACC end serial
-     !DEV_ACC end data
+     !DEV_ACC_DEBUG end data
      !
    else
      !
@@ -207,7 +207,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
    !
 #ifdef _GPU
    !
-   !DEV_ACC data present(Xo_res,Xo_scatt_rhotw_p)
+   !DEV_ACC_DEBUG data present(Xo_res,Xo_scatt_rhotw_p)
    !DEV_ACC parallel loop collapse(2)
    !DEV_CUF kernel do(2) <<<*,*>>>
    !DEV_OMPGPU target map(present,alloc:Xo_res,Xo_scatt_rhotw_p)
@@ -221,7 +221,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      enddo
    enddo
    !DEV_OMPGPU end target
-   !DEV_ACC end data
+   !DEV_ACC_DEBUG end data
    !
 #else
    !
@@ -248,13 +248,13 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      call devxlib_memcpy_d2d(rhotw_save2,Xo_scatt_rhotw_p)
      !
      if (X%ng==1) then
-       !DEV_ACC data present(Xo_scatt_rhotw_p)
+       !DEV_ACC_DEBUG data present(Xo_scatt_rhotw_p)
        !DEV_ACC serial
        !DEV_OMPGPU target map(present,alloc:Xo_scatt_rhotw_p)
        Xo_scatt_rhotw_p(1)=cONE 
        !DEV_OMPGPU end target
        !DEV_ACC end serial
-       !DEV_ACC end data
+       !DEV_ACC_DEBUG end data
      else
        call DEV_SUB(scatter_Bamp)(Xo_scatt)
      endif
@@ -265,7 +265,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      !
      sop_inv_l=sop_inv(is)
      !
-     !DEV_ACC data present(g_rot,rhotw_save,Xo_scatt_rhotw_p)
+     !DEV_ACC_DEBUG data present(g_rot,rhotw_save,Xo_scatt_rhotw_p)
      !DEV_ACC parallel loop private(ig1,ig2)
      !DEV_CUF kernel do(1) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:g_rot,rhotw_save,Xo_scatt_rhotw_p)
@@ -276,14 +276,14 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
        Xo_scatt_rhotw_p(ig1)=rhotw_save(ig2)
      enddo
      !DEV_OMPGPU end target
-     !DEV_ACC end data
+     !DEV_ACC_DEBUG end data
      !
      if (is>nsym/(i_time_rev+1)) then
        call devxlib_conjg(Xo_scatt_rhotw_p)
      endif
      !
 #ifdef _GPU
-     !DEV_ACC data present(Xo_res,Xo_scatt_rhotw_p,G_m_G)
+     !DEV_ACC_DEBUG data present(Xo_res,Xo_scatt_rhotw_p,G_m_G)
      !DEV_ACC parallel loop collapse(2)
      !DEV_CUF kernel do(2) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:Xo_res,Xo_scatt_rhotw_p,G_m_G)
@@ -295,7 +295,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
        enddo
      enddo
      !DEV_OMPGPU end target
-     !DEV_ACC end data
+     !DEV_ACC_DEBUG end data
 #else
      !DEV_OMP parallel do default(shared), private(ig1,ig2)
      do ig2=X_cols(1),X_cols(2)
@@ -312,14 +312,14 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  enddo loop_bare_grid
  !
  if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) then
-    !DEV_ACC data present(Xo_res)
+    !DEV_ACC_DEBUG data present(Xo_res)
     !DEV_ACC serial
     !DEV_OMPGPU target map(present,alloc:Xo_res)
     ctmp=Xo_res(1,1)
     Xo_res(1,1)=ctmp/real(drude_n_states,SP)
     !DEV_OMPGPU end target
     !DEV_ACC end serial
-    !DEV_ACC end data
+    !DEV_ACC_DEBUG end data
  endif
  !
 end subroutine X_irredux_residuals

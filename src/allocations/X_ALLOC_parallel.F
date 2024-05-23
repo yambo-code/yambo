@@ -51,6 +51,8 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
  if (l_XUP.and..not.X_FILL_UP_matrix_only.and.X_par%INTER_comm%n_CPU>1) then
    !
    call MATRIX_reset(X_par_lower_triangle)
+   !DEV_ACC enter data copyin(X_par_lower_triangle)
+   !
    X_lower_triangle_matrix_in_use=.TRUE.
    X_par_lower_triangle%kind ="XDN"
    X_par_lower_triangle%rows =X_par%cols

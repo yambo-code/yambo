@@ -70,6 +70,8 @@ module matrix
      type(PAR_matrix)   :: M_in,M_out
      logical            :: ALLOC
      integer            :: NW
+     !
+     !DEV_ACC enter data copyin(M_out)
      M_out%kind       = M_in%kind
      M_out%I          = M_in%I   
      M_out%N          = M_in%N   
@@ -89,6 +91,7 @@ module matrix
      M_out%Nb         = M_in%Nb  
      M_out%INTER_comm = M_in%INTER_comm
      M_out%INTRA_comm = M_in%INTRA_comm
+     !
      if (.not.ALLOC) return
      if (allocated(M_in%blc)) then
        NW=size(M_in%blc,3)
@@ -99,6 +102,7 @@ module matrix
        YAMBO_ALLOC_GPU(DEV_VAR(M_out%blc),(M_out%rows(1):M_out%rows(2),M_out%cols(1):M_out%cols(2),NW))
        call devxlib_memset_d(DEV_VAR(M_out%blc),cZERO)
      endif
+     !
    end subroutine 
    !
    subroutine MATRIX_reset(M_par)
@@ -131,6 +135,8 @@ module matrix
      !
      YAMBO_FREE_GPU(DEV_VAR(M_par%blc))
      YAMBO_FREE(M_par%blc)
+     !
+     !DEV_ACC exit data delete(M_par)
      !
    end subroutine
    !

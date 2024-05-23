@@ -24,22 +24,17 @@ subroutine X_AVERAGE_do_it(what,X_par)
  character(*)     :: what
  type(PAR_matrix) :: X_par
  !
+ ! AF: even with GPU support, accumulation is done on the host
+ !     X_par%blc is assumed to be up-to-date
+ !
  if (what=="ACCUMULATE") then
    X_par_average%blc=X_par_average%blc+X_par%blc*1._SP/real(n_OPTICAL_dir_to_eval,SP)
    X_par%blc=cZERO
-   if (have_gpu) then
-     ! DS+AF: This call assumes that Host and Device are syncronized
-     !        It should be the case here, since blc_d is computed on the Device
-     !        in X_redux, and then transferred to the Host before exiting 
-     call devxlib_memcpy_h2d(DEV_VAR(X_par_average%blc),X_par_average%blc)
-     call devxlib_memset_d(DEV_VAR(X_par%blc),cZERO)
-   endif
    return
  endif
  !
  if (what=="DUMP") then
    X_par%blc=X_par_average%blc
-   if (have_gpu) call devxlib_memcpy_d2d(DEV_VAR(X_par%blc),DEV_VAR(X_par_average%blc))
    call MATRIX_reset(X_par_average)
    return
  endif

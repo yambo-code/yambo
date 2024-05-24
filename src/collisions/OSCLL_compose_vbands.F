@@ -76,14 +76,8 @@ subroutine OSCLL_compose_vbands(V_input,H_nl_sc,k,q,E,i_k,i_sp_pol)
  ! Build Oscillators for the time-dependent valence bands
  !
 !$OMP WORKSHARE
- forall(iv=1:E%nbf(i_sp_pol),iqbz=1:q%nbz,i_n=NL_bands(1):NL_bands(2),ig1=1:ng_oscll)
+forall(iv=1:E%nbf(i_sp_pol),iqbz=1:q%nbz,i_n=NL_bands(1):NL_bands(2),ig1=1:ng_oscll)
    OSCLL_val(iv,i_n,ig1,iqbz)=sum(OSCLL(i_n,:,ik_mem,iqbz,ig1)*V_kmq(NL_bands(1):,iv,iqbz))
- end forall
-!$OMP END WORKSHARE
- !
-!$OMP WORKSHARE
- forall(iqbz=1:q%nbz,ig1=1:ng_oscll,ig2=1:ng_oscll)
-   OSCLL_sum(iqbz,ig1,ig2)=dot_product(OSCLL_val(:,i_m,ig1,iqbz),OSCLL_val(:,i_n,ig2,iqbz))
  end forall
 !$OMP END WORKSHARE
  !
@@ -92,20 +86,17 @@ subroutine OSCLL_compose_vbands(V_input,H_nl_sc,k,q,E,i_k,i_sp_pol)
     !
     call OSCLL_compose_collision(k,q,i_n,i_m,i_k,COLL)
     !
-    do iv=1,E%nbf(i_sp_pol)
-     COLL_val=cZERO
-     !
-     do iqbz=1,q%nbz 
-           do ig1=1,ng_oscll
-             do ig2=1,ng_oscll
-                COLL_val=COLL_val+OSCLL_val(i_n,iv,ig2,iqbz)*conjg(OSCLL_val(i_m,iv,ig1,iqbz)) &
-&                             *W(iqbz,ig2,ig1)
-             enddo
-           enddo
-     enddo
-     !
-     H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)+COLL_val*spin_occ
-    enddo
+!$OMP WORKSHARE
+    forall(iqbz=1:q%nbz,ig1=1:ng_oscll,ig2=1:ng_oscll)
+      OSCLL_sum(iqbz,ig1,ig2)=dot_product(OSCLL_val(:,i_m,ig2,iqbz),OSCLL_val(:,i_n,ig2,iqbz))
+    end forall
+!$OMP END WORKSHARE
+    !
+#if defined _DOUBLE
+    H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)+spin_occ*ZDOTU(q%nbz*ng_oscll**2,OSCLL_sum,1,W,1)
+#else
+    H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)+spin_occ*CDOTU(q%nbz*ng_oscll**2,OSCLL_sum,1,W,1)
+#endif
     !
     do ib=NL_bands(1),E%nbf(i_sp_pol)
       H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)-sum(COLL(ib,ib,:))*spin_occ

@@ -43,6 +43,7 @@ subroutine XCo_driver(E,k,Xk,q,Dip)
  logical           ::l_Vxc,l_Vnl_xc,l_screen_hyb
  ! Vxc from libxc or from H-Hbare
  logical           ::l_use_libxc,l_use_qe_pseudo
+ integer           ::i_role
  type(QP_t)        ::qp
  !
  ! IO
@@ -171,8 +172,15 @@ subroutine XCo_driver(E,k,Xk,q,Dip)
    ! FP 15/11/23: MPI q-tasks lead to problems with DIPOLE_IO of P_square in Bare_Hamiltonian_from_Scracth (to be fixed)
 #if defined _MPI 
    if (l_use_p2_Vloc_becp) then
-     if (ncpu/=1 .and. PARALLEL_CPU_used(1)/=1) then 
-       call error("[PARALLEL] Turn off MPI tasks over "//trim(PARALLEL_CPU_role(1))//" for Hbare reconstruction")
+     if(ncpu/=1) then
+       do i_role=1,size(PARALLEL_CPU_role)
+         if (trim(PARALLEL_CPU_role(i_role))=='q') then
+           if (PARALLEL_CPU_used(i_role)/=1) then 
+             call error("[PARALLEL] Turn off MPI tasks over "//trim(PARALLEL_CPU_role(i_role))//" for Hbare reconstruction")
+           endif
+           exit
+         endif
+       enddo 
      endif
    endif
 #endif

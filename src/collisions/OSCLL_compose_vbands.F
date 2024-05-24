@@ -107,12 +107,14 @@ forall(iv=1:E%nbf(i_sp_pol),iqbz=1:q%nbz,i_n=NL_bands(1):NL_bands(2),ig1=1:ng_os
  !
  ! Symmetrization
  ! 
+!$omp parallel do default(shared), private(i_n,i_m)
  do i_n=NL_bands(1),NL_bands(2)
    do i_m=i_n+1,NL_bands(2)
      H_nl_sc(i_m,i_n)=conjg(H_nl_sc(i_n,i_m))
    enddo
    H_nl_sc(i_n,i_n)=real(H_nl_sc(i_n,i_n))
  enddo
+!$omp end parallel do
  !
 #if defined _TIMING
  call timing('OSCLL compose NL',OPR='stop')

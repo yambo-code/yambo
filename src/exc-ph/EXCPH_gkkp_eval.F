@@ -38,7 +38,7 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  use BS,             ONLY:BS_H_dim,BS_bands
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,FAN_deltaE_treshold,GKKP,Q_io_map,K_io_map
  use EXCPH,          ONLY:BS_mat_in,BS_mat_out,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,BSS_eh_table_in,&
-&                         EXCPH_states,EXCPH_sum,k_plus_q_table,&
+&                         EXCPH_states,EXCPH_sum,k_plus_q_table,EXCPH_kthresh,&
 &                         l_const_elph,l_abs_elph,l_abs_exc,l_elec_only,l_hole_only
  !
 #include<memory.h>
@@ -98,6 +98,11 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
      ik_bz = BSS_eh_table(i_H,1)
      iv    = BSS_eh_table(i_H,2)
      ic    = BSS_eh_table(i_H,3)
+     !
+     ! only sum k-points up to the shell with radius EXCPH_kthresh (debug only)
+     if (EXCPH_kthresh>0._SP) then
+       if (norm2(k%ptbz(ik_bz,:)) > EXCPH_kthresh ) cycle
+     endif
      !
      !ik_minus_iq_bz = qindx_C(ik_bz,iq_bz,1)      ! K_bz-Q_bz
      !

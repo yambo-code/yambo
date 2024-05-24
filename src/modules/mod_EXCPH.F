@@ -69,6 +69,10 @@ module EXCPH
  complex(SP), pointer :: BS_R_left(:),BS_R_right(:)
  real(SP),    allocatable :: BS_R(:)
  !
+ ! Debug
+ !
+ real(SP) :: EXCPH_kthresh 
+ !
  ! ... Sigma
  !
  complex(SP), allocatable :: BS_Sat_E(:,:,:)

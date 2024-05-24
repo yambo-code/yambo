@@ -93,7 +93,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use ELPH,          ONLY:QP_PH_n_G_bands,elph_nQ_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
 &                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,E_kpq_sh_fact,gkkp_db
  use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,Lout_path,L_damping,EXC_q0,alphaQ, &
-&                        EXCPH_deltaE_treshold
+&                        EXCPH_deltaE_treshold,EXCPH_kthresh
  use D_lattice,     ONLY:Boltz_Temp
 #endif
 #if defined _OPENMP
@@ -677,6 +677,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'AbsExc',  '[EXCPH] Module of excitonic WFs (for testing purpose)')
  call it('f',defs,'HoleContributionOnly', '[EXCPH] Hole channel only (for testing purpose)')
  call it('f',defs,'ElectronContributionOnly',  '[EXCPH] Elec channel only (for testing purpose)')
+ call it(defs,'MaxKShells', '[EXCPH] K-sum up to a max shell within k-radius in IKU (for testing purpose)',EXCPH_kthresh)
  ! Testing only zone >
  !
  call it(defs,'LDamping', '[EXCPH] Damping of exc-ph self-energy',L_damping,E_unit)

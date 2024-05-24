@@ -57,7 +57,7 @@ subroutine NL_initialize(E,k)
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
  if(l_P_periodic)  call msg('sr','[NL] Enforce periodicity of the polarization repect to Efield')
- if(SP/=DP.and.COLLISIONS_load_SP) call msg('sr','COLLISIONS in single precisions')
+ if(SP==DP.and.COLLISIONS_load_SP) call msg('sr','COLLISIONS in single precisions')
  !
  ! Velocity gauge mode
  ! =======================================

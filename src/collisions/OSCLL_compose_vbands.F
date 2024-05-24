@@ -27,7 +27,7 @@ subroutine OSCLL_compose_vbands(V_input,H_nl_sc,k,q,E,i_k,i_sp_pol)
  use electrons,      ONLY:n_sp_pol,levels,spin_occ
  use pars,           ONLY:SP,cI,cZERO,cONE
  use FFT_m,          ONLY:fft_size
- use nl_optics,      ONLY:NL_bands,NL_nbands
+ use nl_optics,      ONLY:NL_bands,NL_nbands,Sigma_SEX_EQ
  use collision_ext,  ONLY:ng_oscll,OSCLL,W
  use QP_m,           ONLY:QP_nk
  use R_lattice,      ONLY:bz_samp,qindx_S,nXkibz
@@ -58,7 +58,7 @@ subroutine OSCLL_compose_vbands(V_input,H_nl_sc,k,q,E,i_k,i_sp_pol)
  complex(SP), external :: CDOTU
 #endif
  complex(SP) :: COLL_val
- integer :: ib,ibp,i_kmq,i_n,i_m,iv,iqbz,ig1,ig2,ik_mem
+ integer :: i_kmq,i_n,i_m,iv,iqbz,ig1,ig2,ik_mem
  !
  ik_mem=PAR_Xk_ibz_index(i_k)
  !
@@ -81,10 +81,14 @@ forall(iv=1:E%nbf(i_sp_pol),iqbz=1:q%nbz,i_n=NL_bands(1):NL_bands(2),ig1=1:ng_os
  end forall
 !$OMP END WORKSHARE
  !
+ ! Remove equilibrium Sigma-sex
+ !
+!$OMP WORKSHARE
+ H_nl_sc=H_nl_sc-Sigma_SEX_EQ(:,:,i_sp_pol,ik_mem)
+!$OMP END WORKSHARE
+ !
  do i_n=NL_bands(1),NL_bands(2)
    do i_m=i_n,NL_bands(2)
-    !
-    call OSCLL_compose_collision(k,q,i_n,i_m,i_k,COLL)
     !
 !$OMP WORKSHARE
     forall(iqbz=1:q%nbz,ig1=1:ng_oscll,ig2=1:ng_oscll)
@@ -97,10 +101,6 @@ forall(iv=1:E%nbf(i_sp_pol),iqbz=1:q%nbz,i_n=NL_bands(1):NL_bands(2),ig1=1:ng_os
 #else
     H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)+spin_occ*CDOTU(q%nbz*ng_oscll**2,OSCLL_sum,1,W,1)
 #endif
-    !
-    do ib=NL_bands(1),E%nbf(i_sp_pol)
-      H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)-sum(COLL(ib,ib,:))*spin_occ
-    enddo
     !
    enddo
  enddo

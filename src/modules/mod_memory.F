@@ -443,11 +443,6 @@ module memory
      complex(DP), device ::c(:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1)),DEV_)
    end subroutine
-   subroutine MEM_cd1_s(name,c)
-     character(*)::name
-     complex(SP6), device ::c(:)
-     call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1)),DEV_)
-   end subroutine
    subroutine MEM_cd2_d(name,c)
      character(*)::name
      complex(DP), device ::c(:,:)

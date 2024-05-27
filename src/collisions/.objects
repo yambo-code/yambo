@@ -8,7 +8,7 @@ SC_objs = COLLISIONS_compose_sc.o
 RT_objs = COLLISIONS_compose_rt.o
 #endif
 #if defined _NL
-NL_objs = COLLISIONS_compose_nl.o
+NL_objs = COLLISIONS_compose_nl.o COLLISIONS_compress.o
 LSEX_objs = Build_LSEX_collisions.o LSEX_potential.o OSCLL_eval.o OSCLL_load.o \
             OSCLL_compose_collision.o OSCLL_compose_nl.o OSCLL_compose_vbands.o 
 #endif

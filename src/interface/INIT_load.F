@@ -523,6 +523,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'UseDipoles','[NL] Use Covariant Dipoles (just for test purpose)',verb_level=V_nl_optics)
  call it('f',defs,'TestOSCLL','[NL] Test Oscillators vs Full Collisions [for testing purposes]',verb_level=V_nl_optics)
  call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_nl_optics)
+ call it('f',defs,'NoComprCOLL','[NL] Load collisions in double-precision and do not remove small elements (default false)',&
+&  verb_level=V_nl_optics)
  call it('f',defs,'EvalCurrent','[NL] Evaluate the current')
  !
 #endif

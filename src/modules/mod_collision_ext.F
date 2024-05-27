@@ -11,7 +11,7 @@ module collision_ext
  ! EXTENDED COLLISION
  !====================
  !
- use pars,       ONLY:SP,LP,schlen
+ use pars,       ONLY:SP,SP6,LP,schlen
  use parallel_m, ONLY:PP_indexes
  !
  implicit none
@@ -33,6 +33,8 @@ module collision_ext
  logical :: COLLISIONS_HXC_MB=.FALSE.
  logical :: COLLISIONS_HXC_use_TDDFT=.FALSE.
  logical :: COLLISIONS_CV_only=.FALSE.
+ logical :: COLLISIONS_load_SP=.FALSE.  ! Force loading of collision in single precision
+ logical :: COLLISIONS_compr  =.FALSE. ! If parallel-io is used collisions in memory are compressed
  !
  ! Elements used in the code
  !
@@ -49,8 +51,9 @@ module collision_ext
  type COLLISIONS_element
    integer               :: I=0         ! State Index 
    integer               :: N=0         ! Linear Dimension
-   character,   allocatable  :: table(:,:,:)
-   complex(SP), allocatable  :: v_c(:)       ! SEX and HF
+   character,      allocatable  :: table(:,:,:)
+   complex(SP),  allocatable  :: v_c(:)      
+   complex(SP6), allocatable  :: v_c_SP(:)    ! SEX and HF only in single precision
    complex(SP), allocatable  :: v3_c(:,:,:)
    real(SP)   , allocatable  :: v_r(:)       ! GW NEQ collisions
    real(SP)   , allocatable  :: v3_r(:,:,:)

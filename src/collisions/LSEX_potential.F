@@ -81,10 +81,12 @@ subroutine LSEX_potential(q,X,Xw)
  YAMBO_ALLOC(W,(q%nbz,ng_oscll,ng_oscll))
  iqref=0
  !
+!$OMP WORKSHARE 
+ W=cZERO
+!$OMP END WORKSHARE 
+ ! 
  do iqbz=1,q%nbz
    !
-   W(iqbz,:,:)=cZERO
-   ! 
    isc%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
    iqibz=isc%qs(2)
    iqs  =isc%qs(3)
@@ -93,9 +95,11 @@ subroutine LSEX_potential(q,X,Xw)
    !
    ! The bare exchange v
    !
-   do ig1=1,X%ng
+!$OMP WORKSHARE 
+   forall(ig1=1:X%ng)
      W(iqbz,ig1,ig1)=-4._SP/spin_occ*pi*isc%gamp(ig1,ig1)
-   enddo
+   end forall
+!$OMP END WORKSHARE 
    !
    if(Correlation==LSEX) then
      !      
@@ -114,13 +118,11 @@ subroutine LSEX_potential(q,X,Xw)
      !
      !  Screened part of the exchange  \tilde W = W - v
      !
-!$omp parallel do default(shared), private(ig1,ig2)
-     do ig1=1,X%ng
-       do ig2=1,X%ng
+!$OMP WORKSHARE 
+     forall(ig1=1:X%ng,ig2=1:X%ng)
          W(iqbz,ig1,ig2)=W(iqbz,ig1,ig2)-4._SP/spin_occ*pi*X_mat(ig1,ig2,1)*isc%gamp(ig1,ig2)
-       enddo
-     enddo
-!$omp end parallel do
+     end forall
+!$OMP END WORKSHARE 
      !
    endif
    !

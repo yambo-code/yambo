@@ -11,7 +11,7 @@ subroutine XC_potentials(POTENTIALS_string)
  use drivers,        ONLY:l_sc_ip,l_sc_hartree,l_sc_exx,l_sc_fock,l_sc_coh,l_sc_sex,l_sc_is_libDFT,&
 &                         l_sc_srpa,l_use_Hxc_collisions,l_use_COH_collisions,l_eval_collisions
  use global_XC,      ONLY:H_SE_EXX,H_SE_FOCK,H_SE_COH,H_SE_SEX,H_SE_EXXC,H_SE_SRPA,H_SE_HARTREE, &
-&                         H_SE_LSEX         
+&                         H_SE_LSEX,H_SE_LHF
  use hamiltonian,    ONLY:H_kind,H_xc_functional,l_sc_XC_is_local,l_sc_V_is_local
  use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE,&
 &                         GS_xc_KIND,GS_xc_FUNCTIONAL
@@ -145,6 +145,10 @@ subroutine XC_potentials(POTENTIALS_string)
      l_sc_V_is_local=.false.
      l_sc_XC_is_local=.false.
      H_kind=H_kind+H_SE_LSEX
+   else if (STRING_same(trim(potentials(i_c)),'LHF')) then
+     l_sc_V_is_local=.false.
+     l_sc_XC_is_local=.false.
+     H_kind=H_kind+H_SE_LHF
    else if (STRING_same(trim(potentials(i_c)),'COHSEX')) then
      l_sc_coh=.true.
      l_sc_sex=.true.

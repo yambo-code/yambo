@@ -27,7 +27,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  use stderr,        ONLY : intc
  use BS_solvers,    ONLY : BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_maxit,&
  &                         BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_precondition,&
- &                         BSS_slepc_approach
+ &                         BSS_slepc_approach,BSS_slepc_custom
  !
  use petscsys
  use petscmat
@@ -103,12 +103,15 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  !Set operators. In this case, it is a standard eigenvalue problem
  !
- call EPSSetOperators(eps,M_slepc,PETSC_NULL_MAT,ierr) 
+ call EPSSetOperators(eps,M_slepc,PETSC_NULL_MAT,ierr)
  if(     present(V_left)) then
-   ! To do: to check if it can be cast in the form of a generalized hermitian problem
-   call EPSSetProblemType(eps,EPS_NHEP,ierr)
-   call EPSSetFromOptions(eps,ierr)
-   call EPSSetTwoSided(eps,PETSC_TRUE,ierr)
+   if (BSS_slepc_custom) then
+     call EPSSetProblemType(eps,EPS_BSE,ierr)
+   else
+     ! To do: to check if it can be cast in the form of a generalized hermitian problem
+     call EPSSetProblemType(eps,EPS_NHEP,ierr)
+     call EPSSetTwoSided(eps,PETSC_TRUE,ierr)
+   endif
  else
    call EPSSetProblemType(eps,EPS_HEP,ierr)
  endif
@@ -229,7 +232,8 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !Set monitor
  call EPSMonitorSet(eps,MyEPSMonitor,0,PETSC_NULL_FUNCTION,ierr)
  !
-
+ call EPSSetFromOptions(eps,ierr)
+ !
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Solve the eigensystem
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

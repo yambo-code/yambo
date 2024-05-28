@@ -97,6 +97,7 @@ module BS_solvers
  real(SP)         :: BSS_slepc_target_E      !find eigenvalues close to this energy
  character(schlen):: BSS_slepc_matrix_format !matrix type ("shell","explicit","explicit-debug")
  logical          :: BSS_slepc_double_grp    !duplicate the number of groups for slepc shells solver
+ logical          :: BSS_slepc_custom        !use a slepc BSE specific solver
  !
  ! Solvers (Inversion)
  !=========

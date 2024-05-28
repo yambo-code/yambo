@@ -55,12 +55,8 @@ subroutine NL_initialize(E,k)
  call parser('TestOSCLL',            l_test_OSCLL)
  call parser('NoComprCOLL',          l_no_compress_COLL)
  !
- COLLISIONS_load_SP =.not.l_no_compress_COLL
- COLLISIONS_compr   =.not.l_no_compress_COLL
- !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
  if(l_P_periodic)  call msg('sr','[NL] Enforce periodicity of the polarization repect to Efield')
- if(SP==DP.and.COLLISIONS_load_SP) call msg('sr','COLLISIONS in single precisions')
  !
  ! Velocity gauge mode
  ! =======================================
@@ -375,6 +371,12 @@ subroutine NL_initialize(E,k)
    !
  endif
  !
+ if(eval_COLLISIONS) then
+   COLLISIONS_load_SP =.not.l_no_compress_COLL
+   COLLISIONS_compr   =.not.l_no_compress_COLL
+   if(SP==DP.and.COLLISIONS_load_SP) call msg('sr','COLLISIONS in single precisions')
+ endif
+ !   
  ! Set the number of g-vectors for oscillators and W(q,G,G')
  !
  if(Correlation==LHF) ng_oscll=QP_ng_Sx

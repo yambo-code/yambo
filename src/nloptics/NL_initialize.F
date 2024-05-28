@@ -350,6 +350,8 @@ subroutine NL_initialize(E,k)
         call error("Unknow correlation in the response function")
  end select
  !
+ call msg('rs','Correlation in the reponse functions: '//trim(NL_correlation))
+ !
  if(l_test_OSCLL.and.(Correlation==LSEX.or.Correlation==LHF)) then
    !      
    eval_COLLISIONS=.TRUE.

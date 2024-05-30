@@ -167,7 +167,7 @@ subroutine INIT_activate()
    if(l_bs_fxc) call initactivate(1,'FxcGRLc FxcSVdig FxcRetarded')
    !
    ! ALDA/LRC Tddft
-   if (l_alda_fxc) call initactivate(1,'FxcGRLc FxcLibxc FxcCutScheme UseNLCC')
+   if (l_alda_fxc) call initactivate(1,'FxcGRLc FxcLibxc FxcMode UseNLCC')
    if (l_lrc_fxc)  call initactivate(1,'LRC_alpha LRC_beta')
    if (l_pf_fxc)   call initactivate(1,'PF_alpha')
    !
@@ -219,7 +219,7 @@ subroutine INIT_activate()
    if(l_td_hf.or.l_td_sex) call initactivate(1,'BSENGBlk')
    if(l_td_sex)            call initactivate(1,'WehDiag WehCpl')
    if(l_alda_fxc) then
-     call initactivate(1,'BSENGfxc FxcLibxc FxcCutScheme')
+     call initactivate(1,'BSENGfxc FxcLibxc FxcMode')
      if( (WF_exx_fraction>0.) .or. (WF_exx_screening>0.) ) call initactivate(1,'BSENGBlk WehDiag WehCpl')
    endif
    !
@@ -279,7 +279,7 @@ subroutine INIT_activate()
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer BSHayItrIO BSHayItrMAX')
    if (index(BSS_mode,'s')/=0)  then
      call initactivate(1,'BSSNEig BSSEnTarget BSSSlepcApproach BSSSlepcPrecondition BSSSlepcExtraction')
-     call initactivate(1,'BSSSlepcMaxIt BSSSlepcNCV BSSSlepcTol BSSSlepcMatrix')
+     call initactivate(1,'BSSSlepcMaxIt BSSSlepcNCV BSSSlepcTol BSSSlepcMatrixFormat')
    endif
    !
    ! Special project dependent variables

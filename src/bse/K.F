@@ -16,7 +16,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_spin,n_spinor
  use FFT_m,         ONLY:fft_size
- use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G,TDDFT_ALDA_R_space
+ use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G,TDDFT_ALDA_eh_space_R_kernel
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
  use R_lattice,     ONLY:G_m_G,qindx_B,bz_samp,RIM_W,&
 &                        qindx_X,qindx_B_max,qindx_B_load,&
@@ -39,7 +39,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
  use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc, &
-&                        ALDA_cut_scheme,tddft_wf_t
+&                        FXC_mode,tddft_wf_t
  use xc_functionals,ONLY:V_xc,F_xc,F_xc_mat,magn,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
  use wave_func,     ONLY:WF
@@ -86,11 +86,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  real(SP), allocatable :: BS_max_val_CPU(:)
  !
  complex(SP),   external ::K_correlation_kernel_std,K_correlation_kernel_dir
+ complex(SP),   external ::TDDFT_ALDA_eh_space_G_kernel
  complex(SP),   external ::K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
  ! Oscillators
  !
- logical    :: load_O_X,l_std_alg,l_dir_alg
+ logical    :: load_O_X,l_std_alg,l_dir_alg,l_tddft_gsum,l_tddft_rsum
  !
  ! I/O
  !
@@ -163,7 +164,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Default is standard algorithm, unless imposed from input
    call parser('ImposeDirAlg',l_dir_alg)
    l_std_alg=.not.l_dir_alg
- endif 
+ endif
+ !
+ l_tddft_gsum=.false.
+ l_tddft_rsum=.false.
+ if (BS_K_is_ALDA) then
+   l_tddft_gsum=(index(FXC_mode,"G-")>0)
+   l_tddft_rsum=(index(FXC_mode,"R-")>0)
+   if( .not.(l_tddft_gsum.or.l_tddft_rsum) ) call error("Wrong FXC_mode:"//trim(FXC_mode))
+ endif
  !
  ! Oscillators Setup
  !===================
@@ -179,7 +188,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if(iq/=1) O_ng_shift=max(qindx_B_max,O_ng_shift)
  endif
  !
- if (BS_K_is_ALDA.and.trim(ALDA_cut_scheme)=="lower_GmGp") then
+ if(BS_K_is_ALDA.and.index(FXC_mode,"cut_GmGp")>0) then
    FXC_n_g_corr=BS_n_g_fxc
    if (BS_n_g_fxc/= eval_G_minus_G(BS_n_g_fxc,0) ) then
      BS_n_g_fxc   = eval_G_minus_G(BS_n_g_fxc,0)
@@ -265,8 +274,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !======
  if (BS_K_is_ALDA) then
    !
-   YAMBO_ALLOC(tddft_wf%rhotwr1,(fft_size*n_spinor*n_spinor))
-   YAMBO_ALLOC(tddft_wf%rhotwr2,(fft_size*n_spinor*n_spinor))
+   if (l_tddft_rsum) then
+     YAMBO_ALLOC(tddft_wf%rhotwr1,(fft_size*n_spinor*n_spinor))
+     YAMBO_ALLOC(tddft_wf%rhotwr2,(fft_size*n_spinor*n_spinor))
+   else if (l_tddft_gsum) then
+     YAMBO_ALLOC(tddft_wf%rhotwr_DP,(fft_size))
+   endif
    YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
    YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
    !
@@ -285,7 +298,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if(n_spin>1) then
      YAMBO_FREE(magn)
    endif
-   call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
+   call TDDFT_ALDA_lower_cutoff(FXC_mode)
    !
  endif
  !
@@ -408,12 +421,28 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    i_k        =BS_blk(i_block)%ik
    i_p        =BS_blk(i_block)%ip
    !
+   mode_now=BS_blk(i_block)%mode
+   if (.not.l_BS_ares_from_res) mode_now="F"
+   !
    ! Exchange oscillators
    !----------------------
    ! 
    call K_exchange_collisions(iq,Xk,i_Tgrp_k)
    !
    if (i_Tgrp_k/=i_Tgrp_p) call K_exchange_collisions(iq,Xk,i_Tgrp_p)
+   !
+   ! TDDFT oscillators
+   !----------------------
+   if(BS_K_is_ALDA.and.l_tddft_gsum) then
+     if (.not.allocated( BS_T_grp(i_Tgrp_k)%O_tddft_L) ) then
+       call TDDFT_oscillators_alloc_L(i_Tgrp_k)
+       call TDDFT_ALDA_eh_space_G_collisions_L(iq,Xk,i_Tgrp_k,tddft_wf,mode_now)
+     endif
+     if (.not.allocated( BS_T_grp(i_Tgrp_p)%O_tddft_R) ) then
+       call TDDFT_oscillators_alloc_R(i_Tgrp_p)
+       call TDDFT_ALDA_eh_space_G_collisions_R(iq,Xk,i_Tgrp_p,tddft_wf,mode_now)
+     endif
+   endif
    !
    ! Correlation oscillators
    !----------------------
@@ -429,7 +458,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !$omp &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol_c,i_k_sp_pol_v,i_k_s,is_k,os_k,i_k_s_m1,H_pos, &
    !$omp &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol_c,i_p_sp_pol_v,i_p_s,is_p,os_p,i_kp_s, &
    !$omp &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
-   !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t,mode_now, &
+   !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t, &
    !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c, &
    !$omp &       i_p_bz_last,i_k_bz_last,i_pmq_bz_last,i_kmq_bz_last, &
    !$omp &       iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last, &
@@ -552,7 +581,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
        endif 
        ! 
-       if (BS_K_is_ALDA) then 
+       if (BS_K_is_ALDA.and.l_tddft_rsum) then 
          is_k = (/i_c_k,i_k,i_k_s,i_k_sp_pol_c/) 
          os_k = (/i_v_k,i_kmq,i_kmq_s,i_k_sp_pol_v/) 
          is_p = (/i_c_p,i_p,i_p_s,i_p_sp_pol_c/) 
@@ -572,9 +601,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        H_x=cZERO
        H_c=cZERO
        !
-       mode_now=BS_blk(i_block)%mode
-       if (.not.l_BS_ares_from_res) mode_now="F"
-       !
        select case (mode_now)
        !
        case ("R","A","F")
@@ -587,7 +613,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                                   BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
          !
          ! ALDA
-         if (BS_K_is_ALDA)      H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'RES')
+         if (BS_K_is_ALDA) then
+           if(l_tddft_rsum)     H_x=H_x+TDDFT_ALDA_eh_space_R_kernel(is_k,os_k,is_p,os_p,tddft_wf,'RES')
+           if(l_tddft_gsum)     H_x=H_x+TDDFT_ALDA_eh_space_G_kernel(BS_n_g_fxc,&
+&                                   BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
+         endif
          !
          ! Correlations
          if (BS_res_K_corr) then
@@ -611,7 +641,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
                                    &    BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk) 
          !
          ! ALDA
-         if (BS_K_is_ALDA)      H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'CPL')
+         if (BS_K_is_ALDA) then
+           if(l_tddft_rsum)     H_x=H_x+TDDFT_ALDA_eh_space_R_kernel(is_k,os_k,is_p,os_p,tddft_wf,'CPL')
+           if(l_tddft_gsum)     H_x=H_x+TDDFT_ALDA_eh_space_G_kernel(BS_n_g_fxc,&
+&                                 BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
+         endif
          !
          ! Correlations
          if (BS_cpl_K_corr) then
@@ -637,6 +671,27 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        BS_blk(i_block)%done(i_Tk,i_Tp)="t"
        !
+       i_v_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,2) 
+       i_c_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,3) 
+       !
+       i_v_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,2) 
+       i_c_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,3) 
+       !
+       i_k_sp_pol_c=BS_T_grp(i_Tgrp_k)%table(i_Tk,4) 
+       i_p_sp_pol_c=BS_T_grp(i_Tgrp_p)%table(i_Tp,4) 
+       i_k_sp_pol_v=BS_T_grp(i_Tgrp_k)%table(i_Tk,5) 
+       i_p_sp_pol_v=BS_T_grp(i_Tgrp_p)%table(i_Tp,5) 
+
+       if (H_pos(1)==H_pos(2)) then
+         BS_blk(i_block)%table(:,i_Tk)=BS_T_grp(i_Tgrp_k)%table(i_Tk,:)
+         BS_blk(i_block)%E(i_Tk)      =BS_T_grp(i_Tgrp_k)%E(i_Tk,1)
+         if (mode_now=="C") then
+           ! Swap c and v
+           BS_blk(i_block)%table(2,i_Tk)=BS_T_grp(i_Tgrp_k)%table(i_Tk,3)
+           BS_blk(i_block)%table(3,i_Tk)=BS_T_grp(i_Tgrp_k)%table(i_Tk,2)
+         endif
+       endif
+       !
      enddo   ! i_Tk
    enddo     ! i_Tp
 #if defined _OPENMP && ! defined _CUDA
@@ -651,6 +706,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if(l_BSE_minimize_memory) then
      call BS_oscillators_free(i_Tgrp_p,0)
      call BS_oscillators_free(i_Tgrp_k,0)
+     if(l_tddft_gsum) then
+       call TDDFT_oscillators_free_L(i_Tgrp_k)
+       call TDDFT_oscillators_free_R(i_Tgrp_p)
+     endif
    endif
    !
 #if defined _PAR_IO
@@ -699,8 +758,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  else if (BS_K_is_ALDA) then
    !
-   YAMBO_FREE(tddft_wf%rhotwr1)
-   YAMBO_FREE(tddft_wf%rhotwr2)
+   if (l_tddft_rsum) then
+     YAMBO_FREE(tddft_wf%rhotwr1)
+     YAMBO_FREE(tddft_wf%rhotwr2)
+   else if (l_tddft_gsum) then
+     call TDDFT_oscillators_free_L(BS_nT_grps)
+     call TDDFT_oscillators_free_R(BS_nT_grps)
+     YAMBO_FREE(tddft_wf%rhotwr_DP)
+   endif
    YAMBO_FREE(tddft_wf%WF_symm1)
    YAMBO_FREE(tddft_wf%WF_symm2)
    !

@@ -5,6 +5,8 @@
 !
 ! Authors (see AUTHORS file for details): CA DS
 !
+#include<dev_defs.h>
+!
 subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR)
  !
  use pars,                ONLY:SP,lchlen,cZERO
@@ -12,7 +14,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR)
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:OP_WR_CL,NONE,OP_APP_CL,OP_WR,OP_RD,&
 &                              OP_APP,OP_RD_CL,RD_CL,RD,frag_WF
- use wave_func,           ONLY:io_WF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
+ use wave_func,           ONLY:io_WF,wf_nc_k, wf_igk,DEV_VAR(wf_igk),wf_ncx,wf_nb_io,wf_ng, &
  &                             WF,wf_nb_io_groups
  use electrons,           ONLY:levels,E_reset,n_sp_pol,n_spinor
  use LIVE_t,              ONLY:live_timing
@@ -23,7 +25,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR)
 &                              wf_nc_k_new,wf_igk_new,&
 &                              wf_nc_k_new,wf_ncx_new,wf_ncx_save,wf_ng_new,wf_ng_save
  !
-#include<dev_defs.h>
 #include<y_memory.h>
  !
  type(levels),intent(in)  :: E

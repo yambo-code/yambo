@@ -95,6 +95,8 @@ module collision_el
      YAMBO_FREE(ggw%becprod)
      YAMBO_FREE(ggw%eiqtau)
      !
+     !DEV_ACC exit data delete(ggw)
+     !
    end subroutine
    !
    subroutine elemental_collision_alloc(ggw,NG,NG_GAMP,GRADIENT,TITLE)
@@ -112,6 +114,7 @@ module collision_el
        ggw%name=TITLE
      endif
      !
+     !DEV_ACC enter data copyin(ggw)
      if (fft_size>0) then
        YAMBO_ALLOC(ggw%rho_tw_rs,(fft_size))
        YAMBO_ALLOC(ggw%WF_symm_i,(fft_size,n_spinor))

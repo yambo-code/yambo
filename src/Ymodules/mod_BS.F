@@ -273,18 +273,18 @@ module BS
      !
      if (EXCHANGE) then
        if (BS_T_grp(iG)%size==0) return
+       !DEV_ACC enter data copyin(BS_T_grp(iG))
        YAMBO_ALLOC(BS_T_grp(iG)%O_x,(BS_n_g_exch,BS_T_grp(iG)%size))
        if (have_gpu) then
-         !AMBO_ALLOC_GPU_MOLD(DEV_VAR(BS_T_grp(iG)%O_x),BS_T_grp(iG)%O_x)
          YAMBO_ALLOC_GPU(DEV_VAR(BS_T_grp(iG)%O_x),(BS_n_g_exch,BS_T_grp(iG)%size))
        endif
      endif
      !
      if (CORRELATION) then
        if (BS_blk(iB)%N_oscillators==0) return
+       !DEV_ACC enter data copyin(BS_blk(iB))
        YAMBO_ALLOC(BS_blk(iB)%O_c,(O_ng,BS_blk(iB)%N_oscillators))
        if (have_gpu) then
-         !AMBO_ALLOC_GPU_MOLD(DEV_VAR(BS_blk(iB)%O_c),BS_blk(iB)%O_c)
          YAMBO_ALLOC_GPU(DEV_VAR(BS_blk(iB)%O_c),(O_ng,BS_blk(iB)%N_oscillators))
        endif
      endif
@@ -295,9 +295,11 @@ module BS
      use stderr,     ONLY:intc
      integer, intent(in) :: iG_ref,iB_ref
      integer :: iG,iB,ik_loop,ip_loop,ik_now,ip_now
+     !
      do iG=iG_ref,1,-1
        YAMBO_FREE_GPU(DEV_VAR(BS_T_grp(iG)%O_x))
        YAMBO_FREE(BS_T_grp(iG)%O_x)
+       !DEV_ACC exit data delete(BS_T_grp(iG))
      enddo
      if(iB_ref==0) return
      ik_now=BS_blk(iB_ref)%ik
@@ -314,7 +316,9 @@ module BS
        YAMBO_FREE_GPU(DEV_VAR(BS_blk(iB)%O_c))
        YAMBO_FREE(BS_blk(iB)%O_c)
        YAMBO_FREE(BS_blk(iB)%kp_table)
-       YAMBO_FREE_NO_DEV_CHECK(BS_blk(iB)%O_table)  ! O_table has rank>7, there is not interface for dev_allocated function
+       ! O_table has rank>7, there is not interface for dev_allocated function
+       YAMBO_FREE_NO_DEV_CHECK(BS_blk(iB)%O_table)
+       !DEV_ACC exit data delete(BS_blk(iB))
      enddo
      !
    end subroutine

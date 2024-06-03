@@ -5,11 +5,13 @@
 !
 ! Authors (see AUTHORS file for details): CA DS
 !
+#include<dev_defs.h>
+!
 subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym)
  !
  use com,                 ONLY:msg
  use vec_operate,         ONLY:v_norm,sort
- use wave_func,           ONLY:wf_nc_k, wf_igk,wf_ncx,wf_ng
+ use wave_func,           ONLY:wf_nc_k,wf_igk,DEV_VAR(wf_igk),wf_ncx,wf_ng
  use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,ng_vec
  use vec_operate,         ONLY:v_norm
  use D_lattice,           ONLY:nsym
@@ -18,7 +20,6 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym)
 &                              wf_nc_k_new,l_wf_nc_k_red,ng_vec_new,ng_vec_save,wf_igk_new,&
 &                              wf_nc_k_new,wf_ncx_new,wf_ncx_save,wf_ng_new,wf_ng_save,wf_ng_cut
  !
-#include<dev_defs.h>
 #include<y_memory.h>
  !
  type(bz_samp),intent(inout) :: k

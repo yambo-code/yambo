@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_global_Oscillators(E,Xk,q,ENVIRONMENT)
+subroutine PARALLEL_global_Oscillators(E,Xk,q)
  !
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
@@ -54,7 +54,7 @@ subroutine PARALLEL_global_Oscillators(E,Xk,q,ENVIRONMENT)
  !
  integer      :: nb_mat 
  !
- CALL PARALLEL_structure(1,(/"k ","b "/))
+ CALL PARALLEL_structure(2,(/"k ","b "/))
  !
  call PARALLEL_assign_chains_and_COMMs(2,COMM_index_1=PAR_COM_Xk_ibz_INDEX, &
 &                                        COMM_index_2=PAR_COM_G_b_INDEX,&
@@ -72,7 +72,7 @@ if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) then
  call PARALLEL_index(PAR_IND_Xk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX)
  PAR_IND_Xk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id
  PAR_Xk_nibz=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)
- call PARALLEL_live_message("K-points",ENVIRONMENT=ENVIRONMENT,         &
+ call PARALLEL_live_message("K-points",ENVIRONMENT="Oscillators",         &
 &                           LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1), &
 &                           TOTAL=Xk%nibz,NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
  !
@@ -91,7 +91,7 @@ if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) then
  YAMBO_ALLOC(PAR_G_bands_INDEX,(nb_mat))
  call PAR_build_index(PAR_IND_G_b,nb_mat,PAR_G_bands_index,PAR_nG_bands)
  !
- call PARALLEL_live_message("OSCL bands",ENVIRONMENT=ENVIRONMENT,&
+ call PARALLEL_live_message("OSCL bands",ENVIRONMENT="Oscillators",&
 &                             LOADED=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1),&
 &                             TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
  !

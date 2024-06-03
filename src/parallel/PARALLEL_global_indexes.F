@@ -149,8 +149,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
 #endif
  !
 #if defined _NL
- if (      ENVIRONMENT=="Non_Linear")          call PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
- if (      ENVIRONMENT=="Oscillators")         call PARALLEL_global_Oscillators(E,Xk,q,ENVIRONMENT)
+ if (      ENVIRONMENT=="Non_Linear")          call PARALLEL_global_Non_Linear(E,Xk,q)
+ if (      ENVIRONMENT=="Oscillators")         call PARALLEL_global_Oscillators(E,Xk,q)
 #endif
  !
 #if defined _SCALAPACK

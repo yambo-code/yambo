@@ -48,7 +48,6 @@ subroutine PARALLEL_global_Oscillators(E,Xk,q)
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q
- character(*)         :: ENVIRONMENT
  !
  ! Work space
  !

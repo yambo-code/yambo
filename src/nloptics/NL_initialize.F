@@ -379,20 +379,19 @@ subroutine NL_initialize(E,k)
    if(SP==DP.and.COLLISIONS_load_SP) call msg('sr','COLLISIONS in single precisions')
  endif
  !   
- ! Set the number of g-vectors for oscillators and W(q,G,G')
+ ! Set the number of g-vectors for oscillators and W(q,G,G') or V(q,G)
  !
- if(Correlation==LHF) ng_oscll=QP_ng_Sx
- if(Correlation==LSEX) then
-   if(QP_ng_Sx/=QP_ng_Sc) call warning(' EXXRLvcs /= CORRLvcs not possible with oscillator, smallest value will be used') 
-   ng_oscll=maxval((/QP_ng_Sx,QP_ng_Sc/))
-   QP_ng_Sx=ng_oscll
-   QP_ng_Sc=ng_oscll
+ if(Correlation==LHF.or.Correlation==LSEX) then
+   if(Correlation==LSEX.and.QP_ng_Sx/=QP_ng_Sc) &
+    &   call error(' EXXRLvcs /= CORRLvcs not possible with oscillator, set the same value in input') 
+   ng_oscll=QP_ng_Sx
    call msg('rs','Number of G-vectors in oscillators :',ng_oscll)
-   if(QP_ng_SH<=1) then
-     call msg('rs','Hartree term turned off ')
-   else
-     call msg('rs','Number of G-vectors in Hartree   :',QP_ng_SH)
-   endif
+ endif
+ !
+ if(QP_ng_SH<=1) then
+   call msg('rs','Hartree term turned off ')
+ else
+   call msg('rs','Number of G-vectors in Hartree   :',QP_ng_SH)
  endif
  !
  if(eval_COLLISIONS) then

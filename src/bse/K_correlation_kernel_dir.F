@@ -15,7 +15,7 @@ function K_correlation_kernel_dir(i_block,i_p,i_pmq,                            
  use pars,         ONLY:SP,cZERO,pi
  use BS,           ONLY:BS_blk,BS_n_g_W,BS_W,BS_W_is_diagonal,O1,O2,O_times_W
  use R_lattice,    ONLY:DEV_VAR(G_m_G),DEV_VAR(g_rot)
- use wrapper,      ONLY:DEV_SUB(V_by_V_pwise),M_by_V,DEV_SUB(Vstar_dot_V)
+ use wrapper,      ONLY:V_by_V_pwise_gpu,Vstar_dot_V_gpu,M_by_V_gpu
  !
  implicit none
  !
@@ -54,10 +54,9 @@ function K_correlation_kernel_dir(i_block,i_p,i_pmq,                            
  !DEV_OMP end parallel do
  !DEV_ACC_DEBUG end data
  !
- if (     BS_W_is_diagonal) call DEV_SUB(V_by_V_pwise)(BS_n_g_W,O_times_W,O1,BS_W(:,1,iq_W))
- ! AF: to be fixed
- if (.not.BS_W_is_diagonal) call M_by_V('T',BS_n_g_W,BS_W(:,:,iq_W),O1,O_times_W)
+ if (     BS_W_is_diagonal) call V_by_V_pwise_gpu(BS_n_g_W,O_times_W,O1,BS_W(:,1,iq_W))
+ if (.not.BS_W_is_diagonal) call M_by_V_gpu('T',BS_n_g_W,BS_W(:,:,iq_W),O1,O_times_W)
  !
- K_correlation_kernel_dir=DEV_SUB(Vstar_dot_V)(BS_n_g_W,O2,O_times_W)*4._SP*pi
+ K_correlation_kernel_dir= Vstar_dot_V_gpu(BS_n_g_W,O2,O_times_W)*4._SP*pi
  !
 end function K_correlation_kernel_dir

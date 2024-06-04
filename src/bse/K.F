@@ -430,6 +430,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !----------------------
    if (l_std_alg) call K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
    if (l_dir_alg) call K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
+
    !
    ! Transition Loops
    !------------------
@@ -597,9 +598,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          if (BS_res_K_exchange) H_x=K_exchange_kernel_resonant(iq, BS_n_g_exch,               &
 &                                   BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
          !
-!write(0,*)
-!write(0,*) "BS_res_K_exchange"
-!write(0,"(8f15.9)") H_x
+!write(1000,*)
+!write(1000,*) "BS_res_K_exchange"
+!write(1000,"(8f15.9)") H_x
+         !
          ! ALDA
          if (BS_K_is_ALDA)      H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'RES')
          !
@@ -615,10 +617,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
          endif
          !         
-!write(0,*)
-!write(0,*) "BS_res_K_corr"
-!write(0,"(8f15.9)") H_c
-
+!write(2000,*)
+!write(2000,*) "BS_res_K_corr"
+!write(2000,"(8f15.9)") H_c
+         !
        case ("C","Q")
          !
          ! :::COUPLING TERM:::

@@ -71,8 +71,7 @@ module wrapper
  end interface
  !
  ! GPU-aware interfaces
- ! defined but unsuable or working on host memory when undef _GPU
- ! (de facto, place holders to have _gpu names defined)
+ ! resorting to host functions when _GPU is not defined
  !
  interface V_by_V_pwise_gpu
    module procedure :: V_by_V_pwise_gpu
@@ -89,6 +88,10 @@ module wrapper
  interface V_dot_VV_gpu
    module procedure :: V_dot_VV_c1_gpu
  end interface
+ interface M_by_V_gpu
+   module procedure :: mv_c_gpu
+ end interface
+ !
  !
  public :: V_by_V_pwise_gpu
  public :: Vstar_dot_V_gpu
@@ -96,6 +99,7 @@ module wrapper
  public :: V_dot_V_gpu
  public :: V_dot_VV_gpu
  public :: M_by_M_gpu
+ public :: M_by_V_gpu
  !
  public :: V_by_V_pwise
  public :: Vstar_dot_V
@@ -464,6 +468,7 @@ module wrapper
      !DEV_CUF kernel do(1) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:CX,CY,CZ) map(tofrom:ctmp)
      !DEV_OMPGPU teams loop reduction(+:ctmp)
+     !DEV_OMP parallel do default(shared), private(i), reduction(+:ctmp)
      do i = 1, N
        ctmp=ctmp+conjg(CX(i))*CY(i)*CZ(i)
      enddo
@@ -597,6 +602,7 @@ module wrapper
      complex(SP),intent(out):: CZ(:)
      !
      integer :: i
+     !$omp parallel do default(shared), private(i)
      do i=1,N
         CZ(i)=CX(i)*CY(i)
      enddo
@@ -613,6 +619,7 @@ module wrapper
      !DEV_CUF kernel do(1) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:CX,CY,CZ)
      !DEV_OMPGPU teams loop
+     !DEV_OMP parallel do default(shared), private(i)
      do i=1,N
         CZ(i)=CX(i)*CY(i)
      enddo

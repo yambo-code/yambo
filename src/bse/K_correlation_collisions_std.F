@@ -443,7 +443,7 @@ subroutine K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
      !
      iB_oscillator = BS_blk(iB)%O_table(1,i_s_collision,ikit,ikot,ibi,ibo,i_sp_pol_i)
      !
-     call DEV_SUB(scatter_Bamp)(isc)
+     call scatter_Bamp_gpu(isc)
      !
      call devxlib_memcpy_d2d( DEV_VAR(BS_blk(iB)%O_c)(:,iB_oscillator), DEV_VAR(isc%rhotw) )
      !

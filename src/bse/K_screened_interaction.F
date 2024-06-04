@@ -133,7 +133,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  do iq_W=1,q%nibz
    !
    isc%qs(2)=iq_W
-   call DEV_SUB(scatter_Gamp)(isc,'c')
+   call scatter_Gamp_gpu(isc,'c')
    !
    if (.not.W_is_unscreened) then
      !

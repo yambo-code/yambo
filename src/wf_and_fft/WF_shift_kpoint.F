@@ -7,7 +7,7 @@
 !
 #include<dev_defs.h>
 !
-subroutine DEV_SUB(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
+subroutine WF_shift_kpoint(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
  !
  use pars,          ONLY: SP,cZERO
  use electrons,     ONLY: n_spinor,n_sp_pol
@@ -61,6 +61,7 @@ subroutine DEV_SUB(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out
      !DEV_CUF kernel do(4) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:WF_tmp,G_m_G,WF_k_out)
      !DEV_OMPGPU teams loop collapse(4)
+     !DEV_OMP parallel do default(shared), private(i_sp_pol,i_b,i_spinor,ig,igp),collapse(4)
      do i_sp_pol=1,n_sp_pol
      do i_b=b_to_shift(1),b_to_shift(2)
      do i_spinor=1,n_spinor
@@ -74,6 +75,7 @@ subroutine DEV_SUB(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out
      enddo
      enddo
      enddo
+     !DEV_OMP end parallel do
      !DEV_OMPGPU end target
      !DEV_ACC_DEBUG end data
      !
@@ -82,7 +84,7 @@ subroutine DEV_SUB(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out
      call devxlib_memcpy_d2d(WF_k_out,WF_tmp)
    endif
    ! dev2dev
-   WF_tmp  =cZERO
+   call devxlib_memset_d(WF_tmp,cZERO)
    call devxlib_memcpy_d2d(WF_tmp,WF_k_out)
    !
  enddo
@@ -92,5 +94,5 @@ subroutine DEV_SUB(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out
  YAMBO_FREE(WF_tmp)
 #endif
  !
-end subroutine DEV_SUB(WF_shift_kpoint)
+end subroutine WF_shift_kpoint
 

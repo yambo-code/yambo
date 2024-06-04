@@ -49,6 +49,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  type(elemental_collision), target :: isc,iscp
  complex(SP), pointer DEV_ATTR     :: gamp_p(:)
+ complex(SP), pointer DEV_ATTR     :: isc_rhotw_p(:), iscp_rhotw_p(:)
  integer                  :: iq,iq_ibz,is_ibz,ib,ibp,jb,i_qp
  integer                  :: Sx_lower_band,Sx_upper_band(2),n_lt_bands,n_lt_steps
  complex(DP)              :: DP_Sx, DP_Sx_l
@@ -155,9 +156,11 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    isc%qs    =1
    !
-   call DEV_SUB(scatter_Gamp)(isc,'x')
+   call scatter_Gamp_gpu(isc,'x')
    !
    gamp_p => DEV_VAR(isc%gamp)(:,1)
+   isc_rhotw_p => DEV_VAR(isc%rhotw) 
+   iscp_rhotw_p => DEV_VAR(iscp%rhotw) 
    !
    ! AF: Alternative coding to be removed if not needed
    !call c_f_pointer(c_loc(isc%gamp), gamp_p, (/size(isc%gamp)/) )
@@ -175,7 +178,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      isc%qs(2:)=(/iq_ibz,is_ibz/)
      !
      if (isc%qs(2)/=isc%iqref) then 
-       call DEV_SUB(scatter_Gamp)(isc,'x')
+       call scatter_Gamp_gpu(isc,'x')
        if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
      endif
      !
@@ -225,21 +228,20 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
        isc%os(1)=jb
        iscp%os=isc%os
        !
-       call DEV_SUB(scatter_Bamp)(isc)
+       call scatter_Bamp_gpu(isc)
        !
        ! Normal case, the density matrix is diagonal
        !
        if (isc%is(1)/=iscp%is(1)) then
-         call DEV_SUB(scatter_Bamp)(iscp)
+         call scatter_Bamp_gpu(iscp)
        else
          ! dev2dev, iscp%rhotw = isc%rhotw
-         call devxlib_memcpy_d2d(DEV_VAR(iscp%rhotw),DEV_VAR(isc%rhotw))
+         call devxlib_memcpy_d2d(iscp_rhotw_p,isc_rhotw_p)
        endif
        !
        ! when GPUs are not available, revert on CPUs
        !
-       DP_Sx_l=Vstar_dot_VV_gpu(isc%ngrho,DEV_VAR(iscp%rhotw),&
-&                               DEV_VAR(isc%rhotw),gamp_p)
+       DP_Sx_l=Vstar_dot_VV_gpu(isc%ngrho,iscp_rhotw_p,isc_rhotw_p,gamp_p)
        DP_Sx=DP_Sx + DP_Sx_l * ( -4._SP/spin_occ*pi*E%f(jb,ikp,i_sp_pol) )
        !
        if (master_thread.and.is_ibz==1.and.n_lt_steps>0) call live_timing(steps=1)

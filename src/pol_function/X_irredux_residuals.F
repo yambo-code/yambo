@@ -132,7 +132,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      if (.not. X%ng==1) then
        if ( any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/)) ) then
          !
-         call DEV_SUB(scatter_Bamp)(Xo_scatt)
+         call scatter_Bamp_gpu(Xo_scatt)
          !
          ! dev2dev, rhotw_save=Xo_scatt%rhotw
          call devxlib_memcpy_d2d(rhotw_save,Xo_scatt_rhotw_p)
@@ -198,7 +198,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      Xo_scatt%os=(/iv,ikp,isp,i_spin/)
      Xo_scatt%qs=(/qindx_X(iq,ikbz,2),iq,1/)
      !
-     call DEV_SUB(scatter_Bamp)(Xo_scatt)
+     call scatter_Bamp_gpu(Xo_scatt)
      !
    endif
    !
@@ -256,7 +256,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
        !DEV_ACC end serial
        !DEV_ACC_DEBUG end data
      else
-       call DEV_SUB(scatter_Bamp)(Xo_scatt)
+       call scatter_Bamp_gpu(Xo_scatt)
      endif
      !
      ! symm

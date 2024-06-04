@@ -44,7 +44,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 &                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,WAVEs,states_to_load
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:OP_RD,NONE,VERIFY,RD,RD_CL,DUMP
- use wrapper,       ONLY:DEV_SUB(Vstar_dot_V)
+ use wrapper,       ONLY:Vstar_dot_V_gpu
 #if defined _SC
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB,SC_bands
  use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_perturbation,global_XC_string
@@ -582,7 +582,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      !
      if ( WF%index(ib1,1,1)==0 .or. WF%index(ib2,1,1)==0 ) cycle
      !
-     c=DEV_SUB(Vstar_dot_V)( size(WF%c(:,:,WF%index(1,1,1))), DEV_VAR(WF%c)(:,:,WF%index(ib1,1,1)), DEV_VAR(WF%c)(:,:,WF%index(ib2,1,1)) )
+     c=Vstar_dot_V_gpu( size(WF%c(:,:,WF%index(1,1,1))), DEV_VAR(WF%c)(:,:,WF%index(ib1,1,1)), DEV_VAR(WF%c)(:,:,WF%index(ib2,1,1)) )
      !
      if (abs(c)>mxdp) mxdp=abs(c)
      if (abs(c)<mndp) mndp=abs(c)

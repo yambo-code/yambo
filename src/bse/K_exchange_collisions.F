@@ -114,7 +114,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
      if  (i_s==1.or.i_T_grp_last_with_identity_sym<0) then
        !
-       call DEV_SUB(scatter_Bamp)(K_EXCH_collision)
+       call scatter_Bamp_gpu(K_EXCH_collision)
        !
        call devxlib_memcpy_d2d( DEV_VAR(BS_T_grp(i_T_grp)%O_x)(:,i_T_el),&
                                 DEV_VAR(K_EXCH_collision%rhotw),range1=(/2,BS_n_g_exch/) )
@@ -143,7 +143,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
    else
      !
-     call DEV_SUB(scatter_Bamp)(K_EXCH_collision)
+     call scatter_Bamp_gpu(K_EXCH_collision)
      !
      ! BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=cZERO
      call devxlib_memset_d(BS_T_grp(i_T_grp)%DEV_VAR(O_x)(:,i_T_el),val=cZERO,range1=[1,1])

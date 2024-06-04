@@ -259,7 +259,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      X_range=(/1,Xw%n_freqs/)
      if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
      !
-     call DEV_SUB(scatter_Gamp)(isc,'c')
+     call scatter_Gamp_gpu(isc,'c')
      if (have_gpu) call devxlib_memcpy_d2h(isc%gamp,isc%gamp_d)
      !
      ! I/O
@@ -409,7 +409,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        isc%os(1)=ib
        !
-       call DEV_SUB(scatter_Bamp)(isc)
+       call scatter_Bamp_gpu(isc)
        iscp%os=isc%os
        !
        if (any(isc%is/=iscp%is))  then

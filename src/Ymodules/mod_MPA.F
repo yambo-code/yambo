@@ -32,6 +32,7 @@ module mpa_m
  !
  use pars,            ONLY:SP,DP,cZERO,cONE,cI
  use functions,       ONLY:NAN
+ use gpu_m,           ONLY:have_gpu
  !
 #include <y_memory.h>
 #include <dev_defs.h>
@@ -40,8 +41,8 @@ module mpa_m
  complex(SP), allocatable, target :: MPA_R_mat(:,:,:)
  complex(SP), allocatable, target :: MPA_freqs(:)
  !
- complex(SP), allocatable DEV_ATTR, target :: MPA_E_mat_d(:,:,:)
- complex(SP), allocatable DEV_ATTR, target :: MPA_R_mat_d(:,:,:)
+ complex(SP), allocatable, target DEV_ATTR :: MPA_E_mat_d(:,:,:)
+ complex(SP), allocatable, target DEV_ATTR :: MPA_R_mat_d(:,:,:)
 
  public :: mpa_RE_solver,err_func_X
  public :: MPA_alloc,MPA_free
@@ -51,24 +52,32 @@ contains
  subroutine MPA_alloc(d)
    implicit none
    integer :: d(4)
+   !
    call MPA_free()
+   !
    YAMBO_ALLOC(MPA_E_mat,(d(1),d(2),d(3)))
    YAMBO_ALLOC(MPA_R_mat,(d(1),d(2),d(3)))
    YAMBO_ALLOC(MPA_freqs,(d(4)))
-#ifdef _CUDA
-   YAMBO_ALLOC(MPA_E_mat_d,(d(1),d(2),d(3)))
-   YAMBO_ALLOC(MPA_R_mat_d,(d(1),d(2),d(3)))
-#endif
+   !
+   if (have_gpu) then
+     YAMBO_ALLOC_GPU(DEV_VAR(MPA_E_mat),(d(1),d(2),d(3)))
+     YAMBO_ALLOC_GPU(DEV_VAR(MPA_R_mat),(d(1),d(2),d(3)))
+   endif
+   !
  end subroutine
 
  subroutine MPA_free()
+   implicit none
+   !
+   if (have_gpu) then
+     YAMBO_FREE_GPU(DEV_VAR(MPA_E_mat))
+     YAMBO_FREE_GPU(DEV_VAR(MPA_R_mat))
+   endif
+   !
    YAMBO_FREE(MPA_E_mat)
    YAMBO_FREE(MPA_R_mat)
    YAMBO_FREE(MPA_freqs)
-#ifdef _CUDA
-   YAMBO_FREE(MPA_E_mat_d)
-   YAMBO_FREE(MPA_R_mat_d)
-#endif
+   !
  end subroutine
  !
  subroutine mpa_cond1(z, E, PPcond_rate)
@@ -89,7 +98,8 @@ contains
      PPcond_rate=1._SP 
    endif
    !
-   ! DALV: since MPA uses complex poles we need to guarantee the time ordering
+   ! DALV: since MPA uses complex poles 
+   !       we need to guarantee the time ordering
    !
    if(real(E)<0._SP) E=-E
    if(aimag(E)>-epsilon(1._SP)) E=real(E,SP)-cI*epsilon(1._SP)
@@ -144,7 +154,10 @@ contains
    real(SP)    :: wmax, thr=0.00001_SP
    !
    npr=np
-   wmax=maxval(sqrt(real(z,SP)))*1.5_SP !DALV: we were using the square before, now we use 1.5* the extreme of the interval
+   !
+   !DALV: we were using the square before, 
+   !      now we use 1.5* the extreme of the interval
+   wmax=maxval(sqrt(real(z,SP)))*1.5_SP 
    !
    i=1
    do while(i<=npr)

@@ -33,7 +33,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:OP_RD_CL,REP,VERIFY,NONE,io_COLLs
  use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t
- use interfaces,    ONLY:WF_load,TDDFT_ALDA_R_space
+ use interfaces,    ONLY:WF_load,TDDFT_ALDA_eh_space_R_kernel
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use R_lattice,     ONLY:qindx_S,bz_samp,g_rot,minus_G
  use hamiltonian,   ONLY:B_mat_index
@@ -430,7 +430,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
                  i_p_s =k%star(i_p,i_star)
                  iscp_H%is(3) = i_p_s
                  iscp_H%os(3) = i_p_s
-                 pre_factor2=pre_factor2+TDDFT_ALDA_R_space(isc_H%is,isc_H%os,iscp_H%is,iscp_H%os,tddft_wf,'RES')
+                 pre_factor2=pre_factor2+TDDFT_ALDA_eh_space_R_kernel(isc_H%is,isc_H%os,iscp_H%is,iscp_H%os,tddft_wf,'RES')
                enddo
              endif
              !
@@ -459,7 +459,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
                  i_p_s =k%star(i_p,i_star)
                  iscp_H%is(3) = i_p_s
                  iscp_H%os(3) = i_p_s
-                 pre_factor2=pre_factor2+TDDFT_ALDA_R_space(isc_H%is,isc_H%os,iscp_H%is,iscp_H%os,tddft_wf,'CPL')
+                 pre_factor2=pre_factor2+TDDFT_ALDA_eh_space_R_kernel(isc_H%is,isc_H%os,iscp_H%is,iscp_H%os,tddft_wf,'CPL')
                enddo
              endif
              !

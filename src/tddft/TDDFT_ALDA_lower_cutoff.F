@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
-subroutine TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
+subroutine TDDFT_ALDA_lower_cutoff(FXC_mode)
  !
  ! This subroutine performes a double FFT of F_xc
  ! F_xc(r) --> F_xc(G_l) --> F_xc(r)
@@ -34,7 +34,7 @@ subroutine TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
  !
  implicit none
  !
- character(10) :: ALDA_cut_scheme
+ character(12) :: FXC_mode
  ! 
  ! Work Space
  !
@@ -42,11 +42,11 @@ subroutine TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
  complex(DP) :: F_xc_DP(fft_size),F_xc_DP_reduced(fft_size)
  logical     :: l_lower_GmGp, l_lower_Gmax, l_use_fullgd
  !
- if(trim(ALDA_cut_scheme)=="none") return
+ if(index(FXC_mode,"def")>0) return
  !
- l_lower_GmGp=trim(ALDA_cut_scheme)=="lower_GmGp"
- l_lower_Gmax=trim(ALDA_cut_scheme)=="lower_Gmax"
- l_use_fullgd=trim(ALDA_cut_scheme)=="full_grid"
+ l_lower_GmGp=index(FXC_mode,"cut_GmGp")>0
+ l_lower_Gmax=index(FXC_mode,"cut_Gmax")>0
+ l_use_fullgd=index(FXC_mode,"full")>0
  !
  if (l_lower_GmGp) then
    BS_n_g_fxc=maxval(G_m_G(:FXC_n_g_corr,:FXC_n_g_corr))

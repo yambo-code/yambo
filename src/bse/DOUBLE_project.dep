@@ -47,6 +47,7 @@
  K_shell_matrix.o
  K_solvers.o
  K_stored_in_a_big_matrix.o
+ K_stored_in_a_nest_matrix.o
  K_stored_in_a_slepc_matrix.o
  PL_diago_residual.o
  PL_via_perturbative_inversion.o

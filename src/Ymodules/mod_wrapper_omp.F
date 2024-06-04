@@ -179,7 +179,7 @@ module wrapper_omp
    end subroutine mv_r_omp
    !
    !=========================
-   ! interface M_plus_alpha_M
+   ! interface M_plus_alpha_M_omp
    !=========================
    !
    subroutine MM_caxpy_omp(N, CA, CX,  CY )
@@ -191,13 +191,13 @@ module wrapper_omp
 #if defined _OPENMP_INT_LINALG 
      integer :: i,j
      if (n_threads_now>1) then
-!$omp parallel do default(shared), private(i,j)
+       !$omp parallel do default(shared), private(i,j)
        do j=1,N
          do i=1,N
            CY(i,j) = CY(i,j) + CA * CX(i,j)
          enddo
        enddo
-!$omp end parallel do
+       !$omp end parallel do
      else
        call MM_caxpy(N, CA, CX,  CY )
      endif
@@ -208,7 +208,7 @@ module wrapper_omp
    end subroutine MM_caxpy_omp
    !
    !=========================
-   ! interface V_plus_alpha_V
+   ! interface V_plus_alpha_V_omp
    !=========================
    !
    subroutine vv_caxpy_omp(N, CA, CX,  CY )
@@ -220,11 +220,11 @@ module wrapper_omp
 #if defined _OPENMP_INT_LINALG
      integer :: i
      if (n_threads_now>1) then
-!$omp parallel do default(shared), private(i)
+       !$omp parallel do default(shared), private(i)
        do i=1,N
           CY(i) = CY(i) + CA * CX(i)
        enddo
-!$omp end parallel do
+       !$omp end parallel do
      else
        call vv_c(N, CA, CX,  CY )
      endif
@@ -243,11 +243,11 @@ module wrapper_omp
 #if defined _OPENMP_INT_LINALG
      integer :: i
      if (n_threads_now>1) then
-!$omp parallel do default(shared), private(i)
+       !$omp parallel do default(shared), private(i)
        do i=1,N
          CY(i) = CY(i) + CA * CX(i)
        enddo
-!$omp end parallel do
+       !$omp end parallel do
      else
        call vv_s(N, CA, CX,  CY )
      endif
@@ -269,11 +269,11 @@ module wrapper_omp
 #if defined _OPENMP_INT_LINALG
      integer :: i
      if (n_threads_now>1) then
-!$omp parallel do default(shared), private(i)
+       !$omp parallel do default(shared), private(i)
        do i=1,N
          CY(i)=CX(i)
        enddo
-!$omp end parallel do
+       !$omp end parallel do
      else
        call V_copy(N,CX,CY)
      endif

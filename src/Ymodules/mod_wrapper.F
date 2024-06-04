@@ -25,25 +25,14 @@ module wrapper
  interface M_by_M
    module procedure :: mm_cgemm
    module procedure :: mm_c,mm_cg
-#ifdef _CUDAF
-!          procedure :: devxlib_xGEMM_gpu
-#endif
  end interface
  !
  interface M_by_V
    module procedure :: mv_cgemv,mv_sgemv,mv_c,mv_r
-#ifdef _CUDAF
-   module procedure :: mv_c_gpu
-!          procedure :: devxlib_xGEMV_gpu
-#endif
  end interface
  !
  interface V_plus_alpha_V
    module procedure :: vv_s,vv_c,vv_saxpy,vv_caxpy,MM_caxpy
-#ifdef _CUDAF
-   module procedure :: vv_c_gpu
-!          procedure :: devxlib_xAXPY_gpu
-#endif
  end interface
  !
  interface M_plus_alpha_M
@@ -88,6 +77,9 @@ module wrapper
  interface V_dot_VV_gpu
    module procedure :: V_dot_VV_c1_gpu
  end interface
+ interface V_plus_alpha_V_gpu
+   module procedure :: vv_c_gpu
+ end interface
  interface M_by_V_gpu
    module procedure :: mv_c_gpu
  end interface
@@ -98,6 +90,7 @@ module wrapper
  public :: Vstar_dot_VV_gpu
  public :: V_dot_V_gpu
  public :: V_dot_VV_gpu
+ public :: V_plus_alpha_V_gpu
  public :: M_by_M_gpu
  public :: M_by_V_gpu
  !

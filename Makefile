@@ -48,12 +48,6 @@ rt-project:
 	@for target in $(RT_PROJ)  ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 nl-project: 
 	@for target in $(NL_PROJ)  ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-rtext-project:
-	@for target in $(RTE_PROJ) ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-mod-project:
-	@for target in $(MOD_PROJ) ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-kerr-project:
-	@for target in $(KERR_PROJ); do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 main:
 	@for target in $(MAIN)     ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 all:
@@ -61,7 +55,8 @@ all:
 ext-libs:
 	@for target in $(EXT_LIBS) ; do if ! test "$$target" = Ydriver; then $(MAKE) $(MAKEFLAGS) $$target; fi; done
 int-libs:
-	@for target in $(INT_LIBS) ; do $(MAKE) $(MAKEFLAGS) $$target; done
+	@for target in $(INT_LIBS) ; do $(MAKE) $(MAKEFLAGS) $$target; \
+	if test ! -f "lib/lib$$target."*; then echo "$$target build failed"; exit 1; fi done
 yambo-int-libs: 
 	@for target in $(YAMBO_INT_LIBS) ; do $(MAKE) $(MAKEFLAGS) $$target; done
 check-packages:

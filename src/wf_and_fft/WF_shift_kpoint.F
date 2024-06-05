@@ -27,11 +27,7 @@ subroutine WF_shift_kpoint_gpu(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
  ! Work space
  !
  integer :: id,ik,is
-#if defined _GPU
  complex(SP), allocatable DEV_ATTR :: WF_tmp(:,:,:,:)
-#else
- complex(SP) :: WF_tmp(wf_ng_overlaps,n_spinor,b_to_shift(2),n_sp_pol)
-#endif
  integer :: ig,igp,i_b1,i_b2
  integer :: g0_idx(3,2),g0_idx_val
  integer :: i_spinor,i_b,i_sp_pol
@@ -42,15 +38,13 @@ subroutine WF_shift_kpoint_gpu(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
  i_b1= b_to_shift(1)
  i_b2= b_to_shift(2)
  !
- if (have_gpu) then
-   !
-   ! AF: note that here and above, instead of using   b_to_shift(2),
-   !     one could use  b_to_shift(1):b_to_shift(2)
-   !     We prefer the version below to avoid issues with devxlib calls
-   !     in the presence of GPUs
-   !
-   YAMBO_ALLOC_GPU(WF_tmp,(wf_ng_overlaps,n_spinor,b_to_shift(2),n_sp_pol))
- endif
+ ! AF: note that here and above, instead of using   b_to_shift(2),
+ !     one could use  b_to_shift(1):b_to_shift(2)
+ !     We prefer the version below to avoid issues with devxlib calls
+ !     in the presence of GPUs
+ !
+ YAMBO_ALLOC_GPU(WF_tmp,(wf_ng_overlaps,n_spinor,b_to_shift(2),n_sp_pol))
+
  !
  ! dev2dev
  call devxlib_memset_d(WF_tmp,cZERO)
@@ -101,10 +95,8 @@ subroutine WF_shift_kpoint_gpu(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
    !
  enddo
  !
- if (have_gpu) then
-   YAMBO_FREE_GPU(WF_tmp)
-   YAMBO_FREE(WF_tmp)
- endif
+ YAMBO_FREE_GPU(WF_tmp)
+ YAMBO_FREE(WF_tmp)
  !
 end subroutine WF_shift_kpoint_gpu
 

@@ -43,18 +43,19 @@ subroutine PP_PWscf_comp(basis,atoms)
     nbeta = psp%nbeta
     do ibeta=1,nbeta
       l=psp%lbeta(ibeta)
+      kb_E = psp%d(ibeta)/basis%struct%a_omega*0.5_SP  ! 0.5 = Ry2Ha
+      if(abs(kb_E)>0._SP) pp_kbs(itype,ibeta) = kb_E/abs(kb_E)
+      !
       fl=0._SP
       dfl=0._SP
       do ipw=1,npw
         if(KpG_norm(ipw) < 1.E-5) cycle
         fl(ipw) = num_interpolation_calc(psp%interp_beta(ibeta),KpG_norm(ipw),3)
         dfl(ipw) = num_interpolation_calc_der(psp%interp_beta(ibeta),KpG_norm(ipw),3,ider=1)
+        pp_kb(ipw,itype,ibeta,1) = sqrt(abs(kb_E))*fl(ipw)*KpG_norm(ipw)**l
+        pp_kbd(ipw,itype,ibeta,1) = sqrt(abs(kb_E))*(dfl(ipw)*KpG_norm(ipw)**l+ &
+&                                         fl(ipw)*real(l,SP)*KpG_norm(ipw)**(l-1) )
       enddo
-      kb_E = psp%d(ibeta)/basis%struct%a_omega*0.5_SP  ! 0.5 = Ry2Ha
-      pp_kbs(itype,ibeta) = kb_E/abs(kb_E)
-      pp_kb(:npw,itype,ibeta,1) = sqrt(abs(kb_E))*fl(:npw)*KpG_norm(:npw)**l
-      pp_kbd(:npw,itype,ibeta,1) = sqrt(abs(kb_E))*(dfl(:npw)*KpG_norm(:npw)**l+ &
-&                                         fl(:npw)*real(l,SP)*KpG_norm(:npw)**(l-1) )
     enddo
   enddo
   !

@@ -187,6 +187,7 @@ module interpolate_tools
     !
   end subroutine
   !
+#if defined _RT
   subroutine FILL_SEED_RT(ID,SEED_RT)
     !
     use real_time, ONLY:RT_t
@@ -211,6 +212,7 @@ module interpolate_tools
     enddo
     !
   end subroutine
+#endif
   !
   subroutine FILL_SEED_QP(ID,SEED_QP)
     !

@@ -5,8 +5,13 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+#if defined _RT
 subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
 &                                    NEAREST,QUIET,SERIAL)
+#else
+subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,        SEED_QP,SEED_R3,&
+&                                    NEAREST,QUIET,SERIAL)
+#endif
  !
  !  INTERPOLATION_driver_seed at present interpolates only from a single grid, not from both
  !  Defines the coefficients to be used for the interpolation starting from SEED_k
@@ -29,11 +34,14 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  !    OUTPUT: coeff(nshells,nval)
  !
  use pars,                 ONLY:SP
- use real_time,            ONLY:RT_t
  use QP_m,                 ONLY:QP_t
  use R_lattice,            ONLY:bz_samp
  use electrons,            ONLY:levels,n_sp_pol
- use interpolate_tools,    ONLY:init_ID,FILL_SEED_E,FILL_SEED_RT,FILL_SEED_QP
+#if defined _RT
+ use real_time,            ONLY:RT_t
+ use interpolate_tools,    ONLY:FILL_SEED_RT
+#endif
+ use interpolate_tools,    ONLY:init_ID,FILL_SEED_E,FILL_SEED_QP
  use interpolate,          ONLY:INTERP_obj,INTERPOLATION_coefficients,max_interpls,&
 &                               l_INTERP_f,l_INTERP_E,l_INTERP_dE,l_INTERP_W,INTERPOLATE_is_serial,&
 &                               INTERPOLATE_initialized,l_INTERP_Z,INTERP_mode,INTERPOLATE_is_quiet
@@ -45,7 +53,9 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  integer,       intent(out)          :: ID
  integer,       intent(in)           :: dims(2)
  type(bz_samp), intent(in)           :: SEED_k
+#if defined _RT
  type(RT_t),    intent(in), optional :: SEED_RT
+#endif
  type(levels),  intent(in), optional :: SEED_E
  type(QP_t),    intent(in), optional :: SEED_QP
  real(SP),      intent(in), optional :: SEED_R3(:,:,:)
@@ -95,7 +105,9 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  !======
  !
  if (present(SEED_E))  INTERP_obj(ID)%D=n_sp_pol
+#if defined _RT
  if (present(SEED_RT)) INTERP_obj(ID)%D=n_sp_pol
+#endif
  if (present(SEED_QP)) then
    INTERP_obj(ID)%D=0
    if (l_INTERP_dE) INTERP_obj(ID)%D=INTERP_obj(ID)%D+n_sp_pol
@@ -106,7 +118,9 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  !
  if (present(SEED_R3)) call init_ID(ID,dims,SEED_k,operation,"R3")
  if (present(SEED_E))  call init_ID(ID,dims,SEED_k,operation,"E")
+#if defined _RT
  if (present(SEED_RT)) call init_ID(ID,dims,SEED_k,operation,"RT")
+#endif
  if (present(SEED_QP)) call init_ID(ID,dims,SEED_k,operation,"QP")
  !
  if (present(NEAREST)) then
@@ -125,7 +139,9 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  ! I asssume here that SEED_E and SEED_RT lives on the same grid of SEED_k
  !
  if (present(SEED_E))   call FILL_SEED_E(ID,SEED_E)
+#if defined _RT
  if (present(SEED_RT))  call FILL_SEED_RT(ID,SEED_RT)
+#endif
  if (present(SEED_QP))  call FILL_SEED_QP(ID,SEED_QP)
  !
  if (present(SEED_R3)) then

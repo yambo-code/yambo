@@ -40,6 +40,7 @@ subroutine NL_initialize(E,k)
  !
  real(SP) :: Time,W_0,T_0,sigma,E_dot_rot_axis 
  integer  :: i1,n_active_fields
+ real(SP) :: Sampling_Time
  !
  ! Parser
  ! ============
@@ -233,10 +234,19 @@ subroutine NL_initialize(E,k)
      !
      ! Add time to sample the response
      !
-     NE_tot_time=NE_tot_time+EtoT(E=NL_er(1))+5._SP*RT_step
+     Sampling_Time=EtoT(E=NL_er(1))+5._SP*RT_step
+     !
+     if(n_active_fields>1) then
+       if((Efield(2)%ef_name/='none').and.Efield(2)%frequency(1)>0._SP) &
+&         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(2)%frequency(1))+5._SP*RT_step/))
+       if((Efield(3)%ef_name/='none').and.Efield(3)%frequency(1)>0._SP) &
+&         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(3)%frequency(1))+5._SP*RT_step/))
+     endif
+     !
+     NE_tot_time=NE_tot_time+Sampling_Time
      !
      call msg('sr','Dephasing Time              ',DephMult*Phase_LifeTime*AUT2FS,"[fs]")
-     call msg('sr','Sampling  Time              ',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS,"[fs]")
+     call msg('sr','Sampling  Time              ',(Sampling_Time)*AUT2FS,"[fs]")
      !
    elseif(Efield(1)%ef_name=='PULSE'.or.Efield(1)%ef_name=='QSSIN' &
 &     .or.Efield(1)%ef_name=='QSFIELD'.or.Efield(1)%ef_name=='SPULSE') then

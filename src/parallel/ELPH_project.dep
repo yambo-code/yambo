@@ -1,4 +1,3 @@
- PARALLEL_global_Phonon_Self_Energy.o
  PARALLEL_global_Self_Energy.o
  PARALLEL_global_dimensions.o
 

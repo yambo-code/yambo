@@ -20,7 +20,7 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
  !
  integer,       intent(in)  :: ikbz,b_to_load(2)
  type(bz_samp), intent(in)  :: Xk
- complex(SP),   intent(out) DEV_ATTR :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
+ complex(SP),   intent(out) DEV_ATTR :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(2),n_sp_pol)
  !
  ! Work space
  !

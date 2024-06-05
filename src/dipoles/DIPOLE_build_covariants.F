@@ -186,10 +186,6 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
      !
      call live_timing(steps=1)
      !
-! XXX
-write(2000,*) "DIP_tmp"
-write(2000,"(8f15.9)") DIP_tmp
-
    enddo ! ik
    !
    YAMBO_FREE(Sm1_plus)

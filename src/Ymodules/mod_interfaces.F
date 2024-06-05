@@ -276,24 +276,17 @@ module interfaces
      type(tddft_wf_t), target, intent(inout) :: tddft_wf
    end function TDDFT_ALDA_R_space
    !
- end interface
- !
- interface
-   subroutine WF_shift_kpoint(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
+   subroutine WF_shift_kpoint_gpu(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
      use pars,          ONLY:SP
      use electrons,     ONLY:n_spinor,n_sp_pol
      use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
      use R_lattice,     ONLY:bz_samp
      integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2)
      type(bz_samp), intent(in) :: Xk
-     complex(SP),   intent(in)  DEV_ATTR :: &
-&         WF_k_in (wf_ng_1st_BZ,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
-     complex(SP),   intent(out) DEV_ATTR :: &
-&         WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
-   end subroutine
- end interface 
- !
- interface
+     complex(SP),   intent(in)  DEV_ATTR :: WF_k_in (wf_ng_1st_BZ,n_spinor,b_to_shift(2),n_sp_pol)
+     complex(SP),   intent(out) DEV_ATTR :: WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(2),n_sp_pol)
+   end subroutine WF_shift_kpoint_gpu
+   !
    subroutine WF_symm_kpoint(b_to_load,ikbz,Xk,WF_k_out)
      use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
@@ -301,11 +294,9 @@ module interfaces
      use electrons,     ONLY:n_spinor,n_sp_pol
      integer,       intent(in)  :: ikbz,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
-     complex(SP),   intent(out) :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
+     complex(SP),   intent(out) :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(2),n_sp_pol)
    end subroutine WF_symm_kpoint
- end interface 
- !
- interface
+   !
    subroutine WF_symm_kpoint_gpu(b_to_load,ikbz,Xk,WF_k_out)
      use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
@@ -313,12 +304,9 @@ module interfaces
      use electrons,     ONLY:n_spinor,n_sp_pol
      integer,       intent(in)  :: ikbz,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
-     complex(SP),   intent(out) DEV_ATTR :: &
-&       WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
+     complex(SP),   intent(out) DEV_ATTR :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(2),n_sp_pol)
    end subroutine WF_symm_kpoint_gpu
- end interface
- !
- interface
+   !
    subroutine WF_apply_symm(isc,WF_symm)
      use pars,          ONLY:SP
      use FFT_m,         ONLY:fft_size
@@ -326,9 +314,7 @@ module interfaces
      integer,     intent(in)  :: isc(4)
      complex(SP), intent(out) :: WF_symm(fft_size,n_spinor)
    end subroutine WF_apply_symm
- end interface
- !
- interface
+   !
    subroutine WF_apply_symm_gpu(isc,WF_symm)
      use pars,          ONLY:SP
      use FFT_m,         ONLY:fft_size
@@ -336,6 +322,7 @@ module interfaces
      integer,     intent(in)  :: isc(4)
      complex(SP), intent(out) DEV_ATTR :: WF_symm(fft_size,n_spinor)
    end subroutine WF_apply_symm_gpu
+   !
  end interface
  !
 end module interfaces

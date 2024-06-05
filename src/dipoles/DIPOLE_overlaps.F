@@ -26,7 +26,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
 &                            PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,           &
 &                            PAR_IND_OVLPk_ibz,PAR_COM_DIPk_ibz_INDEX
  use parallel_int,      ONLY:PP_redux_wait,PARALLEL_WF_index,PARALLEL_WF_distribute
- use interfaces,        ONLY:WF_shift_kpoint,eval_G_minus_G,WF_load,WF_free
+ use interfaces,        ONLY:WF_shift_kpoint_gpu,eval_G_minus_G,WF_load,WF_free
  use gpu_m,             ONLY:have_gpu
  use timing_m,          ONLY:timing
  !
@@ -100,7 +100,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
      !
      call WF_symm_kpoint_gpu((/1,Dip%ib(2)/),ikbz,Xk,WF_symm)
      !  
-     call WF_shift_kpoint((/1,Dip%ib(2)/),ikbz,WF_shifts(ikbz,:),Xk,WF_symm,WF_ik)
+     call WF_shift_kpoint_gpu((/1,Dip%ib(2)/),ikbz,WF_shifts(ikbz,:),Xk,WF_symm,WF_ik)
      !
      call WF_free(WF)
      !
@@ -138,7 +138,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            if(WF_shifts(ikbzp,id)==2) shift(id)=0
          endif
          !
-         call WF_shift_kpoint((/1,Dip%ib(2)/),ikbzp,shift,Xk,WF_symm,WF_ikp)
+         call WF_shift_kpoint_gpu((/1,Dip%ib(2)/),ikbzp,shift,Xk,WF_symm,WF_ikp)
          !
          call WF_free(WF)
          !
@@ -147,7 +147,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            do ibp=1,Dip%ib(2)
              if(.not.PAR_IND_CON_BANDS_OVLP%element_1D(ibp)) cycle
              DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)= &
-             &  Vstar_dot_V_gpu(wf_ng_overlaps*n_spinor,WF_ik(:,:,ib,i_sp_pol),WF_ikp(:,:,ibp,i_sp_pol))
+&                  Vstar_dot_V_gpu(wf_ng_overlaps*n_spinor,WF_ik(:,:,ib,i_sp_pol),WF_ikp(:,:,ibp,i_sp_pol))
            enddo ! ibp
          enddo ! ib
          !

@@ -18,7 +18,7 @@ subroutine NL_initialize(E,k)
  use zeros,          ONLY:zero_dfl
  use com,            ONLY:msg
  use R_lattice,      ONLY:bz_samp,k_map
- use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
+ use fields,         ONLY:Efield,Efield_strength,n_ext_fields
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field,l_NE_with_fields, &
 &                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential,RAD_LifeTime
  use RT_control,     ONLY:SETUP_RT_IO_type,OBS_RT_IO_t
@@ -39,8 +39,8 @@ subroutine NL_initialize(E,k)
  ! Working space
  !
  real(SP) :: Time,W_0,T_0,sigma,E_dot_rot_axis 
- integer  :: i1,n_active_fields
- real(SP) :: Sampling_Time
+ integer  :: i1,n_active_fields,i_f,a,b,c,d,r,dec
+ real(SP) :: Sampling_Time,EF1_freq
  !
  ! Parser
  ! ============
@@ -218,6 +218,8 @@ subroutine NL_initialize(E,k)
    endif
  endif
  !
+ if(all(NL_er>0._SP).and.n_frequencies>=1) NL_estep=(NL_er(2)-NL_er(1))/real(n_frequencies,SP)
+ ! 
  ! Determine the total time from the damping or from T_0
  !
  if(NE_tot_time<=0._SP) then
@@ -234,13 +236,24 @@ subroutine NL_initialize(E,k)
      !
      ! Add time to sample the response
      !
-     Sampling_Time=2._SP*pi/NL_er(1)+5._SP*RT_step
-     !
-     if(n_active_fields==2) then
-       if((Efield(2)%ef_name/='none').and.Efield(2)%frequency(1)>0._SP) &
-&         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(2)%frequency(1))+5._SP*RT_step/))
-       if((Efield(3)%ef_name/='none').and.Efield(3)%frequency(1)>0._SP) &
-&         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(3)%frequency(1))+5._SP*RT_step/))
+     if(n_active_fields==1) then
+       Sampling_Time=2._SP*pi/NL_er(1)+5._SP*RT_step
+     elseif(n_active_fields==2) then
+       ! 
+       dec=1
+       Sampling_Time=1._SP/(NL_er(1)*HA2EV)
+       if(n_frequencies<0) call error("Error NL_Time<0 NLEnSteps<0 and more than one field not compatible")
+       do i_f=1,n_frequencies
+         EF1_freq=NL_er(1)+real(i_f-1,SP)*NL_estep
+   	 a = NINT(EF1_freq *HA2EV* 10.0**dec)
+         b = NINT(Efield(2)%frequency(1)*HA2EV* 10.0**dec)
+         r = a * b
+         c = a * 10**dec
+         d = b * 10**dec
+         Sampling_Time=maxval((/Sampling_Time,lcm(c, d)/DBLE(r)/))
+       enddo
+       Sampling_Time=Sampling_Time*2._SP*pi*HA2EV
+       ! 	  
      elseif(n_active_fields==3) then
        call error("Automatic simulation time not implemented with three fields, set it in input ")
      endif
@@ -342,8 +355,6 @@ subroutine NL_initialize(E,k)
  !
  if(n_frequencies>=1.and.n_angles>=1)  call error("Loops on frequencies and angles cannot be performed in the same run")
  !
- if(all(NL_er>0._SP).and.n_frequencies>=1) NL_estep=(NL_er(2)-NL_er(1))/real(n_frequencies,SP)
- ! 
  if(n_angles>=1) then
    ! loop on angles
    NL_ang_step=2.0*pi/real(n_angles,SP)

@@ -9,7 +9,7 @@ subroutine NL_initialize(E,k)
  ! 
  use pars,           ONLY:SP,DP,pi
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
- use vec_operate,    ONLY:normalize_v,v_norm,cross_product
+ use vec_operate,    ONLY:normalize_v,v_norm,cross_product,lcm
  use collision_ext,  ONLY:COLLISIONS_CV_only
  use hamiltonian,    ONLY:H_potential
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
@@ -234,13 +234,15 @@ subroutine NL_initialize(E,k)
      !
      ! Add time to sample the response
      !
-     Sampling_Time=EtoT(E=NL_er(1))+5._SP*RT_step
+     Sampling_Time=2._SP*pi/NL_er(1)+5._SP*RT_step
      !
-     if(n_active_fields>1) then
+     if(n_active_fields==2) then
        if((Efield(2)%ef_name/='none').and.Efield(2)%frequency(1)>0._SP) &
 &         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(2)%frequency(1))+5._SP*RT_step/))
        if((Efield(3)%ef_name/='none').and.Efield(3)%frequency(1)>0._SP) &
 &         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(3)%frequency(1))+5._SP*RT_step/))
+     elseif(n_active_fields==3) then
+       call error("Automatic simulation time not implemented with three fields, set it in input ")
      endif
      !
      NE_tot_time=NE_tot_time+Sampling_Time

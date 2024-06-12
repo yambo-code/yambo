@@ -73,11 +73,13 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  call PARALLEL_WF_index( )
  !
- YAMBO_ALLOC(WF_symm,(wf_ng_1st_BZ,n_spinor,1,n_sp_pol))
+ YAMBO_ALLOC(WF_symm,     (wf_ng_1st_BZ,n_spinor,1,n_sp_pol))
  YAMBO_ALLOC(WF_ikp,    (wf_ng_overlaps,n_spinor,1,n_sp_pol))
  YAMBO_ALLOC(WF_ik,     (wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
  !
+!$OMP WORKSHARE
  DIP_S=cZERO
+!$OMP END WORKSHARE
  !
  call live_timing("Overlaps:",PAR_IND_DIPk_bz%n_of_elements(PAR_IND_DIPk_bz_ID+1)*n_sp_pol)
  !

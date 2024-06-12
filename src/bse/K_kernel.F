@@ -42,7 +42,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
 &                        FXC_mode,tddft_wf_t,l_Fxc_from_Vxc
  use xc_functionals,ONLY:V_xc,F_xc,F_xc_mat,magn,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
- use wave_func,     ONLY:WF,rho_map,rho_map_thresh,rho_map_size
+ use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
  use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme,PARALLEL_default_mode,master_cpu
@@ -311,29 +311,19 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !======
  if (iHxc==2) then
    !
-   ! This part could be done just by the master bypassing the PAR_IND_WF_linear ...
-   !
-   if(rho_map_thresh>0._SP) then
-     call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT",keep_states_to_load=.true.)
-     YAMBO_ALLOC(rho,(fft_size))
-     call el_density_and_current(Ken,Xk,rho=rho,compute_rho_map=.true.)
-     YAMBO_FREE(rho)
-     call WF_free(WF,keep_states_to_load=.true.)
-   endif
-   !
    call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT",keep_states_to_load=.true.)
    !
    QP_ng_Vxc=BS_n_g_fxc
    !
    if (l_tddft_rsum) then
-     YAMBO_ALLOC(tddft_wf%rhotwr1,(rho_map_size*n_spinor*n_spinor))
-     YAMBO_ALLOC(tddft_wf%rhotwr2,(rho_map_size*n_spinor*n_spinor))
+     YAMBO_ALLOC(tddft_wf%rhotwr1,(fft_size*n_spinor*n_spinor))
+     YAMBO_ALLOC(tddft_wf%rhotwr2,(fft_size*n_spinor*n_spinor))
    else if (l_tddft_gsum) then
      YAMBO_ALLOC(tddft_wf%rhotwr_DP,(fft_size))
    endif
    !
-   YAMBO_ALLOC(tddft_wf%WF_symm1,(rho_map_size,n_spinor))
-   YAMBO_ALLOC(tddft_wf%WF_symm2,(rho_map_size,n_spinor))
+   YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
+   YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
    !
    YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
    if(l_BS_magnons .or. n_spinor==2 .or. l_Fxc_from_Vxc) then
@@ -830,8 +820,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
    YAMBO_FREE(tddft_wf%WF_symm1)
    YAMBO_FREE(tddft_wf%WF_symm2)
-   !
-   if(rho_map_thresh>0._SP) deallocate(rho_map)
    !
    if (l_bs_fxc) then
      YAMBO_FREE(F_xc_gspace)

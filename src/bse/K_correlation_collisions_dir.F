@@ -14,7 +14,7 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
  use D_lattice,     ONLY:nsym
  use R_lattice,     ONLY:qindx_X,bz_samp
  use BS,            ONLY:O_ng,BS_bands,BS_res_K_corr,BS_blk,&
-&                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp,&
+&                        K_CORR_collision,BS_T_grp,&
 &                        BS_K_dim,l_BS_ares_from_res
  use electrons,     ONLY:n_sp_pol
  use collision_el,  ONLY:elemental_collision_free,elemental_collision_alloc
@@ -131,11 +131,11 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
        !
        ! v->v', i.e. k-q -> p-q=k-q_W-q transitions
        !
-       call EVAL_table(i_block,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp_pol_v,i_kmq_s,i_pmq_s)
+       call SET_table(i_block,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp_pol_v,i_kmq_s,i_pmq_s)
        !
        ! c->c', i.e. k -> p=k-q_w transitions
        !
-       call EVAL_table(i_block,1,1,i_c_k,i_c_p,i_k_sp_pol_c,i_k_s,i_p_s)
+       call SET_table(i_block,1,1,i_c_k,i_c_p,i_k_sp_pol_c,i_k_s,i_p_s)
        !
      enddo
    enddo
@@ -164,18 +164,18 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
        !
        ! v->c', i.e. k-q -> p-q=k-q_W-q transitions
        !
-       call EVAL_table(i_block,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp_pol_v,i_kmq_s,i_pmq_s)
+       call SET_table(i_block,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp_pol_v,i_kmq_s,i_pmq_s)
        !
        ! c->v', i.e. k -> p=k-q_W transitions
        !
-       call EVAL_table(i_block,1,1,i_c_k,i_v_p,i_k_sp_pol_c,i_k_s,i_p_s)
+       call SET_table(i_block,1,1,i_c_k,i_v_p,i_k_sp_pol_c,i_k_s,i_p_s)
        !
      enddo
    enddo
    !
  end select
  !
- call BS_oscillators_alloc(.FALSE.,0,.TRUE.,i_block)
+ call BS_correlation_oscillators_alloc(i_block)
  !
 #if !defined _CUDA
  !$omp parallel default(shared), private(i_Tk,i_Tp, &
@@ -375,12 +375,11 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
        !
    end subroutine fill_indexes
    !
-   subroutine EVAL_table(iB,iki,iko,ibi,ibo,i_sp_pol,i_s_ki,i_s_ko)
+   subroutine SET_table(iB,iki,iko,ibi,ibo,i_sp_pol,i_s_ki,i_s_ko)
      implicit none
      integer, intent(in) :: iB,iki,iko,ibi,ibo,i_sp_pol,i_s_ki,i_s_ko
      !
      if( O_todo_table(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol) ) return
-     !
      BS_blk(iB)%N_oscillators=BS_blk(iB)%N_oscillators+1 
      BS_blk(iB)%O_table(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)=BS_blk(iB)%N_oscillators
      O_todo_table(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)=.true.

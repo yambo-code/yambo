@@ -14,7 +14,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
 &                         diam_term_exact,para_term_w0,l_abs_prop_chi_bse,&
 &                         l_eels_from_inversion,Co_factor
  use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BS_H_dim,BS_K_coupling,&
-&                         l_BS_anomalous_Hall
+&                         l_BS_anomalous_Hall,l_BS_Esort_indx
  use stderr,         ONLY:STRING_match
  use X_m,            ONLY:Epsilon_ii,eps_2_alpha,X_OUTPUT_driver,Epsilon_ij,&
 &                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,&
@@ -246,6 +246,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      if (data_sort(1)==0._SP) cycle
      call X_OUTPUT_driver("WRITE E_IP",data=data_sort(:N_BS_E_sorted))
    enddo
+   if (l_BS_esort_indx) then
    do id=1,min(BS_H_dim,1000)
      data_sort(1)=real(BS_E_sorted(id,1,1),SP)
      if (data_sort(1)==0._SP) cycle
@@ -256,6 +257,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
        call X_OUTPUT_driver("WRITE E_INDX_IP",data=data_sort(1:1),indexes=index_sort)
      enddo
    enddo
+   endif
  endif
  !
  ! E sorted

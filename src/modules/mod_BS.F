@@ -54,6 +54,7 @@ module BS
  logical :: l_BS_dichroism
  logical :: l_BS_optics
  logical :: l_BS_esort
+ logical :: l_BS_esort_indx
  !
  ! Dimensions
  !=============

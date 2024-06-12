@@ -10,7 +10,7 @@ subroutine K_IP_sort(what,I,N,Indexes,vI,El,vC)
  use pars,          ONLY:SP,cZERO
  use parallel_m,    ONLY:PAR_COM_eh_INDEX,PAR_COM_Xk_ibz_INDEX
  use X_m,           ONLY:BS_E_sorted,N_BS_E_sorted,BS_E_sorted_indx
- use BS,            ONLY:BS_H_dim
+ use BS,            ONLY:BS_H_dim,l_BS_esort_indx
  use vec_operate,   ONLY:sort,degeneration_finder
  use units,         ONLY:HA2EV
  use parallel_int,  ONLY:PP_redux_wait
@@ -64,7 +64,7 @@ subroutine K_IP_sort(what,I,N,Indexes,vI,El,vC)
    do i_grp=1,n_deg_grp
      if(i_grp>EDIM/Ntmp) cycle
      !
-     if(i_VAR==1) then
+     if(i_VAR==1.and.l_BS_esort_indx) then
        if (n_of_el(i_grp)>18) l_print_warning=.true.
        do i_cv=first_el(i_grp),first_el(i_grp)+min(18,n_of_el(i_grp))-1
          BS_E_sorted_indx(i_grp,i_cv-first_el(i_grp)+1,1:5)=vI(sort_indx(i_cv),:)

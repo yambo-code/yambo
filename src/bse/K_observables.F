@@ -16,7 +16,7 @@ subroutine K_observables( W )
  use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,BSS_mode
  use BS,           ONLY:BS_dip_size,l_BS_anomalous_Hall,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,&
-&                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,l_BS_kerr_asymm
+&                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,l_BS_kerr_asymm,l_BS_esort_indx
  use parser_m,     ONLY:parser
  use stderr,       ONLY:STRING_match
  use electrons,    ONLY:levels,n_sp_pol,n_spin
@@ -43,6 +43,7 @@ subroutine K_observables( W )
  ! How ...
  !---------
  l_BS_esort     = STRING_match(BSE_prop,'esrt')
+ l_BS_esort_indx= STRING_match(BSE_prop,'indx').and.l_BS_esort
  !
  ! How to treat dipoles...
  !------------------------
@@ -92,6 +93,7 @@ subroutine K_observables( W )
  if(l_BS_photolum)       BSE_prop=trim(BSE_prop)//' photolum'
  if(l_BS_magnons)        BSE_prop=trim(BSE_prop)//' magn'
  if(l_BS_esort)          BSE_prop=trim(BSE_prop)//' esrt'
+ if(l_BS_esort)          BSE_prop=trim(BSE_prop)//' indx'
  if(l_BS_trace)          BSE_prop=trim(BSE_prop)//' trace'
  !
  ! Solver Logicals

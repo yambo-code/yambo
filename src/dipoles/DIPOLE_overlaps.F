@@ -43,7 +43,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  complex(SP), allocatable DEV_ATTR :: WF_symm(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: WF_shifted(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: WF_ik(:,:,:,:)
- complex(SP), allocatable DEV_ATTR :: WF_ikp(:,:,:,:)
+ complex(SP), allocatable DEV_ATTR :: WF_ikp(:,:,:)
  !
  logical           :: USE_shifted_wf
  !
@@ -77,7 +77,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  YAMBO_ALLOC(WF_symm,(wf_ng_1st_BZ,n_spinor,Dip%ib(2),n_sp_pol))
  YAMBO_ALLOC(WF_shifted,(wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
  YAMBO_ALLOC(WF_ik,     (wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
- YAMBO_ALLOC(WF_ikp,    (wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
+ YAMBO_ALLOC(WF_ikp,    (wf_ng_overlaps,n_spinor,n_sp_pol))
  !
  DIP_S=cZERO
  !
@@ -136,16 +136,15 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            if(WF_shifts(ikbzp,id)==2) shift(id)=0
          endif
          !
-         call WF_shift_kpoint((/1,Dip%ib(2)/),ikbzp,shift,Xk,WF_symm,WF_ikp)
-         !
          call WF_free(WF)
          !
          do ib=1,Dip%ib(2)
            if(.not.PAR_IND_VAL_BANDS_OVLP%element_1D(ib)) cycle
-           do ibp=1,Dip%ib(2)
+           do ibp=1,Dip%ib(2)		   
+             call WF_shift_kpoint((/ibp,ibp/),ikbzp,shift,Xk,WF_symm(:,:,ibp,:),WF_ikp)
              if(.not.PAR_IND_CON_BANDS_OVLP%element_1D(ibp)) cycle
              DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)= &
-             &  Vstar_dot_V(wf_ng_overlaps*n_spinor,WF_ik(:,:,ib,i_sp_pol),WF_ikp(:,:,ibp,i_sp_pol))
+             &  Vstar_dot_V(wf_ng_overlaps*n_spinor,WF_ik(:,:,ib,i_sp_pol),WF_ikp(:,:,i_sp_pol))
            enddo ! ibp
          enddo ! ib
          !

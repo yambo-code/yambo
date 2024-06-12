@@ -39,9 +39,13 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_R(iq,Xk,i_T_grp,tddft_wf,mode)
  integer     :: i_T_el,i_T_el_p,N_T_el_p,i_c,i_v,i_sp_c,i_sp_v,i_k_bz,i_k,i_s,i_g0,i_g1,i_g2,i_p_bz,i_g_p,i_p,&
 &               i_sp,i_T_grp_p,is(4),os(4),qs(3),NK(2)
  !
- complex(DP), pointer DEV_ATTR :: rhotwr_p(:)
- complex(SP), pointer DEV_ATTR :: WF_symm1_p(:,:)
- complex(SP), pointer DEV_ATTR :: WF_symm2_p(:,:)
+ complex(DP), pointer :: rhotwr_p(:)
+ complex(SP), pointer :: WF_symm1_p(:,:)
+ complex(SP), pointer :: WF_symm2_p(:,:)
+ !
+#if defined _CUDA
+ call error("TDDFT ALDA Osc. not GPU ported")
+#endif
  !
  call timing('T_space ALDA Osc.',OPR='start')
  !

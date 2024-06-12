@@ -7,7 +7,7 @@
 !
 #include<dev_defs.h>
 !
-subroutine TDDFT_ALDA_eh_space_G_collisions_R(iq,Xk,i_T_grp,tddft_wf,mode)
+subroutine TDDFT_ALDA_eh_space_G_collisions_R(iq,Xk,i_T_grp,NG,l_bs_tddft_wf_in_loop,tddft_wf,mode)
  !
  ! Calculates the F_xc scattering 
  !
@@ -16,7 +16,9 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_R(iq,Xk,i_T_grp,tddft_wf,mode)
  !
  use pars,           ONLY:SP,DP,pi,cZERO
  use FFT_m,          ONLY:fft_size
+ use wave_func,      ONLY:WF
  use xc_functionals, ONLY:F_xc_mat
+ use interfaces,     ONLY:WF_load,WF_free
  use R_lattice,      ONLY:qindx_X,bz_samp,minus_G
  use BS,             ONLY:l_BS_magnons,BS_T_grp,BS_bands
  use electrons,      ONLY:n_spinor,n_sp_pol,n_spin
@@ -28,12 +30,14 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_R(iq,Xk,i_T_grp,tddft_wf,mode)
  implicit none
  !
  type(bz_samp),intent(in) :: Xk
- integer,      intent(in) :: iq,i_T_grp
+ integer,      intent(in) :: iq,i_T_grp,NG(2)
+ logical,      intent(in) :: l_bs_tddft_wf_in_loop
  character(1), intent(in) :: mode
  type(tddft_wf_t), target, intent(inout) :: tddft_wf 
  ! 
  ! Work Space
  !
+ logical     :: l_load_WFs
  integer     :: i_spinor,j_spinor,ip_spinor,jp_spinor,ifft,irhotw,is_yambo,os_yambo,i_spinor_y,j_spinor_y,&
 &               i_sp_loop,o_sp_loop
  integer     :: i_T_el,i_T_el_p,N_T_el_p,i_c,i_v,i_sp_c,i_sp_v,i_k_bz,i_k,i_s,i_g0,i_g1,i_g2,i_p_bz,i_g_p,i_p,&
@@ -104,6 +108,20 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_R(iq,Xk,i_T_grp,tddft_wf,mode)
      os(1)=i_c
    endif
    !
+   l_load_WFs= l_bs_tddft_wf_in_loop .and. (NK(1)/=min(i_k,i_p).or.NK(2)/=max(i_k,i_p))
+   if (l_load_WFs) then
+#if defined(__NOTNOW) && ! defined(_CUDA)
+     !$omp critical
+#endif
+     if (NK(2)/=-1) call WF_free(WF,keep_fft=.true.,keep_states_to_load=.true.)
+     NK=(/min(i_k,i_p),max(i_k,i_p)/)
+     call WF_load(WF,NG(1),NG(2),BS_bands,NK,k_extrema_only=.true.,quiet=.true.,&
+     &            space='R',title="Kernel exch",keep_states_to_load=.true.)
+#if defined(__NOTNOW) && ! defined(_CUDA)
+     !$omp end critical
+#endif
+   endif
+   !
    if ( (is(4)/=os(4)) .and. ((.not.l_BS_magnons).or. n_sp_pol==1) ) call error(" TDDFT_ALDA_R_space: wrong spin index")
    if ( (is(4)==os(4)) .and. ((     l_BS_magnons).and.n_sp_pol==2) ) call error(" TDDFT_ALDA_R_space: wrong spin index")
    !
@@ -130,7 +148,7 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_R(iq,Xk,i_T_grp,tddft_wf,mode)
          os_yambo=i_sp_loop
          ! To check/fix the spinorial version 
          rhotwr_p(:)=cmplx(F_xc_mat(:,is_yambo,os_yambo,is(4),os(4))* &
-         &              WF_symm1_p(:,1)*conjg(WF_symm2_p(:,1)),kind=DP)
+         &                                             WF_symm1_p(:,1)*conjg(WF_symm2_p(:,1)),kind=DP)
          call perform_fft_3d(qs,rhotwr_p,BS_T_grp(i_T_grp)%O_tddft_R(:,i_T_el,i_sp_loop,o_sp_loop))
          !
        enddo
@@ -161,6 +179,8 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_R(iq,Xk,i_T_grp,tddft_wf,mode)
    !
  enddo
  !
+ if(l_bs_tddft_wf_in_loop) call WF_free(WF,keep_fft=.true.,keep_states_to_load=.true.)
+ !
  nullify(WF_symm1_p)
  nullify(WF_symm2_p)
  nullify(rhotwr_p)
@@ -168,31 +188,3 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_R(iq,Xk,i_T_grp,tddft_wf,mode)
  call timing('T_space ALDA Osc.',OPR='stop')
  !
 end subroutine TDDFT_ALDA_eh_space_G_collisions_R
-!
-!
-subroutine TDDFT_oscillators_alloc_R(iGR)
- use electrons, ONLY:n_spin,n_spinor
- use BS,        ONLY:BS_T_grp,BS_n_g_fxc
-#include<memory.h>
- integer, intent(in) :: iGR
- if (BS_T_grp(iGR)%size>0) then
-   YAMBO_ALLOC(BS_T_grp(iGR)%O_tddft_R,(BS_n_g_fxc,BS_T_grp(iGR)%size,n_spin,n_spin))
-#ifdef _CUDA
-   allocate(BS_T_grp(iGR)%O_tddft_R_d,mold=BS_T_grp(iGR)%O_tddft_R)
-#endif
- endif
-end subroutine TDDFT_oscillators_alloc_R
-!
-!
-subroutine TDDFT_oscillators_free_R(iG_ref)
- use BS,        ONLY:BS_T_grp
-#include<memory.h>
- integer, intent(in) :: iG_ref
- integer :: iGR
- do iGR=iG_ref,1,-1
-   YAMBO_FREE(BS_T_grp(iGR)%O_tddft_R)
-#ifdef _CUDA
-   if (allocated(BS_T_grp(iGR)%O_tddft_R_d)) deallocate(BS_T_grp(iGR)%O_tddft_R_d)
-#endif
- enddo
-end subroutine TDDFT_oscillators_free_R

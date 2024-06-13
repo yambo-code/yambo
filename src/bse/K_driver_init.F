@@ -12,8 +12,8 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match
- use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,BSS_slepc_double_grp,&
-&                       run_Slepc,BSS_mode,&
+ use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix_format,BSS_uses_DbGd,&
+&                       BSS_slepc_double_grp,run_Slepc,BSS_mode,       &
 &                       l_abs_prop_chi_bse,l_eels_can_be_computed,l_eels_from_inversion
  use BS,           ONLY:BSE_L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
 &                       BS_perturbative_SOC,l_BS_magnons,l_BS_photolum,&
@@ -25,6 +25,9 @@ subroutine K_driver_init(what,iq,Ken,Xk)
 #if defined _RT
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:NEQ_Kernel,EQ_Transitions,EQ_NoOcc,NEQ_Residuals,RT_BSE_Occ_Mode
+#endif
+#if defined _CUDA
+ use TDDFT,        ONLY:FXC_mode
 #endif
  !
  implicit none
@@ -162,6 +165,12 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  & call error('set Lkind = DEFAULT or BAR or FULL')
  !
  BS_K_is_ALDA=l_alda_fxc
+#if defined _CUDA
+ if ( BS_K_is_alda.and. index(FXC_mode,"G-")>0 ) then
+   call warning(" Tddft with G-integrals is not GPU ported. Fallback to R-integrals")
+   FXC_mode="R-def"
+ endif
+#endif
  BS_dip_size=1
  !
  ! Memory saving
@@ -227,13 +236,11 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  ! SLEPC
  !=======
- ! Here we will have two options to initialize the slepc matrix:
- call parser('BSSSlepcMatrix',BSS_slepc_matrix)
  !
 #if defined _SLEPC && !defined _NL
  !
  ! Special case, slepc with distributed matrix need to explicitly compute the anti-resonant block
- l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (.not.BSS_slepc_matrix)
+ l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (BSS_slepc_matrix_format=="shell")
  !
  ! The doubling is activated unless explicily imposed by input since slepc
  ! with shells requires the extended K_multiply_by_V for the non hermitian algorithm

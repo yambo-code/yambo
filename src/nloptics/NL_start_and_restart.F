@@ -20,7 +20,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  use pars,           ONLY:cZERO,rZERO,cONE,lchlen
  use com,            ONLY:msg
  use electrons,      ONLY:levels,n_sp_pol
- use real_time,      ONLY:rho_reference
+ use real_time,      ONLY:rho_reference,eval_HARTREE,eval_DFT
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_t
  use DIPOLES,        ONLY:DIPOLE_t
@@ -71,7 +71,7 @@ subroutine NL_start_and_restart(E,k,Dip)
    forall(i1=1:E%nbf(n_sp_pol)) V_bands(i1,i1,:,i_sp_pol)=cONE
  enddo
  !
- if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE) then
+ if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE.and.(eval_HARTREE.or.eval_DFT)) then
    !  
    call NL_build_valence_bands(E,V_bands,VAL_BANDS,1)
    call el_density_vbands(E,k,full_rho,VAL_BANDS)

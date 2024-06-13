@@ -100,7 +100,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
        !
        call WF_symm_kpoint((/ib,ib/),ikbz,Xk,WF_symm)
        !  
-       call WF_shift_kpoint((/ib,ib/),ikbz,WF_shifts(ikbz,:),Xk,WF_symm,WF_ik(:,:,ib,:))
+       call WF_shift_kpoint((/ib,ib/),ikbz,WF_shifts(ikbz,:),Xk,WF_symm,WF_ik(:,:,ib:ib,:))
        !
      enddo
      !

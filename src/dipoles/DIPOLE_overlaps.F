@@ -138,8 +138,6 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            if(WF_shifts(ikbzp,id)==2) shift(id)=0
          endif
          !
-         call WF_free(WF)
-         !
          do ibp=1,Dip%ib(2) 
            if(.not.PAR_IND_CON_BANDS_OVLP%element_1D(ibp)) cycle
            call WF_symm_kpoint((/ibp,ibp/),ikbzp,Xk,WF_symm)
@@ -150,6 +148,8 @@ subroutine DIPOLE_overlaps(Xk,Dip)
              &  Vstar_dot_V(wf_ng_overlaps*n_spinor,WF_ik(:,:,ib,i_sp_pol),WF_ikp(:,:,1,i_sp_pol))
            enddo ! ibp
          enddo ! ib
+         !
+         call WF_free(WF)
          !
        enddo ! istep
      enddo ! idir

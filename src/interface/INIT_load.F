@@ -784,7 +784,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        if (i_s==8) possible_fields='(w,k) '      ! NL
        if (i_s==9) possible_fields='(k) '        ! BZ
        if (i_s==10)possible_fields='(q,k,b) '    ! PH_SE
-       if (i_s==11)possible_fields='(k) '        ! OSCLL
+       if (i_s==11)possible_fields='(k,b) '      ! OSCLL
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
        name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"

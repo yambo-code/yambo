@@ -27,7 +27,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  use stderr,        ONLY : intc
  use BS_solvers,    ONLY : BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_maxit,&
  &                         BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_precondition,&
- &                         BSS_slepc_approach,BSS_slepc_matrix_format
+ &                         BSS_slepc_approach,BSS_slepc_mpd,BSS_slepc_matrix_format
  !
  use petscsys
  use petscmat
@@ -217,8 +217,10 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  nev = n_eig
  if ( BSS_slepc_ncv/=0 ) ncv = BSS_slepc_ncv
  if ( BSS_slepc_ncv==0 ) ncv = PETSC_DECIDE
+ if ( BSS_slepc_mpd/=0 ) mpd = BSS_slepc_mpd
+ if ( BSS_slepc_mpd==0 ) mpd = PETSC_DECIDE
  !
- call EPSSetDimensions(eps,nev,ncv,PETSC_DECIDE,ierr)
+ call EPSSetDimensions(eps,nev,ncv,mpd,ierr)
  !
  if ( BSS_slepc_maxit/=0 ) maxit = BSS_slepc_maxit
  if ( BSS_slepc_maxit==0 ) maxit = PETSC_DECIDE

@@ -218,6 +218,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (io_X_err<0) then
    call deliver_IO_error_message(io_X_err,'PP/Em1s')
    call warning('Bethe Salpter section skipped. Impossible to build the kernel.')
+   call warning('Error reading the PP/Em1s database.')
    n_BS_blks=0
    call BS_blks_free(1)
    call BSS_MAGN_free( )

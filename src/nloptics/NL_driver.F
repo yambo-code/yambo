@@ -250,7 +250,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  elseif (l_pump_and_probe) then
    l_message="[NL] Time-steps "
  else
-   call error("Wrong call to the code")
+   call error("Wrong input: use pump-probe mode 'yambo_nl -u p' or set a number of frequencie/angles with 'yambo_nl -u n'")
  endif
  call live_timing(l_message,PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1)*NE_steps)
  !

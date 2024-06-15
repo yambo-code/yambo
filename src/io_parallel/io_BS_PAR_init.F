@@ -7,7 +7,7 @@
 !
 integer function io_BS_PAR_init(iq,ID,mode)
  !
- use stderr,        ONLY:intc,real2ch,STRING_remove
+ use stderr,        ONLY:intc,real2ch,STRING_split
  use com,           ONLY:msg
  use pars,          ONLY:IP,IPL,SP,IP_YIO,SP_YIO,schlen,lchlen,max_io_vars_open
  use BS,            ONLY:BS_K_dim,BS_H_dim,BS_IO_dim,BS_K_coupling,l_BSE_kernel_complete,&
@@ -27,7 +27,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
  integer, parameter :: n_kind_vars=2     ! mat, done
  integer, parameter :: n_max_tot_vars=6  ! maximum number is n_max_vars times 2 kinds
  !
- character(schlen)  :: db_name,ch_tmp,dim_names(3,n_max_vars),BSK_IO_local
+ character(schlen)  :: db_name,ch_tmp,dim_names(3,n_max_vars),BSK_IO_local,BSK_IO_split(3)
  character(lchlen)  :: ch(n_max_vars,max_io_vars_open-1)
  logical           :: def_var, io_var
  integer(IPL)      :: BS_lin_size
@@ -86,7 +86,8 @@ integer function io_BS_PAR_init(iq,ID,mode)
  if (     BS_K_coupling     ) n_vars=2
  if (.not.l_BS_ares_from_res) n_vars=n_vars+1
  !
- BSK_IO_local=trim(STRING_remove(BSK_IO_mode,"norestart"))
+ call STRING_split(BSK_IO_mode,BSK_IO_split)
+ BSK_IO_local=BSK_IO_split(1)
  if(index(mode,"compressed")/=0 ) BSK_IO_local=trim(mode)
  !
  select case(trim(BSK_IO_local))

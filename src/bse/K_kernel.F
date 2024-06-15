@@ -10,6 +10,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  ! K = <2V-W> for n_spin=1; K=<V-W> for n_spin>1
  !
  use pars,          ONLY:SP,schlen,pi,cZERO,cI
+ use drivers,       ONLY:l_bss
  use LOGO,          ONLY:pickup_a_random
  use drivers,       ONLY:l_bs_fxc,l_tddft,l_rim_w
  use frequency,     ONLY:w_samp
@@ -31,7 +32,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
 &                        O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
 &                        BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                        BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
-&                        WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
+&                        WF_phase,n_BS_blks,BS_blk,BS_T_grp,BSK_IO_mode,BSK_IO_sum_value,&
 &                        BS_nT_grps,BS_blks_free,l_BS_ares_from_res,&
 &                        l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
 &                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val,l_BS_magnons
@@ -89,8 +90,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP),   external ::TDDFT_ALDA_eh_space_G_kernel
  complex(SP),   external ::K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
- logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_bs_tddft_wf_in_loop,l_matrix_init,&
- &             l_load_kernel,l_write_kernel,l_skip_phases,l_std_alg,l_dir_alg,l_tddft_gsum,l_tddft_rsum
+ logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_bs_tddft_wf_in_loop,l_matrix_init,BS_blk_todo,&
+ &             l_load_kernel,l_write_kernel,l_write_kernel_step,l_skip_phases,l_std_alg,l_dir_alg,l_tddft_gsum,l_tddft_rsum
  !
  ! I/O
  !
@@ -289,6 +290,9 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  l_matrix_init=.true.
  l_load_kernel=.true.
  l_write_kernel=.false.
+ l_write_kernel_step= index(BSK_IO_mode,"write_all_steps")/=0
+ !
+ if (l_write_kernel_step) call warning("Experimental mode, IO at every step. Restart not possible")
  !
  BS_blk_done=.false.
  !
@@ -369,6 +373,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    do i_block=1,n_BS_blks
      !
+     if (.not. allocated(BS_blk(i_block)%mat) ) call K_block_alloc(i_block)
+     !
      ! Read BS_blk to check if the transition was already computed
      !
      if (.not.l_partial_kernel_loaded) then
@@ -385,16 +391,16 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      ! check if this block need to be done
      ! skip this block if already done
      !
-     BS_blk_done(i_block)=.true.
-     skip_check: do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
-       do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
-         if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t") cycle
-         BS_blk_done(i_block)=.false.
-         exit skip_check
-       enddo
-     enddo skip_check
+     BS_blk_done(i_block)=all((/BS_blk(i_block)%done=="t"/))
+     BS_blk_todo         =all((/BS_blk(i_block)%done=="f"/))
      !
      if (BS_blk_done(i_block)) m_steps=m_steps-i_steps
+     !
+     if (.not. (l_bss.or.l_partial_kernel_loaded) ) then
+       !
+       if (BS_blk_done(i_block) .or. BS_blk_todo) call K_block_free(i_block)
+       !
+     endif
      !
      call live_timing(steps=i_steps)
      !
@@ -457,10 +463,19 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      if(l_partial_kernel_loaded.and.l_write_kernel) then
        call io_control(ACTION=WR,ID=ID)
        call io_BS_PAR_block(iq,i_block,ID,"full")
+       if (.not.l_bss) call K_block_free(i_block)
      endif
 #endif
      cycle
    endif
+   !
+   if (l_write_kernel_step) then
+     if (iHxc==1) BSK_IO_sum_value=.false.
+     if (iHxc==2) BSK_IO_sum_value=l_bs_exch
+     if (iHxc==3) BSK_IO_sum_value=l_bs_exch.or.BS_K_is_ALDA
+   endif
+   !
+   if (.not. allocated(BS_blk(i_block)%mat) ) call K_block_alloc(i_block)
    !
    ! Read BS_blk to check if the transition was already computed
    !
@@ -787,7 +802,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if(iHxc==3) call BS_correlation_oscillators_free(i_block,l_std_alg)
    !
-100 if(l_write_kernel) then
+100 if(l_write_kernel.or.l_write_kernel_step) then
 #if defined _PAR_IO
      call io_control(ACTION=WR,ID=ID)
      call io_BS_PAR_block(iq,i_block,ID,"full")
@@ -795,6 +810,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      call io_control(ACTION=WR,COM=REP,SEC=(/i_block+1/),ID=ID)
      io_BS_err=io_BS(iq,X,ID)
 #endif
+     if (.not.l_bss) call K_block_free(i_block)
    endif
    !
    call live_timing(steps=i_steps)

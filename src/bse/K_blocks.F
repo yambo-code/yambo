@@ -19,7 +19,7 @@ subroutine K_blocks( )
  !  complex(SP), allocatable      :: mat(:,:)
  !end type BS_block
  !
- use pars,         ONLY:cZERO,SP,IP,IPL
+ use pars,         ONLY:SP,IP,IPL
  use parallel_m,   ONLY:PAR_IND_T_ordered,myid,ncpu,PAR_COM_HOST
  use parallel_int, ONLY:PP_wait,PP_redux_wait,PARALLEL_live_message
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
@@ -129,20 +129,6 @@ subroutine K_blocks( )
  !
  YAMBO_PAR_ALLOC_CHECK1(BS_MAT,(/TMP_SIZE/))
  !
- do iB=1,n_BS_blks
-   YAMBO_ALLOC(BS_blk(iB)%mat,(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
-   allocate(BS_blk(iB)%done(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
-   BS_blk(iB)%mat=cZERO
-   BS_blk(iB)%done(:,:)="f"
-   if (BS_blk(iB)%coordinate(1)==BS_blk(iB)%coordinate(2)) then
-    diag_size=minval(BS_blk(iB)%size(:))
-    allocate(BS_blk(iB)%table(5,diag_size))
-    allocate(BS_blk(iB)%E(diag_size))
-    BS_blk(iB)%E=-1._SP
-    BS_blk(iB)%table=0
-  endif
-enddo
- !
  ! Live Timing Blocks
  !====================
  !
@@ -170,3 +156,47 @@ enddo
  call PARALLEL_live_message("Kernel matrix elements",ENVIRONMENT="Response_T_space",LOADED_r=N_Ts_local,TOTAL_r=N_Ts_total)
  !
 end subroutine
+!
+!
+subroutine K_block_alloc( iB )
+ !
+ use pars,         ONLY:SP,cZERO
+ use BS,           ONLY:BS_blk
+ !
+#include<memory.h>
+ !
+ integer, intent(in) :: iB
+ !
+ integer :: diag_size
+ !
+ YAMBO_ALLOC(BS_blk(iB)%mat,(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
+ allocate(BS_blk(iB)%done(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
+ BS_blk(iB)%mat=cZERO
+ BS_blk(iB)%done(:,:)="f"
+ if (BS_blk(iB)%coordinate(1)==BS_blk(iB)%coordinate(2)) then
+   diag_size=minval(BS_blk(iB)%size(:))
+   allocate(BS_blk(iB)%table(5,diag_size))
+   allocate(BS_blk(iB)%E(diag_size))
+   BS_blk(iB)%E=-1._SP
+   BS_blk(iB)%table=0
+ endif
+ !
+end subroutine K_block_alloc
+!
+!
+subroutine K_block_free( iB )
+ !
+ use BS,           ONLY:BS_blk
+ !
+#include<memory.h>
+ !
+ integer, intent(in) :: iB
+ !
+ YAMBO_FREE(BS_blk(iB)%mat)
+ deallocate(BS_blk(iB)%done)
+ if (BS_blk(iB)%coordinate(1)==BS_blk(iB)%coordinate(2)) then
+   deallocate(BS_blk(iB)%table)
+   deallocate(BS_blk(iB)%E)
+ endif
+ !
+end subroutine K_block_free

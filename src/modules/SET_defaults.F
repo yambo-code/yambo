@@ -47,14 +47,14 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,frag_WF
- use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,&
-&                     BSS_q0,Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,&
+ use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,BSS_P_dir,BSS_E_dir,BSS_Q_dir,&
+&                     Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH,BSS_desc
  use descriptors,ONLY:IO_desc_reset
 #if defined _SLEPC && !defined _NL
  use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_maxit,&
- &                    BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_matrix_format
+ &                    BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_mpd
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,MAX_BSK_LIN_size,&
 &                     BS_K_dim,BS_not_const_eh_f,BSK_mode,l_BSE_kernel_complete,&
@@ -449,7 +449,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_inversion_mode='pf'
  BSS_er=(/0._SP,10._SP/)/HA2EV
  BSS_dr=0.1_SP/HA2EV
- BSS_q0=(/1._SP,0._SP,0._SP/)
+ BSS_E_dir=(/1._SP,0._SP,0._SP/)
+ BSS_P_dir=(/0._SP,1._SP,0._SP/)
+ BSS_Q_dir=(/0._SP,0._SP,1._SP/)
  BSS_uses_DbGd=.FALSE.
  BSS_damp_reference=0._SP
  BS_K_is_ALDA=.FALSE.
@@ -479,6 +481,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_slepc_extraction='ritz'
  BSS_slepc_maxit=0
  BSS_slepc_ncv=0
+ BSS_slepc_mpd=0
  BSS_slepc_tol=1E-6_SP
  BSS_slepc_target_E=0._SP
 #endif

@@ -104,7 +104,8 @@ subroutine INIT_activate()
  if (l_nl_optics) then
    call CPU_activate("NL")
    call CPU_activate("DIP")
-   call initactivate(1,'DIP_Threads NL_Threads')
+   call CPU_activate("OSCLL")
+   call initactivate(1,'DIP_Threads NL_Threads OSCLL_Threads')
  endif
 #endif
  !
@@ -122,7 +123,7 @@ subroutine INIT_activate()
  !
  !Setup
  !
- if (l_setup) call initactivate(1,'MaxGvecs Gthresh K_grids IkSigLim IkXLim NoDiagSC')
+ if (l_setup) call initactivate(1,'MaxGvecs Gthresh K_grids IkSigLim IkXLim NoDiagSC EvalMagn')
 #if defined  _ELPH 
  if (l_setup) call initactivate(1,'BSEscatt')
 #endif
@@ -205,7 +206,7 @@ subroutine INIT_activate()
    !
    ! Dipoles & Gauges
    !
-   call initactivate(1,'DipApproach DipComputed DipPDirect ShiftedPaths Gauge AnHall')
+   call initactivate(1,'DipApproach DipComputed DipPDirect ShiftedPaths Gauge')
    !
  endif
  !
@@ -227,7 +228,8 @@ subroutine INIT_activate()
    ! Special case: The BSE equation is used to build up the BSE_Fxc kernel.
    if (l_bs_fxc) then
      call initactivate(1,'FxcGRLc FxcSVdig FxcRetarded FxcMEStps')
-     call initactivate(1,'BLongDir BEnRange BDmRange BEnSteps')
+     call initactivate(1,'BLongDir QPropDir BEnRange BDmRange BEnSteps')
+     !call initactivate(1,'EFieldDir QPropDir BEnRange BDmRange BEnSteps')
    endif
    !
  endif
@@ -243,7 +245,7 @@ subroutine INIT_activate()
    call INIT_RT_ctl_switch('R')
 #endif
    !
-   call initactivate(1,'NoCondSumRule MetDamp AnHall')
+   call initactivate(1,'NoCondSumRule MetDamp')
    !
 #if defined _NL || defined _SC
    call initactivate(1,'EvPolarization FrSndOrd')
@@ -265,7 +267,8 @@ subroutine INIT_activate()
  !
  if (l_optics.and.l_bse.and.l_bss.or.(l_bse.and.l_rpa_IP)) then
    !
-   call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir')
+   call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir QPropDir')
+   !call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps EFieldDir QPropDir')
    call initactivate(1,'BSEprop BSEdips')
    !
    ! Special case: the BSE_Fxc kernel has been constructed
@@ -279,7 +282,7 @@ subroutine INIT_activate()
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer BSHayItrIO BSHayItrMAX')
    if (index(BSS_mode,'s')/=0)  then
      call initactivate(1,'BSSNEig BSSEnTarget BSSSlepcApproach BSSSlepcPrecondition BSSSlepcExtraction')
-     call initactivate(1,'BSSSlepcMaxIt BSSSlepcNCV BSSSlepcTol BSSSlepcMatrixFormat')
+     call initactivate(1,'BSSSlepcMaxIt BSSSlepcNCV BSSSlepcMPD BSSSlepcTol BSSSlepcMatrixFormat')
    endif
    !
    ! Special project dependent variables
@@ -549,9 +552,10 @@ subroutine INIT_activate()
 #if defined _NL
  if (l_nl_optics) then
    call initactivate(1,'FFTGvecs NLBands NLverbosity NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
+   call initactivate(1,'TestOSCLL')
    if(.not.l_nl_p_and_p) call initactivate(1,'NLEnRange NLEnSteps NLrotaxis NLAngSteps')
    call initactivate(1,'NLDamping RADLifeTime UseDipoles FrSndOrd NoComprCOLL EvalCurrent InducedField FrPolPerdic') 
-   call initactivate(1,'Gauge RADLifeTime HARRLvcs EXXRLvcs') 
+   call initactivate(1,'TestOSCLL Gauge RADLifeTime HARRLvcs EXXRLvcs CORRLvcs') 
    call init_QP_ctl_switch('G')
  endif
  !

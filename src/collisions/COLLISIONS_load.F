@@ -124,8 +124,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    !
    if (l_use_COH_collisions.and.l_sc_sex.and..not.l_use_Hxc_collisions) l_error=.TRUE.
    !
-   if (l_error)   call error(  ' HXC collisions not found / not compatible')
-   if (l_warning) call warning(' HXC collisions not found. Potential is computed on the fly.')
+   if (l_error)   call error(  ' HXC collisions not found/not compatible')
+   if (l_warning) call warning(' HXC collisions not found/not compatible. Potential is computed on the fly.')
    !
    l_use_scatt_collisions=all(io_err(3:4)==0).and.(l_elphoton_scatt.or.l_elphoton_corr.or.l_elel_scatt)
    if (io_err(3)/=0)                 call error(' el-el scatt collisions not found / not compatible') 

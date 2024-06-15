@@ -27,7 +27,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG, & 
-&                         NL_bands,VAL_BANDS,NL_P
+&                         NL_bands,VAL_BANDS,NL_P,LSEX,LHF
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_Xk_ibz_index
  use wrapper_omp,    ONLY:M_plus_alpha_M_omp
@@ -169,8 +169,10 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  ! Build the Hamiltonian
  ! =====================
  !
+!$OMP WORKSHARE  
  Ho_plus_Sigma=cZERO
  I_relax      =cZERO
+!$OMP END WORKSHARE 
  !
  do i_sp_pol=1,n_sp_pol
   do ik=1,QP_nk
@@ -217,10 +219,12 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
      !
    endif                                                         
    !
+!   if(Correlation==LSEX.or.Correlation==LHF) call OSCLL_compose_nl(dG,H_nl_sc,k,q,E,ik,i_sp_pol)
+   if(Correlation==LSEX.or.Correlation==LHF) call OSCLL_compose_vbands(V_bands,H_nl_sc,k,q,E,ik,i_sp_pol)
+   !
    if(l_use_Hxc_collisions) then
      call M_plus_alpha_M_omp(RT_nbands,cONE,RT_Vnl_xc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),ik,i_sp_pol),&
 &                                            H_nl_sc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2)))
-
    endif
    !
    ! Damping: NL_damping fills the I_relax matrix 

@@ -31,9 +31,14 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  type(w_samp) ::W_bss
  integer      ::iq
  !
- ! Check first if the BS database has been calculated/loaded in K.F
+ integer :: ID(3)
+ logical :: l_partial_kernel_loaded
  !
- if (.not. BS_K_has_been_calculated_loaded ) return
+ ! If the BS database was not loaded in memory, call K_restart
+ !
+ if (.not. BS_K_has_been_calculated_loaded ) call K_restart(iq,X_static,ID(1),ID(2),ID(3),l_partial_kernel_loaded)
+ !
+ if (.not. BS_K_has_been_calculated_loaded ) call error("Something went wrong in K_restart, cannot proceed with solver")
  !
  call section('-','BSE solver(s) @q'//trim(intc(iq)))
  !

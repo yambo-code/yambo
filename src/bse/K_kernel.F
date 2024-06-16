@@ -10,7 +10,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  ! K = <2V-W> for n_spin=1; K=<V-W> for n_spin>1
  !
  use pars,          ONLY:SP,schlen,pi,cZERO,cI
- use drivers,       ONLY:l_bss
  use LOGO,          ONLY:pickup_a_random
  use drivers,       ONLY:l_bs_fxc,l_tddft,l_rim_w
  use frequency,     ONLY:w_samp
@@ -33,12 +32,12 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
 &                        BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                        BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                        WF_phase,n_BS_blks,BS_blk,BS_T_grp,BSK_IO_mode,BSK_IO_sum_value,&
-&                        BS_nT_grps,BS_blks_free,l_BS_ares_from_res,&
+&                        BS_nT_grps,BS_blks_free,l_BS_ares_from_res,BS_K_has_been_calculated_loaded,&
 &                        l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
 &                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val,l_BS_magnons
  use collision_el,  ONLY:elemental_collision_free
  use IO_int,        ONLY:io_control
- use IO_m,          ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
+ use IO_m,          ONLY:REP,OP_WR,RD,WR,WR_CL,OP_APP,io_BS_K,deliver_IO_error_message
  use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc, &
 &                        FXC_mode,tddft_wf_t,l_Fxc_from_Vxc
  use xc_functionals,ONLY:V_xc,F_xc,F_xc_mat,magn,XC_potential_driver
@@ -396,7 +395,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      !
      if (BS_blk_done(i_block)) m_steps=m_steps-i_steps
      !
-     if (.not. (l_bss.or.l_partial_kernel_loaded) ) then
+     if ( (.not.l_partial_kernel_loaded) .and. io_BS_K .and. l_write_kernel_step) then
        !
        if (BS_blk_done(i_block) .or. BS_blk_todo) call K_block_free(i_block)
        !
@@ -463,7 +462,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      if(l_partial_kernel_loaded.and.l_write_kernel) then
        call io_control(ACTION=WR,ID=ID)
        call io_BS_PAR_block(iq,i_block,ID,"full")
-       if (.not.l_bss) call K_block_free(i_block)
+       if (io_BS_K.and.l_write_kernel_step) call K_block_free(i_block)
      endif
 #endif
      cycle
@@ -810,7 +809,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      call io_control(ACTION=WR,COM=REP,SEC=(/i_block+1/),ID=ID)
      io_BS_err=io_BS(iq,X,ID)
 #endif
-     if (.not.l_bss) call K_block_free(i_block)
+     if (io_BS_K.and.l_write_kernel_step) call K_block_free(i_block)
    endif
    !
    call live_timing(steps=i_steps)
@@ -876,6 +875,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  call io_control(ACTION=WR_CL,COM=REP,ID=ID_head)
  call io_control(ACTION=WR_CL,COM=REP,ID=ID)
  call io_BS_PAR_free(ID_head,ID,"full",.true.)
+ ! In this mode the blocks are written to disk after each step and the memory is freed
+ if (io_BS_K.and.l_write_kernel_step) BS_K_has_been_calculated_loaded=.false.
 #else
  call io_control(ACTION=WR_CL,COM=REP,SEC=(/n_BS_blks+2/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)

@@ -325,8 +325,7 @@ module BS
      do iB=1,n_BS_blks
        if(i_BS_mat/=BS_blk(iB)%ira_k) cycle
        if(.not.allocated(BS_blk(iB)%mat)) cycle
-       YAMBO_FREE(BS_blk(iB)%mat)
-       deallocate(BS_blk(iB)%done)
+       call K_block_free( iB )
      enddo
    end subroutine
    !

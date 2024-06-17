@@ -94,6 +94,7 @@ module BS_solvers
  character(schlen):: BSS_slepc_extraction    !choose slepc eigenvalue extraction method (ritz,harmonic)
  integer          :: BSS_slepc_ncv           !dimension of the subspace
  integer          :: BSS_slepc_maxit         !maximum number of iterations
+ integer          :: BSS_slepc_mpd           !maximum allowed dimension
  real(SP)         :: BSS_slepc_tol           !tolerance for the iterative solver
  real(SP)         :: BSS_slepc_target_E      !find eigenvalues close to this energy
  character(schlen):: BSS_slepc_matrix_format !matrix type ("shell","explicit","explicit-debug")

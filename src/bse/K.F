@@ -218,6 +218,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (io_X_err<0) then
    call deliver_IO_error_message(io_X_err,'PP/Em1s')
    call warning('Bethe Salpter section skipped. Impossible to build the kernel.')
+   call warning('Error reading the PP/Em1s database.')
    n_BS_blks=0
    call BS_blks_free(1)
    call BSS_MAGN_free( )
@@ -317,7 +318,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
 #if defined _PAR_IO
  !
- call io_control(ACTION=OP_APP,COM=REP,ID=ID_head,DO_IT=.TRUE.)
+ call io_control(ACTION=OP_APP,COM=REP,ID=ID_head)
  io_BS_err=io_BS_header(iq,X,ID_head,"full")
  !
  call io_control(ACTION=OP_APP,COM=REP,ID=ID,DO_IT=.TRUE.)

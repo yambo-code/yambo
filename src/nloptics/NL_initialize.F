@@ -390,7 +390,7 @@ subroutine NL_initialize(E,k)
  !
  if(QP_ng_SH<=1) then
    call msg('rs','Hartree term turned off ')
- else
+ elseif(QP_ng_SH>1.and.eval_HARTREE) then
    call msg('rs','Number of G-vectors in Hartree   :',QP_ng_SH)
  endif
  !

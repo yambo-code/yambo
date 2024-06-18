@@ -78,7 +78,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
 &                     l_SC_nl_mix,SC_kind,SC_perturbation,SC_desc,SC_neq_kind,SC_last_coh_it
 #endif
-#if defined _SC || defined _RT || defined _QED || defined _NL
+#if defined _SC || defined _RT || defined _QED || defined _NL || defined _FL
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff,COLLISIONS_CV_only, &
 &                         COLLISIONS_load_SP,COLLISIONS_compr
  use hamiltonian,    ONLY:H_potential
@@ -106,6 +106,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,NL_initial_versor,     &
 &                     NL_verb_name,NL_bands,NL_desc,n_angles,NL_rot_axis
  use fields,     ONLY:Efield,Efield_reset
+#endif
+#if defined _FL
+ use fl_optics,  ONLY:FL_Chi_order,FL_Chi_thr_1,FL_Chi_thr_2,FL_Chi_thr_3,FL_deg_thrs,FL_deg_lift,&
+&                     FL_solver_mode,FL_S_inv_mode,FL_max_iterations,FL_beta,FL_add_mode,&
+&                     FL_ild,FL_Pade_damping
 #endif
 #if defined _SC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
@@ -531,7 +536,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
 #endif
  !
-#if defined _SC || defined _RT || defined _QED || defined _NL
+#if defined _SC || defined _RT || defined _QED || defined _NL || defined _FL
  !
  call COLLISIONS_naming( 0 , "all" )
  !
@@ -713,6 +718,25 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NL_verb_name='high'
  !
  call IO_desc_reset(NL_desc)
+ !
+#endif
+ !
+#if defined _FL
+ !
+ Efield(1)%ef_name="SIN"
+ FL_Chi_order = 2
+ FL_Chi_thr_1 = 1.E-1_SP
+ FL_Chi_thr_2 = 1.E-1_SP
+ FL_Chi_thr_3 = 1.E-1_SP
+ FL_deg_thrs  = 1.E-5_SP
+ FL_deg_lift  = 1.E-2_SP
+ FL_solver_mode = "D"
+ FL_S_inv_mode  = "N"
+ FL_max_iterations = 11
+ FL_beta = 1._SP
+ FL_add_mode = 0
+ FL_ild = -1._SP
+ FL_Pade_damping = 0._SP
  !
 #endif
  !

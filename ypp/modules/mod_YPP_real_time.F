@@ -29,10 +29,17 @@ module YPP_real_time
  logical  :: l_RT_density
  logical  :: l_RT_G_two_times
  logical  :: l_RT_X
- logical  :: l_NL_X
- logical  :: l_NL_exc
  logical  :: l_RT_abs
  logical  :: l_RT_pol
+ !
+ ! NL post-processing
+ !
+ logical  :: l_NL_X
+ logical  :: l_NL_exc
+ !
+ ! FL post-processing
+ !
+ logical  :: l_FL_bands
  !
  ! RT post-processing (kind)
  !
@@ -121,6 +128,10 @@ module YPP_real_time
  ! (RT) Pol
  !
  character(schlen)        :: RT_pol_mode="slice"
+ !
+ ! (FL) bands
+ !
+ integer     :: FL_freq_indx
  !
  type RT_ctl
    real(SP) :: delta_W             =0._SP   ! delta W

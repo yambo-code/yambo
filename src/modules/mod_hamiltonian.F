@@ -153,5 +153,51 @@ module hamiltonian
      YAMBO_FREE(V_hartree_sc)
      !
    end subroutine
-   !
+     !
+   subroutine FL_H_alloc(E,l_real_space,l_rotation_matrix,FL_states)
+     use pars,           ONLY:SP
+     use drivers,        ONLY:l_nl_optics,l_sc_run
+     use electrons,      ONLY:n_spin,n_sp_pol,levels,E_reset,E_duplicate
+     use FFT_m,          ONLY:fft_size
+     use xc_functionals, ONLY:magn,V_xc
+     !
+     implicit none
+     !
+     type(levels), intent(in) :: E
+     logical,      intent(in) :: l_real_space,l_rotation_matrix
+     integer,      intent(in) :: FL_states(2)
+     !
+     ! Store the reference energies
+     !
+     if (.not.l_sc_run) then
+       call E_reset(E_reference)
+       call E_duplicate(E,E_reference)
+     endif
+     !
+     H_ref_nbands=H_ref_bands(2)-H_ref_bands(1)+1
+     !
+     YAMBO_ALLOC(Hzero,(FL_states(1):FL_states(2),FL_states(1):FL_states(2),E%nk,n_sp_pol))
+     !
+     YAMBO_ALLOC(H_nl_sc,(FL_states(1):FL_states(2),FL_states(1):FL_states(2)))
+     !
+     if(l_rotation_matrix) then
+       YAMBO_ALLOC(H_rotation,(FL_states(1):FL_states(2),FL_states(1):FL_states(2),E%nk,n_sp_pol))
+     endif
+     !
+     if (.not.l_real_space.or.fft_size==0) return
+     !
+     YAMBO_ALLOC(rho_n,(fft_size))
+     !
+     if(n_spin>1) then
+       YAMBO_ALLOC(magn,(fft_size,3))
+       YAMBO_ALLOC(magn_n,(fft_size,3))
+     endif
+     !
+     YAMBO_ALLOC(V_xc_sc,(fft_size,n_spin))
+     !
+     YAMBO_ALLOC(V_xc,(fft_size,n_spin))
+     !
+     YAMBO_ALLOC(V_hartree_sc,(fft_size,n_spin))
+     !
+   end subroutine
 end module

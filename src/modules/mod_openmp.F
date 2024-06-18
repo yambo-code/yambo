@@ -27,6 +27,7 @@ module openmp
  integer     :: n_threads_DIP   = 0  
  integer     :: n_threads_K     = 0  
  integer     :: n_threads_NL    = 0
+ integer     :: n_threads_FL    = 0
  integer     :: n_threads_BZINDX= 0
  integer     :: n_threads_OSCLL = 0
  integer     :: n_threads_now   = 0

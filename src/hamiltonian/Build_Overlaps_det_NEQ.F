@@ -197,18 +197,18 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  !
  ! Invert matrices
  !
-!$omp parallel do default(shared), private(id)
+! $omp parallel do default(shared), private(id)
  do id=1,3
    if(k_map%max_kdir(id)==1) cycle ! non-periodic directions
      max_step=1
      if(k_map%max_kdir(id)>=6.and..not.l_force_SndOrd) max_step=2
-!$omp parallel do default(shared), private(istep)
+! $omp parallel do default(shared), private(istep)
      do istep=1,max_step
        call SERIAL_inversion(en%nbf(i_sp),Sm1_minus(:,:,id+(istep-1)*3),tmp_det,.FALSE.)
        call SERIAL_inversion(en%nbf(i_sp), Sm1_plus(:,:,id+(istep-1)*3),S_det(id+(istep-1)*3),.TRUE.)
      enddo
-!$omp end parallel do
+! $omp end parallel do
   enddo
-!$omp end parallel do
+! $omp end parallel do
   !
 end subroutine Build_overlaps_det_NEQ

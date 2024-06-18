@@ -33,6 +33,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use wrapper_omp,    ONLY:M_plus_alpha_M_omp
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use H_interfaces,   ONLY:V_real_space_to_H
+ use fft_m,          ONLY:fft_size
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -234,7 +235,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    ! Store the Hamiltonian
    ! =====================
 !$omp parallel do default(shared), private(i1)
- do i1=NL_bands(1),NL_bands(2)
+   do i1=NL_bands(1),NL_bands(2)
      Ho_plus_Sigma(NL_bands(1):NL_bands(2),i1,ik_mem,i_sp_pol)=H_nl_sc(NL_bands(1):NL_bands(2),i1)
    enddo
 !$omp end parallel do

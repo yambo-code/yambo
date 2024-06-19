@@ -23,7 +23,7 @@
 !
 subroutine FL_initialize(E,k,q)
  ! 
- use pars,           ONLY:SP,DP,pi
+ use pars,           ONLY:SP,DP,pi,lchlen
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
  use vec_operate,    ONLY:normalize_v
  use hamiltonian,    ONLY:H_potential
@@ -53,6 +53,7 @@ subroutine FL_initialize(E,k,q)
  ! Working space
  !
  integer  :: i1
+ character(lchlen) :: mesg
  !
  ! Input variables: FL_Chi_order, FL_add_mode, NL_bands
  !
@@ -173,12 +174,10 @@ subroutine FL_initialize(E,k,q)
         Correlation=HARTREE
         RT_potential='HARTREE'
         eval_HARTREE =.true.
-        call warning ('  [FL] HARTREE implementation in Floquet is still under development')
     case('HARTREE')
         Correlation=HARTREE
         RT_potential='HARTREE'
         eval_HARTREE =.true.
-        call warning ('  [FL] HARTREE implementation in Floquet is still under development')
     case('TDDFT')  
         Correlation=TDDFT
         RT_potential='default'
@@ -208,7 +207,6 @@ subroutine FL_initialize(E,k,q)
         eval_COLLISIONS=.true.
         l_sc_coh       =.true.
         l_sc_sex       =.true.
-        call error ('  [FL] SEX not yet implemented in Floquet')
     case('HF')
         Correlation=HF
         RT_potential   ='HARTREE+FOCK'
@@ -217,10 +215,15 @@ subroutine FL_initialize(E,k,q)
         eval_COLLISIONS=.true.
         l_sc_hartree   =.true.
         l_sc_fock      =.true.
-        call error ('  [FL] HF not yet implemented in Floquet')
     case default
         call error("Unknow correlation in the response function")
  end select
+ !
+ if(trim(NL_Correlation)/="IPA") then
+   write(mesg,*) "Correlation effects beyond IPA are not stable in Floquet.",NEW_LINE('a'), &
+   & "You can comment this line in the file FL_initialize.F if you want to continue."
+   call error(mesg)
+ endif	
  !
  H_potential = RT_potential
  !

@@ -131,7 +131,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! In non-linear optics we do not need bare_qpg
  ! it will be loaded only if required
  !
- if(.not.l_nl_optics) call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
+ if(.not.l_nl_optics.and..not.l_fl_optics) call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
  !
  ! reset the section numbering
  !=============================
@@ -178,7 +178,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  launch_me=l_em1s.or.(l_em1d.and..not.l_life).or.l_ppa.or.l_X.or.l_mpa
 
  !
- if (l_nl_optics.and.launch_me) call error('Please run the calculation of em1s/d/x in a separate run')
+ if ((l_nl_optics.or.l_fl_optics).and.launch_me) call error('Please run the calculation of em1s/d/x in a separate run')
  !
  if (launch_me) i_err=X_dielectric_matrix(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
  if (launch_me) call mem_manager_report

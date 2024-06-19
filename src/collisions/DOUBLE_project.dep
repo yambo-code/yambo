@@ -6,6 +6,7 @@
  COLLISIONS_compose_nl.o
  COLLISIONS_compose_rt.o
  COLLISIONS_compose_sc.o
+ COLLISIONS_compress.o
  COLLISIONS_eval.o
  COLLISIONS_linearize_and_IO.o
  COLLISIONS_load.o
@@ -14,9 +15,9 @@
  LSEX_potential.o
  OSCLL_compose_collision.o
  OSCLL_compose_nl.o
+ OSCLL_compose_vbands.o
  OSCLL_eval.o
  OSCLL_load.o
- OSCLL_old_compose_nl.o
  PLASMA_build_up.o
  PLASMA_parallel_setup.o
  PLASMA_tables_and_dimensions.o

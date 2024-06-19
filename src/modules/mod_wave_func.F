@@ -52,9 +52,10 @@ module wave_func
  !
  ! Max Num. of G-VECTORS for the WFs maxval(wf_igk) > wf_ncx
  !
- integer                :: wf_ng          ! For WFs in the    IBZ
+ integer                :: wf_ng          ! For WFs in the    IBZ (may be later overwritten, e.g. by io_COL_CUT)
  integer                :: wf_ng_1st_BZ   ! For WFs in the 1st BZ
  integer                :: wf_ng_overlaps ! For WFs shifted used by the overlaps
+ integer                :: cutoff_ng      ! For G-vectors used in cutoff (if read, may be different from wf_ng)
  !
  ! Wave function derivatives
  !

@@ -8,8 +8,8 @@
 subroutine k_build_map(k,k_save,kpoints_map)
  !
  use pars,                ONLY:SP
- use zeros,               ONLY:k_rlu_zero,k_iku_zero
- use vec_operate,         ONLY:rlu_v_is_zero,c2a,v_is_zero
+ use zeros,               ONLY:k_iku_zero    !,k_rlu_zero
+ use vec_operate,         ONLY:c2a,v_is_zero !,rlu_v_is_zero
  use R_lattice,           ONLY:bz_samp
  !
  implicit none
@@ -40,11 +40,8 @@ subroutine k_build_map(k,k_save,kpoints_map)
    do ik_save=1,nk
      v1=k_save%ptbz(ik_save,:)
      !
-     ! DEBUG <
-     !call c2a(v_in=v1,mode='ki2a')
-     !call c2a(v_in=k%pt(ik,:),v_out=v2,mode='ki2a')
-     ! DEBUG >
-     v2=k%pt(ik,:)
+     call c2a(v_in=v1,mode='ki2a')
+     call c2a(v_in=k%pt(ik,:),v_out=v2,mode='ki2a')
      !
      ! 2022/05/25 DS: If we have problems with the following procedure,
      !                It means that we need to use the procedure in between DEBUG

@@ -67,8 +67,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,use_PH_DbGd,EkplusQ_mode,gkkp_db,&
 &                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,&
 &                     elph_bands
- use EXCPH,      ONLY:Lin_path,Lout_path,EXCPH_states,EXCPH_sum,L_damping,EXC_q0,EXCPH_kind_name,alphaQ, &
-&                     EXCPH_deltaE_treshold
+ use EXCPH,      ONLY:Lin_path,Lout_path,EXCPH_states,EXCPH_sum,L_damping,EXC_q0,alphaQ, &
+&                     EXCPH_deltaE_treshold,EXCPH_kthresh
 #endif
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,G_mod_zero,zero_dfl
  use memory,     ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
@@ -537,12 +537,12 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Lin_path ='none'
  Lout_path='none'
  EXCPH_states=(/1,1/)
- EXCPH_kind_name='PALEARI'
  EXCPH_sum=(/1,1/)
  L_damping=0.0005/HA2EV ! set to 0.5 meV
  EXCPH_deltaE_treshold=1.E-6_SP/HA2EV ! This is a cutoff for denominator in the exc-ph spectra
  EXC_q0=(/0.0,0.0,0.0/)
  alphaQ=rZERO
+ EXCPH_kthresh=-1. ! If negative, use all kpoints (turn positive only for debug)
  !
 #endif
  !

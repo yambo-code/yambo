@@ -19,6 +19,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free
  use RT_control,     ONLY:CARR_RT_IO_t,RT_ctl_db,RT_ctl_interp_neigh
  use com,            ONLY:msg,jobstr,alt_jobstr,n_alt_jobstr,depth,alt_jobdir,jobdir
+ use global_XC,      ONLY:QP_SE_NONE,setup_global_XC
  !
  implicit none
  !
@@ -241,5 +242,12 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  if (l_verbose) call REPORT_Energies(E%f/HA2EV,K,K,E%nb,(/1,K%nibz/),'OCCrt',.FALSE.,.TRUE.)
  !
  if (.not.l_keep_carriers) call RT_obj_free(RT_carriers)
+ !
+ ! XC string 
+ !============
+ if (l_E) what_="E"
+ if (l_f) what_="Occ"
+ if (l_W) what_="Widths"
+ call setup_global_XC(what,QP_SE_NONE,STRING=trim(what_)//"@"//trim(real2ch(local_Time*AUT2FS))//" fs")
  !
 end subroutine

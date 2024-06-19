@@ -1,8 +1,8 @@
 #if defined _ELPH && !defined _YPP_ELPH
-EQ_objs = EXCPH_gkkp_eval_ber.o EXCPH_gkkp_eval_pal.o EXCPH_gkkp_driver.o EXCPH_load_L.o EXCPH_lifetime.o EXC_dipole.o \
+EQ_objs = EXCPH_gkkp_eval.o EXCPH_gkkp_driver.o EXCPH_load_L.o EXCPH_lifetime.o EXC_dipole.o \
 	  EXCPH_eval_sat.o EXCPH_optics.o EXCPH_X_phass.o Satellite_Simple.o Satellite_DbGrid.o \
 	  EXCPH_double_grid_setup.o EXCPH_eval_renorm.o EXCPH_ave_sat_DbGrid.o EXC_occupations.o \
-          EXCPH_X_phass_from_Hpert.o
+          EXCPH_X_phass_from_Hpert.o ELEC_WF_phases.o
 #endif
 #if defined _YPP_ELPH
 EQ_objs = EXC_occupations.o 

@@ -23,6 +23,8 @@ lib/archive/git.list
 
 # Compiled source #
 ###################
+src/*/*.o_to_save
+ypp/*/*.o_to_save
 *.com
 *.class
 *.dll
@@ -41,6 +43,7 @@ lib/archive/git.list
 # source #
 ##########
 lib/archive/Ydriver
+lib/archive/Ydriver-src
 lib/yambo/Ydriver/yambo/include/editor.h
 lib/yambo/Ydriver/yambo/include/version.h
 include/version/version.h

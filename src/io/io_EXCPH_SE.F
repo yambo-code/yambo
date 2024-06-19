@@ -27,7 +27,7 @@ integer function io_EXCPH_SE(ID,what)
  use IO_m,           ONLY:io_sec,read_is_on,frag_ELPH,io_status
  use IO_int,         ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header,&
 &                         def_variable_bulk,io_variable_bulk,io_fragment
- use EXCPH,          ONLY:EXCPH_Gkkp,EXCPH_Gkkp_sq,EXCPH_kind,EXCPH_sum,EXCPH_states,&
+ use EXCPH,          ONLY:EXCPH_Gkkp,EXCPH_Gkkp_sq,EXCPH_sum,EXCPH_states,&
 &                         BS_E_in,BS_Sat_E,BS_Sat_WEIGHT,BS_EXCPH_E,ph_EXCPH_E,&
 &                         BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs
  use ELPH,           ONLY:ph_modes,elph_branches
@@ -61,7 +61,7 @@ integer function io_EXCPH_SE(ID,what)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   scat_type = kind_to_integers(EXCPH_kind)
+   scat_type = 3
    !
    io_EXCPH_gkkp=io_header(ID,R_LATT=.true.,KPTS=.true.,FRAG=frag_ELPH)
    !

@@ -92,8 +92,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _ELPH 
  use ELPH,          ONLY:QP_PH_n_G_bands,elph_nQ_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
 &                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,E_kpq_sh_fact,gkkp_db
- use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,Lout_path,L_damping,EXC_q0,EXCPH_kind_name,alphaQ, &
-&                        EXCPH_deltaE_treshold
+ use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,Lout_path,L_damping,EXC_q0,alphaQ, &
+&                        EXCPH_deltaE_treshold,EXCPH_kthresh
  use D_lattice,     ONLY:Boltz_Temp
 #endif
 #if defined _OPENMP
@@ -658,7 +658,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'ELPhExcStates', '[EXCPH] Incoming (external) exciton states',EXCPH_states)
  call it(defs,'ELPhExcSum',    '[EXCPH] Outgoing (virtual) exciton states',EXCPH_sum)
- call it(defs,'ExcPhKind',     '[EXCPH] Exciton-phonon kind (PALEARI | BERNARDI)',EXCPH_kind_name,verb_level=V_ph)
  call it(defs,'LoutPath',      '[EXCPH] Path of the outgoing L',Lout_path)
  call it(defs,'EXCTemp'       ,'[EXCPH] Excitonic Temperature (for luminescence spectra)',Boltz_Temp,T_unit)
  call it(defs,'AlphaQ'       ,'[EXCPH] Excitonic band structure 2D distortion',alphaQ)
@@ -678,6 +677,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'AbsExc',  '[EXCPH] Module of excitonic WFs (for testing purpose)')
  call it('f',defs,'HoleContributionOnly', '[EXCPH] Hole channel only (for testing purpose)')
  call it('f',defs,'ElectronContributionOnly',  '[EXCPH] Elec channel only (for testing purpose)')
+ call it(defs,'MaxKShells', '[EXCPH] K-sum up to a max shell within k-radius in IKU (for testing purpose)',EXCPH_kthresh)
  ! Testing only zone >
  !
  call it(defs,'LDamping', '[EXCPH] Damping of exc-ph self-energy',L_damping,E_unit)

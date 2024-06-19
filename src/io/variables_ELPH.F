@@ -64,7 +64,7 @@ integer function variables_ELPH(ID,what)
 &                               CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
  endif
  if (ver_is_gt_or_eq(ID,revision=21550)) then
-   call io_variable_elemental(ID,VAR="[ELPH] Debay-Waller",L0=l_GKKP_hosts_DW,&
+   call io_variable_elemental(ID,VAR="[ELPH] Debye-Waller",L0=l_GKKP_hosts_DW,&
 &                               CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
  else
    l_GKKP_hosts_DW=.true.

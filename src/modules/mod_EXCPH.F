@@ -44,12 +44,7 @@ module EXCPH
  integer                  :: EXCPH_sum(2)       ! Internal states ("virtual")
  integer                  :: EXCPH_interband(2) ! Interband states
  real(SP), allocatable    :: EXCPH_q(:,:)
- character(schlen)        :: EXCPH_kind_name
- integer                  :: EXCPH_kind
  real(SP)                 :: EXC_q0(3)
- !
- integer, parameter :: PALEARI  = 1
- integer, parameter :: BERNARDI = 2
  !
  ! L_in and L_out paths
  !
@@ -73,6 +68,10 @@ module EXCPH
  integer,     allocatable :: BSS_eh_table_in(:,:)
  complex(SP), pointer :: BS_R_left(:),BS_R_right(:)
  real(SP),    allocatable :: BS_R(:)
+ !
+ ! Debug
+ !
+ real(SP) :: EXCPH_kthresh 
  !
  ! ... Sigma
  !
@@ -127,7 +126,39 @@ module EXCPH
  real(SP) :: alphaQ
  !
  contains
-   !      
+   !
+   subroutine BSE_in_alloc(k)
+     !      
+     ! pre-allocs...
+     !
+     use R_lattice,      ONLY:bz_samp
+     use electrons,      ONLY:n_sp_pol 
+     use BS,             ONLY:BS_bands
+     !
+#include<memory.h>
+     !
+     type(bz_samp) ::k
+     ! 
+     YAMBO_ALLOC(BS_E_in,(BSS_n_eig))
+     YAMBO_ALLOC(BS_mat_in,(BS_H_dim,EXCPH_states(1):EXCPH_states(2)))
+     YAMBO_ALLOC(BSS_eh_table_in,(BS_H_dim,3+n_sp_pol-1))
+     YAMBO_ALLOC(BSS_eh_table_m1_in,(k%nbz,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2)))
+     !
+     BS_mat_in=cZERO
+     BS_E_in  =cZERO
+     BSS_eh_table_in     = 0
+     BSS_eh_table_m1_in  = 0
+     !
+   end subroutine BSE_in_alloc
+   !
+   subroutine BSE_out_alloc()
+     implicit none
+     !
+     YAMBO_ALLOC(BS_mat_out,(BS_H_dim,EXCPH_sum(1):EXCPH_sum(2)))
+     BS_mat_out=cZERO
+     !
+   end subroutine BSE_out_alloc
+   ! 
    subroutine Sat_alloc()
      implicit none
      YAMBO_ALLOC(BS_Sat_E,(ph_modes,EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
@@ -261,6 +292,14 @@ module EXCPH
      YAMBO_FREE(BSqpts)
    end subroutine BSE_free
    !
+   subroutine BSE_in_free
+     implicit none
+     YAMBO_FREE(BS_E_in)
+     YAMBO_FREE(BS_mat_in)
+     YAMBO_FREE(BSS_eh_table_in)
+     YAMBO_FREE(BSS_eh_table_m1_in)
+   end subroutine BSE_in_free
+   !
    subroutine build_Q_map(q)
     use R_lattice,      ONLY:bz_samp
     use zeros,          ONLY:k_iku_zero
@@ -282,8 +321,8 @@ module EXCPH
     do iq=1,q%nbz
       do idb=1,q%nbz
         v_rlu=q%ptbz(iq,:)-PH_qpt(idb,:)
+        !if(.not.v_is_zero(v_rlu,zero_=k_iku_zero)) cycle
         call c2a(v_in=v_rlu,mode='ki2a')
-!        if(.not.v_is_zero(q%ptbz(iq,:)-PH_qpt(idb,:),zero_=k_iku_zero)) cycle
         if(.not.rlu_v_is_zero(v_rlu)) cycle
         DB_Q_map(iq)=idb
         exit

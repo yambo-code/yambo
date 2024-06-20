@@ -48,13 +48,13 @@ subroutine FL_driver(E,X,k,q,Dip)
 &                         FL_S_plus,FL_S_minus,FL_time_S_det,n_tot_fl_modes,FL_Chi_pol,&
 &                         FL_Chi_order,FL_S_inv_mode,FL_loc_S_inv_mode,FL_space_dim,FL_QE,FL_V_bands_hist,&
 &                         FL_ac_phase,FL_max_iterations,l_FL_conv_Chi,l_FL_conv_Rho,FL_states,FL_build_table
- use real_time,      ONLY:RT_step,NE_steps,NE_i_time,eval_DFT
+ use real_time,      ONLY:RT_step,NE_steps,NE_i_time,eval_DFT,eval_HARTREE
  use IO_m,           ONLY:io_COLLs,OP_WR_CL,OP_APP_CL,VERIFY,REP
  use IO_int,         ONLY:io_control
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,PP_redux_wait,PP_wait
  use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,&
 &                         PAR_COM_freqs_INDEX,PAR_COM_Xk_bz_INDEX,PAR_COM_Xk_ibz_INDEX,myid,master_cpu
- use collision_ext,  ONLY:COLLISIONS_have_HARTREE
+ use collision_ext,  ONLY:COLLISIONS_have_HARTREE,COLLISIONS_CV_only
  !
 #include<memory.h>
  !
@@ -114,6 +114,10 @@ subroutine FL_driver(E,X,k,q,Dip)
  call DIPOLE_IO(k,E,Dip,'read ',io_err,'NL')
  if(io_err/=0) call error("Error in DIPOLES! ")
  !
+ ! Generate bare_qpg if required
+ !=============================
+ if(eval_HARTREE.or.CORRELATION==JGM) call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
+ !
  ! Free memory: qindx_* and unused DIPOLES
  ! =====================================================
  call qindx_free('ALL')
@@ -148,6 +152,20 @@ subroutine FL_driver(E,X,k,q,Dip)
    !
    if(.not.l_use_Hxc_collisions .and. (Correlation==SEX.or.Correlation==HF)) &
 &    call error(' HF / SEX need Collisions. Cannot be computed on the fly.')
+   !
+   if(COLLISIONS_have_HARTREE) then
+     if(Correlation==JGM) then
+        call warning('Collisions not compatible with JGM, turned off')
+        l_use_Hxc_collisions=.false.
+     elseif(Correlation==TDDFT) then
+        call warning('With Collisions TDDFT is approximated to the linear contribution!')
+     endif
+     eval_HARTREE=.FALSE.
+   endif
+   !
+   if(l_use_Hxc_collisions.and..not.COLLISIONS_have_HARTREE) eval_HARTREE=.TRUE.
+   !     
+   if(COLLISIONS_CV_only) call msg('rs','Collisions contains C<->V ONLY scatterings')
    !
  endif
  !

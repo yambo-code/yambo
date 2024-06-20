@@ -223,6 +223,8 @@ subroutine NL_initialize(E,k)
    endif
  endif
  !
+ if(all(NL_er>0._SP).and.n_frequencies>=1) NL_estep=(NL_er(2)-NL_er(1))/real(n_frequencies,SP)
+ ! 
  ! Determine the total time from the damping or from T_0
  !
  if(NE_tot_time<=0._SP) then
@@ -390,7 +392,7 @@ subroutine NL_initialize(E,k)
  !
  if(QP_ng_SH<=1) then
    call msg('rs','Hartree term turned off ')
- else
+ elseif(QP_ng_SH>1.and.eval_HARTREE) then
    call msg('rs','Number of G-vectors in Hartree   :',QP_ng_SH)
  endif
  !
@@ -415,8 +417,6 @@ subroutine NL_initialize(E,k)
  !
  if(n_frequencies>=1.and.n_angles>=1)  call error("Loops on frequencies and angles cannot be performed in the same run")
  !
- if(all(NL_er>0._SP).and.n_frequencies>=1) NL_estep=(NL_er(2)-NL_er(1))/real(n_frequencies,SP)
- ! 
  if(n_angles>=1) then
    ! loop on angles
    NL_ang_step=2.0*pi/real(n_angles,SP)

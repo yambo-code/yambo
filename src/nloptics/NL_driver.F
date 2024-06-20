@@ -180,9 +180,9 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
    !
    ! Load oscillators
    !
-   call OSCLL_load(q,k)
-   !
    call setup_NL_parallelization()
+   !
+   call OSCLL_load(q,k)
    !
  endif
  !

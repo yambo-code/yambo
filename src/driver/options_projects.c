@@ -6,6 +6,7 @@
   Authors (see AUTHORS file for details): AM
 
 */
+#include <string.h>
 #include <stdio.h>
 #include <kind.h>
 
@@ -23,21 +24,21 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Self-Consistent Potential";
- options[*i_opt].long_desc[0]="Hartree => <string>=h";
- options[*i_opt].long_desc[1]="Fock    => <string>=f";
- options[*i_opt].long_desc[2]="Coh     => <string>=coh";
- options[*i_opt].long_desc[3]="Sex     => <string>=sex";
- options[*i_opt].long_desc[4]="exx     => <string>=exx";
- options[*i_opt].long_desc[5]="exxc    => <string>=exxc";
- options[*i_opt].long_desc[6]="srpa    => <string>=srpa";
- options[*i_opt].long_desc[7]="default => <string>=d";
- options[*i_opt].long_desc[8]="IP      => <string>=ip";
- options[*i_opt].long_desc[9]="LDA_X   => <string>=ldax";
- options[*i_opt].long_desc[10]="PZ      => <string>=pz";
- options[*i_opt].long_desc[11]="GS      => <string>=gs";
- options[*i_opt].long_desc[12]="CVONLY  => <string>=cvonly (compute only cv collisions)";
- options[*i_opt].long_desc[13]=" ";
- options[*i_opt].long_desc[14]="Potentials can be combined. Example: use hf for Hartree-Fock";
+ strcpy(options[*i_opt].long_desc[0],"Hartree => <string>=h");
+ strcpy(options[*i_opt].long_desc[1],"Fock    => <string>=f");
+ strcpy(options[*i_opt].long_desc[2],"Coh     => <string>=coh");
+ strcpy(options[*i_opt].long_desc[3],"Sex     => <string>=sex");
+ strcpy(options[*i_opt].long_desc[4],"exx     => <string>=exx");
+ strcpy(options[*i_opt].long_desc[5],"exxc    => <string>=exxc");
+ strcpy(options[*i_opt].long_desc[6],"srpa    => <string>=srpa");
+ strcpy(options[*i_opt].long_desc[7],"default => <string>=d");
+ strcpy(options[*i_opt].long_desc[8],"IP      => <string>=ip");
+ strcpy(options[*i_opt].long_desc[9],"LDA_X   => <string>=ldax");
+ strcpy(options[*i_opt].long_desc[10],"PZ      => <string>=pz");
+ strcpy(options[*i_opt].long_desc[11],"GS      => <string>=gs");
+ strcpy(options[*i_opt].long_desc[12],"CVONLY  => <string>=cvonly (compute only cv collisions)");
+ strcpy(options[*i_opt].long_desc[13]," ");
+ strcpy(options[*i_opt].long_desc[14],"Potentials can be combined. Example: use hf for Hartree-Fock");
  options[*i_opt].long_opt="potential";
  options[*i_opt].short_opt='v';
  options[*i_opt].bin="yambo_sc yambo_rt yambo_nl";
@@ -49,7 +50,7 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].long_opt="magnetic";
  options[*i_opt].bin="yambo_sc";
  options[*i_opt].yambo_string="magnetic";
- options[*i_opt].long_desc[0]="<string>=(p)auli/(l)andau";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(p)auli/(l)andau");
  options[*i_opt].char_var=1;
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
@@ -75,7 +76,7 @@ void options_projects(struct options_struct options[],int *i_opt)
  desc="Real-Time";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="NEQ Real-time dynamics";
- options[*i_opt].long_desc[0]="<string>=(p)ump or probe,(pp)ump & probe, (pn) n external fields";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(p)ump or probe,(pp)ump & probe, (pn) n external fields");
  options[*i_opt].char_var=1;
  options[*i_opt].long_opt="rt";
  options[*i_opt].short_opt='n';
@@ -84,7 +85,7 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Non-linear spectroscopy";
- options[*i_opt].long_desc[0]="<string>=(p)ump or probe,(n) non-linear optics";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(p)ump or probe,(n) non-linear optics");
  options[*i_opt].long_opt="nl";
  options[*i_opt].char_var=1;
  options[*i_opt].short_opt='u';
@@ -94,24 +95,24 @@ void options_projects(struct options_struct options[],int *i_opt)
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="NEQ scattering kind";
  i_desc=0;
- options[*i_opt].long_desc[i_desc]="<string>=(ee):electron-electron interaction";
+ strcpy(options[*i_opt].long_desc[i_desc],"<string>=(ee):electron-electron interaction");
 #if defined _QED 
  i_desc=i_desc+1;
- options[*i_opt].long_desc[i_desc]="<string>=(eh):electron-photon interaction";
+ strcpy(options[*i_opt].long_desc[i_desc],"<string>=(eh):electron-photon interaction");
 #endif
 #if defined _ELPH 
  i_desc=i_desc+1;
- options[*i_opt].long_desc[i_desc]="<string>=(ep):electron-phonon interaction";
+ strcpy(options[*i_opt].long_desc[i_desc],"<string>=(ep):electron-phonon interaction");
 #endif
 #if defined _ELPH 
  i_desc=i_desc+1;
- options[*i_opt].long_desc[i_desc]="<string>=(pe):phonon-electron interaction";
+ strcpy(options[*i_opt].long_desc[i_desc],"<string>=(pe):phonon-electron interaction");
 #endif
 #if defined _PHEL || defined _PHEL
  i_desc=i_desc+1;
- options[*i_opt].long_desc[i_desc]=" ";
+ strcpy(options[*i_opt].long_desc[i_desc]," ");
  i_desc=i_desc+1;
- options[*i_opt].long_desc[i_desc]="Use -scattering ee+ep/ee+pe to activate more than one kind simultaneously";
+ strcpy(options[*i_opt].long_desc[i_desc],"Use -scattering ee+ep/ee+pe to activate more than one kind simultaneously");
 #endif
  options[*i_opt].long_opt="scattering";
  options[*i_opt].short_opt='s';
@@ -122,18 +123,18 @@ void options_projects(struct options_struct options[],int *i_opt)
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Correlation kind";
  i_desc=0;
- options[*i_opt].long_desc[i_desc]="<string>=(ee):electron-electron interaction";
+ strcpy(options[*i_opt].long_desc[i_desc],"<string>=(ee):electron-electron interaction");
 #if defined _QED 
  i_desc=i_desc+1;
- options[*i_opt].long_desc[i_desc]="<string>=(eh):electron-photon interaction";
+ strcpy(options[*i_opt].long_desc[i_desc],"<string>=(eh):electron-photon interaction");
 #endif
 #if defined _ELPH 
  i_desc=i_desc+1;
- options[*i_opt].long_desc[i_desc]="<string>=(ep):electron-phonon interaction";
+ strcpy(options[*i_opt].long_desc[i_desc],"<string>=(ep):electron-phonon interaction");
 #endif
 #if defined _ELPH 
  i_desc=i_desc+1;
- options[*i_opt].long_desc[i_desc]="<string>=(pe):phonon-electron interaction";
+ strcpy(options[*i_opt].long_desc[i_desc],"<string>=(pe):phonon-electron interaction");
 #endif
  options[*i_opt].long_opt="correlation";
  options[*i_opt].short_opt='c';

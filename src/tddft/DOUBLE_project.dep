@@ -1,5 +1,8 @@
  TDDFT_ALDA_G_space.o
- TDDFT_ALDA_R_space.o
+ TDDFT_ALDA_eh_space_G_collisions_L.o
+ TDDFT_ALDA_eh_space_G_collisions_R.o
+ TDDFT_ALDA_eh_space_G_kernel.o
+ TDDFT_ALDA_eh_space_R_kernel.o
  TDDFT_ALDA_lower_cutoff.o
  TDDFT_BSK_2_FXC.o
  TDDFT_BSK_disk_2_FXC.o

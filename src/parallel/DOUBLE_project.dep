@@ -19,6 +19,7 @@
  PARALLEL_global_BZINDX.o
  PARALLEL_global_DIPOLES.o
  PARALLEL_global_Non_Linear.o
+ PARALLEL_global_Oscillators.o
  PARALLEL_global_Real_Time.o
  PARALLEL_global_Response_G.o
  PARALLEL_global_Response_IO.o

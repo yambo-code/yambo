@@ -111,11 +111,11 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
  if (len_trim(QP_ctl_xc_STRING)>0) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" +" 
  !
  if (.not.allocated(QP_action(i_ACTION)%STATES_done)) then
-   QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" Analyt. " 
+   QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" analytical correction " 
  endif
- if (any(do_E)) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" E" 
- if (any(do_W)) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" W" 
- if (any(do_Z)) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" Z" 
+ if (any(do_E)) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" @E" 
+ if (any(do_W)) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" @W" 
+ if (any(do_Z)) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" @Z" 
  if (allocated(QP_action(i_ACTION)%STATES_done)) then
    if (any(do_E).or.any(do_W).or.any(do_Z)) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" Fit" 
  endif

@@ -5,7 +5,8 @@
 # Copyright (C) 2021 The Yambo Team
 #
 # Authors (see AUTHORS file for details): AM DS
-# make sure there is no locale setting creating unneeded differences.
+#
+# Note: make sure there is no locale setting creating not needed differences.
 #
 LC_ALL=C
 export LC_ALL
@@ -157,8 +158,16 @@ cp config/mk/local/makefile $cdir/Makefile
 # to a file that has no explicit dependence on the projects (see for example ypp/dipoles/DIPOLES_ypp_driver).
 # In this case the file cannot be saved in a project dependent folder and needs to be removed.
 #
+# This will however introduce a bug in any subsequent compilation.
+# Let's consider for example a module which is project dependent.
+# The first time the project is compiled, the module is re-created, and all the files.o dependent on it are tagged
+# (i) to be saved, and (ii) to be re-compiled
+# If later the same project is re-compiled, the module is loaded, and all the files.o dependent on it are not tagged
+# (i) not to be saved, and (ii) not to be recompiled neither.
+# They will be left in a version, which might be the one of another projects (e.g. linked to another versione of the module) 
+#
 if [ "$mode" == "x" ] ; then
- files_to_remove=`find $compdir -type f -name "*_to_save"`
+ files_to_remove=`find $compdir -type f,l -name "*_to_save"`
  for file in $files_to_remove
  do
    source ./sbin/compilation/verbosity.sh "helper.sh: rm $file"

@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
-subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
+subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  !
  use pars,                ONLY:SP,lchlen,cZERO
  use com,                 ONLY:msg,core_io_path,more_io_path
@@ -31,8 +31,6 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
  real(SP),intent(in)      :: old_dl_sop(3,3,old_nsym)
  integer,intent(in)       :: old_sop_inv(old_nsym)
  logical,intent(in)       :: S_contains_TR(old_nsym)
- !
- integer,intent(in)       :: action_kind
  !
  ! Work space
  !
@@ -89,8 +87,6 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
  YAMBO_ALLOC(atomic_projections,(n_atom_wfc,n_proj_bands,k%nibz,n_sp_pol))
  atomic_projections=cZERO
  !
- select case(action_kind)
- case(1)
    !
    call msg('s',' Copying existing database ...')
    !
@@ -137,30 +133,6 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
    !
    if(n_steps>0) call live_timing()
    !
-   !
- case(2)
-   !
-   if(io_err==0) call msg('s',' Atomic projections reduction...')
-   !
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
-   io_err=io_ATMPROJ_pwscf(ID) 
-   !
-   do i_sp_pol=1,n_sp_pol
-     do ik=1,k%nibz
-       !
-       ifrag=ik+(i_sp_pol-1)*k%nibz
-       !
-       atomic_projections(:,:,ik,i_sp_pol) =atom_proj_store(:,:,kpoints_map(1,ik),i_sp_pol)
-       !
-       call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)      
-       io_err=io_ATMPROJ_pwscf(ID)
-       !
-     enddo
-   enddo
-   !
-   YAMBO_FREE(atom_proj_store)
-   !
- end select
  core_io_path=core_io_path_save
  !
 end subroutine fix_ATOMPROJs

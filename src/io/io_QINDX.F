@@ -37,7 +37,7 @@ integer function io_QINDX(Xk,q,io_db)
  !
  ! Work Space
  !
- integer      :: ioScatt,id_frag,n_pars
+ integer      :: ioScatt,id_frag
  !
  call timing('io_QINDX',OPR='start')
  !

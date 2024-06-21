@@ -304,7 +304,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! 
  ! E_dbgd
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID)
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=DUMP,ID=ID)
  i_err=io_Double_Grid(en,k,ID,'electrons')
  !
  call bz_samp_duplicate_Fg(k%FGibz,Xk%FGibz,k%nibz) 

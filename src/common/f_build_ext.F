@@ -8,7 +8,6 @@
 subroutine f_build_ext(E,Ef)
  !
  use pars,       ONLY:SP
- use units,      ONLY:HA2EV
  use electrons,  ONLY:levels,spin_occ,n_sp_pol
  use D_lattice,  ONLY:T_elecs,T_holes
  use functions,  ONLY:Fermi_fnc

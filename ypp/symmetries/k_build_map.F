@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): CA DS
 !
-subroutine k_build_map(k,k_save,kpoints_map,action_kind)
+subroutine k_build_map(k,k_save,kpoints_map)
  !
  use pars,                ONLY:SP
  use zeros,               ONLY:k_rlu_zero
@@ -18,8 +18,6 @@ subroutine k_build_map(k,k_save,kpoints_map,action_kind)
  type(bz_samp),intent(in)    :: k_save
  integer,intent(out)         :: kpoints_map(2,k%nibz)
  !
- integer,intent(in)          :: action_kind
- ! 
  ! Work space
  !
  integer               :: i1,ik,ik_save
@@ -34,27 +32,22 @@ subroutine k_build_map(k,k_save,kpoints_map,action_kind)
  !
  ! with ik_save,is relative to the original set of k-points and symmetries
  !
- if(action_kind==1) nk=k_save%nbz
- if(action_kind==2) nk=k_save%nibz
+ nk=k_save%nbz
  !
  kpoints_map=0
  do ik=1,k%nibz 
    do ik_save=1,k_save%nbz
-     if(action_kind==1) v1=k_save%ptbz(ik_save,:)
-     if(action_kind==2) v1=k_save%pt(ik_save,:)
+     v1=k_save%ptbz(ik_save,:)
      !
      call c2a(v_in=v1,mode='ki2a')
      call c2a(v_in=k%pt(ik,:),v_out=v2,mode='ki2a')
      !
      if (rlu_v_is_zero(v2-v1,zero_=k_rlu_zero)) then
-       if(action_kind==1) kpoints_map(:, ik ) = k_save%sstar(ik_save,:)
-       if(action_kind==2) kpoints_map(1, ik ) = ik_save
+       kpoints_map(:, ik ) = k_save%sstar(ik_save,:)
        exit 
      endif
    enddo
  enddo
- !
- if(action_kind==2) return
  !
  ! swap ik and i1 to sort
  ! first all the points in the ibz

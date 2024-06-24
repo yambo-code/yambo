@@ -165,8 +165,8 @@ subroutine ELPH_databases(k,E,q)
  DB_Q_map=0
  do idb=1,DB_nq
    do iq=1,nqibz
-     v=DB_PH_qpt(idb,:)
-     if (v_is_zero(v+q%pt(iq,:),zero_=k_iku_zero)) DB_Q_map(idb)=iq
+     v=DB_PH_qpt(idb,:)-q%pt(iq,:)
+     if (v_is_zero(v,zero_=k_iku_zero)) DB_Q_map(idb)=iq
    enddo
  enddo
  !

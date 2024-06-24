@@ -50,10 +50,10 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  ! Work Space
  !
  integer                 :: io_err,i_H,i_Hp,i_alpha,iq_db,ik_db,&
-&                           iv,ic,ik_bz,ivp,icp,i_beta,ip_bz,ik_plus_iq_bz,IO_ACT, &
-&                           iv_in,ic_in,ik_bz_in!,ik_minus_iq_bz
+&                           iv,ic,ik_bz,ivp,icp,i_beta,ik_plus_iq_bz,IO_ACT, &
+&                           iv_in,ic_in,ik_bz_in
  real(SP)                :: ph_E
- complex(SP)             :: elph_gkkp
+ complex(SP)             :: elph_gkkp,EXC_out,EXC_in
  integer, external       :: io_ELPH
  !
  ! Loop scheme: 
@@ -111,63 +111,45 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
      ! 1=DOWN (hole contribution)
      !========
      !
-     ip_bz = ik_bz ! elemental_scattering(iq_s,ik_bz)
-     !
      do ivp=BS_bands(1),BS_bands(2)
        !
        if (l_elec_only) exit
        !
-       i_Hp=BSS_eh_table_m1(ip_bz,ivp,ic,1,1)
+       i_Hp=BSS_eh_table_m1(ik_bz,ivp,ic,1,1)
        if (i_Hp==0) cycle
        !
-       ! [NB] If the el-ph matrix elements are obtained bypassing the old el-ph interface,
-       !      such as with LetzElPhC+yambopy, then we don't need anymore to apply the conjg
-       !      and SWAP band indices in the matrix elements: we use the NOTES indexing. 
-       !      !!!Notes: (iv,ivp) => Code: (ivp,iv)
-       !      !!!See issues #690 and #609
        if (.not.l_const_elph) then
          ik_db=K_io_map(ik_bz)
-         !ik_db=K_io_map(ik_minus_iq_bz)
-         if(.not.l_abs_elph) elph_gkkp=GKKP%dVc(il,iv,ivp,ik_db,1) /sqrt(2._SP*ph_E)
+         if(.not.l_abs_elph) elph_gkkp=    GKKP%dVc(il,iv,ivp,ik_db,1) /sqrt(2._SP*ph_E)
          if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,iv,ivp,ik_db,1))/sqrt(2._SP*ph_E)
-         !if(.not.l_abs_elph) elph_gkkp=conjg(GKKP%dVc(il,ivp,iv,ik_db,1)) /sqrt(2._SP*ph_E)
-         !if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,ivp,iv,ik_db,1))/sqrt(2._SP*ph_E)
        endif
        !
-       !write(iq_bz*1000+i_beta,*) i_Hp,ik_bz,ivp,ic,abs(BS_mat(i_Hp,i_beta)),ip_bz,ik_db,k%ptbz(ik_bz,:)
+       if (     l_abs_exc) EXC_OUT=  abs(BS_mat_out(i_Hp,i_beta))
+       if (.not.l_abs_exc) EXC_OUT=conjg(BS_mat_out(i_Hp,i_beta))
        !
-       if (l_abs_exc)      Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*abs(BS_mat_out(i_Hp,i_beta))
-       if (.not.l_abs_exc) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*conjg(BS_mat_out(i_Hp,i_beta))
+       Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*EXC_OUT
        !
      enddo
      !
      ! 2=UP (electron contribution)
      !======
      !
-     ip_bz = ik_plus_iq_bz !elemental_scattering(iq_s,ik_plus_iq_bz)
-     !
      do icp=BS_bands(1),BS_bands(2)
        !
        if (l_hole_only) exit
        !
-       i_Hp=BSS_eh_table_m1(ip_bz,iv,icp,1,1)
+       i_Hp=BSS_eh_table_m1(ik_plus_iq_bz,iv,icp,1,1)
        if (i_Hp==0) cycle
-       ! [NB] If the el-ph matrix elements are obtained bypassing the old el-ph interface,
-       !      such as with LetzElPhC+yambopy, then we don't need anymore to apply the conjg
-       !      and SWAP band indices in the matrix elements: we use the NOTES indexing. 
-       !      !!!Notes: (icp,ic) => Code: (ic,icp)
-       !      !!!See issues #690 and #609         
        if (.not.l_const_elph) then
          ik_db=K_io_map(ik_plus_iq_bz)
-         !ik_db=K_io_map(ik_bz)
-         if(.not.l_abs_elph) elph_gkkp=GKKP%dVc(il,icp,ic,ik_db,1)/sqrt(2._SP*ph_E)
+         if(.not.l_abs_elph) elph_gkkp=    GKKP%dVc(il,icp,ic,ik_db,1) /sqrt(2._SP*ph_E)
          if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,icp,ic,ik_db,1))/sqrt(2._SP*ph_E)
-         !if(.not.l_abs_elph) elph_gkkp=conjg(GKKP%dVc(il,ic,icp,ik_db,1))/sqrt(2._SP*ph_E)
-         !if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,ic,icp,ik_db,1))/sqrt(2._SP*ph_E)
        endif
        !
-       if (l_abs_exc)      Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*abs(BS_mat_out(i_Hp,i_beta))
-       if (.not.l_abs_exc) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*conjg(BS_mat_out(i_Hp,i_beta)) 
+       if (     l_abs_exc) EXC_OUT=  abs(BS_mat_out(i_Hp,i_beta))
+       if (.not.l_abs_exc) EXC_OUT=conjg(BS_mat_out(i_Hp,i_beta)) 
+       !
+       Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*exc_out 
        !
      enddo
      !
@@ -196,55 +178,24 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
        if (iv    /= iv_in   ) call error(" Wrong iv correspondence")
        if (ic    /= ic_in   ) call error(" Wrong ic correspondence")
        !
-       ! "Left" part of exciton-phonon coupling. The "right" part is its conjugate
+       ! EXC_IN: "Left" part of exciton-phonon coupling. The "right" part is its conjugate
+       !
+       if (     l_abs_exc) EXC_IN=  abs(BS_mat_in(i_H,i_alpha))
+       if (.not.l_abs_exc) EXC_IN=      BS_mat_in(i_H,i_alpha)
        !
        ! FIX ME ! Any reason why we use hole-electron instead of the standard elec-hole?
-       if (l_abs_exc) then
-         EXCPH_Gkkp(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)+&
- &                                        abs(BS_mat_in(i_H,i_alpha))*(Xi(i_H,1)-Xi(i_H,2))
-       else
-         EXCPH_Gkkp(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)+&
- &                                        BS_mat_in(i_H,i_alpha)*(Xi(i_H,1)-Xi(i_H,2))
-       endif
+       !
+       EXCPH_Gkkp(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)+EXC_IN*(Xi(i_H,1)-Xi(i_H,2))
        !
      enddo
    enddo
    !
  enddo !Loop i_beta
  !
- ! Compute the squared couplings
+ ! Compute the squared couplings (to be removed)
  !
  forall(i_alpha=EXCPH_states(1):EXCPH_states(2),i_beta=EXCPH_sum(1):EXCPH_sum(2))
    EXCPH_Gkkp_sq(il,i_beta,i_alpha)=REAL(EXCPH_Gkkp(il,i_beta,i_alpha))**2 + AIMAG(EXCPH_Gkkp(il,i_beta,i_alpha))**2
  end forall
  !
- !contains
-   !
-   !integer function elemental_scattering(i_q_SYM,i_k_BZ)
-       !
-       ! OUTDATED: now we use the correctly-rotated BS_mat_out already in the q_BZ
-       !
-       ! This is done because the BSE is solved for q in IBZ  and k in BZ.
-       ! However the EXCPH matrix elements are for k in BZ and q in BZ.
-       !
-       ! Therefore, I have the exc. weight (q |cRk vRk-q)
-       ! but I don't have the exc. weight (Sq |cRk vRk-Sq).
-       !
-       ! Yet, I know that (Sq |cRk vRk-Sq) = (q |c{S^-1R}k v{S^-1R}k-q).
-       !
-       ! Therefore, in this subroutine I look for p = {S^-1 R}k
-       !
-       !integer i_q_SYM,i_k_BZ,i_k_IBZ,i_k_SYM
-       !
-       ! K_i_k_bz =R_i_k_SYM K_i_k_IBZ
-       !
-       !i_k_IBZ = k%sstar(i_k_BZ,1)
-       !i_k_SYM = k%sstar(i_k_BZ,2)
-       !
-       ! ip_bz=R_iq_s^-1 R_ik_s ik_ibz
-       !
-       !elemental_scattering = k%k_table(i_k_IBZ, sop_tab(sop_inv(i_q_SYM),i_k_SYM) )
-       !
-   !end function
-   !
 end subroutine

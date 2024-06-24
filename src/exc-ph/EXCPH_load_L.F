@@ -65,7 +65,7 @@ subroutine EXCPH_load_L(iq_bse,X,what,Ltype)
    io_err=io_BSS_diago(iq_bse,1,ID_BS,X)
    if(io_err/=0) call error(" Error checking "//trim(Ltype)//" for q = "//trim(intc(iq_bse)))
    !
-   if (BS_res_ares_n_mat/=1) call error("Excitonic Gkkp: anti-resonant part not implemented")
+   !if (BS_res_ares_n_mat/=1) call error("Excitonic Gkkp: anti-resonant part not implemented")
    !
    if(.not.BSS_write_eig_2_db) call error("BSS diago DB does not contain the eigenstates")
    !

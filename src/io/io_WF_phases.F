@@ -26,7 +26,7 @@ integer function io_WF_phases(nb,ik,istark,i_sp_pol,ID,nsz,WF_phases)
  ! Work Space
  !
  integer :: VAR_ID,VAR_SIZE(6),VAR_POS(6),i_fragment,ID_frag
- character(schlen)    :: VAR_name
+ character(schlen)    :: VAR_name,DIM_NAMES(6)
  !
  call timing('io_WF_phases',OPR='start')
  !
@@ -70,11 +70,12 @@ integer function io_WF_phases(nb,ik,istark,i_sp_pol,ID,nsz,WF_phases)
    VAR_ID=1
    VAR_name='WF_phases'
    VAR_SIZE=(/2,nsz(1),nsz(2),nsz(3),nsz(4),nsz(5)/)
+   DIM_NAMES = [character(schlen) :: 're_im', 'bands', 'bands', 'bands_grp', 'syms', 'istark']
    !VAR_SIZE=(/2,shape(WF_phases)/)
    VAR_POS=(/1,1,1,1,1,1/)
    if(istark>0) VAR_POS=(/1,1,1,1,1,istark/)
    !
-   call def_variable_bulk(ID_frag,trim(VAR_name),VAR_ID,VAR_SIZE,SP_YIO)
+   call def_variable_bulk(ID_frag,trim(VAR_name),VAR_ID,VAR_SIZE,SP_YIO,DIM_NAMES)
    call io_variable_bulk(ID_frag,VAR_ID,C5=WF_phases,IPOS=VAR_POS)
    ! 
    call io_fragment_disconnect(ID,ID_frag)

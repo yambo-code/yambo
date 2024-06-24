@@ -94,6 +94,8 @@ subroutine EXC_WF_symm_qpoint(Xk,qpt,first_state,nstates,iq,isq,igq,&
        ip    =Xk%sstar(ipbz,1)
        istarp=Xk%sstar(ipbz,3)
        !
+       if (ip/=ik) call error("WF_phases: rotation of ik got a different ip in the IBZ")
+       !
        ! (R)^-1 k_BZ - q_IBZ = p_BZ - q_IBZ
        ipmqbz=qindx_X(iq,ipbz,1)
        ipmqg0=qindx_X(iq,ipbz,2)
@@ -175,8 +177,8 @@ subroutine EXC_WF_symm_qpoint(Xk,qpt,first_state,nstates,iq,isq,igq,&
                    phase_cc=      WF_phases(i_c1_bnd,i_c2_bnd,i_c1_grp,isq,i2)
                  endif
                  !
-                 if(.not.t_rev) EXC_WFs(neh1,iexc)=EXC_WFs(neh1,iexc)+BS_mat(neh2,il)*phase_vv*phase_cc
-                 if(t_rev)      EXC_WFs(neh1,iexc)=EXC_WFs(neh1,iexc)+conjg(BS_mat(neh2,il))*phase_vv*phase_cc
+                 if(.not.t_rev) EXC_WFs(neh1,iexc)=EXC_WFs(neh1,iexc)+      BS_mat(neh2,il) *phase_vv*phase_cc
+                 if(     t_rev) EXC_WFs(neh1,iexc)=EXC_WFs(neh1,iexc)+conjg(BS_mat(neh2,il))*phase_vv*phase_cc
                  !
                enddo
              enddo
@@ -195,9 +197,5 @@ subroutine EXC_WF_symm_qpoint(Xk,qpt,first_state,nstates,iq,isq,igq,&
      !
    enddo
  enddo
- !
- !! take care of time reversal if needed
- !!
- !if(isymm>nsym/(1+i_time_rev)) call dev_conjg(WF_p)
  !
 end subroutine EXC_WF_symm_qpoint

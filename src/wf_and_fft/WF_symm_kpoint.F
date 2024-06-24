@@ -55,12 +55,10 @@ subroutine DEV_SUB_ALT(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
        if (n_spinor==1) then
          !
 #ifdef _CUDA_LOC
-         !$cuf kernel do(2) <<<*,*>>>
+         !$cuf kernel do(1) <<<*,*>>>
 #endif
-         do i_spinor=1,n_spinor
          do i_g=1,wf_ng
-           WF_k_out(DEV_VAR(g_rot)(i_g,is),i_spinor,ib,i_sp_pol)=WF_p(i_g,i_spinor,iwf)
-         enddo
+           WF_k_out(DEV_VAR(g_rot)(i_g,is),1,ib,i_sp_pol)=WF_p(i_g,1,iwf)
          enddo
          !
        else

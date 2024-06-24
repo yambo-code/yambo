@@ -24,7 +24,7 @@
 !! Code taken from branch phys-excitons
 !! file ypp/excitons/exciton_symmetries.f90
 !
-subroutine ELEC_WF_phases(E,k)
+subroutine ELEC_WF_phases(E,k,l_min_mem,ID_phases)
  !
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:bz_samp
@@ -36,13 +36,15 @@ subroutine ELEC_WF_phases(E,k)
  !
 #include<memory.h>
  !
- type(levels)  ::E
- type(bz_samp) ::k
+ type(levels),  intent(in) :: E
+ type(bz_samp), intent(in) :: k
+ integer,       intent(out):: ID_phases
+ logical,       intent(in) :: l_min_mem
  !
  ! Work Space
  !
  integer :: nsz(5)
- integer :: ID_phases,io_err
+ integer :: io_err
  integer :: i_sp_pol,ik,il1
  !
  ! Electronic part of the symmetries
@@ -57,6 +59,8 @@ subroutine ELEC_WF_phases(E,k)
  !
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1,2/),MODE=DUMP,ID=ID_phases)
  io_err=io_WF_phases(BS_bands,0,0,0,ID_phases,(/0,0,0,0,0/))
+ !
+ if (l_min_mem) return
  !
  nsz(1:2)=maxval(WF_phases_b_map(:,:,:,1))
  nsz(3)  =maxval(WF_phases_b_map(:,:,:,2))

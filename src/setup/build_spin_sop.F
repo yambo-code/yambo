@@ -36,6 +36,7 @@ subroutine build_spin_sop()
  endif
  !
  ! T_rev=(-i sigma_y K0 ) with K0 the complex conjugation.
+ ! NB: (-i sigma_y) K0 = K0 (-i sigma_y)
  t_rev=-cI*sigma_y
  !
  do is=1,nsym

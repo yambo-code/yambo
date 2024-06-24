@@ -65,6 +65,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  integer  :: S_index(EXCPH_states(1):EXCPH_States(2)),ID_phases
  integer  :: ID_gkkp,ID_exc_gkkp,io_err,io_ID,IO_ACT
  integer  :: il,iq_bz,iq,i_star,iq_s,elph_branches_save(2)!,iq_db
+ logical  :: l_min_mem
  ! Debug
  !integer :: ik
  !open(1, file='K_grid_bz.dat')
@@ -134,8 +135,10 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call k_build_up_BZ_tables(k)
  call k_build_up_BZ_tables(q)
  !
+ l_min_mem=.false.
+ !
  ! Pre-requisite: calculate electronic phases (needed to rotate the excitonic wavefunctions)
- if(nsym>1) call ELEC_WF_phases(E,k)
+ if(nsym>1) call ELEC_WF_phases(E,k,l_min_mem,ID_phases)
  !
  call EXCPH_load_L(1,X,'check','Lin') ! At present the Lin can be only gamma iq=1
  !
@@ -216,14 +219,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      !
      BS_mat_out=cZERO
      ! Here we obtain the rotated BS_mat_out at iq_bz
-     if(nsym>1) call EXC_WF_symm_qpoint(k,q,EXCPH_states(1),n_exc_in,iq,iq_s,1,ID_phases,S_index,BS_mat_out,.false.)
-     if(nsym==1) BS_mat_out=BS_mat(:,EXCPH_sum(1):EXCPH_sum(2))
-     !
-     !write(47,*) "#q = ",iq_bz
-     !write(47,*) "#    alpha = ", EXCPH_sum(1),EXCPH_sum(1)+1
-     !do ik=1,k%nbz
-     !  write(47,*) BS_mat_out(ik,EXCPH_sum(1)), BS_mat_out(ik,EXCPH_sum(1)+1)
-     !end do
+     call EXC_WF_symm_qpoint(k,q,EXCPH_states(1),n_exc_in,iq,iq_s,1,ID_phases,S_index,BS_mat_out,l_min_mem)
      !
      EXCPH_gkkp          =cZERO
      EXCPH_gkkp_sq       =rZERO

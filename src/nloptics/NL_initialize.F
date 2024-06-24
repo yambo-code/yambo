@@ -10,7 +10,7 @@ subroutine NL_initialize(E,k)
  use pars,           ONLY:SP,DP,pi
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
  use vec_operate,    ONLY:normalize_v,v_norm,cross_product
- use collision_ext,  ONLY:COLLISIONS_CV_only
+ use collision_ext,  ONLY:COLLISIONS_CV_only,COLLISIONS_load_SP,COLLISIONS_compr
  use hamiltonian,    ONLY:H_potential
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
@@ -40,6 +40,8 @@ subroutine NL_initialize(E,k)
  !
  real(SP) :: Time,W_0,T_0,sigma,E_dot_rot_axis 
  integer  :: i1,n_active_fields
+ real(SP) :: Sampling_Time
+ logical  :: l_no_compress_COLL
  !
  ! Parser
  ! ============
@@ -48,9 +50,14 @@ subroutine NL_initialize(E,k)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('EvalCurrent' ,         l_eval_CURRENT)
  call parser('FrPolPerdic' ,         l_P_periodic)
+ call parser('NoComprCOLL',          l_no_compress_COLL)
+ !
+ COLLISIONS_load_SP =.not.l_no_compress_COLL
+ COLLISIONS_compr   =.not.l_no_compress_COLL
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
  if(l_P_periodic)  call msg('sr','[NL] Enforce periodicity of the polarization repect to Efield')
+ if(SP==DP.and.COLLISIONS_load_SP) call msg('sr','COLLISIONS in single precisions')
  !
  ! Velocity gauge mode
  ! =======================================
@@ -233,10 +240,19 @@ subroutine NL_initialize(E,k)
      !
      ! Add time to sample the response
      !
-     NE_tot_time=NE_tot_time+EtoT(E=NL_er(1))+5._SP*RT_step
+     Sampling_Time=EtoT(E=NL_er(1))+5._SP*RT_step
+     !
+     if(n_active_fields>1) then
+       if((Efield(2)%ef_name/='none').and.Efield(2)%frequency(1)>0._SP) &
+&         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(2)%frequency(1))+5._SP*RT_step/))
+       if((Efield(3)%ef_name/='none').and.Efield(3)%frequency(1)>0._SP) &
+&         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(3)%frequency(1))+5._SP*RT_step/))
+     endif
+     !
+     NE_tot_time=NE_tot_time+Sampling_Time
      !
      call msg('sr','Dephasing Time              ',DephMult*Phase_LifeTime*AUT2FS,"[fs]")
-     call msg('sr','Sampling  Time              ',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS,"[fs]")
+     call msg('sr','Sampling  Time              ',(Sampling_Time)*AUT2FS,"[fs]")
      !
    elseif(Efield(1)%ef_name=='PULSE'.or.Efield(1)%ef_name=='QSSIN' &
 &     .or.Efield(1)%ef_name=='QSFIELD'.or.Efield(1)%ef_name=='SPULSE') then
@@ -318,7 +334,17 @@ subroutine NL_initialize(E,k)
         call error("Unknow correlation in the response function")
  end select
  !
- if(eval_COLLISIONS.and.COLLISIONS_CV_only) call warning(' ONLY cv scattering in COLLISIONS! ')
+ if(eval_COLLISIONS) then
+   !      
+   if(COLLISIONS_CV_only) call warning(' ONLY cv scattering in COLLISIONS! ')
+   !
+   if(l_no_compress_COLL) then
+     call msg('sr','Full collisions in double-precision ')
+   else
+     call msg('sr','Compressed collisions in single-precision ')
+   endif
+ endif
+ !
  ! 
  H_potential = RT_potential
  !

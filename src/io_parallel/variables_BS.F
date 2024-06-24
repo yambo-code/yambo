@@ -189,7 +189,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  !
 #endif
  !
- if (ver_is_gt_or_eq(ID,revision=20415)) then
+ if (write_is_on(ID).or.variable_exist(ID,"X_kind")) then
    call def_variable_elemental(ID,"X_kind",1,CR_YIO,0)
    call io_variable_elemental(ID,VAR="[X] Response Kind",CH0=BSE_L_kind,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  endif

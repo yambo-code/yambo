@@ -27,7 +27,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  use stderr,        ONLY : intc
  use BS_solvers,    ONLY : BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_maxit,&
  &                         BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_precondition,&
- &                         BSS_slepc_approach,BSS_slepc_matrix
+ &                         BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_mpd
  !
  use petscsys
  use petscmat
@@ -66,6 +66,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  STType                             :: stkind
  KSPType                            :: kspkind
  PCType                             :: pckind
+ MatType                            :: mtype
  !
  EPSExtraction                      :: extr
  PetscReal                          :: tol, ferror
@@ -77,12 +78,11 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  PetscScalar, pointer               :: xsr(:), xsi(:), xsr_left(:), xsi_left(:)
  PetscScalar, pointer               :: M(:,:)          !pointer to matrix
  Vec                                :: xr, xi, xr_left, xi_left
- Vec, dimension (:), allocatable    :: voutr, vouti, voutr_left, vouti_left
-                                    !These are local varibles and are destroyed after used
+ Vec                                :: vout, vout2, xup, xdown
+ IS                                 :: is(2)
  PetscViewer                        :: viewer, hdf5v
  PetscMPIInt                        :: rank
- VecScatter, dimension (:), allocatable     ::  ctxr, ctxi, ctxr_left, ctxi_left
-                                    !These are local varibles and are destroyed after used
+ VecScatter                         :: vs, vs2
  !
  logical           :: l_precondition
  character(len=30) :: rowfmt
@@ -122,7 +122,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  ! * Generalized-Davidson: EPSGD, RIGHT VECTORS ONLY
  !                       STPPRECOND + KSPPREONLY + PCJACOBY very fast for few eigenvectors
  !
- ! * Jacob-Davidson: EPSJD, NOT WORKING WITH KSP PREONLY
+ ! * Jacobi-Davidson: EPSJD, NOT WORKING WITH KSP PREONLY
  !                    STPPRECOND + KSPCG SUPER-SLOW + PCJACOBY super slow
  !
  ! Default
@@ -130,11 +130,15 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  ! From user
  if(BSS_slepc_approach=="Krylov-Schur")          epskind=EPSKRYLOVSCHUR
  if(BSS_slepc_approach=="Generalized-Davidson")  epskind=EPSGD
- if(BSS_slepc_approach=="Jacob-Davidson")        epskind=EPSJD
+ if(BSS_slepc_approach=="Jacobi-Davidson")       epskind=EPSJD
  !if(BSS_slepc_approach=="Scalapack")             epskind=EPSSCALAPACK
  !if(BSS_slepc_approach=="ELPA")                  epskind=EPSELPA
  ! In case input is mispelled fallback to Krylov-Schur
  if (epskind==EPSKRYLOVSCHUR) BSS_slepc_approach="Krylov-Schur"
+ !
+ if (.not. (epskind==EPSKRYLOVSCHUR .or. epskind==EPSGD .or. epskind==EPSJD )) then
+   call error("wrong slepc approach in input "//trim(BSS_slepc_approach))
+ endif
  !
  call msg( 'sr', '[SLEPC] Approach                          ',BSS_slepc_approach)
  !
@@ -142,7 +146,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  l_precondition=BSS_slepc_precondition/="none"
  !
- if (l_precondition.and. .not.BSS_slepc_matrix) then
+ if (l_precondition.and. trim(BSS_slepc_matrix_format)=="shell") then
    !
    call warning("Preconditioning not compatible with shell matrix, disabled")
    BSS_slepc_precondition="none"
@@ -213,8 +217,10 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  nev = n_eig
  if ( BSS_slepc_ncv/=0 ) ncv = BSS_slepc_ncv
  if ( BSS_slepc_ncv==0 ) ncv = PETSC_DECIDE
+ if ( BSS_slepc_mpd/=0 ) mpd = BSS_slepc_mpd
+ if ( BSS_slepc_mpd==0 ) mpd = PETSC_DECIDE
  !
- call EPSSetDimensions(eps,nev,ncv,PETSC_DECIDE,ierr)
+ call EPSSetDimensions(eps,nev,ncv,mpd,ierr)
  !
  if ( BSS_slepc_maxit/=0 ) maxit = BSS_slepc_maxit
  if ( BSS_slepc_maxit==0 ) maxit = PETSC_DECIDE
@@ -223,8 +229,6 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  call EPSSetTolerances(eps,tol,maxit, ierr)
  !
  !
- !free the M_slepc matrix
- call MatDestroy(M_slepc,ierr)
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Optional: Get some information from the solver and display it
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -269,17 +273,24 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  !calculate eigenvalues and relative errors
  !
- allocate(voutr(n_eig),ctxr(n_eig)) ! Allocate n_eig structs
-
- if (present(V_left)) allocate(ctxr_left(n_eig),voutr_left(n_eig))
+ call MatGetType(M_slepc,mtype,ierr)
+ if(mtype==MATNEST) then
+   call MatNestGetISs(M_slepc,is,is,ierr)
+   call VecGetSubVector(xr,is(1),xup,ierr)
+   call VecGetSubVector(xr,is(2),xdown,ierr)
+   call VecScatterCreateToAll(xup,vs,vout,ierr)
+   call VecScatterCreateToAll(xdown,vs2,vout2,ierr)
+   call VecRestoreSubVector(xr,is(1),xup,ierr)
+   call VecRestoreSubVector(xr,is(2),xdown,ierr)
+ else
+   call VecScatterCreateToAll(xr,vs,vout,ierr)
+ endif
 
  do i=0,n_eig-1
    !Get converged eigenpairs: i-th eigenvalue is stored in kr
    !(real part) and ki (imaginary part)
    if(present(V_left)) then
-     !call EPSGetEigenpair(eps,i,kr,ki,xr,xi,ierr)
      call EPSGetEigenpair(eps,i,kr,PETSC_NULL_SCALAR,xr,PETSC_NULL_VEC,ierr)
-     !call EPSGetLeftEigenvector(eps,i,xr_left,xi_left,ierr)
      call EPSGetLeftEigenvector(eps,i,xr_left,PETSC_NULL_VEC,ierr)
    else
      call EPSGetEigenpair(eps,i,kr,PETSC_NULL_SCALAR,xr,PETSC_NULL_VEC,ierr)
@@ -292,71 +303,83 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    ! this is to write the vector to hdf5 directly
    !call VecView(xr,hdf5v,ierr)
    !
-   if (present(V_left)) then
-     !save the eigenvectors
-     call VecScatterCreateToAll(xr,ctxr(i+1),voutr(i+1),ierr)
-     !call VecScatterCreateToAll(xi,ctxi,vouti,ierr)
+   if(mtype==MATNEST) then
+     !save the right eigenvectors
      ! scatter as many times as you need
-     call VecScatterBegin(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
-     call VecScatterEnd(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
-     !call VecScatterBegin(ctxi,xi,vouti,INSERT_VALUES,SCATTER_FORWARD,ierr)
-     !call VecScatterEnd(ctxi,xi,vouti,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     call VecGetSubVector(xr,is(1),xup,ierr)
+     call VecGetSubVector(xr,is(2),xdown,ierr)
+     call VecScatterBegin(vs,xup,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     call VecScatterBegin(vs2,xdown,vout2,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     call VecScatterEnd(vs,xup,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     call VecScatterEnd(vs2,xdown,vout2,INSERT_VALUES,SCATTER_FORWARD,ierr)
      !
-     call VecGetArrayReadF90(voutr(i+1),xsr,ierr)
-     !call VecGetArrayReadF90(vouti,xsi,ierr)
+     call VecGetArrayReadF90(vout,xsr,ierr)
+     V_right(1:n/2, i+1) = cmplx(xsr,kind=SP)
+     call VecRestoreArrayReadF90(vout,xsr,ierr)
+     call VecGetArrayReadF90(vout2,xsr,ierr)
+     V_right(n/2+1:n, i+1) = cmplx(xsr,kind=SP)
+     call VecRestoreArrayReadF90(vout2,xsr,ierr)
+     !
+     call VecRestoreSubVector(xr,is(1),xup,ierr)
+     call VecRestoreSubVector(xr,is(2),xdown,ierr)
+     !
+     if (present(V_left)) then
+       !save the left eigenvectors
+       ! scatter as many times as you need
+       call VecGetSubVector(xr_left,is(1),xup,ierr)
+       call VecGetSubVector(xr_left,is(2),xdown,ierr)
+       call VecScatterBegin(vs,xup,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
+       call VecScatterBegin(vs2,xdown,vout2,INSERT_VALUES,SCATTER_FORWARD,ierr)
+       call VecScatterEnd(vs,xup,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
+       call VecScatterEnd(vs2,xdown,vout2,INSERT_VALUES,SCATTER_FORWARD,ierr)
+       !
+       call VecGetArrayReadF90(vout,xsr_left,ierr)
+       V_left(1:n/2, i+1) = cmplx(xsr_left,kind=SP)
+       call VecRestoreArrayReadF90(vout,xsr_left,ierr)
+       call VecGetArrayReadF90(vout2,xsr_left,ierr)
+       V_left(n/2+1:n, i+1) = cmplx(xsr_left,kind=SP)
+       call VecRestoreArrayReadF90(vout2,xsr_left,ierr)
+       !
+       call VecRestoreSubVector(xr_left,is(1),xup,ierr)
+       call VecRestoreSubVector(xr_left,is(2),xdown,ierr)
+     endif
+   else
+     !save the right eigenvectors
+     ! scatter as many times as you need
+     call VecScatterBegin(vs,xr,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     call VecScatterEnd(vs,xr,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     !
+     call VecGetArrayReadF90(vout,xsr,ierr)
      V_right(:, i+1) = cmplx(xsr,kind=SP)
      !if (BSS_slepc_double_grp) V_right(BS_K_dim(1)+1:,i+1) =cI*V_right(BS_K_dim(1)+1:,i+1)
-     call VecRestoreArrayReadF90(voutr(i+1),xsr,ierr)
-     !call VecRestoreArrayReadF90(vouti,xsi,ierr)
+     call VecRestoreArrayReadF90(vout,xsr,ierr)
      !
-     call VecScatterDestroy(ctxr(i+1),ierr)
-     call VecDestroy(voutr(i+1),ierr)
-     !call VecScatterDestroy(ctxi,ierr)
-     !call VecDestroy(vouti,ierr)
-     !
-     !save the eigenvectors
-     call VecScatterCreateToAll(xr_left,ctxr_left(i+1),voutr_left(i+1),ierr)
-     !call VecScatterCreateToAll(xi_left,ctxi_left,vouti_left,ierr)
-     ! scatter as many times as you need
-     call VecScatterBegin(ctxr_left(i+1),xr_left,voutr_left(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
-     call VecScatterEnd(ctxr_left(i+1),xr_left,voutr_left(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
-     !call VecScatterBegin(ctxi_left,xi_left,vouti_left,INSERT_VALUES,SCATTER_FORWARD,ierr)
-     !call VecScatterEnd(ctxi_left,xi_left,vouti_left,INSERT_VALUES,SCATTER_FORWARD,ierr)
-     !
-     call VecGetArrayReadF90(voutr_left(i+1),xsr_left,ierr)
-     !call VecGetArrayReadF90(vouti_left,xsi_left,ierr)
-     V_left(:, i+1) = cmplx(xsr_left,kind=SP)
-     !if (BSS_slepc_double_grp) V_left(BS_K_dim(1)+1:,i+1) =cI*V_left(BS_K_dim(1)+1:,i+1)
-     call VecRestoreArrayReadF90(voutr_left(i+1),xsr_left,ierr)
-     !call VecRestoreArrayReadF90(vouti_left,xsi_left,ierr)
-     !
-     !
-     call VecScatterDestroy(ctxr_left(i+1),ierr)
-     call VecDestroy(voutr_left(i+1),ierr)
-     !call VecScatterDestroy(ctxi_left,ierr)
-     !call VecDestroy(vouti_left,ierr)
-   else
-     !save the eigenvectors
-     call VecScatterCreateToAll(xr,ctxr(i+1),voutr(i+1),ierr)
-     ! scatter as many times as you need
-     call VecScatterBegin(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
-     call VecScatterEnd(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
-     !
-     call VecGetArrayReadF90(voutr(i+1),xsr,ierr)
-     V_right(:, i+1) = xsr
-     call VecRestoreArrayReadF90(voutr(i+1),xsr,ierr)
-     call VecScatterDestroy(ctxr(i+1),ierr)
-     call VecDestroy(voutr(i+1),ierr)
+     if (present(V_left)) then
+       !save the left eigenvectors
+       ! scatter as many times as you need
+       call VecScatterBegin(vs,xr_left,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
+       call VecScatterEnd(vs,xr_left,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
+       !
+       call VecGetArrayReadF90(vout,xsr_left,ierr)
+       V_left(:, i+1) = cmplx(xsr_left,kind=SP)
+       !if (BSS_slepc_double_grp) V_left(BS_K_dim(1)+1:,i+1) =cI*V_left(BS_K_dim(1)+1:,i+1)
+       call VecRestoreArrayReadF90(vout,xsr_left,ierr)
+     endif
    endif
    !
  enddo
  !
- deallocate(voutr,ctxr)
- !
- if (present(V_left)) deallocate(ctxr_left,voutr_left)
- !
  ! destroy scatter context and local vector when no longer needed
  !
+ call VecScatterDestroy(vs,ierr)
+ call VecDestroy(vout,ierr)
+ if(mtype==MATNEST) then
+   call VecScatterDestroy(vs2,ierr)
+   call VecDestroy(vout2,ierr)
+ endif
+ !
+ !free the M_slepc matrix
+ call MatDestroy(M_slepc,ierr)
  !
  call EPSDestroy(eps,ierr)
  call VecDestroy(xr,ierr)

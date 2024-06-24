@@ -258,14 +258,14 @@ module interfaces
      type(QP_t),optional ::qp              
    end subroutine
    !
-   function TDDFT_ALDA_R_space(is,os,isp,osp,tddft_wf,mode)
+   function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
      use pars,           ONLY:SP
      use TDDFT,          ONLY:tddft_wf_t
-     complex(SP) :: TDDFT_ALDA_R_space
+     complex(SP) :: H_x
      integer,          intent(in)  :: is(4),os(4),isp(4),osp(4)
      character(3),     intent(in)  :: mode
      type(tddft_wf_t), target, intent(inout) :: tddft_wf
-   end function TDDFT_ALDA_R_space
+   end function TDDFT_ALDA_eh_space_R_kernel
    !
    subroutine WF_symm_kpoint_g_ssop(b_to_load,ik,i_sp_pol,isymm,ig0,ssop,WF)
      use pars,          ONLY:SP

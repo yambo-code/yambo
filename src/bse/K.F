@@ -318,7 +318,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
 #if defined _PAR_IO
  !
- call io_control(ACTION=OP_APP,COM=REP,ID=ID_head,DO_IT=.TRUE.)
+ call io_control(ACTION=OP_APP,COM=REP,ID=ID_head)
  io_BS_err=io_BS_header(iq,X,ID_head,"full")
  !
  call io_control(ACTION=OP_APP,COM=REP,ID=ID,DO_IT=.TRUE.)

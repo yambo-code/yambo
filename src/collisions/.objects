@@ -7,12 +7,12 @@ SC_objs = COLLISIONS_compose_sc.o
 #if defined _RT
 RT_objs = COLLISIONS_compose_rt.o
 #endif
-#if defined _NL
+#if defined _NL || defined _FL
 NL_objs = COLLISIONS_compose_nl.o COLLISIONS_compress.o
 LSEX_objs = Build_LSEX_collisions.o LSEX_potential.o OSCLL_eval.o OSCLL_load.o \
             OSCLL_compose_collision.o OSCLL_compose_nl.o OSCLL_compose_vbands.o 
 #endif
-#if defined _QED || defined _SC || defined _RT || defined _NL 
+#if defined _QED || defined _SC || defined _RT || defined _NL || defined _FL
 objs= PLASMA_parallel_setup.o COLLISIONS_basic_operations.o \
       PLASMA_build_up.o PLASMA_tables_and_dimensions.o \
       COLLISIONS_alloc_and_free.o COLLISIONS_eval.o COLLISIONS_load.o \

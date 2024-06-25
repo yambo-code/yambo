@@ -19,7 +19,7 @@ ELPH_objects = variables_ELPH.o io_ELPH.o io_gFsq.o
 PHEL_objects = io_PH.o
 #endif
 COLL_objects =
-#if defined _SC || _RT 
+#if defined _SC || defined _RT || defined _FL  || defined _NL
 COLL_objects = io_OSCLL.o 
 #endif
 objs = ver_is_gt_or_eq.o \

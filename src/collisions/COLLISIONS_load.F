@@ -50,7 +50,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
 #if defined _PAR_IO
  integer, external :: io_COLLs_header
-#if defined _NL
+#if defined _NL || defined _FL
  real(SP)  :: COLL_full,COLL_compr
 #endif
 #endif
@@ -229,7 +229,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      IO_ACT=RD
 #endif
      !
-#if defined _NL
+#if defined _NL || defined _FL
     COLL_full =rZERO
     cOLL_compr=rZERO
 #endif
@@ -315,7 +315,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        call live_timing(steps=1)
        !
 #if defined _PAR_IO
-#if defined _NL
+#if defined _NL || defined _FL
        if(COLLISIONS_compr) then
          COLL_full=COLL_full+HXC_COLL_element(i_coll_mem)%N
          call COLLISIONS_compress(HXC_COLL_element(i_coll_mem))
@@ -344,7 +344,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      call live_timing()
      !
 #if defined _PAR_IO
-#if defined _NL
+#if defined _NL || defined _FL
      if(COLLISIONS_compr) then
        if(COLLISIONS_load_SP)      call msg('sl','Collisions compression: ' &
  &              //trim(real2ch(100.0-COLL_compr/COLL_full*50.0))//' %')

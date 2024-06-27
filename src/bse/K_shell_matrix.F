@@ -11,7 +11,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  ! function using the routine K_multiply_by_V 
  !
  use BS,             ONLY:BS_H_dim, BS_nT_grps,BS_res_ares_n_mat,BS_K_coupling,&
-&                         BS_Blocks_symmetrize_K
+&                         BS_Blocks_symmetrize_K,l_BS_ares_from_res
  !
  !      | (K_r)     (cI*K_c)    |  
  !  K = |                       |
@@ -35,6 +35,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  !
  integer, intent(in)  :: i_BS_mat
  Mat,     intent(out) :: slepc_mat
+ Mat                  :: slepc_mat_R,slepc_mat_C
  !
  integer          :: i_B,domk(BS_nT_grps)
  PetscInt         :: SL_H_dim,SL_K_dim
@@ -62,22 +63,28 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  ! TODO: In the future it should be done acording to the BS parallelization
  ! to avoid the scattering vi (distributed) -> x (local) in K_multiply_by_V_slepc
  !
- call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim,SL_H_dim,0,slepc_mat,ierr)
- ! Are the following needed ??
- !call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
- !call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
- !
- ! To extend to the new solvers we need to define K_multiply_by_V for resonant and copupling part
- ! The K_multuiply_by_V_transpose will not be needed anymore since we use the fact that R is hermitian and C is symmetric
- !
- call MatShellSetOperation(slepc_mat,MATOP_MULT,K_multiply_by_V_slepc,ierr)
  if(BS_K_coupling) then
-   call MatShellSetOperation(slepc_mat,MATOP_MULT_TRANSPOSE,K_multiply_by_V_transpose_slepc,ierr)
-   call MatSetOption(slepc_mat,MAT_HERMITIAN,PETSC_FALSE,ierr)
+   if (l_BS_ares_from_res) then
+     call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,slepc_mat_R,ierr)
+     call MatSetOption(slepc_mat_R,MAT_HERMITIAN,PETSC_TRUE,ierr)
+     call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,slepc_mat_C,ierr)
+     call MatSetOption(slepc_mat_C,MAT_SYMMETRIC,PETSC_TRUE,ierr)
+     call MatShellSetOperation(slepc_mat_R,MATOP_MULT,K_multiply_by_V_slepc_R,ierr)
+     call MatShellSetOperation(slepc_mat_C,MATOP_MULT,K_multiply_by_V_slepc_C,ierr)
+     call MatCreateBSE(slepc_mat_R,slepc_mat_C,slepc_mat,ierr)
+     call MatDestroy(slepc_mat_R,ierr)
+     call MatDestroy(slepc_mat_C,ierr)
+   else
+     call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim,SL_H_dim,0,slepc_mat,ierr)
+     call MatShellSetOperation(slepc_mat,MATOP_MULT,K_multiply_by_V_slepc,ierr)
+     call MatShellSetOperation(slepc_mat,MATOP_MULT_TRANSPOSE,K_multiply_by_V_transpose_slepc,ierr)
+     call MatSetOption(slepc_mat,MAT_HERMITIAN,PETSC_FALSE,ierr)
+   endif
  else
+   call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim,SL_H_dim,0,slepc_mat,ierr)
+   call MatShellSetOperation(slepc_mat,MATOP_MULT,K_multiply_by_V_slepc,ierr)
    call MatSetOption(slepc_mat,MAT_HERMITIAN,PETSC_TRUE,ierr)
  endif
- call MatSetUp(slepc_mat,ierr)
  !
  ! Symmetrize BS_blk%mat to be used in K_multiply_by_V
  !

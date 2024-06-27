@@ -66,7 +66,7 @@ subroutine OSCLL_eval(q,k,en)
  YAMBO_ALLOC(OSCLL_done,(QP_nk))
  OSCLL_done=.FALSE.
  !
- YAMBO_ALLOC(K_index%element_1D,(QP_nk))
+! AMBO_ALLOC(K_index%element_1D,(QP_nk))
  !
  if(io_err==0)  then
    !

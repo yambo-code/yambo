@@ -35,6 +35,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,PAR_Xk_ibz_index
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
+ use collision_ext,  ONLY:ng_oscll,OSCLL,W
  !
 #include<memory.h>
  !
@@ -183,6 +184,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
    call setup_NL_parallelization()
    !
    call OSCLL_load(q,k)
+   OSCLL=cZERO
    !
  endif
  !

@@ -27,7 +27,7 @@ subroutine ignore_petsc_error_handler(comm,line,fun,file,n,p,mess,ctx,ierr)
   return
 end subroutine ignore_petsc_error_handler
 
-subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
+subroutine K_stored_in_a_nest_matrix(i_BS_mat,nest_debug,slepc_mat)
 !
 ! BS_K_coupling and l_BS_ares_from_res are assumed TRUE
 !
@@ -56,6 +56,7 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
   implicit none
   !
   integer, intent(in)  :: i_BS_mat
+  logical, intent(in)  :: nest_debug
   Mat,     intent(out) :: slepc_mat
   Mat                  :: RT,CHT
   Mat                  :: matArray(4)
@@ -159,46 +160,56 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
  call MatAssemblyBegin(C,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyEnd(C,MAT_FINAL_ASSEMBLY,ierr)
  !
- ! Create the two shell submatrices and define the required operations
- !
- call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,RT,ierr)
- if (have_cuda) then
+ if (.NOT.nest_debug) then
+   !
+   ! Folded spectrum
+   !
+   call MatCreateBSE(R,C,slepc_mat,ierr);
+ else
+   !
+   ! Nested matrix
+   !
+   ! Create the two shell submatrices and define the required operations
+   !
+   call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,RT,ierr)
+   if (have_cuda) then
 #ifdef PETSC_HAVE_CUDA
- call MatSetVecType(RT,VECCUDA,ierr)
+   call MatSetVecType(RT,VECCUDA,ierr)
 #endif
- endif
- call MatShellSetOperation(RT,MATOP_GET_DIAGONAL,RT_get_diagonal,ierr)
- call MatShellSetOperation(RT,MATOP_MULT,RT_mat_mult,ierr)
- call MatShellSetOperation(RT,MATOP_MULT_TRANSPOSE,RT_mat_mult_transpose,ierr)
- call PetscPushErrorHandler(ignore_petsc_error_handler,PETSC_NULL_INTEGER,ierr)
- call MatShellSetOperation(RT,MATOP_MULT_HERMITIAN_TRANSPOSE,RT_mat_mult_hermitian_transpose,ierr)
- call PetscPopErrorHandler(ierr)
- !
- call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,CHT,ierr)
- if (have_cuda) then
+   endif
+   call MatShellSetOperation(RT,MATOP_GET_DIAGONAL,RT_get_diagonal,ierr)
+   call MatShellSetOperation(RT,MATOP_MULT,RT_mat_mult,ierr)
+   call MatShellSetOperation(RT,MATOP_MULT_TRANSPOSE,RT_mat_mult_transpose,ierr)
+   call PetscPushErrorHandler(ignore_petsc_error_handler,PETSC_NULL_INTEGER,ierr)
+   call MatShellSetOperation(RT,MATOP_MULT_HERMITIAN_TRANSPOSE,RT_mat_mult_hermitian_transpose,ierr)
+   call PetscPopErrorHandler(ierr)
+   !
+   call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,CHT,ierr)
+   if (have_cuda) then
 #ifdef PETSC_HAVE_CUDA
- call MatSetVecType(CHT,VECCUDA,ierr)
+   call MatSetVecType(CHT,VECCUDA,ierr)
 #endif
- endif
- call MatShellSetOperation(CHT,MATOP_GET_DIAGONAL,CHT_get_diagonal,ierr)
- call MatShellSetOperation(CHT,MATOP_MULT,CHT_mat_mult,ierr)
- call MatShellSetOperation(CHT,MATOP_MULT_TRANSPOSE,CHT_mat_mult_transpose,ierr)
- call PetscPushErrorHandler(ignore_petsc_error_handler,PETSC_NULL_INTEGER,ierr)
- call MatShellSetOperation(CHT,MATOP_MULT_HERMITIAN_TRANSPOSE,CHT_mat_mult_hermitian_transpose,ierr)
- call PetscPopErrorHandler(ierr)
- !
- ! Build the nest matrix
- !
- matArray(1) = R
- matArray(2) = C
- matArray(3) = CHT
- matArray(4) = RT
- itwo = 2
- call MatCreateNest(PETSC_COMM_WORLD,itwo,PETSC_NULL_INTEGER,itwo,PETSC_NULL_INTEGER,matArray,slepc_mat,ierr)
- if (have_cuda) then
+   endif
+   call MatShellSetOperation(CHT,MATOP_GET_DIAGONAL,CHT_get_diagonal,ierr)
+   call MatShellSetOperation(CHT,MATOP_MULT,CHT_mat_mult,ierr)
+   call MatShellSetOperation(CHT,MATOP_MULT_TRANSPOSE,CHT_mat_mult_transpose,ierr)
+   call PetscPushErrorHandler(ignore_petsc_error_handler,PETSC_NULL_INTEGER,ierr)
+   call MatShellSetOperation(CHT,MATOP_MULT_HERMITIAN_TRANSPOSE,CHT_mat_mult_hermitian_transpose,ierr)
+   call PetscPopErrorHandler(ierr)
+   !
+   ! Build the nest matrix
+   !
+   matArray(1) = R
+   matArray(2) = C
+   matArray(3) = CHT
+   matArray(4) = RT
+   itwo = 2
+   call MatCreateNest(PETSC_COMM_WORLD,itwo,PETSC_NULL_INTEGER,itwo,PETSC_NULL_INTEGER,matArray,slepc_mat,ierr)
+   if (have_cuda) then
 #ifdef PETSC_HAVE_CUDA
- call MatSetVecType(slepc_mat,VECCUDA,ierr)
+   call MatSetVecType(slepc_mat,VECCUDA,ierr)
 #endif
+   endif
  endif
  !
 end subroutine K_stored_in_a_nest_matrix

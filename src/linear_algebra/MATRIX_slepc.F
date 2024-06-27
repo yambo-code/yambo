@@ -27,7 +27,8 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  use stderr,        ONLY : intc
  use BS_solvers,    ONLY : BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_maxit,&
  &                         BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_precondition,&
- &                         BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_mpd
+ &                         BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_mpd,&
+ &                         BSS_slepc_custom
  !
  use petscsys
  use petscmat
@@ -69,6 +70,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  MatType                            :: mtype
  !
  EPSExtraction                      :: extr
+ EPSKrylovSchurBSEType              :: epsbsetype
  PetscReal                          :: tol, ferror
  PetscScalar                        :: target_energy
  PetscErrorCode                     :: ierr
@@ -103,12 +105,15 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  !Set operators. In this case, it is a standard eigenvalue problem
  !
- call EPSSetOperators(eps,M_slepc,PETSC_NULL_MAT,ierr) 
+ call EPSSetOperators(eps,M_slepc,PETSC_NULL_MAT,ierr)
  if(     present(V_left)) then
-   ! To do: to check if it can be cast in the form of a generalized hermitian problem
-   call EPSSetProblemType(eps,EPS_NHEP,ierr)
-   call EPSSetFromOptions(eps,ierr)
-   call EPSSetTwoSided(eps,PETSC_TRUE,ierr)
+   if (BSS_slepc_custom) then
+     call EPSSetProblemType(eps,EPS_BSE,ierr)
+   else
+     ! To do: to check if it can be cast in the form of a generalized hermitian problem
+     call EPSSetProblemType(eps,EPS_NHEP,ierr)
+     call EPSSetTwoSided(eps,PETSC_TRUE,ierr)
+   endif
  else
    call EPSSetProblemType(eps,EPS_HEP,ierr)
  endif
@@ -139,8 +144,6 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  if (.not. (epskind==EPSKRYLOVSCHUR .or. epskind==EPSGD .or. epskind==EPSJD )) then
    call error("wrong slepc approach in input "//trim(BSS_slepc_approach))
  endif
- !
- call msg( 'sr', '[SLEPC] Approach                          ',BSS_slepc_approach)
  !
  call EPSSetType(eps,epskind,ierr)
  !
@@ -175,8 +178,6 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    !
    BSS_slepc_precondition=trim(kspkind)//"+"//trim(pckind)
    !
-   call msg( 'sr', '[SLEPC] Precondition method               ',BSS_slepc_precondition)
-   !
    call EPSGetST(eps,st,ierr)
    call STGetKSP(st,ksp,ierr)
    call KSPGetPC(ksp,pc,ierr)
@@ -187,7 +188,6 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    !
  endif
  !
- call msg( 'sr', '[SLEPC] Extraction method                 ',BSS_slepc_extraction)
  !
  if (BSS_slepc_extraction == 'ritz')              extr = EPS_RITZ
  if (BSS_slepc_extraction == 'harmonic')          extr = EPS_HARMONIC         
@@ -199,16 +199,12 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  call EPSSetExtraction(eps, extr, ierr)
  !
- call msg( 'sr', '[SLEPC] Number of requested eigenvalues   ', n_eig ) 
- !
  if (l_target_energy.or.l_precondition) then
    target_energy=0._SP
    if(l_target_energy) target_energy=BSS_slepc_target_E
-   call msg( 'nsr', '[SLEPC] Criterion is target energy        ', real(target_energy,SP)*HA2EV,'[eV]')
    call EPSSetTarget(eps,target_energy,ierr)
    call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)
  else
-   call msg( 'nsr', '[SLEPC] Criterion is smaller eigenvalues')
    call EPSSetWhichEigenpairs(eps,EPS_SMALLEST_MAGNITUDE,ierr)
  endif
  !
@@ -235,13 +231,35 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !call EPSGetType(eps,tname,ierr)
  call EPSGetTolerances(eps,tol,maxit,ierr)
  !
- call msg( 'sr', '[SLEPC] Stopping condition tolerance      ', real(tol,SP) )
- call msg( 'sr', '[SLEPC] Stopping condition max iterations ', int(maxit) )
-
  !Set monitor
  call EPSMonitorSet(eps,MyEPSMonitor,0,PETSC_NULL_FUNCTION,ierr)
  !
-
+ call EPSSetFromOptions(eps,ierr)
+ !
+ if(present(V_left).and.BSS_slepc_custom.and.epskind==EPSKRYLOVSCHUR) then
+   call EPSKrylovSchurGetBSEType(eps,epsbsetype,ierr)
+   if(epsbsetype==EPS_KRYLOVSCHUR_BSE_SHAO)       BSS_slepc_approach=trim(BSS_slepc_approach)//", Shao" 
+   if(epsbsetype==EPS_KRYLOVSCHUR_BSE_GRUNING)    BSS_slepc_approach=trim(BSS_slepc_approach)//", Gruning" 
+   if(epsbsetype==EPS_KRYLOVSCHUR_BSE_SYMPLECTIC) BSS_slepc_approach=trim(BSS_slepc_approach)//", Symplectic" 
+ else
+   BSS_slepc_approach=trim(BSS_slepc_approach)//"+NonHermitian"
+ endif
+ !
+ call msg( 'sr', '[SLEPC] Approach                          ',BSS_slepc_approach)
+ !
+ call msg( 'sr', '[SLEPC] Precondition method               ',BSS_slepc_precondition)
+ call msg( 'sr', '[SLEPC] Extraction method                 ',BSS_slepc_extraction)
+ call msg( 'sr', '[SLEPC] Number of requested eigenvalues   ', n_eig ) 
+ !
+ if (l_target_energy.or.l_precondition) then
+   call msg( 'nsr', '[SLEPC] Criterion is target energy        ', real(target_energy,SP)*HA2EV,'[eV]')
+ else
+   call msg( 'nsr', '[SLEPC] Criterion is smaller eigenvalues')
+ endif
+ !
+ call msg( 'sr', '[SLEPC] Stopping condition tolerance      ', real(tol,SP) )
+ call msg( 'sr', '[SLEPC] Stopping condition max iterations ', int(maxit) )
+ !
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Solve the eigensystem
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -119,9 +119,9 @@ subroutine OSCLL_eval(q,k,en)
  isc%iqref =0
  isc%ngrho =ng_oscll  ! only G=1 is required for local-SEX
  !
- call WF_load(WF,wf_ng,iGo_max,COLL_bands,(/1,1/),space='R',title='-OSC')  
+ call WF_load(WF,wf_ng,iGo_max,COLL_bands,(/1,k%nibz/),space='R',title='-OSC')  
  call elemental_collision_alloc(isc,NG=isc%ngrho,TITLE="OSCLL")
- call WF_free(WF,keep_fft=.TRUE.)
+! call WF_free(WF,keep_fft=.TRUE.)
  !
  call live_timing('[OSC] Oscillators :',PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1))
  !
@@ -160,14 +160,14 @@ subroutine OSCLL_eval(q,k,en)
      !
      ! Load only two k-points 
      !	   
-     K_index%element_1D=.FALSE.
-     K_index%element_1D(i_k) =.TRUE.
-     K_index%element_1D(i_kmq)=.TRUE.
+!     K_index%element_1D=.FALSE.
+!     K_index%element_1D(i_k) =.TRUE.
+!     K_index%element_1D(i_kmq)=.TRUE.
      !
-     call IO_and_Messaging_switch("-report -log")
-     call PARALLEL_WF_distribute(K_index=K_index,CLEAN_UP=.TRUE.)
-     call WF_load(WF,wf_ng,iGo_max,COLL_bands,(/1,k%nibz/),space='R',title='-OSC')  
-     call IO_and_Messaging_switch("+report +log")
+!     call IO_and_Messaging_switch("-report -log")
+!     call PARALLEL_WF_distribute(K_index=K_index,CLEAN_UP=.TRUE.)
+!     call WF_load(WF,wf_ng,iGo_max,COLL_bands,(/1,k%nibz/),space='R',title='-OSC')  
+!     call IO_and_Messaging_switch("+report +log")
      !
      do i_n=COLL_bands(1),COLL_bands(2)
        do i_m=COLL_bands(1),COLL_bands(2)
@@ -189,7 +189,7 @@ subroutine OSCLL_eval(q,k,en)
        enddo
     enddo
     !
-    call WF_free(WF,keep_fft=.TRUE.)
+!    call WF_free(WF,keep_fft=.TRUE.)
     !
    enddo
    !

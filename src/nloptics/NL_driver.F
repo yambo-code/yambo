@@ -184,7 +184,6 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
    call setup_NL_parallelization()
    !
    call OSCLL_load(q,k)
-   OSCLL=cZERO
    !
  endif
  !

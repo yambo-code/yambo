@@ -24,7 +24,7 @@ subroutine OSCLL_eval(q,k,en)
  use collision_el,        ONLY:elemental_collision,elemental_collision_free, &
 &                              elemental_collision_alloc         
  use collision_ext,       ONLY:COLL_bands,W,OSCLL_k,ng_oscll
- use parallel_m,          ONLY:PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID
+ use parallel_m,          ONLY:PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,PAR_COM_G_b_INDEX
  use FFT_m,               ONLY:fft_size
  use IO_int,              ONLY:io_control,IO_and_Messaging_switch
  use IO_m,                ONLY:OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_CL,file_is_present,rm_file,DUMP, &

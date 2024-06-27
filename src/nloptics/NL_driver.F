@@ -339,7 +339,6 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  contains
  !
  subroutine setup_OSCLL_parallelization
-   use parallel_m,       ONLY:PAR_IND_G_b
    implicit none
    !
    ! Restore original number of bands
@@ -347,13 +346,13 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
    X(1)%ib       =(/NL_bands(1),NL_bands(2)/)
    !
    call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
-   call PARALLEL_global_indexes(E,k,q,"Oscillators",X=X(1))
    call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
+   !
+   call PARALLEL_global_indexes(E,k,q,"Oscillators",X=X(1))
    !
  end subroutine setup_OSCLL_parallelization
  !
  subroutine setup_NL_parallelization()
-   use parallel_m,       ONLY:PAR_IND_Xk_ibz
    !
    implicit none
    !

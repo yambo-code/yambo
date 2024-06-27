@@ -67,6 +67,9 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  !call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  !call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  !
+ ! To extend to the new solvers we need to define K_multiply_by_V for resonant and copupling part
+ ! The K_multuiply_by_V_transpose will not be needed anymore since we use the fact that R is hermitian and C is symmetric
+ !
  call MatShellSetOperation(slepc_mat,MATOP_MULT,K_multiply_by_V_slepc,ierr)
  if(BS_K_coupling) then
    call MatShellSetOperation(slepc_mat,MATOP_MULT_TRANSPOSE,K_multiply_by_V_transpose_slepc,ierr)

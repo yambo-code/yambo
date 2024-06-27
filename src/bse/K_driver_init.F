@@ -12,7 +12,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match
- use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix_format,BSS_uses_DbGd,&
+ use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix_format,BSS_uses_DbGd,BSS_uses_FKE,&
 &                       BSS_slepc_double_grp,run_Slepc,BSS_mode,       &
 &                       l_abs_prop_chi_bse,l_eels_can_be_computed,l_eels_from_inversion
  use BS,           ONLY:BSE_L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
@@ -258,6 +258,9 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  ! Double Grid support
  !=====================
- BSS_uses_DbGd = (Ken%FG%nb>=BS_bands(2)).and.STRING_match(BSS_mode,'i')
+ BSS_uses_DbGd = ((Ken%FG%nb>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)) &
+ &          .or. ((Ken%FG%nb>=BS_bands(2)) .and. (index(BSS_mode,'h')/=0))
+ !
+ call parser('BSS_FKE',BSS_uses_FKE)
  !
 end subroutine

@@ -16,7 +16,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use DIPOLES,        ONLY:DIPOLE_t
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,REP
- use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0,BSS_uses_DbGd,&
+ use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0,&
 &                         BSS_Q_dir,BSS_E_dir
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_res_K_corr,BS_n_g_W,BS_cpl_K_corr,&
 &                         BS_Blocks_and_Transitions_free,BSqpts,O_ng
@@ -79,11 +79,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  ! Observables initialization
  !============================
  call K_observables(W_bss)
- !
- ! Double Grid support
- !=====================
- BSS_uses_DbGd = ((Ken%FG%nb>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)) &
-&           .or. ((Ken%FG%nb>=BS_bands(2)) .and. (index(BSS_mode,'h')/=0))
  !
  ! PARALLEL SETUP
  !================

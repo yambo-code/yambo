@@ -13,6 +13,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !                                        
  use pars,           ONLY:SP,cZERO,pi,cONE
  use units,          ONLY:SPEED_OF_LIGHT
+ use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use drivers,        ONLY:l_use_Hxc_collisions
@@ -26,7 +27,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG, & 
-&                         NL_bands,VAL_BANDS,NL_P
+&                         NL_bands,VAL_BANDS,NL_P,LSEX,LHF
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_Xk_ibz_index
  use wrapper_omp,    ONLY:M_plus_alpha_M_omp
@@ -47,7 +48,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !
  ! Working Space
  !
- integer     :: ik,i_sp_pol,is,i1,ik_mem
+ integer     :: ik,i_sp_pol,is,ir,i1,ik_mem
  complex(SP) :: E_vec_pot(3),E_xc_pot(3)
  real :: alpha_
  !
@@ -75,9 +76,19 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    ! Reconstruct the full density
    !
    call XC_potential_driver(E,k,WF_kind,WF_xc_functional,1)
-   V_xc_sc=V_xc-V_xc_0
+!$omp parallel do default(shared), private(ir,i_sp_pol), collapse(2)
+   do ir=1,fft_size
+     do i_sp_pol=1,n_sp_pol
+       V_xc_sc(ir,i_sp_pol)=V_xc(ir,i_sp_pol)-V_xc_0(ir,i_sp_pol)
+     enddo
+   enddo
+!$omp end parallel do
    !
  endif
+ !
+ ! Evaluate the G_lesser for current/polarization and collisions
+ ! ======================================================
+ if(eval_dG)              call NL_build_dG_lesser(E,V_bands,dG)
  !
  ! Evaluate the Polarization 
  ! ===================================================================
@@ -151,16 +162,17 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
     !
  endif
  !
- ! Evaluate the G_lesser if using TD-SEX or TD-HF and than add COLLISIONS
- ! ======================================================
- if(eval_dG)              call NL_build_dG_lesser(E,V_bands,dG)
+ ! Calculate collisions
+ ! =======================================
  if(l_use_Hxc_collisions) call COLLISIONS_compose_nl(dG)
  !
  ! Build the Hamiltonian
  ! =====================
  !
+!$OMP WORKSHARE  
  Ho_plus_Sigma=cZERO
  I_relax      =cZERO
+!$OMP END WORKSHARE 
  !
  do i_sp_pol=1,n_sp_pol
   do ik=1,QP_nk
@@ -207,10 +219,12 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
      !
    endif                                                         
    !
+!   if(Correlation==LSEX.or.Correlation==LHF) call OSCLL_compose_nl(dG,H_nl_sc,k,q,E,ik,i_sp_pol)
+   if(Correlation==LSEX.or.Correlation==LHF) call OSCLL_compose_vbands(V_bands,H_nl_sc,k,q,E,ik,i_sp_pol)
+   !
    if(l_use_Hxc_collisions) then
      call M_plus_alpha_M_omp(RT_nbands,cONE,RT_Vnl_xc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),ik,i_sp_pol),&
 &                                            H_nl_sc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2)))
-
    endif
    !
    ! Damping: NL_damping fills the I_relax matrix 

@@ -112,17 +112,21 @@ if test "$internal_blacs" = "yes" ; then
 fi
 #
 PETSC_check="-"
+PETSC_info=""
 if test "$internal_petsc" = "yes" ; then
   if test "$compile_petsc" = "yes" ; then PETSC_check="C"; fi
   if test "$compile_petsc" = "no"  ; then PETSC_check="I"; fi
+  if ! test "$with_petsc_branch" = "none"; then PETSC_info="(git branch $with_petsc_branch)"; fi
 elif test "$enable_petsc" = "yes" ; then
   PETSC_check="E"
 fi
 #
 SLEPC_check="-"
+SLEPC_info=""
 if test "$internal_slepc" = "yes" ; then
   if test "$compile_slepc" = "yes" ; then SLEPC_check="C"; fi
   if test "$compile_slepc" = "no"  ; then SLEPC_check="I"; fi
+  if ! test "$with_slepc_branch" = "none"; then SLEPC_info="(git branch $with_slepc_branch)"; fi
 elif test "$enable_slepc" = "yes" ; then
   SLEPC_check="E"
 fi
@@ -140,8 +144,6 @@ if test "$enable_yambopy" = "yes" ; then YPY_check="X"; fi
 #
 # - I/O -
 #
-HDF5_PAR_IO_check="-"
-PNETCDF_check="-"
 NETCDF_check="-"
 if test "$internal_netcdf" = "yes" ; then
   if test "$compile_netcdf" = "yes" ; then NETCDF_check="C"; fi
@@ -156,38 +158,26 @@ else
   NETCDF_info="${NETCDF_info}, Version 4"
 fi
 #
-PNETCDF_check="-"
-if test "$enable_netcdf_par_io" = "yes";  then
-  PNETCDF_check="X"
-  NETCDF_info="${NETCDF_info}, Version 4"
-fi
 #
 PARIO_check="-"
-if ! test "$PARIO_info" = " " ; then
- PARIO_check="X"
-fi
-#
 HDF5_check="-"
-HDF5_PAR_IO_check="X"
-HDF5_PAR_IO_info=" "
+HDF5_info="none"
 if test "$hdf5" = "yes" ; then
   if test "$internal_hdf5" = "yes" ; then
     if test "$compile_hdf5" = "yes" ; then HDF5_check="C"; fi
     if test "$compile_hdf5" = "no"  ; then HDF5_check="I"; fi
   else
     HDF5_check="E"
+    HDF5_info="external"
   fi
-  if test "$IO_LIB_VER" = "parallel" ; then HDF5_info="Parallel_lib" ; fi
   if ! test "$enable_netcdf_classic" = "yes"  ; then
-    if test "$enable_hdf5_compression" = "yes"; then
-      HDF5_PAR_IO_info="Data Compression enabled" ;
+    if test "$IO_LIB_VER" = "parallel" ; then
+      HDF5_info="Parallel_lib" ;
     else
-      HDF5_PAR_IO_info="NO Data Compression" ;
+      HDF5_info="Serial_lib" ;
     fi
-    if ! test "$enable_hdf5_par_io" = "yes"; then
-      HDF5_PAR_IO_check="-"
-      HDF5_PAR_IO_info=" "
-    fi
+    if test "$enable_hdf5_par_io" = "yes"; then      PARIO_check="X"; fi
+    if test "$enable_hdf5_compression" = "yes"; then HDF5_info="${HDF5_info}, Data Compression enabled"; fi
   fi
 fi
 #
@@ -201,9 +191,6 @@ AC_SUBST(OPENMP_check)
 AC_SUBST(PARIO_check)
 AC_SUBST(HDF5_check)
 AC_SUBST(HDF5_info)
-AC_SUBST(HDF5_PAR_IO_check)
-AC_SUBST(HDF5_PAR_IO_info)
-AC_SUBST(PNETCDF_check)
 AC_SUBST(NETCDF_check)
 AC_SUBST(NETCDF_info)
 #
@@ -219,6 +206,8 @@ AC_SUBST(BLACS_check)
 AC_SUBST(SLK_check)
 AC_SUBST(PETSC_check)
 AC_SUBST(SLEPC_check)
+AC_SUBST(PETSC_info)
+AC_SUBST(SLEPC_info)
 #
 AC_SUBST(YDB_check)
 AC_SUBST(YPY_check)
@@ -270,13 +259,6 @@ ACX_STRIPE_SUBPATH($NETCDF_INCS,"INC")
 NETCDF_INCS_R=$STRIPE
 AC_SUBST(NETCDF_LIBS_R)
 AC_SUBST(NETCDF_INCS_R)
-#
-ACX_STRIPE_SUBPATH($PNETCDF_LIBS,"LIB")
-PNETCDF_LIBS_R=$STRIPE
-ACX_STRIPE_SUBPATH($PNETCDF_INCS,"INC")
-PNETCDF_INCS_R=$STRIPE
-AC_SUBST(PNETCDF_LIBS_R)
-AC_SUBST(PNETCDF_INCS_R)
 #
 ACX_STRIPE_SUBPATH($HDF5_LIBS,"LIB")
 HDF5_LIBS_R=$STRIPE

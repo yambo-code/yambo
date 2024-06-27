@@ -11,10 +11,8 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  use drivers,       ONLY:l_life,l_elph_corr
  use com,           ONLY:msg
  use electrons,     ONLY:levels,spin,n_sp_pol
- use QP_m,          ONLY:QP_t,QP_Vxc,QP_Sc,QP_Vnl_xc,QP_table,&
-&                        QP_solver,QP_n_states,Vxc_kind,l_extended_output,&
-&                        use_GreenF_to_eval_QP,Vnlxc_kind,report_Vxc,&
-&                        report_Vnlxc,QP_G_amplitude_integral,&
+ use QP_m,          ONLY:QP_t,QP_Vxc,QP_Sc,QP_Vnl_xc,QP_table,QP_solver,QP_n_states,Vxc_kind,l_extended_output,&
+&                        use_GreenF_to_eval_QP,Vnlxc_kind,report_Vxc,report_Vnlxc,QP_G_amplitude_integral,&
 &                        QP_states_simmetrize,QP_G_info,QP_dSc,report_Sc
  use OUTPUT,        ONLY:OUTPUT_driver
  use interfaces,    ONLY:DESC_write

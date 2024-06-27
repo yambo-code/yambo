@@ -18,7 +18,8 @@ module BS_solvers
  !==================
  real(SP)    :: Co_factor
  complex(SP) :: diam_term_exact
- complex(SP) :: A_drude(2)
+ complex(SP) :: para_term_w0(3)
+ complex(SP) :: A_drude(3)
  complex(SP) :: B_Hall(2)
  !
  ! Haydock
@@ -62,14 +63,14 @@ module BS_solvers
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
  logical  :: BSS_perturbative_width
- logical  :: BSS_eels_to_eps
+ logical  :: l_abs_prop_chi_bse=.TRUE.
+ logical  :: l_eels_can_be_computed=.TRUE.
+ logical  :: l_eels_from_inversion=.TRUE.
  logical  :: BSS_uses_pert_SOC=.FALSE.
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.
  logical  :: run_Diago=.FALSE.
-#if defined _SLEPC && !defined _NL
  logical  :: run_Slepc=.FALSE.
-#endif
  !
  ! Solvers (Diago)
  !=========
@@ -88,11 +89,12 @@ module BS_solvers
  !
  ! Solvers (Slepc)
  !=========
- character(schlen):: BSS_slepc_approach      !choose slepc approach ("Krylov-Schur","Generalized-Davidson","Jacob-Davidson")
+ character(schlen):: BSS_slepc_approach      !choose slepc approach ("Krylov-Schur","Generalized-Davidson","Jacobi-Davidson")
  character(schlen):: BSS_slepc_precondition  !choose slepc eigenvalue precondition method (none,bcgs+jacobi)
  character(schlen):: BSS_slepc_extraction    !choose slepc eigenvalue extraction method (ritz,harmonic)
  integer          :: BSS_slepc_ncv           !dimension of the subspace
  integer          :: BSS_slepc_maxit         !maximum number of iterations
+ integer          :: BSS_slepc_mpd           !maximum allowed dimension
  real(SP)         :: BSS_slepc_tol           !tolerance for the iterative solver
  real(SP)         :: BSS_slepc_target_E      !find eigenvalues close to this energy
  character(schlen):: BSS_slepc_matrix_format !matrix type ("shell","explicit","explicit-debug")

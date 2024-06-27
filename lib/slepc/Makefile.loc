@@ -24,34 +24,42 @@ all: $(LIBRARY)
 #
 uncompress:
 	@$(get_the_lib)
-	@$(uncompress)
+	@if ! test -e $(PACKAGE) ; then \
+         if test -d ../archive/slepc-src ; then \
+          (ln -s ../archive/slepc-src ./$(PACKAGE)); \
+          touch uncompressed.stamp; \
+         else \
+           $(uncompress) \
+         fi \
+        fi
 
 configure: uncompress
-	@if test -d $(PACKAGE) && ! test -f configured.stamp; then \
+	@if test -e $(PACKAGE) && ! test -f configured.stamp; then \
          echo "\t[$(PACKAGE)] configuration"; \
-	 cd $(PACKAGE); \
-	 PETSC_DIR=$(LIBPATH) \
-	 SLEPC_DIR=$(PWD)/$(PACKAGE) \
-	 python3 ./configure $(CONFFLAGS) >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
-	 touch ../configured.stamp; \
-	fi
-	
+         cd $(PACKAGE); \
+         echo "PETSC_DIR=$(LIBPATH)" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
+         PETSC_DIR=$(LIBPATH) \
+         echo "SLEPC_DIR=$(PWD)/$(PACKAGE)" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
+         SLEPC_DIR=$(PWD)/$(PACKAGE) \
+         echo "python3 ./configure $(CONFFLAGS)" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
+         python3 ./configure $(CONFFLAGS) >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
+         cd - ; \
+         touch configured.stamp; \
+        fi
+
 compile: uncompress configure
-	@if test -d $(PACKAGE) && ! test -f compiled.stamp ; then \
+	@if test -e $(PACKAGE) && ! test -f compiled.stamp ; then \
          echo "\t[$(PACKAGE)] compilation"; \
-	 cd $(PACKAGE); \
-         $(make) -j1 SLEPC_DIR=$(PWD)/$(PACKAGE) PETSC_DIR=$(LIBPATH)  >> ${compdir}/log/compile_$(PACKAGE).log 2>&1; \
-         touch ../compiled.stamp; \
-	fi
-	
+         ( cd $(PACKAGE); $(make) -j1 SLEPC_DIR=$(PWD)/$(PACKAGE) PETSC_DIR=$(LIBPATH)  >> ${compdir}/log/compile_$(PACKAGE).log 2>&1 ) ; \
+         touch compiled.stamp; \
+        fi
+
 install: uncompress configure compile
 	@if ! test -f installed.stamp ; then \
          echo "\t[$(PACKAGE)] installation"; \
-	 cd $(PACKAGE); \
-         $(make) -j1 SLEPC_DIR=$(PWD)/$(PACKAGE) PETSC_DIR=$(LIBPATH) install  >> ${compdir}/log/compile_$(PACKAGE).log 2>&1; \
-         #chmod u+x $(LIBPATH)/lib/*slepc*.a; \
-	 touch ../installed.stamp; \
-	fi
+         ( cd $(PACKAGE); $(make) -j1 SLEPC_DIR=$(PWD)/$(PACKAGE) PETSC_DIR=$(LIBPATH) install  >> ${compdir}/log/compile_$(PACKAGE).log 2>&1 ); \
+         touch installed.stamp; \
+        fi
 
 $(LIBRARY): uncompress configure compile install
 #

@@ -2,12 +2,10 @@
 # Package List
 #
 include ./package.list
+#
 ifeq ($(wildcard ./git.list),./git.list)
   include ./git.list
   include ../../config/setup
-else
- git_Ydriver=git@github.com:yambo-code/Ydriver.git
- branch_Ydriver=none
 endif
 #
 WGETFLAGS=--no-check-certificate -v
@@ -33,8 +31,6 @@ netcdf:
 	@+URL="$(url_netcdf)"   ; LIB="$(pkgname_netcdf)"; $(getsrc)
 netcdff:
 	@+URL="$(url_netcdff)"  ; LIB="$(pkgname_netcdff)"; $(getsrc)
-pnetcdf:
-	@+URL="$(url_pnetcdf)"  ; LIB="$(pkgname_pnetcdf)"; $(getsrc)
 etsf_io:
 	@+URL="$(url_etsf_io)"  ; LIB="$(pkgname_etsf_io)"; $(getsrc)
 libxc:
@@ -46,9 +42,9 @@ blacs:
 scalapack:
 	@+URL="$(url_scalapack)"; LIB="$(pkgname_scalapack)"; $(getsrc)
 petsc:
-	@+URL="$(url_petsc)"    ; LIB="$(pkgname_petsc)"; $(getsrc)
+	@+URL="$(url_petsc)"    ; LIB="$(pkgname_petsc)";  GBRANCH="$(branch_petsc)"  ;  GIT="$(git_petsc)" ;  $(call getsrc_git,"petsc");
 slepc:
-	@+URL="$(url_slepc)"    ; LIB="$(pkgname_slepc)"; $(getsrc)
+	@+URL="$(url_slepc)"    ; LIB="$(pkgname_slepc)";  GBRANCH="$(branch_slepc)"  ;  GIT="$(git_slepc)" ;  $(call getsrc_git,"slepc");
 fftw:
 	@+URL="$(url_fftw)"     ; LIB="$(pkgname_fftw)"; $(getsrc)
 fftqe:
@@ -73,7 +69,6 @@ clean_tgz:
           if test -s $(tarball_iotk)     && test "$(keep_iotk)"      != "yes" ;  then rm $(tarball_iotk)      ; fi ; \
           if test -s $(tarball_netcdf)   && test "$(keep_netcdf)"    != "yes" ;  then rm $(tarball_netcdf)    ; fi ; \
           if test -s $(tarball_netcdff)  && test "$(keep_netcdff)"   != "yes" ;  then rm $(tarball_netcdff)   ; fi ; \
-          if test -s $(tarball_pnetcdf)  && test "$(keep_pnetcdf)"   != "yes" ;  then rm $(tarball_pnetcdf)   ; fi ; \
           if test -s $(tarball_hdf5)     && test "$(keep_hdf5)"      != "yes" ;  then rm $(tarball_hdf5)      ; fi ; \
           if test -s $(tarball_etsf_io)  && test "$(keep_etsf_io)"   != "yes" ;  then rm $(tarball_etsf_io)   ; fi ; \
           if test -s $(tarball_lapack)   && test "$(keep_lapack)"    != "yes" ;  then rm $(tarball_lapack)    ; fi ; \

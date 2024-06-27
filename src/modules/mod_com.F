@@ -66,6 +66,10 @@ module com
  logical            :: fat_log
  logical            :: exp_user
  !
+ ! Msg dynamical length
+ !
+ integer            :: msg_length=msg_len
+ !
  interface
    !
    ! This interfaces is not really needed and could be easely
@@ -78,7 +82,7 @@ module com
    end subroutine of_open_close
    !
    function com_compose_msg(pre,body,post)
-     use pars,          ONLY:msg_len
+     use pars, ONLY:msg_len
      character(msg_len)                  :: com_compose_msg
      character(*), intent(in)            :: body
      character(*), intent(in), optional  :: pre,post
@@ -95,6 +99,15 @@ module com
  end interface
  !
  contains
+   !
+   subroutine msg_length_set(length)
+     integer, optional:: length
+     if (present(length)) then
+       msg_length=length
+     else
+       msg_length=msg_len
+     endif
+   end subroutine
    !
    !#######################
    ! INTERFACE TO MSG

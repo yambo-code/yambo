@@ -66,6 +66,8 @@ module X_m
  !
  integer                  :: N_BS_E_sorted=0
  complex(SP), allocatable :: BS_E_sorted(:,:,:)
+ complex(SP), allocatable :: Resp_ii(:,:)
+ complex(SP), allocatable :: Resp_ij(:,:)
  complex(SP), allocatable :: Epsilon_ii(:,:)
  complex(SP), allocatable :: Epsilon_ij(:,:)
  complex(SP), allocatable :: Joint_DOS(:,:) 
@@ -195,18 +197,17 @@ module X_m
      real(SP),            optional :: nTrans_percent,Radius
    end subroutine
    !
-   logical function EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel)
-     use pars,          ONLY:SP
-     integer              :: nw 
-     complex(SP)          :: wv(nw)
-     logical              :: be_verbose
-     character(2)         :: ordering
-     complex(SP) ,optional:: eps(nw),eel(nw)
-   end function
-   !
    subroutine X_ALLOC_elemental(WHAT,DIM)
      character(*)      :: WHAT
      integer, optional :: DIM(:)
+   end subroutine
+   !
+   subroutine X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols,compute_on_gpu,iq)
+     use matrix,        ONLY:PAR_matrix
+     implicit none
+     type(PAR_matrix), target :: KERNEL,Xo
+     integer, intent(in)      :: Xo_rows(2),Xo_cols(2),iq
+     logical, intent(in)      :: compute_on_gpu
    end subroutine
    !
  end interface

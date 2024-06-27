@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM MG DS
+! Authors (see AUTHORS file for details): AM MG DS BM
 !
 ! headers
 !
@@ -200,10 +200,9 @@ subroutine K_diago_driver(iq,W,X_static)
        ! 2.3 No optimization of memory for the coupling case (debug)
        else if (BSS_slepc_matrix_format=="explicit-debug") then
          call K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
-       ! Default option is to use PetscShell
-       else
-         call K_shell_matrix(i_BS_mat,slepc_mat)
-       endif
+       else 
+         call error(" wrong value of slepc matrix format: "//trim(BSS_slepc_matrix_format))
+       endif        
      endif
 #endif
      !
@@ -440,8 +439,10 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      call parser('BSSEnTarget',l_target_energy)
      !
-     if (BSS_slepc_matrix_format=='explicit'.or.BSS_slepc_matrix_format=='explicit-debug') call msg( 's', '[SLEPC] Faster algorithm but BSE matrix duplicated over MPI tasks')
-     if (BSS_slepc_matrix_format=='shell')  call msg( 's', '[SLEPC] Slower algorithm but BSE matrix distributed over MPI tasks')
+     if (index(BSS_slepc_matrix_format,'explicit')>0) &
+     & call msg( 's', '[SLEPC] Faster algorithm but BSE matrix duplicated over MPI tasks')
+     if (BSS_slepc_matrix_format=='shell')            &
+     & call msg( 's', '[SLEPC] Slower algorithm but BSE matrix distributed over MPI tasks')
      !
      ! Number of states for partial diagonalization
      !================================================

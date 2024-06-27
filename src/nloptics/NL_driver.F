@@ -187,7 +187,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  endif
  !
  if(eval_HARTREE.or.eval_DFT) then
-   call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL',impose_free_and_alloc=.TRUE.)  
+   call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
  endif
  !
  ! Load Collisions if necessary

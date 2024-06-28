@@ -41,6 +41,8 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  PetscInt         :: SL_H_dim,SL_K_dim
  PetscErrorCode   :: ierr
  external K_multiply_by_V_slepc
+ external K_multiply_by_V_slepc_C
+ external K_multiply_by_V_slepc_R
  external K_multiply_by_V_transpose_slepc
  !
  if (BS_res_ares_n_mat==2) call error(" Slepc with shells and multiple BS_mat not coded")
@@ -65,9 +67,9 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  !
  if(BS_K_coupling) then
    if (l_BS_ares_from_res) then
-     call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,slepc_mat_R,ierr)
+     call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,slepc_mat_R,ierr)
      call MatSetOption(slepc_mat_R,MAT_HERMITIAN,PETSC_TRUE,ierr)
-     call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,slepc_mat_C,ierr)
+     call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,slepc_mat_C,ierr)
      call MatSetOption(slepc_mat_C,MAT_SYMMETRIC,PETSC_TRUE,ierr)
      call MatShellSetOperation(slepc_mat_R,MATOP_MULT,K_multiply_by_V_slepc_R,ierr)
      call MatShellSetOperation(slepc_mat_C,MATOP_MULT,K_multiply_by_V_slepc_C,ierr)

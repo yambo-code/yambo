@@ -260,7 +260,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
 #endif
  enddo
  !
- if(velocity_correction) call K_multiply_by_V(V_tmp,V0,1)
+ if(velocity_correction) call K_multiply_by_V(V_tmp,V0,1,"all")
  !
  if(use_left_and_right) then
    !
@@ -282,7 +282,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
 #endif
    enddo
    !
-   if(velocity_correction) call K_multiply_by_V(V_tmp,W0,1)
+   if(velocity_correction) call K_multiply_by_V(V_tmp,W0,1,"all")
    !
  endif
  !
@@ -302,7 +302,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
      !
      Cf= cZERO
      !
-     call K_multiply_by_V(V0,Vnp1,-1)
+     call K_multiply_by_V(V0,Vnp1,-1,"all")
      call K_dot_product(v0_mod_,V0,Vnp1,1)
      !
      ! For the coupling case if A = -R* (l_BS_ares_from_res=.FALSE.), V0 = (u0, -iu0*)
@@ -363,7 +363,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
      !
      !|Vn+1> = H |Vn>
      !
-     call  K_multiply_by_V(Vn,Vnp1,1)
+     call  K_multiply_by_V(Vn,Vnp1,1,"all")
      !
      ! A(n) = <Vn|Vn+1>
      !
@@ -454,7 +454,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
      !
      !|Vn+1> = H |Vn>
      !
-     call K_multiply_by_V(Vn,Vnp1,ItParity)
+     call K_multiply_by_V(Vn,Vnp1,ItParity,"all")
      !
      ! B(n+1)= <Vn|F|Vn+1>^(1/2) (that is <Vn|FH|Vn>^(1/2))
      !

@@ -5,6 +5,13 @@
 !
 ! Authors (see AUTHORS file for details): HM DS IMA
 !
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <petsc/finclude/petscvec.h>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+!
 subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  !
  ! Interface with the K_multiply_by_V from the Haydock method
@@ -14,13 +21,6 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  use BS_solvers,    ONLY : Slepc_v,BSS_Slepc_double_grp
  use BS,            ONLY : BS_T_grp,BS_nT_grps,BS_K_dim
  use parallel_m,    ONLY : PAR_IND_T_Haydock
- !
-#include <petsc/finclude/petscsys.h>
-#include <petsc/finclude/petscvec.h>
-#include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h>
-#include <slepc/finclude/slepcsys.h>
-#include <slepc/finclude/slepceps.h>
  !
  use petscmat
  use slepcsys
@@ -75,7 +75,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  if(BSS_Slepc_double_grp) fac=(-1)**(Slepc_v%it(1)+1)
  ! use the haydock routine to calculate the BSE auxiliaxy hamiltonian matrix-vector product
  ! Slepc_v%Vo = H Slepc_v%Vi
- call K_multiply_by_V( Slepc_v%Vi, Slepc_v%Vo,fac)
+ call K_multiply_by_V( Slepc_v%Vi, Slepc_v%Vo,fac,"all")
  !
  ! copy output vector Vo -> vo (distributed)
  !

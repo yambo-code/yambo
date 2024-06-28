@@ -35,13 +35,15 @@ subroutine FFT_vloc_G_to_R(vloc_full_r)
   ! Work space
   !
   integer                   :: ig,ir
+  integer                   :: shape_fft_g_table(2)
   complex(DP), allocatable  :: vloc_aux(:)
   !
   vloc_full_r=cZERO
   !
   YAMBO_ALLOC(vloc_aux,(fft_size))
   !
-  if (ngm/=size(fft_g_table)) then
+  shape_fft_g_table=shape(fft_g_table)
+  if (ngm/=shape_fft_g_table(1)) then
    !
    call errore('[FFT-vloc] Mismatch in Gvecs number between QE and Yambo.&
 & Check Gthresh warning during setup') 

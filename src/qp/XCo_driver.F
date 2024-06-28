@@ -180,7 +180,7 @@ subroutine XCo_driver(E,k,Xk,q,Dip)
            endif
            exit
          endif
-       enddo 
+       enddo
      endif
    endif
 #endif
@@ -200,7 +200,7 @@ subroutine XCo_driver(E,k,Xk,q,Dip)
    endif
    !
 #if defined _SC
-   if (l_use_qe_pseudo) call XCo_from_H_minus_Hbare(E,Xk,k,Dip)
+   if (l_use_qe_pseudo) call XCo_from_H_minus_Hbare(E,Xk,k,q,Dip)
    !
    ! Now WF_load can be safely called again
    l_use_p2_Vloc_becp=.false.
@@ -241,6 +241,7 @@ subroutine XCo_driver(E,k,Xk,q,Dip)
    io_err=io_HF_and_locXC(ID)
    !
    call WF_free(WF)
+   !
    call XCo_report(qp,E,k)
    !
  endif

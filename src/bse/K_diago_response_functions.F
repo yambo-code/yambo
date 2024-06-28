@@ -5,12 +5,13 @@
 !
 ! Authors (see AUTHORS file for details): DS AM MG
 !
-subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
- &                                  BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_PL)
+subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
+ &                    BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
  !
  ! eps2(iw)= 1 - Sum  [BS_R_left(i)*BS_R_right(i)] / [w+i*eta - E(i)]  
  !
- use pars,           ONLY:cZERO,cONE,SP,pi
+ use pars,           ONLY:cZERO,cONE,cI,SP,pi
+ use units,          ONLY:SPEED_OF_LIGHT
  use X_m,            ONLY:Resp_ii,Joint_DOS,BS_E_sorted,&
 &                         global_gauge,i_G_shift
  use electrons,      ONLY:n_sp_pol,n_spinor
@@ -21,23 +22,23 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  use BS,             ONLY:BS_perturbative_SOC,BS_res_ares_n_mat,l_BS_abs,l_BS_jdos,l_BS_esort,&
 &                         BS_K_anti_resonant,l_BS_ares_from_res,BS_K_coupling
  use BS_solvers,     ONLY:BSS_n_eig,Co_factor
- use R_lattice,      ONLY:bare_qpg
+ use R_lattice,      ONLY:bare_qpg,q0_def_norm
  use units,          ONLY:HA2EV
  use vec_operate,    ONLY:degeneration_finder,sort
  use BS_solvers,     ONLY:B_Hall,para_term_w0
- use X_m,            ONLY:Resp_ij,X_magnons
+ use X_m,            ONLY:Resp_ij,X_magnons,X_dichroism
  use PHOTOLUM,       ONLY:PL,PL_prefactor
- use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_photolum,l_BS_dichroism
+ use BS,             ONLY:l_BS_kerr,l_BS_kerr_asymm,l_BS_magnons,l_BS_photolum,l_BS_dichroism
  !
  implicit none
  !
  type(w_samp),intent(in)  :: W
  integer,     intent(in)  :: iq,i_BS_mat
  complex(SP), intent(in)  :: BS_E(BSS_n_eig)
- complex(SP), pointer, intent(in) :: BS_R_left(:),BS_R_right(:)
+ complex(SP), pointer, intent(in) :: BS_R_left_abs(:),BS_R_right_abs(:)
  real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
  complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
- complex(SP), pointer, intent(in) :: BS_R_right_kerr(:)
+ complex(SP), pointer, intent(in) :: BS_R_left_kerr(:),BS_R_right_kerr(:),BS_R_right_dich(:,:)
  real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
  !
  ! Work space
@@ -48,7 +49,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  real(SP), allocatable     :: vtmpR(:)
  complex(SP), allocatable  :: BS_E_sorted_tmp(:,:)
  integer, allocatable      :: sort_indx(:),first_exc(:),n_of_exc(:)
- complex(SP)               :: g_fac,res_kerr,res_magn(2)
+ complex(SP)               :: g_fac,res_kerr,res_dich,res_magn(2)
  logical                   :: l_ADD_the_ARES_using_the_RES
  !
  n_SOC=1
@@ -85,10 +86,17 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    if (.not.px%element_1D(i1)) cycle
    !
    if (l_BS_abs) then
-     res_abs=BS_R_left(i1)*BS_R_right(i1)*ares_fac
+     res_abs=BS_R_left_abs(i1)*BS_R_right_abs(i1)*ares_fac
    endif
    if (l_BS_kerr) then
-     res_kerr=BS_R_left(i1)*BS_R_right_kerr(i1)*ares_fac
+     res_kerr=BS_R_left_abs(i1)*BS_R_right_kerr(i1)*ares_fac
+     if(l_BS_kerr_asymm) then
+       res_kerr=(BS_R_left_abs(i1)*BS_R_right_kerr(i1)-BS_R_left_kerr(i1)*BS_R_right_abs(i1))*ares_fac/2._SP
+     endif
+   endif
+   if(l_BS_dichroism) then
+     res_dich=(BS_R_left_abs(i1)*BS_R_right_dich(i1,1)+BS_R_left_kerr(i1)*BS_R_right_dich(i1,2))
+     res_dich=res_dich*ares_fac/q0_def_norm/2._SP
    endif
    if(l_BS_magnons) res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)*ares_fac
    !
@@ -135,6 +143,18 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
        endif
        B_Hall(2)=B_Hall(2)+res_kerr*g_fac
      endif
+     !
+     if(l_BS_dichroism) then
+       if(l_BS_esort.and.i_BS_mat==1) then
+         BS_E_sorted_tmp(i1,nVAR+1:nVAR+1)=res_dich
+         nVAR=nVAR+1
+       endif
+       X_dichroism(:,2)=X_dichroism(:,2)-res_dich/(W%p(:)-EXC_E(i_pert_SOC))
+       if (l_ADD_the_ARES_using_the_RES) then
+         X_dichroism(:,2)=X_dichroism(:,2)+conjg(res_dich)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+       endif
+     endif
+     !
      if(l_BS_magnons) then
        if(l_BS_esort.and.i_BS_mat==1) then
          BS_E_sorted_tmp(i1,nVAR+1:nVAR+n_spinor)=res_magn(:n_spinor)
@@ -147,6 +167,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
          X_magnons(:,2,2)=X_magnons(:,2,2)+conjg(res_magn(1))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
      endif
+     !
      if(l_BS_photolum) then
        PL(:,2)=PL(:,2)+PL_prefactor*ares_fac*BS_R_PL(1,i1)*aimag(-1._SP/(W%p(:)-EXC_E(i_pert_SOC)))/pi
        if (l_ADD_the_ARES_using_the_RES) then
@@ -213,6 +234,10 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    call PP_redux_wait(B_Hall(2))
  endif
  !
+ if(l_BS_dichroism) then
+   call PP_redux_wait(X_dichroism(:,2))
+ endif
+ !
  if(l_BS_magnons) then
    call PP_redux_wait(X_magnons(:,:,2))
  endif
@@ -232,6 +257,9 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    Resp_ij(:,2)=Resp_ij(:,2)*Co_factor
    if (BS_K_anti_resonant.and..not.BS_K_coupling) B_Hall(2)=B_Hall(2)-conjg(B_Hall(2))
  endif
+ !
+ ! Factors to be fixed
+ if (l_BS_dichroism) X_dichroism(:,2)=X_dichroism(:,2)*(cI/SPEED_OF_LIGHT)*Co_factor/(4._SP*pi)
  !
  if (l_BS_magnons) X_magnons(:,:,2)=X_magnons(:,:,2)*Co_factor/(4._SP*pi)
  !

@@ -121,6 +121,7 @@ module R_lattice
  integer              :: n_g_shells     ! Number of G-shells
  integer              :: ng_vec         ! Number of G-vectors
  integer              :: ng_closed      ! Number of G closed
+ integer              :: G_m_G_maxval   ! Maximum value of G_m_G
  integer ,allocatable :: ng_in_shell(:) ! Number of G in each shell
  integer ,allocatable :: g_rot(:,:)
  integer ,allocatable :: G_m_G(:,:)

@@ -35,6 +35,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,PAR_Xk_ibz_index
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
+ use collision_ext,  ONLY:ng_oscll,OSCLL,W
  !
 #include<memory.h>
  !
@@ -338,22 +339,20 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  contains
  !
  subroutine setup_OSCLL_parallelization
-   use parallel_m,       ONLY:PAR_IND_G_b
    implicit none
    !
    ! Restore original number of bands
    !
    X(1)%ib       =(/NL_bands(1),NL_bands(2)/)
    !
-   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
-   call PARALLEL_global_indexes(E,k,q,"Oscillators",X=X(1))
+   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
    call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
-   call PARALLEL_WF_index( )
+   !
+   call PARALLEL_global_indexes(E,k,q,"Oscillators",X=X(1))
    !
  end subroutine setup_OSCLL_parallelization
  !
  subroutine setup_NL_parallelization()
-   use parallel_m,       ONLY:PAR_IND_Xk_ibz
    !
    implicit none
    !
@@ -366,7 +365,6 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
    ! 
    call PARALLEL_global_indexes(E,k,q,"Non_Linear",Dip=Dip,X=X(1))
    call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,CLEAN_UP=.TRUE.)
-   call PARALLEL_WF_index( )
    !
  end subroutine setup_NL_parallelization
 

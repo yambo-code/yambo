@@ -10,7 +10,7 @@ integer function variables_NL(ID)
  use pars,           ONLY:SP,IP,LP,IP_YIO,LP_YIO,CR_YIO
  use units,         ONLY:AUT2FS, HA2EV, AU2KWCMm2
  use nl_optics,     ONLY:NL_damping,l_use_DIPOLES,NL_correlation,NL_er,NL_correlation,n_frequencies,      &
-&                        NL_desc,NL_rot_axis,n_angles,NL_initial_versor
+&                        NL_desc,NL_rot_axis,n_angles,NL_initial_versor,l_eval_CURRENT
  use collision_ext, ONLY:ng_oscll
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx
  use real_time,     ONLY:Integrator_name,NE_steps,RT_step,l_RT_induced_field,RT_bands,RAD_LifeTime
@@ -74,6 +74,10 @@ integer function variables_NL(ID)
 
  call def_variable_elemental(ID,"l_use_DIPOLES",1,LP_YIO,0)
  call io_variable_elemental(ID,VAR="[NL] Use DIPOLES",L0=l_use_DIPOLES,CHECK=.true.,OP=(/"=="/), & 
+&         DESCRIPTOR=NL_desc)
+
+ call def_variable_elemental(ID,"l_eval_CURRENT",1,LP_YIO,0)
+ call io_variable_elemental(ID,VAR="[NL] Evaluate currrent and store on disk",L0=l_eval_CURRENT,CHECK=.true.,OP=(/"=="/), & 
 &         DESCRIPTOR=NL_desc)
 
  call def_variable_elemental(ID,"l_RT_induced_field",1,LP_YIO,0)

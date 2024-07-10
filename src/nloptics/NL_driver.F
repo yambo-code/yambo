@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
-subroutine NL_driver(E,X,k,q,Dip)
+subroutine NL_driver(E,X,Xw,k,q,Dip)
  !
  use pars,           ONLY:pi,SP,cZERO,cONE,schlen
  use vec_operate,    ONLY:axis_rotation
@@ -14,7 +14,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  use QP_m,           ONLY: QP_ng_SH,QP_ng_Sx 
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_sp_pol
- use collision_ext,  ONLY:COLLISIONS_CV_only 
+ use collision_ext,  ONLY:COLLISIONS_CV_only,HXC_collisions 
  use X_m,            ONLY:X_t
  use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S
  use wave_func,      ONLY:WF,wf_ng
@@ -22,17 +22,20 @@ subroutine NL_driver(E,X,k,q,Dip)
  use hamiltonian,    ONLY:WF_Go_indx,H_QP_table_setup,H_potential
  use R_lattice,      ONLY:bz_samp,qindx_free
  use fields,         ONLY:Efield
+ use frequency,      ONLY:w_samp
  use QP_CTL_m,       ONLY:QP_apply
+ use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J,NL_initial_versor, &
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P,loop_on_angles,n_angles,&
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,runs_done,n_runs_todo,l_eval_CURRENT,NL_rot_axis,&
 &                         HF,SEX,NL_bands,NL_nbands,NL_alloc_k_distributed,NL_J_t,n_runs,loop_on_frequencies, &
-&                         l_pump_and_probe
+&                         l_pump_and_probe,eval_OSCLL,l_test_OSCLL,LSEX,LHF,Sigma_SEX_EQ
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT,eval_HARTREE
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz
+ use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,PAR_Xk_ibz_index
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
+ use collision_ext,  ONLY:ng_oscll,OSCLL,W
  !
 #include<memory.h>
  !
@@ -42,12 +45,13 @@ subroutine NL_driver(E,X,k,q,Dip)
  type(bz_samp)     :: k,q
  type(X_t)         :: X(2)
  type(DIPOLE_t)    :: Dip
+ type(w_samp)      :: Xw(2)
  !
  logical, external :: stop_now
  ! 
  ! Work Space
  !
- integer           :: i_f,i1,i_sp_pol,wf_ng_save,io_err
+ integer           :: i_f,i1,i_sp_pol,wf_ng_save,io_err,ik,ik_mem
  character(schlen) :: l_message
  logical           :: l_dynamics_is_over
  integer           :: ID_RESTART
@@ -79,7 +83,8 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  ! Dipoles & WF dimensions
  !=========================
- call WF_and_dipole_dimensions(X,k)
+
+ call WF_and_dipole_dimensions(X(1),k)
  !
  ! QP dimensions
  !================
@@ -87,10 +92,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  ! Non_Linear parallization
  ! ===================================
- call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,Dip=Dip,X=X(1))
- call PARALLEL_global_indexes(E,k,q,"Non_Linear",Dip=Dip,X=X(1))
- call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,CLEAN_UP=.TRUE.)
- call PARALLEL_WF_index( )
+ call setup_NL_parallelization()
  !
  !Load Dipole after the NL parallelization
  ! ========================================
@@ -100,11 +102,16 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  ! Generate bare_qpg if required
  !=============================
- if(eval_HARTREE.or.CORRELATION==JGM) call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
+ if(eval_HARTREE.or.CORRELATION==JGM.or.CORRELATION==LSEX.or.CORRELATION==LHF) &
+&  call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
  !
  ! Free memory: qindx_* and unused DIPOLES
  ! =====================================================
- call qindx_free('ALL')
+ if(.not.eval_OSCLL) then
+   call qindx_free('ALL')
+ else
+   call qindx_free('X B C')
+ endif
  !
  call DIP_alloc('P_square')
  if(l_use_DIPOLES) then
@@ -122,16 +129,26 @@ subroutine NL_driver(E,X,k,q,Dip)
  wf_ng_save =wf_ng
  if(eval_DFT) then
    wf_ng      =max(QP_ng_Sx,QP_ng_SH)
+ elseif(eval_OSCLL) then
+   wf_ng      =max(wf_ng,QP_ng_Sx,QP_ng_SH)
  else
    wf_ng      =QP_ng_SH
  endif
  WF_Go_indx =1
+ !
+ if(eval_OSCLL.and..not.l_test_OSCLL) then
+    io_COLLs=.false.
+    HXC_collisions%N=0
+ endif
  !
  if(io_COLLs) then
    !      
    ! check if they exist      
    !
    call COLLISIONS_load(.true.)
+   !
+   if(l_test_OSCLL.and..not.l_use_Hxc_collisions) &
+&    call error("You should calculate collisions before the testing with: yambo_nl -e -v f/sex")          
    !
    if(.not.l_use_Hxc_collisions .and. (Correlation==SEX.or.Correlation==HF)) &
 &    call error(' HF / SEX need Collisions. Cannot be computed on the fly.')
@@ -152,8 +169,27 @@ subroutine NL_driver(E,X,k,q,Dip)
    !
  endif
  !
- if(eval_HARTREE.or.eval_DFT) & 
-&   call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
+ if(eval_OSCLL) then
+   !
+   call setup_OSCLL_parallelization()
+   !
+   ! Evaluate oscillators if not present
+   call OSCLL_eval(q, k, E)
+   !
+   ! Load the LSEX potential W(q,G,G') or V(q,G,G')
+   call LSEX_potential(q, X(2), Xw(2))
+   !
+   ! Load oscillators
+   !
+   call setup_NL_parallelization()
+   !
+   call OSCLL_load(q,k)
+   !
+ endif
+ !
+ if(eval_HARTREE.or.eval_DFT) then
+   call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
+ endif
  !
  ! Load Collisions if necessary
  ! ============================
@@ -171,10 +207,32 @@ subroutine NL_driver(E,X,k,q,Dip)
  call NL_alloc(E) 
  call NL_alloc_k_distributed(E)
  !
+ if(l_test_OSCLL) then
+   call NL_test_collisions(k,q)
+   return
+ endif
+ !
  ! Initialization
  ! ==================
  call section('*','NL Start and Restart')
  call NL_start_and_restart(E,k,Dip)
+ !
+ !
+ if(eval_OSCLL) then
+   !      
+   ! If I use oscillators I store the equilibrium part of long-range SEX
+   !
+   Sigma_SEX_EQ=cZERO
+   !
+   do ik=1,QP_nk
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+     ik_mem=PAR_Xk_ibz_index(ik)
+     do i_sp_pol=1,n_sp_pol
+       call OSCLL_compose_vbands(V_bands,Sigma_SEX_EQ(:,:,i_sp_pol,ik_mem),k,q,E,ik,i_sp_pol) 
+     enddo
+   enddo
+   !
+ endif
  !
  ! Check if calculation was already done
  ! =====================================
@@ -193,7 +251,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  elseif (l_pump_and_probe) then
    l_message="[NL] Time-steps "
  else
-   call error("Wrong call to the code")
+   call error("Wrong input: use pump-probe mode 'yambo_nl -u p' or set a number of frequencie/angles with 'yambo_nl -u n'")
  endif
  call live_timing(l_message,PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1)*NE_steps)
  !
@@ -277,5 +335,38 @@ subroutine NL_driver(E,X,k,q,Dip)
  call DIP_alloc('DIP_S')
  call DIP_alloc('DIP_R')
  call DIP_alloc('DIP_v')
+ !
+ contains
+ !
+ subroutine setup_OSCLL_parallelization
+   implicit none
+   !
+   ! Restore original number of bands
+   !
+   X(1)%ib       =(/NL_bands(1),NL_bands(2)/)
+   !
+   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
+   call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
+   !
+   call PARALLEL_global_indexes(E,k,q,"Oscillators",X=X(1))
+   !
+ end subroutine setup_OSCLL_parallelization
+ !
+ subroutine setup_NL_parallelization()
+   !
+   implicit none
+   !
+   ! Restore original number of bands
+   !
+   X(1)%ib       =(/NL_bands(1),NL_bands(2)/)
+   !
+   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
+   call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
+   ! 
+   call PARALLEL_global_indexes(E,k,q,"Non_Linear",Dip=Dip,X=X(1))
+   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,CLEAN_UP=.TRUE.)
+   !
+ end subroutine setup_NL_parallelization
+
  !
 end subroutine NL_driver

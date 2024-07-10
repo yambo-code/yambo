@@ -59,6 +59,9 @@ module BS_solvers
  real(SP) :: BSS_dr(2)
  real(SP) :: BSS_damp_reference
  real(SP) :: BSS_q0(3)
+ real(SP) :: BSS_E_dir(3)         ! Electric field
+ real(SP) :: BSS_P_dir(3)         ! Induced polarization
+ real(SP) :: BSS_Q_dir(3)         ! Field propagation direction
  logical  :: BSS_uses_DbGd
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
@@ -93,8 +96,8 @@ module BS_solvers
  character(schlen):: BSS_slepc_precondition  !choose slepc eigenvalue precondition method (none,bcgs+jacobi)
  character(schlen):: BSS_slepc_extraction    !choose slepc eigenvalue extraction method (ritz,harmonic)
  integer          :: BSS_slepc_ncv           !dimension of the subspace
- integer          :: BSS_slepc_mpd        !maximum allowed dimension
  integer          :: BSS_slepc_maxit         !maximum number of iterations
+ integer          :: BSS_slepc_mpd           !maximum allowed dimension
  real(SP)         :: BSS_slepc_tol           !tolerance for the iterative solver
  real(SP)         :: BSS_slepc_target_E      !find eigenvalues close to this energy
  character(schlen):: BSS_slepc_matrix_format !matrix type ("shell","explicit","explicit-debug")
@@ -153,7 +156,7 @@ module BS_solvers
    end function
    !
    integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,BsRr,BsE_corr,&
-   &                                    bsL_magn,bsR_magn,bsR_kerr,bsR_pl)
+   &                                    bsL_magn,bsR_magn,bsL_kerr,bsR_kerr,bsR_dich,bsR_pl)
      use pars,          ONLY:SP
      use X_m,           ONLY:X_t
      implicit none
@@ -161,7 +164,7 @@ module BS_solvers
      integer                      :: iq,ID,i_BS_mat
      complex(SP)        ,optional :: bsE(:)
      real(SP),   pointer,optional :: BsE_corr(:,:),bsR_pl(:,:)
-     complex(SP),pointer,optional :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
+     complex(SP),pointer,optional :: bsL_kerr(:),bsR_kerr(:),bsR_dich(:,:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
    end function
    !
    integer function io_BSS_Haydock(ID,iq,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp1)

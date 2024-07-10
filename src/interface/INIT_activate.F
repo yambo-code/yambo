@@ -130,7 +130,7 @@ subroutine INIT_activate()
  !
  !Setup
  !
- if (l_setup) call initactivate(1,'MaxGvecs Gthresh K_grids IkSigLim IkXLim NoDiagSC')
+ if (l_setup) call initactivate(1,'MaxGvecs Gthresh K_grids IkSigLim IkXLim NoDiagSC EvalMagn')
 #if defined  _ELPH 
  if (l_setup) call initactivate(1,'BSEscatt')
 #endif
@@ -213,7 +213,7 @@ subroutine INIT_activate()
    !
    ! Dipoles & Gauges
    !
-   call initactivate(1,'DipApproach DipComputed DipPDirect ShiftedPaths Gauge AnHall')
+   call initactivate(1,'DipApproach DipComputed DipPDirect ShiftedPaths Gauge')
    !
  endif
  !
@@ -235,7 +235,8 @@ subroutine INIT_activate()
    ! Special case: The BSE equation is used to build up the BSE_Fxc kernel.
    if (l_bs_fxc) then
      call initactivate(1,'FxcGRLc FxcSVdig FxcRetarded FxcMEStps')
-     call initactivate(1,'BLongDir BEnRange BDmRange BEnSteps')
+     call initactivate(1,'BLongDir QPropDir BEnRange BDmRange BEnSteps')
+     !call initactivate(1,'EFieldDir QPropDir BEnRange BDmRange BEnSteps')
    endif
    !
  endif
@@ -251,7 +252,7 @@ subroutine INIT_activate()
    call INIT_RT_ctl_switch('R')
 #endif
    !
-   call initactivate(1,'NoCondSumRule MetDamp AnHall')
+   call initactivate(1,'NoCondSumRule MetDamp')
    !
 #if defined _NL || defined _SC
    call initactivate(1,'EvPolarization FrSndOrd')
@@ -273,7 +274,8 @@ subroutine INIT_activate()
  !
  if (l_optics.and.l_bse.and.l_bss.or.(l_bse.and.l_rpa_IP)) then
    !
-   call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir')
+   call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir QPropDir')
+   !call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps EFieldDir QPropDir')
    call initactivate(1,'BSEprop BSEdips')
    !
    ! Special case: the BSE_Fxc kernel has been constructed

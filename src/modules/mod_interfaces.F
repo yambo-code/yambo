@@ -272,7 +272,7 @@ module interfaces
      use wave_func,     ONLY:WAVEs
      integer,              intent(in)    :: b_to_load(2)
      integer,              intent(in)    :: ik,i_sp_pol,isymm,ig0
-     complex(SP),          intent(in)    :: ssop(2,2)
+     complex(SP) DEV_ATTR, intent(in)    :: ssop(2,2)
      type (WAVEs), target, intent(inout) :: WF
    end subroutine WF_symm_kpoint_g_ssop
    !

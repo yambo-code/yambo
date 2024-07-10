@@ -48,7 +48,7 @@ integer function io_OSCLL(q,ID)
  !
  integer :: ik,ik_mem,i_fragment,COLL_nbands,i_sp_pol,iqbz,ig,ib,ID_frag
  character(schlen)    :: VAR_name
- real(SP),allocatable :: disk_data(:,:,:)
+ complex(SP),allocatable :: disk_data(:,:)
  !
 #if defined _TIMING
  call timing('io_OSCLL',OPR='start')
@@ -95,7 +95,7 @@ integer function io_OSCLL(q,ID)
  ik_mem=PAR_Xk_ibz_index(ik)
  !
  COLL_nbands=COLL_bands(2)-COLL_bands(1)+1
- YAMBO_ALLOC(disk_data,(COLL_nbands,q%nbz,2))
+ YAMBO_ALLOC(disk_data,(COLL_nbands,q%nbz))
  !
  if (read_is_on(ID)) then
    if(.not.allocated(OSCLL)) then
@@ -114,16 +114,16 @@ integer function io_OSCLL(q,ID)
  do ib=COLL_bands(1),COLL_bands(2)
    do ig=1,ng_oscll
      !
-     if (write_is_on(ID)) call mat_c2r(OSCLL_k(ib,:,:,ig),disk_data)
+     if (write_is_on(ID)) disk_data=OSCLL_k(ib,:,:,ig)
      !
      write (VAR_name,'(3(a,i4.4))') 'OSCLL_',ik,'_ib_',ib,'_ig_',ig
-     call def_variable_bulk(ID_frag,trim(VAR_name),1,shape(disk_data),SP)
-     call io_variable_bulk(ID_frag,1,R3=disk_data)
+     call def_variable_bulk(ID_frag,trim(VAR_name),1,(/2,COLL_nbands,q%nbz/),SP)
+     call io_variable_bulk(ID_frag,1,C2=disk_data)
      !
      io_OSCLL=io_status(ID)
      if (io_OSCLL/=0) goto 1
      !
-     if (read_is_on(ID)) call mat_r2c(disk_data,OSCLL(ib,:,ik_mem,:,ig))
+     if (read_is_on(ID)) OSCLL(ib,:,ik_mem,:,ig)=disk_data
      !
    enddo
  enddo

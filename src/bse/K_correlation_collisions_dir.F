@@ -14,7 +14,7 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
  use D_lattice,     ONLY:nsym
  use R_lattice,     ONLY:qindx_X,bz_samp
  use BS,            ONLY:O_ng,BS_bands,BS_res_K_corr,BS_blk,&
-&                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp,&
+&                        K_CORR_collision,BS_T_grp,&
 &                        BS_K_dim,l_BS_ares_from_res
  use electrons,     ONLY:n_sp_pol
  use collision_el,  ONLY:elemental_collision_free,elemental_collision_alloc
@@ -175,7 +175,7 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
    !
  end select
  !
- call BS_oscillators_alloc(.FALSE.,0,.TRUE.,i_block)
+ call BS_correlation_oscillators_alloc(i_block)
  !
 #if !defined _CUDA
  !$omp parallel default(shared), private(i_Tk,i_Tp, &
@@ -380,7 +380,6 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
      integer, intent(in) :: iB,iki,iko,ibi,ibo,i_sp_pol,i_s_ki,i_s_ko
      !
      if( O_todo_table(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol) ) return
-     !
      BS_blk(iB)%N_oscillators=BS_blk(iB)%N_oscillators+1 
      BS_blk(iB)%O_table(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)=BS_blk(iB)%N_oscillators
      O_todo_table(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)=.true.

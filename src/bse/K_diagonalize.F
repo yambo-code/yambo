@@ -236,7 +236,7 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   ! Free the space of the distributed matrix 
   call free_D_Matrix(diago_mat)
 
-  if(.not. allocated(BS_energies)) deallocate(BS_energies)
+  if(allocated(BS_energies)) deallocate(BS_energies)
   ! 
   allocate(BS_energies(neig_found*evec_fac))
   !

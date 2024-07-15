@@ -290,7 +290,7 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   call free_D_Matrix(evecs)
 
   if (evec_fac == 2) then
-    ! set the right eigen vectors for negative eigenvalues
+    ! set the right eigenvectors for -ve eigenvalues
     BS_VR(1:SL_H_dim/2, 2:2*neigs_this_cpu:2)  = conjg(BS_VR(SL_H_dim/2 + 1:SL_H_dim, 1:2*neigs_this_cpu:2))
     BS_VR(SL_H_dim/2 + 1:SL_H_dim, 2:2*neigs_this_cpu:2) = conjg(BS_VR(1:SL_H_dim/2, 1:2*neigs_this_cpu:2))
   endif
@@ -305,15 +305,15 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
       ! left eigen-vectors for +ve eigenvalues
       BS_VL(1:SL_H_dim/2, 1:2*neigs_this_cpu:2)            =  BS_VR(1:SL_H_dim/2, 1:2*neigs_this_cpu:2)
       BS_VL(SL_H_dim/2 + 1:SL_H_dim, 1:2*neigs_this_cpu:2) = -BS_VR(SL_H_dim/2 + 1:SL_H_dim, 1:2*neigs_this_cpu:2)
-      ! left eigen-vectors for +ve eigenvalues
+      ! left eigen-vectors for -ve eigenvalues
       BS_VL(1:SL_H_dim/2, 2:2*neigs_this_cpu:2)  = CONJG(BS_VL(SL_H_dim/2 + 1:SL_H_dim, 1:2*neigs_this_cpu:2))
       BS_VL(SL_H_dim/2 + 1:SL_H_dim, 2:2*neigs_this_cpu:2) = CONJG(BS_VL(1:SL_H_dim/2, 1:2*neigs_this_cpu:2))
     else 
-      ! set the Queue for the eigen vectors
+      ! set the Queue for the left eigen vectors
       error_diago = initiateGetQueue(evecs_left, nelements)
       if (error_diago /= 0) call error("Failed to initiate left eigvec GetQueue")
       !
-      ! request the right eigenvectors
+      ! request the left eigenvectors
       do i_c = 0, neigs_this_cpu-1
         do i_r = 1, SL_H_dim
           error_diago = dmatget_fortran(evecs_left, i_r, i_c + neig_shift + 1, c_loc(BS_VL(i_r, evec_fac*i_c + 1)) )

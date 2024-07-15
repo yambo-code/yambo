@@ -282,18 +282,18 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
       if (error_diago /= 0) call error("Failed to retreive eigenvectors from distributed matrix")
     enddo
   enddo
+  !
+  ! finalize the queue. The eigenvectors buffer gets magically filled after this call !
+  error_diago = ProcessGetQueue(evecs)
+  if (error_diago /= 0) call error("Failed to Process GetQueue")
+  ! we got the data ! Free right eigen-vectors.
+  call free_D_Matrix(evecs)
 
   if (evec_fac == 2) then
     ! set the right eigen vectors for negative eigenvalues
-    BS_VR(1:SL_H_dim/2, 2:2*neigs_this_cpu:2)  = CONJG(BS_VR(SL_H_dim/2 + 1:SL_H_dim, 1:2*neigs_this_cpu:2))
-    BS_VR(SL_H_dim/2 + 1:SL_H_dim, 2:2*neigs_this_cpu:2) = CONJG(BS_VR(1:SL_H_dim/2, 1:2*neigs_this_cpu:2))
+    BS_VR(1:SL_H_dim/2, 2:2*neigs_this_cpu:2)  = conjg(BS_VR(SL_H_dim/2 + 1:SL_H_dim, 1:2*neigs_this_cpu:2))
+    BS_VR(SL_H_dim/2 + 1:SL_H_dim, 2:2*neigs_this_cpu:2) = conjg(BS_VR(1:SL_H_dim/2, 1:2*neigs_this_cpu:2))
   endif
-  !
-  ! finalize the queue
-  error_diago = ProcessGetQueue(evecs)
-  if (error_diago /= 0) call error("Failed to Process GetQueue")
-  ! Free right eigen-vectors
-  call free_D_Matrix(evecs)
   !
   ! Set the left eigen vectors in case requested
   if (BS_K_coupling .and. compute_left_eigs) then 
@@ -302,14 +302,14 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
     allocate(BS_VL(SL_H_dim, evec_fac*neigs_this_cpu))
 
     if (evec_fac  == 2) then 
-      ! right eigen-vectors for +ve eigenvalues
+      ! left eigen-vectors for +ve eigenvalues
       BS_VL(1:SL_H_dim/2, 1:2*neigs_this_cpu:2)            =  BS_VR(1:SL_H_dim/2, 1:2*neigs_this_cpu:2)
       BS_VL(SL_H_dim/2 + 1:SL_H_dim, 1:2*neigs_this_cpu:2) = -BS_VR(SL_H_dim/2 + 1:SL_H_dim, 1:2*neigs_this_cpu:2)
       ! left eigen-vectors for +ve eigenvalues
       BS_VL(1:SL_H_dim/2, 2:2*neigs_this_cpu:2)  = CONJG(BS_VL(SL_H_dim/2 + 1:SL_H_dim, 1:2*neigs_this_cpu:2))
       BS_VL(SL_H_dim/2 + 1:SL_H_dim, 2:2*neigs_this_cpu:2) = CONJG(BS_VL(1:SL_H_dim/2, 1:2*neigs_this_cpu:2))
     else 
-      ! set the Queue for the -ve eigen vectors
+      ! set the Queue for the eigen vectors
       error_diago = initiateGetQueue(evecs_left, nelements)
       if (error_diago /= 0) call error("Failed to initiate left eigvec GetQueue")
       !

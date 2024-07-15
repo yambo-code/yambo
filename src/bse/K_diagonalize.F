@@ -1,6 +1,6 @@
 !
 ! License-Identifier: GPL
-! Copyright (C) 2006 The Yambo Team
+! Copyright (C) 2024 The Yambo Team
 !
 subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
     & neigs_this_cpu, neig_shift, neigs_range, eigvals_range, &
@@ -12,6 +12,8 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   !  K = |                       |
   !      | (-cI*K_c^*)  (-K_r^*) |
   !
+  !  This total number of eigenvectors found can be obtained by
+  !  by calling size function of eigvals i.e size(BS_energies)
   use pars,           ONLY:cI,cONE, SP
   use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling,&
     &                        BS_res_ares_n_mat,l_BS_ares_from_res
@@ -25,24 +27,26 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   !
   integer, intent(in)      :: i_BS_mat
   complex(SP), allocatable :: BS_energies(:)
-  ! Energy values. these will be allocated internally
+  ! Energy values. these will be allocated internally.(realloced if already allocated)
+  ! Each cpu gets full set of eigenvalues and size(BS_energies) gives 
+  ! total number of eigenvectors found (will be same on all processes).
   complex(SP), allocatable, target :: BS_VR(:,:) 
-  ! Right eigenvectors. these will be allocated internally
+  ! Right eigenvectors. these will be allocated internally (realloced if allocated)
   ! This process store eigenvectors from [neig_shift+1, neigs_this_cpu+neig_shift]
   integer, intent(out)     :: neigs_this_cpu  
   integer, intent(out)     :: neig_shift
   !
   ! optional arguments  
   integer, optional, target          :: neigs_range(2)
-  ! index range of eigen values
+  ! index range of eigen values (input)
   real(SP), optional, target         :: eigvals_range(2)
-  ! value range of eigenvalues
+  ! value range of eigenvalues (input)
   complex(SP), allocatable, optional, target :: BS_VL(:,:) 
-  ! Left eigenvectors. these will be allocated internally
+  ! Left eigenvectors. these will be allocated internally (input) !(realloced if already allocated)
   character, optional                :: solver_type   ! if 'e' uses elpa, 's' scalapack
-  ! SOlver to use Elpa or scalapack
+  ! SOlver to use Elpa or scalapack (input)
   integer,  optional                 :: elpasolver
-  ! 1 or 2. put 2 as default and give an option to user
+  ! 1 or 2. put 2 as default and give an option to user (input)
   !
   ! FIX ME : Move to a better place (modules)
   integer, parameter                 :: blacs_blk_size = 64
@@ -65,6 +69,11 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   type(c_ptr)                        :: evecs_left        = c_null_ptr
   logical                            :: compute_left_eigs = .false.
   complex(YDIAGO_CMPLX), target, allocatable :: eig_vals(:)
+  
+  ! Gpu support via ELPA.
+  type(c_ptr)                             :: gpu_str = c_null_ptr
+  character(kind=c_char, len=20), target  :: gpu_device_elpa
+  !// Accpeted values for gpu_device_elpa : "nvidia-gpu", "amd-gpu", "intel-gpu"
 
   integer                            :: evec_fac = 1
   ! evec_fac = 2 if bse_solver function was used to diagonalize else 1
@@ -75,6 +84,14 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   if(present(solver_type)) solver_type_aux = solver_type
   if(present(elpasolver)) elpa_solver_aux = elpasolver
 
+
+if (have_cuda) then
+  ! Note this is a gpu specific flag. set according to gpu.
+  ! Accpeted values for gpu_device_elpa : "nvidia-gpu", "amd-gpu", "intel-gpu"
+  ! As yambo supports only nvidia gpus, we set it to nvidia-gpu
+  gpu_device_elpa =  c_char_"nvidia-gpu"//c_null_char
+  gpu_str = c_loc(gpu_device_elpa)
+endif
 
 #if defined _OPENMP
   elpa_nthreads = int(n_threads_K,kind=YDIAGO_INT)
@@ -96,7 +113,7 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   ProcY = ProcX
 
   if (my_rank == 0) then 
-    print *, 'BLACS GRID : ',  ProcX, ' X ', ProcY
+    print *, 'BLACS GRID :', ProcX,' X ', ProcY
   ! FIX ME  : This should be a message. replace with correct function
   endif
 
@@ -159,7 +176,7 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
       !
       if(present(neigs_range))  neig_found = abs(max(neigs_range))
       !
-      error_diago = Heev_Elpa(diago_mat, c_loc(eig_vals), evecs, neig_found, elpa_solver_aux, c_null_ptr, &
+      error_diago = Heev_Elpa(diago_mat, c_loc(eig_vals), evecs, neig_found, elpa_solver_aux, gpu_str, &
         &           elpa_nthreads)
     else
       error_diago = Heev(diago_mat, 'L', neigs_range_tmp, eigvals_range_tmp, c_loc(eig_vals), evecs, neig_found)
@@ -184,7 +201,7 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
 #if defined WITH_ELPA
     if (solver_type_aux .eq. 'e') then
       ! Elpa always gives full spectrum
-      error_diago = BSE_Solver_Elpa(diago_mat, c_loc(eig_vals), evecs, elpa_solver_aux, c_null_ptr, &
+      error_diago = BSE_Solver_Elpa(diago_mat, c_loc(eig_vals), evecs, elpa_solver_aux, gpu_str, &
         &           elpa_nthreads) 
     else 
       !
@@ -199,7 +216,7 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
     ! -50 is the error code when CHOLESKY factorization fails. see Ydiago/src/common/error.h
     if (error_diago == -50) then
       !
-      call warning('CHOLESKY factorization failed. &
+      call warning('Cholesky decomposition failed. &
         & Switching to slow scalapack solver. This solver is not-GPU supported.')
       !
       if (compute_left_eigs .and. .not. c_associated(evecs_left)) then 

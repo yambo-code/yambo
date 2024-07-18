@@ -131,11 +131,11 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
        !
        ! v->v', i.e. k-q -> p-q=k-q_W-q transitions
        !
-       call SET_table(i_block,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp_pol_v,i_kmq_s,i_pmq_s)
+       call EVAL_table(i_block,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp_pol_v,i_kmq_s,i_pmq_s)
        !
        ! c->c', i.e. k -> p=k-q_w transitions
        !
-       call SET_table(i_block,1,1,i_c_k,i_c_p,i_k_sp_pol_c,i_k_s,i_p_s)
+       call EVAL_table(i_block,1,1,i_c_k,i_c_p,i_k_sp_pol_c,i_k_s,i_p_s)
        !
      enddo
    enddo
@@ -164,11 +164,11 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
        !
        ! v->c', i.e. k-q -> p-q=k-q_W-q transitions
        !
-       call SET_table(i_block,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp_pol_v,i_kmq_s,i_pmq_s)
+       call EVAL_table(i_block,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp_pol_v,i_kmq_s,i_pmq_s)
        !
        ! c->v', i.e. k -> p=k-q_W transitions
        !
-       call SET_table(i_block,1,1,i_c_k,i_v_p,i_k_sp_pol_c,i_k_s,i_p_s)
+       call EVAL_table(i_block,1,1,i_c_k,i_v_p,i_k_sp_pol_c,i_k_s,i_p_s)
        !
      enddo
    enddo
@@ -375,7 +375,7 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
        !
    end subroutine fill_indexes
    !
-   subroutine SET_table(iB,iki,iko,ibi,ibo,i_sp_pol,i_s_ki,i_s_ko)
+   subroutine EVAL_table(iB,iki,iko,ibi,ibo,i_sp_pol,i_s_ki,i_s_ko)
      implicit none
      integer, intent(in) :: iB,iki,iko,ibi,ibo,i_sp_pol,i_s_ki,i_s_ko
      !

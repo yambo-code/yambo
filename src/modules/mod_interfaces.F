@@ -296,42 +296,42 @@ module interfaces
  !
  interface WF_shift_kpoint
    !
-   subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
+   subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k_out)
      use pars,          ONLY:SP
-     use electrons,     ONLY:n_spinor,n_sp_pol
+     use electrons,     ONLY:n_spinor
      use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
      use R_lattice,     ONLY:bz_samp
-     integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2)
+     integer,       intent(in) :: wf_shift(3),ikbz,i_sp_pol,b_to_shift(2)
      type(bz_samp), intent(in) :: Xk
      complex(SP), intent(in)  DEV_ATTR :: &
-&         WF_k_in (wf_ng_1st_BZ,  n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
+&         WF_k_in (wf_ng_1st_BZ,  n_spinor,b_to_shift(1):b_to_shift(2))
      complex(SP), intent(out) DEV_ATTR :: &
-&         WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
+&         WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2))
    end subroutine
  end interface 
  !
  interface WF_symm_kpoint
    !
-   subroutine WF_symm_kpoint_cpu(b_to_load,ikbz,Xk,WF_k_out)
+   subroutine WF_symm_kpoint_cpu(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
      use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
      use wave_func,     ONLY:wf_ng_1st_BZ
-     use electrons,     ONLY:n_spinor,n_sp_pol
-     integer,       intent(in)  :: ikbz,b_to_load(2)
+     use electrons,     ONLY:n_spinor
+     integer,       intent(in)  :: ikbz,i_sp_pol,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
-     complex(SP),   intent(out) :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
+     complex(SP),   intent(out) :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2))
    end subroutine WF_symm_kpoint_cpu
    !
 #ifdef _CUDA
-   subroutine WF_symm_kpoint_gpu(b_to_load,ikbz,Xk,WF_k_out)
+   subroutine WF_symm_kpoint_gpu(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
      use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
      use wave_func,     ONLY:wf_ng_1st_BZ
-     use electrons,     ONLY:n_spinor,n_sp_pol
-     integer,       intent(in)  :: ikbz,b_to_load(2)
+     use electrons,     ONLY:n_spinor
+     integer,       intent(in)  :: ikbz,i_sp_pol,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
      complex(SP),   intent(out) DEV_ATTR :: &
-&       WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
+&       WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2))
    end subroutine WF_symm_kpoint_gpu
 #endif
  end interface

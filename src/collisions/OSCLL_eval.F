@@ -1,25 +1,13 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2012 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): CA
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
+!> @brief Calculate oscillators  <\psi_k | exp[i*(q+G)] |\psi_{k+q} > for few G-vectors
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!! @param[out]      OSCLL_k	              Oscillators for each k-point
 !
 subroutine OSCLL_eval(q,k,en) 
  !
@@ -32,19 +20,19 @@ subroutine OSCLL_eval(q,k,en)
  use wave_func,           ONLY:WF,wf_ng
  use interfaces,          ONLY:WF_load,WF_free
  use QP_m,                ONLY:QP_nk
+ use com,                 ONLY:msg
  use stderr,              ONLY:intc
  use collision_el,        ONLY:elemental_collision,elemental_collision_free, &
 &                              elemental_collision_alloc         
  use collision_ext,       ONLY:COLL_bands,W,OSCLL_k,ng_oscll
- use parallel_m,          ONLY:PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID
+ use parallel_m,          ONLY:PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,PAR_COM_G_b_INDEX
  use FFT_m,               ONLY:fft_size
  use IO_int,              ONLY:io_control,IO_and_Messaging_switch
  use IO_m,                ONLY:OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_CL,file_is_present,rm_file,DUMP, &
 &                              OP_IF_START_APP_CL_IF_END,manage_action 
- use com,                 ONLY:msg
- use parallel_int,        ONLY:PP_redux_wait,PP_wait,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,          ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,master_cpu,myid,PAR_IND_G_b,master_cpu, &
-&                              PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_A2A,PAR_COM_G_b_INDEX,myid,PP_indexes
+ use parallel_int,        ONLY:PP_redux_wait,PP_wait
+ use parallel_m,          ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,master_cpu,PAR_IND_G_b, &
+&                              PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_A2A,PAR_COM_G_b_INDEX
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -58,8 +46,7 @@ subroutine OSCLL_eval(q,k,en)
  integer :: i_k,i_m,i_n,i_q,iqbz,i_kmq_G0,iqs,i_kmq,i_kmq_s,i_k_s,ik_mem
  integer :: i_k_sp,i_kmq_sp,iqibz,ig,i_np,i_mp,io,ic,i_sp_pol,ib_idx
  integer :: ID,io_err,iGo_max,i_fragment,max_count,i_count,IO_ACT
- integer :: COLL_nbands,OSCLL_perc
- type(PP_indexes)  :: K_index
+ integer :: COLL_nbands,OSCLL_perc,NK(2)
  logical, allocatable :: OSCLL_done(:)
  integer, external :: io_OSCLL
  logical :: IO_do_it
@@ -77,8 +64,6 @@ subroutine OSCLL_eval(q,k,en)
  ! 
  YAMBO_ALLOC(OSCLL_done,(QP_nk))
  OSCLL_done=.FALSE.
- !
- YAMBO_ALLOC(K_index%element_1D,(QP_nk))
  !
  if(io_err==0)  then
    !
@@ -133,7 +118,6 @@ subroutine OSCLL_eval(q,k,en)
  !
  call WF_load(WF,wf_ng,iGo_max,COLL_bands,(/1,1/),space='R',title='-OSC')  
  call elemental_collision_alloc(isc,NG=isc%ngrho,TITLE="OSCLL")
- call WF_free(WF,keep_fft=.TRUE.)
  !
  call live_timing('[OSC] Oscillators :',PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1))
  !
@@ -172,14 +156,10 @@ subroutine OSCLL_eval(q,k,en)
      !
      ! Load only two k-points 
      !	   
-     K_index%element_1D=.FALSE.
-     K_index%element_1D(i_k) =.TRUE.
-     K_index%element_1D(i_kmq)=.TRUE.
-     !
-     call IO_and_Messaging_switch("-report -log")
-     call PARALLEL_WF_distribute(K_index=K_index,CLEAN_UP=.TRUE.)
-     call WF_load(WF,wf_ng,iGo_max,COLL_bands,(/1,k%nibz/),space='R',title='-OSC')  
-     call IO_and_Messaging_switch("+report +log")
+     NK=(/min(i_k,i_kmq),max(i_k,i_kmq)/)
+     call WF_free(WF,keep_fft=.true.,keep_states_to_load=.true.)
+     call WF_load(WF,wf_ng,iGo_max,COLL_bands,NK,k_extrema_only=.true.,quiet=.true.,space='R',title='-OSC', &
+&             keep_states_to_load=.true.)  
      !
      do i_n=COLL_bands(1),COLL_bands(2)
        do i_m=COLL_bands(1),COLL_bands(2)
@@ -200,8 +180,6 @@ subroutine OSCLL_eval(q,k,en)
          !
        enddo
     enddo
-    !
-    call WF_free(WF,keep_fft=.TRUE.)
     !
    enddo
    !

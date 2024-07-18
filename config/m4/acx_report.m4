@@ -137,8 +137,8 @@ fi
 #
 MAGMA_check="-"
 if test "$internal_magma" = "yes" ; then
-  if test "$compile_magma" = "yes" ; then SLEPC_check="C"; fi
-  if test "$compile_magma" = "no"  ; then SLEPC_check="I"; fi
+  if test "$compile_magma" = "yes" ; then MAGMA_check="C"; fi
+  if test "$compile_magma" = "no"  ; then MAGMA_check="I"; fi
 elif test "$enable_magma" = "yes" ; then
   MAGMA_check="E"
 fi

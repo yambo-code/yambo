@@ -58,7 +58,7 @@
 #                 @FFT_INCS_R@
 # [@PETSC_check@] PETSC     : @PETSC_LIBS_R@
 #                 @PETSC_INCS_R@ 
-# [@SLEPC_check@] SLEPC     : @SLEPC_LIBS_R@ 
+# [@SLEPC_check@] SLEPC     : @SLEPC_LIBS_R@
 #                 @SLEPC_INCS_R@ 
 # [@MAGMA_check@] MAGMA     : @MAGMA_LIBS@
 #                 @MAGMA_INCS@

@@ -171,7 +171,7 @@ endif
   if (.not. BS_K_coupling) then
     !
     ! ===========  TDA Case ===============
-#if defined WITH_ELPA
+#if defined _ELPA
     if (solver_type_aux .eq. 'e') then
       !
       if(present(neigs_range))  neig_found = abs(max(neigs_range))
@@ -198,7 +198,7 @@ endif
     !          [X_2, conj(X_1) ]        [ -X_2,  conj(X_1)],
     !
     neig_found = SL_H_dim/2 ! Only +ve eigenvalues computes and rest are retreived
-#if defined WITH_ELPA
+#if defined _ELPA
     if (solver_type_aux .eq. 'e') then
       ! Elpa always gives full spectrum
       error_diago = BSE_Solver_Elpa(diago_mat, c_loc(eig_vals), evecs, elpa_solver_aux, gpu_str, &

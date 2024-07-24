@@ -4,7 +4,7 @@
 !
 subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
     & neigs_this_cpu, neig_shift, neigs_range, eigvals_range, &
-    & BS_VL, solver_type, elpasolver)
+    & BS_VL, BS_overlap, solver_type, elpasolver)
   !
   ! Here We diagonalize any BSE hamilitioan
   !
@@ -21,6 +21,7 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   use cuda_m,         ONLY:have_cuda
   use parallel_m,     ONLY:MPI_COMM_WORLD
   use openmp,         ONLY:n_threads_K
+  use LIVE_t,         ONLY:live_timing
   use YDIAGO_interface
   !
   implicit none
@@ -47,6 +48,9 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   ! SOlver to use Elpa or scalapack (input)
   integer,  optional                 :: elpasolver
   ! 1 or 2. put 2 as default and give an option to user (input)
+  complex(SP),pointer,optional       :: BS_overlap(:,:) ! overlap matrix
+  ! Note Overlap matrix is allocated and computed only when geev solver is called.
+  ! If overlap matrix is not allocated, this implies that BS_overlap is a identity matrix.
   !
   ! FIX ME : Move to a better place (modules)
   integer, parameter                 :: blacs_blk_size = 64
@@ -128,7 +132,9 @@ endif
   end if
   !
   ! Fill the block cyclic matrix
+  call live_timing('Filling BSE Matrix',1)
   call K_fill_block_cyclic(i_BS_mat, diago_mat)
+  call live_timing()
   ! Now we create a matix for eigenvectors
   !
   allocate(eig_vals(SL_H_dim))
@@ -168,6 +174,7 @@ endif
   neig_found = SL_H_dim ! This will be modified by scalapack functions
   evec_fac = 1 ! This is important set to 1
   !
+  call live_timing('BSK diagonalize',1)
   if (.not. BS_K_coupling) then
     !
     ! ===========  TDA Case ===============
@@ -196,6 +203,7 @@ endif
     !           +ve     -ve               +ve       -ve
     !     X = [ X_1, conj(X_2) ]    Y = [  X_1, -conj(X_2)]
     !          [X_2, conj(X_1) ]        [ -X_2,  conj(X_1)],
+    ! Note that the overlap matrix is identity in this case, so we donot construct
     !
     neig_found = SL_H_dim/2 ! Only +ve eigenvalues computes and rest are retreived
 #if defined _ELPA
@@ -244,14 +252,12 @@ endif
     neig_found = SL_H_dim
     !
     error_diago = Geev(diago_mat, c_loc(eig_vals), evecs_left, evecs)
-    !
+    ! On output diago_mat has overlap i.e VL^H @ VR
     !
   endif
 
   if (error_diago /= 0) call error("Diagonalization failed")
-
-  ! Free the space of the distributed matrix 
-  call free_D_Matrix(diago_mat)
+  call live_timing()
 
   if(allocated(BS_energies)) deallocate(BS_energies)
   ! 
@@ -266,7 +272,7 @@ endif
   !
   deallocate(eig_vals)
   !
-  call section('=','Folding eigenvectors')
+  !call section('=','Folding eigenvectors')
   ! Now retreive the right eigen_vectors
   !
   ! Compute number of right eigenvectors residing in this cpu
@@ -281,6 +287,35 @@ endif
     neig_shift = neig_shift + mod(neig_found, nProcs)
   endif
 
+  ! Retreive overlap matrix if case geev is used. (VL^H @ VR)
+  ! As mentioned above, in all other cases overlap is identity
+  if (evec_fac == 1 .and. BS_K_coupling .and. present(BS_overlap)) then
+    call live_timing('Overlap',1)
+    if (.not. associated(BS_overlap)) allocate(BS_overlap(neig_found,neigs_this_cpu))
+    !
+    nelements = neig_found*neigs_this_cpu
+    !
+    error_diago = initiateGetQueue(diago_mat, nelements)
+    if (error_diago /= 0) call error("Failed to initiate overlap GetQueue.")
+    !
+    ! get the overlap matrix. The overlap matrix is distributed along the right eigenvectors
+    do i_c = 1, neigs_this_cpu
+      do i_r = 1, neig_found
+        error_diago = dmatget_fortran(diago_mat, i_r, i_c + neig_shift, c_loc(BS_overlap(i_r, i_c)) )
+        if (error_diago /= 0) call error("Failed to retreive overlap matrix from distributed matrix.")
+      enddo
+    enddo
+    ! finalize the queue
+    error_diago = ProcessGetQueue(diago_mat)
+    if (error_diago /= 0) call error("Failed to Process overlap matrix GetQueue.")
+    call live_timing()
+  else 
+    if (present(BS_overlap)) BS_overlap => null()
+  endif
+
+  ! Free the space of the distributed matrix 
+  call free_D_Matrix(diago_mat)
+
   nelements = neigs_this_cpu*SL_H_dim
   !
   if(allocated(BS_VR)) deallocate(BS_VR)
@@ -289,6 +324,7 @@ endif
   !
   ! retreive right eigenvectors
   ! initiate get queue
+  call live_timing('Folding Right eigenvectors',1)
   error_diago = initiateGetQueue(evecs, nelements)
   if (error_diago /= 0) call error("Failed to initiate GetQueue")
   !
@@ -305,6 +341,7 @@ endif
   if (error_diago /= 0) call error("Failed to Process GetQueue")
   ! we got the data ! Free right eigen-vectors.
   call free_D_Matrix(evecs)
+  call live_timing()
 
   if (evec_fac == 2) then
     ! set the right eigenvectors for -ve eigenvalues
@@ -327,6 +364,7 @@ endif
       BS_VL(SL_H_dim/2 + 1:SL_H_dim, 2:2*neigs_this_cpu:2) = CONJG(BS_VL(1:SL_H_dim/2, 1:2*neigs_this_cpu:2))
     else 
       ! set the Queue for the left eigen vectors
+      call live_timing('Folding Left eigenvectors',1)
       error_diago = initiateGetQueue(evecs_left, nelements)
       if (error_diago /= 0) call error("Failed to initiate left eigvec GetQueue")
       !
@@ -340,6 +378,7 @@ endif
       ! finalize the queue
       error_diago = ProcessGetQueue(evecs_left)
       if (error_diago /= 0) call error("Failed to Process left eigen vectors GetQueue")
+      call live_timing()
     endif
   !
   endif

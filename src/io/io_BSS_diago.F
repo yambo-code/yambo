@@ -6,7 +6,7 @@
 ! Authors (see AUTHORS file for details): AM
 !
 integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
-&                             bsL_magn,bsR_magn,bsR_kerr,bsR_pl)
+&                             bsL_magn,bsR_magn,bsR_kerr,bsR_pl,write_ev)
  !
  use pars,          ONLY:SP,schlen,IP
  use stderr,        ONLY:intc
@@ -26,11 +26,14 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  complex(SP)        , optional  :: bsE(:)
  real(SP)   ,pointer, optional  :: BsE_corr(:,:),bsR_pl(:,:)
  complex(SP),pointer, optional  :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
+ logical, optional              :: write_ev
  !
  ! Work Space
  !
  character(schlen):: db_name
  type(IO_desc)    :: local_desc
+ logical          :: dump_ev = .true.
+ if (present(write_ev)) dump_ev = write_ev
  !
  call timing('io_BSS_diago',OPR='start')
  !
@@ -152,8 +155,10 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
    !
    ! Eigenstates (resonant only matrix)
    !
-   call io_bulk(ID,'BS_EIGENSTATES',VAR_SZ=(/2,BS_H_dim,BSS_n_eig/))
-   call io_bulk(ID,C2=BS_mat,IPOS=(/1,1,1/))
+   if (read_is_on(ID) .or. write_ev) then 
+    call io_bulk(ID,'BS_EIGENSTATES',VAR_SZ=(/2,BS_H_dim,BSS_n_eig/))
+    call io_bulk(ID,C2=BS_mat,IPOS=(/1,1,1/))
+   endif
    !
  endif
  !
@@ -162,3 +167,82 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  call timing('io_BSS_diago',OPR='stop')
  !
 end function
+
+subroutine write_bs_ev_par(iq, i_BS_mat, BS_VR, BS_VL)
+  !
+  use pars,           ONLY:SP,schlen
+  use BS,             ONLY:BS_K_dim, BS_H_dim,BS_K_coupling,BS_res_ares_n_mat
+  use parallel_m,     ONLY:par_distribute_set
+  use BS_solvers,     ONLY:BSS_n_eig
+  use IO_m,           ONLY:REP,OP_APP_CL,YAMBO_DEF_CHUNK
+  use stderr,         ONLY:intc
+  use timing_m,      ONLY:timing
+  use IO_int,        ONLY:io_connect,io_disconnect,def_variable_bulk,&
+&                        io_variable_bulk,io_control
+  !
+  implicit none
+  !
+  integer, intent(in)      :: i_BS_mat, iq
+  complex(SP),allocatable, target, optional ::BS_VR(:,:),BS_VL(:,:)
+  ! workspace
+  integer :: SL_H_dim, neigs_this_cpu, neig_shift, ID, io_BSS_diago, chunksize(3), varid
+  character(schlen):: db_name
+  character(schlen) :: dim_names(3)
+
+  if (.not. present(BS_VR) .and. .not. present(BS_VL)) return 
+  if(     BS_K_coupling) SL_H_dim=BS_H_dim
+  if(.not.BS_K_coupling) SL_H_dim=BS_K_dim(i_BS_mat)
+
+#if defined _MPI
+  !
+  call timing('io_BSS_diago',OPR='start')
+  !
+  if (BS_res_ares_n_mat>1) then
+    if(i_BS_mat==1) db_name='BS_diago_Q'//trim(intc(iq))
+    if(i_BS_mat==2) db_name='BS_diago_Q'//trim(intc(iq))//'_ares'
+  else
+    db_name='BS_diago_Q'//trim(intc(iq))
+  endif
+  !
+  call par_distribute_set(BSS_n_eig, neigs_this_cpu, neig_shift)
+  !
+  call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID,DO_IT=.TRUE.)
+  
+  io_BSS_diago=io_connect(desc=trim(db_name),type=2,ID=ID)
+  if (io_BSS_diago/=0) then 
+    call io_disconnect(ID)
+    return 
+  endif 
+
+  chunksize(1) = 2 
+  chunksize(2) = SL_H_dim
+  chunksize(3) = CEILING(real(YAMBO_DEF_CHUNK**2/SL_H_dim,kind=sp))
+  ! Dimension names
+  dim_names(1) = 're_im'
+  dim_names(2) = 'kcv'
+  dim_names(3) = 'neigs'
+  !
+  if ( BSS_n_eig < chunksize(3)) chunksize(2:3) = 0
+
+  varid = 100
+  if (present(BS_VR) .and. allocated(BS_VR)) then 
+    call def_variable_bulk(ID,'BS_EIGENSTATES', varid,&
+&        (/2,SL_H_dim,BSS_n_eig/),SP,dim_names, &
+&         par_io_kind='collective',chunksize=chunksize)
+    call  io_variable_bulk(ID,varid,C2=BS_VR,IPOS=(/1,1,neig_shift+1/))
+  endif 
+
+  varid = 101
+  if (present(BS_VL) .and. allocated(BS_VL) ) then 
+    call def_variable_bulk(ID,'BS_EIGENSTATES_LEFT', varid,&
+&        (/2,SL_H_dim,BSS_n_eig/),SP,dim_names, &
+&         par_io_kind='collective',chunksize=chunksize)
+    call  io_variable_bulk(ID,varid,C2=BS_VL,IPOS=(/1,1,neig_shift+1/))
+  endif 
+  call io_disconnect(ID)
+  !
+  call timing('io_BSS_diago',OPR='stop')
+#else 
+  return 
+#endif
+end subroutine write_bs_ev_par

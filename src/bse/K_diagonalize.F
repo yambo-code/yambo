@@ -19,7 +19,7 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
     &                        BS_res_ares_n_mat,l_BS_ares_from_res
   use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width
   use cuda_m,         ONLY:have_cuda
-  use parallel_m,     ONLY:MPI_COMM_WORLD
+  use parallel_m,     ONLY:MPI_COMM_WORLD,par_distribute_set
   use openmp,         ONLY:n_threads_K
   use LIVE_t,         ONLY:live_timing
   use YDIAGO_interface
@@ -277,15 +277,7 @@ endif
   !
   ! Compute number of right eigenvectors residing in this cpu
   ! neigs_this_cpu, neig_shift
-  neigs_this_cpu = neig_found/nProcs 
-  neig_shift  = neigs_this_cpu * my_rank
-  !
-  if (my_rank .lt. mod(neig_found, nProcs)) then
-    neigs_this_cpu = neigs_this_cpu + 1
-    neig_shift = neig_shift + my_rank
-  else 
-    neig_shift = neig_shift + mod(neig_found, nProcs)
-  endif
+  call par_distribute_set(neig_found, neigs_this_cpu, neig_shift)
 
   ! Retreive overlap matrix if case geev is used. (VL^H @ VR)
   ! As mentioned above, in all other cases overlap is identity

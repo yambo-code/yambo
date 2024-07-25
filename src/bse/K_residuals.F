@@ -188,22 +188,22 @@ subroutine K_kerr_residuals(BS_E,BS_V_right,BS_R_right_kerr,neigs_this_cpu, neig
    call live_timing('KERR residuals ',neigs_this_cpu)
    !
    forall(i1=1:BS_K_dim(1))          tmp_res(i1) = conjg(BSS_dipoles_opt(2,i1))*sqrt(cmplx(BSS_eh_f(i1),kind=SP)) 
-      forall(i1=BS_K_dim(1)+1:BS_H_dim) tmp_res(i1) = conjg(BSS_dipoles_opt(2,i1))*sqrt(cmplx(BSS_eh_f(i1),kind=SP))
-         if (allocated(BSS_eh_Z)           ) tmp_res=tmp_res*sqrt(BSS_eh_Z)
-         if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
+   forall(i1=BS_K_dim(1)+1:BS_H_dim) tmp_res(i1) = conjg(BSS_dipoles_opt(2,i1))*sqrt(cmplx(BSS_eh_f(i1),kind=SP))
+   if (allocated(BSS_eh_Z)           ) tmp_res=tmp_res*sqrt(BSS_eh_Z)
+   if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
+   !
+   do i1=1,neigs_this_cpu
+   !
+      BS_R_right_kerr(i1 + neig_shift)=V_dot_V_omp(BS_H_dim,tmp_res,BS_V_right(:,i1))
+      if (trim(global_gauge)=="velocity") BS_R_right_kerr(i1 + neig_shift)= &
+&                                      BS_R_right_kerr(i1 + neig_shift)*BS_E(i1 + neig_shift)
+!
+      call live_timing(steps=1)
+   enddo
+   call PP_redux_wait(BS_R_right_kerr)
+   call live_timing
          !
-         do i1=1,neigs_this_cpu
-            !
-            BS_R_right_kerr(i1 + neig_shift)=V_dot_V_omp(BS_H_dim,tmp_res,BS_V_right(:,i1))
-            if (trim(global_gauge)=="velocity") BS_R_right_kerr(i1 + neig_shift)= &
-               &                                      BS_R_right_kerr(i1 + neig_shift)*BS_E(i1 + neig_shift)
-            !
-            call live_timing(steps=1)
-         enddo
-         call PP_redux_wait(BS_R_right_kerr)
-         call live_timing
-         !
-      end subroutine K_kerr_residuals
+end subroutine K_kerr_residuals
 
 
       subroutine K_magnons_residuals(i_BS_mat, neigs_this_cpu, neig_shift, &
@@ -336,7 +336,6 @@ subroutine K_kerr_residuals(BS_E,BS_V_right,BS_R_right_kerr,neigs_this_cpu, neig
          deallocate(BS_R_tmp)
          !
       end subroutine K_magnons_residuals
-
 
       !subroutine K_PL_residuals(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,neigs_this_cpu, neig_shift,BS_overlap) 
       !   !

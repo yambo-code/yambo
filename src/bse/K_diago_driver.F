@@ -26,7 +26,7 @@ subroutine K_diago_driver(iq,W,X_static)
   use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
     &                         BS_res_ares_n_mat,l_BS_optics !,BS_Blocks_symmetrize_K,&
   use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,&
-    &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E
+    &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E, write_bs_ev_par
   use X_m,            ONLY:X_t,X_OUTPUT_driver
   use electrons,      ONLY:n_sp_pol
   use frequency,      ONLY:w_samp
@@ -39,6 +39,7 @@ subroutine K_diago_driver(iq,W,X_static)
   use IO_m,           ONLY:REP,VERIFY,OP_WR_CL,OP_RD_CL
   use parser_m,       ONLY:parser
   use timing_m,       ONLY:timing
+  use parallel_int,   ONLY:PP_wait
 #if defined _SLEPC && !defined _NL
   use interfaces,     ONLY:MATRIX_slepc
   use petscmat
@@ -290,11 +291,11 @@ subroutine K_diago_driver(iq,W,X_static)
         if (l_BS_magnons) call K_magnons_residuals(i_BS_mat, neigs_this_cpu, neig_shift, &
 &                               BS_R_left_magn,BS_R_right_magn,BS_V_left,BS_V_right,BS_overlap) 
         !
-        if (l_BS_photolum) call error("PL not implemented")
+        if (l_BS_photolum) call error("PL not implemented in Ydiago solver")
         !
-        if( BS_perturbative_SOC ) call error("BS_perturbative_SOC not implemented")
+        if( BS_perturbative_SOC ) call error("BS_perturbative_SOC not implemented in Ydiago solver")
         !
-        if(BSS_perturbative_width) call error("BSS_perturbative_width not implemented")
+        if(BSS_perturbative_width) call error("BSS_perturbative_width not implemented in Ydiago solver")
         !
         !if (l_BS_photolum) call K_PL_residuals(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian, &
 &       !                                        neigs_this_cpu, neig_shift,BS_overlap) 
@@ -336,8 +337,10 @@ subroutine K_diago_driver(iq,W,X_static)
       !
       call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
       io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
-        &                                  BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_PL)
+        &                BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_PL,write_ev=.not.l_ydiago)
       !
+      call PP_wait()
+      if (l_ydiago .and. BSS_write_eig_2_db) call write_bs_ev_par(iq, i_BS_mat, BS_V_right, BS_V_left)
     endif
     !
     YAMBO_FREE(BS_E)

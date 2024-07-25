@@ -33,11 +33,13 @@ subroutine NL_start_and_restart(E,k,Dip)
  use parallel_m,     ONLY:master_cpu
  use nl_optics,      ONLY:Correlation,IPA,E_full,full_rho,V_bands,TDDFT,n_runs_todo,NL_LRC_alpha,NL_bands, &
 &                         V_xc_0,NL_initial_P,l_use_DIPOLES,n_runs,runs_done,JGM,E_xc_0,I_relax,l_use_DIPOLES,&
-&                         VAL_BANDS,l_eval_CURRENT,NL_initial_J,NL_P,l_pump_and_probe
+&                         VAL_BANDS,l_eval_CURRENT,NL_initial_J,NL_P,l_pump_and_probe,NE_steps_old,skip_restart, &
+&                         NE_steps_done,NE_i_restart
+ use real_time,      ONLY:NE_steps
  use IO_int,         ONLY:io_control
- use IO_m,           ONLY:OP_RD_CL,NONE,file_is_present,VERIFY
+ use IO_m,           ONLY:OP_RD_CL,NONE,file_is_present,VERIFY,where_is_file,rm_file,DUMP
  use parallel_int,   ONLY:PP_redux_wait
- use stderr,         ONLY:intc
+ use stderr,         ONLY:intc,STRING_match
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
 #include<memory.h>
@@ -152,6 +154,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  YAMBO_ALLOC(runs_done,(n_runs))
  !
  runs_done=.false.
+ skip_restart=.false.
  !
  if(master_cpu) then
    !      

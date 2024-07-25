@@ -62,7 +62,7 @@ subroutine K_diago_driver(iq,W,X_static)
   integer       :: i_BS_mat,Input_n_eig, neigs_this_cpu, neig_shift
   logical       :: K_is_not_hermitian,l_diago,l_slepc,l_target_energy,l_ydiago
   character(1)  :: sec
-  character(5)  :: Solver
+  character(10)  :: Solver
   !
   ! Slepc specific
   !

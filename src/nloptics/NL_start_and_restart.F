@@ -13,7 +13,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  !
  ! [1] Initialize the Vbands and potentials
  ! [2] Build Ho
- ! [3] RESTART from a previous run
+ ! [3] RESTART from a previous runs on frequencies/angles 
  ! [4] Initialize the bare Hartree and XC
  ! [5] Initialize the fields
  !
@@ -49,9 +49,10 @@ subroutine NL_start_and_restart(E,k,Dip)
  !
  ! Working space
  !
- integer :: i1,ib,i_f,i_sp_pol
+ integer :: i1,ib,i_f,i_sp_pol,n_restarts
  integer :: ID,io_NonLinear
  integer, external::io_NL
+ character(lchlen) :: old_file
  !
  !
  ! Initialize the Gf and potentials
@@ -157,18 +158,58 @@ subroutine NL_start_and_restart(E,k,Dip)
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
    io_NonLinear=io_NL("Nonlinear",ID)
    !
+   ! If simulation parameters are changed execpt NE_steps I do noe use restart
+   !
+   if(io_Nonlinear==-2.and.NE_steps==NE_steps_old) then
+     call msg('s','Simulation paramameters are changed, restart not used!')
+     skip_restart=.true.
+   endif
+   !
    if(io_NonLinear==0) then
+     !
      do i_f=1,n_runs
         if(file_is_present('Nonlinear_fragment_'//intc(i_f))) runs_done(i_f)=.true.
      enddo                                                                    
-    endif
-    !
+     !	
+   else
+     !
+     ! Remove old databases if present      
+     !
+     old_file=where_is_file('Nonlinear')
+     if(.not.STRING_match(old_file,"none")) then
+       call msg('s','Removing old databases: '//trim(old_file))
+       call rm_file(old_file)
+     endif
+     do i_f=1,n_runs
+       old_file=where_is_file('Nonlinear_fragment_'//intc(i_f))
+       if(.not.STRING_match(old_file,"none")) then
+         call msg('s','Removing old databases: '//trim(old_file))
+         call rm_file(old_file)
+       endif
+     enddo                                                                    
+     !  
+   endif
+   !
+   if(.not.all(runs_done).and..not.skip_restart) then
+     n_restarts=0
+     do i_f=1,n_runs
+       if(.not.runs_done(i_f)) then
+         call NL_restart("check",E,i_f)
+         if(NE_steps_done/=0) n_restarts=n_restarts+1
+       endif
+     enddo
+     call msg('s','Found '//intc(n_restarts)//' restart points')
+   endif
+   !
  endif
  !
- call PP_redux_wait(runs_done,imode=3)
+ call PP_redux_wait(skip_restart,imode=3)
+ call PP_redux_wait(runs_done   ,imode=3)
  !
  n_runs_todo=n_runs-count(runs_done)
  if(n_runs_todo/=n_runs) call msg('s','RESTART, remaining frequencies/angles ',n_runs_todo)
+ !
+ if(l_pump_and_probe) n_runs=1
  !
 end subroutine NL_start_and_restart
 

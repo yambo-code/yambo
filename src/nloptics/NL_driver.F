@@ -264,12 +264,36 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
      cycle
    endif
    !
-   ! Re-initialization
-   ! ================
-   V_bands=cZERO
-   do i_sp_pol=1,n_sp_pol
-     forall(i1=1:E%nbf(n_sp_pol)) V_bands(i1,i1,:,i_sp_pol)=cONE
-   enddo
+   ! Check if a restart is present
+   ! ==============================
+   if(.not.skip_restart) then
+     call NL_restart("check",E,i_f)
+   else
+     NE_steps_done=0
+   endif
+   !
+   if(NE_steps_done/=0) then
+     !      
+     call NL_restart("load",E,i_f)
+     NE_i_time=NE_steps_done
+     !
+   else
+     !      
+     ! Initialization
+     ! ================
+     !
+     NE_i_time=0
+     !
+     V_bands=cZERO
+     do i_sp_pol=1,n_sp_pol
+       forall(i1=1:E%nbf(n_sp_pol)) V_bands(i1,i1,:,i_sp_pol)=cONE
+     enddo
+     !
+   endif
+   !
+   ! Open output files
+   ! =================
+   call NL_output(0,i_f) 
    !
    ! Update Efield
    ! ================
@@ -280,8 +304,6 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
    endif
    !
    l_dynamics_is_over=.false.
-   !
-   NE_i_time=0
    !
    do while(.not.l_dynamics_is_over)
      !
@@ -314,6 +336,10 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
      call live_timing(steps=1)
      !
      l_dynamics_is_over= (NE_i_time>=NE_steps) .or. stop_now(.false.)
+     !
+     ! Write a restart point
+     ! =====================
+     if(mod(NE_i_time,NE_i_restart)==0.or.l_dynamics_is_over) call NL_restart("write",E,i_f)
      !
    enddo
    !

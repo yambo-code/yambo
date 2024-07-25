@@ -14,6 +14,13 @@ module nl_optics
  !
 #include<memory.h>
  !
+ ! Restart variables
+ integer           :: NE_steps_done  ! Number of steps done at the last restart point
+ integer           :: NE_steps_old   ! Total number of steps NE_steps in the old run
+ integer           :: NE_i_restart   ! Integer time interval when a restart point is saved
+ real(SP)          :: NE_restart     ! Interval time when a restart point is saved
+ logical           :: skip_restart   ! Do not use restart if simulation parameters are different
+ !
  ! Long range correction field
  !
  real(SP)          :: NL_LRC_alpha
@@ -141,7 +148,7 @@ module nl_optics
  !
  ! Databases input/output
  !
- integer                  :: ID(3)
+ integer                  :: ID(3)  ! ID(1) standard DB, ID(2) restart
  !
  ! Other
  !

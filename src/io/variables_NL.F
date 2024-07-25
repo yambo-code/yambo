@@ -34,7 +34,7 @@ integer function variables_NL(ID)
  ! PARAMETERS
  !
  call def_variable_elemental(ID,"NE_steps",1,IP_YIO,0)
- call io_variable_elemental(ID,VAR="[RT] Time steps",I0=NE_steps,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=NL_desc)
+ call io_variable_elemental(ID,VAR="[RT] Time steps",DB_I0=NE_steps_old,I0=NE_steps,CHECK=.true.,OP=(/"<="/),DESCRIPTOR=NL_desc)
 
  call def_variable_elemental(ID,"RT_step",1,SP,0)
  call io_variable_elemental(ID,VAR="[RT] Time step",TERMINATOR="[fs]",R0=RT_step,      CHECK=.true.,OP=(/"=="/), &

@@ -7,7 +7,7 @@ RT_objects = io_RT_components.o io_RT_components_G_lesser.o io_RT_components_hea
              variables_RT_static.o variables_RT_dynamic.o io_KB_real_space.o
 #endif
 #if defined _NL 
-NL_objects = variables_NL.o io_NL.o
+NL_objects = variables_NL.o io_NL.o io_NL_WF.o
 #endif
 #if defined _ELPH 
 ELPH_objects = variables_ELPH.o io_ELPH.o io_gFsq.o

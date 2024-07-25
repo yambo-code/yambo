@@ -102,12 +102,13 @@ subroutine K_diago_driver(iq,W,X_static)
 #if defined _SLEPC && !defined _NL
   l_slepc     = index(BSS_mode,'s')/=0
 #endif
-  l_ydiago    = .true.
+  l_ydiago    = index(BSS_mode,'d')/=0
   !
   if(l_diago) Solver="Diago"
 #if defined _SLEPC && !defined _NL
   if(l_slepc) Solver="Slepc"
 #endif
+  if (l_ydiago) Solver="Ydiago" 
   !
   call timing(trim(Solver)//' Solver',OPR='start')
   !
@@ -288,7 +289,12 @@ subroutine K_diago_driver(iq,W,X_static)
         !
         if (l_BS_magnons) call K_magnons_residuals(i_BS_mat, neigs_this_cpu, neig_shift, &
 &                               BS_R_left_magn,BS_R_right_magn,BS_V_left,BS_V_right,BS_overlap) 
+        !
         if (l_BS_photolum) call error("PL not implemented")
+        !
+        if( BS_perturbative_SOC ) call error("BS_perturbative_SOC not implemented")
+        !
+        if(BSS_perturbative_width) call error("BSS_perturbative_width not implemented")
         !
         !if (l_BS_photolum) call K_PL_residuals(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian, &
 &       !                                        neigs_this_cpu, neig_shift,BS_overlap) 
@@ -301,22 +307,22 @@ subroutine K_diago_driver(iq,W,X_static)
     ! Define perturbative corrections
     !=================================
     if (.not. l_ydiago) then 
-    if( BS_perturbative_SOC ) then
+      if( BS_perturbative_SOC ) then
+        !
+        ! To check if the expression for the non hermitian case is correct
+        if (     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections,2/n_sp_pol,'SOC')
+        if (.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections,2/n_sp_pol,'SOC')
+        BS_E_SOC_corr=real(BS_corrections)
+        !
+      endif
       !
-      ! To check if the expression for the non hermitian case is correct
-      if (     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections,2/n_sp_pol,'SOC')
-      if (.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections,2/n_sp_pol,'SOC')
-      BS_E_SOC_corr=real(BS_corrections)
-      !
-    endif
-    !
-    if(BSS_perturbative_width) then
-      !
-      if(     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections(1,:),1,'WID')
-      if(.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections(1,:),1,'WID')
-      BS_E=BS_E-aimag(BS_corrections(1,:))
-      !
-    endif
+      if(BSS_perturbative_width) then
+        !
+        if(     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections(1,:),1,'WID')
+        if(.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections(1,:),1,'WID')
+        BS_E=BS_E-aimag(BS_corrections(1,:))
+        !
+      endif
     endif
     !
     ! Now I calculate epsilon

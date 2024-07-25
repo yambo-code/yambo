@@ -288,9 +288,10 @@ subroutine K_diago_driver(iq,W,X_static)
         !
         if (l_BS_magnons) call K_magnons_residuals(i_BS_mat, neigs_this_cpu, neig_shift, &
 &                               BS_R_left_magn,BS_R_right_magn,BS_V_left,BS_V_right,BS_overlap) 
+        if (l_BS_photolum) call error("PL not implemented")
         !
-        if (l_BS_photolum) call K_PL_residuals(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian, &
-&                                               neigs_this_cpu, neig_shift,BS_overlap) 
+        !if (l_BS_photolum) call K_PL_residuals(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian, &
+&       !                                        neigs_this_cpu, neig_shift,BS_overlap) 
         !
         !
       endif ! l_ydiago
@@ -299,6 +300,7 @@ subroutine K_diago_driver(iq,W,X_static)
     !
     ! Define perturbative corrections
     !=================================
+    if (.not. l_ydiago) then 
     if( BS_perturbative_SOC ) then
       !
       ! To check if the expression for the non hermitian case is correct
@@ -314,6 +316,7 @@ subroutine K_diago_driver(iq,W,X_static)
       if(.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections(1,:),1,'WID')
       BS_E=BS_E-aimag(BS_corrections(1,:))
       !
+    endif
     endif
     !
     ! Now I calculate epsilon

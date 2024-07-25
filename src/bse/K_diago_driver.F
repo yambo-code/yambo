@@ -34,7 +34,7 @@ subroutine K_diago_driver(iq,W,X_static)
   use LIVE_t,         ONLY:live_timing
   use linear_algebra, ONLY:DIAGO
   use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver,PL_diago_residual,K_diagonalize
-  use residuals,      ONLY:K_diago_residuals
+  use residuals,      ONLY:K_diago_residuals,K_kerr_residuals,K_magnons_residuals,K_PL_residuals
   use IO_int,         ONLY:io_control
   use IO_m,           ONLY:REP,VERIFY,OP_WR_CL,OP_RD_CL
   use parser_m,       ONLY:parser
@@ -281,12 +281,18 @@ subroutine K_diago_driver(iq,W,X_static)
         endif ! K_is_not_hermitian
       else 
         !
-        ! K_diagonalize(i_BS_mat, BS_E, BS_V_right, &
-        !    & neigs_this_cpu, neig_shift, BS_VL=BS_V_left,BS_overlap=BS_overlap)
-        if (l_BS_optics) then 
-          call K_diago_residuals(i_BS_mat, BS_E, BS_R_right, BS_V_right, &
-&                  neigs_this_cpu, neig_shift, BS_R_left, BS_V_left, BS_overlap)
-        endif
+        if (l_BS_optics) call K_diago_residuals(i_BS_mat, BS_E, BS_R_right, BS_V_right, &
+&                                               neigs_this_cpu, neig_shift, BS_R_left, BS_V_left, BS_overlap)
+        !
+        if (l_BS_kerr) call K_kerr_residuals(BS_E,BS_V_right,BS_R_right_kerr,neigs_this_cpu, neig_shift) 
+        !
+        if (l_BS_magnons) call K_magnons_residuals(i_BS_mat, neigs_this_cpu, neig_shift, &
+&                               BS_R_left_magn,BS_R_right_magn,BS_V_left,BS_V_right,BS_overlap) 
+        !
+        if (l_BS_photolum) call K_PL_residuals(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian, &
+&                                               neigs_this_cpu, neig_shift,BS_overlap) 
+        !
+        !
       endif ! l_ydiago
       !
     endif ! io_err

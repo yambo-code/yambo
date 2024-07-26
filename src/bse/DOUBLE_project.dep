@@ -1,5 +1,5 @@
+ BSE_utilities.o
  EPS_via_perturbative_inversion.o
- K.o
  K_Haydock.o
  K_Haydock_gather.o
  K_Haydock_response.o
@@ -19,10 +19,13 @@
  K_diago_driver.o
  K_diago_hermitian_residuals.o
  K_diago_kerr_residual.o
+ K_diago_left_residuals.o
  K_diago_magnons_residual.o
  K_diago_non_hermitian_residuals.o
+ K_diago_overlap_matrix.o
  K_diago_perturbative.o
  K_diago_response_functions.o
+ K_diago_right_residuals.o
  K_diagonal.o
  K_dipoles.o
  K_dot_product.o
@@ -37,6 +40,7 @@
  K_inversion_driver.o
  K_inversion_engine.o
  K_inversion_restart.o
+ K_kernel.o
  K_multiply_by_V.o
  K_multiply_by_V_slepc.o
  K_multiply_by_V_transpose.o
@@ -47,8 +51,8 @@
  K_shell_matrix.o
  K_solvers.o
  K_stored_in_a_big_matrix.o
+ K_stored_in_a_nest_matrix.o
  K_stored_in_a_slepc_matrix.o
  PL_diago_residual.o
  PL_via_perturbative_inversion.o
- objects.o
 

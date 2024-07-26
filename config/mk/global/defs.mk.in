@@ -32,6 +32,7 @@ do_e2y      = @compile_e2y@
 do_libxc    = @compile_libxc@
 do_petsc    = @compile_petsc@
 do_slepc    = @compile_slepc@
+do_ydiago   = yes
 shell       = @SHELL@
 package_bugreport = @PACKAGE_BUGREPORT@
 prefix      = @prefix@

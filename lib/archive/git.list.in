@@ -7,3 +7,6 @@
 #
 git_Ydriver=git@github.com:yambo-code/Ydriver.git
 branch_Ydriver=@with_ydriver_branch@
+
+git_Ydiago=git@github.com:yambo-code/Ydiago.git
+branch_Ydiago=@with_ydiago_branch@

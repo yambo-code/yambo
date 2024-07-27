@@ -141,17 +141,11 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  do i_BS_mat=1,BS_res_ares_n_mat
    !
-   if(l_diago) then
+   if(l_diago .or. l_ydiago) then
+     ! NM : In case of ydiago, BSS_n_eig will be overwritten after the solver is called! 
      if(.not.BS_K_coupling) BSS_n_eig = BS_K_dim(i_BS_mat)
      if(     BS_K_coupling) BSS_n_eig = BS_H_dim
    endif
-   !
-   if(l_ydiago) then
-     BSS_n_eig = 1 ! Initiated to a temporary variable. This will be overwritten later
-     ! NM : FIX ME ASAP: We need to set the ranges i,e give K_diagonalize either 
-     ! eigvals_range or neigs_range.
-   endif
-   !
    Input_n_eig=BSS_n_eig
    ! NM :
    ! each cpu contains eigen-vectors from [neig_shift + 1, neigs_this_cpu + neig_shift]

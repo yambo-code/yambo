@@ -38,7 +38,6 @@
  mod_collision_el.o
  mod_collision_ext.o
  mod_com.o
- mod_com2y.o
  mod_com_interfcs.o
  mod_cuda.o
  mod_cusolverdn_y.o

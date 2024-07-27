@@ -8,23 +8,26 @@
 subroutine K_driver_init(what,iq,Ken,Xk)
  !
  use R_lattice,    ONLY:bz_samp
- use electrons,    ONLY:levels,n_sp_pol,n_spinor
+ use electrons,    ONLY:levels,n_sp_pol,n_spinor,n_spin
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match
- use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,BSS_slepc_double_grp,&
-&                       run_Slepc,BSS_mode,&
+ use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix_format,BSS_uses_DbGd,&
+&                       BSS_slepc_double_grp,run_Slepc,BSS_mode,       &
 &                       l_abs_prop_chi_bse,l_eels_can_be_computed,l_eels_from_inversion
  use BS,           ONLY:BSE_L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
 &                       BS_perturbative_SOC,l_BS_magnons,l_BS_photolum,&
 &                       BS_cpl_K_exchange,BS_n_g_exch,BS_res_K_exchange,BS_K_coupling,BS_res_ares_n_mat,&
 &                       BS_n_eh_spaces,l_BS_ares_from_res,BS_bands,BS_K_anti_resonant
- use TDDFT,        ONLY:FXC_is_retarded,FXC_n_g_corr
+ use TDDFT,        ONLY:FXC_is_retarded,FXC_n_g_corr,l_Fxc_from_Vxc
  use drivers,      ONLY:l_col_cut,l_rpa_IP,l_alda_fxc,l_bs_fxc
  use D_lattice,    ONLY:i_time_rev,i_space_inv,l_3D
 #if defined _RT
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:NEQ_Kernel,EQ_Transitions,EQ_NoOcc,NEQ_Residuals,RT_BSE_Occ_Mode
+#endif
+#if defined _CUDA
+ use TDDFT,        ONLY:FXC_mode
 #endif
  !
  implicit none
@@ -36,7 +39,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  ! Work Space
  !
- logical :: l_flag,l_slepc_special
+ logical :: l_flag,l_slepc_special,l_Fxc_Libxc
  !
  ! Defaults
  !==========
@@ -143,7 +146,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  if (iq/=1.and.i_time_rev==0.and.i_space_inv==0 )  l_BS_ares_from_res=.FALSE.
  if (l_BS_photolum)                                l_BS_ares_from_res=.FALSE.
  if (l_BS_magnons.and.n_sp_pol==2)                 l_BS_ares_from_res=.FALSE.
- ! The next line is to switch of section of the codes due to the calculation
+ ! The next line is to switch off sections of the code due to the calculation
  ! of the ARES part without checking the BSE_mode (see io_BS_PAR_init for example)
  if (trim(BSE_mode)=="resonant")                   l_BS_ares_from_res=.TRUE.
  !
@@ -162,6 +165,16 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  & call error('set Lkind = DEFAULT or BAR or FULL')
  !
  BS_K_is_ALDA=l_alda_fxc
+ if (l_alda_fxc) then
+   call parser('FxcLibxc',l_Fxc_Libxc)
+   l_Fxc_from_Vxc=(n_spin==1).and..not.l_Fxc_Libxc
+ endif
+#if defined _CUDA
+ if ( BS_K_is_alda.and. index(FXC_mode,"G-")>0 ) then
+   call warning(" Tddft with G-integrals is not GPU ported. Fallback to R-integrals")
+   FXC_mode="R-def"
+ endif
+#endif
  BS_dip_size=1
  !
  ! Memory saving
@@ -227,13 +240,11 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  ! SLEPC
  !=======
- ! Here we will have two options to initialize the slepc matrix:
- call parser('BSSSlepcMatrix',BSS_slepc_matrix)
  !
 #if defined _SLEPC && !defined _NL
  !
  ! Special case, slepc with distributed matrix need to explicitly compute the anti-resonant block
- l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (.not.BSS_slepc_matrix)
+ l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (BSS_slepc_matrix_format=="shell")
  !
  ! The doubling is activated unless explicily imposed by input since slepc
  ! with shells requires the extended K_multiply_by_V for the non hermitian algorithm

@@ -22,6 +22,7 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   use parallel_m,     ONLY:MPI_COMM_WORLD,par_distribute_set
   use openmp,         ONLY:n_threads_K
   use LIVE_t,         ONLY:live_timing
+  use com,            ONLY:msg
   use YDIAGO_interface
   !
   implicit none
@@ -116,10 +117,7 @@ endif
   ProcX = int(sqrt(real(nProcs)),kind=YDIAGO_INT)
   ProcY = ProcX
 
-  if (my_rank == 0) then 
-    print *, 'BLACS GRID :', ProcX,' X ', ProcY
-  ! FIX ME  : This should be a message. replace with correct function
-  endif
+  call msg("s","BLACS grid",(/ProcX,ProcY/))
 
   mpicxt = BLACScxtInit_Fortran('R', MPI_COMM_WORLD, ProcX, ProcY)
   if (.not. c_associated(mpicxt)) then

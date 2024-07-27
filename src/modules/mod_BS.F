@@ -48,11 +48,13 @@ module BS
  logical :: l_BS_jdos
  logical :: l_BS_abs
  logical :: l_BS_kerr
+ logical :: l_BS_kerr_asymm
  logical :: l_BS_photolum
  logical :: l_BS_magnons
  logical :: l_BS_dichroism
  logical :: l_BS_optics
  logical :: l_BS_esort
+ logical :: l_BS_esort_indx
  !
  ! Dimensions
  !=============
@@ -189,6 +191,15 @@ module BS
    complex(SP), allocatable, device :: O_x_d(:,:)
 #endif
    !
+   ! TDDFT Oscillators
+   !
+   complex(SP), allocatable :: O_tddft_L(:,:,:,:)
+   complex(SP), allocatable :: O_tddft_R(:,:,:,:)
+#ifdef _CUDA
+   complex(SP), allocatable, device :: O_tddft_L_d(:,:,:,:)
+   complex(SP), allocatable, device :: O_tddft_R_d(:,:,:,:)
+#endif
+   !
  end type BS_T_group
  !
  type(BS_T_group), allocatable, target :: BS_T_grp(:)
@@ -217,7 +228,9 @@ module BS
    ! Matrix Block
    !--------------
    complex(SP), allocatable      :: mat(:,:)
-   character, allocatable        :: done(:,:)
+   character,   allocatable      :: done(:,:)
+   integer,     allocatable      :: table(:,:)
+   real(SP),    allocatable      :: E(:)
    !
    ! Oscillators...
    !
@@ -267,69 +280,9 @@ module BS
      if (I>=BS_T_grp_1st_el(BS_nT_grps-1)) T_group=BS_nT_grps
    end function
    !
-   subroutine BS_oscillators_alloc(EXCHANGE,iG,CORRELATION,iB)
-     !
-     use pars,       ONLY:IP
-     use stderr,     ONLY:intc
-     !
-     logical, intent(in) :: EXCHANGE,CORRELATION
-     integer, intent(in) :: iG,iB
-     !
-     if (EXCHANGE) then
-       if (BS_T_grp(iG)%size==0) return
-       YAMBO_ALLOC(BS_T_grp(iG)%O_x,(BS_n_g_exch,BS_T_grp(iG)%size))
-#ifdef _CUDA
-       allocate(BS_T_grp(iG)%O_x_d,mold=BS_T_grp(iG)%O_x)
-#endif
-
-     endif
-     !
-     if (CORRELATION) then
-       if (BS_blk(iB)%N_oscillators==0) return
-       YAMBO_ALLOC(BS_blk(iB)%O_c,(O_ng,BS_blk(iB)%N_oscillators))
-#ifdef _CUDA
-       allocate(BS_blk(iB)%O_c_d,mold=BS_blk(iB)%O_c)
-#endif
-     endif
-     !
-   end subroutine
-   !
-   subroutine BS_oscillators_free(iG_ref,iB_ref)
-     use stderr,     ONLY:intc
-     integer, intent(in) :: iG_ref,iB_ref
-     integer :: iG,iB,ik_loop,ip_loop,ik_now,ip_now
-     do iG=iG_ref,1,-1
-       YAMBO_FREE(BS_T_grp(iG)%O_x)
-#ifdef _CUDA
-       if (allocated(BS_T_grp(iG)%O_x_d)) deallocate(BS_T_grp(iG)%O_x_d)
-#endif
-     enddo
-     if(iB_ref==0) return
-     ik_now=BS_blk(iB_ref)%ik
-     ip_now=BS_blk(iB_ref)%ip
-     if(iB_ref==n_BS_blks) then
-       ik_now=0
-       ip_now=0
-     endif
-     do iB=iB_ref,1,-1
-       ik_loop=BS_blk(iB)%ik
-       ip_loop=BS_blk(iB)%ip
-       if ( ik_now==ik_loop .and. ip_now==ip_loop .and. .not.l_BSE_minimize_memory ) cycle
-       if (.not.allocated(BS_blk(iB)%O_c)) exit
-       YAMBO_FREE(BS_blk(iB)%O_c)
-       YAMBO_FREE(BS_blk(iB)%O_table)
-       YAMBO_FREE(BS_blk(iB)%kp_table)
-#ifdef _CUDA
-       if (allocated(BS_blk(iB)%O_c_d)) deallocate(BS_blk(iB)%O_c_d)
-#endif
-     enddo
-     !
-   end subroutine
-   !
    subroutine BS_Blocks_and_Transitions_alloc(E,iT,dom_k_T_group)
      !
      use pars,       ONLY:IP,cZERO
-     use stderr,     ONLY:intc
      use electrons,  ONLY:levels,n_sp_pol
      integer,      intent(in) :: iT,dom_k_T_group
      type(levels), intent(in) :: E
@@ -377,7 +330,6 @@ module BS
    end subroutine
    !
    subroutine BS_Blocks_and_Transitions_free()
-     use stderr,     ONLY:intc
      use parallel_m, ONLY:PAR_BS_T_grps_index
      integer :: iT
      !
@@ -412,7 +364,7 @@ module BS
      !
      if(allocated(BS_blk)) deallocate(BS_blk)
      !
-   end subroutine
+   end subroutine BS_Blocks_and_Transitions_free
    !
    function BS_Block_size(i_block)
      !

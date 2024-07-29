@@ -5,11 +5,11 @@
 !
 ! Originally by AM, MG, DS
 !
-! Modified by NM to for taking care of new parallel distribution.
+! Modified by NM for taking care of new parallel distribution.
 !
 !
-subroutine K_diago_residuals(i_BS_mat, BS_Energies, BS_Res_right, BS_VR, &
-      &                  neigs_this_cpu, neig_shift, BS_Res_left, BS_VL, BS_Overlapp) 
+subroutine K_diago_residuals(mode, i_BS_mat, BS_E, BS_R_right, BS_VR, &
+      &                  neigs_this_cpu, neig_shift, BS_R_left, BS_VL, BS_Overlap) 
    !
    !  The right eigenvector v(j) of A satisfies
    !                   A * v(j) = lambda(j) * v(j)
@@ -28,27 +28,44 @@ subroutine K_diago_residuals(i_BS_mat, BS_Energies, BS_Res_right, BS_VR, &
    use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
    use LIVE_t,         ONLY:live_timing
    use X_m,            ONLY:global_gauge
-   use BS_solvers,     ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f, BSS_eh_f_RES
+   use BS_solvers,     ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f
    use BS,             ONLY:BS_K_coupling,BS_K_dim,BS_H_dim
+   use MAGNONS,        ONLY:BSS_dipoles_magn
+   use DICHROISM,      ONLY:BSS_dipoles_dich
    !
    implicit none
    !
+   character(*),intent(in)  :: mode
    integer,intent(in)       :: i_BS_mat, neigs_this_cpu, neig_shift
-   complex(SP), allocatable :: BS_Energies(:) ! Full set of eigvals are required
-   complex(SP), pointer     :: BS_Res_right(:)
+   complex(SP), allocatable :: BS_E(:) ! Full set of eigvals are required
+   complex(SP), pointer     :: BS_R_right(:)
    complex(SP), target,allocatable     :: BS_VR(:,:)
-   complex(SP), pointer     :: BS_Res_left(:)
+   complex(SP), pointer     :: BS_R_left(:)
    complex(SP), target, allocatable     :: BS_VL(:,:)
-   complex(SP), pointer     :: BS_Overlapp(:,:)
-   ! NM : if BS_Overlapp is null(), then it is treated as a identity matrix
+   complex(SP), pointer     :: BS_Overlap(:,:)
+   ! NM : if BS_Overlap is null(), then it is treated as a identity matrix
    ! optional
    ! Workspace
    integer              ::i1, neig_total, SL_H_dim, i_range(2)
    !
    complex(SP), allocatable :: tmp_res(:), BS_R_tmp(:) 
+   logical                  :: velocity_correction, compute_left
    !
 
-   neig_total = size(BS_Energies)
+   compute_left = .false. 
+   if (associated(BS_R_left)) compute_left = .true.
+   !
+   ! Sanity checks
+   if (.not. allocated(BS_E)) return 
+   if (.not. associated(BS_R_right) .or. .not. allocated(BS_VR)) return 
+   if (BS_K_coupling .and. .not. allocated(BS_VL)) return 
+   !
+   neig_total = size(BS_E)
+   !
+   if (size(BS_R_right)  /= neig_total) call error("Size mismatch between eigvals and R.residuals.")
+   if (size(BS_VR,dim=2) /= neigs_this_cpu) call error("Size mismatch between eigvecs and R.residuals.")
+   !
+   !
    !
    if(BS_K_coupling) then 
       SL_H_dim=BS_H_dim
@@ -58,64 +75,62 @@ subroutine K_diago_residuals(i_BS_mat, BS_Energies, BS_Res_right, BS_VR, &
       i_range=(/1,SL_H_dim/) + BS_K_dim(1)*(i_BS_mat-1)
    endif
 
-   if (associated(BS_Res_right)) deallocate(BS_Res_right)
-   if (associated(BS_Res_left)) deallocate(BS_Res_left)
-
-   allocate(BS_Res_right(neig_total))
-   allocate(BS_Res_left(neig_total))
-
    allocate(tmp_res(SL_H_dim))
-   allocate(BS_R_tmp(neig_total))
    !
-   ! [1] BS_Res_right(i)=<q0|j><j|i_R>
+   ! [1] BS_R_right(i)=<q0|j><j|i_R>
    !                  =conjg(BSS_dipoles(j))*BS_VR(j,i)
    !
-   BS_Res_right= cZERO ! This must be initilaized to 0 else behaviour is undefined
-   BS_Res_left = cZERO
+   BS_R_right= cZERO ! This must be initilaized to 0 else behaviour is undefined
+   if (compute_left) BS_R_left = cZERO
    !
-   call live_timing('EPS R residuals',neigs_this_cpu)
+   velocity_correction=(index(mode,"opt")>0).and.(trim(global_gauge)=="velocity")
    !
-   if(BS_K_coupling) then 
-      tmp_res = conjg(BSS_dipoles_opt(1,:))*sqrt(cmplx(BSS_eh_f,kind=SP))
-   else 
-      tmp_res = conjg(BSS_dipoles_opt(1,i_range(1):i_range(2))) * &
-         &           sqrt(cmplx(BSS_eh_f_RES(i_range(1):i_range(2)),kind=SP))
-   endif
+   if(trim(mode)=="opt1") tmp_res=BSS_dipoles_opt(1,i_range(1):i_range(2))
+   if(trim(mode)=="opt2") tmp_res=BSS_dipoles_opt(2,i_range(1):i_range(2))
+   if(trim(mode)=="dic1") tmp_res=BSS_dipoles_dich(1,i_range(1):i_range(2)) 
+   if(trim(mode)=="dic2") tmp_res=BSS_dipoles_dich(2,i_range(1):i_range(2)) 
+   if(trim(mode)=="mag1") tmp_res=BSS_dipoles_magn(1,i_range(1):i_range(2))
+   if(trim(mode)=="mag2") tmp_res=BSS_dipoles_magn(2,i_range(1):i_range(2))
    !
+   call live_timing(trim(mode)//' residuals ',neigs_this_cpu)
+   !
+   tmp_res = conjg(tmp_res)*sqrt(cmplx(BSS_eh_f(i_range(1):i_range(2)),kind=SP)) 
+   if (allocated(BSS_eh_Z)) tmp_res=tmp_res*sqrt(BSS_eh_Z(i_range(1):i_range(2)))
    ! DS. Note. Velocity gauge fixing does not work if neq occupations are loaded. Not sure why.
-   if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E(i_range(1):i_range(2))
-   if (allocated(BSS_eh_Z)           ) tmp_res=tmp_res*sqrt(BSS_eh_Z(i_range(1):i_range(2)))
+   if (velocity_correction) tmp_res=tmp_res/BSS_eh_E(i_range(1):i_range(2))
    !
    do i1=1, neigs_this_cpu
       !
-      BS_Res_right(i1 + neig_shift)=V_dot_V_omp(SL_H_dim,tmp_res,BS_VR(:,i1))
-      if (trim(global_gauge)=="velocity") BS_Res_right(i1 + neig_shift) = &
-         &                     BS_Res_right(i1 + neig_shift)*BS_Energies(i1 + neig_shift)
+      BS_R_right(i1 + neig_shift)=V_dot_V_omp(SL_H_dim,tmp_res,BS_VR(:,i1))
+      if (velocity_correction) BS_R_right(i1 + neig_shift) = &
+         &                     BS_R_right(i1 + neig_shift)*BS_E(i1 + neig_shift)
       !
       call live_timing(steps=1)
    enddo
-   call PP_redux_wait(BS_Res_right)
+   call PP_redux_wait(BS_R_right)
    call live_timing
    ! In case of hermitian, return now
-   if (.not. BS_K_coupling) then 
-      BS_Res_left = conjg(BS_Res_right)
+   if (.not. BS_K_coupling .or. .not. compute_left) then 
+      if (compute_left) BS_R_left = conjg(BS_R_right)
+      deallocate(tmp_res)
       return 
    endif
    !
    ! [2] BS_R_tmp(i)= <i_K|j><j|q0> 
    !                = conjg( BS_VL(k,i))*BSS_dipoles(k)*R_k
    !
+   allocate(BS_R_tmp(neig_total))
    BS_R_tmp=cZERO
    !
-   call live_timing('EPS L residuals',neigs_this_cpu)
+   call live_timing(trim(mode)//' L residuals',neigs_this_cpu)
    !
-   tmp_res = BSS_dipoles_opt(1,:)*sqrt(cmplx(BSS_eh_f,kind=SP))
+   tmp_res = conjg(tmp_res)
    !
    do i1=1, neigs_this_cpu
       !
       BS_R_tmp(i1 + neig_shift)=Vstar_dot_V_omp(SL_H_dim,BS_VL(:,i1),tmp_res)
-      if (trim(global_gauge)=="velocity") BS_R_tmp(i1 + neig_shift) = &
-         &                     BS_R_tmp(i1 + neig_shift)*BS_Energies(i1 + neig_shift)
+      if (velocity_correction) BS_R_tmp(i1 + neig_shift) = &
+         &                     BS_R_tmp(i1 + neig_shift)*BS_E(i1 + neig_shift)
       !
       call live_timing(steps=1)
       !
@@ -124,24 +139,24 @@ subroutine K_diago_residuals(i_BS_mat, BS_Energies, BS_Res_right, BS_VR, &
    !
    call live_timing()
    !
-   ! [3] BS_Res_left(i)=BS_Overlapp(i,j)BS_R_tmp(j)
+   ! [3] BS_R_left(i)=BS_Overlap(i,j)BS_R_tmp(j)
    !
-   BS_Res_left=cZERO
-   if (.not. associated(BS_Overlapp)) then 
+   BS_R_left=cZERO
+   if (.not. associated(BS_Overlap)) then 
       ! In this case overlap matrix is simply identity
-      BS_Res_left = BS_R_tmp
-   else 
-      call live_timing('EPS L x overlap',neigs_this_cpu)
+      BS_R_left = BS_R_tmp
+   else
+      call live_timing(trim(mode)//' L x overlap',neigs_this_cpu)
       if (neigs_this_cpu>0) then
          do i1=1,neig_total
             !
-            BS_Res_left(i1)=V_dot_V_omp(neigs_this_cpu,BS_Overlapp(i1,:), &
-               &                BS_R_tmp(neig_shift+1 : neig_shift+neigs_this_cpu))
+            BS_R_left(i1)=V_dot_V_omp(neigs_this_cpu,BS_Overlap(i1,:), &
+               &          BS_R_tmp(neig_shift+1 : neig_shift+neigs_this_cpu))
             !
             call live_timing(steps=1)
          enddo
       endif
-      call PP_redux_wait(BS_Res_left)
+      call PP_redux_wait(BS_R_left)
       call live_timing
    endif
    !
@@ -152,190 +167,7 @@ subroutine K_diago_residuals(i_BS_mat, BS_Energies, BS_Res_right, BS_VR, &
 end subroutine K_diago_residuals
 !
 !
-subroutine K_kerr_residuals(BS_E,BS_V_right,BS_R_right_kerr,neigs_this_cpu, neig_shift) 
-   !
-   ! BS_R_right_kerr(i)=<q0_kerr|j><j|i_R>
-   !                   =conjg(BSS_dipoles(j))*BS_V_right(j,i)
-   !
-   use pars,           ONLY:SP,cZERO
-   use wrapper_omp,    ONLY:V_dot_V_omp
-   use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
-   use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
-   use LIVE_t,         ONLY:live_timing
-   use X_m,            ONLY:global_gauge
-   use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_Z,BSS_eh_f,BSS_n_eig,BSS_dipoles_opt
-   use BS,             ONLY:BS_K_dim,BS_H_dim
-   !
-   implicit none
-   !
-   complex(SP), allocatable             :: BS_E(:)
-   complex(SP), target,allocatable      :: BS_V_right(:,:)
-   complex(SP), pointer                 :: BS_R_right_kerr(:)
-   integer,intent(in)                   :: neigs_this_cpu, neig_shift
-   !
-   ! Workspace
-   !
-   integer              ::i1
-   !
-   complex(SP) :: tmp_res(BS_H_dim)
-   !
-   !
-   if (associated(BS_R_right_kerr)) deallocate(BS_R_right_kerr)
-   allocate(BS_R_right_kerr(size(BS_E)))
 
-   BS_R_right_kerr=cZERO
-   !
-   call live_timing('KERR residuals ',neigs_this_cpu)
-   !
-   forall(i1=1:BS_K_dim(1))          tmp_res(i1) = conjg(BSS_dipoles_opt(2,i1))*sqrt(cmplx(BSS_eh_f(i1),kind=SP)) 
-   forall(i1=BS_K_dim(1)+1:BS_H_dim) tmp_res(i1) = conjg(BSS_dipoles_opt(2,i1))*sqrt(cmplx(BSS_eh_f(i1),kind=SP))
-   if (allocated(BSS_eh_Z)           ) tmp_res=tmp_res*sqrt(BSS_eh_Z)
-   if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
-   !
-   do i1=1,neigs_this_cpu
-   !
-      BS_R_right_kerr(i1 + neig_shift)=V_dot_V_omp(BS_H_dim,tmp_res,BS_V_right(:,i1))
-      if (trim(global_gauge)=="velocity") BS_R_right_kerr(i1 + neig_shift)= &
-&                                      BS_R_right_kerr(i1 + neig_shift)*BS_E(i1 + neig_shift)
-!
-      call live_timing(steps=1)
-   enddo
-   call PP_redux_wait(BS_R_right_kerr)
-   call live_timing
-         !
-end subroutine K_kerr_residuals
-
-
-subroutine K_magnons_residuals(i_BS_mat, neigs_this_cpu, neig_shift, &
-      &                 BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap) 
-   !
-   use pars,           ONLY:SP,cZERO
-   use wrapper_omp,    ONLY:V_dot_V_omp,Vstar_dot_V_omp
-   use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index
-   use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
-   use LIVE_t,         ONLY:live_timing
-   use BS_solvers,     ONLY:BSS_eh_Z,BSS_eh_f,BSS_n_eig
-   use BS,             ONLY:BS_H_dim, BS_K_coupling, BS_K_dim
-   use MAGNONS,        ONLY:BSS_dipoles_magn
-   !
-   implicit none
-   !
-   integer,intent(in)      :: i_BS_mat, neigs_this_cpu, neig_shift
-   complex(SP), pointer :: BS_R_left(:,:),BS_R_right(:,:)
-   complex(SP), target,allocatable  :: BS_V_left(:,:),BS_V_right(:,:)
-   complex(SP), pointer  :: BS_overlap(:,:)
-   !
-   ! Workspace
-   !
-   integer                  ::i_lambda, i_range(2), neig_total, SL_H_dim
-   complex(SP),allocatable  ::tmp_res(:,:), BS_R_tmp(:,:)  
-   !
-   if(BS_K_coupling) then 
-      SL_H_dim=BS_H_dim
-      i_range=(/1,SL_H_dim/)
-   else 
-      SL_H_dim=BS_K_dim(i_BS_mat)
-      i_range=(/1,SL_H_dim/) + BS_K_dim(1)*(i_BS_mat-1)
-   endif
-   !
-   ! [1] BS_R_right(i)=<q0|j><j|i_R>
-   !                  =conjg(BSS_dipoles(j))*BS_V_right(j,i)
-   !
-   neig_total = BSS_n_eig
-
-   if (associated(BS_R_left)) deallocate(BS_R_left)
-   if (associated(BS_R_right)) deallocate(BS_R_right)
-
-   allocate(BS_R_left (2,neig_total))
-   allocate(BS_R_right(2,neig_total))
-
-   allocate(tmp_res(SL_H_dim,2)) 
-   allocate(BS_R_tmp(2,neig_total))
-   BS_R_right=cZERO
-   !
-   call live_timing('MAG R residuals',neigs_this_cpu)
-   !
-   tmp_res(:,1) = conjg(BSS_dipoles_magn(1,i_range(1):i_range(2)))*sqrt(cmplx(BSS_eh_f(:),kind=SP)) 
-   tmp_res(:,2) = conjg(BSS_dipoles_magn(2,i_range(1):i_range(2)))*sqrt(cmplx(BSS_eh_f(:),kind=SP)) 
-   !
-   if (allocated(BSS_eh_Z)) then
-      tmp_res(:,1)=tmp_res(:,1)*sqrt(BSS_eh_Z(i_range(1):i_range(2)))
-      tmp_res(:,2)=tmp_res(:,2)*sqrt(BSS_eh_Z(i_range(1):i_range(2)))
-   endif
-   !
-   ! neigs_this_cpu, neig_shift
-   do i_lambda=1 + neig_shift, neigs_this_cpu + neig_shift
-      !
-      BS_R_right(1,i_lambda)=V_dot_V_omp(SL_H_dim,tmp_res(:,1),BS_V_right(:,i_lambda-neig_shift))
-      BS_R_right(2,i_lambda)=V_dot_V_omp(SL_H_dim,tmp_res(:,2),BS_V_right(:,i_lambda-neig_shift))
-      !
-      call live_timing(steps=1)
-   enddo
-   call PP_redux_wait(BS_R_right)
-   call live_timing
-   if (.not. BS_K_coupling) then 
-      BS_R_left = conjg(BS_R_right)
-      return 
-   endif
-   !
-   ! [2] BS_R_tmp(i)= <i_K|j><j|q0> 
-   !                = conjg( BS_V_left(k,i))*BSS_dipoles(k)*R_k
-   !
-   BS_R_tmp=cZERO
-   !
-   call live_timing('MAG L residuals',neigs_this_cpu)
-   !
-   tmp_res(:,1) =       BSS_dipoles_magn(1,:) *sqrt(cmplx(BSS_eh_f(:),kind=SP)) 
-   tmp_res(:,2) =       BSS_dipoles_magn(2,:) *sqrt(cmplx(BSS_eh_f(:),kind=SP)) 
-   !
-   if (allocated(BSS_eh_Z)) then
-      tmp_res(:,1)=tmp_res(:,1)*sqrt(BSS_eh_Z(:))
-      tmp_res(:,2)=tmp_res(:,2)*sqrt(BSS_eh_Z(:))
-   endif
-   !
-   do i_lambda=1 + neig_shift, neigs_this_cpu + neig_shift
-      !
-      !
-      BS_R_tmp(1,i_lambda)=Vstar_dot_V_omp(SL_H_dim,BS_V_left(:,i_lambda-neig_shift),tmp_res(:,1))
-      BS_R_tmp(2,i_lambda)=Vstar_dot_V_omp(SL_H_dim,BS_V_left(:,i_lambda-neig_shift),tmp_res(:,2))
-      !
-      call live_timing(steps=1)
-      !
-   enddo
-   call PP_redux_wait(BS_R_tmp)
-   !
-   call live_timing()
-   !
-   ! [3] BS_R_left(i)=BS_overlap(i,j)BS_R_tmp(j)
-   !
-   if (.not. associated(BS_overlap)) then 
-      ! In this case overlap matrix is simply identity
-      BS_R_left = BS_R_tmp
-   else 
-      BS_R_left=cZERO
-      !
-      if (neigs_this_cpu>0) then
-         call live_timing('MAG L x overlap',neigs_this_cpu)
-         !
-         do i_lambda=1,neig_total
-            !
-            BS_R_left(1,i_lambda)=V_dot_V_omp(neigs_this_cpu,BS_overlap(i_lambda,:), &
-               &                           BS_R_tmp(1,neig_shift+1 : neig_shift+neigs_this_cpu))
-
-            BS_R_left(2,i_lambda)=V_dot_V_omp(neigs_this_cpu,BS_overlap(i_lambda,:), &
-               &                           BS_R_tmp(2,neig_shift+1 : neig_shift+neigs_this_cpu))
-            !
-            call live_timing(steps=1)
-         enddo
-      endif
-      call PP_redux_wait(BS_R_left)
-      call live_timing
-      !
-   endif
-   deallocate(tmp_res)
-   deallocate(BS_R_tmp)
-   !
-end subroutine K_magnons_residuals
 
 !subroutine K_PL_residuals(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,neigs_this_cpu, neig_shift,BS_overlap) 
 !   !

@@ -124,7 +124,16 @@ subroutine K_diago_residuals(mode, i_BS_mat, BS_E, BS_R_right, BS_VR, &
    !
    call live_timing(trim(mode)//' L residuals',neigs_this_cpu)
    !
-   tmp_res = conjg(tmp_res)
+   if(trim(mode)=="opt1") tmp_res=BSS_dipoles_opt(1,i_range(1):i_range(2)) 
+   if(trim(mode)=="opt2") tmp_res=BSS_dipoles_opt(2,i_range(1):i_range(2)) 
+   if(trim(mode)=="dic1") tmp_res=BSS_dipoles_dich(1,i_range(1):i_range(2)) 
+   if(trim(mode)=="dic2") tmp_res=BSS_dipoles_dich(2,i_range(1):i_range(2)) 
+   if(trim(mode)=="mag1") tmp_res=BSS_dipoles_magn(1,i_range(1):i_range(2))
+   if(trim(mode)=="mag2") tmp_res=BSS_dipoles_magn(2,i_range(1):i_range(2))
+   !
+   tmp_res = tmp_res*sqrt(cmplx(BSS_eh_f(i_range(1):i_range(2)),kind=SP)) 
+   if (allocated(BSS_eh_Z)) tmp_res=tmp_res*sqrt(BSS_eh_Z(i_range(1):i_range(2)))
+   if (velocity_correction) tmp_res=tmp_res/BSS_eh_E(i_range(1):i_range(2))
    !
    do i1=1, neigs_this_cpu
       !
@@ -146,16 +155,14 @@ subroutine K_diago_residuals(mode, i_BS_mat, BS_E, BS_R_right, BS_VR, &
       ! In this case overlap matrix is simply identity
       BS_R_left = BS_R_tmp
    else
-      call live_timing(trim(mode)//' L x overlap',neigs_this_cpu)
-      if (neigs_this_cpu>0) then
-         do i1=1,neig_total
-            !
-            BS_R_left(i1)=V_dot_V_omp(neigs_this_cpu,BS_Overlap(i1,:), &
-               &          BS_R_tmp(neig_shift+1 : neig_shift+neigs_this_cpu))
-            !
-            call live_timing(steps=1)
-         enddo
-      endif
+      call live_timing(trim(mode)//' L x overlap',neig_total)
+      do i1=1,neig_total
+         !
+         if (neigs_this_cpu > 0) BS_R_left(i1)=V_dot_V_omp(neigs_this_cpu,BS_Overlap(i1,:), &
+&                                BS_R_tmp(neig_shift+1 : neig_shift+neigs_this_cpu))
+         !
+         call live_timing(steps=1)
+      enddo
       call PP_redux_wait(BS_R_left)
       call live_timing
    endif

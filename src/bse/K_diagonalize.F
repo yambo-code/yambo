@@ -222,7 +222,7 @@ endif
     ! -50 is the error code when CHOLESKY factorization fails. see Ydiago/src/common/error.h
     if (error_diago == -50) then
       !
-      call warning('Cholesky decomposition failed. &
+      call msg("s",'Warning : Cholesky decomposition failed. &
         & Switching to slow scalapack solver. This solver is not-GPU supported.')
       !
       if (compute_left_eigs .and. .not. c_associated(evecs_left)) then 

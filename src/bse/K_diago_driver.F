@@ -386,44 +386,41 @@ subroutine K_diago_driver(iq,W,X_static)
        !
        ! Compute residuals
        !
+       YAMBO_ALLOC_P(tmp_res_ptrR,(BSS_n_eig))
+       YAMBO_ALLOC_P(tmp_res_ptrL,(BSS_n_eig))
        ! Absorption
        if(l_abs_res) then
          call K_diago_residuals("opt1",i_BS_mat,BS_E,BS_R_right_abs, BS_V_right, &
 &                               neigs_this_cpu, neig_shift, BS_R_left_abs,BS_V_left,BS_overlap)
-         ! NM : BS_R_right_kerr must be allocated when l_kerr_rgt or l_kerr_lft. 
-         ! This needs to be addressed in K_diago_residuals function. For now we compute l_kerr_rgt.
-         ! when l_kerr_rgt or l_kerr_lft is true.
-         if (.not. l_kerr_rgt .and. l_kerr_lft) YAMBO_ALLOC_P(BS_R_right_kerr,(BSS_n_eig))
-         if(l_kerr_rgt .or. l_kerr_lft) call K_diago_residuals("opt2",i_BS_mat,BS_E,BS_R_right_kerr, &
+         !
+         if(l_kerr_rgt) call K_diago_residuals("opt2",i_BS_mat,BS_E,BS_R_right_kerr, &
 &                       BS_V_right, neigs_this_cpu, neig_shift, BS_R_left_kerr,BS_V_left,BS_overlap)
          !
-         if (.not. l_kerr_rgt .and. l_kerr_lft) then 
-           YAMBO_FREE_P(BS_R_right_kerr)
-           BS_R_right_kerr => null()
-         endif
+         if(l_kerr_lft .and. .not. l_kerr_rgt) call K_diago_residuals("opt2",i_BS_mat,BS_E,tmp_res_ptrR, &
+&                       BS_V_right, neigs_this_cpu, neig_shift, BS_R_left_kerr,BS_V_left,BS_overlap)
          !
         endif
        !
        ! Dichroism
         if(l_BS_dichroism) then
-           tmp_res_ptrR => BS_R_right_dich(:,1)
+           tmp_res_ptrR = BS_R_right_dich(:,1)
            call K_diago_residuals("dic1",i_BS_mat,BS_E,tmp_res_ptrR,BS_V_right, &
 &                               neigs_this_cpu, neig_shift, null(),BS_V_left,BS_overlap)
-           tmp_res_ptrR => BS_R_right_dich(:,2)
+           tmp_res_ptrR = BS_R_right_dich(:,2)
            call K_diago_residuals("dic2",i_BS_mat,BS_E,tmp_res_ptrR,BS_V_right, &
 &                               neigs_this_cpu, neig_shift, null(),BS_V_left,BS_overlap)
        endif
        !
        ! Magnons
        if(l_BS_magnons)   then
-         tmp_res_ptrR => BS_R_right_magn(1,:)
-         tmp_res_ptrL => BS_R_left_magn(1,:)
+         tmp_res_ptrR = BS_R_right_magn(1,:)
+         tmp_res_ptrL = BS_R_left_magn(1,:)
          call K_diago_residuals("mag1",i_BS_mat,BS_E,tmp_res_ptrR,BS_V_right, &
 &                               neigs_this_cpu, neig_shift, tmp_res_ptrL,BS_V_left,BS_overlap)
          
            if(n_spinor==2)  then
-             tmp_res_ptrR => BS_R_right_magn(2,:)
-             tmp_res_ptrL => BS_R_left_magn(2,:)
+             tmp_res_ptrR = BS_R_right_magn(2,:)
+             tmp_res_ptrL = BS_R_left_magn(2,:)
              call K_diago_residuals("mag2",i_BS_mat,BS_E,tmp_res_ptrR,BS_V_right,&
 &                               neigs_this_cpu, neig_shift, tmp_res_ptrL,BS_V_left,BS_overlap)
            endif
@@ -440,6 +437,8 @@ subroutine K_diago_driver(iq,W,X_static)
 &      !                                        neigs_this_cpu, neig_shift,BS_overlap) 
        !
        !
+       YAMBO_FREE_P(tmp_res_ptrR)
+       YAMBO_FREE_P(tmp_res_ptrL)     
      endif ! l_ydiago
      !
    endif

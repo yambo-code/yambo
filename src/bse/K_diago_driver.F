@@ -25,7 +25,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use stderr,         ONLY:intc
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
 &                         BS_res_ares_n_mat,l_BS_optics,l_BS_dichroism !,BS_Blocks_symmetrize_K,&
- use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,&
+ use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,BSS_slepc_double_grp,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E
  use X_m,            ONLY:X_t,X_OUTPUT_driver
  use electrons,      ONLY:n_sp_pol,n_spinor
@@ -41,18 +41,18 @@ subroutine K_diago_driver(iq,W,X_static)
  use timing_m,       ONLY:timing
 #if defined _SLEPC && !defined _NL
  use interfaces,     ONLY:MATRIX_slepc
- !
- use petscmat
- use slepceps
- use slepcepsdef
- use petscmatdef
- !
- use BS_solvers, ONLY:BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_custom,&
-&                     Slepc_v,BS_HAYVEC_free
+ use BS_solvers,     ONLY:BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_custom,&
+&                         Slepc_v,BS_HAYVEC_free
 #endif
  use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_photolum,l_BS_ares_from_res
  use MAGNONS,        ONLY:BSS_MAGN_free
  use PHOTOLUM,       ONLY:BSS_PL_free
+ !
+#if defined _SLEPC && !defined _NL
+ use slepceps,       ONLY:SlepcInitialize
+ use petscmat,       ONLY:PETSC_NULL_CHARACTER
+ use petscmatdef,    ONLY:tMat
+#endif
  !
 #include<memory.h>
  ! 
@@ -69,6 +69,7 @@ subroutine K_diago_driver(iq,W,X_static)
  ! Slepc specific
  !
 #if defined _SLEPC && !defined _NL
+ ! Mat becomes type(tMat) after source is pre-processed
  Mat                   :: slepc_mat
  PetscErrorCode        :: ierr
 #endif
@@ -189,14 +190,15 @@ subroutine K_diago_driver(iq,W,X_static)
        ! 1. Here we will define a PetscShell matrix and define the matrix-vector multiplication
        ! using the K_multiply_by_V function used in the Haydock method
        if (index(BSS_slepc_matrix_format,"shell")>0) then
-         BSS_slepc_custom=(BSS_slepc_matrix_format=="shell").and.BS_K_coupling
+         BSS_slepc_custom=(BSS_slepc_matrix_format=="shell").and.BS_K_coupling.and..not.BSS_slepc_double_grp
          call K_shell_matrix(i_BS_mat,slepc_mat)
          ! 2. Here we create a distributed PETSC matrix from the BS_blks
        else if (BSS_slepc_matrix_format=="explicit") then
          if (BS_K_coupling.and.l_BS_ares_from_res) then
            ! 2.1. With memory optimization using nest matrix (only possible for the coupling case)
            call K_stored_in_a_nest_matrix(i_BS_mat,.FALSE.,slepc_mat)
-           BSS_slepc_custom=.TRUE.
+           BSS_slepc_custom=.not.BSS_slepc_double_grp
+           !BSS_slepc_nested=.TRUE. ! to replace BSS_slepc_custom (?)
          else
            ! 2.2. Explicit PETSc matrix for the rest of the cases
            call K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)

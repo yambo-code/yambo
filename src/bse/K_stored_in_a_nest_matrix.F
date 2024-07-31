@@ -165,6 +165,7 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,nest_debug,slepc_mat)
    ! Folded spectrum
    !
    call MatCreateBSE(R,C,slepc_mat,ierr);
+   !
  else
    !
    ! Nested matrix
@@ -172,11 +173,11 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,nest_debug,slepc_mat)
    ! Create the two shell submatrices and define the required operations
    !
    call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,RT,ierr)
-   if (have_cuda) then
 #ifdef PETSC_HAVE_CUDA
-   call MatSetVecType(RT,VECCUDA,ierr)
-#endif
+   if (have_cuda) then
+     call MatSetVecType(RT,VECCUDA,ierr)
    endif
+#endif
    call MatShellSetOperation(RT,MATOP_GET_DIAGONAL,RT_get_diagonal,ierr)
    call MatShellSetOperation(RT,MATOP_MULT,RT_mat_mult,ierr)
    call MatShellSetOperation(RT,MATOP_MULT_TRANSPOSE,RT_mat_mult_transpose,ierr)
@@ -185,11 +186,11 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,nest_debug,slepc_mat)
    call PetscPopErrorHandler(ierr)
    !
    call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,CHT,ierr)
-   if (have_cuda) then
 #ifdef PETSC_HAVE_CUDA
-   call MatSetVecType(CHT,VECCUDA,ierr)
-#endif
+   if (have_cuda) then
+     call MatSetVecType(CHT,VECCUDA,ierr)
    endif
+#endif
    call MatShellSetOperation(CHT,MATOP_GET_DIAGONAL,CHT_get_diagonal,ierr)
    call MatShellSetOperation(CHT,MATOP_MULT,CHT_mat_mult,ierr)
    call MatShellSetOperation(CHT,MATOP_MULT_TRANSPOSE,CHT_mat_mult_transpose,ierr)
@@ -205,11 +206,11 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,nest_debug,slepc_mat)
    matArray(4) = RT
    itwo = 2
    call MatCreateNest(PETSC_COMM_WORLD,itwo,PETSC_NULL_INTEGER,itwo,PETSC_NULL_INTEGER,matArray,slepc_mat,ierr)
-   if (have_cuda) then
 #ifdef PETSC_HAVE_CUDA
-   call MatSetVecType(slepc_mat,VECCUDA,ierr)
-#endif
+   if (have_cuda) then
+     call MatSetVecType(slepc_mat,VECCUDA,ierr)
    endif
+#endif
  endif
  !
 end subroutine K_stored_in_a_nest_matrix

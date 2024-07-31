@@ -57,7 +57,7 @@ compile: uncompress configure
 install: uncompress configure compile
 	@if ! test -f installed.stamp ; then \
          echo "\t[$(PACKAGE)] installation"; \
-         ( cd $(PACKAGE); $(make) -j1 SLEPC_DIR=$(PWD)/$(PACKAGE) PETSC_DIR=$(LIBPATH) install  >> ${compdir}/log/compile_$(PACKAGE).log 2>&1 ); \
+         ( cd $(PACKAGE); $(make) -j1 SLEPC_DIR=$(PWD)/$(PACKAGE) PETSC_DIR=$(LIBPATH) install  >> ${compdir}/log/install_$(PACKAGE).log 2>&1 ); \
          touch installed.stamp; \
         fi
 

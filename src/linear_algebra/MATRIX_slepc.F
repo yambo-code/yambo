@@ -130,16 +130,14 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  ! * Jacobi-Davidson: EPSJD, NOT WORKING WITH KSP PREONLY
  !                    STPPRECOND + KSPCG SUPER-SLOW + PCJACOBY super slow
  !
- ! Default
+ ! Default Krylov-Schur used in case input is mispelled
  epskind=EPSKRYLOVSCHUR
  ! From user
- if(BSS_slepc_approach=="Krylov-Schur")          epskind=EPSKRYLOVSCHUR
- if(BSS_slepc_approach=="Generalized-Davidson")  epskind=EPSGD
- if(BSS_slepc_approach=="Jacobi-Davidson")       epskind=EPSJD
- !if(BSS_slepc_approach=="Scalapack")             epskind=EPSSCALAPACK
- !if(BSS_slepc_approach=="ELPA")                  epskind=EPSELPA
- ! In case input is mispelled fallback to Krylov-Schur
- if (epskind==EPSKRYLOVSCHUR) BSS_slepc_approach="Krylov-Schur"
+ if(index(BSS_slepc_approach,"Krylov-Schur")>0)          epskind=EPSKRYLOVSCHUR
+ if(index(BSS_slepc_approach,"Generalized-Davidson")>0)  epskind=EPSGD
+ if(index(BSS_slepc_approach,"Jacobi-Davidson")>0)       epskind=EPSJD
+ !if(index(BSS_slepc_approach,"Scalapack")>0)            epskind=EPSSCALAPACK
+ !if(index(BSS_slepc_approach,"ELPA")>0)                 epskind=EPSELPA
  !
  if (.not. (epskind==EPSKRYLOVSCHUR .or. epskind==EPSGD .or. epskind==EPSJD )) then
    call error("wrong slepc approach in input "//trim(BSS_slepc_approach))
@@ -234,15 +232,33 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !Set monitor
  call EPSMonitorSet(eps,MyEPSMonitor,0,PETSC_NULL_FUNCTION,ierr)
  !
+ ! Load eps from command line options. It overwrites input file
  call EPSSetFromOptions(eps,ierr)
  !
  if(present(V_left).and.BSS_slepc_custom.and.epskind==EPSKRYLOVSCHUR) then
-   call EPSKrylovSchurGetBSEType(eps,epsbsetype,ierr)
-   if(epsbsetype==EPS_KRYLOVSCHUR_BSE_SHAO)       BSS_slepc_approach=trim(BSS_slepc_approach)//", Shao" 
-   if(epsbsetype==EPS_KRYLOVSCHUR_BSE_GRUNING)    BSS_slepc_approach=trim(BSS_slepc_approach)//", Gruning" 
-   if(epsbsetype==EPS_KRYLOVSCHUR_BSE_SYMPLECTIC) BSS_slepc_approach=trim(BSS_slepc_approach)//", Symplectic" 
- else
-   BSS_slepc_approach=trim(BSS_slepc_approach)//"+NonHermitian"
+   ! Default Gruning used in case input is mispelled or not set
+   epsbsetype=EPS_KRYLOVSCHUR_BSE_SHAO
+   ! From user
+   if(index(BSS_slepc_approach,"Shao")>0)        epsbsetype=EPS_KRYLOVSCHUR_BSE_SHAO
+   if(index(BSS_slepc_approach,"Gruning")>0)     epsbsetype=EPS_KRYLOVSCHUR_BSE_GRUNING
+   !if(index(BSS_slepc_approach,"Symplectic")>0)  epsbsetype=EPS_KRYLOVSCHUR_BSE_SYMPLECTIC  ! To be replaced
+   if(index(BSS_slepc_approach,"Projected")>0)   epsbsetype=EPS_KRYLOVSCHUR_BSE_PROJECTEDBSE   ! New replacement 
+   ! Eventially load epsbsetype from command line options. It overwrites input file
+   !call EPSKrylovSchurGetBSEType(eps,epsbsetype,ierr)
+ endif
+ !
+ ! Fix the BSS_slepc_approach string
+ if (epskind==EPSKRYLOVSCHUR) BSS_slepc_approach="Krylov-Schur"
+ !
+ if(present(V_left)) then
+   if(BSS_slepc_custom.and.epskind==EPSKRYLOVSCHUR) then
+     if(epsbsetype==EPS_KRYLOVSCHUR_BSE_SHAO)         BSS_slepc_approach=trim(BSS_slepc_approach)//"+Shao" 
+     if(epsbsetype==EPS_KRYLOVSCHUR_BSE_GRUNING)      BSS_slepc_approach=trim(BSS_slepc_approach)//"+Gruning" 
+     !if(epsbsetype==EPS_KRYLOVSCHUR_BSE_SYMPLECTIC)   BSS_slepc_approach=trim(BSS_slepc_approach)//"+Symplectic" !To be replaced
+     if(epsbsetype==EPS_KRYLOVSCHUR_BSE_PROJECTEDBSE) BSS_slepc_approach=trim(BSS_slepc_approach)//"+ProjectedBSE"  ! New replacement
+   else
+     BSS_slepc_approach=trim(BSS_slepc_approach)//"+NonHermitian"
+   endif
  endif
  !
  call msg( 'sr', '[SLEPC] Approach                          ',BSS_slepc_approach)

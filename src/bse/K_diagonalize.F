@@ -54,13 +54,13 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   ! If overlap matrix is not allocated, this implies that BS_overlap is a identity matrix.
   !
   ! FIX ME : Move to a better place (modules)
-  integer, parameter                 :: blacs_blk_size = 64
+  integer, parameter                 :: blacs_block_size = 64
   ! blacs block size
   ! 64 is good default but give a variable so advanced expert users can play with it
   !
   ! Local variables
   type(c_ptr)                        :: mpicxt, diago_mat, evecs
-  integer                            :: nProcs, my_rank
+  integer                            :: nProcs, my_rank, blacs_blk_size
   integer(YDIAGO_INT)                :: SL_H_dim, ProcX, ProcY, elpa_nthreads
   integer(ERROR_INT)                 :: error_diago ! diagonalization error code
   integer                            :: ierr, i_c, i_r !! mpi error code 
@@ -117,6 +117,11 @@ endif
   ProcX = int(sqrt(real(nProcs)),kind=YDIAGO_INT)
   ProcY = ProcX
 
+  blacs_blk_size = blacs_block_size
+  if (blacs_blk_size .gt. SL_H_dim/ProcX) blacs_blk_size = blacs_blk_size/ProcX
+  if (blacs_blk_size .lt. 8 ) call error("Too small block size.")
+  ! NM : In this case, simply switch to lapack solver.
+  
   call msg("s","BLACS grid",(/ProcX,ProcY/))
 
   mpicxt = BLACScxtInit_Fortran('R', MPI_COMM_WORLD, ProcX, ProcY)
@@ -222,7 +227,7 @@ endif
     ! -50 is the error code when CHOLESKY factorization fails. see Ydiago/src/common/error.h
     if (error_diago == -50) then
       !
-      call msg("s",'Warning : Cholesky decomposition failed. &
+      call msg("s", 'Warning : Cholesky decomposition failed. &
         & Switching to slow scalapack solver. This solver is not-GPU supported.')
       !
       if (compute_left_eigs .and. .not. c_associated(evecs_left)) then 
@@ -277,14 +282,18 @@ endif
   ! neigs_this_cpu, neig_shift
   call par_distribute_set(neig_found, neigs_this_cpu, neig_shift)
 
-  ! Retreive overlap matrix if case geev is used. (VL^H @ VR)
+  ! Retreive inverse of overlap matrix if case geev is used. (VL^H @ VR)^-1
   ! As mentioned above, in all other cases overlap is identity
   if (evec_fac == 1 .and. BS_K_coupling .and. present(BS_overlap)) then
-    call live_timing('Overlap',1)
+    call live_timing('Retrieving Overlap',1)
     if (.not. associated(BS_overlap)) allocate(BS_overlap(neig_found,neigs_this_cpu))
     !
     nelements = neig_found*neigs_this_cpu
+    ! Compute inverse of Overlap matrix (inplace operation)
+    error_diago = Inverse_Dmat(diago_mat)
+    if (error_diago /= 0) call error("Inversion of overlap matrix Failed.")
     !
+    ! Now retreive
     error_diago = initiateGetQueue(diago_mat, nelements)
     if (error_diago /= 0) call error("Failed to initiate overlap GetQueue.")
     !
@@ -314,7 +323,7 @@ endif
   !
   ! retreive right eigenvectors
   ! initiate get queue
-  call live_timing('Folding Right eigenvectors',1)
+  call live_timing('Retrieving Right eigenvectors',1)
   error_diago = initiateGetQueue(evecs, nelements)
   if (error_diago /= 0) call error("Failed to initiate GetQueue")
   !
@@ -354,7 +363,7 @@ endif
       BS_VL(SL_H_dim/2 + 1:SL_H_dim, 2:2*neigs_this_cpu:2) = CONJG(BS_VL(1:SL_H_dim/2, 1:2*neigs_this_cpu:2))
     else 
       ! set the Queue for the left eigen vectors
-      call live_timing('Folding Left eigenvectors',1)
+      call live_timing('Retrieving Left eigenvectors',1)
       error_diago = initiateGetQueue(evecs_left, nelements)
       if (error_diago /= 0) call error("Failed to initiate left eigvec GetQueue")
       !

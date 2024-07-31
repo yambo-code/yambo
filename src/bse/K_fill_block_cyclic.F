@@ -216,8 +216,8 @@ subroutine K_fill_block_cyclic(i_BS_mat, diago_mat)
     enddo
     !
   enddo
-  ! Free the blocks immediatly, we do not need this anymore
-  call BS_blks_free(i_BS_mat)
+  ! Free the blocks ?
+  ! call BS_blks_free(i_BS_mat)
   !
   ! Finalize the setQueue
   error_diago = ProcessSetQueue(diago_mat)

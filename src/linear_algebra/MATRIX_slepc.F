@@ -162,7 +162,8 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    if (epskind==EPSJD)          stkind=STPRECOND
    !
    ! Default
-   if (stkind==STSINVERT)                           kspkind=KSPBCGS
+   !if (stkind==STSINVERT)                           kspkind=KSPBCGS
+   if (stkind==STSINVERT)                           kspkind=KSPPREONLY
    if (stkind==STPRECOND .and. epskind==EPSGD)      kspkind=KSPPREONLY
    if (stkind==STPRECOND .and. epskind==EPSJD)      kspkind=KSPBCGS
    ! From user
@@ -170,11 +171,14 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    if(index(BSS_slepc_precondition,KSPBCGS)/=0)     kspkind=KSPBCGS
    !
    ! Default
-   pckind=PCJACOBI
+   if (stkind==STSINVERT)   pckind=PCLU
+   if (stkind==STPRECOND)   pckind=PCJACOBI
    ! From user
-   if(index(BSS_slepc_precondition,PCJACOBI)/=0)    pckind=PCJACOBI
+   if(index(BSS_slepc_precondition,PCJACOBI)/=0)      pckind=PCJACOBI
+   if(index(BSS_slepc_precondition,PCFIELDSPLIT)/=0)  pckind=PCFIELDSPLIT
+   if(index(BSS_slepc_precondition,PCLU)/=0)          pckind=PCLU
    !
-   BSS_slepc_precondition=trim(kspkind)//"+"//trim(pckind)
+   BSS_slepc_precondition=trim(stkind)//"+"//trim(kspkind)//"+"//trim(pckind)
    !
    call EPSGetST(eps,st,ierr)
    call STGetKSP(st,ksp,ierr)
@@ -236,7 +240,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  call EPSSetFromOptions(eps,ierr)
  !
  if(present(V_left).and.BSS_slepc_custom.and.epskind==EPSKRYLOVSCHUR) then
-   ! Default Gruning used in case input is mispelled or not set
+   ! Default Shao used in case input is mispelled or not set
    epsbsetype=EPS_KRYLOVSCHUR_BSE_SHAO
    ! From user
    if(index(BSS_slepc_approach,"Shao")>0)        epsbsetype=EPS_KRYLOVSCHUR_BSE_SHAO

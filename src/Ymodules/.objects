@@ -22,8 +22,11 @@ ELPH_objects = mod_ELPH_intfcs.o mod_ELPH.o
 #if defined _OPENACC
 DEV_objects_BASE = mod_cudafor.o mod_cufft.o
 #endif
-#if defined _OPENMP_GPU
-DEV_objects_BASE = mod_hip.o mod_hipfft.o mod_mklfft_gpu.o
+#if defined _OPENMP_GPU && defined _MKLGPU
+DEV_objects_BASE = mod_mklfft_gpu.o
+#endif
+#if defined _OPENMP_GPU && defined _HIP
+DEV_objects_BASE = mod_hip.o mod_hipfft.o
 #endif
 #if defined _io_lib
 objs = mod_pars.o mod_stderr.o mod_parallel.o mod_parallel_interface.o  \

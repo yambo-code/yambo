@@ -32,7 +32,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
 &                        BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                        BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                        WF_phase,n_BS_blks,BS_blk,BS_T_grp,BSK_IO_mode,BSK_IO_sum_value,&
-&                        BS_nT_grps,BS_blks_free,l_BS_ares_from_res,BS_K_has_been_calculated_loaded,&
+&                        BS_nT_grps,l_BS_ares_from_res,BS_K_has_been_calculated_loaded,&
 &                        l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
 &                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val,l_BS_magnons
  use collision_el,  ONLY:elemental_collision_free

@@ -50,7 +50,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  !
  call MatCreate(PETSC_COMM_WORLD,slepc_mat,ierr)
  call MatSetSizes(slepc_mat,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim,SL_H_dim,ierr)
- call MatSetType(slepc_mat, MATMPIDENSE,ierr)
+ call MatSetType(slepc_mat, MATDENSE,ierr)
 
 #if defined(PETSC_HAVE_CUDA)
  if(have_cuda) call MatSetType(slepc_mat,MATDENSECUDA,ierr)

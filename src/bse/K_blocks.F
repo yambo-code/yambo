@@ -200,3 +200,16 @@ subroutine K_block_free( iB )
  endif
  !
 end subroutine K_block_free
+!
+!
+subroutine BS_blks_free(i_BS_mat)
+ use BS,           ONLY:BS_blk,n_BS_blks
+ implicit none
+ integer, intent(in) :: i_BS_mat
+ integer :: iB
+ do iB=1,n_BS_blks
+   if(i_BS_mat/=BS_blk(iB)%ira_k) cycle
+   if(.not.allocated(BS_blk(iB)%mat)) cycle
+   call K_block_free( iB )
+ enddo
+end subroutine

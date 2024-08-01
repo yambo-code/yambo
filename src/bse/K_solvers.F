@@ -15,7 +15,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use BS_solvers,     ONLY:BSS_desc,BSS_free,BS_mat,run_Haydock,&
 &                         run_inversion,run_Diago,run_Slepc
  use BS,             ONLY:BS_K_has_been_calculated_loaded,&
- &                       BS_blks_free,l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism
+&                         l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_int,         ONLY:IO_and_Messaging_switch
  use linear_algebra, ONLY:INV,DIAGO

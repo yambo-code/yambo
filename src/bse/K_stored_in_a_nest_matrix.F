@@ -81,7 +81,7 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,nest_debug,slepc_mat)
   !
   call MatCreate(PETSC_COMM_WORLD,R,ierr)
   call MatSetSizes(R,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
-  call MatSetType(R,MATMPIDENSE,ierr)
+  call MatSetType(R,MATDENSE,ierr)
 #ifdef PETSC_HAVE_CUDA
   if (have_cuda) then
     call MatSetType(R,MATDENSECUDA,ierr)
@@ -92,7 +92,7 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,nest_debug,slepc_mat)
   !
   call MatCreate(PETSC_COMM_WORLD,C,ierr)
   call MatSetSizes(C,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
-  call MatSetType(C,MATMPIDENSE,ierr)
+  call MatSetType(C,MATDENSE,ierr)
 #ifdef PETSC_HAVE_CUDA
   if (have_cuda) then
     call MatSetType(C,MATDENSECUDA,ierr)

@@ -207,6 +207,8 @@ module linear_algebra
    !
    subroutine geev(msize,M,E_cmpl,V_left,V_right,work,lwork,rwk,ifail)
      !
+     use com,      ONLY:msg
+     !
      integer,    intent(in)    :: msize,lwork
      integer,    intent(out)   :: ifail
      real(SP),   intent(out)   :: rwk(*)
@@ -220,7 +222,11 @@ module linear_algebra
      !
 #if defined _MAGMA
      !
-     if (.not.magma_init_done) call magma_setup()
+     if (.not.magma_init_done) then
+       call msg('sr','Initializing magma library in geev')
+       call magma_setup()
+     endif
+     call msg('sr','SERIAL diagonalization with magma')
      !
 #  if defined _OPENMP
      ! thread safety
@@ -241,6 +247,8 @@ module linear_algebra
 #  endif
      !
 #else
+     !
+     call msg('sr','SERIAL diagonalization with lapack')
      !
      ! use lapack
      !

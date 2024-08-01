@@ -249,6 +249,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    if(index(BSS_slepc_approach,"Projected")>0)   epsbsetype=EPS_KRYLOVSCHUR_BSE_PROJECTEDBSE   ! New replacement 
    ! Eventially load epsbsetype from command line options. It overwrites input file
    !call EPSKrylovSchurGetBSEType(eps,epsbsetype,ierr)
+   call EPSKrylovSchurSetBSEType(eps,epsbsetype,ierr)
  endif
  !
  ! Fix the BSS_slepc_approach string

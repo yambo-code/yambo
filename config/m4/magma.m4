@@ -117,6 +117,7 @@ integer :: lda
 fi
 #
 # TO BE FIXED: needs internal compilation support and paths have to be corrected with GPU_SUPPORT folder
+#
 if test "x$enable_magma" = "xyes" && test "x$magma" = "xno" ; then
   #
   # internal magma
@@ -125,15 +126,13 @@ if test "x$enable_magma" = "xyes" && test "x$magma" = "xno" ; then
   #
   internal_magma="yes"
   #
-  if test "x$lapack_shared" = "x1" ; then
-    #MAGMA_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libmagma.so" ;
-    MAGMA_LIBS="" ;
-  else
-    #MAGMA_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libmagma.a" ;
-    MAGMA_LIBS="" ;
-  fi
-  #MAGMA_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
-  MAGMA_INCS="" ;
+  #if test "x$lapack_shared" = "x1" ; then
+  #  MAGMA_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libmagma.so" ;
+  #  #MAGMA_LIBS="" ;
+  #else
+    MAGMA_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libmagma.a" ;
+  #fi
+  MAGMA_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
   #
   magma=yes
   def_magma="-D_MAGMA"
@@ -144,14 +143,22 @@ if test "x$enable_magma" = "xyes" && test "x$magma" = "xno" ; then
     compile_magma="no" ;
     AC_MSG_RESULT([already compiled]) ;
   else
-    #compile_magma="yes" ;
-    #AC_MSG_RESULT([to be compiled]) ;
-    AC_MSG_RESULT([Compatible external Magma not found/specified. Internal compilation not available yet.]) ;
-    compile_magma="no"
-    def_magma=""
-    enable_magma="no"
+    compile_magma="yes" ;
+    AC_MSG_RESULT([Compatible external Magma not found/specified. To be compiled.]) ;
   fi
   #
+fi
+#
+# switch off internal magma compilation
+#
+deactivate_internal=yes
+if test "x$compile_magma" = "xyes" && test "x$internal_magma" = "xyes" && test "x$deactivate_internal" = "xyes"  ; then
+  AC_MSG_RESULT([Internal Magma compilation not available yet. Deactivating it.]) ;
+  compile_magma="no"
+  def_magma=""
+  enable_magma="no"
+  MAGMA_INCS="" ;
+  MAGMA_LIBS="" ;
 fi
 #
 AC_SUBST(MAGMA_LIBS)

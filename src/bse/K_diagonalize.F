@@ -117,6 +117,7 @@ endif
   ProcX = int(sqrt(real(nProcs)),kind=YDIAGO_INT)
   ProcY = ProcX
 
+  ! Geev block size must be smaller than mat dim and >=8
   ! Start with the default 64
   blacs_blk_size = blacs_block_size
   ! if not try 32
@@ -125,12 +126,13 @@ endif
   if (blacs_blk_size .gt. SL_H_dim/ProcX) blacs_blk_size = blacs_blk_size/2
   ! Last try.
   if (blacs_blk_size .gt. SL_H_dim/ProcX) then
+    ! force the solver to be scalapack
+    ! If block size is <8, geev solver will fail.
+    solver_type_aux = 's'
     blacs_blk_size = SL_H_dim
     ProcX = 1
-    ProcY = 1 
+    ProcY = 1
   endif
-  if (blacs_blk_size .lt. 8 ) call error("Too small block size.")
-  ! NM : In this case, simply switch to lapack solver.
   
   call msg("s","BLACS grid",(/ProcX,ProcY/))
 
@@ -251,6 +253,8 @@ endif
       !
       neig_found = SL_H_dim
       !
+      if (blacs_blk_size .lt. 8 ) call error("Too small block size. User solver: o")
+      ! NM : FIX ME : In this case, simply switch to lapack solver.
       error_diago = Geev(diago_mat, c_loc(eig_vals), evecs_left, evecs)
       !
       evec_fac = 1
@@ -264,6 +268,8 @@ endif
     ! ========== General solver =================
     neig_found = SL_H_dim
     !
+    if (blacs_blk_size .lt. 8 ) call error("Too small block size. User solver: o")
+  ! NM : FIX ME : In this case, simply switch to lapack solver.
     error_diago = Geev(diago_mat, c_loc(eig_vals), evecs_left, evecs)
     ! On output diago_mat has overlap i.e VL^H @ VR
     !

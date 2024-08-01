@@ -74,7 +74,7 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   type(c_ptr)                        :: evecs_left        = c_null_ptr
   logical                            :: compute_left_eigs = .false.
   complex(YDIAGO_CMPLX), target, allocatable :: eig_vals(:)
-  
+  !
   ! Gpu support via ELPA.
   type(c_ptr)                             :: gpu_str = c_null_ptr
   character(kind=c_char, len=20), target  :: gpu_device_elpa
@@ -93,7 +93,7 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
 if (have_cuda) then
   ! Note this is a gpu specific flag. set according to gpu.
   ! Accpeted values for gpu_device_elpa : "nvidia-gpu", "amd-gpu", "intel-gpu"
-  ! As yambo supports only nvidia gpus, we set it to nvidia-gpu
+  ! As yambo supports only nvidia gpus, we set it to nvidia-gpu for now
   gpu_device_elpa =  c_char_"nvidia-gpu"//c_null_char
   gpu_str = c_loc(gpu_device_elpa)
 endif
@@ -117,8 +117,18 @@ endif
   ProcX = int(sqrt(real(nProcs)),kind=YDIAGO_INT)
   ProcY = ProcX
 
+  ! Start with the default 64
   blacs_blk_size = blacs_block_size
-  if (blacs_blk_size .gt. SL_H_dim/ProcX) blacs_blk_size = blacs_blk_size/ProcX
+  ! if not try 32
+  if (blacs_blk_size .gt. SL_H_dim/ProcX) blacs_blk_size = blacs_blk_size/2
+  ! if not try 16
+  if (blacs_blk_size .gt. SL_H_dim/ProcX) blacs_blk_size = blacs_blk_size/2
+  ! Last try.
+  if (blacs_blk_size .gt. SL_H_dim/ProcX) then
+    blacs_blk_size = SL_H_dim
+    ProcX = 1
+    ProcY = 1 
+  endif
   if (blacs_blk_size .lt. 8 ) call error("Too small block size.")
   ! NM : In this case, simply switch to lapack solver.
   

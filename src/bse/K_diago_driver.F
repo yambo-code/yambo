@@ -403,26 +403,26 @@ subroutine K_diago_driver(iq,W,X_static)
        !
        ! Dichroism
         if(l_BS_dichroism) then
-           tmp_res_ptrR = BS_R_right_dich(:,1)
            call K_diago_residuals("dic1",i_BS_mat,BS_E,tmp_res_ptrR,BS_V_right, &
 &                               neigs_this_cpu, neig_shift, null(),BS_V_left,BS_overlap)
-           tmp_res_ptrR = BS_R_right_dich(:,2)
+           BS_R_right_dich(:,1) = tmp_res_ptrR
+!
            call K_diago_residuals("dic2",i_BS_mat,BS_E,tmp_res_ptrR,BS_V_right, &
 &                               neigs_this_cpu, neig_shift, null(),BS_V_left,BS_overlap)
+           BS_R_right_dich(:,2) = tmp_res_ptrR
        endif
        !
        ! Magnons
        if(l_BS_magnons)   then
-         tmp_res_ptrR = BS_R_right_magn(1,:)
-         tmp_res_ptrL = BS_R_left_magn(1,:)
          call K_diago_residuals("mag1",i_BS_mat,BS_E,tmp_res_ptrR,BS_V_right, &
 &                               neigs_this_cpu, neig_shift, tmp_res_ptrL,BS_V_left,BS_overlap)
-         
+           BS_R_right_magn(1,:) = tmp_res_ptrR
+           BS_R_left_magn(1,:)  = tmp_res_ptrL
            if(n_spinor==2)  then
-             tmp_res_ptrR = BS_R_right_magn(2,:)
-             tmp_res_ptrL = BS_R_left_magn(2,:)
              call K_diago_residuals("mag2",i_BS_mat,BS_E,tmp_res_ptrR,BS_V_right,&
 &                               neigs_this_cpu, neig_shift, tmp_res_ptrL,BS_V_left,BS_overlap)
+             BS_R_right_magn(2,:) = tmp_res_ptrR
+             BS_R_left_magn(2,:)  = tmp_res_ptrL
            endif
        endif
        !
@@ -434,7 +434,7 @@ subroutine K_diago_driver(iq,W,X_static)
        if(BSS_perturbative_width) call error("BSS_perturbative_width not implemented in Ydiago solver")
        !
        !if (l_BS_photolum) call K_PL_residuals(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian, &
-&      !                                        neigs_this_cpu, neig_shift,BS_overlap) 
+!&     !                                        neigs_this_cpu, neig_shift,BS_overlap) 
        !
        !
        YAMBO_FREE_P(tmp_res_ptrR)

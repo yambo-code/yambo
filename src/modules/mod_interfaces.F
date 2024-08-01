@@ -296,6 +296,24 @@ module interfaces
      complex(SP), pointer     :: BS_Overlap(:,:)
    end subroutine K_diago_residuals
 !
+   subroutine K_perturbative_residuals(pert_dim, what, i_BS_mat, &
+    &           BS_corrections, BS_VR, neigs_this_cpu, neig_shift, BS_VL, BS_Overlap) 
+     use pars,           ONLY:SP,cZERO
+     use wrapper_omp,    ONLY:V_dot_V_omp
+     use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
+     use LIVE_t,         ONLY:live_timing
+     use BS_solvers,     ONLY:BSS_eh_E_SOC_corr,BSS_eh_W,BSS_eh_E,BSS_n_eig
+ 	  use BS,             ONLY:BS_K_coupling,BS_K_dim,BS_H_dim
+     implicit none
+     integer,     intent(in)                   :: pert_dim
+     character(3),intent(in)                   :: what
+     complex(SP),allocatable                   :: BS_corrections(:,:)
+     integer,intent(in)                        :: i_BS_mat, neigs_this_cpu, neig_shift
+     complex(SP), target,allocatable           :: BS_VR(:,:)
+     complex(SP), target, allocatable          :: BS_VL(:,:)
+     complex(SP), pointer                      :: BS_Overlap(:,:)
+   end subroutine K_perturbative_residuals
+!
    subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap) 
      use pars,           ONLY:SP
      use BS,             ONLY:BS_H_dim

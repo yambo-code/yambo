@@ -178,13 +178,12 @@ subroutine K_perturbative_residuals(pert_dim, what, i_BS_mat, &
 &           BS_corrections, BS_VR, neigs_this_cpu, neig_shift, BS_VL, BS_Overlap) 
 !
    ! Diagonal Perturbative corrections. We assume that KS corrections are  
-   ! are diagonal
+   ! are diagonal.
    !
-   ! Hermitian case
-   ! <S|\Delta V_KS|S> = \sum_{kcv} |A^S_kcv|^2*BS_corrections_{kcv}
+   ! Hermitian = \sum_{kcv} |A^S_kcv|^2*BS_corrections_{kcv}
    ! 
-   ! Non-hermitian : 
-   ! <S|\Delta V_KS|S> = (overlap^-1)_SS' * \sum_{kcv} conj(A_L^S'_kcv) * (A_R^S'_kcv) * BS_corrections_{kcv}
+   ! Non-hermitian : (overlap^-1)_SS' * \sum_{kcv} conj(A_L^S'_kcv) * (A_R^S'_kcv) * BS_corrections_{kcv}
+   !
    use pars,           ONLY:SP,cZERO
    use wrapper_omp,    ONLY:V_dot_V_omp
    use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
@@ -226,7 +225,7 @@ subroutine K_perturbative_residuals(pert_dim, what, i_BS_mat, &
    do i1=1, neigs_this_cpu
       !
       tmp_BS_RL = conjg(tmp_v_left(:,i1))*BS_VR(:,i1)
-
+      !
       if(what=='SOC') then
          do i2=1,pert_dim
             BS_corrections(i2,i1+neig_shift)=V_dot_V_omp(SL_H_dim, &
@@ -242,41 +241,35 @@ subroutine K_perturbative_residuals(pert_dim, what, i_BS_mat, &
       !
    enddo
    !
+   call PP_redux_wait(BS_corrections) 
+   !
    call live_timing()
    !
    ! In case of overlap multiply with inverse of overlap
    !
-!    if (BS_K_coupling .and. associated(BS_Overlap)) then 
-!       call live_timing('Overlap^{-1} x Perturb.    '//what//' ',neig_total)
-!       !
-!       do i1=1, neig_total
-!          !
-!          if (neigs_this_cpu < 1) cycle
-         
-!          if(what=='SOC') then
-!             do i2=1,pert_dim
-!                !
-!                aux1=V_dot_V_omp(neigs_this_cpu,BS_Overlap(i1,:), &
-! &                                BS_corrections(i2, neig_shift+1 : neig_shift+neigs_this_cpu))
-!                !
-!             enddo
-!          endif
-!          !
-!          if(what=='WID') then
-!             BS_corrections(1,i1+neig_shift)=V_dot_V_omp(SL_H_dim,cmplx(0._SP,BSS_eh_W(:),SP),tmp_BS_RL)
-!          endif
-!          !
-!          call live_timing(steps=1)
-!          !
-!       enddo
-!       !
-!       call live_timing()
-!    endif
+   if (BS_K_coupling .and. associated(BS_Overlap)) then 
+      call live_timing('Overlap^{-1} x Perturb.    '//what//' ',neig_total*pert_dim)
+      
+      do i2=1,pert_dim
+         if (neigs_this_cpu < 1) cycle
+         !
+         do i1=1, neig_total
+         !
+            tmp_BS_RL(i1)=V_dot_V_omp(neigs_this_cpu,BS_Overlap(i1,:), &
+&                                BS_corrections(i2,neig_shift+1 : neig_shift+neigs_this_cpu))
+         !
+            call live_timing(steps=1)
+         !
+         end do
+         BS_corrections(i2,:) = tmp_BS_RL(1:neig_total)
+      enddo
+      !
+      call PP_redux_wait(BS_corrections) 
+      call live_timing()
+
+   endif
    !
    deallocate(tmp_BS_RL)
-   !
-   call PP_redux_wait(BS_corrections) 
-   !
    !
 end subroutine K_perturbative_residuals
 !

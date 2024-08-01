@@ -429,9 +429,15 @@ subroutine K_diago_driver(iq,W,X_static)
        !
        if (l_BS_photolum) call error("PL not implemented in Ydiago solver")
        !
-       if( BS_perturbative_SOC ) call error("BS_perturbative_SOC not implemented in Ydiago solver")
+       if( BS_perturbative_SOC ) call K_perturbative_residuals(2/n_sp_pol,'SOC', i_BS_mat, &
+       &           BS_corrections, BS_V_right, neigs_this_cpu, neig_shift, BS_V_left, BS_Overlap) 
        !
-       if(BSS_perturbative_width) call error("BSS_perturbative_width not implemented in Ydiago solver")
+       if(BSS_perturbative_width) call K_perturbative_residuals(1,'WID', i_BS_mat, &
+       &           BS_corrections, BS_V_right, neigs_this_cpu, neig_shift, BS_V_left, BS_Overlap) 
+
+       if(BSS_perturbative_width) BS_E=BS_E-aimag(BS_corrections(1,:))
+       !
+       if( BS_perturbative_SOC ) BS_E_SOC_corr=real(BS_corrections)
        !
        !if (l_BS_photolum) call K_PL_residuals(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian, &
 !&     !                                        neigs_this_cpu, neig_shift,BS_overlap) 

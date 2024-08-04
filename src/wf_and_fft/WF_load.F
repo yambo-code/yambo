@@ -561,7 +561,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  mndp=10._SP
  mxdp=-1._SP
- N=size(WF%c(:,:,WF%index(1,1,1)))
+ !N=size(WF%c(:,:,WF%index(1,1,1)))
  do ib1=1,min(int(nel)+5,WF%b(2))
    do ib2=1,min(int(nel)+5,WF%b(2))
      !

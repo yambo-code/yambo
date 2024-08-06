@@ -46,7 +46,10 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,nest_debug,slepc_mat)
 !
   use pars,           ONLY:cI,cONE
   use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks
-  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width
+  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width,&
+  &                        run_inversion,run_Haydock
+  use LIVE_t,         ONLY:live_timing
+  use timing_m,       ONLY:timing
   use cuda_m,         ONLY:have_cuda
   !
   use petscmat
@@ -73,6 +76,8 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,nest_debug,slepc_mat)
            RT_mat_mult_hermitian_transpose,CHT_mat_mult_hermitian_transpose,&
            RT_get_diagonal,CHT_get_diagonal,&
            ignore_petsc_error_handler
+  !
+  call timing('BSE mat slepc redist',OPR='start')
   !
   SL_H_dim=BS_H_dim
   SL_K_dim=BS_K_dim
@@ -102,6 +107,8 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,nest_debug,slepc_mat)
   call MatSetUp(C,ierr)
   !
   ! Fill the values of the explicit submatrices of the nest matrix
+  !
+  if (n_BS_blks>0) call live_timing("Redistributing the BSE kernel in parallel slepc mat",n_BS_blks)
   !
   do i_B=1,n_BS_blks
     i_Tk  =BS_blk(i_B)%iT_k
@@ -153,7 +160,15 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,nest_debug,slepc_mat)
       !
     enddo
     !
+    ! After the re-distribution into slepc_mat the %mat's are (in some cases) not needed anymore 
+    !
+    if ( .not. (run_Haydock.or.run_inversion) ) call K_block_free(i_B)
+    !
+    call live_timing(steps=1)
+    !
   enddo
+  !
+  if (n_BS_blks>0) call live_timing()
   !
  call MatAssemblyBegin(R,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyEnd(R,MAT_FINAL_ASSEMBLY,ierr)
@@ -212,6 +227,8 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,nest_debug,slepc_mat)
    endif
 #endif
  endif
+ !
+ call timing('BSE mat slepc redist',OPR='stop')
  !
 end subroutine K_stored_in_a_nest_matrix
 

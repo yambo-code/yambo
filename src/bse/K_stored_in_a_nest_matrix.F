@@ -77,7 +77,7 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,nest_debug,slepc_mat)
            RT_get_diagonal,CHT_get_diagonal,&
            ignore_petsc_error_handler
   !
-  call timing('BSE mat slepc redistribution',OPR='start')
+  call timing('BSE mat slepc redist',OPR='start')
   !
   SL_H_dim=BS_H_dim
   SL_K_dim=BS_K_dim
@@ -228,7 +228,7 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,nest_debug,slepc_mat)
 #endif
  endif
  !
- call timing('BSE mat slepc redistribution',OPR='stop')
+ call timing('BSE mat slepc redist',OPR='stop')
  !
 end subroutine K_stored_in_a_nest_matrix
 

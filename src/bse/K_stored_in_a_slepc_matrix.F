@@ -45,7 +45,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  PetscInt            :: H_pos(2),SL_K_dim(2),SL_H_dim
  PetscErrorCode      :: ierr
  !
- call timing('BSE mat slepc redistribution',OPR='start')
+ call timing('BSE mat slepc redist',OPR='start')
  !
  if(     BS_K_coupling) SL_H_dim=BS_H_dim
  if(.not.BS_K_coupling) SL_H_dim=BS_K_dim(i_BS_mat)
@@ -157,6 +157,6 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  !
- call timing('BSE mat slepc redistribution',OPR='stop')
+ call timing('BSE mat slepc redist',OPR='stop')
  !
 end subroutine K_stored_in_a_slepc_matrix

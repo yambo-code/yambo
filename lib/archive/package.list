@@ -98,6 +98,9 @@ url_slepc=https://gitlab.com/slepc/slepc/-/archive/v$(version_slepc)/$(tarball_s
 url_petsc=https://gitlab.com/petsc/petsc/-/archive/v$(version_petsc)/$(tarball_petsc)
 url_devxlib=https://gitlab.com/max-centre/components/devicexlib/-/archive/$(version_devxlib)/$(tarball_devxlib)
 #
+#...this requires to run "autoreconf -i" (coded)
+url_libxc=https://gitlab.com/libxc/libxc/-/archive/$(version_libxc)/$(tarball_libxc)
+#
 # External URL's More
 #
 url_fftw=https://fftw.org/$(tarball_fftw)

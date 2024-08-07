@@ -202,6 +202,44 @@ subroutine K_block_free( iB )
 end subroutine K_block_free
 !
 !
+subroutine K_block_symmetrize(i_B)
+ use BS,           ONLY:BS_blk,l_BS_ares_from_res
+ implicit none
+ integer, intent(in) :: i_B
+ !
+ ! Symmetrize the DIAGONAL blocks only (i_Tk=i_Tp)
+ !
+ integer :: i_Tk,i_Tp,i_r,i_c
+ !
+ i_Tk  =BS_blk(i_B)%iT_k
+ i_Tp  =BS_blk(i_B)%iT_p
+ !
+ if (i_Tk/=i_Tp) return
+ !
+ select case(BS_blk(i_B)%mode)
+ case("R","A")
+   ! Resonant ("R") and anti-resonant ("A") parts are hermitian
+   do i_r=1,BS_blk(i_B)%size(1)
+     BS_blk(i_B)%mat(i_r,i_r) = real(BS_blk(i_B)%mat(i_r,i_r))
+     do i_c=i_r+1,BS_blk(i_B)%size(2)
+       BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
+     enddo
+   enddo
+ case("C","Q")
+   if (.not.l_BS_ares_from_res) return
+   ! Coupling ("C") and anti-coupling ("Q") are symmetric if l_BS_ares_from_res=.TRUE.
+   do i_r=1,BS_blk(i_B)%size(1)
+     !This gives fails with test-suite test Benzene 06_tddft_cpl
+     !BS_blk(i_B)%mat(i_r,i_r) = real(BS_blk(i_B)%mat(i_r,i_r))
+     do i_c=i_r+1,BS_blk(i_B)%size(2)
+       BS_blk(i_B)%mat(i_c,i_r) = BS_blk(i_B)%mat(i_r,i_c)
+     enddo
+   enddo
+ end select
+ !
+end subroutine K_block_symmetrize
+!
+!
 subroutine BS_blks_free(i_BS_mat)
  use BS,           ONLY:BS_blk,n_BS_blks
  implicit none
@@ -213,3 +251,14 @@ subroutine BS_blks_free(i_BS_mat)
    call K_block_free( iB )
  enddo
 end subroutine
+!
+!
+subroutine BS_blks_symmetrize_K()
+ use BS,           ONLY:BS_blk,n_BS_blks
+ implicit none
+ integer :: i_B
+ do i_B=1,n_BS_blks
+   call K_block_symmetrize(i_B)
+ enddo
+end subroutine BS_blks_symmetrize_K
+

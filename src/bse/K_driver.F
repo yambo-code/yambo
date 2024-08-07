@@ -19,7 +19,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0,&
 &                         BSS_Q_dir,BSS_E_dir
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_res_K_corr,BS_n_g_W,BS_cpl_K_corr,&
-&                         BS_Blocks_and_Transitions_free,BSqpts,O_ng
+&                         BS_Blocks_and_Transitions_free,BSqpts,O_ng,BS_iq_now
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded
  use drivers,        ONLY:l_rpa_IP,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PAR_IND_WF_b_and_k,PAR_K_scheme,PARALLEL_default_mode
@@ -121,6 +121,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  YAMBO_ALLOC(BSqpts,(3,BS_q(1):BS_q(2)))
  !
  do iq=BS_q(1),BS_q(2)
+   !
+   ! This is needed because it is not possible to pass iq
+   ! through the K_multuply_by_V_slepc subroutines
+   BS_iq_now=iq
    !
    ! Output files & observables initialization
    !===========================================

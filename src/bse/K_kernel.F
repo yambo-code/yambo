@@ -26,7 +26,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use X_m,           ONLY:X_t
  use interfaces,    ONLY:el_density_and_current
  use QP_m,          ONLY:QP_ng_Vxc
- use BS,            ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
+ use BS,            ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,BS_ID,&
 &                        BS_res_K_exchange,BS_Block_size,BS_n_g_W,&
 &                        O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
 &                        BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
@@ -201,7 +201,10 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    call msg('r','[BSE] Correlation components ',(/BS_n_g_W,O_ng/))
  endif
  !
- call K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
+ call K_restart(iq,X,BS_ID(1),BS_ID(2),BS_ID(3),l_partial_kernel_loaded)
+ ID_head =BS_ID(1)
+ ID      =BS_ID(2)
+ ID_compr=BS_ID(3)
  !
  if( l_BSE_kernel_complete ) return
  !

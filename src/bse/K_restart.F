@@ -14,6 +14,7 @@ subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
  use drivers,      ONLY:l_bs_fxc,l_bss
  use BS,           ONLY:l_BSE_restart,l_BSE_kernel_complete,&
 &                       BS_K_cutoff,BS_K_cutoff_done,n_BS_blks
+ use BS_solvers,   ONLY:BSS_kernel_IO_on_the_fly
  use IO_int,       ONLY:io_control
  use IO_m,         ONLY:OP_RD_CL,REP,VERIFY,NONE,OP_RD,manage_action,&
 &                       RD,WR,RD_CL,RD_CL_IF_END,WR_CL,OP_APP,DUMP
@@ -80,6 +81,9 @@ subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
  endif
  !
  if(l_BSE_kernel_complete.and.l_bss.and.io_BS_err==0) then
+   if (BSS_kernel_IO_on_the_fly.and.trim(IO_mode)=="full") then
+     call msg("s","BSE kernel will be loaded on the fly")
+   else
    if(trim(IO_mode)=="full") then
      timing_string="Loading full BSE kernel"
      ID_now=ID
@@ -95,6 +99,7 @@ subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
      if(n_BS_blks>0) call live_timing(steps=1)
    enddo
    if(n_BS_blks>0) call live_timing()
+   endif
    !
    ! Only BS_blk%done was loaded
    ! Now I need to estimate compressed size and load
@@ -135,7 +140,7 @@ subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
  endif
  !
  call io_control(ACTION=IO_ACT,COM=REP,ID=ID_head)
- call io_control(ACTION=RD_CL,COM=REP,ID=ID)
+ if(.not.BSS_kernel_IO_on_the_fly) call io_control(ACTION=RD_CL,COM=REP,ID=ID)
  if(     l_BSE_kernel_complete) call io_BS_PAR_free(ID_head,ID,IO_mode,.true.)
  if(.not.l_BSE_kernel_complete) call io_BS_PAR_free(ID_head,ID,IO_mode,.false.)
  !

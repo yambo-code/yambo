@@ -19,7 +19,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  !
  use pars,          ONLY : SP,cI
  use BS_solvers,    ONLY : Slepc_v,BSS_Slepc_double_grp
- use BS,            ONLY : BS_T_grp,BS_nT_grps,BS_K_dim
+ use BS,            ONLY : BS_T_grp,BS_nT_grps,BS_K_dim,BS_iq_now
  use parallel_m,    ONLY : PAR_IND_T_Haydock
  !
  use petscmat
@@ -29,14 +29,18 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  !
  implicit none
  !
+ Mat                  :: slepc_mat
+ Vec                  :: vi,vo
+ PetscErrorCode       :: ierr
+ !
+ ! Work Space
+ !
  PetscScalar          :: tmp_value(1),tmp_value_star(1)
  PetscInt             :: H_pos(1), pet_one
- PetscErrorCode       :: ierr
  !
  VecScatter           :: ctx
  PetscScalar, pointer :: xx(:)
- Vec                  :: vi,vo,x
- Mat                  :: slepc_mat
+ Vec                  :: x
  !
  integer              :: fac
  integer              :: n, i_g, i_g_start, i_c, start_index, start_index_dg
@@ -75,7 +79,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  if(BSS_Slepc_double_grp) fac=(-1)**(Slepc_v%it(1)+1)
  ! use the haydock routine to calculate the BSE auxiliaxy hamiltonian matrix-vector product
  ! Slepc_v%Vo = H Slepc_v%Vi
- call K_multiply_by_V( Slepc_v%Vi, Slepc_v%Vo,fac,"all")
+ call K_multiply_by_V( Slepc_v%Vi, Slepc_v%Vo,fac,BS_iq_now,"all")
  !
  ! copy output vector Vo -> vo (distributed)
  !

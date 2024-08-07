@@ -65,6 +65,7 @@ module BS_solvers
  logical  :: BSS_uses_DbGd
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
+ logical  :: BSS_kernel_IO_on_the_fly
  logical  :: BSS_perturbative_width
  logical  :: l_abs_prop_chi_bse=.TRUE.
  logical  :: l_eels_can_be_computed=.TRUE.

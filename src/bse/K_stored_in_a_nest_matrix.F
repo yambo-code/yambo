@@ -14,7 +14,7 @@
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
 !
-subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
+subroutine K_stored_in_a_nest_matrix(i_BS_mat,iq,slepc_mat)
  !
  ! BS_K_coupling and l_BS_ares_from_res are assumed TRUE
  !
@@ -25,10 +25,12 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
  ! |-C^*  -R^T|
  !
  !
- use pars,           ONLY:cI,cONE
- use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks
+ use pars,           ONLY:cI,cONE,lchlen
+ use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_ID
  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width,&
- &                        run_inversion,run_Haydock,BSS_slepc_pseudo_herm
+ &                        run_inversion,run_Haydock,BSS_kernel_IO_on_the_fly,BSS_slepc_pseudo_herm
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:RD
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
  use cuda_m,         ONLY:have_cuda
@@ -38,10 +40,11 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
  !
  implicit none
  !
- integer, intent(in)  :: i_BS_mat
+ integer, intent(in)  :: i_BS_mat,iq
  Mat,     intent(out) :: slepc_mat
  !
  integer     :: i_c,i_r,i_Tk,i_Tp,i_B,H_shift(2)
+ character(lchlen)   :: live_msg
  Mat                 :: R,C
  PetscScalar         :: Mij,Mij_star
  PetscInt            :: H_pos(2),SL_K_dim(2),SL_H_dim
@@ -74,7 +77,9 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
  !
  ! Fill the values of the explicit submatrices of the nest matrix
  !
- if (n_BS_blks>0) call live_timing("Redistributing the BSE kernel in parallel slepc mat",n_BS_blks)
+ live_msg="Redistribute BSE in slepc_mat"
+ if (BSS_kernel_IO_on_the_fly) live_msg="Load and distribute BSE in slepc mat"
+ if (n_BS_blks>0) call live_timing(trim(live_msg),n_BS_blks)
  !
  do i_B=1,n_BS_blks
    !
@@ -83,6 +88,11 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
    !
    H_shift=0
    if(BS_blk(i_B)%mode=="C") H_shift(2)=BS_K_dim(1)
+   !
+   if (BSS_kernel_IO_on_the_fly) then
+     call io_control(ACTION=RD,ID=BS_ID(2))
+     call io_BS_PAR_block(iq,i_B,BS_ID(2),"matonly")
+   endif
    !
    do i_r=1,BS_blk(i_B)%size(1)
      !
@@ -129,7 +139,7 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
    !
    ! After the re-distribution into slepc_mat the %mat's are (in some cases) not needed anymore 
    !
-   if ( .not. (run_Haydock.or.run_inversion) ) call K_block_free(i_B)
+   if ( (.not.(run_Haydock.or.run_inversion)) .or. BSS_kernel_IO_on_the_fly) call K_block_free(i_B)
    !
    call live_timing(steps=1)
    !

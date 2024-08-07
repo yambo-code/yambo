@@ -55,7 +55,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #if defined _SLEPC && !defined _NL
  use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_maxit,&
 &                     BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_mpd,&
-&                     BSS_slepc_custom
+&                     BSS_slepc_pseudo_herm
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,MAX_BSK_LIN_size,&
 &                     BS_K_dim,BS_not_const_eh_f,BSK_mode,l_BSE_kernel_complete,&
@@ -485,7 +485,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_slepc_mpd=0
  BSS_slepc_tol=1E-6_SP
  BSS_slepc_target_E=0._SP
- BSS_slepc_custom=.FALSE.
+ BSS_slepc_pseudo_herm=.FALSE.
 #endif
  !
  ! TDDFT

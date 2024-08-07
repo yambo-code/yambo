@@ -5,10 +5,18 @@
 !
 ! Authors (see AUTHORS file for details): HM DS
 !
+! headers
+!
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <petsc/finclude/petscvec.h>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+!
 subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  !
- ! Here I fill the kernel (coupling not yet included) in a slepc matrix to be
- ! used for diagonalization and/or invertion
+ ! Here I fill the kernel in a slepc matrix
  !
  !      | (K_r)     (cI*K_c)    |  
  !  K = |                       |
@@ -17,23 +25,14 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  use pars,           ONLY:cI,cONE
  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling,&
  &                        BS_res_ares_n_mat,l_BS_ares_from_res
- use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width,        &
+ use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width,&
  &                        run_inversion,run_Haydock
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
  use cuda_m,         ONLY:have_cuda
  !
-#include <petsc/finclude/petscsys.h>
-#include <petsc/finclude/petscvec.h>
-#include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h>
-#include <slepc/finclude/slepcsys.h>
-#include <slepc/finclude/slepceps.h>
- !
  use petscmat
  use slepceps
- use slepcepsdef
- use petscmatdef
  !
  implicit none
  !
@@ -58,7 +57,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  call MatSetType(slepc_mat, MATDENSE,ierr)
 
 #if defined(PETSC_HAVE_CUDA)
- if(have_cuda) call MatSetType(slepc_mat,MATDENSECUDA,ierr)
+ if (have_cuda) call MatSetType(slepc_mat,MATDENSECUDA,ierr)
 #endif
 
  call MatSetUp(slepc_mat,ierr)

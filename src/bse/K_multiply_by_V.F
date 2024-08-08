@@ -64,7 +64,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par,iq,mode)
    select case(BS_blk(i_B)%mode)
    case("R")
      !
-     if (trim(mode)/="R".and.trim(mode)/="all") cycle
+     if (trim(mode)/="R".and.trim(mode)/="all") goto 100
      !
      if (.not. BSS_uses_FKE) then !Diagonal Kernel Extension
        !
@@ -134,7 +134,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par,iq,mode)
      !
    case("C")
      !
-     if (trim(mode)/="C".and.trim(mode)/="all") cycle
+     if (trim(mode)/="C".and.trim(mode)/="all") goto 100
      !
      ! IA (2022/01/19):
      ! Preliminary implementation of DbGd into coupling case does not work - to be tested
@@ -265,7 +265,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par,iq,mode)
      !
    end select
    !
-   if (i_B>BSS_kernel_last_stored_block) call K_block_free(i_B)
+100 if (i_B>BSS_kernel_last_stored_block) call K_block_free(i_B,"matonly")
    !
  end do
  !

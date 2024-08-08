@@ -155,7 +155,8 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,iq,slepc_mat)
    !
    ! After the re-distribution into slepc_mat the %mat's are (in some cases) not needed anymore 
    !
-   if ( .not. (run_Haydock.or.run_inversion) .or. i_B>BSS_kernel_last_stored_block ) call K_block_free(i_B)
+   if ( i_B>BSS_kernel_last_stored_block)       call K_block_free(i_B,"matonly")
+   if ( (.not.(run_Haydock.or.run_inversion)) ) call K_block_free(i_B,"all")
    !
    call live_timing(steps=1)
    !

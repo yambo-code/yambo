@@ -44,8 +44,6 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  !
  call timing('io_BS',OPR='start')
  !
- if (.not. allocated(BS_blk(i_block)%mat) ) call K_block_alloc(i_block)
- !
  ! Get the type of block that we want to write 
  !
  ID_table=max_io_vars_open
@@ -67,6 +65,8 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  BSK_IO_local=BSK_IO_split(1)
  if(index(mode,"compressed")/=0) BSK_IO_local=trim(mode)
  if(index(mode,"tableonly")/=0)  BSK_IO_local=trim(mode)
+ !
+ if (.not. allocated(BS_blk(i_block)%mat) ) call K_block_alloc(i_block,trim(mode))
  !
  select case(trim(BSK_IO_local))
  case("1D_linear","compressed_head","compressed_mat")

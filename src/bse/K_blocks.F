@@ -158,7 +158,7 @@ subroutine K_blocks( )
 end subroutine
 !
 !
-subroutine K_block_alloc( iB )
+subroutine K_block_alloc( iB, mode )
  !
  use pars,         ONLY:SP,cZERO
  use BS,           ONLY:BS_blk,l_BSE_kernel_complete
@@ -167,14 +167,15 @@ subroutine K_block_alloc( iB )
 #include<memory.h>
  !
  integer, intent(in) :: iB
+ character(*), intent(in) :: mode
  !
  integer :: diag_size
  !
- if (BSS_kernel_IO_on_the_fly.and.l_BSE_kernel_complete) then
+ if (mode=="matonly") then
    allocate(BS_blk(iB)%mat(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
- else
-   YAMBO_ALLOC(BS_blk(iB)%mat,(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
+   return
  endif
+ YAMBO_ALLOC(BS_blk(iB)%mat,(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
  allocate(BS_blk(iB)%done(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
  BS_blk(iB)%mat=cZERO
  BS_blk(iB)%done(:,:)="f"
@@ -189,7 +190,7 @@ subroutine K_block_alloc( iB )
 end subroutine K_block_alloc
 !
 !
-subroutine K_block_free( iB )
+subroutine K_block_free( iB, mode )
  !
  use BS,           ONLY:BS_blk,l_BSE_kernel_complete
  use BS_solvers,   ONLY:BSS_kernel_IO_on_the_fly
@@ -197,12 +198,13 @@ subroutine K_block_free( iB )
 #include<memory.h>
  !
  integer, intent(in) :: iB
+ character(*), intent(in) :: mode
  !
- if (BSS_kernel_IO_on_the_fly.and.l_BSE_kernel_complete) then
+ if (mode=="matonly") then
    deallocate(BS_blk(iB)%mat)
- else
-   YAMBO_FREE(BS_blk(iB)%mat)
+   return
  endif
+ YAMBO_FREE(BS_blk(iB)%mat)
  deallocate(BS_blk(iB)%done)
  if (BS_blk(iB)%coordinate(1)==BS_blk(iB)%coordinate(2)) then
    deallocate(BS_blk(iB)%table)
@@ -258,7 +260,7 @@ subroutine BS_blks_free(i_BS_mat)
  do iB=1,n_BS_blks
    if(i_BS_mat/=BS_blk(iB)%ira_k) cycle
    if(.not.allocated(BS_blk(iB)%mat)) cycle
-   call K_block_free( iB )
+   call K_block_free( iB, "all" )
  enddo
 end subroutine
 !

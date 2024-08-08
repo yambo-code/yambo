@@ -375,7 +375,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    do i_block=1,n_BS_blks
      !
-     if (.not. allocated(BS_blk(i_block)%mat) ) call K_block_alloc(i_block)
+     if (.not. allocated(BS_blk(i_block)%mat) ) call K_block_alloc(i_block,"all")
      !
      ! Read BS_blk to check if the transition was already computed
      !
@@ -400,7 +400,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      !
      if ( (.not.l_partial_kernel_loaded) .and. io_BS_K .and. l_write_kernel_step) then
        !
-       if (BS_blk_done(i_block) .or. BS_blk_todo) call K_block_free(i_block)
+       if (BS_blk_done(i_block) .or. BS_blk_todo) call K_block_free(i_block,"all")
        !
      endif
      !
@@ -465,7 +465,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      if(l_partial_kernel_loaded.and.l_write_kernel) then
        call io_control(ACTION=WR,ID=ID)
        call io_BS_PAR_block(iq,i_block,ID,"full")
-       if (io_BS_K.and.l_write_kernel_step) call K_block_free(i_block)
+       if (io_BS_K.and.l_write_kernel_step) call K_block_free(i_block,"all")
      endif
 #endif
      cycle
@@ -477,7 +477,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      if (iHxc==3) BSK_IO_sum_value=l_bs_exch.or.BS_K_is_ALDA
    endif
    !
-   if (.not. allocated(BS_blk(i_block)%mat) ) call K_block_alloc(i_block)
+   if (.not. allocated(BS_blk(i_block)%mat) ) call K_block_alloc(i_block,"all")
    !
    ! Read BS_blk to check if the transition was already computed
    !
@@ -812,7 +812,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      call io_control(ACTION=WR,COM=REP,SEC=(/i_block+1/),ID=ID)
      io_BS_err=io_BS(iq,X,ID)
 #endif
-     if (io_BS_K.and.l_write_kernel_step) call K_block_free(i_block)
+     if (io_BS_K.and.l_write_kernel_step) call K_block_free(i_block,"all")
    endif
    !
    call live_timing(steps=i_steps)

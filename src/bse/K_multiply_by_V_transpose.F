@@ -147,7 +147,7 @@ subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par,iq)
      !
    end select
    !
-   if (i_B>BSS_kernel_last_stored_block) call K_block_free(i_B)
+   if (i_B>BSS_kernel_last_stored_block) call K_block_free(i_B,"matonly")
    !
  end do
  !

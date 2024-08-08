@@ -7,15 +7,16 @@
 !
 subroutine K_driver_init(what,iq,Ken,Xk)
  !
+ use pars,         ONLY:SP,schlen
  use R_lattice,    ONLY:bz_samp
  use electrons,    ONLY:levels,n_sp_pol,n_spinor,n_spin
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
- use stderr,       ONLY:STRING_match
+ use stderr,       ONLY:STRING_match,STRING_split
  use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix_format,BSS_uses_DbGd,BSS_uses_FKE,&
 &                       BSS_slepc_pseudo_herm,BSS_slepc_double_grp,run_Slepc,BSS_mode,&
 &                       l_abs_prop_chi_bse,l_eels_can_be_computed,l_eels_from_inversion,&
-&                       BSS_kernel_IO_on_the_fly
+&                       BSS_kernel_IO_on_the_fly,BSS_kernel_stored_size
  use BS,           ONLY:BSE_L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
 &                       BS_perturbative_SOC,l_BS_magnons,l_BS_photolum,BSK_IO_mode,&
 &                       BS_cpl_K_exchange,BS_n_g_exch,BS_res_K_exchange,BS_K_coupling,BS_res_ares_n_mat,&
@@ -40,7 +41,9 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  ! Work Space
  !
+ integer :: i1,BSK_IO_n_strings
  logical :: l_flag,l_slepc_special,l_Fxc_Libxc
+ character(schlen) ::BSK_IO_strings(10)
  !
  ! Defaults
  !==========
@@ -272,5 +275,13 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  call parser('BSS_FKE',BSS_uses_FKE)
  !
  BSS_kernel_IO_on_the_fly=index(BSK_IO_mode,"read_on_the_fly")>0 .and. (index(BSS_mode,'h')/=0 .or. index(BSS_mode,'s')/=0)
+ if (BSS_kernel_IO_on_the_fly) then
+   call STRING_split(BSK_IO_mode,BSK_IO_strings,n_non_empty_strings=BSK_IO_n_strings)
+   BSS_kernel_stored_size=0._SP
+   do i1=1,BSK_IO_n_strings
+     if (.not.STRING_match(BSK_IO_strings(i1),"GB")) cycle
+     read (BSK_IO_strings(i1-1),*) BSS_kernel_stored_size
+   enddo
+ endif
  !
 end subroutine

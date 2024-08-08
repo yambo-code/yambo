@@ -19,7 +19,7 @@ subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par,iq)
  use pars,           ONLY:SP,cONE,cZERO,cI
  use parallel_int,   ONLY:PP_redux_wait
  use parallel_m,     ONLY:PAR_IND_T_Haydock,PAR_COM_T_Haydock
- use BS_solvers,     ONLY:Haydock_vector,BSS_Slepc_double_grp,BSS_kernel_IO_on_the_fly
+ use BS_solvers,     ONLY:Haydock_vector,BSS_Slepc_double_grp,BSS_kernel_last_stored_block
  use BS,             ONLY:BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,l_BS_ares_from_res,BS_ID
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:RD
@@ -47,7 +47,7 @@ subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par,iq)
    i_Tk  =BS_blk(i_B)%iT_k
    i_Tp  =BS_blk(i_B)%iT_p
    !
-   if (BSS_kernel_IO_on_the_fly) then
+   if (i_B>BSS_kernel_last_stored_block) then
      call io_control(ACTION=RD,ID=BS_ID(2))
      call io_BS_PAR_block(iq,i_B,BS_ID(2),"matonly")
      call K_block_symmetrize(i_B)
@@ -147,7 +147,7 @@ subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par,iq)
      !
    end select
    !
-   if (BSS_kernel_IO_on_the_fly) call K_block_free(i_B)
+   if (i_B>BSS_kernel_last_stored_block) call K_block_free(i_B)
    !
  end do
  !

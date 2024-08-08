@@ -62,6 +62,8 @@ module BS_solvers
  real(SP) :: BSS_E_dir(3)         ! Electric field
  real(SP) :: BSS_P_dir(3)         ! Induced polarization
  real(SP) :: BSS_Q_dir(3)         ! Field propagation direction
+ real(SP) :: BSS_kernel_stored_size
+ integer  :: BSS_kernel_last_stored_block
  logical  :: BSS_uses_DbGd
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF

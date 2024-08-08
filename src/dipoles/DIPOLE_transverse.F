@@ -9,7 +9,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  ! This routine returns <iR> and <P^2>.
  !
- use pars,                ONLY:SP,schlen,cZERO
+ use pars,                ONLY:SP,cZERO
  use drivers,             ONLY:l_sc_run
  use interfaces,          ONLY:WF_load,WF_free
  use LIVE_t,              ONLY:live_timing
@@ -40,7 +40,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  ! Work Space
  !
- character(schlen)            :: live_t_string
  logical                      :: l_eval_DIP_iR,l_eval_DIP_V,l_eval_DIP_P2,l_use_comm,l_check
  logical, allocatable         :: element_1D_spin(:)
  integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,nc,&
@@ -131,15 +130,9 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    !
  endif
  !
-                                      live_t_string='Dipoles: P (T)'
- if (l_eval_DIP_V)                    live_t_string='Dipoles: P and v (T)'
- if (l_eval_DIP_V .and.l_eval_DIP_iR) live_t_string='Dipoles: P, V and iR (T)'
- if (l_eval_DIP_P2.and.l_eval_DIP_V ) live_t_string='Dipoles: P, V and P2 (T)'
- if (l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dipoles: iR, P, V and P2 (T)'
- !
  ! Main loop over k in IBZ
  !
- if (N_elements_todo>0) call live_timing(trim(live_t_string),N_elements_todo)
+ if (N_elements_todo>0) call live_timing(trim(Dip%computed)//" [Transverse]",N_elements_todo)
  !
  do i_sp_pol=1,n_sp_pol
    !

@@ -32,16 +32,11 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  ! Work Space
  !
- logical     :: idir_not_done(3)
- logical     :: l_eval_polarization,l_force_SndOrd
- integer     :: ik,iv,ic,ic_min,iv_max,i_sp_pol,ikm1,id_red,idir,idx(3),ikbz,ik_mem
- integer     :: istep,max_step
+ logical     :: idir_not_done(3),l_eval_polarization,l_force_SndOrd
+ integer     :: ik,iv,ic,ic_min,iv_max,i_sp_pol,ikm1,id_red,idir,idx(3),ikbz,ik_mem,istep,max_step
  real(SP)    :: Ev_m_Ec_KS
- complex(SP), allocatable :: Sm1_plus (:,:,:)
- complex(SP), allocatable :: Sm1_minus(:,:,:)
- complex(SP) :: S_det(6)
- complex(SP) :: Wop(Dip%ib(2),Dip%ib(2),2),DIP_tmp(6,Dip%ib(2),Dip%ib(2))
- complex(SP) :: S_tmp(Dip%ib(2),Dip%ib(2),2)
+ complex(SP), allocatable :: Sm1_plus (:,:,:),Sm1_minus(:,:,:)
+ complex(SP) :: S_det(6),Wop(Dip%ib(2),Dip%ib(2),2),DIP_tmp(6,Dip%ib(2),Dip%ib(2)),S_tmp(Dip%ib(2),Dip%ib(2),2)
  !
  call timing("DIPOLE_buil_covariants",OPR="start")
  !

@@ -23,30 +23,24 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !                              takes into account the phases. symmetries not yet implemented 
  !                              and then <v> as <r>*DeltaE
  !
- use drivers,        ONLY:l_optics,l_real_time,l_sc_run,l_nl_optics
+ use drivers,        ONLY:l_optics
  use pars,           ONLY:SP,cZERO,schlen
  use electrons,      ONLY:levels,n_sp_pol
  use IO_m,           ONLY:io_DIP
  use R_lattice,      ONLY:bz_samp
  use DIPOLES,        ONLY:DIP_alloc,DIPOLE_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
-&                         Vnl_commutator_warning,use_g_space_approach,&
-&                         use_shifted_grids_approach,DIP_P,DIP_v,DIP_S,eval_OVERLAPS,&
-&                         compute_P2_dipoles,compute_Orb_dipoles,compute_Spin_dipoles
+&                         Vnl_commutator_warning,use_g_space_approach,DIP_P,DIP_v,DIP_S,compute_P_dipoles,&
+&                         compute_P2_dipoles,compute_Orb_dipoles,compute_Spin_dipoles,use_shifted_grids_approach
  use IO_int,         ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_A2A,&
 &                         PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parser_m,       ONLY:parser
  use DIPOLES,        ONLY:DIP_spin,DIP_orbital,P_square
  use electrons,      ONLY:n_spin,n_spinor
 #if defined _RT
  use DIPOLES,        ONLY:DIP_P_spinor
 #endif
- use BS,             ONLY:BSE_prop,l_BS_magnons,l_BS_dichroism,l_BS_photolum
-#if defined _SLEPC && !defined _NL
- use BS_solvers,     ONLY:BSS_mode
-#endif
- !
+ use BS,             ONLY:l_BS_dichroism
  use timing_m,       ONLY:timing
  !
  implicit none
@@ -59,93 +53,18 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  integer           :: ik,io_err
  character(schlen) :: msg
- logical           :: l_warning,use_dipole_transverse,idir_not_done(3)
-#if defined _NL
- logical           :: l_dip_appr_from_user
-#endif
- !
- call timing('Dipoles',OPR='start')
+ logical           :: l_warning,use_dipole_transverse,idir_not_done(3)=.FALSE.
  !
  call section('*','Dipoles')
+ !===========================
+ call timing('Dipoles',OPR='start')
  !
- ! DS 2017/08/22 : Case with io_DIP=.false. to be fixed
- if (.not.io_DIP) then
-   call warning(' Cannot use DIP_P on the flight at the moment. Setting io_DIP=.true.')
-   io_DIP=.true.
- endif
- !
- l_BS_magnons= (index(BSE_prop,'magn')/=0)
- l_BS_dichroism= (index(BSE_prop,'dich')/=0)
- l_BS_photolum= (index(BSE_prop,'photolum')/=0)
- if (l_BS_dichroism.or.l_BS_magnons .or. l_BS_photolum) Dip%bands_ordered=.false.
-#if defined _SLEPC && !defined _NL
- if ( index(BSS_mode,'s')/=0 )  Dip%bands_ordered=.false.
-#endif
- !
-#if defined _NL
- !
- if (l_nl_optics) then
-   !      
-   ! In NL I always force the use of covariant dipoles
-   ! because they have a coerent phase, while normal dipole don't
-   ! this can be see in a districtive interference in the polarization
-   ! perpendicular to the field direction
-   ! I expect that dipole covariant decently reproduce non-linear response
-   !
-   l_dip_appr_from_user=.false.
-   call parser("DipApproach",l_dip_appr_from_user)
-   if (.not.l_dip_appr_from_user) then
-     Dip%approach="Covariant"
-     Dip%ib(1)   =1
-   endif
-   !
- endif
-#endif
- !
- ! Setup logicals 
- !================
- use_g_space_approach        = trim(Dip%approach)=='G-space v'
- use_real_space_approach     = trim(Dip%approach)=='R-space x'
- use_covariant_approach      = trim(Dip%approach)=='Covariant'
- use_shifted_grids_approach  = trim(Dip%approach)=='Shifted grids'
- !
- compute_P2_dipoles          = index(Dip%computed,"P2")  /=0
- compute_Spin_dipoles        = index(Dip%computed,"Spin")/=0
- compute_Orb_dipoles         = index(Dip%computed,"Orb") /=0
-#if defined _SC
- compute_P2_dipoles          = compute_P2_dipoles .or. l_sc_run
-#endif
-#if defined _RT
- compute_P2_dipoles          = compute_P2_dipoles   .or. l_real_time
- compute_Spin_dipoles        = compute_Spin_dipoles .or. (l_real_time .and. n_spin>1)
- compute_Orb_dipoles         = compute_Orb_dipoles  .or. (l_real_time .and. n_spin>1)
-#endif
- compute_Spin_dipoles        = compute_Spin_dipoles .or. (l_BS_magnons .and. n_spin>1)
- !
- if(.not.any((/use_g_space_approach,use_real_space_approach,use_covariant_approach,use_shifted_grids_approach/))) then
-   call warning(' Dipoles approach defined in input not recognised. Reverting to G-space v')
-   use_g_space_approach = .true.
-   Dip%approach='G-space v'
- endif
- !
- call parser('PDirect'  ,Dip%force_v_g_space)
-#if defined _SC || defined _RT || defined _NL
- Dip%force_v_g_space=Dip%force_v_g_space.or.l_sc_run.or.l_real_time.or.l_nl_optics
-#endif
- Dip%force_v_g_space     =Dip%force_v_g_space.or.l_BS_photolum
- Dip%force_v_g_space     =Dip%force_v_g_space.and.(.not.use_g_space_approach)
- use_dipole_transverse   =.true.
- idir_not_done           =.true.
- !
- Dip%computed='R V P'
- if (compute_P2_dipoles)   Dip%computed=trim(Dip%computed)//' P2'
- if (compute_Spin_dipoles) Dip%computed=trim(Dip%computed)//' Spin'
- if (compute_Orb_dipoles)  Dip%computed=trim(Dip%computed)//' Orb'
- !
- if (use_covariant_approach)  eval_OVERLAPS=.true.
+ ! Setup 
+ !=======
+ call DIPOLE_setup(Dip,use_dipole_transverse)
  !
  ! Dipole dimensions to be fixed
- !
+ !===============================
  call DIPOLE_dimensions(Xen,Dip,Dip%ib,(/0._SP,0._SP,0._SP/))
  !
  ! Parallelization
@@ -257,12 +176,14 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    subroutine DIPOLES_alloc()
      !
      call DIP_alloc('DIP_iR',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
-     call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
      call DIP_alloc('DIP_v' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
      DIP_iR=cZERO
-     DIP_P=cZERO
      DIP_v=cZERO
      !
+     if (compute_P_dipoles) then
+       call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
+       DIP_P=cZERO
+     endif
      if (compute_Orb_dipoles) then
        call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz,2/))
        DIP_orbital=cZERO

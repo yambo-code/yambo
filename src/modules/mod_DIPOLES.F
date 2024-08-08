@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2016 The Yambo Team
 !
-! Authors (see AUTHORS file for details): DS
+! Authors (see AUTHORS file for details): DS AM
 !
 module DIPOLES
  !
@@ -19,6 +19,7 @@ module DIPOLES
  logical                  :: use_shifted_grids_approach
  logical                  :: use_g_space_approach
  logical                  :: use_real_space_approach
+ logical                  :: compute_P_dipoles
  logical                  :: compute_P2_dipoles
  logical                  :: compute_Spin_dipoles
  logical                  :: compute_Orb_dipoles

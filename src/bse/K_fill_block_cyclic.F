@@ -13,8 +13,9 @@ subroutine K_fill_block_cyclic(i_BS_mat, diago_mat)
   !
   use pars,           ONLY:cI,cONE
   use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling,&
-    &                        BS_res_ares_n_mat,l_BS_ares_from_res, BS_blks_free
-  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width
+  &                        BS_res_ares_n_mat,l_BS_ares_from_res, BS_blks_free
+  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width, &
+  &                        run_inversion,run_Haydock
   use cuda_m,         ONLY:have_cuda
   !
   !use, intrinsic :: iso_c_binding, only: c_ptr
@@ -216,8 +217,9 @@ subroutine K_fill_block_cyclic(i_BS_mat, diago_mat)
     enddo
     !
   enddo
-  ! Free the blocks ?
-  ! call BS_blks_free(i_BS_mat)
+  !
+  ! Free the blocks immediately if not required.
+  if ( (.not.(run_Haydock.or.run_inversion)) ) call BS_blks_free(i_BS_mat)
   !
   ! Finalize the setQueue
   error_diago = ProcessSetQueue(diago_mat)

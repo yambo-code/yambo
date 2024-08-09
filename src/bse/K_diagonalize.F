@@ -116,16 +116,18 @@ endif
 
   ProcX = int(sqrt(real(nProcs)),kind=YDIAGO_INT)
   ProcY = ProcX
-
+  ! Maximize the number of cpus participating
+  if ( ProcX * (ProcX + 1) .le. nProcs) ProcY = ProcX + 1
+  if ( ProcX * (ProcX + 2) .le. nProcs) ProcY = ProcX + 2
   ! Geev block size must be smaller than mat dim and >=8
   ! Start with the default 64
   blacs_blk_size = blacs_block_size
   ! if not try 32
-  if (blacs_blk_size .gt. SL_H_dim/ProcX) blacs_blk_size = blacs_blk_size/2
+  if (blacs_blk_size .gt. SL_H_dim/ProcY) blacs_blk_size = blacs_blk_size/2
   ! if not try 16
-  if (blacs_blk_size .gt. SL_H_dim/ProcX) blacs_blk_size = blacs_blk_size/2
+  if (blacs_blk_size .gt. SL_H_dim/ProcY) blacs_blk_size = blacs_blk_size/2
   ! Last try.
-  if (blacs_blk_size .gt. SL_H_dim/ProcX) then
+  if (blacs_blk_size .gt. SL_H_dim/ProcY) then
     ! force the solver to be scalapack
     ! If block size is <8, geev solver will fail.
     solver_type_aux = 's'

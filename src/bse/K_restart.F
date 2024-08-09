@@ -100,7 +100,7 @@ subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
      call io_BS_PAR_block(iq,i_block,ID_now,IO_MODE)
      call live_timing(steps=1)
      Sz=BS_blk(i_block)%size(1)*BS_blk(i_block)%size(2)
-     size_now=size_now+Sz*real(kind(size_now),SP)*2/Gigabyte
+     size_now=size_now+Sz*kind(size_now)*2/Gigabyte
      if (BSS_kernel_IO_on_the_fly.and.size_now>=BSS_kernel_stored_size) then
        BSS_kernel_last_stored_block=i_block
        exit

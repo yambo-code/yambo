@@ -24,7 +24,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  use interfaces,          ONLY: WF_load,WF_free,io_DB1_selective_scan
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
  use X_m,                 ONLY: l_X_terminator
- use DIPOLES,             ONLY: DIPOLE_t,DIP_iR,DIP_v,num_shifted_grids
+ use DIPOLES,             ONLY: DIPOLE_t,DIP_iR,DIP_v,num_shifted_grids,shifted_grids_obs
  use vec_operate,         ONLY: degeneration_finder
  use wrapper,             ONLY: Vstar_dot_V
  use wave_func,           ONLY: wf_ng,wf_igk,WF,wf_ncx,WAVEs
@@ -127,13 +127,13 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  !
  call msg('r','Shifted grids found '//trim(intc(num_shifted_grids)))
  !
- if(num_shifted_grids<3) call warning(' Shifted grids are '//trim(intc(num_shifted_grids))//'. Assuming non periodic system.')
+ if (num_shifted_grids<3) call warning(' Shifted grids are '//trim(intc(num_shifted_grids))//'. Assuming non periodic system.')
  !
  n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
 &                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)*num_shifted_grids
  !
- call live_timing('Dipoles shifted grids   ',n_LT_steps)
+ call live_timing(trim(shifted_grids_obs),n_LT_steps)
  !
  do i_sp_pol = 1,n_sp_pol
    !

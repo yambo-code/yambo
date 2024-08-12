@@ -11,19 +11,19 @@ module DIPOLES
  use units,         ONLY:HA2EV
  use descriptors,   ONLY:IO_desc
  !
-#include <memory.h>
+ implicit none
  !
  ! Logicals
  !
- logical                  :: use_covariant_approach
- logical                  :: use_shifted_grids_approach
- logical                  :: use_g_space_approach
- logical                  :: use_real_space_approach
- logical                  :: compute_P_dipoles
- logical                  :: compute_P2_dipoles
- logical                  :: compute_Spin_dipoles
- logical                  :: compute_Orb_dipoles
- logical                  :: Vnl_commutator_warning
+ logical                  :: Vnl_commutator_warning      =.FALSE.
+ !
+ ! List of observables associated to the specific approach and/or to other routines
+ !
+ character(schlen) :: shifted_grids_obs=""
+ character(schlen) :: covariant_obs    =""
+ character(schlen) :: g_space_obs      =""
+ character(schlen) :: x_space_obs      =""
+ character(schlen) :: specific_obs     =""
  ! 
  ! other
  !
@@ -69,80 +69,16 @@ module DIPOLES
    !
  end type
  !
- contains
+ interface
    !
-   subroutine DIP_alloc(what,d)
-     !
-     use electrons, ONLY:n_sp_pol,n_spinor
-     use pars,      ONLY:cZERO
-     !
-     character(*)      :: what
-     integer, optional :: d(:)
-     !
-     if (present(d)) then
-       select case(what)
-       case('DIP_iR')
-         if (allocated(DIP_iR)) return
-         YAMBO_ALLOC(DIP_iR,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
-         DIP_iR=cZERO
-       case('DIP_P')
-         if (allocated(DIP_P)) return
-         YAMBO_ALLOC(DIP_P,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
-         DIP_P=cZERO
-       case('DIP_v')
-         if (allocated(DIP_v)) return
-         YAMBO_ALLOC(DIP_v,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
-         DIP_v=cZERO
-       case('DIP_S')
-         if (allocated(DIP_S)) return
-         YAMBO_ALLOC(DIP_S,(d(1),d(2),d(3),d(4),n_sp_pol))
-         DIP_S=cZERO
-       case('DIP_orbital')
-         if (allocated(DIP_orbital)) return
-         YAMBO_ALLOC(DIP_orbital,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol,d(7)))
-         DIP_orbital=cZERO
-       case('DIP_spin')
-         if (allocated(DIP_spin)) return
-         YAMBO_ALLOC(DIP_spin,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol,3))
-         DIP_spin=cZERO
-       case('DIP_P_spinor')
-         if (allocated(DIP_P_spinor).or.n_spinor==1) return
-         YAMBO_ALLOC(DIP_P_spinor,(d(1),n_spinor,n_spinor,d(2):d(3),d(4):d(5),d(6)))
-         DIP_P_spinor=cZERO
-       case('P_square')
-         if (allocated(P_square)) return
-         YAMBO_ALLOC(P_square,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
-         P_square=cZERO
-       end select
-     else
-       select case(what)
-       case('DIP_iR')
-         if (.not.allocated(DIP_iR)) return
-         YAMBO_FREE(DIP_iR)
-       case('DIP_P')
-         if (.not.allocated(DIP_P)) return
-         YAMBO_FREE(DIP_P)
-       case('DIP_v')
-         if (.not.allocated(DIP_v)) return
-         YAMBO_FREE(DIP_v)
-       case('DIP_S')
-         if (.not.allocated(DIP_S)) return
-         YAMBO_FREE(DIP_S)
-       case('DIP_orbital')
-         if (.not.allocated(DIP_orbital)) return
-         YAMBO_FREE(DIP_orbital)
-       case('DIP_spin')
-         if (.not.allocated(DIP_spin)) return
-         YAMBO_FREE(DIP_spin)
-       case('DIP_P_spinor')
-         if (.not.allocated(DIP_P_spinor)) return
-         YAMBO_FREE(DIP_P_spinor)
-       case('P_square')
-         if (.not.allocated(P_square)) return
-         YAMBO_FREE(P_square)
-       end select
-     endif
+   subroutine DIPOLE_ALLOC_elemental(what,d)
+     character(*)                :: what
+     integer, optional           :: d(:)
    end subroutine
+   !
+ end interface
+ !
+ contains
    !
    subroutine DIPOLES_duplicate(Dip_in,Dip_out)
      type(DIPOLE_t), intent(in) :: Dip_in
@@ -182,7 +118,7 @@ module DIPOLES
      Dip%bands_ordered=.true.
      Dip%force_v_g_space=.false.
      Dip%approach="G-space v"
-     Dip%computed="R P V"
+     Dip%computed=" "
    end subroutine DIPOLES_reset
    !
    function DIP_rotated(ic,iv,ik_bz,i_sp_pol,what,kpt)

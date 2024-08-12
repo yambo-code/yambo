@@ -11,7 +11,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  use pars,          ONLY:SP,schlen
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life,l_rpa_IP 
- use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
+ use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,X_ALLOC_elemental,self_detect_E_range,X_poles,l_recalculate_X,l_write_disk_Xo,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup,&
@@ -306,6 +306,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      if (n_OPTICAL_dir_to_eval>1) X_what="("//trim(intc(iq_dir))//" of "//trim(intc(n_OPTICAL_dir_to_eval))//")"
      !
      call X_irredux(iq,"Xo"//trim(X_what),X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
+     stop
      !
      if (l_write_disk_Xo.and.n_OPTICAL_dir_to_eval==1) then
        call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
@@ -365,9 +366,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  if (allocated(F_xc_gspace)) then
    YAMBO_FREE(F_xc_gspace)
  endif
- call DIP_alloc('DIP_iR')
- call DIP_alloc('DIP_P')
- call DIP_alloc('DIP_v')
+ call DIPOLE_ALLOC_global(Dip,-1)
  if (.not.SILENT_MODE.or.X%iq(2)==q%nibz) call WF_free(WF)
  !
  contains

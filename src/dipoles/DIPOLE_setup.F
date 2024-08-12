@@ -5,16 +5,16 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine DIPOLE_setup(Dip,use_dipole_transverse)
+subroutine DIPOLE_setup(Dip)
  !
  use drivers,        ONLY:l_real_time,l_sc_run,l_nl_optics
- use DIPOLES,        ONLY:DIPOLE_t,use_covariant_approach,use_real_space_approach,&
-&                         compute_P2_dipoles,compute_Orb_dipoles,compute_Spin_dipoles,&
-&                         use_g_space_approach,eval_OVERLAPS,use_shifted_grids_approach,compute_P_dipoles
+ use DIPOLES,        ONLY:DIPOLE_t,x_space_obs,g_space_obs,covariant_obs,shifted_grids_obs,&
+&                         specific_obs,eval_OVERLAPS
  use IO_m,           ONLY:io_DIP
  use BS,             ONLY:BSE_prop,l_BS_magnons,l_BS_dichroism,l_BS_photolum
- use electrons,      ONLY:n_spin
+ use electrons,      ONLY:n_spin,n_spinor
  use parser_m,       ONLY:parser
+ use stderr,         ONLY:STRING_same,STRING_match
 #if defined _SLEPC && !defined _NL
  use BS_solvers,     ONLY:BSS_mode
 #endif
@@ -22,7 +22,6 @@ subroutine DIPOLE_setup(Dip,use_dipole_transverse)
  implicit none
  !
  type(DIPOLE_t),intent(inout) :: Dip
- logical                      :: use_dipole_transverse
  !
  ! Work Space
  !
@@ -42,17 +41,20 @@ subroutine DIPOLE_setup(Dip,use_dipole_transverse)
  endif
  !
  ! Observables (needed later)
- !-------------
+ !----------------------------
  l_BS_magnons=   (index(BSE_prop,'magn')/=0)
  l_BS_dichroism= (index(BSE_prop,'dich')/=0)
  l_BS_photolum=  (index(BSE_prop,'photolum')/=0)
+ !
+ ! Bands ordering
+ !----------------
  if (l_BS_dichroism.or.l_BS_magnons .or. l_BS_photolum) Dip%bands_ordered=.false.
 #if defined _SLEPC && !defined _NL
  if ( index(BSS_mode,'s')/=0 )  Dip%bands_ordered=.false.
 #endif
  !
- ! logicals (approach)
- !--------------------
+ ! Force covariant in NL
+ !-----------------------
 #if defined _NL
  if (l_nl_optics) then
    !      
@@ -71,48 +73,75 @@ subroutine DIPOLE_setup(Dip,use_dipole_transverse)
  endif
 #endif
  !
- use_g_space_approach        = trim(Dip%approach)=='G-space v'
- use_real_space_approach     = trim(Dip%approach)=='R-space x'
- use_covariant_approach      = trim(Dip%approach)=='Covariant'
- use_shifted_grids_approach  = trim(Dip%approach)=='Shifted grids'
- if(.not.any((/use_g_space_approach,use_real_space_approach,use_covariant_approach,use_shifted_grids_approach/))) then
-   call warning(' Dipoles approach defined in input not recognised. Reverting to G-space v')
-   use_g_space_approach = .true.
-   Dip%approach='G-space v'
- endif
- !
+ ! Force <V> to be calculated using the G-space
+ !---------------------------------------------
  call parser('PDirect'  ,Dip%force_v_g_space)
 #if defined _SC || defined _RT || defined _NL
  Dip%force_v_g_space=Dip%force_v_g_space.or.l_sc_run.or.l_real_time.or.l_nl_optics
 #endif
+ ! For some reason (to understand) also in the PL case Dip%force_v_g_space=.TRUE.
  Dip%force_v_g_space     =Dip%force_v_g_space.or.l_BS_photolum
- Dip%force_v_g_space     =Dip%force_v_g_space.and.(.not.use_g_space_approach)
- use_dipole_transverse   =use_g_space_approach
  !
- ! logicals (components)
- !-----------------------
- compute_P_dipoles           = use_g_space_approach !.or.use_dipole_transverse
- compute_P2_dipoles          = index(Dip%computed,"P2")  /=0
- compute_Spin_dipoles        = index(Dip%computed,"Spin")/=0
- compute_Orb_dipoles         = index(Dip%computed,"Orb") /=0
-#if defined _SC
- compute_P2_dipoles          = compute_P2_dipoles .or. l_sc_run
-#endif
+ ! Components based on approach
+ !------------------------------
+ !
+ ! <P> is ALWAYS calculated in G-space
+ g_space_obs="P"
+ !
+ if (STRING_same(Dip%approach,"r-space x")) then
+   x_space_obs="R V"
+   if (Dip%force_v_g_space) x_space_obs="R"
+ else if (STRING_same(Dip%approach,"covariant")) then
+   covariant_obs="S R V"
+   if (Dip%force_v_g_space) x_space_obs="S R"
+   eval_OVERLAPS=.true.
+ else if (STRING_same(Dip%approach,"shifted grids")) then
+   shifted_grids_obs="R V"
+   if (Dip%force_v_g_space) shifted_grids_obs="R"
+ else
+   call warning(' User approach undefined. Switching to G-space v')
+   g_space_obs="R V P"
+ endif
+ !
+ ! ... P2 
 #if defined _RT
- compute_P2_dipoles          = compute_P2_dipoles   .or. l_real_time
- compute_Spin_dipoles        = compute_Spin_dipoles .or. (l_real_time .and. n_spin>1)
- compute_Orb_dipoles         = compute_Orb_dipoles  .or. (l_real_time .and. n_spin>1)
+ if (l_real_time) then
+   g_space_obs=trim(g_space_obs)//" P2"
+ endif
+#else
+ if (STRING_match(Dip%computed,"p2")) g_space_obs=trim(g_space_obs)//" P2"
 #endif
- compute_Spin_dipoles        = compute_Spin_dipoles .or. (l_BS_magnons .and. n_spin>1)
+ !
+ ! ... P_spinor
+ if (n_spinor==2) then
+#if defined _RT
+   if (l_real_time) g_space_obs=trim(g_space_obs)//" P_spinor"
+#else
+   if (STRING_match(Dip%computed,"spin").or.l_BS_magnons) g_space_obs=trim(g_space_obs)//" P_spinor"
+#endif
+ endif
+ ! ...M_spin, M_orb, M_iti, M_orb_CD
+ if (n_spin>1) then
+#if defined _RT
+   if (l_real_time) specific_obs=" M_spin M_orb M_it"
+#else
+   if (STRING_match(Dip%computed,"spin").or.l_BS_magnons) specific_obs=" M_spin"
+   if (STRING_match(Dip%computed,"orb")) specific_obs=trim(specific_obs)//" M_orb M_it"
+   if (l_BS_dichroism) specific_obs=trim(specific_obs)//" M_CD_orb"
+#endif
+ endif
  ! 
  ! Computed components
  !---------------------
- Dip%computed='R V'
- if (compute_P_dipoles)    Dip%computed=trim(Dip%computed)//' P'
- if (compute_P2_dipoles)   Dip%computed=trim(Dip%computed)//' P2'
- if (compute_Spin_dipoles) Dip%computed=trim(Dip%computed)//' Spin'
- if (compute_Orb_dipoles)  Dip%computed=trim(Dip%computed)//' Orb'
- !
- if (use_covariant_approach)  eval_OVERLAPS=.true.
+ Dip%computed=" "
+ if (len_trim(x_space_obs  )    >0) Dip%computed=trim(x_space_obs)//" [X-space]"
+ if (len_trim(covariant_obs)    >0) Dip%computed=trim(covariant_obs)//" [covarian]"
+ if (len_trim(shifted_grids_obs)>0) Dip%computed=trim(shifted_grids_obs)//" [shift-grids]"
+ if (len_trim(Dip%computed)==0) then
+   Dip%computed=trim(g_space_obs)//" [G-space]"
+ else
+   Dip%computed=trim(dip%computed)//" "//trim(g_space_obs)//" [G-space]"
+ endif
+ Dip%computed=trim(dip%computed)//" "//trim(specific_obs)
  !
 end subroutine

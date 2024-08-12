@@ -16,7 +16,7 @@ subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
  use YPPm,           ONLY:EXCITON_weight_treshold,EXCITONS_user_indexes,EXCITONS_n_user_states,DIPs,&
 &                         DIPs_direction,l_dipoles,BSiq
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BSS_desc,BSS_n_eig
- use DIPOLES,        ONLY:DIP_rotated,DIP_alloc,DIPOLES_reset
+ use DIPOLES,        ONLY:DIP_rotated,DIPOLES_reset,DIPOLE_ALLOC_elemental
  use BS,             ONLY:BS_H_dim,BS_bands,BSqpts
  use com,            ONLY:msg
  use vec_operate,    ONLY:sort,v_norm
@@ -206,9 +206,9 @@ subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
  enddo
  !
  if (l_dipoles) then
-   call DIP_alloc('DIP_iR')
-   call DIP_alloc('DIP_P')
-   call DIP_alloc('DIP_v')
+   call DIPOLE_ALLOC_elemental('DIP_iR')
+   call DIPOLE_ALLOC_elemental('DIP_P')
+   call DIPOLE_ALLOC_elemental('DIP_v')
    call DIPOLES_reset(DIPs)
  endif
  !

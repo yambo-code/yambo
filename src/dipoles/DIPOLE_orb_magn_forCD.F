@@ -35,7 +35,7 @@ subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
 &                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
  !
- if (n_LT_steps>0) call live_timing('Dipoles: orbital magnetization',n_LT_steps)
+ if (n_LT_steps>0) call live_timing('Dipoles (CD): orbital magnetization',n_LT_steps)
  !
  ! Main loop over k in IBZ
  !
@@ -63,8 +63,8 @@ subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
            
            DIP_v_loc(:)=DIP_v(:,ic,ib,ik_mem,i_sp_pol)
            !
-           DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)+ &
-           & cross_product(DIP_x_loc,DIP_v_loc)
+           DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)=&
+&                     DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)+cross_product(DIP_x_loc,DIP_v_loc)
            !
            ! DEBUG <
            !write(*,*) "[DIP] writing DIP_orbital(..,ic,iv,ik,,) values"

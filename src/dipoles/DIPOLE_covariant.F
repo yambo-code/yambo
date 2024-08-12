@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): MG CA DS
 !
-subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
+subroutine DIPOLE_covariant(Xen,Xk,Dip)
  !
  ! Build the covariant dipole operator at zero field
  ! in PRB 69, 085106 (2004)
@@ -13,7 +13,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  use pars,           ONLY:SP,cI,cZERO,pi
  use LIVE_t,         ONLY:live_timing
  use electrons,      ONLY:levels,n_sp_pol
- use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S,DIP_iR,DIP_v
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_S,DIP_iR,DIP_v,DIPOLE_ALLOC_elemental
  use R_lattice,      ONLY:bz_samp,k_map
  use vec_operate,    ONLY:k_periodic_idx
  use matrix_operate, ONLY:hermitian
@@ -52,7 +52,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  ! Notice that DIP_S is defined in the BZ       
  !
- call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,PAR_DIPk_nbz/))
+ call DIPOLE_ALLOC_elemental('DIP_S',(/Dip%ib(2),Dip%ib(2),6,PAR_DIPk_nbz/))
  DIP_S=cZERO
  !
  call DIPOLE_overlaps(Xk,Dip)
@@ -197,6 +197,5 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  if(any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,Dip,idir_not_done)
  !
  call timing("DIPOLE_buil_covariants",OPR="stop")
- return
  !
-end subroutine DIPOLE_build_covariants
+end subroutine DIPOLE_covariant

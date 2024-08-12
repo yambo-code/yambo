@@ -8,7 +8,6 @@
 subroutine RT_free( )
  !
  use R_lattice,      ONLY:bz_samp_FineGd_reset
- use DIPOLES,        ONLY:DIP_alloc
 #if defined _ELPH
  use ELPH_intfcs,    ONLY:ELPH_alloc
  use ELPH,           ONLY:Q_io_map,GKKP_ep_sq,GKKP_pe_sq
@@ -25,18 +24,19 @@ subroutine RT_free( )
  use RT_iterative,   ONLY:THETA_matrix,THETA_matrix_index
 #endif
  use RT_lifetimes,   ONLY:RT_ALL_lifetimes_free,q_weight_RT
+ use DIPOLES,        ONLY:DIPOLE_ALLOC_elemental
  !
 #include<memory.h>
  !
  call H_free()
  !
- call DIP_alloc('DIP_iR')
- call DIP_alloc('DIP_P')
- call DIP_alloc('DIP_v')
- call DIP_alloc('DIP_spin')
- call DIP_alloc('DIP_orbital')
- call DIP_alloc('P_square')
- call DIP_alloc('DIP_P_spinor')
+ call DIPOLE_ALLOC_elemental('DIP_iR')
+ call DIPOLE_ALLOC_elemental('DIP_P')
+ call DIPOLE_ALLOC_elemental('DIP_v')
+ call DIPOLE_ALLOC_elemental('DIP_spin')
+ call DIPOLE_ALLOC_elemental('DIP_orbital')
+ call DIPOLE_ALLOC_elemental('P_square')
+ call DIPOLE_ALLOC_elemental('DIP_P_spinor')
  !
  call RT_ALL_lifetimes_free()
  call RT_ALL_occupations_free()

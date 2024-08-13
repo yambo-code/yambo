@@ -18,6 +18,7 @@
  DIPOLE_orbital_magnetization.o
  DIPOLE_overlaps.o
  DIPOLE_p_matrix_elements.o
+ DIPOLE_rotate.o
  DIPOLE_setup.o
  DIPOLE_shifted_grids.o
  DIPOLE_spin_magnetization.o

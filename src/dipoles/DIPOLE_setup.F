@@ -103,7 +103,7 @@ subroutine DIPOLE_setup(Dip)
  else
    call warning(' User approach undefined. Switching to G-space v')
    g_space_obs="R V P"
- endif
+ endif 
  !
  ! ... P2 
 #if defined _RT

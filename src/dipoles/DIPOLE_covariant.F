@@ -13,7 +13,7 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip)
  use pars,           ONLY:SP,cI,cZERO,pi
  use LIVE_t,         ONLY:live_timing
  use electrons,      ONLY:levels,n_sp_pol
- use DIPOLES,        ONLY:DIPOLE_t,DIP_S,DIP_iR,DIP_v,covariant_obs
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_S,DIP_iR,DIP_v,covariant_obs,x_space_obs
  use ALLOC,          ONLY:DIPOLE_ALLOC_elemental
  use R_lattice,      ONLY:bz_samp,k_map
  use vec_operate,    ONLY:k_periodic_idx
@@ -24,6 +24,7 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip)
  use D_lattice,      ONLY:a
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
+ use stderr,         ONLY:STRING_match
  !
 #include<memory.h>
  !
@@ -33,11 +34,12 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip)
  !
  ! Work Space
  !
- logical     :: idir_not_done(3),l_eval_polarization,l_force_SndOrd
- integer     :: ik,iv,ic,ic_min,iv_max,i_sp_pol,ikm1,id_red,idir,idx(3),ikbz,ik_mem,istep,max_step
- real(SP)    :: Ev_m_Ec_KS
+ logical     ::idir_not_done(3),l_eval_polarization,l_force_SndOrd
+ integer     ::ik,iv,ic,ic_min,iv_max,i_sp_pol,ikm1,id_red,idir,idx(3),ikbz,ik_mem,istep,max_step
+ real(SP)    ::Ev_m_Ec_KS
  complex(SP), allocatable :: Sm1_plus (:,:,:),Sm1_minus(:,:,:)
- complex(SP) :: S_det(6),Wop(Dip%ib(2),Dip%ib(2),2),DIP_tmp(6,Dip%ib(2),Dip%ib(2)),S_tmp(Dip%ib(2),Dip%ib(2),2)
+ complex(SP) ::S_det(6),Wop(Dip%ib(2),Dip%ib(2),2),DIP_tmp(6,Dip%ib(2),Dip%ib(2)),S_tmp(Dip%ib(2),Dip%ib(2),2)
+ character(1)::str(3)=(/'x','y','z'/)
  !
  call timing("DIPOLE_covariant",OPR="start")
  !
@@ -164,7 +166,7 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip)
      !=====
      ! <v>
      !=====
-     if(.not.Dip%force_v_g_space) then
+     if(STRING_match(covariant_obs,"V")) then
        do iv=Dip%ib(1),Dip%ib_lim(1) 
          if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
          do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
@@ -195,7 +197,16 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip)
  if(l_eval_polarization) call POLARIZATION_output(Xen,Xk,Dip)
 #endif
  !
- if(any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,Dip,idir_not_done)
+ if (any(idir_not_done)) then
+   do ic=1,3
+     if (idir_not_done(ic)) then
+       x_space_obs=trim(x_space_obs)//" R_"//str(ic)
+       if (STRING_match(covariant_obs,"V")) x_space_obs=trim(x_space_obs)//" V_"//str(ic)
+     endif
+   enddo 
+   Dip%computed=trim(Dip%computed)//trim(x_space_obs)//" [X-space]"
+   call DIPOLE_x_real_space(Xen,Xk,Dip,idir_not_done)
+ endif
  !
  call timing("DIPOLE_covariant",OPR="stop")
  !

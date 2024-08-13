@@ -23,11 +23,6 @@ module ALLOC
      integer, optional           :: d(:)
    end subroutine
    !
-   subroutine DIPOLE_ALLOC_global(what,d)
-     character(*)                :: what
-     integer, optional           :: d(:)
-   end subroutine
-   !
    subroutine DIPOLE_ALLOC_global(D,NK)
      use DIPOLES,        ONLY:DIPOLE_t
      type(DIPOLE_t),intent(inout), optional :: D

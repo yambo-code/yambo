@@ -8,7 +8,8 @@
 integer function io_Overlaps(Dip,ID)
  !
  use pars,          ONLY:schlen
- use DIPOLES,       ONLY:DIPOLE_t,DIP_S,DIPOLE_ALLOC_elemental
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_S
+ use ALLOC,         ONLY:DIPOLE_ALLOC_elemental
  use R_lattice,     ONLY:nXkbz
  use IO_int,        ONLY:io_connect,io_disconnect,io_fragment,io_header,io_bulk
  use IO_m,          ONLY:io_sec,frag_DIP,read_is_on,io_extension,&

@@ -19,7 +19,8 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  !
  use pars,            ONLY:SP,DP
  use D_lattice,       ONLY:DL_vol,i_time_rev,sop_inv,nsym,i_space_inv
- use X_m,             ONLY:X_t, X_ALLOC_elemental,X_mat,X_poles_tab,current_iq 
+ use ALLOC,           ONLY:X_ALLOC_elemental
+ use X_m,             ONLY:X_t,X_mat,X_poles_tab,current_iq 
  use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan

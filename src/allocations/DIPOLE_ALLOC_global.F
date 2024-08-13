@@ -9,8 +9,8 @@ subroutine DIPOLE_ALLOC_global(D,NK)
  !
  ! Here all DIPOLE observables are allocated except the S_overlap matrix
  !
- use DIPOLES,        ONLY:DIPOLE_t,DIP_iR,DIP_v,DIP_P,DIP_orbital,DIP_spin,DIP_P_spinor,&
-&                         P_square,DIPOLE_ALLOC_elemental
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_iR,DIP_v,DIP_P,DIP_orbital,DIP_spin,DIP_P_spinor,P_square
+ use ALLOC,          ONLY:DIPOLE_ALLOC_elemental
  use stderr,         ONLY:STRING_match
  !
  implicit none

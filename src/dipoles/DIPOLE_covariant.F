@@ -13,7 +13,8 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip)
  use pars,           ONLY:SP,cI,cZERO,pi
  use LIVE_t,         ONLY:live_timing
  use electrons,      ONLY:levels,n_sp_pol
- use DIPOLES,        ONLY:DIPOLE_t,DIP_S,DIP_iR,DIP_v,DIPOLE_ALLOC_elemental
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_S,DIP_iR,DIP_v
+ use ALLOC,          ONLY:DIPOLE_ALLOC_elemental
  use R_lattice,      ONLY:bz_samp,k_map
  use vec_operate,    ONLY:k_periodic_idx
  use matrix_operate, ONLY:hermitian

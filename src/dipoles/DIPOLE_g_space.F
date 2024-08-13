@@ -128,7 +128,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
  !
  ! Main loop over k in IBZ
  !
- if (N_elements_todo>0) call live_timing(trim(g_space_obs),N_elements_todo)
+ if (N_elements_todo>0) call live_timing(trim(g_space_obs)//" [g-space]",N_elements_todo)
  !
  do i_sp_pol=1,n_sp_pol
    !

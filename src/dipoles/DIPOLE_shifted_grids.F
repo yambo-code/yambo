@@ -26,6 +26,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  use X_m,                 ONLY:l_X_terminator
  use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,DIP_v,num_shifted_grids,shifted_grids_obs
  use vec_operate,         ONLY:degeneration_finder
+ use timing_m,            ONLY:timing
  use wrapper,             ONLY:Vstar_dot_V
  use wave_func,           ONLY:wf_ng,wf_igk,WF,wf_ncx,WAVEs
 #if defined _SC           
@@ -76,7 +77,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  !
  integer                      :: io_err(3)
  !
- !
+ call timing("DIPOLE_shifted_grids",OPR="start")
  !
  call set_parms(grid='  local', command=' define')
  !
@@ -133,7 +134,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
 &                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)*num_shifted_grids
  !
- call live_timing(trim(shifted_grids_obs),n_LT_steps)
+ call live_timing(trim(shifted_grids_obs)//" [shifted grids]",n_LT_steps)
  !
  do i_sp_pol = 1,n_sp_pol
    !
@@ -293,7 +294,9 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  !
  call DB1_reset()
  !
- if(any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,Dip,idir_not_done)
+ if (any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,Dip,idir_not_done)
+ !
+ call timing("DIPOLE_shifted_grids",OPR="stop")
  !
  contains
    !

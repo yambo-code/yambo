@@ -98,6 +98,8 @@ subroutine DIPOLE_setup(Dip)
  else if (STRING_same(Dip%approach,"shifted grids")) then
    shifted_grids_obs="R V"
    if (Dip%force_v_g_space) shifted_grids_obs="R"
+ else if (STRING_same(Dip%approach,"g-space v")) then
+   g_space_obs="R V P"
  else
    call warning(' User approach undefined. Switching to G-space v')
    g_space_obs="R V P"
@@ -127,9 +129,9 @@ subroutine DIPOLE_setup(Dip)
 #else
    if (STRING_match(Dip%computed,"spin").or.l_BS_magnons) specific_obs=" M_spin"
    if (STRING_match(Dip%computed,"orb")) specific_obs=trim(specific_obs)//" M_orb M_it"
-   if (l_BS_dichroism) specific_obs=trim(specific_obs)//" M_CD_orb"
 #endif
  endif
+ if (l_BS_dichroism) specific_obs=trim(specific_obs)//" M_CD_orb"
  ! 
  ! Computed components
  !---------------------

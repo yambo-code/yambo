@@ -69,7 +69,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
      !
      DIP_tmp=cZERO
      !
-     if (n_LT_steps>0.and..not.LT_msg) call live_timing(trim(x_space_obs),n_LT_steps)
+     if (n_LT_steps>0.and..not.LT_msg) call live_timing(trim(x_space_obs)//" [x-space]",n_LT_steps)
      LT_msg=.TRUE.
      !
      do iv=Dip%ib(1),Dip%ib_lim(1) 

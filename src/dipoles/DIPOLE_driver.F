@@ -31,8 +31,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  use IO_m,           ONLY:io_DIP
  use R_lattice,      ONLY:bz_samp
  use DIPOLES,        ONLY:DIPOLE_t,DIP_iR,x_space_obs,g_space_obs,covariant_obs,shifted_grids_obs,&
-&                         Vnl_commutator_warning,DIP_P,DIP_v,DIP_spin,DIP_orbital,P_square,&
-&                         DIPOLE_ALLOC_elemental
+&                         Vnl_commutator_warning,DIP_P,DIP_v,DIP_spin,DIP_orbital,P_square
+ use ALLOC,          ONLY:DIPOLE_ALLOC_global
  use IO_int,         ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_A2A,&
 &                         PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
@@ -160,7 +160,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  if (.not.io_DIP) return
  !
- call DIPOLE_ALLOC_global(Dip,-1)
+ call DIPOLE_ALLOC_global()
  !
  contains
    !

@@ -197,11 +197,6 @@ module X_m
      real(SP),            optional :: nTrans_percent,Radius
    end subroutine
    !
-   subroutine X_ALLOC_elemental(WHAT,DIM)
-     character(*)      :: WHAT
-     integer, optional :: DIM(:)
-   end subroutine
-   !
    subroutine X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols,compute_on_gpu,iq)
      use matrix,        ONLY:PAR_matrix
      implicit none

@@ -69,15 +69,6 @@ module DIPOLES
    !
  end type
  !
- interface
-   !
-   subroutine DIPOLE_ALLOC_elemental(what,d)
-     character(*)                :: what
-     integer, optional           :: d(:)
-   end subroutine
-   !
- end interface
- !
  contains
    !
    subroutine DIPOLES_duplicate(Dip_in,Dip_out)

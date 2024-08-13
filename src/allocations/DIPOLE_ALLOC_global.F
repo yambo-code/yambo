@@ -15,10 +15,10 @@ subroutine DIPOLE_ALLOC_global(D,NK)
  !
  implicit none
  !
- type(DIPOLE_t),intent(inout) :: D
- integer                      :: NK
+ type(DIPOLE_t),intent(inout), optional :: D
+ integer                     , optional :: NK
  !
- if (NK<0) then
+ if (.not.present(D)) then
    call DIPOLE_ALLOC_elemental('DIP_iR')
    call DIPOLE_ALLOC_elemental('DIP_v')
    call DIPOLE_ALLOC_elemental('DIP_P')

@@ -16,7 +16,8 @@ subroutine NL_driver(E,X,k,q,Dip)
  use electrons,      ONLY:levels,n_sp_pol
  use collision_ext,  ONLY:COLLISIONS_CV_only 
  use X_m,            ONLY:X_t
- use DIPOLES,        ONLY:DIPOLE_t,DIP_S,DIPOLE_ALLOC_elemental
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_S
+ use ALLOC,          ONLY:DIPOLE_ALLOC_elemental,DIPOLE_ALLOC_global
  use wave_func,      ONLY:WF,wf_ng
  use interfaces,     ONLY:WF_load,WF_free
  use hamiltonian,    ONLY:WF_Go_indx,H_QP_table_setup,H_potential
@@ -272,8 +273,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  call WF_free(WF)
  call NL_free()
- call DIPOLE_ALLOC_elemental('DIP_S')
- call DIPOLE_ALLOC_elemental('DIP_R')
- call DIPOLE_ALLOC_elemental('DIP_v')
+ call DIPOLE_ALLOC_global( )
  !
 end subroutine NL_driver

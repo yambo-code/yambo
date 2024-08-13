@@ -119,16 +119,13 @@ module SC
      use QP_m,           ONLY:QP_Sc
      use hamiltonian,    ONLY:H_free
      use xc_functionals, ONLY:magn,V_xc
-     use DIPOLES,        ONLY:DIPOLE_alloc_elemental
+     use ALLOC,          ONLY:DIPOLE_ALLOC_global
      !
      implicit none
      !
      call H_free()
      !
-     call DIPOLE_ALLOC_elemental('DIP_P')
-     call DIPOLE_ALLOC_elemental('DIP_iR')
-     call DIPOLE_ALLOC_elemental('DIP_spin')
-     call DIPOLE_ALLOC_elemental('P_square')
+     call DIPOLE_ALLOC_global( )
      !
      YAMBO_FREE(QP_Sc)
      !

@@ -14,6 +14,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  use R_lattice,     ONLY:bz_samp,q0_def_norm,qindx_X
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
+ use ALLOC,         ONLY:DIPOLE_ALLOC_global
  use stderr,        ONLY:STRING_match
  use interfaces,    ONLY:WF_load,WF_free
  use electrons,     ONLY:levels,spin
@@ -232,7 +233,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  !
  if (iq==1.and.i_G_shift==1.and.io_DIP) then
    !
-   call DIPOLE_ALLOC_global(Dip,-1)
+   call DIPOLE_ALLOC_global( )
    !
    ! Here I need the distribution over k
    call PARALLEL_SETUP_K_scheme("Kdef")

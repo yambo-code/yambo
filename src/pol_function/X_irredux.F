@@ -23,6 +23,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  ! 
  use drivers,       ONLY:l_life
  use IO_m,          ONLY:io_RESPONSE,io_DIP
+ use ALLOC,         ONLY:DIPOLE_ALLOC_global
  use pars,          ONLY:SP,cZERO,schlen
  use wrapper,       ONLY:V_plus_alpha_V,vv_caxpy
  use LIVE_t,        ONLY:live_timing
@@ -43,7 +44,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
  use D_lattice,     ONLY:i_space_inv
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
- use DIPOLES,       ONLY:DIPOLE_t,DIP_iR
+ use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,X_lower_triangle_matrix_in_use,&
 &                        self_detect_E_range,X_FILL_UP_matrix_only,use_X_DbGd,&
 &                        l_X_terminator,X_terminator_E,X_term_E,X_par_lower_triangle,drude_n_states
@@ -441,7 +442,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
 !$omp end parallel
 #endif
  !
- if (iq==1.and.io_DIP) call DIPOLE_ALLOC_global(Dip,-1)
+ if (iq==1.and.io_DIP) call DIPOLE_ALLOC_global()
  !
  if (coarse_grid_N>=n_out_threads) call live_timing( )
  !

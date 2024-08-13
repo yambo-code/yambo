@@ -1,6 +1,6 @@
  Berry_polarization_EQ.o
  DIPOLE_SC_rotate.o
- DIPOLE_driver.o
+ DIPOLE_setup.o
  DIPOLE_shifted_grids.o
  Ionic_polarization.o
  POLARIZATION_output.o

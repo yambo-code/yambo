@@ -13,7 +13,7 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip)
  use pars,           ONLY:SP,cI,cZERO,pi
  use LIVE_t,         ONLY:live_timing
  use electrons,      ONLY:levels,n_sp_pol
- use DIPOLES,        ONLY:DIPOLE_t,DIP_S,DIP_iR,DIP_v
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_S,DIP_iR,DIP_v,covariant_obs
  use ALLOC,          ONLY:DIPOLE_ALLOC_elemental
  use R_lattice,      ONLY:bz_samp,k_map
  use vec_operate,    ONLY:k_periodic_idx
@@ -39,7 +39,7 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip)
  complex(SP), allocatable :: Sm1_plus (:,:,:),Sm1_minus(:,:,:)
  complex(SP) :: S_det(6),Wop(Dip%ib(2),Dip%ib(2),2),DIP_tmp(6,Dip%ib(2),Dip%ib(2)),S_tmp(Dip%ib(2),Dip%ib(2),2)
  !
- call timing("DIPOLE_buil_covariants",OPR="start")
+ call timing("DIPOLE_covariant",OPR="start")
  !
  if(.not.Dip%force_v_g_space) Dip%Vnl_included=.true.
  !
@@ -65,7 +65,7 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip)
  if(any(k_map%max_kdir(:)>=6.and..not.l_force_SndOrd)) &
  &   call msg('rs','Using forth order approximation for covariant dipoles')
  !
- call live_timing('Covariant Dipoles',PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*n_sp_pol)
+ call live_timing(trim(covariant_obs),PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*n_sp_pol)
  !
  ! Notice that DIP_iR/DIP_v are defined only in the IBZ
  ! while the overlaps are in the BZ 
@@ -197,6 +197,6 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip)
  !
  if(any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,Dip,idir_not_done)
  !
- call timing("DIPOLE_buil_covariants",OPR="stop")
+ call timing("DIPOLE_covariant",OPR="stop")
  !
 end subroutine DIPOLE_covariant

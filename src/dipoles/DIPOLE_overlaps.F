@@ -81,7 +81,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  DIP_S=cZERO
  !
- call live_timing("Overlaps:",PAR_IND_DIPk_bz%n_of_elements(PAR_IND_DIPk_bz_ID+1)*n_sp_pol)
+ call live_timing("Overlaps",PAR_IND_DIPk_bz%n_of_elements(PAR_IND_DIPk_bz_ID+1)*n_sp_pol)
  !
  do i_sp_pol=1,n_sp_pol
    !

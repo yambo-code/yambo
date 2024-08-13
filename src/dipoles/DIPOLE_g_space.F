@@ -49,13 +49,14 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
  complex(SP), allocatable DEV_ATTR :: XX(:,:,:,:,:)
  complex(SP)                  :: rho_spinor(3,n_spinor,n_spinor),rho(3),P2
  real(SP)                     :: Ev_m_Ev_KS,Dipole_Energy_treshold
+ logical                      :: LT_msg=.FALSE.
  !
  !I/O and external functions
  !
  integer                      :: ID,IO_ACT_NOW,io_err(3),io_KB_abinit_err,io_KB_pwscf_err
  integer, external            :: io_KB_abinit,io_KB_pwscf
  !
- call timing('DIPOLE_transverse',OPR='start')
+ call timing('DIPOLE_g_space',OPR='start')
  !
  ! CPU-depedent work to be done 
  !==============================
@@ -127,7 +128,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
  !
  ! Main loop over k in IBZ
  !
- if (N_elements_todo>0) call live_timing(trim(Dip%computed),N_elements_todo)
+ if (N_elements_todo>0) call live_timing(trim(g_space_obs),N_elements_todo)
  !
  do i_sp_pol=1,n_sp_pol
    !
@@ -315,6 +316,6 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
  endif
  YAMBO_FREE(g_vec_d)
  !
- call timing('DIPOLE_transverse',OPR='stop')
+ call timing('DIPOLE_g_space',OPR='stop')
  !
 end subroutine DIPOLE_g_space

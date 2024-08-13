@@ -19,6 +19,7 @@ subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
 &                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
+ use timing_m,            ONLY:timing
  !
  implicit none
  !
@@ -31,11 +32,13 @@ subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
  integer                      :: ik,ic,iv,ib,i_sp_pol,n_LT_steps,ik_mem
  complex(SP)                  :: DIP_x_loc(3),DIP_v_loc(3)
  !
+ call timing("DIPOLE_orbital_M_CD",OPR="start")
+ !
  n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
 &                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
  !
- if (n_LT_steps>0) call live_timing('Dipoles (CD): orbital magnetization',n_LT_steps)
+ if (n_LT_steps>0) call live_timing('Orbital magnetization (CD)',n_LT_steps)
  !
  ! Main loop over k in IBZ
  !
@@ -82,5 +85,7 @@ subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
  enddo          ! k-points
  !
  call live_timing()
+ !
+ call timing("DIPOLE_orbital_M_CD",OPR="stop")
  !
 end subroutine Dipole_orb_magn_forCD

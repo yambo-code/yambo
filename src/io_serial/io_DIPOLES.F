@@ -90,11 +90,7 @@ integer function io_DIPOLES(Dip,ID)
  P2_size(2:3)=DIP_size(3:4)
  P2_ipos(2:3)=DIP_ipos(3:4)
  !
- if (read_is_on(ID)) then
-   !
-   call DIPOLE_ALLOC_global(Dip,PAR_K_scheme%nibz)
-   !
- endif
+ if (read_is_on(ID)) call DIPOLE_ALLOC_global(Dip,PAR_K_scheme%nibz)
  !
  ! Fragmentation
  !

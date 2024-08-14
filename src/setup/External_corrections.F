@@ -28,7 +28,7 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  implicit none
  !
  type(levels) ::en,Xen,Ken,DIPen
- type(X_t)    ::X(4) 
+ type(X_t)    ::X(5) 
  type(bz_samp)::k,Xk
  !
  ! Work Space

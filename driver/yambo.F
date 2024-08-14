@@ -138,6 +138,11 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call section('*','') 
  !
+ ! Check USER band selection degeneracy breaking
+ !===============================================
+ !
+ call LEVELS_respect_degenerations(en,Dip,X)
+ !
  ! QP and RT CORRECTIONS
  !=======================
  !
@@ -176,7 +181,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  endif
  !
  launch_me=l_em1s.or.(l_em1d.and..not.l_life).or.l_ppa.or.l_X.or.l_mpa
-
  !
  if (l_nl_optics.and.launch_me) call error('Please run the calculation of em1s/d/x in a separate run')
  !

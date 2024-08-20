@@ -53,7 +53,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  integer           :: ik,io_err
  character(schlen) :: msg
- logical           :: l_warning
+ logical           :: l_warning,direction_is_todo(3)
  !
  call section('*','Dipoles')
  !===========================
@@ -61,6 +61,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  ! Setup 
  !=======
+ direction_is_todo=.TRUE.
  call DIPOLE_setup(Dip)
  !
  ! Dipole dimensions to be fixed
@@ -102,9 +103,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    !
    if (len_trim(shifted_grids_obs)>0)             call DIPOLE_shifted_grids(Xen,Xk,Dip)
    !
-   if (len_trim(covariant_obs)>0)                  call DIPOLE_covariant(Xen,Xk,Dip)
+   if (len_trim(covariant_obs)>0)                  call DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
    !
-   if (len_trim(x_space_obs)>0)                    call DIPOLE_x_real_space(Xen,Xk,Dip,((/.TRUE.,.TRUE.,.TRUE./)))
+   if (len_trim(x_space_obs)>0)                    call DIPOLE_x_real_space(Xen,Xk,Dip,direction_is_todo)
    !
    if (len_trim(g_space_obs)>0)                    call DIPOLE_g_space(Xen,Xk,Dip)
    !
@@ -212,7 +213,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
             DIP_v (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_v(:,iv,iv,ik_mem,i_sp_pol), SP),0. ,SP)
             !
             ! Warning: if n_sp_pol==2 DIP_spin(iv,iv) is not the expectation value but <iv up |S | iv dn>
-            if (STRING_match(Dip%computed,"M_spin")) then
+            if (STRING_match(Dip%computed,"M_spin").and.(.not.n_sp_pol==2)) then
               DIP_spin(:,iv,iv,ik_mem,i_sp_pol,1)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol,1)),0. ,SP)
             endif
 #if defined _RT

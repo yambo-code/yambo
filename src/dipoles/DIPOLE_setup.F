@@ -127,9 +127,9 @@ subroutine DIPOLE_setup(Dip)
 #if defined _RT
    if (l_real_time) specific_obs=" M_spin M_orb M_it"
 #else
-   if (STRING_match(Dip%computed,"spin").or.l_BS_magnons) specific_obs=" M_spin"
    if (STRING_match(Dip%computed,"orb")) specific_obs=trim(specific_obs)//" M_orb M_it"
 #endif
+   if (STRING_match(Dip%computed,"spin").or.l_BS_magnons) specific_obs=" M_spin"
  endif
  if (l_BS_dichroism) specific_obs=trim(specific_obs)//" M_CD_orb"
  ! 

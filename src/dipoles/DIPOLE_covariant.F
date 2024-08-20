@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): MG CA DS
 !
-subroutine DIPOLE_covariant(Xen,Xk,Dip)
+subroutine DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
  !
  ! Build the covariant dipole operator at zero field
  ! in PRB 69, 085106 (2004)
@@ -28,13 +28,14 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip)
  !
 #include<memory.h>
  !
- type(levels),           intent(in)     :: Xen
- type(bz_samp),          intent(inout)  :: Xk
- type(DIPOLE_t),         intent(inout)  :: Dip
+ type(levels),           intent(in)     ::Xen
+ type(bz_samp),          intent(inout)  ::Xk
+ type(DIPOLE_t),         intent(inout)  ::Dip
+ logical,                intent(out)    ::direction_is_todo(3)
  !
  ! Work Space
  !
- logical     ::idir_not_done(3),l_eval_polarization,l_force_SndOrd
+ logical     ::l_eval_polarization,l_force_SndOrd
  integer     ::ik,iv,ic,ic_min,iv_max,i_sp_pol,ikm1,id_red,idir,idx(3),ikbz,ik_mem,istep,max_step
  real(SP)    ::Ev_m_Ec_KS
  complex(SP), allocatable :: Sm1_plus (:,:,:),Sm1_minus(:,:,:)
@@ -60,9 +61,9 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip)
  !
  call DIPOLE_overlaps(Xk,Dip)
  !
- idir_not_done(:)= (k_map%max_kdir(:)==1)
+ direction_is_todo(:)= (k_map%max_kdir(:)==1)
  !
- if(any(idir_not_done)) call warning(' Covariant Dipoles not in 3d. Assuming non periodic system.')
+ if(any(direction_is_todo)) call warning(' Covariant Dipoles not in 3d. Assuming non periodic system.')
  !
  if(any(k_map%max_kdir(:)>=6.and..not.l_force_SndOrd)) &
  &   call msg('rs','Using forth order approximation for covariant dipoles')
@@ -194,18 +195,17 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip)
  call live_timing()
  !
 #if defined _NL
- if(l_eval_polarization) call POLARIZATION_output(Xen,Xk,Dip)
+ if (l_eval_polarization) call POLARIZATION_output(Xen,Xk,Dip)
 #endif
  !
- if (any(idir_not_done)) then
+ if (any(direction_is_todo)) then
    do ic=1,3
-     if (idir_not_done(ic)) then
+     if (direction_is_todo(ic)) then
        x_space_obs=trim(x_space_obs)//" R_"//str(ic)
        if (STRING_match(covariant_obs,"V")) x_space_obs=trim(x_space_obs)//" V_"//str(ic)
      endif
    enddo 
    Dip%computed=trim(Dip%computed)//trim(x_space_obs)//" [X-space]"
-   call DIPOLE_x_real_space(Xen,Xk,Dip,idir_not_done)
  endif
  !
  call timing("DIPOLE_covariant",OPR="stop")

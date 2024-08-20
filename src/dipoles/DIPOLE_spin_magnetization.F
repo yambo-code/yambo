@@ -33,6 +33,7 @@ subroutine Dipole_spin_magnetization(Xen,Xk,dip)
  ! Work Space
  !
  integer                      :: ik,ic_wf(n_sp_pol),iv_wf(n_sp_pol),ic,iv,n_LT_steps,ik_mem
+ logical                      :: LT_msg=.FALSE.
  !
  if (n_spin==1) return
  !
@@ -46,8 +47,6 @@ subroutine Dipole_spin_magnetization(Xen,Xk,dip)
 &           PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
 &           PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
  !
- if (n_LT_steps>0) call live_timing('Spin magnetiziation',n_LT_steps)
- !
  ! Main loop over k in IBZ
  !
  do ik=1,Xk%nibz
@@ -60,6 +59,11 @@ subroutine Dipole_spin_magnetization(Xen,Xk,dip)
    !
    call WF_load(WF,0,1,Dip%ib,(/ik,ik/),space='R',title='-Spin oscillators/R space',&
 &               force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+   !
+   if (.not.LT_msg) then
+     if (n_LT_steps>0) call live_timing('Spin magnetiziation',n_LT_steps)
+     LT_msg=.TRUE.
+   endif
    !
    do iv=Dip%ib(1),Dip%ib_lim(1) 
      !

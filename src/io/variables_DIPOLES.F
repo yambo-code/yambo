@@ -23,6 +23,7 @@ integer function variables_DIPOLES(Dip,ID)
  !
  ! Workspace
  !
+ integer           :: io_status_save
  character(schlen) :: DB_obs
  !
  call IO_desc_reset(DIP_desc)
@@ -45,20 +46,20 @@ integer function variables_DIPOLES(Dip,ID)
 &                           DESCRIPTOR=DIP_desc)
  !
  ! Character variables
- !
  call def_variable_elemental(ID,"APPROACH",1,CR_YIO,0)
  call  io_variable_elemental(ID,VAR="Approach used",CH0=Dip%approach,CHECK=.true.,OP=(/"=="/),&
 &                           DESCRIPTOR=DIP_desc)
  !
+ ! Observables
+ io_status_save=io_status(ID)
  call def_variable_elemental(ID,"KINDS",1,CR_YIO,0)
  call  io_variable_elemental(ID,DB_CH0=DB_obs,VAR="Dipoles computed",CH0=Dip%computed,WARN=.true.,OP=(/"=="/),&
 &                           DESCRIPTOR=DIP_desc)
- if (io_status(ID)==IO_INCOMPATIBLE_VAR) then
+ if (io_status(ID)==IO_INCOMPATIBLE_VAR.and.io_status_save==0) then
    if (STRING_contains(Dip%computed,DB_obs)) io_status(ID)=0
  endif
  !
  ! Wavefunctions xc 
- !
  call def_variable_elemental(ID,'WAVE_FUNC_XC',1,CR_YIO,0)
  call  io_variable_elemental(ID,DB_CH0=Dipole_WF_xc_string,CH0=loaded_WF_xc_string,VAR=' Wavefunctions',CHECK=.true.,OP=(/"=="/),&
 &                           DESCRIPTOR=DIP_desc)

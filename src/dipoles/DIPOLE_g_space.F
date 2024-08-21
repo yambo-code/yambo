@@ -78,7 +78,6 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
  endif
  !
  l_use_comm=STRING_match(g_space_obs,"V").or.STRING_match(g_space_obs,"R")
- write (*,*) l_use_comm,g_space_obs
  !
  if(l_use_comm) then
    !

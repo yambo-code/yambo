@@ -9,6 +9,9 @@ integer function io_DIPOLES(Dip,ID)
  !
  use pars,          ONLY:schlen,SP
  use DIPOLES,       ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_v,DIP_spin,DIP_orbital,P_square
+#if defined _RT
+ use DIPOLES,       ONLY:DIP_P_spinor
+#endif
  use electrons,     ONLY:n_spin,n_sp_pol
  use R_lattice,     ONLY:nXkibz
  use IO_m,          ONLY:io_sec,frag_DIP,io_DIP,read_is_on,io_extension,IO_NOT_ALLOWED, &

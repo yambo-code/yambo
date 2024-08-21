@@ -136,6 +136,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  l_warning=(.not.Vnl_commutator_warning).and.l_optics
  !
  ! Warn about missing [Sigma,r] commutator
+ write (*,*) Dip%Vnl_included
  !
  if (      Dip%Vnl_included .and.l_warning.and.(len_trim(g_space_obs)>0.or.Dip%force_v_g_space)) then
    msg=' [r,Vnl^pseudo] included in'

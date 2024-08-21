@@ -7,13 +7,14 @@
 !
 integer function variables_DIPOLES(Dip,ID)
  !
- use pars,          ONLY:SP,CR_YIO
+ use pars,          ONLY:SP,CR_YIO,schlen
  use units,         ONLY:HA2EV
  use DIPOLES,       ONLY:DIPOLE_t,DIP_desc
- use IO_m,          ONLY:io_status
+ use IO_m,          ONLY:io_status,IO_INCOMPATIBLE_VAR
  use IO_int,        ONLY:io_variable_elemental,def_variable_elemental,io_elemental
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
  use descriptors,   ONLY:IO_desc_reset
+ use stderr,        ONLY:STRING_contains
  !
  implicit none
  !
@@ -21,6 +22,8 @@ integer function variables_DIPOLES(Dip,ID)
  integer        :: ID
  !
  ! Workspace
+ !
+ character(schlen) :: DB_obs
  !
  call IO_desc_reset(DIP_desc)
  !
@@ -48,8 +51,11 @@ integer function variables_DIPOLES(Dip,ID)
 &                           DESCRIPTOR=DIP_desc)
  !
  call def_variable_elemental(ID,"KINDS",1,CR_YIO,0)
- call  io_variable_elemental(ID,VAR="Dipoles computed",CH0=Dip%computed,CHECK=.true.,OP=(/"<="/),&
+ call  io_variable_elemental(ID,DB_CH0=DB_obs,VAR="Dipoles computed",CH0=Dip%computed,WARN=.true.,OP=(/"=="/),&
 &                           DESCRIPTOR=DIP_desc)
+ if (io_status(ID)==IO_INCOMPATIBLE_VAR) then
+   if (STRING_contains(Dip%computed,DB_obs)) io_status(ID)=0
+ endif
  !
  ! Wavefunctions xc 
  !

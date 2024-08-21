@@ -93,7 +93,7 @@ subroutine DIPOLE_setup(Dip)
    if (Dip%force_v_g_space) x_space_obs="R"
  else if (STRING_same(Dip%approach,"covariant")) then
    covariant_obs="S R V"
-   if (Dip%force_v_g_space) x_space_obs="S R"
+   if (Dip%force_v_g_space) covariant_obs="S R"
    eval_OVERLAPS=.true.
  else if (STRING_same(Dip%approach,"shifted grids")) then
    shifted_grids_obs="R V"
@@ -104,6 +104,9 @@ subroutine DIPOLE_setup(Dip)
    call warning(' User approach undefined. Switching to G-space v')
    g_space_obs="R V P"
  endif 
+ !
+ ! ... V 
+ if (Dip%force_v_g_space) g_space_obs=trim(g_space_obs)//" V"
  !
  ! ... P2 
 #if defined _RT

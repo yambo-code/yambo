@@ -136,7 +136,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  epskind=EPSKRYLOVSCHUR
  !
  ! Load eps from command line options. It overwrites input file
- call EPSSetFromOptions(eps,ierr)
+ !call EPSSetFromOptions(eps,ierr)
  ! From input. It overwrites command line options.
  if(index(BSS_slepc_approach,"Krylov-Schur")>0)          epskind=EPSKRYLOVSCHUR
  if(index(BSS_slepc_approach,"Generalized-Davidson")>0)  epskind=EPSGD

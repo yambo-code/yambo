@@ -26,6 +26,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use X_m,           ONLY:X_t
  use interfaces,    ONLY:el_density_and_current
  use QP_m,          ONLY:QP_ng_Vxc
+ use BS_solvers,    ONLY:BSS_kernel_last_stored_block
  use BS,            ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,BS_ID,&
 &                        BS_res_K_exchange,BS_Block_size,BS_n_g_W,&
 &                        O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
@@ -879,7 +880,10 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  call io_control(ACTION=WR_CL,COM=REP,ID=ID)
  call io_BS_PAR_free(ID_head,ID,"full",.true.)
  ! In this mode the blocks are written to disk after each step and the memory is freed
- if (io_BS_K.and.l_write_kernel_step) BS_K_has_been_calculated_loaded=.false.
+ if (io_BS_K) then
+   if(     l_write_kernel_step) BS_K_has_been_calculated_loaded=.false.
+   if(.not.l_write_kernel_step) BSS_kernel_last_stored_block=n_BS_blks
+ endif
 #else
  call io_control(ACTION=WR_CL,COM=REP,SEC=(/n_BS_blks+2/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)

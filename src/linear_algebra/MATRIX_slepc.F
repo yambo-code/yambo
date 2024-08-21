@@ -160,17 +160,29 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    !
  endif
  !
+ ! GD and JD always want stkind to be defined. This is done
+ ! automatically by slepc, however with this line, I get the info in output 
+ if (epskind==EPSGD)          stkind=STPRECOND
+ if (epskind==EPSJD)          stkind=STPRECOND
+ if (stkind==STPRECOND .and. epskind==EPSGD)      kspkind=KSPPREONLY
+ if (stkind==STPRECOND .and. epskind==EPSJD)      kspkind=KSPBCGS
+ !
+ call EPSGetST(eps,st,ierr)
+ call STGetKSP(st,ksp,ierr)
+ !
+ call STSetType(st,stkind,ierr)
+ call KSPSetType(ksp,kspkind,ierr)
+ !
+ pckind="nopc"
+ !
  if (l_precondition) then
    !
    if (epskind==EPSKRYLOVSCHUR) stkind=STSINVERT
-   if (epskind==EPSGD)          stkind=STPRECOND
-   if (epskind==EPSJD)          stkind=STPRECOND
    !
    ! Default
    !if (stkind==STSINVERT)                           kspkind=KSPBCGS
    if (stkind==STSINVERT)                           kspkind=KSPPREONLY
-   if (stkind==STPRECOND .and. epskind==EPSGD)      kspkind=KSPPREONLY
-   if (stkind==STPRECOND .and. epskind==EPSJD)      kspkind=KSPBCGS
+   !
    ! From user
    if(index(BSS_slepc_precondition,KSPPREONLY)/=0)  kspkind=KSPPREONLY
    if(index(BSS_slepc_precondition,KSPBCGS)/=0)     kspkind=KSPBCGS
@@ -183,18 +195,13 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    if(index(BSS_slepc_precondition,PCFIELDSPLIT)/=0)  pckind=PCFIELDSPLIT
    if(index(BSS_slepc_precondition,PCLU)/=0)          pckind=PCLU
    !
-   BSS_slepc_precondition=trim(stkind)//"+"//trim(kspkind)//"+"//trim(pckind)
-   !
-   call EPSGetST(eps,st,ierr)
-   call STGetKSP(st,ksp,ierr)
    call KSPGetPC(ksp,pc,ierr)
    !
-   call STSetType(st,stkind,ierr)
-   call KSPSetType(ksp,kspkind,ierr)
    call PCSetType(pc,pckind,ierr)
    !
  endif
  !
+ BSS_slepc_precondition=trim(stkind)//"+"//trim(kspkind)//"+"//trim(pckind)
  !
  if (BSS_slepc_extraction == 'ritz')              extr = EPS_RITZ
  if (BSS_slepc_extraction == 'harmonic')          extr = EPS_HARMONIC         

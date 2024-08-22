@@ -66,10 +66,10 @@ subroutine LEVELS_respect_degenerations(E,Dip,X)
      call levels_check(E,Dip%ib)
      call fix_and_message("Dipoles",FORCE_it,Dip%ib)
    endif
-#if defined _RT
+#if defined _RT || defined _NL
    if (i_f==8) then
      call levels_check(E,RT_bands)
-     call fix_and_message("Real-Time",.TRUE.,RT_bands)
+     call fix_and_message("Real-Time",FORCE_it,RT_bands)
    endif
 #endif
    if (i_f==7) then
@@ -105,9 +105,6 @@ subroutine LEVELS_respect_degenerations(E,Dip,X)
  !
  ! MIRROR
  !--------
- !... => Dip
- call LEVELS_mirror("MIRROR_Dip_and_X",E,X,Dip,l_USER_fields)
- !... => Levels
  call LEVELS_mirror("MIRROR_bands",E,X,Dip,l_USER_fields)
  !
  contains

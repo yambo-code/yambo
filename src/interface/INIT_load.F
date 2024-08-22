@@ -127,6 +127,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! RunLevels...
  !==============
  !
+ ! ... list of USER fields 
+ call LEVELS_mirror("USER_fields",en,X,Dip,l_USER_fields)
+ !
  ! ... from C_driver
  !
  call INIT_C_driver_runlevels(defs)
@@ -411,12 +414,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! This call is a temporary fix due to the multiple definition of energy ranges.
  ! The call is needed to align the different values based on the USER definition.
  !
- ! ... first the list of USER fields 
- call LEVELS_mirror("USER_fields",en,X,Dip,l_USER_fields)
- !
- ! ... then the mirroring
- if (initmode==4) call LEVELS_mirror("MIRROR_bands",en,X,Dip,l_USER_fields)
- !
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic QP_secant (HS)',Gr_kind,Verb_level=V_real_time)
  call it(defs,'RADLifeTime','[RT] Radiative life-time (if negative Yambo sets it equal to Phase_LifeTime in NL)', &
@@ -665,8 +662,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  !
- if (initmode==4) call LEVELS_mirror("MIRROR_bands",en,X,Dip,l_USER_fields)
- !
  call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
  call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
  call it(defs,'SC_precondition','[SC] Kind of preconditionin: thomas-fermi, simple, none',SC_preconditioning,verb_level=V_sc)
@@ -697,15 +692,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'COLLBands',   '[COLL] Bands for the collisions',COLL_bands)
  !
- if (initmode==4) call LEVELS_mirror("MIRROR_bands",en,X,Dip,l_USER_fields)
- !
  call it(defs,'HXC_Potential', '[SC] SC HXC Potential',H_potential,protect=.FALSE.,case="A")
  call it(defs,'COLLCut',    '[SC,RT] Cutoff on the collisions, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
  !
 #endif
  !
 #if defined _RT
- if (initmode==4) call LEVELS_mirror("MIRROR_bands",en,X,Dip,l_USER_fields)
 #endif
  !
 #if defined _SC
@@ -713,7 +705,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
 #endif
  !
- if (initmode==4) call LEVELS_mirror("MIRROR_Dip_and_X",en,X,Dip,l_USER_fields)
+ if (initmode==4) then
+   call LEVELS_mirror("MIRROR_q",en,X,Dip,l_USER_fields)
+   call LEVELS_mirror("MIRROR_bands",en,X,Dip,l_USER_fields)
+ endif
  ! 
  contains 
    !

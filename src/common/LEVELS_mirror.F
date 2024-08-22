@@ -37,7 +37,7 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
  type(X_t)      ::X(5) 
  logical        ::l_USER_field(16)
  !
- integer :: i1,bands(2),tmp_bands(2)
+ integer :: i1,SCATT_bands(2),DIP_bands(2)
  !
  if (STRING_same(what,"USER_fields")) then
    !
@@ -62,10 +62,10 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
    call parser('BSEQptR', l_USER_field(16))
  endif
  !
- if (STRING_same(what,"MIRROR_Dip_and_X")) then
+ if (STRING_same(what,"MIRROR_q")) then
    !
    ! Q's
-   !
+   !-----
    if (l_USER_field(13).and.runlevel_is_on('optics')) Dip%iq=X(3)%iq
    if (l_USER_field(13).and.runlevel_is_on('em1d')  ) Dip%iq=X(3)%iq
    if (l_USER_field(13).and.runlevel_is_on('ppa')   ) Dip%iq=X(4)%iq
@@ -73,76 +73,76 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
    if (l_USER_field(14)                             ) Dip%iq=X(2)%iq
    if (l_USER_field(15)                             ) Dip%iq=X(1)%iq
    if (l_USER_field(16).and..not.(runlevel_is_on('ppa').or.runlevel_is_on('em1s').or.runlevel_is_on('mpa') )) Dip%iq=BS_q
-   !
-   ! Bands
-   !
-   bands=-1
-   do i1=1,11
-     if(.not.(l_USER_field(i1))) cycle
-     if(i1< 6) tmp_bands=X(i1)%ib
-     if(i1==6) tmp_bands=Dip%ib
-     if(i1==7) tmp_bands=BS_bands
-#if defined _RT || defined _QED || defined _NL
-     if(i1==8) tmp_bands=RT_bands
-#endif
-#if defined _SC
-     if(i1==9) tmp_bands=SC_bands
-#endif
-#if defined _NL
-     if(i1==10) tmp_bands=NL_bands
-#endif
-#if defined _SC || defined _RT || defined _QED || defined _NL
-     if(i1==11) tmp_bands=COLL_bands
-#endif
-#if defined _QED
-   if(i1==12) tmp_bands=QP_n_G_bands
-#endif
-     if(any((/bands==-1/))) then
-       bands(1)=max(tmp_bands(1),   1   )
-       bands(2)=min(tmp_bands(2),E%nb)
-     else
-       bands(1)=max(min(tmp_bands(1),bands(1)),   1   )
-       bands(2)=min(max(tmp_bands(2),bands(2)),E%nb)
-     endif
-   enddo
-   !
-   if (any(bands<1)) bands=(/1,E%nb/)
-   !
-   Dip%ib=bands
-   !
+  !
  endif
  !
  if (STRING_same(what,"MIRROR_bands")) then
    !
-#if defined _SC 
-   if (l_USER_field(9)) bands=SC_bands
-#endif
+   ! Bands (Electronic levels)
+   !---------------------------
+   SCATT_bands=-1
+   do i1=8,12
+     if(.not.(l_USER_field(i1))) cycle
+     !
 #if defined _RT || defined _QED || defined _NL
-   if (l_USER_field(8)) bands=RT_bands
+     if(i1==8) SCATT_bands=RT_bands
+#endif
+#if defined _SC
+     if(i1==9) SCATT_bands=SC_bands
+#endif
+#if defined _NL
+     if(i1==10) SCATT_bands=NL_bands
 #endif
 #if defined _SC || defined _RT || defined _QED || defined _NL
-   if (l_USER_field(11)) bands=COLL_bands
+     if(i1==11) SCATT_bands=COLL_bands
 #endif
 #if defined _QED
-   if (l_USER_field(12)) bands=QP_n_G_bands
+     if(i1==12) SCATT_bands=QP_n_G_bands
 #endif
-#if defined _NL
-   if (l_USER_field(10)) bands=NL_bands
-#endif
+   enddo
    !
-#if defined _SC 
-   SC_bands  =bands
-#endif
-#if defined _RT || defined _QED
-   RT_bands  =bands
+   ! Bands (Dipoles)
+   !----------------
+   DIP_bands=-1
+   do i1=1,6
+     if(.not.(l_USER_field(i1))) cycle
+     if(i1< 6) DIP_bands=X(i1)%ib
+     if(i1==6) DIP_bands=Dip%ib
+   enddo
+   if (all((/DIP_bands<0/))) then
+     if(     l_USER_field(7) ) DIP_bands=BS_bands
+     if(.not.l_USER_field(7) ) DIP_bands=SCATT_bands
+#if defined _RT || defined _QED || defined _NL
+     if(     l_USER_field(8) ) DIP_bands=RT_bands
 #endif
 #if defined _NL
-   NL_bands  =bands
+     if(     l_USER_field(10)) DIP_bands=NL_bands
 #endif
+   endif
+   !
+   ! Any negative bands?
+   !---------------------
+   call fix_me(SCATT_bands)
+   call fix_me(DIP_bands)
+   !
+   ! Now MIRROR in related bands ranges!
+   !------------------------------------
 #if defined _SC || defined _RT || defined _QED || defined _NL
-   COLL_bands =bands
-   H_ref_bands=bands     
+   COLL_bands =SCATT_bands
+   H_ref_bands=SCATT_bands     
 #endif
+   Dip%ib=DIP_bands
+   !
  endif
  !
+ contains
+   !
+   subroutine fix_me(bands)
+     integer :: bands(2)
+     if(all((/bands>0/))) return
+     bands(1)=max(bands(1),1)
+     if (bands(2)>0) bands(2)=min(bands(2),E%nb)
+     if (bands(2)<0) bands(2)=E%nb
+   end subroutine
+   !
 end subroutine

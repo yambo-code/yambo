@@ -101,7 +101,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    !
    ! <R>, <V>, <P>, <P_spinor>, <P^2> S_overlap
    !
-   if (len_trim(shifted_grids_obs)>0)             call DIPOLE_shifted_grids(Xen,Xk,Dip)
+   if (len_trim(shifted_grids_obs)>0)              call DIPOLE_shifted_grids(Xen,Xk,Dip)
    !
    if (len_trim(covariant_obs)>0)                  call DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
    !
@@ -188,7 +188,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
         call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         call PP_redux_wait( DIP_v(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         !
-        if (STRING_match(Dip%computed,"M_spin")) then
+        if (STRING_match(Dip%computed,"M_spin").and.i_sp_pol==1) then
           do i_sp_pol_tmp=1,n_sp_pol
             call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol_tmp,1),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
           enddo

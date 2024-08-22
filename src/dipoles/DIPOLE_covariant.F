@@ -19,7 +19,7 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
  use vec_operate,    ONLY:k_periodic_idx
  use matrix_operate, ONLY:hermitian
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
-&                         PAR_DIPk_nbz,PAR_IND_CON_BANDS_DIP, PAR_IND_VAL_BANDS_DIP
+&                         PAR_IND_CON_BANDS_DIP, PAR_IND_VAL_BANDS_DIP
  use com,            ONLY:msg
  use D_lattice,      ONLY:a
  use parser_m,       ONLY:parser
@@ -56,7 +56,7 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
  !
  ! Notice that DIP_S is defined in the BZ       
  !
- call DIPOLE_ALLOC_elemental('DIP_S',(/Dip%ib(2),Dip%ib(2),6,PAR_DIPk_nbz/))
+ call DIPOLE_ALLOC_elemental('DIP_S',(/Dip%ib(2),Dip%ib(2),6,Xk%nbz/))
  DIP_S=cZERO
  !
  call DIPOLE_overlaps(Xk,Dip)

@@ -76,11 +76,13 @@ subroutine DIPOLE_setup(Dip)
  ! Force <V> to be calculated using the G-space
  !---------------------------------------------
  call parser('PDirect'  ,Dip%force_v_g_space)
+ if (.not.STRING_same(Dip%approach,"g-space v")) then
 #if defined _SC || defined _RT || defined _NL
- Dip%force_v_g_space=Dip%force_v_g_space.or.l_sc_run.or.l_real_time.or.l_nl_optics
+   Dip%force_v_g_space=Dip%force_v_g_space.or.l_sc_run.or.l_real_time.or.l_nl_optics
 #endif
- ! For some reason (to understand) also in the PL case Dip%force_v_g_space=.TRUE.
- Dip%force_v_g_space     =Dip%force_v_g_space.or.l_BS_photolum
+   ! For some reason (to understand) also in the PL case Dip%force_v_g_space=.TRUE.
+   Dip%force_v_g_space     =Dip%force_v_g_space.or.l_BS_photolum
+ endif
  !
  ! Components based on approach
  !------------------------------
@@ -106,7 +108,7 @@ subroutine DIPOLE_setup(Dip)
  endif 
  !
  ! ... V 
- if (Dip%force_v_g_space) g_space_obs=trim(g_space_obs)//" V"
+ if (Dip%force_v_g_space.and..not.STRING_match(g_space_obs,"V")) g_space_obs=trim(g_space_obs)//" V"
  !
  ! ... P2 
 #if defined _RT

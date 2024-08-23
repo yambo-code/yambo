@@ -3,98 +3,88 @@
 !
 ! Copyright (C) 2017 The Yambo Team
 !
-! Authors (see AUTHORS file for details): DS
+! Authors (see AUTHORS file for details): DS AM
 !
 subroutine RT_Integrator_init()
  ! 
  use pars,           ONLY:SP,cONE,cZERO
- use com,            ONLY:msg
- use stderr,         ONLY:intc
- use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV,            &
-&                         l_RT_RWA,l_RT_ACC,l_RT_DIAG,l_RT_PERT,   &
-&                         l_RT_HEUN,l_RT_RK2,l_RT_RK4,l_RT_SIMPLE, &
-&                         Integrator_name,integrator_exp_order,    &
+ use stderr,         ONLY:intc,STRING_match
+ use parser_m,       ONLY:parser
+ use real_time,      ONLY:l_RT_EXP,l_RT_INV,l_RT_ACC,l_RT_DIAG,l_RT_LINEAR_RESP,l_RT_RWA, &
+&                         Integrator_name,Integrator_exp_order,    &
 &                         a_tableau,b_tableau,c_tableau,RWA_table, &
-&                         I1_matrix,Integrator_nsteps,RT_bands
+&                         I1_matrix,Integrator_nsteps,RT_bands,Integrator_slow_approx,l_slow_TE
  !
 #include<memory.h>
  !
- integer  :: ib
+ ! Work Space
  !
- ! a) Propagation kind: Euler / Exp /
+ integer           :: ib
  !
- l_RT_EXP  =(index(Integrator_name,'EXP'  )/=0.or.index(Integrator_name,'exp'  )/=0)
+ ! ... EXACT (EULER+HEUN) https://en.wikipedia.org/wiki/Heun%27s_method
+ logical  :: l_RT_EULER
+ logical  :: l_RT_HEUN
  !
- l_RT_EULER=(index(Integrator_name,'EULER')/=0.or.index(Integrator_name,'euler')/=0).and..not. l_RT_EXP
+ ! ... EXACT (RKN)
+ logical  :: l_RT_RK2
+ logical  :: l_RT_RK4
  !
- l_RT_INV  =(index(Integrator_name,'INV'  )/=0.or.index(Integrator_name,'inv'  )/=0).and..not.(l_RT_EXP.or.l_RT_EULER)
+ ! Integrator Kind (in the differential equations sense)
+ !=================
  !
- if ( .not.(l_RT_EXP.or.l_RT_EULER.or.l_RT_INV) ) l_RT_EULER=.TRUE.
+ l_RT_EULER=STRING_match(Integrator_name,'euler') 
  !
- if (l_RT_EXP) then
-   integrator_exp_order=3
-   if ( index(Integrator_name,'EXP1')/=0 .or. index(Integrator_name,'exp1')/=0 )  integrator_exp_order=1
-   if ( index(Integrator_name,'EXP2')/=0 .or. index(Integrator_name,'exp2')/=0 )  integrator_exp_order=2
-   if ( index(Integrator_name,'EXP3')/=0 .or. index(Integrator_name,'exp3')/=0 )  integrator_exp_order=3
-   if ( index(Integrator_name,'EXP4')/=0 .or. index(Integrator_name,'exp4')/=0 )  integrator_exp_order=4
-   if ( index(Integrator_name,'EXP5')/=0 .or. index(Integrator_name,'exp5')/=0 )  integrator_exp_order=5
-   if ( index(Integrator_name,'EXP6')/=0 .or. index(Integrator_name,'exp6')/=0 )  integrator_exp_order=6
+ l_RT_RK2  =STRING_match(Integrator_name,'rk2') 
+ !
+ l_RT_RK4  =STRING_match(Integrator_name,'rk4').and..not.l_RT_RK2
+ !
+ l_RT_HEUN =STRING_match(Integrator_name,'heun') .and..not.(l_RT_RK2.or.l_RT_RK4) 
+ !
+ if (.not.STRING_match(Integrator_slow_approx,"no")) then
+   !
+   ! Slow dynamics specific approximations
+   !===============
+   !
+   l_RT_EXP=STRING_match(Integrator_slow_approx,'EXP') 
+   !
+   l_RT_INV=.not.l_RT_EXP.and.STRING_match(Integrator_slow_approx,'INV')  
+   !
+   if (l_RT_EXP) then
+     Integrator_exp_order=3
+     if ( STRING_match(Integrator_slow_approx,'EXP1') )  Integrator_exp_order=1
+     if ( STRING_match(Integrator_slow_approx,'EXP2') )  Integrator_exp_order=2
+     if ( STRING_match(Integrator_slow_approx,'EXP3') )  Integrator_exp_order=3
+     if ( STRING_match(Integrator_slow_approx,'EXP4') )  Integrator_exp_order=4
+     if ( STRING_match(Integrator_slow_approx,'EXP5') )  Integrator_exp_order=5
+     if ( STRING_match(Integrator_slow_approx,'EXP6') )  Integrator_exp_order=6
+   endif
+   !
+   l_RT_ACC  =(l_RT_INV.or.l_RT_EXP).and.STRING_match(Integrator_slow_approx,'acc')
+   !
+   l_RT_DIAG =l_RT_INV.and.STRING_match(Integrator_slow_approx,'diag')
+   !
+   l_slow_TE=any((/l_RT_EXP,l_RT_INV/))
+   !
+   ! INV is alternative to EULER
+   !------------------------------
+   if (l_RT_INV) l_RT_EULER=.FALSE.
+   !
+   if (l_RT_INV.or.l_RT_EXP) then
+     YAMBO_ALLOC(I1_matrix,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)))
+     I1_matrix=cZERO
+     do ib=RT_bands(1),RT_bands(2)
+       I1_matrix(ib,ib)=cONE
+     enddo
+   endif
+   !
  endif
  !
- ! b) Multi step approach: RK2 / HEUN
- !
- l_RT_RK2  = (index(Integrator_name,'RK2' )/=0.or.index(Integrator_name,'rk2'  )/=0)
- !
- l_RT_RK4  = (index(Integrator_name,'RK4' )/=0.or.index(Integrator_name,'rk4'  )/=0).and..not. l_RT_RK2
- !
- l_RT_HEUN = (index(Integrator_name,'HEUN')/=0.or.index(Integrator_name,'heun' )/=0).and..not.(l_RT_RK2.or.l_RT_RK4)
- !
- l_RT_SIMPLE=.not.(l_RT_RK2.or.l_RT_RK4.or.l_RT_HEUN)
- !
- ! c) Extra
- !
- l_RT_RWA = index(Integrator_name,'RWA'  )/=0.or.index(Integrator_name,'rwa'  )/=0
- !
- l_RT_ACC = (l_RT_INV  .or. l_RT_EXP) .and. &
-            index(Integrator_name,'ACC'  )/=0.or.index(Integrator_name,'acc'  )/=0
- !
- l_RT_DIAG=  l_RT_INV                 .and. &
-&           index(Integrator_name,'DIAG' )/=0.or.index(Integrator_name,'diag' )/=0
- !
- l_RT_PERT= (l_RT_EULER.and.l_RT_RWA) .and. &
-&           index(Integrator_name,'PERT'  )/=0.or.index(Integrator_name,'pert' )/=0
- !
- ! d) Reset integrator name
- !
- Integrator_name=""
- if (l_RT_EULER) Integrator_name = "EULER"
- if (l_RT_EXP  ) Integrator_name = "EXP"//trim(intc(integrator_exp_order))
- if (l_RT_INV  ) Integrator_name = "INV"
- !
- if (l_RT_SIMPLE) Integrator_name = trim(Integrator_name)//" + SIMPLE"
- if (l_RT_RK2   ) Integrator_name = trim(Integrator_name)//" + RK2"
- if (l_RT_RK4   ) Integrator_name = trim(Integrator_name)//" + RK4"
- if (l_RT_HEUN  ) Integrator_name = trim(Integrator_name)//" + HEUN"
- !
- if (l_RT_RWA   ) Integrator_name = trim(Integrator_name)//" + RWA"
- if (l_RT_ACC   ) Integrator_name = trim(Integrator_name)//" + ACC"
- if (l_RT_DIAG  ) Integrator_name = trim(Integrator_name)//" + DIAG"
- if (l_RT_PERT  ) Integrator_name = trim(Integrator_name)//" + PERT"
- !
- call msg('s','Integrator '//trim(Integrator_name))
- !
- ! e) Define integrators tables
+ ! Integrators tables
+ !====================
  !
  a_tableau(1) = 0._SP
  c_tableau(1) = 0._SP    ! These are non-zero only for implicit methods
  RWA_table(1) = 0._SP
- !
- if (l_RT_SIMPLE) then
-   Integrator_nsteps = 1
-   b_tableau(1) = 1._SP
-   c_tableau(2) = 1._SP
-   RWA_table(2) = 1._SP
- endif
  !
  if (l_RT_RK2   ) then
    Integrator_nsteps = 2
@@ -102,31 +92,48 @@ subroutine RT_Integrator_init()
    a_tableau(2) = 1._SP/2._SP
    b_tableau(1:2) = (/0._SP      ,1._SP      /)
    RWA_table(2:3) = (/1._SP/2._SP,1._SP/2._SP/)
- endif
- !
- if (l_RT_HEUN  ) then
+ else if (l_RT_HEUN  ) then
    Integrator_nsteps = 2
    c_tableau(2) = 1._SP
    a_tableau(2) = 1._SP
    b_tableau(1:2) = (/1._SP/2._SP,1._SP/2._SP/)
    RWA_table(2:3) = (/1._SP      ,0._SP      /)
- endif
- !
- if (l_RT_RK4   ) then
+ else if (l_RT_RK4   ) then
    Integrator_nsteps = 4
    c_tableau(2:4) = (/1._SP/2._SP,1._SP/2._SP,1._SP      /)
    a_tableau(2:4) = (/1._SP/2._SP,1._SP/2._SP,1._SP      /)
    b_tableau(1:4) = (/1._SP/6._SP,1._SP/3._SP,1._SP/3._SP,1._SP/6._SP/)
-   !RWA_table(2:3) = NOT DEFINED
+   RWA_table(2:3) = 0._SP
+ else 
+   Integrator_nsteps = 1
+   b_tableau(1) = 1._SP
+   c_tableau(2) = 1._SP
+   RWA_table(2) = 1._SP
  endif
+ ! 
+ ! Linear regime
+ !===============
+ if (l_RT_EULER) call parser('linearRegime',l_RT_LINEAR_RESP)
  !
- ! This is needed by some integrators
+ ! RWA
+ !=====
+ l_RT_RWA=STRING_match(Integrator_name,'rwa') 
  !
- YAMBO_ALLOC(I1_matrix,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)))
+ ! Rebuild Integrator Name
+ !========================
+ Integrator_name=""
+ if (l_RT_EULER) Integrator_name  = "EULER"
+ if (l_RT_RK2   ) Integrator_name = "RK2"
+ if (l_RT_RK4   ) Integrator_name = "RK4"
+ if (l_RT_HEUN  ) Integrator_name = "HEUN"
+ if (l_RT_RWA   ) Integrator_name = trim(Integrator_name)//" RWA"
  !
- I1_matrix=cZERO
- do ib=RT_bands(1),RT_bands(2)
-   I1_matrix(ib,ib)=cONE
- enddo
+ Integrator_slow_approx=""
+ if (l_slow_TE) then
+   if (l_RT_EXP  ) Integrator_slow_approx = trim(Integrator_slow_approx)//" EXP"//trim(intc(Integrator_exp_order))
+   if (l_RT_INV  ) Integrator_slow_approx = trim(Integrator_slow_approx)//" INV"
+   if (l_RT_ACC  ) Integrator_slow_approx = trim(Integrator_slow_approx)//"+ACCURATE"
+   if (l_RT_DIAG ) Integrator_slow_approx = trim(Integrator_slow_approx)//"+DIAGO"
+ endif
  !
 end subroutine RT_Integrator_init

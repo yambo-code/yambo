@@ -23,8 +23,6 @@ subroutine RT_INV_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  use pars,           ONLY:SP,cI,cZERO
  use wrapper_omp,    ONLY:M_by_M_omp
- !use linear_algebra, ONLY:LIN_SYS
- !use interfaces,     ONLY:LINEAR_ALGEBRA_driver
  use iso_c_binding,  ONLY:C_LOC,C_F_POINTER
  use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nbands,&
 &                         G_lesser_reference,I1_matrix
@@ -63,25 +61,6 @@ subroutine RT_INV_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
  call M_by_M_omp('n','n',RT_nbands,dG_old,H2_k,M2_tmp)
  dG_out=G_com+M1_tmp+M2_tmp
  !
- !*******************************************************
- !U_k=Ho_plus_Sigma(:,:,ik,1)
- !call SERIAL_HERMITIAN_diagonalization(RT_nbands,U_k,En)
- !!
- !! Generate the matrix  
- !!
- !H1_k=cZERO
- !H2_k=cZERO
- !do ib1=RT_bands(1),RT_bands(2)
- !  H1_k(ib1,ib1)=1._SP+cI*deltaT*En(ib1)
- !  H2_k(ib1,ib1)=1._SP-cI*deltaT*En(ib1)
- !enddo
- !!
- !! Rotate dG_out in the new basis set
- !!
- !call M_by_M_omp('c','n',RT_nbands,U_k   ,dG_out,M2_tmp)
- !call M_by_M_omp('n','n',RT_nbands,M2_tmp,U_k   ,dG_out)
- !!*******************************************************
- !
  call C_F_POINTER(C_LOC(dG_out), vec_dG_out, (/RT_nbands**2/) )
  !
  AdA_k=cZERO
@@ -97,18 +76,10 @@ subroutine RT_INV_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
    enddo
  enddo
  !
- !call LINEAR_ALGEBRA_driver(LIN_SYS,M=AdA_k,B=vec_dG_out)
  call SERIAL_lin_system(RT_nbands**2,1,AdA_k,vec_dG_out)
  !
  nullify(vec_dG_out)
- !!*******************************************************
- !!
- !! Rotate G_com back the old basis set
- !!
- !call M_by_M_omp('n','n',RT_nbands,U_k   ,G_com,M2_tmp)
- !call M_by_M_omp('n','c',RT_nbands,M2_tmp,U_k  ,dG_out)
- !!
- !!*******************************************************
+ !
  dG_out=dG_out-dG_old
  !
 end subroutine RT_INV_step_accurate

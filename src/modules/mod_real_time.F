@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM MG DS
+! Authors (see AUTHORS file for details): AM MG DS CA
 !
 module real_time
  !
@@ -169,7 +169,6 @@ module real_time
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------
- real(SP)                 :: RT_ave_dephasing
  real(SP)                 :: RT_deph_range(2)
  real(SP),    allocatable :: RT_INPUT_Deph_limits(:,:)
  real(SP),    allocatable :: RT_Deph_Matrix(:,:,:)
@@ -201,36 +200,39 @@ module real_time
  real(SP),    allocatable :: rho_reference(:)    ! reference density from all bands
  real(SP),    allocatable :: magn_reference(:,:) ! reference magnetization from all bands
  !
- ! Integrators
+ ! Integrators...
+ !================
  !
- logical  :: l_RT_EULER
- logical  :: l_RT_EXP
- logical  :: l_RT_INV
- !
+ ! ... RW (now approx but it is exact)
  logical  :: l_RT_RWA
- logical  :: l_RT_ACC
- logical  :: l_RT_PERT
- logical  :: l_RT_DIAG
  !
- logical  :: l_RT_SIMPLE
- logical  :: l_RT_RK2
- logical  :: l_RT_RK4
- logical  :: l_RT_HEUN
+ ! ... Slowly varying dynamics
+ logical  :: l_slow_TE=.FALSE. ! Slow time-evolution => INV/EXPn/LINEAR_RESP approximations
+ !           =========
+ logical  :: l_RT_INV=.FALSE.
+ logical  :: l_RT_EXP=.FALSE.
+ logical  :: l_RT_LINEAR_RESP=.FALSE.
  !
+ ! ... EXP/INV related
+ logical  :: l_RT_ACC=.FALSE.  ! Used in EXP/INV (RT_EXP/INV_step_accurate)
+ integer  :: Integrator_exp_order ! EXP + ACC specific 
+ !
+ ! ... INV related
+ logical  :: l_RT_DIAG=.FALSE. ! Used in INV (RT_INV_step_diago)
+ !
+ ! ... Steps
  integer  :: Integrator_step
  integer  :: Integrator_nsteps
- integer  :: Integrator_exp_order
  !
+ ! ... Coefficients in the implicit/explicit propagation procedure
  real(SP) :: a_tableau(4)
  real(SP) :: b_tableau(4)
  real(SP) :: c_tableau(4)
  real(SP) :: RWA_table(5)
  !
- ! Integrate exactly the part of the dynamics due to H_o
- ! as it is done in Comp. Phys. Comm. 123(1999)
- ! in this case I choosed H_o = H_lda ( rho_0 )
- !
+ ! ... name (referring to RKn) and approximation (Physics based)
  character(schlen)            :: Integrator_name
+ character(schlen)            :: Integrator_slow_approx='no'
  !
  ! Hartree term
  !

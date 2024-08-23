@@ -20,8 +20,6 @@ subroutine RT_INV_step_diago(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  use pars,           ONLY:SP,cI
  use wrapper_omp,    ONLY:M_by_M_omp
- !use linear_algebra, ONLY:LIN_SYS
- !use interfaces,     ONLY:LINEAR_ALGEBRA_driver
  use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nbands,&
 &                         G_lesser_reference,I1_matrix
  !
@@ -64,11 +62,6 @@ subroutine RT_INV_step_diago(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  U_k=Ho_plus_Sigma(:,:,ik,1)
  call SERIAL_HERMITIAN_diagonalization(RT_nbands,U_k,En)
- !
- ! Implementation works, and it is much faster than before
- ! However it is not sensitive
- !U_k=cmplx(Ho_plus_Sigma(:,:,ik,1),kind=DP)
- !call ZHEEV('V','U',RT_nbands,U_k,RT_nbands,En,v_cmplx,lwork,v_real,i_fail)
  !
  ! Rotate G_com in the new basis set
  !

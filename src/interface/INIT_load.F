@@ -70,7 +70,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use RT_lifetimes,  ONLY:RT_life_extrap_times_INPUT
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
 &                        NE_tot_time,RT_bands,RT_deph_range,                     &
-&                        RT_ave_dephasing,RT_eh_en,RT_scatt_tresh,Gr_kind,       &
+&                        RT_eh_en,RT_scatt_tresh,Gr_kind, Integrator_slow_approx,     &
 &                        NE_MEM_treshold,NE_time_step_update_jump_INPUT,         &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
 &                        NE_initial_time_step_update,NE_step_update_treshold,    &
@@ -432,8 +432,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'dTupdateTresh','[RT][o/o] Treshold of deltaT updates',  NE_step_update_treshold ,verb_level=V_real_time)
  call it(defs,'dT_MAX',      '[RT] Maximum value for the time-dependent dT',  RT_MAX_step ,verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'dT_SET',      '[RT] Prefactor for manual dT update',  RT_step_manual_prefactor,verb_level=V_real_time)
- call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/EXPn/INV" "SIMPLE/RK2/RK4/HEUN" "RWA") ',&
-&              Integrator_name)
+ call it(defs,'Integrator',  '[RT] Time-evolution (TE) integrator: "EULER", "RK2/RK4", "HEUN"',Integrator_name)
+ call it(defs,'SlowDynamics','[RT] Slow-TE approximations: "EXPn" (n<=6), "EXP" (n=3), "INV+ACC", "EXP+ACC", "INV+DIAG"',&
+&        Integrator_slow_approx,verb_level=V_real_time)
+ call it('f',defs,'LinearRegime','[RT] Adopt specific tricks in the EULER case assuming the linear-regime',verb_level=V_real_time)
  !
  IO_times=(/CARR_RT_IO_t%INTERVAL_time_INPUT,Gless_RESTART_RT_IO_t%INTERVAL_time_INPUT,OUTPUT_RT_IO_t%INTERVAL_time_INPUT/)
  call it(defs,'IOtime',      '[RT] Time between two consecutive I/O (CARRIERs - GF - OUTPUT)',IO_times,unit=Time_unit(1))
@@ -489,17 +491,14 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! ELPH
  !
  call it(defs,'MemTresh',   '[RT] Treshold on the decay of the retarded GF',NE_MEM_treshold,verb_level=V_real_time)
+ !
+ ! FLAGS
+ !
  call it('f',defs,'UseDebyeE',   '[RT] Use a single Debye energy for all phonon modes',verb_level=V_real_time)
  call it('f',defs,'RT_T_evol',   '[RT] Use a complete Time evolution instead of the CCA',verb_level=V_real_time)
- !
  call it('f',defs,'InducedField','[RT] Include induced field in coupling and current',verb_level=V_real_time)
  call it('f',defs,'VelGaugeCorr','[RT] Correct the non local term of the pseudo with the vector potential',verb_level=V_real_time)
- !
- ! OLD / EXPERIMENTAL
- !
- call it(defs,'RTAveDeph',    '[RT] Dephasing for all elements not included in RTDePhMatrix', &
-&                             RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit(1))
- call it('f',defs,'LifeFitTemp','[RT] Fit on the fly  lifetimes ratio to a Fermi distribution',verb_level=V_real_time)
+ call it('f',defs,'LifeFitTemp', '[RT] Fit on the fly  lifetimes ratio to a Fermi distribution',verb_level=V_real_time)
  !
 #endif
  !

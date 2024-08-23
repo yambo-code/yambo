@@ -67,7 +67,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
  ! Work Space
  !
  integer     :: i_step
- real(SP)    :: delta_T1,delta_T2,delta_T3
+ real(SP)    :: delta_T1,delta_T2
  complex(SP) :: dG_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2),Integrator_nsteps+1)
  !
  type(gauge_field) :: A_tmp(Integrator_nsteps+1)
@@ -85,11 +85,10 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
    !  
    delta_T1=RT_dyn_step*a_tableau(i_step)
    delta_T2=RT_dyn_step*c_tableau(i_step)
-   delta_T3=RT_dyn_step*RWA_table(i_step)
    !
    ! Evaluate @ T+dt1
    !
-   call RT_Glesser_evolve(E,k,dG_old,dG_tmp(:,:,:,i_step-1),dG_tmp(:,:,:,i_step),delta_T1,delta_T3)
+   call RT_Glesser_evolve(E,k,dG_old,dG_tmp(:,:,:,i_step-1),dG_tmp(:,:,:,i_step),delta_T1)
    !
    ! ... Update of logicals before the occupations update
    !
@@ -200,9 +199,9 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
      !
      A_new=A_old
      do i_step=1,Integrator_nsteps
-        A_new%vecpot    =A_new%vecpot    +A_tmp(i_step+1)%vecpot    *b_tableau(i_step)
-        A_new%vecpot_vel=A_new%vecpot_vel+A_tmp(i_step+1)%vecpot_vel*b_tableau(i_step)
-        A_new%vecpot_acc=A_new%vecpot_acc+A_tmp(i_step+1)%vecpot_acc*b_tableau(i_step)
+       A_new%vecpot    =A_new%vecpot    +A_tmp(i_step+1)%vecpot    *b_tableau(i_step)
+       A_new%vecpot_vel=A_new%vecpot_vel+A_tmp(i_step+1)%vecpot_vel*b_tableau(i_step)
+       A_new%vecpot_acc=A_new%vecpot_acc+A_tmp(i_step+1)%vecpot_acc*b_tableau(i_step)
      enddo
      !
    end subroutine RT_build_A_new

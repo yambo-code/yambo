@@ -1,0 +1,3 @@
+#if defined _RT 
+objs = RT_slow_dynamics_driver.o RT_INV_step_std.o RT_INV_step_accurate.o RT_INV_step_diago.o RT_EXP_step_std.o RT_EXP_step_accurate.o 
+#endif

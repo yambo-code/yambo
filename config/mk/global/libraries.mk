@@ -38,20 +38,20 @@ PJ_SCLIBS_LD = $(MAIN_LIBS_LD) hamiltonian collisions sc
 
 PJ_RTLIBS   = $(BASIC_LIBS) interpolate qp_control setup \
                    tddft dipoles pol_function qp acfdt bse collisions hamiltonian \
-                   real_time_control real_time_hamiltonian real_time_propagation \
+                   real_time_control real_time_hamiltonian real_time_slow_propagation real_time_propagation  \
                    real_time_initialize real_time_drivers
 PJ_RTLIBS_LD= $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
                    tddft dipoles pol_function qp acfdt bse hamiltonian collisions \
-                   real_time_hamiltonian real_time_propagation \
+                   real_time_hamiltonian real_time_slow_propagation real_time_propagation  \
                    real_time_initialize real_time_drivers
 
 PJ_NLLIBS    = $(BASIC_LIBS) interpolate qp_control setup \
                tddft dipoles pol_function qp acfdt bse collisions hamiltonian \
-               real_time_control real_time_hamiltonian real_time_propagation \
+               real_time_control real_time_hamiltonian real_time_slow_propagation real_time_propagation \
                real_time_initialize real_time_drivers nloptics
 PJ_NLLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
                tddft dipoles pol_function qp acfdt bse hamiltonian collisions \
-               real_time_hamiltonian real_time_propagation \
+               real_time_hamiltonian real_time_slow_propagation real_time_propagation \
                real_time_initialize real_time_drivers nloptics
 #
 # Yambo folders needed by Interfaces

@@ -30,7 +30,7 @@ subroutine RT_initialize(E,k,q)
 &                         Life_MEM_steps,l_RT_lifetimes_Tfit,l_RT_skip_ph_abs_lifetimes,l_RT_iterative_ELPH_lifetimes
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,Gr_kind,       &
-&                         RAD_LifeTime,Phase_LifeTime,         &
+&                         RAD_LifeTime,Phase_LifeTime,Integrator_slow_approx,l_RT_LINEAR_RESP,         &
 &                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_FineGd,DbGd_EE_Nk_table,    &
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_impose_E,DbGd_EE_percent,     &
 &                         l_RT_update_Energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
@@ -344,7 +344,9 @@ subroutine RT_initialize(E,k,q)
  call section('=','Messaging')
  !
  call msg( 'r','---General---')
- call msg( 'r', 'Integrator                 ',trim(Integrator_name))
+ if (len_trim(Integrator_name)>0)        call msg( 'r', 'Integrator (ordinary)      ',trim(Integrator_name))
+ if (len_trim(Integrator_slow_approx)>0) call msg( 'r', 'Integrator (slow dynamics)' ,trim(Integrator_slow_approx))
+ call msg( 'r', 'Linear-Regime assumption   ',l_RT_LINEAR_RESP)
  call msg( 'r', 'Simulation time            ',NE_tot_time*AUT2FS,"[fs]")
  call msg( 'r', 'Basic time step            ',RT_step*AUT2FS,"[fs]")
  call msg( 'r', '           steps           ',NE_steps)

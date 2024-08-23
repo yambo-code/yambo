@@ -13,7 +13,7 @@ subroutine RT_EXP_step_std(dG_old,dG_inp,dG_out,ik,deltaT)
  use pars,           ONLY:SP,cI
  use wrapper_omp,    ONLY:M_by_M_omp
  use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nbands,&
-&                         integrator_exp_order,G_lesser_reference,I1_matrix
+&                         Integrator_exp_order,G_lesser_reference,I1_matrix
  !
  implicit none
  !
@@ -50,19 +50,19 @@ subroutine RT_EXP_step_std(dG_old,dG_inp,dG_out,ik,deltaT)
  U1_km1=-cI*deltaT*Ho_plus_Sigma(:,:,ik,1)
  U2_km1=+cI*deltaT*Ho_plus_Sigma(:,:,ik,1)
  !
- if(integrator_exp_order>1) then
+ if(Integrator_exp_order>1) then
    M1_tmp=U2_km1
    M2_tmp=U2_km1
  endif
  !
- do i_order=2,integrator_exp_order
+ do i_order=2,Integrator_exp_order
    !
    call M_by_M_omp('n','n',RT_nbands,M1_tmp,M2_tmp/real(i_order,SP),M3_tmp)
    !
    U1_km1=U1_km1+(-1._SP)**i_order*M3_tmp
    U2_km1=U2_km1+(+1._SP)**i_order*M3_tmp
    !
-   if (i_order<integrator_exp_order) M2_tmp=M3_tmp
+   if (i_order<Integrator_exp_order) M2_tmp=M3_tmp
    !
  enddo
  !

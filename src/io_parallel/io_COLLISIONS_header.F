@@ -47,7 +47,7 @@ integer function io_COLLISIONS_header(ID,COLL)
  endif
  !
  call io_elemental(ID,VAR="COLLISION_DESCRIPTION",VAR_SZ=1,CH0="",MENU=0)
- call io_elemental(ID,CH0=COLL%name,VAR=' COLLISIONS name                 ')
+ call io_elemental(ID,CH0=COLL%name,VAR=' COLLISIONS potential(s)         ')
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  SIZE_=6
@@ -61,7 +61,7 @@ integer function io_COLLISIONS_header(ID,COLL)
  call io_elemental(ID,I0=COLL%N,&
 &       VAR='Total number of COLLISIONS      ',CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,I0=COLL%kind,&
-&       VAR='COLLISIONS kind                 ',CHECK=.true.,OP=(/"=="/))
+&       VAR='COLLISIONS numerical kind       ',CHECK=.true.,OP=(/"=="/))
  !
  call io_elemental(ID,I1=COLL_bands,&
 &       VAR='Bands                           ',CHECK=.true.,OP=(/"==","=="/))

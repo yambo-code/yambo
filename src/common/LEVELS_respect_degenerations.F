@@ -41,7 +41,7 @@ subroutine LEVELS_respect_degenerations(E,Dip,X)
  !
  ! By defaulft I assume that the degeneration is not lifted
  !
- FORCE_it=.FALSE.
+ FORCE_it=.TRUE.
  !
  ! Check for USER definitions 
  !---------------------------

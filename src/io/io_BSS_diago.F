@@ -33,7 +33,10 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  character(schlen):: db_name
  type(IO_desc)    :: local_desc
  logical          :: dump_ev = .true.
+
+#if defined _MPI
  if (present(write_ev)) dump_ev = write_ev
+#endif
  !
  call timing('io_BSS_diago',OPR='start')
  !

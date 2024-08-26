@@ -68,7 +68,8 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,iq,slepc_mat)
  ! filling of the slepc_mat
  !
  live_msg="Redistribute BSE in slepc_mat"
- if (BSS_kernel_last_stored_block<n_BS_blks) live_msg="Load and distribute BSE in slepc mat"
+ if (BSS_kernel_last_stored_block<n_BS_blks) &
+ & live_msg="Load and distribute BSE in slepc mat"
  if (n_BS_blks>0) call live_timing(trim(live_msg),n_BS_blks)
  !
  do i_B=1,n_BS_blks
@@ -153,7 +154,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,iq,slepc_mat)
      !
    enddo
    !
-   ! After the re-distribution into slepc_mat the %mat's are (in some cases) not needed anymore 
+   ! After the re-distribution into slepc_mat the %mat are (in some cases) not needed anymore 
    !
    if ( i_B>BSS_kernel_last_stored_block)  then
      call K_block_free(i_B,"matonly")

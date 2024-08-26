@@ -411,7 +411,7 @@ subroutine K_diago_driver(iq,W,X_static)
          YAMBO_ALLOC(BS_E_real,(BSS_n_eig))
 #if defined _SLEPC && !defined _NL
          if(l_slepc) then
-           if (BS_K_coupling) then
+           if (BS_K_coupling.and.BSS_write_eig_2_db) then
              YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
            else
              YAMBO_ALLOC(BS_mat,(BS_K_dim(i_BS_mat),BSS_n_eig))

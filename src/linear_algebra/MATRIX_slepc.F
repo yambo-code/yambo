@@ -160,27 +160,25 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    !
  endif
  !
+ stkind="none"
+ kspkind="none"
+ pckind="nopc"
+ !
  ! GD and JD always want stkind to be defined. This is done
  ! automatically by slepc, however with this line, I get the info in output 
- if (epskind==EPSGD)          stkind=STPRECOND
- if (epskind==EPSJD)          stkind=STPRECOND
- if (stkind==STPRECOND .and. epskind==EPSGD)      kspkind=KSPPREONLY
- if (stkind==STPRECOND .and. epskind==EPSJD)      kspkind=KSPBCGS
- !
- call EPSGetST(eps,st,ierr)
- call STGetKSP(st,ksp,ierr)
- !
- call STSetType(st,stkind,ierr)
- call KSPSetType(ksp,kspkind,ierr)
- !
- pckind="nopc"
+ if (epskind==EPSGD .or. epskind==EPSJD) then
+   if (epskind==EPSGD)          stkind=STPRECOND
+   if (epskind==EPSJD)          stkind=STPRECOND
+   if (stkind==STPRECOND .and. epskind==EPSGD)      kspkind=KSPPREONLY
+   if (stkind==STPRECOND .and. epskind==EPSJD)      kspkind=KSPBCGS
+ endif
  !
  if (l_precondition) then
    !
    if (epskind==EPSKRYLOVSCHUR) stkind=STSINVERT
    !
    ! Default
-   !if (stkind==STSINVERT)                           kspkind=KSPBCGS
+   !if (stkind==STSINVERT)                          kspkind=KSPBCGS
    if (stkind==STSINVERT)                           kspkind=KSPPREONLY
    !
    ! From user
@@ -195,10 +193,16 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    if(index(BSS_slepc_precondition,PCFIELDSPLIT)/=0)  pckind=PCFIELDSPLIT
    if(index(BSS_slepc_precondition,PCLU)/=0)          pckind=PCLU
    !
-   call KSPGetPC(ksp,pc,ierr)
+ endif
+ !
+ if (epskind==EPSGD .or. epskind==EPSJD) then
+   call EPSGetST(eps,st,ierr)
+   call STGetKSP(st,ksp,ierr)
+   if (l_precondition) call KSPGetPC(ksp,pc,ierr)
    !
-   call PCSetType(pc,pckind,ierr)
-   !
+   call STSetType(st,stkind,ierr)
+   call KSPSetType(ksp,kspkind,ierr)
+   if (l_precondition) call PCSetType(pc,pckind,ierr)
  endif
  !
  BSS_slepc_precondition=trim(stkind)//"+"//trim(kspkind)//"+"//trim(pckind)

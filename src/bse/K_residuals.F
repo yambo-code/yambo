@@ -44,6 +44,7 @@ subroutine K_diago_residuals(mode, i_BS_mat, BS_E, BS_R_right, BS_VR, &
    complex(SP), target, allocatable     :: BS_VL(:,:)
    complex(SP), pointer     :: BS_Overlap(:,:)
    ! NM : if BS_Overlap is null(), then it is treated as a identity matrix
+   ! Incase Ydiago solver is used, BS_Overlap is always null()
    ! optional
    ! Workspace
    integer                  ::i1, neig_total, SL_H_dim, i_range(2)
@@ -150,11 +151,13 @@ subroutine K_diago_residuals(mode, i_BS_mat, BS_E, BS_R_right, BS_VR, &
    !
    ! [3] BS_R_left(i)=BS_Overlap(i,j)BS_R_tmp(j)
    !
-   BS_R_left=cZERO
-   if (.not. associated(BS_Overlap)) then 
-      ! In this case overlap matrix is simply identity
-      BS_R_left = BS_R_tmp
-   else
+   BS_R_left = BS_R_tmp
+   ! Incase of Ydiago solver Overlap is always identity.
+   !
+   if (associated(BS_Overlap)) then 
+      ! This is for backward compatibilty. You should never get into this if using 
+      ! Ydiago solver
+      BS_R_left=cZERO
       call live_timing(trim(mode)//' overlap^{-1} x L',neig_total)
       do i1=1,neig_total
          !
@@ -182,7 +185,7 @@ subroutine K_perturbative_residuals(pert_dim, what, i_BS_mat, &
    !
    ! Hermitian = \sum_{kcv} |A^S_kcv|^2*BS_corrections_{kcv}
    ! 
-   ! Non-hermitian : (overlap^-1)_SS' * \sum_{kcv} conj(A_L^S'_kcv) * (A_R^S'_kcv) * BS_corrections_{kcv}
+   ! Non-hermitian : (overlap^-1)_SS' * \sum_{kcv} conj(A_L^S'_kcv) * (A_R^S_kcv) * BS_corrections_{kcv}
    !
    use pars,           ONLY:SP,cZERO
    use wrapper_omp,    ONLY:V_dot_V_omp
@@ -248,25 +251,10 @@ subroutine K_perturbative_residuals(pert_dim, what, i_BS_mat, &
    ! In case of overlap multiply with inverse of overlap
    !
    if (BS_K_coupling .and. associated(BS_Overlap)) then 
-      call live_timing('Overlap^{-1} x Perturb.    '//what//' ',neig_total*pert_dim)
-      
-      do i2=1,pert_dim
-         if (neigs_this_cpu < 1) cycle
-         !
-         do i1=1, neig_total
-         !
-            tmp_BS_RL(i1)=V_dot_V_omp(neigs_this_cpu,BS_Overlap(i1,:), &
-&                                BS_corrections(i2,neig_shift+1 : neig_shift+neigs_this_cpu))
-         !
-            call live_timing(steps=1)
-         !
-         end do
-         BS_corrections(i2,:) = tmp_BS_RL(1:neig_total)
-      enddo
       !
-      call PP_redux_wait(BS_corrections) 
-      call live_timing()
-
+      ! NM : If you use Ydiago solver, you should never see this because, Ydiago outputs 
+      ! left and right eigenvectors with overlap = null() i.e identity.
+      call error(" BS pertubative residuals not implemented in case of Overlap matrix")
    endif
    !
    deallocate(tmp_BS_RL)
@@ -279,177 +267,6 @@ end subroutine K_perturbative_residuals
 !subroutine K_PL_residuals(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,neigs_this_cpu, neig_shift,BS_overlap) 
 !   !
 !   ! PL Residuals
-!   !
-!   use pars,           ONLY:SP,rZERO,cZERO,cI
-!   use wrapper_omp,    ONLY:V_dot_V_omp,Vstar_dot_V_omp
-!   use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
-!   use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
-!   use LIVE_t,         ONLY:live_timing
-!   use BS,             ONLY:BS_H_dim,BS_K_dim
-!   use BS_solvers,     ONLY:BSS_eh_f, BSS_n_eig
-!   use PHOTOLUM,       ONLY:BSS_dipoles_PL,BSS_PL_f
-!   !
-!   implicit none
-!   !
-!   logical,    intent(in)             :: K_is_not_hermitian
-!   complex(SP), target, allocatable   :: BS_V_left(:,:),BS_V_right(:,:)
-!   real(SP), pointer                  :: BS_R_PL(:,:)
-!   complex(SP), pointer               :: BS_overlap(:,:)
-!   integer,intent(in)                 :: neigs_this_cpu, neig_shift
-!   !
-!   ! Workspace
-!   !
-!   integer              ::i_l,i_c,i_K,i_lr,i_ll, neig_total
-!   complex(SP)          ::Pi_x_R_x_adA_left(3),Pi_x_R_x_adA_right(3),adA_x_R_over_R_x_A(2)
-!   complex(SP), allocatable   :: tmp_rvec(:), R_over_R_x_A(:,:), B(:), P_x_fZ(:,:,:)
-!   logical              :: work_cpu = .false.
-!   !
-!   ! sqrt(R_i) Re[ (Pi_i)* A^l_i (A^l_j)* R<_j/R_j A^l_j (A^l_k)* Pi_k ] sqrt(R_k)
-!   !
-!   ! Zeroing
-!   !
-!   neig_total = BSS_n_eig
-!   ! 
-!   allocate(tmp_rvec(neig_total))
-!   allocate(R_over_R_x_A(2,BS_H_dim))
-!   allocate(B(BS_H_dim))
-!   allocate(P_x_fZ(2,BS_H_dim,3))
-
-!   if (associated(BS_R_PL)) deallocate(BS_R_PL)
-!   allocate(BS_R_PL(2,neig_total))
-
-!   BS_R_PL       =rZERO
-!   P_x_fZ        =cZERO
-!   R_over_R_x_A  =cZERO
-!   !
-!   call live_timing('PL    residuals',neigs_this_cpu)
-!   !
-!   ! Non-Hermitian residual
-!   !========================
-!   !
-!   if (K_is_not_hermitian) then
-!      !
-!      ! 1=> left
-!      ! 2=> right
-!      !
-!      do i_c=1,3
-!         do i_K=1,BS_K_dim(1)
-!            P_x_fZ(1,i_K,i_c)=conjg(BSS_dipoles_PL(i_K,i_c))*sqrt(BSS_eh_f(i_K))
-!            P_x_fZ(2,i_K,i_c)=      BSS_dipoles_PL(i_K,i_c) *sqrt(BSS_eh_f(i_K))
-!         enddo
-!         do i_K=BS_K_dim(1)+1,BS_H_dim
-!            P_x_fZ(1,i_K,i_c)=cI*conjg(BSS_dipoles_PL(i_K,i_c))*sqrt(BSS_eh_f(i_K-BS_K_dim(1)))
-!            P_x_fZ(2,i_K,i_c)=cI*      BSS_dipoles_PL(i_K,i_c) *sqrt(BSS_eh_f(i_K-BS_K_dim(1)))
-!         enddo
-!      enddo
-!      !
-!      do i_lr=1,neig_total
-!         !
-!         !
-!         ! B_i = \sum_lp Overlap^*(lp,l) A^ll_i
-!         !
-!         if ( (i_lr - neig_shift) >= 1 .and. (i_lr - neig_shift) <= neigs_this_cpu) work_cpu = .true.
-!         B=cZERO
-!         if (associated(BS_overlap)) then 
-!            !
-!            ! gather the vector 
-!            tmp_rvec = cZERO
-!            if (work_cpu) tmp_rvec = conjg(BS_overlap(:,i_lr - neig_shift))
-!            !
-!            call PP_redux_wait(tmp_rvec)
-!            !
-!            do i_ll=1 + neig_shift, neigs_this_cpu + neig_shift
-!               B(:)=B(:)+tmp_rvec(i_ll)*BS_V_left(:,i_ll-neig_shift)
-!            enddo
-!            !
-!         else 
-!            !
-!            do i_ll= 1 + neig_shift, neigs_this_cpu + neig_shift
-!               if (i_lr == i_ll) B(:)=B(:)+ BS_V_left(:,i_ll-neig_shift)
-!            enddo
-!            !
-!         endif
-!         call PP_redux_wait(B)
-!         !
-!         ! R_over_R_x_A = R<_j/R_j B^l_j
-!         !
-!         R_over_R_x_A(1,:) = BSS_PL_f(:)*B(:)/BSS_eh_f(:)
-!         !
-!         ! adA_x_R_over_R_x_A = B^l*_j    R<_j/R_j B^l_j
-!         !
-!         adA_x_R_over_R_x_A(1)=Vstar_dot_V_omp(BS_H_dim,B,R_over_R_x_A(1,:))
-!         !
-!         if (work_cpu) then
-!            do i_c=1,3
-!               !
-!               ! Pi_x_R_x_adA_left =   sqrt(R) Pi_i* A^lr_i
-!               !
-!               Pi_x_R_x_adA_left(i_c) =V_dot_V_omp(BS_H_dim,P_x_fZ(1,:,i_c),BS_V_right(:,i_lr-neig_shift))
-!               !
-!               ! Pi_x_R_x_adA_right=   A^lr*_i Pi_i sqrt(R)  
-!               !
-!               Pi_x_R_x_adA_right(i_c)=Vstar_dot_V_omp(BS_H_dim,BS_V_right(:,i_lr-neig_shift),P_x_fZ(2,:,i_c))
-!               !
-!            enddo
-!            !
-!            BS_R_PL(1,i_lr)=real((Pi_x_R_x_adA_left(1)*Pi_x_R_x_adA_right(1)+&
-!               &                          Pi_x_R_x_adA_left(2)*Pi_x_R_x_adA_right(2)+&
-!               &                          Pi_x_R_x_adA_left(3)*Pi_x_R_x_adA_right(3))*adA_x_R_over_R_x_A(1))
-!            !
-!         endif
-!         call live_timing(steps=1)
-!         !
-!      enddo
-!      !
-!   else
-!      !
-!      ! Hermitian residual
-!      !====================
-!      !
-!      do i_c=1,3
-!         P_x_fZ(1,:,i_c)=BSS_dipoles_PL(:,i_c)*sqrt(BSS_eh_f(:))
-!      enddo
-!      !
-!      do i_l=1,neigs_this_cpu
-!         !
-!         !                       
-!         ! R_over_R_x_A = R<_j/R_j A^l_j
-!         ! NM : FIX ME URGENT !
-!         R_over_R_x_A(1,:) =  BSS_PL_f(1:BS_K_dim(1)) *BS_V_right(:,i_l)/BSS_eh_f(:)
-!         R_over_R_x_A(2,:) =  BSS_PL_f(BS_K_dim(1)+1:)*BS_V_right(:,i_l)/BSS_eh_f(:)
-!         !
-!         ! adA_x_R_over_R_x_A = (A^l_j)* R<_j/R_j A^l_j
-!         !
-!         adA_x_R_over_R_x_A(1)=V_dot_V_omp(BS_K_dim(1),conjg(BS_V_right(:,i_l)),R_over_R_x_A(1,:))
-!         adA_x_R_over_R_x_A(2)=V_dot_V_omp(BS_K_dim(1),conjg(BS_V_right(:,i_l)),R_over_R_x_A(2,:))
-!         !
-!         do i_c=1,3
-!            !                                   
-!            ! Pi_x_R_x_adA_right =   Pi sqrt(R)  A^l_i
-!            !
-!            Pi_x_R_x_adA_right(i_c)=V_dot_V_omp(BS_K_dim(1),BS_V_right(:,i_l),P_x_fZ(1,:,i_c))
-!            !
-!         enddo
-!         !
-!         ! Note that the 2nd component (anti-resonant) should take a -1  from BSS_eh_f and a i^2 from sqrt(R)
-!         ! that cancel out.
-!         !
-!         BS_R_PL(:,i_l + neig_shift)=dot_product(Pi_x_R_x_adA_right,Pi_x_R_x_adA_right)*adA_x_R_over_R_x_A(:)
-!         !
-!         call live_timing(steps=1)
-!         !
-!      enddo
-!      !
-!   endif
-!   !
-!   call live_timing()
-!   !
-!   call PP_redux_wait(BS_R_PL)
-!   !
-!   deallocate(tmp_rvec)
-!   deallocate(R_over_R_x_A)
-!   deallocate(B)
-!   deallocate(P_x_fZ)
 !   !
 !end subroutine K_PL_residuals
 

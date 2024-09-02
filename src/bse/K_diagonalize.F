@@ -14,6 +14,10 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   !
   !  This total number of eigenvectors found can be obtained by
   !  by calling size function of eigvals i.e size(BS_energies)
+  !
+  !  Note : Ydiago always returns normalized right eigenvectors 
+  !  and the left eigenvectors are choosen such that overlap is a an identity matrix.
+  !  This implies that left eigenvectors maynot be normalized in some cases.
   use pars,           ONLY:cI,cONE, SP
   use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling,&
     &                        BS_res_ares_n_mat,l_BS_ares_from_res
@@ -73,6 +77,7 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   type(c_ptr)                        :: eigvals_range_tmp = c_null_ptr
   type(c_ptr)                        :: evecs_left        = c_null_ptr
   logical                            :: compute_left_eigs = .false.
+  logical                            :: run_gpu = .false.
   complex(YDIAGO_CMPLX), target, allocatable :: eig_vals(:)
   !
   ! Gpu support via ELPA.
@@ -88,14 +93,19 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   if(present(BS_VL)) compute_left_eigs = .true.
   if(present(solver_type)) solver_type_aux = solver_type
   if(present(elpasolver)) elpa_solver_aux = elpasolver
-
-
-if (have_cuda) then
-  ! Note this is a gpu specific flag. set according to gpu.
-  ! Accpeted values for gpu_device_elpa : "nvidia-gpu", "amd-gpu", "intel-gpu"
-  ! As yambo supports only nvidia gpus, we set it to nvidia-gpu for now
-  gpu_device_elpa =  c_char_"nvidia-gpu"//c_null_char
-  gpu_str = c_loc(gpu_device_elpa)
+  !
+  run_gpu = have_cuda ! Turn this flag to run the diagonalization on gpu.
+  ! Note that even when compiled with gpu support, if this is set to false,
+  ! then the diagonalization will run on cpu.
+  !
+if (run_gpu) then
+  ! Set the gpu flag
+  call set_elpa_gpu_str(gpu_device_elpa)
+  if (gpu_device_elpa /= c_char_"not-supported"//c_null_char) then 
+    gpu_str = c_loc(gpu_device_elpa)
+  else 
+    call msg("s", 'Warning : Ydiago not compiled with GPU. using CPU version')
+  endif 
 endif
 
 #if defined _OPENMP
@@ -131,7 +141,7 @@ endif
     ! force the solver to be scalapack
     ! If block size is <8, geev solver will fail.
     solver_type_aux = 's'
-    blacs_blk_size = SL_H_dim
+    blacs_blk_size = 8 !SL_H_dim
     ProcX = 1
     ProcY = 1
   endif
@@ -271,7 +281,7 @@ endif
     neig_found = SL_H_dim
     !
     if (blacs_blk_size .lt. 8 ) call error("Too small block size. User solver: o")
-  ! NM : FIX ME : In this case, simply switch to lapack solver.
+    ! NM : FIX ME : In this case, simply switch to lapack solver.
     error_diago = Geev(diago_mat, c_loc(eig_vals), evecs_left, evecs)
     ! On output diago_mat has overlap i.e VL^H @ VR
     !
@@ -279,6 +289,9 @@ endif
 
   if (error_diago /= 0) call error("Diagonalization failed")
   call live_timing()
+
+  ! Free the space of the distributed matrix
+  call free_D_Matrix(diago_mat)
 
   if(allocated(BS_energies)) deallocate(BS_energies)
   ! 
@@ -300,38 +313,8 @@ endif
   ! neigs_this_cpu, neig_shift
   call par_distribute_set(neig_found, neigs_this_cpu, neig_shift)
 
-  ! Retreive inverse of overlap matrix if case geev is used. (VL^H @ VR)^-1
-  ! As mentioned above, in all other cases overlap is identity
-  if (evec_fac == 1 .and. BS_K_coupling .and. present(BS_overlap)) then
-    call live_timing('Retrieving Overlap',1)
-    if (.not. associated(BS_overlap)) allocate(BS_overlap(neig_found,neigs_this_cpu))
-    !
-    nelements = neig_found*neigs_this_cpu
-    ! Compute inverse of Overlap matrix (inplace operation)
-    error_diago = Inverse_Dmat(diago_mat)
-    if (error_diago /= 0) call error("Inversion of overlap matrix Failed.")
-    !
-    ! Now retreive
-    error_diago = initiateGetQueue(diago_mat, nelements)
-    if (error_diago /= 0) call error("Failed to initiate overlap GetQueue.")
-    !
-    ! get the overlap matrix. The overlap matrix is distributed along the right eigenvectors
-    do i_c = 1, neigs_this_cpu
-      do i_r = 1, neig_found
-        error_diago = dmatget_fortran(diago_mat, i_r, i_c + neig_shift, c_loc(BS_overlap(i_r, i_c)) )
-        if (error_diago /= 0) call error("Failed to retreive overlap matrix from distributed matrix.")
-      enddo
-    enddo
-    ! finalize the queue
-    error_diago = ProcessGetQueue(diago_mat)
-    if (error_diago /= 0) call error("Failed to Process overlap matrix GetQueue.")
-    call live_timing()
-  else 
-    if (present(BS_overlap)) BS_overlap => null()
-  endif
-
-  ! Free the space of the distributed matrix 
-  call free_D_Matrix(diago_mat)
+  ! Set the Overlap to null() as this is always identity incase Ydiago solver is used
+  if (present(BS_overlap)) BS_overlap => null()
 
   nelements = neigs_this_cpu*SL_H_dim
   !

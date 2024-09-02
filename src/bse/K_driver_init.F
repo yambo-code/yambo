@@ -8,7 +8,7 @@
 subroutine K_driver_init(what,iq,Ken,Xk)
  !
  use R_lattice,    ONLY:bz_samp
- use electrons,    ONLY:levels,n_sp_pol
+ use electrons,    ONLY:levels,n_sp_pol,n_spinor
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match
@@ -207,7 +207,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  endif
  !
  ! Remove exchange if computing the irreducible response
- if (trim(BSE_L_kind)=="tilde") then
+ if (STRING_match(BSE_L_kind,"tilde") ) then
    BS_res_K_exchange=.FALSE.
    BS_cpl_K_exchange=.FALSE.
  endif

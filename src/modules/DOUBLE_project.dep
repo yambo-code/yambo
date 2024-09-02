@@ -8,6 +8,7 @@
  mod_DIPOLES.o
  mod_D_lattice.o
  mod_ELPH.o
+ mod_ELPH_intfcs.o
  mod_FFT.o
  mod_H_interfaces.o
  mod_IO.o
@@ -18,7 +19,6 @@
  mod_NL_interfaces.o
  mod_OUTPUT.o
  mod_Overlaps.o
- mod_PHEL.o
  mod_PHOTOLUM.o
  mod_POL_FIT.o
  mod_QP.o
@@ -38,6 +38,7 @@
  mod_collision_el.o
  mod_collision_ext.o
  mod_com.o
+ mod_com2y.o
  mod_com_interfcs.o
  mod_cuda.o
  mod_cusolverdn_y.o

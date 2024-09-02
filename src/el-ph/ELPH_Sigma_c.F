@@ -37,11 +37,15 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        elph_nQ,elph_use_q_grid,setup_k_plus_q_levels,elph_nQ_used,&
 &                        E_kpq_sh_fact,Efermi_DbGd,gsqF_energy_steps,eval_G_using_KK,PH_qpt,ID_E_kpq,ID_E_kpq_obj, &
 &                        elph_branches,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold
- use interfaces,    ONLY:QP_state_print,ELPH_alloc
+ use interfaces,    ONLY:QP_state_print
+ use ELPH_intfcs,   ONLY:ELPH_alloc
  use interpolate,   ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
 &                        INTERPOLATE_is_quiet    
  use stderr,        ONLY:STRING_same
  use timing_m,      ONLY:timing
+#if defined _RT
+ use RT_control,    ONLY:RT_apply
+#endif
  !
 #include<memory.h>
  !
@@ -286,6 +290,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        if (io_err<0) call error('Missing Q-database')
        !
      endif
+
      !
      if (.not.elph_use_q_grid.or.elph_grids_are_expanded) then
        !
@@ -294,6 +299,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        call setup_k_plus_q_levels(iq_db,E_random_shift)
        !
        call QP_apply((/1,elph_nb/),GKKP%E_kpq(iq_db),k,"G",msg_fmt=' ')
+#if defined _RT
+       call RT_apply((/1,elph_nb/),GKKP%E_kpq(iq_db),k,"G",VERBOSE=iq_bz==1)
+#endif
        !
      endif
      !

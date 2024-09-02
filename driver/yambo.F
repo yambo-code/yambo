@@ -202,12 +202,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! SELF-ENERGIES
  !===============
  !
- launch_me=(l_gw0.or.l_life).and..not.l_phel_corr
+ launch_me=l_gw0.or.l_life
  if (launch_me) call QP_driver(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
-#if defined _PHEL
- launch_me=(l_gw0.or.l_life).and.     l_phel_corr
- if (launch_me) call PHEL_driver(en,k,q)
-#endif
  if (launch_me) call mem_manager_report
  !
  ! BETHE-SALPETER

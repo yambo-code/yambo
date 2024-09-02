@@ -102,8 +102,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use plasma,     ONLY:PLASMA_redux_percent
 #endif
 #if defined _NL
- use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,         &
-&                     NL_verb_name,NL_bands,n_order,NL_desc
+ use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,NL_initial_versor,     &
+&                     NL_verb_name,NL_bands,NL_desc,n_angles,NL_rot_axis
  use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _SC
@@ -581,6 +581,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  n_ext_fields=0
  do i1=1,n_ext_fields_max
    call Efield_reset(Efield(i1))
+   Efield(i1)%t_initial=RT_step
  enddo
  !
  call A_vecpot_reset(A_tot)
@@ -678,13 +679,16 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NL_bands      =(/0,0/)
  NL_correlation="IPA"
  NL_er         =(/-1._SP,-1._SP/)/HA2EV
- n_frequencies =1
- n_order    = 0
+ n_frequencies =0
+ n_angles      =0
+ NL_rot_axis   =(/0._SP,0._SP,0._SP/)
+ NL_initial_versor=(/0._SP,0._SP,0._SP/)
  NL_damping    =0.2_SP/HA2EV
  NL_LRC_alpha  =0._SP
  !
  do i1=1,n_ext_fields_max
    call Efield_reset(Efield(i1))
+   Efield(i1)%t_initial=RT_step
    Efield(i1)%frequency=0.1_SP/HA2EV
    Efield(i1)%intensity=0.0_SP
    Efield(i1)%FWHM=2._SP*FS2AUT

@@ -12,7 +12,7 @@ integer function io_MPA(X,Xw,ID)
  use frequency,     ONLY:w_samp
  use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_header,io_fragment,&
 &                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental
- use IO_m,          ONLY:io_sec,io_com,io_status,read_is_on,&
+ use IO_m,          ONLY:io_sec,io_com,io_status,read_is_on,write_is_on,&
 &                        io_MULTIPOLE,IO_NOT_ALLOWED,io_extension,&
 &                        frag_MULTIPOLE,IO_NO_DATABASE,io_mode,DUMP,frag_RESPONSE
  use stderr,        ONLY:intc

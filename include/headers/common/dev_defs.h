@@ -6,6 +6,7 @@
   Authors (see AUTHORS file for details): AF
 */
 
+#include <device_macros.h>
 
 #ifdef __STDC__
 #  define CAT(a,b) a##b 

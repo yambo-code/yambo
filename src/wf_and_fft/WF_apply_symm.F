@@ -47,11 +47,8 @@ subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
  !
  if(n_spinor==1) then
    !
-#ifdef _CUDA_LOC   
-   !$cuf kernel do(1) <<<*,*>>>
-#else
-   !$omp parallel do default(shared), private(ifft)
-#endif
+   !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_OMP parallel do default(shared), private(ifft)
    do ifft = 1, fft_size
      WF_symm(ifft,1)=WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),1,i_wf)
    enddo
@@ -60,11 +57,8 @@ subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
  !
  if (n_spinor==2) then
    !
-#ifdef _CUDA_LOC   
-   !$cuf kernel do(1) <<<*,*>>>
-#else
-   !$omp parallel do default(shared), private(ifft)
-#endif
+   !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_OMP parallel do default(shared), private(ifft)
    do ifft = 1, fft_size
      WF_symm(ifft,1)=DEV_VAR(spin_sop)(1,1,isymm)*WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),1,i_wf)+ &
                      DEV_VAR(spin_sop)(1,2,isymm)*WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),2,i_wf)

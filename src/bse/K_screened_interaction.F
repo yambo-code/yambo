@@ -137,7 +137,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      !
 #if defined _CUDA
      ! device <- host transfer
-     X_mat_d=X_mat
+     YAMBO_ALLOC_SOURCE(X_mat_d,X_mat)
      !
      ! CUDA Fortran workarounds
      gamp_d => isc%gamp_d

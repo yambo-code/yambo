@@ -32,6 +32,12 @@ module mpa_m
  !
  use pars,            ONLY:SP,DP,cZERO,cONE,cI
  use functions,       ONLY:NAN
+ use parallel_m,    ONLY:COMM_copy,PAR_COM_RL_INDEX,PAR_COM_RL_A2A
+ use matrix,        ONLY:MATRIX_reset,PAR_matrix
+ use X_m,           ONLY:X_par_lower_triangle,X_rows,X_cols,&
+ &                        X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
+  use parallel_int,  ONLY:PARALLEL_live_message
+  use cuda_m,        ONLY:have_cuda
  !
 #include <dev_defs.h>
 #include <memory.h>
@@ -42,10 +48,16 @@ module mpa_m
  !
  complex(SP), allocatable DEV_ATTR, target :: MPA_E_mat_d(:,:,:)
  complex(SP), allocatable DEV_ATTR, target :: MPA_R_mat_d(:,:,:)
+ !MB:
+ type(PAR_matrix), allocatable, target :: MPA_E_par(:)
+ type(PAR_matrix), allocatable, target :: MPA_R_par(:)
+ complex(SP), allocatable DEV_ATTR, target :: MPA_E_par_d(:,:,:)
+ complex(SP), allocatable DEV_ATTR, target :: MPA_R_par_d(:,:,:)
 
  public :: mpa_RE_solver,err_func_X
  public :: MPA_alloc,MPA_free
 
+ !
 contains
  !
  subroutine MPA_alloc(d)
@@ -735,5 +747,7 @@ contains
    !
  end subroutine mpa_RQ_3p_solver
  !
+!
 end module mpa_m
+
 

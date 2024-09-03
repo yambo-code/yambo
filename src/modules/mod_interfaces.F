@@ -55,8 +55,15 @@ module interfaces
      use matrix,         ONLY:PAR_matrix
      character(*)               :: operation
      type(PAR_matrix), optional :: M_in
-     type(PAR_matrix)           :: M_out
      integer         , optional :: INDEX_in
+     type(PAR_matrix)           :: M_out
+   end subroutine
+   !
+   subroutine MATRIX_transpose( operation, M_in, M_out )
+     use matrix,         ONLY:PAR_matrix,MATRIX_reset
+     character(*)               :: operation
+     type(PAR_matrix), optional :: M_in
+     type(PAR_matrix)           :: M_out
    end subroutine
    !
    subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV, COMM, COMM_name)

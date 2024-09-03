@@ -32,12 +32,12 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  !
  !Working Space
  !
- integer :: ng(2),ig1,ig2,iq,i1,i2
+ integer :: ig1,ig2,iq,i1,i2
  logical :: l_RIM
  real(SP):: reg_q_m2,q_weight,R_sphere
  !
  complex(SP), pointer DEV_ATTR :: gamp_p(:,:)
- integer :: ng1, ng2
+ integer :: ng_rows1,ng_rows2,ng_cols1,ng_cols2
 #ifdef _CUDA_LOC
  character(32) :: subname="scatter_Gamp_gpu"
 #else
@@ -88,24 +88,27 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  endif
 #endif
  !
- ng=shape(isc%gamp)
- ng1=ng(1)
- ng2=ng(2)
+ ! desipite this information is (or should be) already present
+ ! in isc%gamp_rows and isc%gamp_cols, here we recompute it
+ ! in order to protect for gamp allocations done directly
+ ! via YAMBO_ALLOC instead of using the proper isc allocator
+ !
+ ng_rows1=lbound(DEV_VAR(isc%gamp),1)
+ ng_rows2=ubound(DEV_VAR(isc%gamp),1)
+ ng_cols1=lbound(DEV_VAR(isc%gamp),2)
+ ng_cols2=ubound(DEV_VAR(isc%gamp),2)
  !
  gamp_p => DEV_VAR(isc%gamp)
  !
-#ifdef _CUDA_LOC
- !$cuf kernel do(2)
-#else
- !$omp parallel do default(shared), private(i1,i2,ig1,ig2,l_RIM), collapse(2)
-#endif
+ !DEV_CUF kernel do(2)
+ !DEV_OMP parallel do default(shared), private(i1,i2,ig1,ig2,l_RIM), collapse(2)
  !
- do i1=1,ng1
-   do i2=1,ng2
+ do i2=ng_cols1,ng_cols2
+   do i1=ng_rows1,ng_rows2
      ig1=i1
      ig2=i2
-     if (ng1==1) ig1=ig2
-     if (ng2==1) ig2=ig1
+     if (ng_rows1==1.and.ng_rows2==1) ig1=ig2
+     if (ng_cols1==1.and.ng_cols2==1) ig2=ig1
      !
      ! RIM support (Both components)
      !
@@ -171,7 +174,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  !
  ! Anisotropy correction
  !
- if (.not.l_col_cut) then
+ if (.not.l_col_cut.and.ng_rows1==1.and.ng_cols1==1) then
    if (all((/iq==1,RIM_ng>0,mode=='c',RIM_anisotropy/=0._SP/))) gamp_p(1,1)=RIM_anisotropy/2._SP
  endif
  !

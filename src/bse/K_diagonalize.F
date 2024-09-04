@@ -27,7 +27,7 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   use openmp,         ONLY:n_threads_K
   use LIVE_t,         ONLY:live_timing
   use com,            ONLY:msg
-  use YDIAGO_interface
+  use ydiago_interface
   !
   implicit none
   !

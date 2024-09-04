@@ -16,8 +16,10 @@ if test x"$with_ydiago_branch" = "xnone"; then
 else
  ydiago_check="G"; 
 fi
-YDIAGO_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libydiago.a"
-YDIAGO_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/include/"
+#YDIAGO_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libydiago.a"
+#YDIAGO_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/include/"
+YDIAGO_LIBS="${compdir}/lib/libydiago.a"
+YDIAGO_INCS="$IFLAG${compdir}/include/"
 
 AC_SUBST(YDIAGO_LIBS)
 AC_SUBST(YDIAGO_INCS)

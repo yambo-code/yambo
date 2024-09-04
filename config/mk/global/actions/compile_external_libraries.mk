@@ -40,5 +40,5 @@ petsc:
 	@if test "$(do_petsc)" = yes ; then LIBS="petsc" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) petsc-dl; $(mk_external_lib); fi
 slepc: petsc
 	@if test "$(do_slepc)" = yes ; then LIBS="slepc" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) slepc-dl; $(mk_external_lib); fi
-Ydiago:
-	@if test "$(do_ydiago)" = yes ; then LIBS="ydiago" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) Ydiago-dl; $(mk_external_lib); fi
+ydiago:
+	@if test "$(do_ydiago)" = yes ; then LIBS="ydiago" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) ydiago-dl; $(mk_external_lib); fi

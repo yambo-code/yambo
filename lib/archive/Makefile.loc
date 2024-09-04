@@ -16,7 +16,7 @@ all: $(EXT_LIBS)
 #
 Ydriver:
 	@+URL="$(url_Ydriver)"  ;  GBRANCH="$(branch_Ydriver)"  ;  GIT="$(git_Ydriver)"; LIB="$(pkgname_Ydriver)"; $(call getsrc_git,"Ydriver"); $(call copy_driver,"Ydriver")
-Ydiago:
+ydiago:
 	@+URL="$(url_Ydiago)"  ;   GBRANCH="$(branch_Ydiago)"   ;  GIT="$(git_Ydiago)";  LIB="$(pkgname_Ydiago)";  $(call getsrc_git,"Ydiago");
 #
 # Libraries (archives)

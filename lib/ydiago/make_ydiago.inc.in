@@ -12,7 +12,7 @@ FC               = @FC@
 AR               = @AR@
 
 CFLAGS       	 = @CFLAGS@  #-g -fsanitize=address -fno-omit-frame-pointer 
-YAMBO_FLAGS   	 = #-D_ELPA -D_DOUBLE -D_CUDA -D_OPENMP
+YAMBO_FLAGS   	 = @def_mpi@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_cuda@ #-D_ELPA -D_DOUBLE -D_CUDA -D_OPENMP
 ELPA_INC         = # include directory of elpa
 
 #

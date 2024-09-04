@@ -78,6 +78,7 @@ module BS_solvers
  ! Solvers (Diago)
  !=========
  logical  :: BSS_write_eig_2_db
+ character(1) :: BSS_ydiago_solver     ! "s" for scalapack / "e" for elpa
  !
  ! Solvers (Haydock)
  !=========

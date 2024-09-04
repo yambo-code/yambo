@@ -155,8 +155,9 @@ if test "$mpibuild"  = "yes"; then
       #AC_MSG_CHECKING([for $elpa_routine in $ELPA_LIBS])
       #AC_TRY_LINK_FUNC($elpa_routine, [enable_elpa="yes"], [enable_elpa="internal"; ELPA_LIBS=""])
       #AC_MSG_RESULT($enable_elpa)
-      AC_LINK_IFELSE($testprog_elpa,  [enable_elpa="yes"], [enable_elpa="internal"; ELPA_LIBS=""])
-      AC_MSG_RESULT("Internal elpa are ok: $enable_elpa")
+      AC_MSG_CHECKING([for $elpa_routine in $ELPA_LIBS])
+      AC_LINK_IFELSE($testprog_elpa,  [enable_elpa="yes"; elpa_msg="yes"], [enable_elpa="internal"; elpa_msg="not working, fallback to internal"; ELPA_LIBS=""])
+      AC_MSG_RESULT($enable_elpa)
       ELPA_LIBS="$acx_elpa_save_LIBS"
       LIBS="$save_LIBS"
       FCFLAGS="$save_FCFLAGS"
@@ -223,6 +224,13 @@ if test "$enable_blacs" = "yes" && test "$enable_scalapack" = "yes" ; then
   def_scalapack="-D_SCALAPACK"
   if test "$enable_elpa" = "yes" ; then
     def_elpa="-D_ELPA"
+  else
+    enable_elpa="no"
+    def_elpa=""
+    ELPA_LIBS=""
+    ELPA_INCS=""
+    compile_elpa="no"
+    internal_elpa="no"
   fi
 else
   enable_scalapack="no"
@@ -233,6 +241,7 @@ else
   BLACS_LIBS=""
   SCALAPACK_LIBS=""
   ELPA_LIBS=""
+  ELPA_INCS=""
   compile_blacs="no"
   compile_slk="no"
   compile_elpa="no"

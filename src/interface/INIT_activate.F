@@ -136,7 +136,7 @@ subroutine INIT_activate()
  !
  !RIM_W
  !
- if (l_rim_w) call initactivate(1,'RandQpts RandGvecW rimw_type')
+ if (l_rim_w) call initactivate(1,'RandQpts RandGvecW RIMW_type')
  !
  !Col CUTOFF 
  !

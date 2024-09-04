@@ -1,9 +1,12 @@
+#if defined _TOFIX
+objs = RT_Dephasing_step.o RT_EULER_step.o RT_Glesser_evolve.o Runge_Kutta_final_vec_potential.o 
+#endif
 #if defined _PHEL
 PHEL_objects = RT_PHEL_Scattering_step.o
-#endif
+#endif 
+RUNGE_KUTTA_objects = Runge_Kutta_integrators.o Runge_Kutta_initialize.o Runge_Kutta_driver.o Runge_Kutta_kernel.o
 #if defined _RT 
-objs = RT_Integrator_init.o RT_Integrator.o RT_EULER_step.o \
-       RT_Glesser_evolve.o RT_Glesser_rotate.o RT_Scattering_step.o RT_Dephasing_step.o \
-       RT_propagate_fields.o RT_rotate_in_RF.o RT_Ext_fields.o RT_occupations_eval.o \
+objs = RT_Scattering_step.o RT_rotating_frame.o RT_propagate_fields.o RT_Ext_fields.o RT_occupations_eval.o \
+       $(RUNGE_KUTTA_objects) \
        RT_MEMORY_index.o RT_time_step_update.o RT_IO_type_time_steps.o $(PHEL_objects)
 #endif

@@ -65,9 +65,6 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
    df(1)= RT_el_occ%dN(ib,ik)
    df(2)=-RT_el_occ%dN(ib,ik)
    !
-   ! The GAMMA0 term could be moved inside RT_apply_RWA.F
-   ! For the moment I keep it here, together with the rest of the relaxation term
-   !
    GAMMA0(1)=EMIT_RT_life_REF(ib,ik)
    GAMMA0(2)= ABS_RT_life_REF(ib,ik)
    !
@@ -103,23 +100,6 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
      endif
      !
      dG_out(ib,ib) = dG_out(ib,ib) + cI*df_out(1)
-     !
-     ! DEBUG<
-     !! Option B: Written in the same form of RTA
-     !if( GAMMA__TOT> 0._SP  ) then
-     !  f_inf(1)= GAMMA_(2)/GAMMA__TOT*spin_occ
-     !  f_inf(2)= GAMMA_(1)/GAMMA__TOT*spin_occ
-     !endif
-     !if( GAMMA__TOT<=0._SP  ) then
-     !  f_inf(1)=         aimag(G_lesser_reference(ib,ib,ik))
-     !  f_inf(2)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
-     !endif
-     !df_out(:) = -deltaT*(GAMMA0_TOT*df(:) + GAMMA0_TOT*(f0(:)-f_inf(:)) + &
-     !&                    dGAMMA_TOT*df(:) + dGAMMA_TOT*(f0(:)-f_inf(:)) )
-     !!
-     !if (f0(1)<=0.5_SP*spin_occ) dG_out(ib,ib) = dG_out(ib,ib) + cI*df_out(1)   ! electron channel
-     !if (f0(1)> 0.5_SP*spin_occ) dG_out(ib,ib) = dG_out(ib,ib) - cI*df_out(2)   ! hole     channel
-     ! DEBUG>
      !
    else
      !

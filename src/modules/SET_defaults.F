@@ -36,8 +36,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
-&                     RIM_anisotropy,RIM_ng,RIM_W_ng,rimw_type,RIM_n_rand_pts,nqibz,q0_def_norm,&
-&                     cutoff_presets,k_map,qindx_S_max_Go
+&                     RIM_anisotropy,RIM_ng,RIM_W_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
+&                     cutoff_presets,k_map,qindx_S_max_Go,RIMW_type
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn
  use parallel_m, ONLY:ncpu,CPU_str_reset,CREATE_hosts_COMM
  use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
@@ -92,7 +92,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_deph_range,&
 &                     Gr_kind,two_alpha,RAD_LifeTime,Phase_LifeTime,&
 &                     NE_tot_time,NE_MEM_treshold,RT_eh_en,l_update_SOC,&
-&                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,&
+&                     DbGd_EE_percent,RT_scatt_tresh,RT_nk,&
 &                     i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps,RT_step_manual_prefactor,&
 &                     RT_deph_deg_thresh,RT_deph_cv_only,NE_time_step_update_manual,&
 &                     NE_time_step_update_last_point,NE_time_step_update_jump,NE_time_step_update_jump_INPUT, &
@@ -619,7 +619,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  i_MEM_prev  = 0
  i_MEM_now   = 1
  !
- integrator_step=1
  Integrator_name='RK2'
  !
  RAD_LifeTime = 0._SP

@@ -190,9 +190,20 @@ module real_time
  !----------------
  !
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
- complex(SP), allocatable :: H_EQ(:,:,:,:)
  complex(SP), allocatable :: H_pseudo_eq(:,:,:,:)
  complex(SP), allocatable :: RT_Vnl_xc(:,:,:,:)
+ !
+ ! ... Ho
+ ! AM [Aug 2024]: H_EQ contains just the reference energies and it is different from H_bare
+ ! as H_EQ is defined on, eventually, the Fine Grid.
+ !
+ ! Dunno why H_EQ is complex being the energies real.
+ !
+ ! In addition to H_EQ I need to define H_RF(rotating frame) that has the same structure
+ ! of RT_Depth_matrix and can be quickly used to rotate the G_lesser back and forth the RF
+ !
+ complex(SP), allocatable :: H_EQ(:,:,:,:) ! (n,n)=E_n
+ complex(SP), allocatable :: H_RF(:,:,:,:) ! (n,m)=E_n-E_m+\im (G_n+G_m)
  !
  ! Density
  !---------
@@ -202,9 +213,18 @@ module real_time
  !
  ! Integrators...
  !================
+ type RK_integrator_t
+   character(schlen)     :: name   ! Runge-Kutta RK1, RK22, RK21...
+   character(schlen)     :: short  ! Euler, RK2, H2, MP, EMP...
+   integer               :: N      ! Number of iterations
+   real(SP), allocatable :: a(:,:) ! Butcher a
+   real(SP), allocatable :: b(:)   !    "    b
+   real(SP), allocatable :: c(:)   !    "    c
+ end type
  !
- ! ... RW (now approx but it is exact)
- logical  :: l_RT_RWA
+ integer, parameter     :: N_RK_integrators=7
+ type(RK_integrator_t)  :: RK_integrators(N_RK_integrators)
+ type(RK_integrator_t)  :: RK_integrator
  !
  ! ... Slowly varying dynamics
  logical  :: l_slow_TE=.FALSE. ! Slow time-evolution => INV/EXPn/LINEAR_RESP approximations
@@ -214,23 +234,19 @@ module real_time
  logical  :: l_RT_LINEAR_RESP=.FALSE.
  !
  ! ... EXP/INV related
- logical  :: l_RT_ACC=.FALSE.  ! Used in EXP/INV (RT_EXP/INV_step_accurate)
+ logical  :: l_RT_ACC=.FALSE.     ! Used in EXP/INV (RT_EXP/INV_step_accurate)
  integer  :: Integrator_exp_order ! EXP + ACC specific 
  !
  ! ... INV related
  logical  :: l_RT_DIAG=.FALSE. ! Used in INV (RT_INV_step_diago)
  !
- ! ... Steps
- integer  :: Integrator_step
- integer  :: Integrator_nsteps
  !
  ! ... Coefficients in the implicit/explicit propagation procedure
  real(SP) :: a_tableau(4)
  real(SP) :: b_tableau(4)
  real(SP) :: c_tableau(4)
- real(SP) :: RWA_table(5)
  !
- ! ... name (referring to RKn) and approximation (Physics based)
+ ! ... names (referring to RKn) and approximation (Physics based)
  character(schlen)            :: Integrator_name
  character(schlen)            :: Integrator_slow_approx='no'
  !
@@ -343,6 +359,22 @@ module real_time
      call RT_obj_lifetime_free(RT%GAMMA_EP_emit)
      call RT_obj_lifetime_free(RT%GAMMA_EH)
      call RT_obj_lifetime_free(RT%GAMMA_PE)
+   end subroutine
+   !
+   subroutine RK_integrator_alloc(I,N,short,name)
+     type(RK_integrator_t)::I
+     integer              ::N
+     character(*)         ::short
+     character(*)         ::name
+     I%short=short
+     I%name=name
+     I%N=N
+     YAMBO_ALLOC(I%a,(I%N,I%N))
+     YAMBO_ALLOC(I%b,(I%N))
+     YAMBO_ALLOC(I%c,(I%N))
+     I%a(:,:)=0._SP
+     I%b(:)  =0._SP
+     I%c(:)  =0._SP
    end subroutine
    !
 end module

@@ -17,7 +17,7 @@ subroutine RT_Glesser_evolve(En,kpt,dG_old,dG_in,dG_out,dT)
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_G_k_range
- use real_time,      ONLY:G_lesser_reference,RT_bands,RT_nk,RTibz,l_slow_TE,l_RT_RWA
+ use real_time,      ONLY:G_lesser_reference,RT_bands,RT_nk,RTibz,l_slow_TE
  !
  implicit none
  !
@@ -39,8 +39,6 @@ subroutine RT_Glesser_evolve(En,kpt,dG_old,dG_in,dG_out,dT)
    !
    if( .not.PAR_IND_Xk_ibz%element_1D(RTibz%k_map(ik)) ) cycle
    !
-   call RT_rotate_in_RW(1,dG_in(:,:,ik))
-   !
    if (     l_slow_TE) call RT_slow_dynamics_driver(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    if (.not.l_slow_TE) call RT_EULER_step(dG_in(:,:,ik),dG_out(:,:,ik),ik,En%nbf,dT)
    !
@@ -49,6 +47,9 @@ subroutine RT_Glesser_evolve(En,kpt,dG_old,dG_in,dG_out,dT)
    ! G(T0+dt) = G(T0) - i dt * Sigma_relax(T)
    !
    call RT_Scattering_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
+   !
+   ! G(T+dt) = G(t)+dG(T)
+   dG_out(:,:,ik)=dG_out(:,:,ik)+dG_in(:,:,ik)
    !
    call RT_G_symmetrization(dG_out(:,:,ik),ik)
    !

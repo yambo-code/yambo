@@ -127,9 +127,9 @@ subroutine RT_initialize(E,k,q)
    PAR_G_k_range(2)=RTibz%k_range(PAR_G_k_range(2),2)
  endif
  !
- ! Integrator FLAGS
- !==================
- call RT_Integrator_init()
+ ! RK init 
+ !=========
+ call Runge_Kutta_initialize()
  !
  ! Global gauge
  !==============
@@ -343,8 +343,11 @@ subroutine RT_initialize(E,k,q)
  !
  call section('=','Messaging')
  !
- call msg( 'r','---General---')
+ call msg( 'r','---Time Integration---')
  if (len_trim(Integrator_name)>0)        call msg( 'r', 'Integrator (ordinary)      ',trim(Integrator_name))
+ !
+ call Runge_Kutta_integrators(.TRUE.)
+ !
  if (len_trim(Integrator_slow_approx)>0) call msg( 'r', 'Integrator (slow dynamics)' ,trim(Integrator_slow_approx))
  call msg( 'r', 'Linear-Regime assumption   ',l_RT_LINEAR_RESP)
  call msg( 'r', 'Simulation time            ',NE_tot_time*AUT2FS,"[fs]")

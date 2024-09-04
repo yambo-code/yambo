@@ -26,7 +26,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
  use electrons,      ONLY:nel,levels,n_spin,Spin_magn,Orbital_magn,Itinerant_magn
  use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_bands,&
 &                         RT_P,RT_spin_magn,RT_orbt_magn,RT_P_prev,G_lesser_reference,NE_i_time,&
-&                         RT_dyn_step,l_P_integrating_J,l_velocity_gauge_diam,integrator_step
+&                         l_P_integrating_J,l_velocity_gauge_diam
  use fields,         ONLY:gauge_field
  use DIPOLES,        ONLY:DIP_iR,DIP_v,DIP_spin,DIP_orbital
  use parallel_m,     ONLY:PAR_DIPk_nibz,PAR_G_k_range
@@ -82,8 +82,8 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
    !     This expression is exact to all orders in the field.
    !     (to be fixed, it is not stable ...)
    !
-   if (integrator_step==1) RT_P=RT_P_prev+RT_ind_J_prev*RT_dyn_step/2._SP
-   if (integrator_step==2) RT_P=RT_P_prev+RT_ind_J     *RT_dyn_step/2._SP
+   !if (integrator_step==1) RT_P=RT_P_prev+RT_ind_J_prev*RT_dyn_step/2._SP
+   !if (integrator_step==2) RT_P=RT_P_prev+RT_ind_J     *RT_dyn_step/2._SP
    !
  endif
  !

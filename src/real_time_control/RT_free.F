@@ -16,7 +16,7 @@ subroutine RT_free( )
  use hamiltonian,    ONLY:H_free
  use xc_functionals, ONLY:E_xc
  use real_time,      ONLY:DbGd_EE_scatt_table,RT_TIME_status,REF_V_xc_sc,&
-&                         Ho_plus_Sigma,H_EQ,H_pseudo_eq,RT_Vnl_xc,HARTREE0,XC0,G_lesser_reference,&
+&                         Ho_plus_Sigma,H_EQ,H_RF,H_pseudo_eq,RT_Vnl_xc,HARTREE0,XC0,G_lesser_reference,&
 &                         dG_lesser,G_lesser,MEM_pointer,REF_V_xc_sc,REF_V_hartree_sc,rho_reference,&
 &                         magn_reference,DbGd_EE_scatt_table,RT_TIME_status,REF_V_xc_sc,&
 &                         RT_levels,I1_matrix,RT_Deph_Matrix,RTibz
@@ -52,6 +52,7 @@ subroutine RT_free( )
  !
  YAMBO_FREE(Ho_plus_Sigma)
  YAMBO_FREE(H_EQ)
+ YAMBO_FREE(H_RF)
  YAMBO_FREE(H_pseudo_eq)
  YAMBO_FREE(RT_Vnl_xc)
  !

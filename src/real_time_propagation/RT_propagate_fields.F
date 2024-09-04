@@ -7,31 +7,17 @@
 !
 subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
  !
- ! The external and total fields in Yambo are defined and organized as follow:
+ ! Here Yambo uses the A" (the ext current) to evolve the Maxwell equations when
+ ! the induced current is included in the dynamics
  !
- ! The general vector potential is defined as
- !
- !   A (t)=-c Eo    a(t) theta(t-to)                                     [1]
- !   A'(t)=-c Eo ( a'(t) theta(t-to)+ a(0) delta(t-to))                  [2]
- !   A"(t)=-c Eo ( a"(t) theta(t-to)+ a'(0) delta(t-to) - a"(0) sign(t)) [3]
- !
- ! the function a(t) and theta(t) are defined in mod_fields.
- !
- ! Using [1-3] yambo :
- !
- ! a. calculates the analytical form of A/A'/A" in RT_Ext_fields 
- ! b. uses A" (the ext current/polarization) to evolve the Maxwell equations when
- !    the induced current is included in the dynamics ( RT_propagate_fields )
- ! 
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT
  use electrons,      ONLY:levels,nel
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:global_gauge
  use parallel_m,     ONLY:PAR_G_k_range
- use real_time,      ONLY:RT_ind_J_prev,RT_ind_J,RT_P_prev,RT_P,RT_dyn_step,   &
-&                         l_RT_induced_field,Integrator_step,Integrator_nsteps,&
-&                         RT_bands
+ use real_time,      ONLY:RT_ind_J_prev,RT_ind_J,RT_P_prev,RT_P,&
+&                         l_RT_induced_field,RT_bands
  use fields,         ONLY:gauge_field,A_ind,A_ext,A_vecpot_reset,compute_intensity,compute_envelop
  !
  implicit none
@@ -53,13 +39,13 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
  !----------------------------------------
  !
  if (l_RT_induced_field) then
-   call RT_Ext_fields_sum(A_ext,T)
+   call RT_Ext_fields(A_ext,T,-1)
    A_ind_old%vecpot    =A_old%vecpot    -A_ext%vecpot
    A_ind_old%vecpot_vel=A_old%vecpot_vel-A_ext%vecpot_vel
    A_ind_old%vecpot_acc=A_old%vecpot_acc-A_ext%vecpot_acc
  endif
  !
- call RT_Ext_fields_sum(A_ext,T+T_step)
+ call RT_Ext_fields(A_ext,T+T_step,-1)
  !
  ! (See also by Yaban and co. PRB 2012)
  ! The approach which          includes the induced field is also called longitudinal gauge.
@@ -108,7 +94,6 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
    !
    !  Induced field E(t) from P(t)
    !
-   !
    ! Integrate the eq. for the vector potential
    !
    ! d A_ind / d t = 4 pi * c * P(t)
@@ -154,10 +139,10 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
  ! I(t) = \frac{c}{8\pi} E^2(t) and E(t)=A_vel(t)/c
  ! F(t) = \int I(t) dt
  !
- if(Integrator_step==Integrator_nsteps) then
-   if (l_RT_induced_field) A_ind%fluence=A_ind%fluence+A_ind%intensity*RT_dyn_step
-   A_ext%fluence=A_ext%fluence+A_ext%intensity*RT_dyn_step
-   A_new%fluence=A_new%fluence+A_new%intensity*RT_dyn_step
- endif
+ !if(Integrator_step==Integrator_nsteps) then
+ !  if (l_RT_induced_field) A_ind%fluence=A_ind%fluence+A_ind%intensity*RT_dyn_step
+ !  A_ext%fluence=A_ext%fluence+A_ext%intensity*RT_dyn_step
+ !  A_new%fluence=A_new%fluence+A_new%intensity*RT_dyn_step
+ !endif
  !
 end subroutine RT_propagate_fields

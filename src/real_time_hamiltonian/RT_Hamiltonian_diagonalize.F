@@ -28,7 +28,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
  use parallel_int,   ONLY:PP_redux_wait
  use real_time,      ONLY:RT_levels,Ho_plus_Sigma,RTibz,RT_bands,&
 &                         l_RT_uses_E_FineGd,l_RT_update_Energies,l_RT_rotate_DM,&
-&                         RT_nbands,l_NE_with_fields,H_EQ,l_RT_RWA
+&                         RT_nbands,l_NE_with_fields,H_EQ
  use RT_lifetimes,   ONLY:l_RT_eval_lifetimes
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:gauge_field
@@ -74,7 +74,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
    !
    H(:,:)=Ho_plus_Sigma(:,:,ik_RT,1)
    !
-   if (l_RT_RWA) H=H+H_EQ(:,:,ik_RT,1)
+   H=H+H_EQ(:,:,ik_RT,1)
    !
    if (l_NE_with_fields) then
      !

@@ -17,7 +17,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  use RT_control,     ONLY:Gless_RT_IO_t,NE_i_start_time,RT_do_IO
  use real_time,      ONLY:dG_lesser,G_MEM_steps,RT_bands,RT_nbands,RT_nk,l_RT_rotate_DM,&
 &                         NE_i_time,RT_dyn_step,RT_step,i_MEM_now,i_MEM_prev,i_MEM_old, &
-&                         H_EQ,l_RT_RWA,RTibz,Ho_plus_sigma
+&                         H_EQ,RTibz,Ho_plus_sigma
  use netcdf,         ONLY:NF90_UNLIMITED
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_G_k_range
@@ -135,8 +135,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
    if(write_is_on(ID)) then
      do ikibz=PAR_G_k_range_ibz(1),PAR_G_k_range_ibz(2)
        ik=RTibz%k_range(ikibz,1)
-       if(     l_RT_RWA) Delta_Sigma(:,:,ikibz,1:1)=Ho_plus_sigma(:,:,ik,1:1)
-       if(.not.l_RT_RWA) Delta_Sigma(:,:,ikibz,1:1)=Ho_plus_sigma(:,:,ik,1:1)-H_EQ(:,:,ik,1:1)
+       Delta_Sigma(:,:,ikibz,1:1)=Ho_plus_sigma(:,:,ik,1:1)
      enddo
    endif
 #if defined _PAR_IO

@@ -11,7 +11,7 @@ module RT_operations
  use RT_occupations, ONLY:RT_el_occ,RT_ho_occ
  use RT_lifetimes,   ONLY:RT_lifetime,RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_EP_abs_life,&
 &                         RT_EP_emit_REF_life,RT_EE_REF_life,RT_EH_REF_life,RT_EP_abs_REF_life
- use real_time,      ONLY:G_lesser_reference,integrator_step,RT_bands,RT_t
+ use real_time,      ONLY:G_lesser_reference,RT_bands,RT_t
  !
  implicit none
  !
@@ -151,10 +151,6 @@ module RT_operations
      if (LIFE%kind=="el-ph_emit".and.RT_EP_abs_life%active) then
        EMIT_RT_life_one_KIND=EMIT_RT_life_one_KIND+RT_EP_abs_life%abs(i1,i2)+RT_EP_abs_REF_life%abs(i1,i2)
      endif
-   end function
-   !
-   logical function FIRST_step( )
-     FIRST_step=integrator_step==1
    end function
    !
    subroutine ADD_to_saved_values(VAL,ARRAY,STEPS)

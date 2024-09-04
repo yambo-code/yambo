@@ -17,7 +17,7 @@ do
 done
 #
 llocal="-lqe_pseudo -lmath77 -lslatec -llocal"
-lPLA="\$(lscalapack) \$(lblacs) \$(llapack) \$(lblas)"
+lPLA="\$(lydiago) \$(lscalapack) \$(lblacs) \$(llapack) \$(lblas)"
 lSL="\$(lslepc) \$(lpetsc)"
 lIO="\$(liotk) \$(letsf) \$(lnetcdff) \$(lnetcdf) \$(lhdf5)"
 lextlibs="\$(llibxc) \$(lfft) \$(lfutile) \$(lyaml)"

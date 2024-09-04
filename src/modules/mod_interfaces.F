@@ -104,6 +104,31 @@ module interfaces
      !
    end subroutine
    !
+  subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
+    & neigs_this_cpu, neig_shift, neigs_range, eigvals_range, &
+    & BS_VL, BS_overlap, solver_type, elpasolver)
+    use pars,           ONLY:cI,cONE, SP
+    use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling,&
+&                        BS_res_ares_n_mat,l_BS_ares_from_res
+    use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width
+    use cuda_m,         ONLY:have_cuda
+    use parallel_m,     ONLY:MPI_COMM_WORLD
+    use openmp,         ONLY:n_threads_K
+    use YDIAGO_interface
+    implicit none
+    integer, intent(in)      :: i_BS_mat
+    complex(SP), allocatable :: BS_energies(:)
+    complex(SP), allocatable, target :: BS_VR(:,:) 
+    integer, intent(out)     :: neigs_this_cpu  
+    integer, intent(out)     :: neig_shift
+    integer, optional, target          :: neigs_range(2)
+    real(SP), optional, target         :: eigvals_range(2)
+    complex(SP), allocatable, optional, target :: BS_VL(:,:) 
+    character, optional                :: solver_type
+    integer,  optional                 :: elpasolver
+    complex(SP),pointer,optional       :: BS_overlap(:,:)
+  end subroutine K_diagonalize
+
    subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
@@ -245,6 +270,50 @@ module interfaces
      complex(SP),optional,intent(in)  :: BS_overlap(BSS_n_eig,BSS_n_eig)
    end subroutine K_diago_left_residuals
    !
+   subroutine K_diago_residuals(mode, i_BS_mat, BS_E, BS_R_right, BS_VR, &
+    &                  neigs_this_cpu, neig_shift, BS_R_left, BS_VL, BS_Overlap)
+     ! For distributed eigenvectors
+     use pars,           ONLY:SP,cZERO
+     use wrapper_omp,    ONLY:Vstar_dot_V_omp,V_dot_V_omp
+     use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
+     use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
+     use LIVE_t,         ONLY:live_timing
+     use X_m,            ONLY:global_gauge
+     use BS_solvers,     ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f
+     use BS,             ONLY:BS_K_coupling,BS_K_dim,BS_H_dim
+     use MAGNONS,        ONLY:BSS_dipoles_magn
+     use DICHROISM,      ONLY:BSS_dipoles_dich
+     !
+     implicit none
+     !
+     character(*),intent(in)  :: mode
+     integer,intent(in)       :: i_BS_mat, neigs_this_cpu, neig_shift
+     complex(SP), allocatable :: BS_E(:) ! Full set of eigvals are required
+     complex(SP), pointer     :: BS_R_right(:)
+     complex(SP), target,allocatable     :: BS_VR(:,:)
+     complex(SP), pointer     :: BS_R_left(:)
+     complex(SP), target, allocatable     :: BS_VL(:,:)
+     complex(SP), pointer     :: BS_Overlap(:,:)
+   end subroutine K_diago_residuals
+!
+   subroutine K_perturbative_residuals(pert_dim, what, i_BS_mat, &
+    &           BS_corrections, BS_VR, neigs_this_cpu, neig_shift, BS_VL, BS_Overlap) 
+     use pars,           ONLY:SP,cZERO
+     use wrapper_omp,    ONLY:V_dot_V_omp
+     use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
+     use LIVE_t,         ONLY:live_timing
+     use BS_solvers,     ONLY:BSS_eh_E_SOC_corr,BSS_eh_W,BSS_eh_E,BSS_n_eig
+ 	  use BS,             ONLY:BS_K_coupling,BS_K_dim,BS_H_dim
+     implicit none
+     integer,     intent(in)                   :: pert_dim
+     character(3),intent(in)                   :: what
+     complex(SP),allocatable                   :: BS_corrections(:,:)
+     integer,intent(in)                        :: i_BS_mat, neigs_this_cpu, neig_shift
+     complex(SP), target,allocatable           :: BS_VR(:,:)
+     complex(SP), target, allocatable          :: BS_VL(:,:)
+     complex(SP), pointer                      :: BS_Overlap(:,:)
+   end subroutine K_perturbative_residuals
+!
    subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap) 
      use pars,           ONLY:SP
      use BS,             ONLY:BS_H_dim
@@ -358,3 +427,4 @@ module interfaces
  end interface
  !
 end module interfaces
+

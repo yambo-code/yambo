@@ -155,7 +155,8 @@ module BS_solvers
    end function
    !
    integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,BsRr,BsE_corr,&
-   &                                    bsL_magn,bsR_magn,bsL_kerr,bsR_kerr,bsR_dich,bsR_pl)
+   &                        bsL_magn,bsR_magn,bsL_kerr,bsR_kerr,bsR_dich,bsR_pl,&
+   &                        write_ev)
      use pars,          ONLY:SP
      use X_m,           ONLY:X_t
      implicit none
@@ -164,7 +165,25 @@ module BS_solvers
      complex(SP)        ,optional :: bsE(:)
      real(SP),   pointer,optional :: BsE_corr(:,:),bsR_pl(:,:)
      complex(SP),pointer,optional :: bsL_kerr(:),bsR_kerr(:),bsR_dich(:,:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
+     logical, optional            :: write_ev
    end function
+
+   subroutine write_bs_ev_par(iq, i_BS_mat, BS_VR, BS_VL)
+  !
+  use pars,           ONLY:SP,schlen
+  use BS,             ONLY:BS_K_dim, BS_H_dim,BS_K_coupling,BS_res_ares_n_mat
+  use parallel_m,     ONLY:par_distribute_set
+  use IO_m,           ONLY:REP,OP_APP_CL,YAMBO_DEF_CHUNK
+  use stderr,         ONLY:intc
+  use timing_m,      ONLY:timing
+  use IO_int,        ONLY:io_connect,io_disconnect,def_variable_bulk,&
+&                        io_variable_bulk,io_control
+  !
+  implicit none
+  !
+  integer, intent(in)      :: i_BS_mat, iq
+  complex(SP),allocatable, target, optional ::BS_VR(:,:),BS_VL(:,:)
+  end subroutine write_bs_ev_par
    !
    integer function io_BSS_Haydock(ID,iq,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp1)
      use pars,          ONLY:SP

@@ -60,6 +60,7 @@ include/system/*
 lib/install/make_iotk.inc
 lib/iotk/make.sys
 lib/iotk/make_iotk.inc
+lib/ydiago/make_ydiago.inc
 lib/yambo
 lib/*/*stamp
 lib/*/package-installed
@@ -78,6 +79,7 @@ lib/*/petsc-*
 lib/*/slepc-*
 lib/*/futile*
 lib/*/yaml*
+lib/*/Ydiago*
 lib/hdf5/hdf5*
 lib/external/*
 compile.sh

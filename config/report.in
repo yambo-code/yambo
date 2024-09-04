@@ -64,7 +64,8 @@
 # > OTHERs
 #
 # [@Ydriver_check@] Ydriver   : @Ydriver_LIB@
-#
+# [@ydiago_check@] Ydiago    : @YDIAGO_LIBS_R@
+#                 @YDIAGO_INCS_R@
 # [@LIBXC_check@] LibXC     : @LIBXC_LIBS_R@
 #                 @LIBXC_INCS_R@
 # [@MPI_check@] MPI       : @MPI_LIBS@ @MPI_info@

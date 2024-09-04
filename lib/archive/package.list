@@ -1,7 +1,7 @@
 #
 # Libs list
 #
-EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff etsf_io libxc lapack blacs scalapack petsc slepc fftw fftqe Ydriver ydiago
+EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff etsf_io libxc lapack blacs scalapack elpa petsc slepc fftw fftqe Ydriver ydiago
 #
 # storing options
 #
@@ -15,6 +15,7 @@ keep_libxc=no
 keep_lapack=no
 keep_blacs=no
 keep_scalapack=no
+keep_elpa=no
 keep_petsc=no
 keep_slepc=no
 keep_fftw=no
@@ -36,6 +37,7 @@ version_libxc=5.2.3
 version_lapack=3.12.0
 version_blacs=missing
 version_scalapack=2.2.1
+version_elpa=release_2024_05_001
 version_slepc=3.20.2
 version_petsc=3.20.5
 version_fftw=3.3.10
@@ -56,6 +58,7 @@ pkgname_libxc=libxc-$(version_libxc)
 pkgname_lapack=lapack-$(version_lapack)
 pkgname_blacs=blacs
 pkgname_scalapack=scalapack-$(version_scalapack)
+pkgname_elpa=elpa-$(version_elpa)
 pkgname_slepc=slepc-$(version_slepc)
 pkgname_petsc=petsc-$(version_petsc)
 pkgname_fftw=fftw-$(version_fftw)
@@ -75,6 +78,7 @@ tarball_etsf_io=$(pkgname_etsf_io).tar.gz
 tarball_libxc=$(pkgname_libxc).tar.gz
 tarball_lapack=v$(version_lapack).tar.gz
 tarball_scalapack=v$(version_scalapack).tar.gz
+tarball_elpa=$(pkdname_elpa).tar.gz
 tarball_blacs=$(pkgname_blacs).tar.gz
 tarball_slepc=slepc-v$(version_slepc).tar.gz
 tarball_petsc=petsc-v$(version_petsc).tar.gz
@@ -98,6 +102,7 @@ url_netcdff=https://github.com/Unidata/netcdf-fortran/archive/refs/tags/$(tarbal
 url_slepc=https://gitlab.com/slepc/slepc/-/archive/v$(version_slepc)/$(tarball_slepc)
 url_petsc=https://gitlab.com/petsc/petsc/-/archive/v$(version_petsc)/$(tarball_petsc)
 url_libxc=https://gitlab.com/libxc/libxc/-/archive/$(version_libxc)/$(tarball_libxc)  # this requires to run "autoreconf -i" (coded)
+url_elpa=https://gitlab.mpcdf.mpg.de/elpa/elpa/-/archive/$(version_elpa)/$(tarball_elpa)
 #
 # External URL's More
 #

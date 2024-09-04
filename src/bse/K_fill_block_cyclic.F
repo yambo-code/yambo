@@ -19,7 +19,7 @@ subroutine K_fill_block_cyclic(i_BS_mat, diago_mat)
   use cuda_m,         ONLY:have_cuda
   !
   !use, intrinsic :: iso_c_binding, only: c_ptr
-  use YDIAGO_interface
+  use ydiago_interface
   !
   implicit none
   !

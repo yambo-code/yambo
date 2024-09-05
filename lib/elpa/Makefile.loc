@@ -20,7 +20,8 @@ include ../config/external_libs_defs.mk
 #
 CONFFLAGS=--prefix=$(LIBPATH) \
           --disable-sse-kernels --disable-avx-kernels --disable-avx2-kernels --disable-avx512-kernels \
-          CPP="$(cpp)" CPPFLAGS="$(cppflags)" \
+	  --disable-shared --disable-cpp-tests \
+          CPP="$(cpp)" CPPFLAGS="$(cppflags) ${impi}" \
           CC="$(cc)" \
 	  CFLAGS="$(cflags)" \
 	  FC="$(fc)" \
@@ -41,6 +42,19 @@ compile: uncompress configure
 
 install: uncompress configure compile
 	@$(call install_via_make,elpa)
+
+# 	@if test -d $(LIBPATH)/include/$(PACKAGE) ; then \
+#	  cd $(LIBPATH)/include ; ln -s elpa*/modules/*.mod ./ \
+#	fi
+
+#	@if ! test -e installed.stamp ; then \
+#         echo "\t[$(PACKAGE)] installation"; \
+#         cd $(PACKAGE); cp *.a $(LIBPATH)/lib ; \
+#	 chmod u+x $(LIBPATH)/lib/libelpa*.a ; \
+#	 cp modules/*.mod $(LIBPATH)/include ; \
+#	 touch ../installed.stamp; \
+#	fi
+
 
 $(LIBRARY): uncompress configure compile install
 #

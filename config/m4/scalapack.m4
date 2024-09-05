@@ -176,13 +176,13 @@ if test "$mpibuild"  = "yes"; then
     fi
   fi
   #
-  if test x"$enable_par_linalg" = "xelpa"; then
-    if test x"$enable_int_linalg" = "xelpa"; then
-      enable_elpa="internal";
-    else
-      if test "$enable_elpa" = "no"; then enable_elpa="internal"; fi
-    fi
-  fi
+  #if test x"$enable_par_linalg" = "xyes"; then
+  #  if test x"$enable_int_linalg" = "xyes"; then
+  #    enable_elpa="internal";
+  #  else
+  #    if test "$enable_elpa" = "no"; then enable_elpa="internal"; fi
+  #  fi
+  #fi
   #
   if test "$mpif_found" = "yes" && test "$enable_blacs" = "internal"; then
     enable_blacs="yes"

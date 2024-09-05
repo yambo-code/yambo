@@ -27,6 +27,7 @@ CONFFLAGS=--prefix=$(LIBPATH) \
 	  FC="$(fc)" \
 	  FCFLAGS="$(fcflags)" \
 	  LDFLAGS="-L$(LIBPATH)/lib"
+
 #
 all: $(LIBRARY)
 #

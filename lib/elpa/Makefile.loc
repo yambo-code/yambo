@@ -21,12 +21,13 @@ include ../config/external_libs_defs.mk
 CONFFLAGS=--prefix=$(LIBPATH) \
           --disable-avx512-kernels --disable-shared \
 	  --disable-c-tests --disable-cpp-tests --disable-fortran-tests \
-          CPP="$(cpp)" CPPFLAGS="$(cppflags) ${impi}" \
-          CC="$(cc)" \
+	  CPP="$(cpp)" CPPFLAGS="$(cppflags) ${impi}" \
+	  CC="$(cc)" \
 	  CFLAGS="$(cflags)" \
 	  FC="$(fc)" \
 	  FCFLAGS="$(fcflags)" \
 	  LDFLAGS="-L$(LIBPATH)/lib"
+
 #
 all: $(LIBRARY)
 #

@@ -26,7 +26,8 @@ subroutine K_diago_driver(iq,W,X_static)
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
 &                         BS_res_ares_n_mat,l_BS_ares_from_res !,BS_Blocks_symmetrize_K,&
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode, BSS_resize, &
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E, write_bs_ev_par
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E, write_bs_ev_par, &
+&                         BSS_ydiago_solver
  use X_m,            ONLY:X_t,X_OUTPUT_driver
  use electrons,      ONLY:n_sp_pol,n_spinor
  use frequency,      ONLY:w_samp
@@ -48,7 +49,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use slepcepsdef
  use petscmatdef
  !
- use BS_solvers,     ONLY:BSS_ydiago_solver,BSS_slepc_matrix_format,Slepc_v,BS_HAYVEC_free
+ use BS_solvers,     ONLY:BSS_slepc_matrix_format,Slepc_v,BS_HAYVEC_free
 #endif
  use BS,             ONLY:l_BS_abs,l_BS_kerr,l_BS_kerr_asymm,l_BS_magnons,l_BS_photolum,l_BS_dichroism
  use MAGNONS,        ONLY:BSS_MAGN_free

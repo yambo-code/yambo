@@ -166,8 +166,8 @@ if test "$mpibuild"  = "yes"; then
     fi
   fi
   #
-  if ! test x"$enable_par_linalg" = "xno"; then
-    if ! test  x"$enable_int_linalg" = "xno"; then
+  if test x"$enable_par_linalg" = "xyes"; then
+    if test x"$enable_int_linalg" = "xyes"; then
       enable_blacs="internal";
       enable_scalapack="internal";
     else

@@ -19,8 +19,8 @@ include ../config/external_libs_defs.mk
 # Configure flags
 #
 CONFFLAGS=--prefix=$(LIBPATH) \
-          --disable-sse-kernels --disable-avx-kernels --disable-avx2-kernels --disable-avx512-kernels \
-	  --disable-shared --disable-cpp-tests \
+          --disable-avx512-kernels --disable-shared \
+	  --disable-c-tests --disable-cpp-tests --disable-fortran-tests \
           CPP="$(cpp)" CPPFLAGS="$(cppflags) ${impi}" \
           CC="$(cc)" \
 	  CFLAGS="$(cflags)" \

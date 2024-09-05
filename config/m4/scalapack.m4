@@ -210,7 +210,7 @@ if test "$mpibuild"  = "yes"; then
     enable_elpa="yes"
     internal_elpa="yes"
     ELPA_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libelpa.a"
-    ELPA_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/inclde/"
+    ELPA_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include/"
     if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libelpa.a"; then
       compile_elpa="no"
     else

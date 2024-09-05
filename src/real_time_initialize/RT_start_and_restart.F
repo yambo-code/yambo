@@ -19,7 +19,7 @@ subroutine RT_start_and_restart(E,k,q)
  ! [5] Initialize the fields
  ! [6] (Eventually) load the retarded Green Functions
  !
- use pars,           ONLY:SP,cZERO,rZERO
+ use pars,           ONLY:SP,cZERO,rZERO,cI
  use units,          ONLY:HA2EV,AUT2FS
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use com,            ONLY:msg
@@ -29,13 +29,10 @@ subroutine RT_start_and_restart(E,k,q)
  use RT_control,     ONLY:NE_i_start_time,CARR_RT_IO_t,OBS_RT_IO_t,Gless_RESTART_RT_IO_t,OUTPUT_RT_IO_t,&
 &                         CACHE_OBS_INTERVAL_time,RT_control_free,RT_control_alloc,RT_DB_name,RT_DB_ID,N_RT_databases,&
 &                         RT_return_db_ID
- use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,H_EQ,H_RF,&
-&                         G_lesser_reference,rho_reference,magn_reference,  &
-&                         l_NE_with_fields,XC0,HARTREE0,NE_time,RT_levels,&
-&                         RT_P,RT_step,dG_lesser,NE_i_time,RT_dyn_step,&
-&                         Gr_kind,l_RT_is_WFfree,RT_TIME_status,RTibz,&
-&                         RT_nk,G_lesser,RT_eh_en,G_MEM_steps,RT_bands,&
-&                         NE_time_step_update_jump,l_velocity_gauge_corr
+ use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,H_EQ,H_RF,G_lesser_reference,rho_reference,magn_reference,  &
+&                         l_NE_with_fields,XC0,HARTREE0,NE_time,RT_levels,RT_P,RT_step,dG_lesser,NE_i_time,RT_dyn_step,&
+&                         Gr_kind,l_RT_is_WFfree,RT_TIME_status,RTibz,RT_nk,G_lesser,RT_eh_en,G_MEM_steps,RT_bands,&
+&                         NE_time_step_update_jump,l_velocity_gauge_corr,RT_Deph_Matrix,RT_is_statically_dephased
  use RT_lifetimes,   ONLY:RT_life_extrap_times,l_RT_iterative_ELPH_lifetimes
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc,E_reference
@@ -93,6 +90,11 @@ subroutine RT_start_and_restart(E,k,q)
      do ib=RT_bands(1),RT_bands(2)
        do ibp=RT_bands(1),RT_bands(2)
          H_RF(ib,ibp,ik_RT,1)=H_EQ(ib,ib,ik_RT,1)-H_EQ(ibp,ibp,ik_RT,1)
+         !
+         if (RT_is_statically_dephased) then
+           H_RF(ib,ibp,ik_RT,1)= H_RF(ib,ibp,ik_RT,1)-cI*RT_Deph_Matrix(ib,ibp,RTibz%k_map(ik_RT))
+         endif
+         !
        enddo
      enddo
      !

@@ -44,7 +44,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,REF_V_xc_sc, &
 &                         rho_reference,magn_reference,RT_Vnl_xc,     &
 &                         eval_HARTREE,eval_DFT,RTibz,RT_potential,   &
-&                         RT_bands,RT_nbands,H_EQ,    &
+&                         RT_bands,RT_nbands,                    &
 &                         l_update_SOC,l_velocity_gauge_corr
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
@@ -203,9 +203,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    call timing('RT Apply Field',OPR='stop')
    !
  endif
- ! The KS Hamiltonian
- !====================
- Ho_plus_Sigma=Ho_plus_Sigma+H_EQ
  !
  ! Pseudo potential terms needed for velocity gauge
  !==================================================

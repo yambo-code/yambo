@@ -7,7 +7,6 @@
  RT_RESTART_database_copy.o
  RT_Rabi_frequency.o
  RT_Rabi_frequency_ALL_and_print.o
- RT_alloc.o
  RT_apply.o
  RT_average_operator.o
  RT_carriers_number.o
@@ -18,7 +17,6 @@
  RT_do_it.o
  RT_energy_components.o
  RT_entropy.o
- RT_free.o
  RT_interpolation_doit_and_transfer.o
  RT_interpolation_driver.o
  RT_k_grid.o

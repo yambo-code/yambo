@@ -146,7 +146,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
    call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
    call PARALLEL_WF_index( )
    !
-   if(n_spinor==2.and.l_update_SOC) call WF_derivative(RT_bands,(/1,k%nibz/),(/1,n_sp_pol/),(/.true.,.true.,.true./),.true.)
+   if (n_spinor==2.and.l_update_SOC) call WF_derivative(RT_bands,(/1,k%nibz/),(/1,n_sp_pol/),(/.true.,.true.,.true./),.true.)
    !
    call WF_load(WF,WF_G_max,WF_Go_indx,RT_bands,(/1,k%nibz/),space='R',title='-RT',keep_states_to_load=.true.)
    !

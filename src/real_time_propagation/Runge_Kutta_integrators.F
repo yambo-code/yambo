@@ -71,18 +71,18 @@ subroutine Runge_Kutta_integrators(PRINT_me)
  RK_integrators(5)%a(2,1)=1._SP/3._SP
  RK_integrators(5)%a(3,:)=(/0._SP,2._SP/3._SP,0._SP/)
  !
- call RK_integrator_alloc(RK_integrators(6),4,"RK41","Runge-Kutta RK41")
- RK_integrators(6)%b=(/1._SP/6._SP,1._SP/3._SP,1._SP/3._SP,1_SP/6._SP/)
- RK_integrators(6)%c=(/0._SP,1._SP/2._SP,1._SP/2._SP,1._SP/)
- RK_integrators(6)%a(2,1) =  1._SP/2._SP
+ call RK_integrator_alloc(RK_integrators(6),4,"RK42","Runge-Kutta RK42")
+ RK_integrators(6)%b=(/1._SP/6._SP,0._SP,2._SP/3._SP,1_SP/6._SP/)
+ RK_integrators(6)%c=(/0._SP,1._SP/4._SP,1._SP/2._SP,1._SP/)
+ RK_integrators(6)%a(2,1) =  1._SP/4._SP
  RK_integrators(6)%a(3,:2)=(/0._SP,1._SP/2._SP/)
- RK_integrators(6)%a(4,:3)=(/0._SP,0._SP,1._SP/)
+ RK_integrators(6)%a(4,:3)=(/1._SP,-2._SP,2._SP/)
  !
- call RK_integrator_alloc(RK_integrators(7),4,"RK42","Runge-Kutta RK42")
- RK_integrators(7)%b=(/1._SP/6._SP,0._SP,2._SP/3._SP,1_SP/6._SP/)
- RK_integrators(7)%c=(/0._SP,1._SP/4._SP,1._SP/2._SP,1._SP/)
- RK_integrators(7)%a(2,1) =  1._SP/4._SP
+ call RK_integrator_alloc(RK_integrators(7),4,"RK41","Runge-Kutta RK41")
+ RK_integrators(7)%b=(/1._SP/6._SP,1._SP/3._SP,1._SP/3._SP,1_SP/6._SP/)
+ RK_integrators(7)%c=(/0._SP,1._SP/2._SP,1._SP/2._SP,1._SP/)
+ RK_integrators(7)%a(2,1) =  1._SP/2._SP
  RK_integrators(7)%a(3,:2)=(/0._SP,1._SP/2._SP/)
- RK_integrators(7)%a(4,:3)=(/1._SP,-2._SP,2._SP/)
+ RK_integrators(7)%a(4,:3)=(/0._SP,0._SP,1._SP/)
  !
 end subroutine Runge_Kutta_integrators

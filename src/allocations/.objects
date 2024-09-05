@@ -1,4 +1,7 @@
+#if defined _RT
+RT_objs = RT_alloc.o RT_free.o
+#endif
 #if defined _ELPH
 ELPH_objs = ELPH_alloc.o
 #endif
-objs = $(ELPH_objs) X_ALLOC_parallel.o X_ALLOC_global.o X_ALLOC_elemental.o
+objs = $(ELPH_objs) $(RT_objs) X_ALLOC_parallel.o X_ALLOC_global.o X_ALLOC_elemental.o

@@ -1,4 +1,3 @@
- ELPH_alloc.o
  RT_alloc.o
  RT_free.o
 

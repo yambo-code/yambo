@@ -3,4 +3,5 @@
  RT_INV_step_accurate.o
  RT_INV_step_diago.o
  RT_INV_step_std.o
+ RT_slow_dynamics_driver.o
 

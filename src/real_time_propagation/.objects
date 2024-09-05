@@ -6,7 +6,7 @@ PHEL_objects = RT_PHEL_Scattering_step.o
 #endif 
 RUNGE_KUTTA_objects = Runge_Kutta_integrators.o Runge_Kutta_initialize.o Runge_Kutta_driver.o Runge_Kutta_kernel.o
 #if defined _RT 
-objs = RT_Scattering_step.o RT_rotating_frame.o RT_propagate_fields.o RT_Ext_fields.o RT_occupations_eval.o \
+objs = RT_Scattering_step.o RT_propagate_fields.o RT_Ext_fields.o RT_occupations_eval.o \
        $(RUNGE_KUTTA_objects) \
        RT_MEMORY_index.o RT_time_step_update.o RT_IO_type_time_steps.o $(PHEL_objects)
 #endif

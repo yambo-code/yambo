@@ -68,7 +68,6 @@ subroutine RT_initialize(E,k,q)
  !
  ! Logicals
  !==========
- !
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('VelGaugeNoDiam',       l_velocity_gauge_tmp)
  l_velocity_gauge_diam=.not.l_velocity_gauge_tmp

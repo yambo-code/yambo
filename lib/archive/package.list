@@ -37,7 +37,8 @@ version_libxc=5.2.3
 version_lapack=3.12.0
 version_blacs=missing
 version_scalapack=2.2.1
-version_elpa=release_2024_05_001
+#version_elpa=release_2024_05_001   # This was neeeded for gitlab
+version_elpa=2024.05.001
 version_slepc=3.20.2
 version_petsc=3.20.5
 version_fftw=3.3.10
@@ -78,7 +79,7 @@ tarball_etsf_io=$(pkgname_etsf_io).tar.gz
 tarball_libxc=$(pkgname_libxc).tar.gz
 tarball_lapack=v$(version_lapack).tar.gz
 tarball_scalapack=v$(version_scalapack).tar.gz
-tarball_elpa=$(pkdname_elpa).tar.gz
+tarball_elpa=$(pkgname_elpa).tar.gz
 tarball_blacs=$(pkgname_blacs).tar.gz
 tarball_slepc=slepc-v$(version_slepc).tar.gz
 tarball_petsc=petsc-v$(version_petsc).tar.gz
@@ -102,7 +103,8 @@ url_netcdff=https://github.com/Unidata/netcdf-fortran/archive/refs/tags/$(tarbal
 url_slepc=https://gitlab.com/slepc/slepc/-/archive/v$(version_slepc)/$(tarball_slepc)
 url_petsc=https://gitlab.com/petsc/petsc/-/archive/v$(version_petsc)/$(tarball_petsc)
 url_libxc=https://gitlab.com/libxc/libxc/-/archive/$(version_libxc)/$(tarball_libxc)  # this requires to run "autoreconf -i" (coded)
-url_elpa=https://gitlab.mpcdf.mpg.de/elpa/elpa/-/archive/$(version_elpa)/$(tarball_elpa)
+#url_elpa=https://gitlab.mpcdf.mpg.de/elpa/elpa/-/archive/$(version_elpa)/$(tarball_elpa) # this would require autoconf
+url_elpa=https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/$(version_elpa)/$(tarball_elpa)
 #
 # External URL's More
 #

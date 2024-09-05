@@ -1,0 +1,69 @@
+#
+#===============================
+# Yambo package
+#===============================
+#
+include ../../config/setup
+include ../archive/package.list
+
+LIBNAME=libelpa.a
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
+PACKAGE=$(pkgname_elpa)
+TARBALL=$(tarball_elpa)
+#
+include ../config/external_libs_commons.mk
+include ../config/external_libs_defs.mk
+#
+# Configure flags
+#
+CONFFLAGS=--prefix=$(LIBPATH) \
+          --disable-sse-kernels --disable-avx-kernels --disable-avx2-kernels --disable-avx512-kernels \
+	  --disable-shared --disable-cpp-tests \
+          CPP="$(cpp)" CPPFLAGS="$(cppflags) ${impi}" \
+          CC="$(cc)" \
+	  CFLAGS="$(cflags)" \
+	  FC="$(fc)" \
+	  FCFLAGS="$(fcflags)" \
+	  LDFLAGS="-L$(LIBPATH)/lib"
+#
+all: $(LIBRARY)
+#
+uncompress:
+	@$(get_the_lib)
+	@$(uncompress)
+
+configure: uncompress
+	@$(configure)
+
+compile: uncompress configure
+	@$(call compile)
+
+makeinstall: uncompress configure compile
+	@$(call install_via_make,elpa)
+
+install: makeinstall
+	@if test -d $(LIBPATH)/include/$(PACKAGE) ; then \
+	  cd $(LIBPATH)/include ; ln -s $(PACKAGE)/* ./ ; \
+	fi
+
+#	@if ! test -e installed.stamp ; then \
+#         echo "\t[$(PACKAGE)] installation"; \
+#         cd $(PACKAGE); cp *.a $(LIBPATH)/lib ; \
+#	 chmod u+x $(LIBPATH)/lib/libelpa*.a ; \
+#	 cp modules/*.mod $(LIBPATH)/include ; \
+#	 touch ../installed.stamp; \
+#	fi
+
+
+$(LIBRARY): uncompress configure compile install
+#
+# cleaning
+#
+clean:
+	@$(call clean_the_lib,clean)
+
+clean_all: clean
+	@$(rm_the_lib)
+#

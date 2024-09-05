@@ -48,7 +48,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use slepcepsdef
  use petscmatdef
  !
- use BS_solvers,     ONLY:BSS_slepc_matrix_format,Slepc_v,BS_HAYVEC_free
+ use BS_solvers,     ONLY:BSS_ydiago_solver,BSS_slepc_matrix_format,Slepc_v,BS_HAYVEC_free
 #endif
  use BS,             ONLY:l_BS_abs,l_BS_kerr,l_BS_kerr_asymm,l_BS_magnons,l_BS_photolum,l_BS_dichroism
  use MAGNONS,        ONLY:BSS_MAGN_free
@@ -66,7 +66,6 @@ subroutine K_diago_driver(iq,W,X_static)
  character(1)     :: sec
  character(10)    :: Solver
  ! Ydiago varibles
- character        :: ydiago_solver = 's' ! 'e' for elpa
  integer, target  :: neigs_range(2)   = 0      ! index range of eigenvalues to find
  real(SP), target :: eigvals_range(2) = 0.0_SP ! value range of eigenvales to find
  logical          :: l_eval_range ! This is true if eigvals_range is given instead of neigs_range
@@ -259,12 +258,12 @@ subroutine K_diago_driver(iq,W,X_static)
          ! Use index range
          call K_diagonalize(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
 &                         neigs_range=neigs_range, BS_VL=BS_V_left,BS_overlap=BS_overlap, &
-&                         solver_type=ydiago_solver, elpasolver=elpa_solver)
+&                         solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
        else
         ! use value range
         call K_diagonalize(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
 &                         eigvals_range=eigvals_range, BS_VL=BS_V_left,BS_overlap=BS_overlap, &
-&                         solver_type=ydiago_solver, elpasolver=elpa_solver)
+&                         solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
        endif
        ! NM : K_diagonalize will autamatically resizes variables
        ! The size can change in case range is requested !

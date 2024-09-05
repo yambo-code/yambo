@@ -18,6 +18,7 @@ p2ycpp      = @PW_CPP@
 keep_objs   = @enable_keep_objects@
 do_blacs    = @compile_blacs@
 do_slk      = @compile_slk@
+do_elpa     = @compile_elpa@
 do_lapack   = @compile_lapack@
 do_fftw     = @compile_fftw@
 do_fftqe    = @compile_fftqe@

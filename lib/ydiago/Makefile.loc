@@ -46,9 +46,11 @@ install: uncompress configure compile
 	 echo "cp ${compdir}/lib/ydiago/$(PACKAGE)/src/libdiago.a $(LIBPATH)/lib/libydiago.a" >> ${compdir}/log/install_$(PACKAGE).log ; \
 	 echo "cp ${compdir}/lib/ydiago/$(PACKAGE)/src/ydiago_interface.mod $(LIBPATH)/include/" >> ${compdir}/log/install_$(PACKAGE).log ; \
 	 echo "chmod +x $(LIBPATH)/lib/libydiago.a" >> ${compdir}/log/install_$(PACKAGE).log ; \
-	 cp ${compdir}/lib/ydiago/$(PACKAGE)/src/libdiago.a $(LIBPATH)/lib/libydiago.a ;\
-	 cp ${compdir}/lib/ydiago/$(PACKAGE)/src/ydiago_interface.mod $(LIBPATH)/include/ ;\
-	 chmod +x $(LIBPATH)/lib/libydiago.a ; \
+	 cp ${compdir}/lib/ydiago/$(PACKAGE)/src/libdiago.a ${compdir}/lib/libydiago.a ;\
+	 cp ${compdir}/lib/ydiago/$(PACKAGE)/src/ydiago_interface.mod ${compdir}/include/ ;\
+	 chmod +x ${compdir}/lib/libydiago.a ; \
+	 touch ${compdir}/config/stamps_and_lists/libydiago.a.stamp;\
+	 echo ydiago_interface >> ${compdir}/src/bse/modules.list;\
 	 touch installed.stamp;\
 	fi
 #

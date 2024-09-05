@@ -114,7 +114,7 @@ module interfaces
     use cuda_m,         ONLY:have_cuda
     use parallel_m,     ONLY:MPI_COMM_WORLD
     use openmp,         ONLY:n_threads_K
-    use YDIAGO_interface
+    use ydiago_interface
     implicit none
     integer, intent(in)      :: i_BS_mat
     complex(SP), allocatable :: BS_energies(:)

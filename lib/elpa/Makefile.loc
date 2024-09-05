@@ -17,13 +17,12 @@ include ../config/external_libs_commons.mk
 include ../config/external_libs_defs.mk
 #
 # Configure flags
-#          --disable-sse-kernels --disable-avx-kernels --disable-avx2-kernels --disable-avx512-kernels \
 #
 CONFFLAGS=--prefix=$(LIBPATH) \
-	  --disable-shared --disable-cpp-tests \
-          CPP="$(cpp)" CPPFLAGS="$(cppflags) ${impi}" \
-          CC="$(cc)" CXX=$(cc) \
-	  CFLAGS="$(cflags)" CXXFLAGS="$(cflags)" \
+	  --disable-sse-kernels --disable-avx-kernels --disable-avx2-kernels --disable-avx512-kernels \
+	  CPP="$(cpp)" CPPFLAGS="$(cppflags) ${impi}" \
+	  CC="$(cc)" \
+	  CFLAGS="$(cflags)" \
 	  FC="$(fc)" \
 	  FCFLAGS="$(fcflags)" \
 	  LDFLAGS="-L$(LIBPATH)/lib"

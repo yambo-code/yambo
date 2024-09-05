@@ -40,12 +40,13 @@ configure: uncompress
 compile: uncompress configure
 	@$(call compile)
 
-install: uncompress configure compile
+makeinstall: uncompress configure compile
 	@$(call install_via_make,elpa)
 
-# 	@if test -d $(LIBPATH)/include/$(PACKAGE) ; then \
-#	  cd $(LIBPATH)/include ; ln -s elpa*/modules/*.mod ./ \
-#	fi
+install: makeinstall
+	@if test -d $(LIBPATH)/include/$(PACKAGE) ; then \
+	  cd $(LIBPATH)/include ; ln -s $(PACKAGE)/* ./ ; \
+	fi
 
 #	@if ! test -e installed.stamp ; then \
 #         echo "\t[$(PACKAGE)] installation"; \

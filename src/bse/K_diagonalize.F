@@ -83,7 +83,7 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   ! Gpu support via ELPA.
   type(c_ptr)                             :: gpu_str = c_null_ptr
   character(kind=c_char, len=20), target  :: gpu_device_elpa
-  !// Accpeted values for gpu_device_elpa : "nvidia-gpu", "amd-gpu", "intel-gpu"
+  ! NM : gpu_device_elpa must be atleat 20 characters long 
 
   integer                            :: evec_fac = 1
   ! evec_fac = 2 if bse_solver function was used to diagonalize else 1
@@ -101,10 +101,11 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
 if (run_gpu) then
   ! Set the gpu flag
   call set_elpa_gpu_str(gpu_device_elpa)
-  if (gpu_device_elpa /= c_char_"not-supported"//c_null_char) then 
+  if (gpu_device_elpa(1:3) /= c_char_"not") then 
     gpu_str = c_loc(gpu_device_elpa)
   else 
     call msg("s", 'Warning : Ydiago not compiled with GPU. using CPU version')
+    gpu_str = c_null_ptr
   endif 
 endif
 

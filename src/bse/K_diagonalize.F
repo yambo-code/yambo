@@ -208,7 +208,7 @@ endif
 #if defined _ELPA
     if (solver_type_aux .eq. 'e') then
       !
-      if(present(neigs_range))  neig_found = abs(max(neigs_range))
+      if(present(neigs_range))  neig_found = abs(maxval(neigs_range))
       !
       error_diago = Heev_Elpa(diago_mat, c_loc(eig_vals), evecs, neig_found, elpa_solver_aux, gpu_str, &
         &           elpa_nthreads)

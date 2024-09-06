@@ -69,8 +69,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use RT_occupations,ONLY:RT_RTA_temp,RT_RTA_chem
  use RT_lifetimes,  ONLY:RT_life_extrap_times_INPUT
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
-&                        NE_tot_time,RT_bands,RT_deph_range,                     &
-&                        RT_eh_en,RT_scatt_tresh,Gr_kind, Integrator_slow_approx,     &
+&                        NE_tot_time,RT_bands,RT_eh_en,RT_scatt_tresh,Gr_kind, Integrator_slow_approx,     &
 &                        NE_MEM_treshold,NE_time_step_update_jump_INPUT,         &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
 &                        NE_initial_time_step_update,NE_step_update_treshold,    &
@@ -415,7 +414,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &         RAD_LifeTime,unit=Time_unit(1))
  call it(defs,'RADmagnific','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
  call it(defs,'PhLifeTime', '[RT] Constant Dephasing Time',Phase_LifeTime,unit=Time_unit(1))
- call it(defs,'DephTRange', '[RT] Time range in which Dephasing is applied',RT_deph_range,unit=Time_unit(1),Verb_level=V_real_time)
  call it(defs,'DephEThresh', '[RT] Threshold on the energy difference between two states to dephase them',&
          &   RT_deph_deg_thresh,unit=E_unit,Verb_level=V_real_time)
  !

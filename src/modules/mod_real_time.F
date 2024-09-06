@@ -169,7 +169,6 @@ module real_time
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------
- real(SP)                 :: RT_deph_range(2)
  real(SP),    allocatable :: RT_INPUT_Deph_limits(:,:)
  real(SP),    allocatable :: RT_Deph_Matrix(:,:,:)
  !

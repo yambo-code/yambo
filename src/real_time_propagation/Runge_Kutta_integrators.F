@@ -1,7 +1,7 @@
 !
 ! License-Identifier: GPL
 !
-! Copyright (C) 2017 The Yambo Team
+! Copyright (C) 2024 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
 !

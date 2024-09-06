@@ -131,6 +131,8 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  call RT_apply(RT_bands,E,k,what="G",VERBOSE=.true.)
  !
+ if (RT_step<0) call RT_Runge_Kutta_Fehlberg(E)
+ !
  call section('=','Initialization')
  !#################################
  call RT_initialize(E,k,q)
@@ -159,7 +161,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  endif
  !
  ! Core allocations
- !
+ !------------------
  call RT_alloc(E,"all")
  call RT_control_alloc("all")
  !

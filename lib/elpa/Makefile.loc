@@ -19,14 +19,15 @@ include ../config/external_libs_defs.mk
 # Configure flags
 #
 CONFFLAGS=--prefix=$(LIBPATH) \
-          --disable-sse-kernels --disable-avx-kernels --disable-avx2-kernels --disable-avx512-kernels \
-	  --disable-shared --disable-cpp-tests \
-          CPP="$(cpp)" CPPFLAGS="$(cppflags) ${impi}" \
-          CC="$(cc)" \
+	  --disable-avx512-kernels --disable-shared \
+	  --disable-c-tests --disable-cpp-tests --disable-fortran-tests \
+	  CPP="$(cpp)" CPPFLAGS="$(cppflags) ${impi}" \
+	  CC="$(cc)" \
 	  CFLAGS="$(cflags)" \
 	  FC="$(fc)" \
 	  FCFLAGS="$(fcflags)" \
 	  LDFLAGS="-L$(LIBPATH)/lib"
+
 #
 all: $(LIBRARY)
 #
@@ -40,22 +41,11 @@ configure: uncompress
 compile: uncompress configure
 	@$(call compile)
 
-makeinstall: uncompress configure compile
+install: uncompress configure compile
 	@$(call install_via_make,elpa)
-
-install: makeinstall
-	@if test -d $(LIBPATH)/include/$(PACKAGE) ; then \
+	@if test -d $(LIBPATH)/include/$(PACKAGE) && ! test -e $(LIBPATH)/include/elpa ; then \
 	  cd $(LIBPATH)/include ; ln -s $(PACKAGE)/* ./ ; \
 	fi
-
-#	@if ! test -e installed.stamp ; then \
-#         echo "\t[$(PACKAGE)] installation"; \
-#         cd $(PACKAGE); cp *.a $(LIBPATH)/lib ; \
-#	 chmod u+x $(LIBPATH)/lib/libelpa*.a ; \
-#	 cp modules/*.mod $(LIBPATH)/include ; \
-#	 touch ../installed.stamp; \
-#	fi
-
 
 $(LIBRARY): uncompress configure compile install
 #

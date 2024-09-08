@@ -47,19 +47,19 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,frag_WF
- use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,&
-&                     BSS_q0,Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,&
+ use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,BSS_P_dir,BSS_E_dir,BSS_Q_dir,&
+&                     Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH,BSS_desc
  use descriptors,ONLY:IO_desc_reset
 #if defined _SLEPC && !defined _NL
  use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_maxit,&
- &                    BSS_slepc_precondition,BSS_slepc_approach
+ &                    BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_mpd
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,MAX_BSK_LIN_size,&
 &                     BS_K_dim,BS_not_const_eh_f,BSK_mode,l_BSE_kernel_complete,&
 &                     BS_K_is_ALDA,BSE_mode,BSE_prop,BSE_L_kind,BS_K_cutoff,BS_perturbative_SOC,BSK_IO_mode
- use TDDFT,      ONLY:FXC_type,FXC_n_g_corr,ALDA_cut_scheme,&
+ use TDDFT,      ONLY:FXC_type,FXC_n_g_corr,FXC_mode,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_retarded,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
@@ -79,7 +79,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     l_SC_nl_mix,SC_kind,SC_perturbation,SC_desc,SC_neq_kind,SC_last_coh_it
 #endif
 #if defined _SC || defined _RT || defined _QED || defined _NL
- use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff,COLLISIONS_CV_only
+ use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff,COLLISIONS_CV_only, &
+&                         COLLISIONS_load_SP,COLLISIONS_compr
  use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
@@ -439,7 +440,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSK_IO_mode='2D_standard'
  l_BSE_kernel_complete=.false.
  TDDFT_mode=' '
- ALDA_cut_scheme="none"
+ FXC_mode="G-def"
  BSS_Wd=cZERO
  l_drude=.false.
  BS_K_dim=0
@@ -448,7 +449,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_inversion_mode='pf'
  BSS_er=(/0._SP,10._SP/)/HA2EV
  BSS_dr=0.1_SP/HA2EV
- BSS_q0=(/1._SP,0._SP,0._SP/)
+ BSS_E_dir=(/1._SP,0._SP,0._SP/)
+ BSS_P_dir=(/0._SP,1._SP,0._SP/)
+ BSS_Q_dir=(/0._SP,0._SP,1._SP/)
  BSS_uses_DbGd=.FALSE.
  BSS_damp_reference=0._SP
  BS_K_is_ALDA=.FALSE.
@@ -472,11 +475,13 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  call IO_desc_reset(BSS_desc)
  !
 #if defined _SLEPC && !defined _NL
+ BSS_slepc_matrix_format='shell'
  BSS_slepc_approach='none'
  BSS_slepc_precondition='none'
  BSS_slepc_extraction='ritz'
  BSS_slepc_maxit=0
  BSS_slepc_ncv=0
+ BSS_slepc_mpd=0
  BSS_slepc_tol=1E-6_SP
  BSS_slepc_target_E=0._SP
 #endif
@@ -539,7 +544,14 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 # else
  COLLISIONS_cutoff=0.0005_SP
 # endif
+ !
+#if defined _NL
+ COLLISIONS_cutoff=0.0005_SP
+#endif
+ !
  COLLISIONS_CV_only=.FALSE.
+ COLLISIONS_load_SP=.FALSE.
+ COLLISIONS_compr  =.FALSE.
  !
  H_potential="NONE"
  !

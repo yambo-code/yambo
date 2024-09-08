@@ -9,6 +9,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
  !
  use pars,           ONLY:SP,schlen,cI,cZERO,cONE
  use functions,      ONLY:NAN
+ use R_lattice,      ONLY:q0_def_norm
  use X_m,            ONLY:global_gauge,X_OUTPUT_driver
  use wrapper_omp,    ONLY:V_plus_alpha_V_omp
  use frequency,      ONLY:w_samp
@@ -228,6 +229,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
    do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_g)
      if (trim(OBS)=="optics")      V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
      if (trim(OBS)=="kerr")        V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(2,:,1)
+     if (trim(OBS)=="dichroism")   V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_dic(1,:,1)
      if (trim(OBS)=="magnons")     V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
      V0(i_g)%fragment(:,i_ColFG) = V0(i_g)%fragment(:,i_ColFG)*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
    enddo
@@ -266,9 +268,10 @@ subroutine K_Haydock(iq,W,OBS,Xk)
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
      do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_g)
        if (trim(OBS)=="kerr") W0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
+       if (trim(OBS)=="dichroism") W0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)/q0_def_norm
        W0(i_g)%fragment(:,i_ColFG) = W0(i_g)%fragment(:,i_ColFG)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
      enddo
-       if(velocity_correction) V_tmp(i_g)%fragment = W0(i_g)%fragment/BS_T_grp(i_g)%E
+     if(velocity_correction) V_tmp(i_g)%fragment = W0(i_g)%fragment/BS_T_grp(i_g)%E
    enddo
    !
    do i_g = 1,BS_nT_grps

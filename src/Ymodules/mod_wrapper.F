@@ -15,9 +15,17 @@ module wrapper
  ! TRANSA = 'T' or 't',  op( A ) = A'.
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
- use pars,      ONLY: SP,cI
- use devxlib_linalg,   ONLY: M_by_M_gpu=>devxlib_xGEMM_gpu,devxlib_xGEMM_gpu,devxlib_xGEMV_gpu,&
-&                            devxlib_xAXPY_gpu,devxlib_xDOTC_gpu,devxlib_xDOTU_gpu
+ use pars,             ONLY:SP,cI
+ !
+ ! Implementation based on C_F_POINTER assumes that variables are contiguous,
+ ! which may not be the case
+ use iso_c_binding,    ONLY:C_LOC,C_F_POINTER
+#ifdef _CUDAF
+ use cudafor,  only: c_devloc
+#endif
+ !
+use devxlib_linalg,   ONLY: M_by_M_gpu=>devxlib_xGEMM_gpu,devxlib_xGEMM_gpu,devxlib_xGEMV_gpu,&
+ &                            devxlib_xAXPY_gpu,devxlib_xDOTC_gpu,devxlib_xDOTU_gpu
  use devxlib_cublas
  !
  implicit none
@@ -44,7 +52,7 @@ module wrapper
  end interface
  !
  interface Vstar_dot_V
-   module procedure :: Vstar_dot_V_c1_cpu, Vstar_dot_V_c2_cpu
+   module procedure :: Vstar_dot_V_c1_cpu,Vstar_dot_V_c2_cpu,V_dot_V_r1_cpu,V_dot_V_r2_cpu
  end interface
  !
  interface Vstar_dot_VV
@@ -52,7 +60,7 @@ module wrapper
  end interface
  !
  interface V_dot_V
-   module procedure :: V_dot_V_r1_cpu, V_dot_V_c1_cpu, V_dot_V_c2_cpu
+   module procedure :: V_dot_V_r1_cpu,V_dot_V_r2_cpu,V_dot_V_c1_cpu,V_dot_V_c2_cpu
  end interface
  !
  interface V_dot_VV
@@ -66,13 +74,13 @@ module wrapper
    module procedure :: V_by_V_pwise_gpu
  end interface
  interface Vstar_dot_V_gpu
-   module procedure :: Vstar_dot_V_c1_gpu, Vstar_dot_V_c2_gpu
+     module procedure :: Vstar_dot_V_c1_gpu,Vstar_dot_V_c2_gpu,V_dot_V_r1_gpu,V_dot_V_r2_gpu
  end interface
  interface Vstar_dot_VV_gpu
    module procedure :: Vstar_dot_VV_c1_gpu
  end interface
  interface V_dot_V_gpu
-   module procedure :: V_dot_V_c1_gpu
+     module procedure :: V_dot_V_r1_cpu,V_dot_V_r2_cpu,V_dot_V_c1_cpu,V_dot_V_c2_cpu
  end interface
  interface V_dot_VV_gpu
    module procedure :: V_dot_VV_c1_gpu
@@ -387,7 +395,7 @@ module wrapper
    complex(SP) function Vstar_dot_V_c2_cpu(N,CX,CY)
      implicit none
      integer,    intent(in) :: N
-     complex(SP),intent(in) :: CX(:,:),CY(:,:)
+     complex(SP),target,contiguous,intent(in) :: CX(:,:),CY(:,:)
 #if defined _DOUBLE
      complex(SP)::zdotc
      Vstar_dot_V_c2_cpu=ZDOTC(N,CX,1,CY,1)
@@ -408,13 +416,9 @@ module wrapper
    !
    complex(SP) function Vstar_dot_V_c2_gpu(N,CX,CY)
      use iso_c_binding
-#ifdef _CUDAF
-     use cudafor,  only: c_devloc
-#endif
      implicit none
      integer,              intent(in) :: N
      complex(SP) DEV_ATTR, target, intent(in) :: CX(:,:),CY(:,:)
-     !
      complex(SP), pointer DEV_ATTR :: CX_p(:), CY_p(:)
      !
 #ifdef _CUDAF
@@ -489,6 +493,59 @@ module wrapper
 #endif
    end function V_dot_V_r1_cpu
    !
+   real(SP) function V_dot_V_r2_cpu(N,CX,CY)
+     implicit none
+     integer, intent(in) :: N
+     real(SP),target,intent(in) :: CX(:,:),CY(:,:)
+#if defined _DOUBLE
+     real(SP)::ddot
+#else
+     real(SP)::sdot
+#endif
+     !real(SP),pointer    :: CX1D(:),CY1D(:)
+     !call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
+     !call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
+#if defined _DOUBLE
+     V_dot_V_r2_cpu=DDOT(N,CX,1,CY,1)
+#else
+     V_dot_V_r2_cpu=SDOT(N,CX,1,CY,1)
+#endif
+   end function V_dot_V_r2_cpu
+   !
+#ifdef _CUDA
+   real(SP) function V_dot_V_r1_gpu(N,CX,CY)
+     implicit none
+     integer,    intent(in) :: N
+     real(SP), device, intent(in) :: CX(:),CY(:)
+#if defined _DOUBLE
+     real(SP)::ddot
+     V_dot_V_r1_gpu=cublasDDOT(N,CX,1,CY,1)
+#else
+     real(SP)::sdot
+     V_dot_V_r1_gpu=cublasSDOT(N,CX,1,CY,1)
+#endif
+   end function V_dot_V_r1_gpu
+   !
+   real(SP) function V_dot_V_r2_gpu(N,CX,CY)
+     implicit none
+     integer,    intent(in) :: N
+     real(SP), device, target, intent(in) :: CX(:,:),CY(:,:)
+#if defined _DOUBLE
+     real(SP)::ddot
+#else
+     real(SP)::sdot
+#endif
+     !real(SP),pointer    :: CX1D(:),CY1D(:)
+     !call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
+     !call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
+#if defined _DOUBLE
+     V_dot_V_r2_gpu=cublasDDOT(N,CX,1,CY,1)
+#else
+     V_dot_V_r2_gpu=cublasSDOT(N,CX,1,CY,1)
+#endif
+   end function V_dot_V_r2_gpu
+#endif
+   !
    complex(SP) function V_dot_V_c1_cpu(N,CX,CY)
      implicit none
      integer,    intent(in) :: N
@@ -505,12 +562,18 @@ module wrapper
    complex(SP) function V_dot_V_c2_cpu(N,CX,CY)
      implicit none
      integer,    intent(in) :: N
-     complex(SP),intent(in) :: CX(:,:),CY(:,:)
+     complex(SP),target,intent(in) :: CX(:,:),CY(:,:)
 #if defined _DOUBLE
      complex(SP)::zdotu
-     V_dot_V_c2_cpu=ZDOTU(N,CX,1,CY,1)
 #else
      complex(SP)::cdotu
+#endif
+     !complex(SP),pointer    :: CX1D(:),CY1D(:)
+     !call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
+     !call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
+#if defined _DOUBLE
+     V_dot_V_c2_cpu=ZDOTU(N,CX,1,CY,1)
+#else
      V_dot_V_c2_cpu=CDOTU(N,CX,1,CY,1)
 #endif
    end function V_dot_V_c2_cpu
@@ -523,6 +586,27 @@ module wrapper
      V_dot_V_c1_gpu=devxlib_xDOTU_gpu(N,CX,1,CY,1)
      !
    end function V_dot_V_c1_gpu
+   !
+   complex(SP) function V_dot_V_c2_gpu(N,CX,CY)
+     ! DS 2024/09/06
+     ! This function should be ported to GPU using devxlib_xDOTU_gpu
+     implicit none
+     integer,    intent(in) :: N
+     complex(SP), device, target, intent(in) :: CX(:,:),CY(:,:)
+#if defined _DOUBLE
+     complex(SP)::zdotu
+#else
+     complex(SP)::cdotu
+#endif
+     !complex(SP),pointer    :: CX1D(:),CY1D(:)
+     !call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
+     !call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
+#if defined _DOUBLE
+     V_dot_V_c2_gpu=cublasZDOTU(N,CX,1,CY,1)
+#else
+     V_dot_V_c2_gpu=cublasCDOTU(N,CX,1,CY,1)
+#endif
+   end function V_dot_V_c2_gpu
    !
    !==============
    ! DOT PRODUCTS: V_dot_VV

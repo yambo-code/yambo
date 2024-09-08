@@ -7,9 +7,10 @@
 !
 subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_threshold,FG_factor)
  !
- use pars,           ONLY:SP,cZERO,cONE,pi
+ use pars,           ONLY:SP,cZERO,cONE,cI,pi
+ use units,          ONLY:SPEED_OF_LIGHT
  use X_m,            ONLY:Resp_ii,Joint_DOS,global_gauge, &
-&                         X_magnons,Resp_ij,i_G_shift
+&                         X_magnons,Resp_ij,X_dichroism,i_G_shift
  use R_lattice,      ONLY:bare_qpg
  use frequency,      ONLY:w_samp
  use BS,             ONLY:BSE_mode
@@ -223,6 +224,8 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
      Resp_ij(iw,i_resp(:))= -X_o(1:2,1)*Co
    case("magnons")
      X_magnons(iw,1,i_resp(:))=-X_o(1:2,1)*Co/(4._SP*pi)
+   case("dichroism")
+     X_dichroism(iw,i_resp(:))=-X_o(1:2,1)*Co/(4._SP*pi)*(cI/SPEED_OF_LIGHT)
    end select
    !
  enddo
@@ -242,6 +245,9 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
    case("magnons")
      sums=(X_magnons(iw,1,2)+X_magnons(iw,1,4))/2._SP
      diff= X_magnons(iw,1,2)-X_magnons(iw,1,4)
+   case("dichroism")
+     sums=(X_dichroism(iw,2)+X_dichroism(iw,4))/2._SP
+     diff= X_dichroism(iw,2)-X_dichroism(iw,4)
    end select
    !
    update_thresh = abs(real(sums))>0._SP .and. abs(aimag(sums))>0._SP

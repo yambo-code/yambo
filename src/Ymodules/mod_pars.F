@@ -62,9 +62,11 @@ module pars
  !integer, parameter :: DP = real64
 #if defined _DOUBLE
  integer, parameter  :: SP = selected_real_kind(14,200)
+ integer, parameter  :: SP6 = selected_real_kind(6,30)
  !integer, parameter :: SP = real64
 #else
  integer, parameter  :: SP = selected_real_kind(6,30)
+ integer, parameter  :: SP6 = selected_real_kind(6,30)
  !integer, parameter :: SP = real32
 #endif
  !

@@ -7,25 +7,25 @@
 !
 subroutine PARALLEL_and_IO_Setup(en,k)
  !
- use pars,           ONLY: lchlen,SP,DP
- use stderr,         ONLY: log_as_a_file,intc
- use com,            ONLY: core_io_path,more_io_path,repfile,jobstr,msg,com_path,&
-&                          alt_jobstr,n_alt_jobstr,jobdir,alt_jobdir,fat_log
- use it_m,           ONLY: infile
- use IO_int,         ONLY: io_control
- use IO_m,           ONLY: OP_RD_CL,REP,frag_WF
- use R_lattice,      ONLY: bz_samp
- use electrons,      ONLY: levels
- use parallel_m,     ONLY: n_nodes,ncpu,PARALLEL_message,n_CPU_str_max,PAR_COM_WORLD,&
-&                          mpi_comm_world,myid,COMM_reset,PAR_COM_NULL,host_name,&
-&                          master_cpu,n_IO_nodes
- use parallel_int,   ONLY: PP_bcast,PP_redux_wait 
- use parser_m,       ONLY: parser
- use wave_func,      ONLY: WF_buffered_IO
- use openmp,         ONLY: n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads
- use y_memory,       ONLY: USER_MEM_limit_string
- use LIVE_t,         ONLY: USER_wall_time_string
- use gpu_m,          ONLY: gpu_visible_devices,have_gpu_devices,gpu_subscription,gpu_str
+ use pars,           ONLY:lchlen,SP,DP
+ use stderr,         ONLY:log_as_a_file,intc
+ use com,            ONLY:core_io_path,more_io_path,repfile,jobstr,msg,com_path,&
+&                         alt_jobstr,n_alt_jobstr,jobdir,alt_jobdir,fat_log
+ use it_m,           ONLY:infile
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,REP,frag_WF
+ use R_lattice,      ONLY:bz_samp
+ use electrons,      ONLY:levels
+ use parallel_m,     ONLY:n_nodes,ncpu,PARALLEL_message,n_CPU_str_max,PAR_COM_WORLD,&
+&                         mpi_comm_world,myid,COMM_reset,PAR_COM_NULL,host_name,&
+&                         master_cpu,n_IO_nodes
+ use parallel_int,   ONLY:PP_bcast,PP_redux_wait 
+ use parser_m,       ONLY:parser
+ use wave_func,      ONLY:WF_buffered_IO
+ use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads,n_threads_OSCLL
+ use y_memory,       ONLY:USER_MEM_limit_string
+ use LIVE_t,         ONLY:USER_wall_time_string
+ use gpu_m,          ONLY:gpu_visible_devices,have_gpu_devices,gpu_subscription,gpu_str
 #if defined _GPU
  use gpu_m,          ONLY:gpu_GetDevice
 #endif
@@ -84,7 +84,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! CPU structure REPORT
  !======================
  !
- n_max_threads=maxval((/n_threads,n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL/))
+ n_max_threads=maxval((/n_threads,n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads_OSCLL/))
  !
  if (ncpu>1.or.n_max_threads>1) then
    !

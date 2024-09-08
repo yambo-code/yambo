@@ -372,8 +372,8 @@ function num_xmlsphbes(x,l)
   real(dbl) :: t
   if(l>3 .or. l<0) call errore("num_sphbes","Bad l value",1)
   if(abs(x) < .01) then
-    t = 0.0
-    do is=15,0,-1
+    t = coeff(0,l)
+    do is=15,1,-1
       t = t + x**(2*is) * coeff(is,l)
     end do
     num_xmlsphbes = real(t,sgl)

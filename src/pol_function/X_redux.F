@@ -364,8 +364,8 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  call PP_indexes_reset(PAR_IND_freqs)
  !
 end subroutine
-!
-   subroutine X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols,compute_on_gpu,iq)
+   !
+  subroutine X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols,compute_on_gpu,iq)
      use R_lattice,     ONLY:bare_qpg, DEV_VAR(bare_qpg)
      use pars,          ONLY:pi,cONE,SP
      use matrix,        ONLY:PAR_matrix

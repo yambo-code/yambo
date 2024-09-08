@@ -7,12 +7,12 @@
 !
 subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
- use pars,           ONLY:cZERO,rZERO
+ use pars,           ONLY:cZERO,rZERO,DP,SP
  use plasma,         ONLY:N_plasma_poles_global
  use R_lattice,      ONLY:nqbz,nkibz
  use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ_bz
  use collision_ext,  ONLY:COLLISIONS_element,COH_COLL_element,HXC_COLL_element,GW_NEQ_COLL_element,&
-&                         COLL_bands,&
+&                         COLL_bands,COLLISIONS_load_SP,&
 &                         GW_NEQ_collisions,COH_collisions,HXC_collisions,P_collisions,COLLISIONS_group
 #if defined _QED
  use QP_m,           ONLY:QP_QED_ng
@@ -191,10 +191,18 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
            YAMBO_ALLOC(COLL(J)%v_c,(COLL(J)%N))
            COLL(J)%v_c=cZERO
            mem_size(4)=mem_size(4)+size(COLL(J)%v_c)
+           if(SP==DP.and.COLLISIONS_load_SP) then
+             YAMBO_ALLOC(COLL(J)%v_c_SP,(COLL(J)%N))
+             COLL(J)%v_c_SP=cZERO
+             mem_size(4)=mem_size(4)+size(COLL(J)%v_c_SP)
+           endif
          endif
        endif
        if (l_clean.and.(l_v1.or.l_all)) then
          YAMBO_FREE(COLL(J)%v_c)
+         if(SP==DP.and.allocated(COLL(J)%v_c_SP)) then
+            YAMBO_FREE(COLL(J)%v_c_SP)
+         endif
          YAMBO_FREE(COLL(J)%v_r)
        endif
        if (l_alloc.and.(l_table.or.l_all)) then

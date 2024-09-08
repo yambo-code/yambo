@@ -750,4 +750,28 @@ module vec_operate
      !
    end subroutine
    !
+   ! Least common multiple (LCM)
+   !    
+   integer function lcm(a, b)
+     INTEGER, INTENT(IN) :: a, b
+     INTEGER :: n, m, p, temp
+     !  
+     n = a
+     m = b
+     IF (n < m) THEN
+       temp = m
+       m = n
+       n = temp
+     END IF
+     !
+     p = n
+     DO WHILE (p /= 0)
+       p = MOD(m, n)
+       m = n
+       n = p
+     END DO
+     !
+     lcm = (a * b) / m
+   end function lcm
+   !
 end module vec_operate

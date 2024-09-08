@@ -118,6 +118,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    X_MEM_n_freqs =2*X%mpa_npoles
    X%ordering='t'
    Xw%grid_type="mp"
+   if(Xw%dr(1)<epsilon(1._SP)) call error("Damping = 0.0 not compatible with MPA dielectric constant")
    !
  endif
  !

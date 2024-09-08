@@ -35,9 +35,11 @@ subroutine V_Hartree(rho,vhr)
  !
  call timing('V_Hartree',OPR='start')
  !
+!$OMP WORKSHARE  
  vhg   = (0._DP,0._DP)
  vhtmp = (0._DP,0._DP)
  rhog  = rho
+!$OMP END WORKSHARE  
  !
  ! FFT call: rho in reciprocal space
  !
@@ -71,7 +73,9 @@ subroutine V_Hartree(rho,vhr)
  call fft_3d(vhtmp,fft_dim,1)
 #endif
  !
+!$OMP WORKSHARE  
  vhr(:,1) = real(vhtmp,SP)
+ !$OMP END WORKSHARE  
  if(n_spin==2) vhr(:,2)=vhr(:,1)
  !
  call timing('V_Hartree',OPR='stop')

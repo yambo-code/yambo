@@ -37,7 +37,7 @@ uncompress:
 	@touch uncompressed.stamp
 
 configure: uncompress
-	export BLAS_LIBS ; export LAPACK_LIBS
+	@export BLAS_LIBS ; export LAPACK_LIBS
 	@$(configure)
 
 compile: uncompress configure

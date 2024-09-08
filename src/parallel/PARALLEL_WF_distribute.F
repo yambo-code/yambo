@@ -22,7 +22,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  use R_lattice,       ONLY:nkbz
  use collision_ext,   ONLY:GW_NEQ_collisions
 #endif
-#include<memory.h>
+#include<y_memory.h>
  !
  type(PP_indexes), optional    :: K_index
  type(PP_indexes), optional    :: B_index

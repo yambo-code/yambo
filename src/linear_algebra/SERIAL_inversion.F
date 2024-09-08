@@ -12,7 +12,7 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  use linear_algebra,ONLY:LINEAR_ALGEBRA_error,LU_factorization,LU_inversion,&
 &                        LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
-#include<memory.h>
+#include<y_memory.h>
  !
  integer           :: n
  complex(SP)       :: M(n,n),det

@@ -13,7 +13,7 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,Xen)
  use R_lattice,           ONLY:bz_samp,bz_fine_grid,bz_samp_FineGd_alloc
  use LIVE_t,              ONLY:live_timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*)      , intent(in)    :: zone
  type(bz_fine_grid), intent(inout) :: FG

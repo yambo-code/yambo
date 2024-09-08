@@ -12,7 +12,7 @@ subroutine k_find_border_and_merge(FineGd_E,FineGd_k,n_FineGd_DBs,FineGd_io_E,Fi
  use stderr,    ONLY:intc
  use com,       ONLY:msg
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,       intent(in)     :: n_FineGd_DBs 
  type(levels),  intent(inout)  :: FineGd_io_E(n_FineGd_DBs)

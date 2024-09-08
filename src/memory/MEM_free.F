@@ -10,7 +10,7 @@ subroutine MEM_free(what,Sz)
  use pars,         ONLY:schlen,DP,IPL,IP
  use units,        ONLY:Kilobyte
  use openmp,       ONLY:master_thread
- use memory,       ONLY:TOT_MEM_Kb,MEM_element_copy,N_MEM_elements,MEMs
+ use y_memory,       ONLY:TOT_MEM_Kb,MEM_element_copy,N_MEM_elements,MEMs
  !
  implicit none
  !

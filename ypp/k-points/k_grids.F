@@ -23,7 +23,7 @@ subroutine k_grids(en,k,Xk,q)
  use zeros,               ONLY:k_iku_zero
  use YPP_interfaces,      ONLY:k_special
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ::en       
  type(bz_samp)::k,Xk,q

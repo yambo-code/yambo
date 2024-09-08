@@ -15,7 +15,7 @@ subroutine QP_apply_dump_user_CTLs( E, object )
 &                        QP_ctl_ID,QP_CTL_is_active,QP_CTL_fill
  use stderr,        ONLY:STRING_split,STRING_same
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type (levels) ::E
  character(1)  ::object

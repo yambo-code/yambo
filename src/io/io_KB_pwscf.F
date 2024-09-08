@@ -20,7 +20,7 @@ integer function io_KB_pwscf(ID)
 &                           PP_alloc_pwscf
  use timing_m,       ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,intent(in) :: ID
  ! 

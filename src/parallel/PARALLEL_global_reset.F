@@ -55,7 +55,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  use SLK_m,         ONLY:SLK_COM_INDEX,SLK_COM_A2A
 #endif
  !
-#include <memory.h>
+#include <y_memory.h>
  !
  type(bz_samp)        :: Xk
  character(*)         :: ENVIRONMENT

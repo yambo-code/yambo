@@ -23,7 +23,7 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  use IO_m,          ONLY:OP_RD_CL,OP_RD,RD_CL,&
 &                        NONE,OP_WR_CL,REP,VERIFY
  use frequency,     ONLY:w_samp
-#include<memory.h>
+#include<y_memory.h>
  type(w_samp) ::W
  integer      ::ik1,ik2,O_x_dim,iq
  complex(SP)  ::O1x(FXC_n_g_corr,O_x_dim),O2x(FXC_n_g_corr,O_x_dim)

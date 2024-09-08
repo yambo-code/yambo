@@ -31,7 +31,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
  use descriptors,    ONLY:IO_desc_add
  use R_lattice,      ONLY:bz_samp
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(w_samp), intent(in) :: W
  integer,      intent(in) :: iq

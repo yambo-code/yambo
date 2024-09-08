@@ -15,7 +15,7 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,FILES)
  use vec_operate,    ONLY:v_is_zero
  use descriptors,    ONLY:IO_desc_duplicate
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer              :: n_dbs,n_GROUNDS
  type(QP_t)           :: qp2merge(n_dbs)

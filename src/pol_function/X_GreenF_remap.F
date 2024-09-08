@@ -12,7 +12,7 @@ subroutine X_GreenF_remap(bands,E,W)
  use LIVE_t,        ONLY:live_timing
  use electrons,     ONLY:levels,n_sp_pol,E_reset
  use frequency,     ONLY:w_samp,W_reset
-#include<memory.h>
+#include<y_memory.h>
  integer      :: bands(2)
  type(w_samp) :: W
  type(levels) :: E

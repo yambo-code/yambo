@@ -48,7 +48,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use electrons,      ONLY:Spin_magn
  use electric,       ONLY:ELECTRIC_alloc,ELECTRIC_free,W_electric
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ::E
  type(bz_samp)::k,q,Xk

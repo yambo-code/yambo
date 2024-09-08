@@ -26,6 +26,13 @@ SLK_FC_FLAGS=""
 case "${host}" in
 i?86*linux*)
   case "${FC}" in
+  *ftn* )
+    SYSFLAGS="-O1 -g -emf -eZ"
+    FUFLAGS="-O0 -g -emf  -eZ"
+    FCMFLAG=""
+    OMPFLAGS="-fopenmp"
+    DEBUG_FLAGS="-g "
+  ;;
   *pgf9* | *ftn* | *pgfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
     FUFLAGS="-O0 -Mbackslash"
@@ -63,7 +70,7 @@ i?86*linux*)
     DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ftrace=full"
     ;;
   *gfortran*)
-    SYSFLAGS="-O3 -g -mtune=native"
+    SYSFLAGS="-O3 -g -mtune=native -fno-lto"
     FUFLAGS="-O0 -mtune=native"
     SLK_FC_FLAGS="-fallow-argument-mismatch"
     FCMFLAG=""
@@ -175,6 +182,13 @@ i?86*linux*)
   ;;
 ia64*linux* )
   case "${FC}" in
+  *ftn* )
+    SYSFLAGS="-O1 -g -emf -eZ"
+    FUFLAGS="-O0 -g -emf  -eZ"
+    FCMFLAG=""
+    OMPFLAGS="-fopenmp"
+    DEBUG_FLAGS="-g "
+  ;;
   *pgf9* | *ftn* | *pgfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
     #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
@@ -195,7 +209,7 @@ ia64*linux* )
     DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
     ;;
   *gfortran*)
-    SYSFLAGS="-O3 -g -mtune=native"
+    SYSFLAGS="-O3 -g -mtune=native -fno-lto"
     FUFLAGS="-O0 -g -mtune=native"
     SLK_FC_FLAGS="-fallow-argument-mismatch"
     FCMFLAG=""
@@ -257,6 +271,13 @@ ia64*linux* )
   ;;
 *x86*64* )
   case "${FC}" in
+  *ftn* )
+    SYSFLAGS="-O1 -g -emf -eZ"
+    FUFLAGS="-O0 -g -emf  -eZ"
+    FCMFLAG=""
+    OMPFLAGS="-fopenmp"
+    DEBUG_FLAGS="-g "
+  ;;
   *pgf9* | *ftn* | *pgfortran* | *nvfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
     #SYSFLAGS="-O2 -g -Munroll -Mnoframe -Mdalign -Mbackslash -cpp"
@@ -268,7 +289,7 @@ ia64*linux* )
     DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame  -Mbackslash -cpp"
     ;;
   *gfortran*)
-    SYSFLAGS="-O3 -g -mtune=native"
+    SYSFLAGS="-O3 -g -mtune=native -fno-lto"
     FUFLAGS="-O0 -g -mtune=native"
     SLK_FC_FLAGS="-fallow-argument-mismatch"
     FCMFLAG=""
@@ -326,6 +347,15 @@ ia64*linux* )
     SYSFLAGS="-assume bscc -O3 -g -ip ${CPU_FLAG}"
     FUFLAGS="-assume bscc -O0 -g ${CPU_FLAG}"
     NETCDFFLAGS="-DpgiFortran"
+    DEBUG_FLAGS="-CB -traceback -debug full"
+    ;;
+  *ifx*)
+    OMPFLAGS="-qopenmp"
+    CPU_FLAG=""
+    FCMFLAG="-nofor-main"
+    CFLAGS="-O2 -std=gnu99"
+    SYSFLAGS="-O3 -g"
+    FUFLAGS="-O0 -g"
     DEBUG_FLAGS="-CB -traceback -debug full"
     ;;
   *openf9*)

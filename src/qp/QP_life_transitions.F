@@ -14,7 +14,7 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  use electrons,     ONLY:levels,spin
  use R_lattice,     ONLY:qindx_S,bz_samp
  !
-#include<memory.h>
+#include<y_memory.h>
  type(levels) ::E
  type(bz_samp)::q,k
  type(w_samp) ::X_life_W

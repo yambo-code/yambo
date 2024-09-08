@@ -19,7 +19,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  use collision_ext,  ONLY:P_COLL_element
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*)             :: what,elements,actions
  integer                  :: I

@@ -22,7 +22,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  use zeros,          ONLY:k_rlu_zero
  use drivers,        ONLY:l_rim_w
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp)::k,Xk
  integer      ::G_shell

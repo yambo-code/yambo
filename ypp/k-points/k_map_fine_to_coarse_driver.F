@@ -16,7 +16,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:REP,OP_WR_CL
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) :: Xk
  type(levels)  :: Xen

@@ -25,7 +25,7 @@ subroutine PARALLEL_global_Response_T_base(Xk)
  ! ID's
  use parallel_m,    ONLY:PAR_IND_Kk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp)        :: Xk
  !

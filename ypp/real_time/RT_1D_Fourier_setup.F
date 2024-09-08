@@ -10,7 +10,7 @@ subroutine RT_1D_Fourier_setup(FT,RT,N)
  use YPP_real_time,  ONLY:OBS_el,Use_FFT,RT_ctl
  use pars,           ONLY:SP,cZERO_DP,cZERO
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(OBS_el) :: FT
  type(RT_ctl) :: RT

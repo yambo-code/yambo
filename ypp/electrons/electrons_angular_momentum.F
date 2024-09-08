@@ -29,7 +29,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  use units,          ONLY:SPEED_OF_LIGHT
  use com,            ONLY:msg,of_open_close
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Input variables
  integer                  :: nkpt_angular(2), nband_angular(2)

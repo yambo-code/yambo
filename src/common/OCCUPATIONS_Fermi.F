@@ -32,7 +32,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
  use SC,            ONLY:SC_neq_kind,SC_mu,SC_occ
 #endif 
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::E
  type(bz_samp) ::K

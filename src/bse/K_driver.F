@@ -28,7 +28,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use vec_operate,    ONLY:v_norm
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free,G_m_G_maxval,q0_def_norm
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q

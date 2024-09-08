@@ -26,7 +26,7 @@ subroutine DIPOLE_ypp_driver(k,E,q)
  use parser_m,       ONLY:parser
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k,INTERP_obj
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp)  :: k,q
  type(levels)   :: E

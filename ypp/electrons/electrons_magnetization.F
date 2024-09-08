@@ -18,7 +18,7 @@ subroutine electrons_magnetization(Xk,Xen)
  use com,            ONLY:msg,of_open_close
  use xc_functionals, ONLY:magn
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) ::Xk
  type(levels)  ::Xen

@@ -12,7 +12,7 @@ subroutine PLASMA_parallel_setup(EH_gas)
  use parallel_int,  ONLY:PARALLEL_live_message,PARALLEL_index
  use plasma,        ONLY:plasma_gas
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(plasma_gas) :: EH_gas
  !

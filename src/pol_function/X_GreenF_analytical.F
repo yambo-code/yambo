@@ -24,7 +24,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  use frequency,  ONLY:w_samp
  use parallel_m, ONLY:PAR_Xk_bz_index
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer      :: iq,transitions(4)
  type(w_samp) :: Xw

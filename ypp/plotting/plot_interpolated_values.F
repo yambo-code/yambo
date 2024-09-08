@@ -23,7 +23,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  use YPP_real_time,  ONLY:GreenF_T_and_W
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp),    intent(in)  :: Xk,LOCAL_k
  type(levels),     intent(in)  :: Xen

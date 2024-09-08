@@ -19,7 +19,7 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
 &                         BSS_eh_E,BSS_eh_W
  use timing_m,       ONLY:timing
  !
-#include <memory.h>
+#include <y_memory.h>
  !
  integer,      intent(in) :: i_BS_mat,iq
  character(*), intent(in) :: what

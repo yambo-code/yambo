@@ -11,7 +11,7 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
  use BS,          ONLY:BS_nT_grps
  use parallel_m,  ONLY:PAR_IND_T_groups,PAR_IND_T_Haydock,&
 &                      PAR_COM_T_Haydock,PAR_COM_WORLD,CREATE_the_COMM,ncpu
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*),       intent(in) :: what     
  !

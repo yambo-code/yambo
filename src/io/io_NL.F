@@ -24,7 +24,7 @@ integer function io_NL(what,ID)
  use timing_m,      ONLY:timing
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,      intent(in) :: ID
  character(*), intent(in) :: what 

@@ -18,7 +18,7 @@ subroutine eval_Mtot(en,k,q)
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                         PARALLEL_WF_index
  !
-#include <memory.h>
+#include <y_memory.h>
  !
  type(levels)    ::en
  type(bz_samp)   ::k,q

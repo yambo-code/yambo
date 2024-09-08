@@ -26,7 +26,7 @@ subroutine cutoff_box(q,is_cut)
  use zeros,         ONLY:k_iku_zero,G_iku_zero
  use openmp,        ONLY:OPENMP_update,n_threads,master_thread,OPENMP_set_threads
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  logical      ::is_cut(3)
  type(bz_samp)::q

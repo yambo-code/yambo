@@ -13,7 +13,7 @@ AR               = @AR@
 CPP              = @CPP@ 
 
 CFLAGS       	 = @CFLAGS@  #-g -fsanitize=address -fno-omit-frame-pointer 
-YAMBO_FLAGS   	 = @def_mpi@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_cuda@ @def_elpa@
+YAMBO_FLAGS   	 = @def_mpi@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_gpu@ @def_elpa@
 ELPA_INC         = @ELPA_INCS@
 
 #

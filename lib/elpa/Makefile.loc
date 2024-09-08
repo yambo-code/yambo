@@ -7,7 +7,8 @@ include ../../config/setup
 include ../archive/package.list
 
 LIBNAME=libelpa.a
-LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${gpu_support}
+LIBPATH_SLK=$(libs_prefix)/$(fc_kind)/${fc}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_elpa)
@@ -26,7 +27,15 @@ CONFFLAGS=--prefix=$(LIBPATH) \
 	  CFLAGS="$(cflags)" \
 	  FC="$(fc)" \
 	  FCFLAGS="$(fcflags)" \
-	  LDFLAGS="-L$(LIBPATH)/lib"
+	  LDFLAGS="-L$(LIBPATH_SLK)/lib"
+
+ifeq ($(gpu_support),"cudaf")
+  CONFFLAGS=$(CONFFLAGS) \
+	  --enable-nvidia-gpu-kernels \
+	  --with-cuda-path="$(dcudalib)" \
+	  --with-NVIDIA-GPU-compute-capability="sm_$(cudacc)"
+  echo "pippo $(CONFFLAGS)"
+endif
 
 #
 all: $(LIBRARY)

@@ -24,8 +24,8 @@ module wrapper
  use cudafor,  only: c_devloc
 #endif
  !
-use devxlib_linalg,   ONLY: M_by_M_gpu=>devxlib_xGEMM_gpu,devxlib_xGEMM_gpu,devxlib_xGEMV_gpu,&
- &                            devxlib_xAXPY_gpu,devxlib_xDOTC_gpu,devxlib_xDOTU_gpu
+ use devxlib_linalg,   ONLY: M_by_M_gpu=>devxlib_xGEMM_gpu,devxlib_xGEMM_gpu,devxlib_xGEMV_gpu,&
+ &                            devxlib_xAXPY_gpu,devxlib_xDOT_gpu,devxlib_xDOTC_gpu,devxlib_xDOTU_gpu
  use devxlib_cublas
  !
  implicit none
@@ -512,39 +512,30 @@ use devxlib_linalg,   ONLY: M_by_M_gpu=>devxlib_xGEMM_gpu,devxlib_xGEMM_gpu,devx
 #endif
    end function V_dot_V_r2_cpu
    !
-#ifdef _CUDA
    real(SP) function V_dot_V_r1_gpu(N,CX,CY)
      implicit none
      integer,    intent(in) :: N
-     real(SP), device, intent(in) :: CX(:),CY(:)
-#if defined _DOUBLE
-     real(SP)::ddot
-     V_dot_V_r1_gpu=cublasDDOT(N,CX,1,CY,1)
-#else
-     real(SP)::sdot
-     V_dot_V_r1_gpu=cublasSDOT(N,CX,1,CY,1)
-#endif
+     real(SP) DEV_ATTR, intent(in) :: CX(:),CY(:)
+     V_dot_V_r1_gpu=devxlib_xDOT_gpu(N,CX,1,CY,1)
    end function V_dot_V_r1_gpu
    !
    real(SP) function V_dot_V_r2_gpu(N,CX,CY)
      implicit none
      integer,    intent(in) :: N
-     real(SP), device, target, intent(in) :: CX(:,:),CY(:,:)
-#if defined _DOUBLE
-     real(SP)::ddot
+     real(SP) DEV_ATTR, target, intent(in) :: CX(:,:),CY(:,:)
+     real(SP), pointer DEV_ATTR :: CX_p(:), CY_p(:)
+     !
+#ifdef _CUDAF
+     call c_f_pointer(c_devloc(CX),CX_p,[size(CX)])
+     call c_f_pointer(c_devloc(CY),CY_p,[size(CY)])
 #else
-     real(SP)::sdot
+     call c_f_pointer(c_loc(CX),CX_p,[size(CX)])
+     call c_f_pointer(c_loc(CY),CY_p,[size(CY)])
 #endif
-     !real(SP),pointer    :: CX1D(:),CY1D(:)
-     !call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
-     !call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
-#if defined _DOUBLE
-     V_dot_V_r2_gpu=cublasDDOT(N,CX,1,CY,1)
-#else
-     V_dot_V_r2_gpu=cublasSDOT(N,CX,1,CY,1)
-#endif
+     !
+     V_dot_V_r2_gpu=devxlib_xDOT_gpu(N,CX_p,1,CY_p,1)
+     !
    end function V_dot_V_r2_gpu
-#endif
    !
    complex(SP) function V_dot_V_c1_cpu(N,CX,CY)
      implicit none
@@ -582,30 +573,25 @@ use devxlib_linalg,   ONLY: M_by_M_gpu=>devxlib_xGEMM_gpu,devxlib_xGEMM_gpu,devx
      implicit none
      integer,              intent(in) :: N
      complex(SP) DEV_ATTR, intent(in) :: CX(:),CY(:)
-     !
      V_dot_V_c1_gpu=devxlib_xDOTU_gpu(N,CX,1,CY,1)
-     !
    end function V_dot_V_c1_gpu
    !
    complex(SP) function V_dot_V_c2_gpu(N,CX,CY)
-     ! DS 2024/09/06
-     ! This function should be ported to GPU using devxlib_xDOTU_gpu
      implicit none
      integer,    intent(in) :: N
-     complex(SP), device, target, intent(in) :: CX(:,:),CY(:,:)
-#if defined _DOUBLE
-     complex(SP)::zdotu
+     complex(SP) DEV_ATTR, target, intent(in) :: CX(:,:),CY(:,:)
+     complex(SP), pointer DEV_ATTR :: CX_p(:), CY_p(:)
+     !
+#ifdef _CUDAF
+     call c_f_pointer(c_devloc(CX),CX_p,[size(CX)])
+     call c_f_pointer(c_devloc(CY),CY_p,[size(CY)])
 #else
-     complex(SP)::cdotu
+     call c_f_pointer(c_loc(CX),CX_p,[size(CX)])
+     call c_f_pointer(c_loc(CY),CY_p,[size(CY)])
 #endif
-     !complex(SP),pointer    :: CX1D(:),CY1D(:)
-     !call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
-     !call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
-#if defined _DOUBLE
-     V_dot_V_c2_gpu=cublasZDOTU(N,CX,1,CY,1)
-#else
-     V_dot_V_c2_gpu=cublasCDOTU(N,CX,1,CY,1)
-#endif
+     !
+     V_dot_V_c2_gpu=devxlib_xDOTU_gpu(N,CX_p,1,CY_p,1)
+     !
    end function V_dot_V_c2_gpu
    !
    !==============

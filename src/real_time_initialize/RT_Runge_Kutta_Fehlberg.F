@@ -15,7 +15,8 @@ subroutine RT_Runge_Kutta_Fehlberg(E)
  use R_lattice,      ONLY:nXkibz
  use fields,         ONLY:gauge_field,Efield,n_ext_fields,Efield_strength
  use units,          ONLY:AUT2FS,SPEED_OF_LIGHT
- use vec_operate,    only:normalize_v
+ use vec_operate,    ONLY:normalize_v
+ use OUTPUT,         ONLY:OUTPUT_driver
  !
 #include<memory.h>
  !
@@ -24,50 +25,56 @@ subroutine RT_Runge_Kutta_Fehlberg(E)
  ! Work Space 
  !
  type(gauge_field)   :: A
- real(SP)            :: Time_total,Damp,delta_E_max,delta_E
- real(SP),allocatable:: F(:),Time(:),Ef(:),dT_correction(:,:)
- integer             :: N_steps,it,i_f,ik,ib,ibp
+ real(SP)            :: Damp,delta_E_max,delta_E
+ real(SP),allocatable:: F(:),Time(:),Ef(:),dT_fehlberg(:,:)
+ integer             :: N_steps,i_f,ik,ib,ibp
  !
  ! .. Runge-Kutta
- integer                :: i_Selected_RK_int(4),n,m,i_int
+ integer                :: i_Selected_RK_int(4),n,m,it
  character(schlen)      :: Selected_RK_int(4)
- complex(SP),allocatable:: Y(:,:)
- real(SP)               :: T_eval
- complex(SP)            :: K(4),Y_RK(4)
+ !
+ ! .. iterative dT optimization
+ integer                :: i_int,i_iter,N_iter_steps,itp,it_trial
+ integer,parameter      :: N_max_iterations=20
+ complex(SP),allocatable:: Y(:,:),Y_converged(:)
+ real(SP)               :: TRESH,ERR,dT_iter,dT_iter_prev
+ complex(SP)            :: Y_trial,M_trial
  !
  call section('=','Time-Step evaluation via Runge-Kutta-Fehlber')
  !################################################################
  !
  ! Initial step & damping
  !------------------------
- RT_step=1./AUT2FS/1.E3_SP ! 1as
+ RT_step=1./AUT2FS/1.E3_SP ! 1as 
+ TRESH=1.E-1
  RT_dyn_step=RT_step
  Damp=0._SP
  !Damp=100.0_SP/HA2EV/1000. ! 50 meV
- !Time_total=HBAR_eVfs/Damp/HA2EV/AUT2FS
- Time_total=NE_tot_time
  !
  ! Fields init
  !-------------
  do i_f=1,n_ext_fields
    if (STRING_same(Efield(i_f)%ef_name,'none')) cycle
-   !Time_total=max(Time_total,4*Efield(i_f)%FWHM)
    Efield(i_f)%versor        =normalize_v(Efield(i_f)%versor)
    Efield(i_f)%amplitude     =Efield_strength(Efield(i_f)%intensity,'AU')
    Efield(i_f)%t_initial_indx=max(nint(Efield(i_f)%t_initial/RT_step)+1,2)
    Efield(i_f)%t_initial     =real(Efield(i_f)%t_initial_indx-1)*RT_step
  enddo
  !
- ! Step & Allocs
+ ! Steps & Allocs
+ !
+ ! The elemental step here is 1as just defined in order to 
+ ! define a max number of steps
  !---------------
- N_steps=Time_Total/RT_step
+ N_steps=NE_tot_time/RT_step
  YAMBO_ALLOC(F,(N_steps+1))
  YAMBO_ALLOC(Time,(N_steps+1))
  YAMBO_ALLOC(Ef,(N_steps+1))
- YAMBO_ALLOC(dT_correction,(3,N_steps+1))
+ YAMBO_ALLOC(dT_fehlberg,(4,N_steps+1))
  YAMBO_ALLOC(Y,(4,N_steps+1))
+ YAMBO_ALLOC(Y_converged,(N_steps+1))
  Y=0._SP
- dT_correction=0._SP
+ dT_fehlberg=0._SP
  !
  ! Elemental frequencies
  !=======================
@@ -109,50 +116,91 @@ subroutine RT_Runge_Kutta_Fehlberg(E)
    enddo
  enddo
  !
- ! RK integrations
- !-----------------
- do i_int=1,4
+ ! Iterative solution
+ !--------------------
+ !
+ ! ... reference (=RK4 with 1as time-step)
+ Y(:,1)=1._SP
+ it=1
+ i_int=2
+ do while (it<N_steps)
+   dT_iter=RT_step
+   call GIMME_val(i_int,it)
+   Y(i_int,it+1)=Y_trial
+   it=it+1
+ enddo 
+ Y_converged(:)=Y(i_int,:)
+ call  OUTPUT_driver("converged",action="open")
+ do it=1,N_steps+1 
+   call  OUTPUT_driver("converged",TITLES=(/"Time"/),R_VALUES=(/Time(it)/),UNIT="fs",Kind="Time")
+   call  OUTPUT_driver("converged",TITLES=(/trim(RK_integrators(i_Selected_RK_int(i_int))%short)//" [dT=1as]"/),&
+&                      R_VALUES=(/aimag(Y_converged(it))/))
+   call  OUTPUT_driver("converged",action="write")
+ enddo
+ call  OUTPUT_driver("converged",action="close")
+ !
+ ! ... iterative 
+ do i_int=2,2
    !
    Y(i_int,1)=1._SP
-   !
-   do it=1,N_steps
+   it=1
+   do while (it<N_steps)
      !
-     Y_RK=0._SP
-     K   =0._SP
+     dT_iter     =RT_step
+     dT_iter_prev=RT_step
      !
-     do n=1,RK_integrators( i_Selected_RK_int(i_int) )%N
+     ITER: do i_iter=1,N_max_iterations
        !
-       Y_RK(n)=Y(i_int,it)
-       if (n>1) then
-         do m=1,n-1
-           Y_RK(n)=Y_RK(n)+RT_step*RK_integrators( i_Selected_RK_int(i_int) )%a(n,m)*K(m)
-         enddo
+       ! T -> T+dT_iter (in Y_trial)
+       call GIMME_val(i_int,it)
+       !
+       it_trial=it+int(dT_iter/RT_step)
+       !
+       ERR=abs(aimag(Y_trial-Y_converged(it_trial)))/abs(aimag(Y_converged(it_trial)))
+       !
+       if (ERR>TRESH.or.dT_iter>1._SP/AUT2FS.or.i_iter==N_max_iterations) then
+         if (i_iter==1) write (*,*) it,ERR
+         if (i_iter==1) STOP
+         dT_iter=dT_iter_prev
+         N_iter_steps=int(dT_iter/RT_step)
+         it=it+N_iter_steps
+         exit ITER
        endif
        !
-       T_eval=Time(it)+RK_integrators( i_Selected_RK_int(i_int) )%c(n)*RT_step
-       K(n) =-cI*S(T_eval)*Y_RK(n)
+       N_iter_steps=int(dT_iter/RT_step)
+       dT_iter_prev=dT_iter
+       dT_fehlberg(i_int,it:it+N_iter_steps-1)=dT_iter
        !
-     enddo
+       M_trial=(Y_trial-Y(i_int,it))/dT_iter
+       do itp=1,N_iter_steps
+         Y(i_int,it+itp)=Y(i_int,it)+M_trial*itp*RT_step 
+         write (100,*) Time(it+itp)*AUT2FS,aimag(Y(i_int,it+itp)),aimag(Y_converged(it+itp))
+       enddo
+       !
+       dT_iter=dT_iter*2._SP
+       !
+     enddo ITER
      !
-     Y(i_int,it+1)=Y(i_int,it)
-     do n=1,RK_integrators( i_Selected_RK_int(i_int) )%N
-       Y(i_int,it+1)=Y(i_int,it+1)+RK_integrators( i_Selected_RK_int(i_int) )%b(n)*K(n)*RT_step
-     enddo
-     !
-   enddo
+   enddo 
    !
  enddo
  !
- do it=1,N_steps
-   do i_int=1,3
-     dT_correction(i_int,it)=abs( Y(i_int,it)/ (  Y(i_int+1,it)- Y(i_int,it) ) )
-   enddo
-   write (200,*) it,dT_correction(:,it)
- enddo
- !
+ call  OUTPUT_driver("iterative",action="open")
+ call  OUTPUT_driver("time_step",action="open")
  do it=1,N_steps+1 
-   write (100,'(10f30.10)') Time(it)*AUT2FS,aimag(Y(:4,it))
+   call  OUTPUT_driver("iterative",TITLES=(/"Time"/),R_VALUES=(/Time(it)/),UNIT="fs",Kind="Time")
+   call  OUTPUT_driver("time_step",TITLES=(/"Time"/),R_VALUES=(/Time(it)/),UNIT="fs",Kind="Time")
+   do i_int=1,1
+     call  OUTPUT_driver("iterative",TITLES=(/trim(RK_integrators( i_Selected_RK_int(i_int) )%short)/),&
+&                        R_VALUES=(/aimag(Y(i_int,it))/))
+     call  OUTPUT_driver("time_step",TITLES=(/trim(RK_integrators( i_Selected_RK_int(i_int) )%short)/),&
+&                        R_VALUES=(/dT_fehlberg(i_int,it)/),UNIT="as",Kind="Time")
+   enddo
+   call  OUTPUT_driver("iterative",action="write")
+   call  OUTPUT_driver("ime_step",action="write")
  enddo
+ call  OUTPUT_driver("iterative",action="close")
+ call  OUTPUT_driver("time_step",action="close")
  stop
  !
  contains
@@ -169,5 +217,35 @@ subroutine RT_Runge_Kutta_Fehlberg(E)
      enddo
      !
    end function
+   !
+   subroutine GIMME_val(i_int,it)
+     !
+     real(SP)    :: T_eval
+     integer     :: i_int,it
+     complex(SP) :: K(4),Y_RK(4)
+     !
+     Y_RK=0._SP
+     K   =0._SP
+     !
+     do n=1,RK_integrators( i_Selected_RK_int(i_int) )%N
+       !
+       Y_RK(n)=Y(i_int,it)
+       if (n>1) then
+         do m=1,n-1
+           Y_RK(n)=Y_RK(n)+dT_iter*RK_integrators( i_Selected_RK_int(i_int) )%a(n,m)*K(m)
+         enddo
+       endif
+       !
+       T_eval=Time(it)+RK_integrators( i_Selected_RK_int(i_int) )%c(n)*dT_iter
+       K(n) =-cI*S(T_eval)*Y_RK(n)
+       !
+     enddo
+     !
+     Y_trial=Y(i_int,it)
+     do n=1,RK_integrators( i_Selected_RK_int(i_int) )%N
+       Y_trial=Y_trial+RK_integrators( i_Selected_RK_int(i_int) )%b(n)*K(n)*dT_iter
+     enddo
+     !
+   end subroutine
    !
 end subroutine RT_Runge_Kutta_Fehlberg

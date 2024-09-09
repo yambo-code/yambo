@@ -77,7 +77,7 @@ subroutine OUTPUT_unit_conversion(Ivar,Rvar,DESC,KIND,PARSER_call)
    !
  else
    !
-   v_line  =DESC
+   v_line         =DESC
    var_is_time     =any((/trim(KIND)=="Time"/))
    var_is_B        =trim(KIND)=="Bfield"
    var_is_E        =trim(KIND)=="Efield"

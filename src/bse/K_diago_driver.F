@@ -252,8 +252,8 @@ subroutine K_diago_driver(iq,W,X_static)
        ! SL and diagonalize entire hamilitonian
        ! NM : BS_V_left are only referenced in non-hermitian case
        ! Note that in coupling case, if the user requested n values,
-       ! This means that the we compute the first n posive and n 
-       ! negative, making it a total of 2n.
+       ! This means that the we compute the first min(n,BS_H_dim/2) positive and 
+       ! min(n,BS_ham/2) negative eigvals and eigvectors, making it a total of 2*min(n,BS_ham/2)
        !
        if (.not. l_eval_range) then
          ! Use index range

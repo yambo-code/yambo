@@ -64,11 +64,11 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   !
   ! Local variables
   type(c_ptr)                        :: mpicxt, diago_mat, evecs
-  integer                            :: nProcs, my_rank, blacs_blk_size
+  integer                            :: nProcs, my_rank
   integer(YDIAGO_INT)                :: SL_H_dim, ProcX, ProcY, elpa_nthreads
   integer(ERROR_INT)                 :: error_diago ! diagonalization error code
-  integer                            :: ierr, i_c, i_r !! mpi error code 
-  integer(YDIAGO_INT)                :: neig_found
+  integer                            :: ierr !! mpi error code 
+  integer(YDIAGO_INT)                :: neig_found, i_c, i_r, blacs_blk_size 
   integer(YDIAGO_LL_INT)             :: nelements
   ! optional local vars with their defaults
   character                          :: solver_type_aux   = 's'
@@ -103,6 +103,14 @@ if (run_gpu) then
   call set_elpa_gpu_str(gpu_device_elpa)
   if (gpu_device_elpa(1:3) /= c_char_"not") then 
     gpu_str = c_loc(gpu_device_elpa)
+    ! NM: ELPA GPU for now does not support solver type =2, 
+    ! in this case we force the solver to be type=1 (i.e standard QR)
+    ! In future, if it works, we need to remove this.
+    ! See https://github.com/marekandreas/elpa/blob/master/src/elpa2/elpa2_template.F90#L1742
+    if (elpa_solver_aux .eq. 2) then 
+      call msg("s", 'Warning : ELPA Solver 2 is not GPU Ported. Switching to QR Solver.') 
+      elpa_solver_aux = 1
+    endif
   else 
     call msg("s", 'Warning : Ydiago not compiled with GPU. using CPU version')
     gpu_str = c_null_ptr
@@ -187,6 +195,7 @@ endif
     !
   endif
   !
+#if defined _ELPA
   if (solver_type_aux .eq. 'e') then
     !
     call section('=','ELPA Diagonalization')
@@ -196,6 +205,9 @@ endif
     call section('=','Scalapack Diagonalization')
     !
   endif
+#else 
+  call section('=','Scalapack Diagonalization')
+#endif
   !
   ! Call the solvers
   ! 

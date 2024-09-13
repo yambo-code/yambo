@@ -13,7 +13,7 @@ subroutine RT_driver(E,X,k,q,Dip)
 #if defined _PHEL
  use drivers,        ONLY:l_phel_scatt
 #endif
- use stderr,         ONLY:real2ch
+ use stderr,         ONLY:real2ch,STRING_same
  use LIVE_t,         ONLY:live_timing
  use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
  use X_m,            ONLY:X_t
@@ -32,7 +32,7 @@ subroutine RT_driver(E,X,k,q,Dip)
 &                         NE_steps,RT_step,G_lesser,RT_bands,&
 &                         NE_i_time,eval_energy,rho_reference,magn_reference,RT_nk, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_RT_is_WFfree,&
-&                         dG_lesser,NE_tot_time,&
+&                         dG_lesser,NE_tot_time,Integrator_name,&
 &                         i_MEM_prev,i_MEM_now,RT_is_dynamically_dephased,&
 &                         l_RT_update_Energies,l_NE_with_fields,l_update_SOC,l_velocity_gauge_corr
  use plasma,          ONLY:PLASMA_free,EH_gas
@@ -131,7 +131,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  call RT_apply(RT_bands,E,k,what="G",VERBOSE=.true.)
  !
- if (RT_step<0) call RT_Runge_Kutta_Fehlberg(E)
+ if (STRING_same(Integrator_name,"best")) call Runge_Kutta_optimization(E)
  !
  call section('=','Initialization')
  !#################################

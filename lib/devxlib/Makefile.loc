@@ -38,6 +38,7 @@ uncompress:
 
 configure: uncompress
 	@export BLAS_LIBS ; export LAPACK_LIBS
+	@export CUDA_LIBS ; export CUDA_INCS
 	@$(configure)
 
 compile: uncompress configure

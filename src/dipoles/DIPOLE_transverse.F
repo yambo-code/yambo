@@ -332,10 +332,13 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  if (l_use_comm) then
    call DIP_alloc("DIP_work")
-   YAMBO_FREE_GPU(DEV_VAR(kbv))
+   if (have_gpu) then
+     YAMBO_FREE_GPU(DEV_VAR(kbv))
+     YAMBO_FREE_GPU(XX)
+   else
+     YAMBO_FREE(XX)
+   endif
    YAMBO_FREE(DEV_VAR(kbv))
-   YAMBO_FREE_GPU(XX)
-   YAMBO_FREE(XX)
    YAMBO_FREE(pp_n_l_comp)
    YAMBO_FREE(pp_table)
    YAMBO_FREE(pp_kbv_table)

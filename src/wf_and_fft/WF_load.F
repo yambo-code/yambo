@@ -482,6 +482,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
        if (.not.buffer_is_ok) then
          YAMBO_FREE_GPU(DEV_VAR(wf_disk))
          YAMBO_FREE(wf_disk)
+         !
+         !DEV_ACC exit data delete(wf_disk)
+         !
        endif
        !
      enddo      ! i_b_grp
@@ -516,6 +519,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  YAMBO_FREE_GPU(DEV_VAR(wf_DP))
  YAMBO_FREE(wf_DP)
+ !
+ !DEV_ACC exit data delete(wf_DP)
+ !
 
  !
  ! The states_to_load is a temporary array that points to the states to be loaded

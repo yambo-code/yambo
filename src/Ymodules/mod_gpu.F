@@ -168,7 +168,7 @@ contains
 
   subroutine gpu_setup()
     implicit none
-    integer :: ndev,myid_host_loc
+    integer :: ndev,myid_host_loc,devtype
     integer :: ierr
     !
     gpu_subscription=1
@@ -184,13 +184,22 @@ contains
     !
     myid_host_loc=PAR_COM_HOST%CPU_id
     !
-#if defined _CUDA
+#if defined _CUDAF && defined _CUDA
     ierr = cudaGetDeviceCount( ndev )
     if (ierr/=0) call error("[GPU] cannot get DeviceCount")
     ierr = cudaSetDevice(mod(myid_host_loc, ndev))
     if (ierr/=0) call error("[GPU] cannot set device")
     ierr = cudaDeviceSynchronize()
     if (ierr/=0) call error("[GPU] cannot device-sync")
+#endif
+#if defined _OPENACC
+    devtype = acc_get_device_type()
+    ndev = acc_get_num_devices(devtype)
+    call acc_set_device_num(mod(myid_host_loc, ndev),devtype)
+# if defined _CUDA
+    ierr = cudaDeviceSynchronize()
+    if (ierr/=0) call error("[GPU] cannot device-sync")
+# endif
 #endif
 #if defined _HIP
     ierr = hipGetDeviceCount( ndev )
@@ -336,10 +345,14 @@ contains
 
   function gpu_GetDevice(i_dev) result(ierr)
     implicit none
-    integer :: ierr, i_dev
+    integer :: ierr, i_dev, devtype
     ierr = 0
-#if ( defined _CUDAF || defined  _OPNEACC ) && defined _CUDA
+#if defined _CUDAF && defined _CUDA
     ierr = cudaGetDevice(i_dev)
+#endif
+#if defined _OPENACC
+    devtype = acc_get_device_type()
+    i_dev = acc_get_device_num(devtype)
 #endif
 #if defined _OPENMP_GPU && defined _HIP
     ierr = hipGetDevice(i_dev)

@@ -79,12 +79,14 @@ subroutine Runge_Kutta_initialize()
  ! Rebuild Integrator Name(s)
  !===========================
  Integrator_name=RK_integrators(i_active_integrator)%short
- Integrator_slow_approx=""
- if (l_slow_TE) then
-   if (l_RT_EXP  ) Integrator_slow_approx = trim(Integrator_slow_approx)//" EXP"//trim(intc(Integrator_exp_order))
-   if (l_RT_INV  ) Integrator_slow_approx = trim(Integrator_slow_approx)//" INV"
-   if (l_RT_ACC  ) Integrator_slow_approx = trim(Integrator_slow_approx)//"+ACCURATE"
-   if (l_RT_DIAG ) Integrator_slow_approx = trim(Integrator_slow_approx)//"+DIAGO"
+ if (.not.STRING_match(Integrator_slow_approx,"no")) then
+   Integrator_slow_approx=""
+   if (l_slow_TE) then
+     if (l_RT_EXP  ) Integrator_slow_approx = trim(Integrator_slow_approx)//" EXP"//trim(intc(Integrator_exp_order))
+     if (l_RT_INV  ) Integrator_slow_approx = trim(Integrator_slow_approx)//" INV"
+     if (l_RT_ACC  ) Integrator_slow_approx = trim(Integrator_slow_approx)//"+ACCURATE"
+     if (l_RT_DIAG ) Integrator_slow_approx = trim(Integrator_slow_approx)//"+DIAGO"
+   endif
  endif
  !
  ! Copy the active integrator in the RT_integrator type

@@ -68,12 +68,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use stderr,        ONLY:intc
  use RT_occupations,ONLY:RT_RTA_temp,RT_RTA_chem
  use RT_lifetimes,  ONLY:RT_life_extrap_times_INPUT
- use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
+ use real_time,     ONLY:RT_step,Integrator_name, RAD_LifeTime, Phase_LifeTime, &
 &                        NE_tot_time,RT_bands,RT_eh_en,RT_scatt_tresh,Gr_kind, Integrator_slow_approx,     &
 &                        NE_MEM_treshold,NE_time_step_update_jump_INPUT,         &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
 &                        NE_initial_time_step_update,NE_step_update_treshold,    &
-&                        RT_MAX_step,RAD_magnification,  &
+&                        RT_MAX_step,RAD_magnification,RK_quest_treshold,  &
 &                        RT_deph_deg_thresh,RT_step_manual_prefactor,NE_time_step_update_manual
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
@@ -411,15 +411,16 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic QP_secant (HS)',Gr_kind,Verb_level=V_real_time)
  call it(defs,'RADLifeTime','[RT] Radiative life-time (if negative Yambo sets it equal to Phase_LifeTime in NL)', &
-&         RAD_LifeTime,unit=Time_unit(1))
+&                            RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
  call it(defs,'RADmagnific','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
- call it(defs,'PhLifeTime', '[RT] Constant Dephasing Time',Phase_LifeTime,unit=Time_unit(1))
+ call it(defs,'PhLifeTime', '[RT] Constant Dephasing Time',Phase_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
  call it(defs,'DephEThresh', '[RT] Threshold on the energy difference between two states to dephase them',&
-         &   RT_deph_deg_thresh,unit=E_unit,Verb_level=V_real_time)
+&                            RT_deph_deg_thresh,unit=E_unit,Verb_level=V_real_time)
  !
  ! Dynamics
  !
- call it(defs,'RTstep',      '[RT] Real Time step length',RT_step,unit=Time_unit(3))
+ call it(defs,'RTstep',      '[RT] Real Time step: >0 absolute, <0 used as seed for the Runge-Kutta optimization procedure.',&
+&                             RT_step,unit=Time_unit(3))
  call it(defs,'NETime',      '[RT] Simulation Time',NE_tot_time,unit=Time_unit(2))
  call it(defs,'dTupdateTimeSet','[RT] Time for manual deltaT update',NE_time_step_update_manual,&
 &                            unit=Time_unit(1),verb_level=V_real_time)
@@ -428,11 +429,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'dTupdateJump','[RT] Time betweem two deltaT updates',  NE_time_step_update_jump_INPUT,&
 &                            unit=Time_unit(1),verb_level=V_real_time)
  call it(defs,'dTupdateTresh','[RT][o/o] Treshold of deltaT updates',  NE_step_update_treshold ,verb_level=V_real_time)
+ call it(defs,'RKquestTresh','[RT][o/oo] Treshold used to identify the best dT/integrator',RK_quest_treshold,verb_level=V_real_time)
  call it(defs,'dT_MAX',      '[RT] Maximum value for the time-dependent dT',  RT_MAX_step ,verb_level=V_real_time,unit=Time_unit(1))
  call it(defs,'dT_SET',      '[RT] Prefactor for manual dT update',  RT_step_manual_prefactor,verb_level=V_real_time)
- call it(defs,'Integrator',  '[RT] Time-evolution (TE) integrator: "EULER", "RK2/RK4", "HEUN"',Integrator_name)
+ call it(defs,'Integrator',  '[RT] Time-evolution RK integrator: "EULER/EMP/RK2/RK3/H3/RK42/RK41/best"',Integrator_name)
  call it(defs,'SlowDynamics','[RT] Slow-TE approximations: "EXPn" (n<=6), "EXP" (n=3), "INV+ACC", "EXP+ACC", "INV+DIAG"',&
-&        Integrator_slow_approx,verb_level=V_real_time)
+&                             Integrator_slow_approx,verb_level=V_real_time)
  call it('f',defs,'LinearRegime','[RT] Adopt specific tricks in the EULER case assuming the linear-regime',verb_level=V_real_time)
  !
  IO_times=(/CARR_RT_IO_t%INTERVAL_time_INPUT,Gless_RESTART_RT_IO_t%INTERVAL_time_INPUT,OUTPUT_RT_IO_t%INTERVAL_time_INPUT/)

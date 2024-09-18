@@ -131,7 +131,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  call RT_apply(RT_bands,E,k,what="G",VERBOSE=.true.)
  !
- if (STRING_same(Integrator_name,"best")) call Runge_Kutta_optimization(E)
+ if (RT_step<0._SP.or.STRING_same(Integrator_name,"best")) call Runge_Kutta_step_and_order_estimation(E)
  !
  call section('=','Initialization')
  !#################################

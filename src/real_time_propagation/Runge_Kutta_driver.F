@@ -75,7 +75,7 @@ subroutine Runge_Kutta_driver(G_tpdt,dG_tpdt,dG_t,A_tpdt,A_t,E,k,q)
        !
        call timing('RT integrator',OPR='stop')
        !
-       ! dG_n => New Hamiltonian@(t+c_n dt) Eq. 11b of Overleaf Notes ( in the SB)
+       ! dG_n => New Hamiltonian@(t+c_n dt) Eq. 11b of Overleaf Notes (in the SB)
        !---------------------------------------------------------------------------
        !
        ! ... E_ext(t+c*dt) (needed by RT_Hamiltonian)
@@ -111,6 +111,7 @@ subroutine Runge_Kutta_driver(G_tpdt,dG_tpdt,dG_t,A_tpdt,A_t,E,k,q)
  eval_T=NE_time+RT_dyn_step
  !
  do ik=1,RT_nk
+   !
    if( .not.PAR_IND_Xk_ibz%element_1D(RTibz%k_map(ik)) ) cycle
    !
    ! The following step(s) are in the RF
@@ -121,9 +122,11 @@ subroutine Runge_Kutta_driver(G_tpdt,dG_tpdt,dG_t,A_tpdt,A_t,E,k,q)
    enddo
    !
    ! Final rotation and sum in the SB
-   !-------------------------------------------
+   !----------------------------------
    dG_tpdt(:,:,ik)=dG_tpdt(:,:,ik)*exp(-cI*H_RF(:,:,ik,1)*eval_T)
    G_tpdt(:,:,ik) =G_lesser_reference(:,:,ik)+dG_tpdt(:,:,ik)
+   !
+   call RT_G_symmetrization(ik,G_tpdt)
    !
  enddo
  !

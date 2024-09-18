@@ -224,6 +224,7 @@ module real_time
  integer, parameter     :: N_RK_integrators=7
  type(RK_integrator_t)  :: RK_integrators(N_RK_integrators)
  type(RK_integrator_t)  :: RK_integrator
+ real(SP)               :: RK_quest_treshold=1._SP
  !
  ! ... Slowly varying dynamics
  logical  :: l_slow_TE=.FALSE. ! Slow time-evolution => INV/EXPn/LINEAR_RESP approximations
@@ -238,12 +239,6 @@ module real_time
  !
  ! ... INV related
  logical  :: l_RT_DIAG=.FALSE. ! Used in INV (RT_INV_step_diago)
- !
- !
- ! ... Coefficients in the implicit/explicit propagation procedure
- real(SP) :: a_tableau(4)
- real(SP) :: b_tableau(4)
- real(SP) :: c_tableau(4)
  !
  ! ... names (referring to RKn) and approximation (Physics based)
  character(schlen)            :: Integrator_name
@@ -368,6 +363,7 @@ module real_time
      I%short=short
      I%name=name
      I%N=N
+     if (allocated(I%a)) return
      YAMBO_ALLOC(I%a,(I%N,I%N))
      YAMBO_ALLOC(I%b,(I%N))
      YAMBO_ALLOC(I%c,(I%N))

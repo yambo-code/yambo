@@ -604,7 +604,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NE_time_step_update_jump_INPUT  = 0._SP
  NE_initial_time_step_update    = 0._SP
  NE_step_update_treshold        = 0.1_SP
- NE_time_step_update_manual     =-1.0_SP
+ NE_time_step_update_manual     =-1.0_SP*FS2AUT
  !
  CACHE_OBS_steps      = 0
  CACHE_OBS_steps_now  = 0
@@ -624,7 +624,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  RAD_LifeTime = -1._SP*FS2AUT  ! Automatic set equal to the dephasing
 #endif
  Phase_LifeTime = 0._SP
- RT_deph_deg_thresh = 1.E-5_SP
+ RT_deph_deg_thresh = 1.E-5_SP/HA2EV
  RT_deph_cv_only =.FALSE.
  !
  NE_MEM_treshold=0._SP

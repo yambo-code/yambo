@@ -532,7 +532,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'RTBands Integrator SlowDynamics LinearRegime GrKind TwoAlph RTehEny ScattTresh')
    call initactivate(1,'RADLifeTime RADmagnific PhLifeTime DephCVonly DephEThresh DephTRange')
-   call initactivate(1,'RTstep NEsteps NETime DipoleEtresh SPINprojected')
+   call initactivate(1,'RTstep RKquestTresh NEsteps NETime DipoleEtresh SPINprojected')
    call initactivate(1,'IOtime IOCachetime')
    !
    ! n_ext_fields is by default 0.  It is set to the input number of fields when a command line option is provided (below in init.F)

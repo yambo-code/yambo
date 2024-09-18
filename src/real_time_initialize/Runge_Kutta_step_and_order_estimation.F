@@ -188,7 +188,7 @@ subroutine Runge_Kutta_step_and_order_estimation(E)
  !-----------
  !
  ! ... CHECK file
- string="Runge_Kutta_optimization"
+ string="RK_dT_and_order_estimation"
  call  OUTPUT_driver(trim(string),action="open")
  n=nint(NE_tot_time/RT_step)
  do it=1,N_steps+1 

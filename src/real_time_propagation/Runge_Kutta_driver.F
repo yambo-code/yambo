@@ -57,8 +57,8 @@ subroutine Runge_Kutta_driver(G_tpdt,dG_tpdt,dG_t,A_tpdt,A_t,E,k,q)
      !
      if (i_step>1) then
        !
-       ! K_m (m<n) => dG_n, Eq. 11a of Overleaf Notes (in the RF)
-       !---------------------------------------------
+       ! K_m (m<n) => dG_n (in the RF)
+       !-------------------------------
        do j_step=1,i_step-1
          RK_dG(:,:,ik,i_step)=RK_dG(:,:,ik,i_step)+RK_integrator%a(i_step,j_step)*RK_kernel(:,:,ik,j_step)*RT_dyn_step ! RF
        enddo
@@ -92,8 +92,8 @@ subroutine Runge_Kutta_driver(G_tpdt,dG_tpdt,dG_t,A_tpdt,A_t,E,k,q)
      !
      if( .not.PAR_IND_Xk_ibz%element_1D(RTibz%k_map(ik)) ) cycle
      !
-     ! K_n, Eq. 11b of Overleaf Notes ( in the SB)
-     !--------------------------------
+     ! K_n (in the SB)
+     !-----------------
      call Runge_Kutta_kernel(ik,RK_dG(:,:,ik,i_step),RK_kernel(:,:,ik,i_step))
      !
      ! K_n must be rotated in the RF
@@ -107,7 +107,7 @@ subroutine Runge_Kutta_driver(G_tpdt,dG_tpdt,dG_t,A_tpdt,A_t,E,k,q)
  ! Final t -> t+dt step ...
  !==========================
  !
- ! ... G_lesser(t+dt) (Eq. 10)
+ ! ... G_lesser(t+dt)
  eval_T=NE_time+RT_dyn_step
  !
  do ik=1,RT_nk

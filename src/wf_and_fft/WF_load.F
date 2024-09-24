@@ -561,12 +561,12 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  mndp=10._SP
  mxdp=-1._SP
- N=size(WF%c(:,:,WF%index(1,1,1)))
  do ib1=1,min(int(nel)+5,WF%b(2))
    do ib2=1,min(int(nel)+5,WF%b(2))
      !
      if ( WF%index(ib1,1,1)==0 .or. WF%index(ib2,1,1)==0 ) cycle
      !
+     N=size(WF%c(:,:,WF%index(ib1,1,1)))
      c=Vstar_dot_V( N, WF%c(:,:,WF%index(ib1,1,1) ) , WF%c(:,:,WF%index(ib2,1,1)) )
      !
      if (abs(c)>mxdp) mxdp=abs(c)

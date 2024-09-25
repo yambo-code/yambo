@@ -70,11 +70,11 @@ testprog="AC_LANG_PROGRAM([],[
     integer :: i
 ])"
 
-FCFLAGS="$GPU_FLAGS $LIBCUDA_INCS $DEVXLIB_INCS $acx_devxlib_save_FCFLAGS"
+FCFLAGS="$GPU_FLAGS $LIBCUDA_INCS $LIBROCM_INCS $DEVXLIB_INCS $acx_devxlib_save_FCFLAGS"
 
 # set from environment variable, if not blank
 if test ! -z "$DEVXLIB_LIBS"; then
-  LIBS="$DEVXLIB_LIBS $LIBCUDA_LIBS"
+  LIBS="$DEVXLIB_LIBS $LIBCUDA_LIBS $LIBROCM_LIBS"
 dnl $acx_devxlib_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_devxlib_ok=yes], [])
 fi
@@ -82,7 +82,7 @@ fi
 # set from --with-devxlib-libs flag
 if test x"$acx_devxlib_ok" = xno && test ! -z "$with_devxlib_libs" ; then
   DEVXLIB_LIBS="$with_devxlib_libs"
-  LIBS="$DEVXLIB_LIBS $LIBCUDA_LIBS"
+  LIBS="$DEVXLIB_LIBS $LIBCUDA_LIBS $LIBROCM_LIBS"
 dnl $acx_devxlib_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_devxlib_ok=yes], [])
 fi
@@ -90,7 +90,7 @@ fi
 # dynamic linkage, separate Fortran interface
 if test x"$acx_devxlib_ok" = xno; then
   DEVXLIB_LIBS="-L$devxlib_libdir -ldevXlib"
-  LIBS="$DEVXLIB_LIBS $LIBCUDA_LIBS"
+  LIBS="$DEVXLIB_LIBS $LIBCUDA_LIBS $LIBROCM_LIBS"
 dnl $acx_devxlib_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_devxlib_ok=yes], [])
 fi
@@ -98,7 +98,7 @@ fi
 # static linkage, separate Fortran interface
 if test x"$acx_devxlib_ok" = xno; then
   DEVXLIB_LIBS="$devxlib_libdir/libdevXlib.a"
-  LIBS="$DEVXLIB_LIBS $LIBCUDA_LIBS"
+  LIBS="$DEVXLIB_LIBS $LIBCUDA_LIBS $LIBROCM_LIBS"
 dnl $acx_devxlib_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_devxlib_ok=yes], [])
 fi
@@ -106,7 +106,7 @@ fi
 # static linkage, combined Fortran interface (devxlib pre-r10730)
 if test x"$acx_devxlib_ok" = xno; then
   DEVXLIB_LIBS="$devxlib_libdir/libdevXlib.a"
-  LIBS="$DEVXLIB_LIBS $LIBCUDA_LIBS"
+  LIBS="$DEVXLIB_LIBS $LIBCUDA_LIBS $LIBROCM_LIBS"
 dnl $acx_devxlib_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_devxlib_ok=yes], [])
 fi
@@ -114,7 +114,7 @@ fi
 # dynamic linkage, combined Fortran interface (devxlib pre-r10730)
 if test x"$acx_devxlib_ok" = xno; then
   DEVXLIB_LIBS="-L$devxlib_libdir -ldevXlib"
-  LIBS="$DEVXLIB_LIBS $LIBCUDA_LIBS"
+  LIBS="$DEVXLIB_LIBS $LIBCUDA_LIBS $LIBROCM_LIBS"
 dnl $acx_devxlib_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_devxlib_ok=yes], [])
 fi

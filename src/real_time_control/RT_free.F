@@ -43,7 +43,7 @@ subroutine RT_free( )
  !
  YAMBO_FREE(DbGd_EE_scatt_table)
  YAMBO_FREE(E_xc)
- YAMBO_FREE(RT_TIME_status)
+ !AMBO_FREE(RT_TIME_status)
  YAMBO_FREE(REF_V_xc_sc)
  !
  YAMBO_FREE(REF_V_hartree_sc)

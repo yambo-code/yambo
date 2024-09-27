@@ -12,7 +12,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  !
  use BS,             ONLY:BS_H_dim, BS_nT_grps,BS_res_ares_n_mat,BS_K_coupling,&
 &                         BS_Blocks_symmetrize_K,l_BS_ares_from_res
- use BS_solvers,     ONLY:BSS_kernel_IO_on_the_fly
+ use BS_solvers,     ONLY:BSS_kernel_IO_on_the_fly,BSS_slepc_pseudo_herm
  !
  !      | (K_r)     (cI*K_c)    |  
  !  K = |                       |
@@ -67,7 +67,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  ! to avoid the scattering vi (distributed) -> x (local) in K_multiply_by_V_slepc
  !
  if(BS_K_coupling) then
-   if (l_BS_ares_from_res) then
+   if (BSS_slepc_pseudo_herm) then
      call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,slepc_mat_R,ierr)
      call MatSetOption(slepc_mat_R,MAT_HERMITIAN,PETSC_TRUE,ierr)
      call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,slepc_mat_C,ierr)

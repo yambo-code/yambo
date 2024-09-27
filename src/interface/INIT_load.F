@@ -331,7 +331,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSSSlepcNCV',   '[SLEPC] Dimension of the subspace',BSS_slepc_ncv,verb_level=V_resp)
  call it(defs,'BSSSlepcMPD',   '[SLEPC] Maximum allowed dimention',BSS_slepc_mpd,verb_level=V_resp)
  call it(defs,'BSSSlepcTol',   '[SLEPC] Tolerance for the iterative solver',BSS_slepc_tol,verb_level=V_resp)
- call it(defs,'BSSSlepcMatrixFormat','[SLEPC] Matrix type (shell|explicit|explicit-debug)',&
+ call it(defs,'BSSSlepcMatrixFormat','[SLEPC] Matrix type (shell|explicit)',&
  &                                                BSS_slepc_matrix_format,verb_level=V_resp)
 #endif
 #if !defined _SC

@@ -197,15 +197,13 @@ module fields
      do i_field=1,n_fields
        do i_fr=1,max(1,E_field%n_frequencies)
          !
+         W_field=field_frequency(E_field,i_fr)
+         W_field_m1=1._SP/W_field
+         WtimesT=W_field*(T-T_0)+fr_shift(i_field)
+         !
          if (envelop_only_) then
-           W_field=0._SP
-           W_field_m1=0._SP
-           WtimesT=fr_shift(i_field)
            f0t=cONE ; f1t=cONE
          else
-           W_field=field_frequency(E_field,i_fr)
-           W_field_m1=1._SP/W_field
-           WtimesT=W_field*(T-T_0)+fr_shift(i_field)
            cos_wt=cos(WtimesT) ; sin_wt=sin(WtimesT); exp_iwt=cos_wt+cI*sin_wt
            f0t=cmplx(cos_wt,0._SP) ; f1t=cmplx(sin_wt,0._SP)
            if(trim(field_defs(2))=="ANTIRES")     then ; f0t= 0.5_SP*      exp_iwt  ; f1t=-cI*0.5_SP*      exp_iwt   ; endif
@@ -290,6 +288,7 @@ module fields
            if (order==2 ) f_now=(-W_field*f1t-f1t/sigma**2                           &
                           &             -W_field*(T-T_0)*f1t/sigma**2                    &
                           &             -(T-T_0)*(W_field*f0t-(T-T_0)*f1t/sigma**2)/sigma**2)*EXPf
+	   f_now=f_now/W_field
            !
          case('PULSE')
            if(abs((T-T_0))< sigma) then

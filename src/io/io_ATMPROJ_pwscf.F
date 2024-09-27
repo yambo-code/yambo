@@ -18,7 +18,7 @@ integer function io_ATMPROJ_pwscf(ID)
 &                           io_header,io_fragment
  use timing_m,       ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,intent(in) :: ID
  ! 

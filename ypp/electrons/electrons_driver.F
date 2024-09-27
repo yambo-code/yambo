@@ -22,7 +22,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use interpolate,    ONLY:INTERP_mode
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) ::Xk,Xq
  type(levels)  ::Xen

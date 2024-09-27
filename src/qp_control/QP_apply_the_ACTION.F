@@ -14,7 +14,7 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
  use R_lattice,     ONLY:bz_samp
  use QP_CTL_m,      ONLY:QP_action,QP_ctl_xc_STRING,At_least_one_band_corrected
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)    ::E
  type(bz_samp)   ::k

@@ -15,7 +15,7 @@ subroutine X_ALLOC_global(WHAT,W)
  use BS_solvers,    ONLY:B_Hall
  use PHOTOLUM,      ONLY:PL,PL_init
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*)   :: WHAT
  type(w_samp)   :: W

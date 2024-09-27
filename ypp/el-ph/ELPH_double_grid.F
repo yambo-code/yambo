@@ -20,7 +20,7 @@ subroutine ELPH_double_grid(k,E,q)
  use IO_m,                ONLY:OP_RD_CL,REP,DUMP,OP_WR_CL
  use parser_m,            ONLY:parser
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) ::k,q
  type(levels)  ::E

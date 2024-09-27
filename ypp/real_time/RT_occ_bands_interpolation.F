@@ -24,7 +24,7 @@ subroutine RT_occ_bands_interpolation(en,k,q,n_T_steps)
 &                         INTERP_obj,INTERP_mode,GRID_k
  use LIVE_t,         ONLY:live_timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,       intent(in)    :: n_T_steps
  type(bz_samp), intent(in)    :: k,q

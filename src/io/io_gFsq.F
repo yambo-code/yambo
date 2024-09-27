@@ -19,7 +19,7 @@ integer function io_gFsq(ID)
  use parallel_m,     ONLY:PAR_Q_bz_index
  use timing_m,       ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer      ::ID
  !

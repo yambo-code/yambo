@@ -26,7 +26,7 @@ integer function io_BS(iq,X,ID)
  use descriptors,   ONLY:IO_desc,IO_desc_reset,IO_desc_duplicate
  use timing_m,      ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(X_t):: X 
  integer  :: iq,ID

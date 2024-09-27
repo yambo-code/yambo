@@ -16,7 +16,7 @@ subroutine RT_OBSERVABLES_IO(what,Curr,Pol,IO_error,first_sec_only,G_lesser_only
  use real_time,      ONLY:NE_steps,NE_i_time,G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*)           :: what
  type(OBS_el), optional :: Curr,Pol

@@ -27,7 +27,7 @@ subroutine K_blocks( )
 &                       BS_n_eh_spaces,BS_res_ares_n_mat,BS_IO_dim,l_BS_ares_from_res
  use com,          ONLY:msg
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! YAMBO_PAR_ALLOC
  !
@@ -163,7 +163,7 @@ subroutine K_block_alloc( iB )
  use pars,         ONLY:SP,cZERO
  use BS,           ONLY:BS_blk
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer, intent(in) :: iB
  !
@@ -188,7 +188,7 @@ subroutine K_block_free( iB )
  !
  use BS,           ONLY:BS_blk
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer, intent(in) :: iB
  !

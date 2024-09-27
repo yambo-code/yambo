@@ -28,7 +28,7 @@ function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
  use wrapper_omp,    ONLY:V_dot_V_omp
  use electrons,      ONLY:n_spinor,n_sp_pol,n_spin
  use timing_m,       ONLY:timing
- !use interfaces,     ONLY:WF_apply_symm
+ use interfaces,     ONLY:WF_apply_symm
  use TDDFT,          ONLY:tddft_wf_t
  !
  implicit none
@@ -64,8 +64,9 @@ function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
  !
  ! Use pointers both for CUDA and to avoid continuous allocation and de-allocation
  !
- call WF_apply_symm_cpu(is,WF_symm1_p)
- call WF_apply_symm_cpu(os,WF_symm2_p)
+ !
+ call WF_apply_symm(is,WF_symm1_p)
+ call WF_apply_symm(os,WF_symm2_p)
  !
  if(n_spinor==1) rhotwr1_p(:)=conjg(WF_symm1_p(:,1))*WF_symm2_p(:,1)
  !
@@ -89,8 +90,8 @@ function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
    osp_loc=(/isp(1),osp(2),osp(3),isp(4)/)
  endif
  !
- call WF_apply_symm_cpu(isp_loc,WF_symm1_p)
- call WF_apply_symm_cpu(osp_loc,WF_symm2_p)
+ call WF_apply_symm(isp_loc,WF_symm1_p)
+ call WF_apply_symm(osp_loc,WF_symm2_p)
  !
  if( n_spin==1 ) then
    rhotwr2_p(:)=F_xc_mat(:,1,1,1,1)*WF_symm1_p(:,1)*conjg(WF_symm2_p(:,1))

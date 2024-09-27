@@ -18,7 +18,7 @@ subroutine TDDFT_ALDA_G_space(E,k)
  use global_XC,     ONLY:WF_xc_functional,WF_kind
  use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ::E
  type(bz_samp)::k

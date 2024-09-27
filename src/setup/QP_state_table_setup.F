@@ -33,7 +33,7 @@ subroutine QP_state_table_setup(en)
  use SC,            ONLY:l_SC_diagonal
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  type(levels)::en
  !
  ! Work Space

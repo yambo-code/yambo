@@ -45,7 +45,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  use units,           ONLY:FS2AUT
  use RT_lifetimes,    ONLY:l_initial_equilibrium
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Notice that E is never changed!
  !

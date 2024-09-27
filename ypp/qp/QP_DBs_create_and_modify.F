@@ -16,7 +16,7 @@ subroutine QP_DBs_create_and_modify(en,k)
  use R_lattice,     ONLY:bz_samp
  use YPPm,          ONLY:QP_user_corrections
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels), intent(in) :: en
  type(bz_samp),intent(in) :: k

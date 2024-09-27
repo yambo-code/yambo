@@ -31,6 +31,7 @@ subroutine INIT_activate()
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
+ use drivers,        ONLY:l_gpu_test
  !
  implicit none
  !
@@ -85,6 +86,11 @@ subroutine INIT_activate()
    call CPU_activate("SLK")
  endif
 #endif
+ !
+ if (l_gpu_test) then
+   call initactivate(1,"GPUdim")
+   !call CPU_activate("SLK")
+ endif
  !
 #if defined _SC
  if (l_eval_collisions .or. l_sc_run) then

@@ -33,7 +33,7 @@ subroutine NL_initialize(E,k)
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels), intent(in) :: E
  type(bz_samp),intent(in) :: k

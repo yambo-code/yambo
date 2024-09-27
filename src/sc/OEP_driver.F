@@ -34,7 +34,7 @@ subroutine OEP_driver(X,Xw,E,k,q,V_oep)
  use SC,              ONLY:it_now,l_oep_iterative,l_oep_EWeight 
  use frequency,       ONLY:w_samp
  !
-#include<memory.h>
+#include<y_memory.h>
  real(SP),intent(inout)  :: V_oep(fft_size)
  type(X_t),intent(in)    :: X(2)  
  type(w_samp),intent(in) :: Xw

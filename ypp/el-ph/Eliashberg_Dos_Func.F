@@ -13,7 +13,7 @@ real(SP) function Eliashberg_Dos_Func(iq,im,ph_en, ph_broad, PH_E, q)
  use functions,           ONLY:Fermi_fnc_derivative
  use ELPH,                ONLY:PH_freqs_sq,use_PH_DbGd
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,      intent(in) :: iq,im
  real(SP),     intent(in) :: ph_en,ph_broad

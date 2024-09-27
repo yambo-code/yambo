@@ -42,7 +42,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  !
  ! I/O
  !
-#include<memory.h>
+#include<y_memory.h>
  complex(SP),intent(inout)  :: U_csx(nkibz,maxval(n_met_bands),fft_size)
  type(levels), intent(in)   :: E
  type(bz_samp), intent(in)  :: k,q

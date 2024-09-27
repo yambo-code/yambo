@@ -12,7 +12,7 @@ subroutine QP_load_GFs(bands,qp,E)
  use electrons,     ONLY:n_sp_pol,spin,levels
  use QP_m,          ONLY:QP_t,GF_is_causal
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ::E
  type(QP_t)   ::qp

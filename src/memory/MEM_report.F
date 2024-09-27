@@ -8,7 +8,7 @@
 subroutine MEM_report( REPORT )
  !
  use pars,         ONLY:lchlen
- use memory,       ONLY:MEMs,N_MEM_elements,mem_string,MEM_element,MAX_MEM_Kb,N_MEM_SAVE_elements,&
+ use y_memory,       ONLY:MEMs,N_MEM_elements,mem_string,MEM_element,MAX_MEM_Kb,N_MEM_SAVE_elements,&
 &                       LARGE_MEMs,MEM_treshold,MEM_SAVE_treshold,HOST_,DEV_
  use units,        ONLY:Kilobyte
  use com,          ONLY:msg,fat_log
@@ -61,7 +61,7 @@ subroutine MEM_report( REPORT )
    enddo
  endif
  !
-#ifdef _CUDA
+#ifdef _GPU
  write(msg_,'(a8,a," : ",a,3x)') trim(PREFIX),  "Max memory used (HOST) ",trim(mem_string(MAX_MEM_Kb(HOST_)))
  call msg("nr",msg_(1:len_trim(msg_)))
  write(msg_,'(a8,a," : ",a,3x)') trim(PREFIX),  "Max memory used (DEV)  ",trim(mem_string(MAX_MEM_Kb(DEV_)))

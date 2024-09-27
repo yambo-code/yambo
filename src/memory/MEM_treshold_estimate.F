@@ -12,7 +12,7 @@ subroutine MEM_treshold_estimate( )
  use electrons,    ONLY:n_spin,n_bands
  use R_lattice,    ONLY:nkibz
  use wave_func,    ONLY:wf_ng
- use memory,       ONLY:MEM_treshold
+ use y_memory,       ONLY:MEM_treshold
  !
  implicit none
  !

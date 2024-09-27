@@ -32,7 +32,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
 &                         XC_LDA_X,XC_CORRELATION,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::Xen,En
  type(bz_samp) ::Xk,q,k

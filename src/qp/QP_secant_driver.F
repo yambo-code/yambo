@@ -48,7 +48,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use IO_m,          ONLY:NONE,RD,RD_CL,OP_RD,OP_RD_CL,io_SCREEN
  use stderr,        ONLY:intc
  !
-#include<memory.h>
+#include<y_memory.h>
  type(levels)::en,Xen
  type(bz_samp)::Xk,k,q
  type(X_t):: X

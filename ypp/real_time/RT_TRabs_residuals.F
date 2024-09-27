@@ -19,7 +19,7 @@ subroutine RT_TRabs_residuals(what,N_trans,N_dirs,DIP_dir,Xen,Xk,nb,l_EQ)
  use real_time,       ONLY:RT_bands
  use parallel_m,      ONLY:PAR_IND_DIPk_ibz,PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_DIP
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*)      :: what
  integer           :: N_trans,nb(2),N_dirs

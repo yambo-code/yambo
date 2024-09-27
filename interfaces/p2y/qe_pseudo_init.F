@@ -31,7 +31,7 @@ subroutine qe_pseudo_init()
  !
  use matrix_inversion,  ONLY: invmat
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  real(DP), parameter :: Ha2Ry=2.0_DP
  character(14)       :: subname="qe_pseudo_init"

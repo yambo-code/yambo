@@ -20,7 +20,7 @@ function Eval_Efermi_DbGd(k,q,en)
  use interfaces,    ONLY:OCCUPATIONS_Fermi
  use com,           ONLY:msg
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(in)  :: q,k
  type(levels) :: en

@@ -15,7 +15,7 @@ subroutine QP_load_DB(i_ACTION,bands,en,k)
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,DUMP,REP
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)    ::en
  type(bz_samp)   ::k

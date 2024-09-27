@@ -14,7 +14,7 @@ subroutine COLLISIONS_compress(COLL)
  use collision_ext,   ONLY:COLLISIONS_element,COLL_bands,COLLISIONS_cutoff
  use R_lattice,       ONLY:nXkibz
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(COLLISIONS_element), intent(inout) :: COLL
  !

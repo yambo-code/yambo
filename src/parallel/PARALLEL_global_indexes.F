@@ -27,7 +27,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
  use R_lattice,     ONLY:bz_samp
  use pars,          ONLY:SP
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)               ::E
  type(bz_samp)              ::Xk,q

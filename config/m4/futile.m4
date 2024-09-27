@@ -15,7 +15,6 @@ AC_ARG_WITH(yaml_libdir, AS_HELP_STRING([--with-yaml-libdir=<path>],[Path to the
 AC_ARG_WITH(yaml_includedir, AS_HELP_STRING([--with-yaml-includedir=<path>],[Path to the FUTILE include directory],[32]),[],[])
 
 
-
 AC_ARG_WITH(futile_libs, AS_HELP_STRING([--with-futile-libs=<libs>],[Use the FUTILE library in <libs>],[32]),[],[])
 AC_ARG_WITH(futile_libdir, AS_HELP_STRING([--with-futile-libdir=<path>],[Path to the FUTILE lib directory],[32]))
 AC_ARG_WITH(futile_libdir, AS_HELP_STRING([--with-futile-libdir=<path>],[Path to the FUTILE lib directory],[32]))

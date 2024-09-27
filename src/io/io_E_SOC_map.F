@@ -12,7 +12,7 @@ integer function io_E_SOC_map(En,kpt,ID)
  use IO_m,           ONLY:read_is_on,write_is_on,file_is_present
  use IO_int,         ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) :: En
  type(bz_samp):: kpt

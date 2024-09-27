@@ -15,7 +15,7 @@ subroutine QP_state_print(qp)
  use stderr,        ONLY:intc
  use descriptors,   ONLY:IO_desc_add
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(QP_t), optional :: qp    
  !

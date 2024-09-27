@@ -45,8 +45,10 @@
 
 #if defined _OPENACC
 #  define DEV_ACC $acc
+#  define DEV_ACC_DEBUG $acc
 #else
 #  define DEV_ACC !!!!
+#  define DEV_ACC_DEBUG !!!!
 #endif
 
 #if defined _CUDAF

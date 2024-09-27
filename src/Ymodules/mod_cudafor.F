@@ -104,7 +104,7 @@ public :: cudaGetDevice
 
 !Start types
 
-#if !defined _OPENACC
+#if !defined _OPENACC  || !defined _PGI
 !Start c_devptr
 type, bind(c) :: c_devptr
 type(c_ptr) :: member

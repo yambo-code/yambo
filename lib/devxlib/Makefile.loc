@@ -18,8 +18,6 @@ include ../config/external_libs_defs.mk
 #
 # Flags
 #
-CUDA_LIBS="$(lcudalib)"
-CUDA_INCS="$(icudalib)"
 BLAS_LIBS="$(lblas)"
 LAPACK_LIBS="$(llapack)"
 CONFFLAGS=--prefix=$(LIBPATH) $(devxlib_flgs) \
@@ -37,7 +35,8 @@ uncompress:
 	@touch uncompressed.stamp
 
 configure: uncompress
-	@export BLAS_LIBS ; export LAPACK_LIBS
+	@export BLAS_LIBS="$(lblas)"    ; export LAPACK_LIBS="$(llapack)"
+	@export CUDA_LIBS="$(lcudalib)" ; export CUDA_INCS="$(icudalib)"
 	@$(configure)
 
 compile: uncompress configure

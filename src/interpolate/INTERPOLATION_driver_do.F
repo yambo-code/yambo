@@ -28,7 +28,7 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,FineGrid)
 &                               l_integral_respect,OUT_k_nk
  use IO_int,               ONLY:IO_and_Messaging_switch
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*),  intent(in)              :: operation
  integer,       intent(in)              :: ID

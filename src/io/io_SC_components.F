@@ -23,7 +23,7 @@ integer function io_SC_components(what,E_sc,ID)
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:levels,n_sp_pol,n_spin
  use timing_m,      ONLY:timing
-#include<memory.h>
+#include<y_memory.h>
  !
  integer, intent(in)      :: ID
  type(levels)             :: E_sc

@@ -16,7 +16,7 @@ subroutine io_RT_components_OBS(ID,what)
  use RT_control,  ONLY:J_cache,P_cache,Ms_cache,Ml_cache,A_cache,&
 &                      CACHE_OBS_steps_now,OBS_RT_IO_t,RT_do_IO
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,      intent(in) :: ID
  character(*), intent(in) :: what

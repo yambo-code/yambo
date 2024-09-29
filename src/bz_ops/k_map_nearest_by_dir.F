@@ -14,7 +14,7 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  use com,            ONLY:msg
  use pars,           ONLY:zero_dfl
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_map), intent(inout) :: k_map
  type(bz_samp),intent(inout) :: Xk

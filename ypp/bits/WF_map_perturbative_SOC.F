@@ -25,7 +25,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  use LIVE_t,              ONLY:live_timing
  use interfaces,          ONLY:io_DB1_selective_scan
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(in)    :: kpt
  type(levels),  intent(inout) :: En

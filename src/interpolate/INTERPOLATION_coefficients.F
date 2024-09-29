@@ -17,7 +17,7 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  use interpolate,       ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells,INTERP_FineGd
  use interpolate_tools, ONLY:get_ID
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(in)           :: k
  real(SP),      intent(in), optional :: R1D(:,:),R2D(:,:,:)

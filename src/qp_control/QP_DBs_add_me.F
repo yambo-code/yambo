@@ -13,7 +13,7 @@ subroutine QP_DBs_add_me(qp_base,qp2add,plan_EWZG,SAME_states,SAME_desc,OP,PRE_F
  use QP_m,           ONLY:QP_t,QP_reset,QP_copy,QP_alloc
  use electrons,      ONLY:n_sp_pol
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(QP_t)         ::qp_base,qp2add
  logical            ::plan_EWZG(4),SAME_states,SAME_desc

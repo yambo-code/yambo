@@ -14,7 +14,7 @@ subroutine K_diagonal(iq,what)
  use SLK_m,          ONLY:SLK_POOL
  use parallel_int,   ONLY:PP_redux_wait
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,       intent(in) :: iq
  character(*)              :: what

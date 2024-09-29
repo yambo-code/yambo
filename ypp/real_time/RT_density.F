@@ -27,7 +27,7 @@ subroutine RT_density(en,kpt,qpt)
  use wave_func,      ONLY:WF,wf_ng
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  :: en
  type(bz_samp) :: kpt,qpt

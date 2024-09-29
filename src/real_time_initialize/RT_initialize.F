@@ -50,7 +50,7 @@ subroutine RT_initialize(E,k,q)
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_G_k_range
  use parallel_int,   ONLY:PP_redux_wait
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels), intent(inout) :: E
  type(bz_samp),intent(in)    :: q,k

@@ -28,7 +28,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use interfaces,     ONLY:DESC_write
  use timing_m,       ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) :: kpt
  type(levels)  :: En

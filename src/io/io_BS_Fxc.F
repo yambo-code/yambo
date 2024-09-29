@@ -22,7 +22,7 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
 &                         io_elemental,def_variable_elemental,io_variable_elemental,&
 &                         io_bulk,io_header
  use descriptors,    ONLY:IO_desc,IO_desc_duplicate,IO_desc_reset
-#include<memory.h>
+#include<y_memory.h>
  type(w_samp)        ::FXC_W
  integer             ::ID,iq
  type(X_t), optional ::X 

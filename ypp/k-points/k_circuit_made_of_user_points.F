@@ -13,7 +13,7 @@ subroutine k_circuit_made_of_user_points( )
  use parser_m,       ONLY:PARSER_array
  use YPPm,           ONLY:BANDS_steps,USER_k,CIRCUIT_k,coo_in,coo_out,K_transform,PROJECT_mode
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Work space
  !

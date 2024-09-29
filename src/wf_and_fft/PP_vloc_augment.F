@@ -19,7 +19,7 @@ subroutine PP_vloc_augment(QP_Vloc,Vloc,ik,ib,ibp)
 #endif
  use qe_pseudo_m,   ONLY:qe_omega=>omega,qe_ngm=>ngm,becprod
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! vars
  !

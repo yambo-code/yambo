@@ -5,6 +5,8 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+#include<dev_defs.h>
+!
 subroutine scatter_Bamp_using_the_gradient(isc,which)
  !
  ! It computs
@@ -59,27 +61,23 @@ subroutine scatter_Bamp_using_the_gradient(isc,which)
    !
    ! \tilde{\rho} in Real Space
    !
-#if defined _OPENMP
-   !$omp parallel default(shared), private(ir)
-   !$omp do
-#endif
+   !DEV_OMP parallel default(shared), private(ir)
+   !DEV_OMP do
    do ir = 1, fft_size
      if (which=="i")  isc%rho_tw_rs(ir) = conjg(WF_der(ir,1,ic))*isc%WF_symm_o(ir,1)
      if (which=="o")  isc%rho_tw_rs(ir) = conjg(isc%WF_symm_i(ir,1))*WF_der(ir,1,ic)
    enddo
-#if defined _OPENMP
-   !$omp end do
-#endif
+   !DEV_OMP end do
    !
    if (n_spinor==2) then
-   !$omp do
+   !DEV_OMP do
      do ir = 1, fft_size
        if (which=="i") isc%rho_tw_rs(ir) = isc%rho_tw_rs(ir) + conjg(WF_der(ir,2,ic))*isc%WF_symm_o(ir,2)
        if (which=="o") isc%rho_tw_rs(ir) = isc%rho_tw_rs(ir) + conjg(isc%WF_symm_i(ir,2))*WF_der(ir,2,ic)
      enddo
-   !$omp end do
+   !DEV_OMP end do
    endif
-   !$omp end parallel
+   !DEV_OMP end parallel
    !
    ! perform the actual FFT
    !
@@ -96,19 +94,19 @@ subroutine scatter_Bamp_using_the_gradient(isc,which)
    !
 #if defined _OPENMP
    if (qs==idt_index) then 
-     !$omp parallel do default(shared), private(ig,ig_)
+     !DEV_OMP parallel do default(shared), private(ig,ig_)
      do ig = 1, isc%ngrho
        ig_ =isc%ngrho*(ic-1)+ig
        isc%rhotw(ig_)= isc%rho_tw_rs(fft_g_table(ig,iGo))
      enddo
-     !$omp end parallel do
+     !DEV_OMP end parallel do
    else
-     !$omp parallel do default(shared), private(ig,ig_)
+     !DEV_OMP parallel do default(shared), private(ig,ig_)
      do ig = 1, isc%ngrho
        ig_ =isc%ngrho*(ic-1)+ig
        isc%rhotw(ig_)= isc%rho_tw_rs(fft_g_table(g_rot(qs,ig),iGo))
      enddo
-     !$omp end parallel do
+     !DEV_OMP end parallel do
    endif
 #else
    do ig = 1,isc%ngrho

@@ -16,7 +16,7 @@ subroutine plot_xcrysden()
  use D_lattice,   ONLY:n_atomic_species,n_atoms_species,a,atom_pos,Z_species,n_atoms
  use LIVE_t,      ONLY:live_timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Work Space...
  !

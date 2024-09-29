@@ -18,7 +18,7 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  use pars,          ONLY:SP
  use linear_algebra,ONLY:LINEAR_ALGEBRA_error,M_eigenvalues,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,      ONLY:timing
-#include<memory.h>
+#include<y_memory.h>
  !
  integer           :: n
  complex(SP)       :: M(n,n),E(n),V_left(n,n),V_right(n,n)

@@ -14,7 +14,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  use real_time,      ONLY:RT_step
  use RT_control,     ONLY:TIME_adjust,RT_IO_t
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*),  intent(in) :: what
  type(RT_IO_t), intent(in) :: GENERAL_RT_IO_t

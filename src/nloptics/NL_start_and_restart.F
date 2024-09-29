@@ -40,7 +40,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  use stderr,         ONLY:intc
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)      :: E
  type(bz_samp)     :: k

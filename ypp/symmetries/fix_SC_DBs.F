@@ -18,7 +18,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map)
  use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp,nkibz
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp),intent(in) :: k
  type(bz_samp),intent(in) :: k_save

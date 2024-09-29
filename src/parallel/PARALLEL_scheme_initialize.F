@@ -10,7 +10,7 @@ subroutine PARALLEL_scheme_initialize(WHAT,ENVIRONMENT,PARALL_PARs,N,TABLE,MATRI
  use parallel_m,   ONLY:PAR_scheme
  use parallel_int, ONLY:PARALLEL_live_message,PARALLEL_index,PARALLEL_MATRIX_distribute
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*)               :: WHAT
  character(*)               :: ENVIRONMENT

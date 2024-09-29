@@ -42,8 +42,8 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_L(iq,Xk,i_T_grp,NG,l_bs_tddft_wf_in_
 &               i_sp,i_T_grp_p,is(4),os(4),qs(3),NK(2)
  !
  complex(DP), pointer DEV_ATTR :: rhotwr_p(:)
- complex(SP), pointer DEV_ATTR :: WF_symm1_p(:,:)
- complex(SP), pointer DEV_ATTR :: WF_symm2_p(:,:)
+ complex(SP), pointer :: WF_symm1_p(:,:)
+ complex(SP), pointer :: WF_symm2_p(:,:)
  !
  call timing('T_space ALDA Osc.',OPR='start')
  !
@@ -148,9 +148,6 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_L(iq,Xk,i_T_grp,NG,l_bs_tddft_wf_in_
  call timing('T_space ALDA Osc.',OPR='stop')
  !
 end subroutine TDDFT_ALDA_eh_space_G_collisions_L
-!
-!
-#include<dev_defs.h>                                                    
 !
 !
 subroutine perform_fft_3d(qs,rhotw,O_x)

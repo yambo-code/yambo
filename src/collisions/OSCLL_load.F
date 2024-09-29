@@ -34,7 +34,7 @@ subroutine OSCLL_load(q,k)
  use IO_int,              ONLY:io_control,IO_and_Messaging_switch
  use com,                 ONLY:msg
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(in) :: q,k
  !

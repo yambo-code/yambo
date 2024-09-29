@@ -20,7 +20,7 @@ subroutine PROJECTION_plot( what, N, Ns, bands, W, TIME, OBS_K, OBS_B)
  use interpolate,    ONLY:GRID_k
  use stderr,         ONLY:intc,real2ch,STRING_remove
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*)       :: what
  integer            :: N,Ns,bands(2)

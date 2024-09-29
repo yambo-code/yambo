@@ -24,7 +24,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels),           intent(in)     :: Xen
  type(bz_samp),          intent(inout)  :: Xk

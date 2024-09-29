@@ -16,7 +16,7 @@ integer function io_RIM_W(ID,mode,Xw)
 &                         io_elemental,io_bulk
  use frequency,      ONLY:w_samp
  !
-#include <memory.h>
+#include <y_memory.h>
  !
  integer :: ID
  type(w_samp) :: Xw

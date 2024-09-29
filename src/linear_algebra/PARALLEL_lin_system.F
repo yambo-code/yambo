@@ -18,7 +18,7 @@ subroutine PARALLEL_lin_system(A,B,n,nrhs)
 &                         LINEAR_ALGEBRA_WS_reset
  use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing
-#include<memory.h>
+#include<y_memory.h>
  !
  integer           :: n,nrhs
  type(PAR_matrix)  :: A, B

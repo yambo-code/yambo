@@ -14,7 +14,7 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  use RT_control,     ONLY:RT_output
  use real_time,      ONLY:RT_ind_J,RT_P
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(OBS_el) :: OBS
  type(RT_ctl) :: RT

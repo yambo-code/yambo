@@ -26,7 +26,7 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use stderr,              ONLY:intc
  use qexml_module
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)                 :: en
  type(bz_samp)                :: k

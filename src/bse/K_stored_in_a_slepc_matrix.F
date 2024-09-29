@@ -18,7 +18,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling,&
  &                        BS_res_ares_n_mat,l_BS_ares_from_res
  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width
- use cuda_m,         ONLY:have_cuda
+ use gpu_m,         ONLY:have_cuda
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>

@@ -11,7 +11,7 @@ subroutine MEM_manager_init(what,adding,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUN
  use drivers,      ONLY:infile_editing
  use com,          ONLY:repfile,secnm
  use C_driver,     ONLY:code_bin
- use memory,       ONLY:MEM_treshold,MEM_shelf,MEM_jump_treshold,MEM_LIBs,MEMs,&
+ use y_memory,       ONLY:MEM_treshold,MEM_shelf,MEM_jump_treshold,MEM_LIBs,MEMs,&
 &                       MEM_SAVE_treshold
  !
  implicit none

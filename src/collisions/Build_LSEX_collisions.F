@@ -31,7 +31,7 @@ subroutine Build_LSEX_collisions(k,q,i_qp,COLL)
  use QP_m,           ONLY:QP_table,QP_nk,QP_n_states
  use R_lattice,      ONLY:bz_samp,qindx_S
  ! 
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(in)  :: k,q
  integer,       intent(in)  :: i_qp

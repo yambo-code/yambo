@@ -29,7 +29,7 @@ subroutine SLK_test(E,k,q)
  use linear_algebra, ONLY:INV,DIAGO,LIN_SYS,MAT_MUL,USE_LK,USE_SLK
  use matrix_operate, ONLY:hermitian
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)   ::E
  type(bz_samp)  ::k,q
@@ -191,7 +191,7 @@ end subroutine build_matrix
  use com,        ONLY:msg
  use parallel_m, ONLY:mpi_comm_world
  use wrapper,    ONLY:M_by_M
-#include<memory.h>
+#include<y_memory.h>
  !
  integer            :: ndim
  complex(SP) :: Amat(ndim,ndim)

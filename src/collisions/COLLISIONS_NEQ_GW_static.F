@@ -31,7 +31,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use D_lattice,     ONLY:DL_vol
  use wrapper,       ONLY:M_by_V
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)             ::E
  type(bz_samp)            ::k,q,Xk

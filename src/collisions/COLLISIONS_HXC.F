@@ -39,7 +39,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use hamiltonian,   ONLY:B_mat_index
  use fft_m,         ONLY:fft_size
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)             ::E
  type(bz_samp)            ::k,q,Xk

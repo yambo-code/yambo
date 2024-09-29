@@ -5,6 +5,8 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+#include<dev_defs.h>
+!
 integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode)
  !
  ! Do a selective (only variables specified in what) or a 
@@ -16,15 +18,12 @@ integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode
  use D_lattice,        ONLY:dl_sop,n_atoms_species,Z_species,atom_pos,&
 &                           atom_mass,atoms_map,nsym,alat
  use R_lattice,        ONLY:g_vec,rl_sop,bz_samp,bz_samp_reset
- use wave_func,        ONLY:wf_nc_k,wf_igk
-#ifdef _CUDA
- use wave_func,        ONLY:wf_igk_d
-#endif
+ use wave_func,        ONLY:wf_nc_k,wf_igk,DEV_VAR(wf_igk)
  use com,              ONLY:core_io_path
  use IO_m,             ONLY:OP_RD_CL,NONE,DUMP
  use IO_int,           ONLY:io_control,io_connect,io_disconnect,io_elemental,io_bulk
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)      :: E
  type(bz_samp)     :: k
@@ -74,10 +73,9 @@ integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode
      YAMBO_FREE(dl_sop)
      YAMBO_FREE(rl_sop)
      YAMBO_FREE(wf_nc_k)
+     !
+     YAMBO_FREE_GPU(DEV_VAR(wf_igk))
      YAMBO_FREE(wf_igk)
-#ifdef _CUDA
-     YAMBO_FREE(wf_igk_d)
-#endif
    endif
    if (allocated(n_atoms_species)) then
      YAMBO_FREE(n_atoms_species)

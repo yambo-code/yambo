@@ -22,7 +22,7 @@ subroutine electrons_dos(Xk,Xen)
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k,INTERP_obj
  use stderr,         ONLY:intc
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) ::Xk
  type(levels)  ::Xen

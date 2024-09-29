@@ -17,7 +17,7 @@ subroutine cutoff_cylinder(q,is_cut)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  !
-#include<memory.h>
+#include<y_memory.h>
  type(bz_samp) ::q
  logical       ::is_cut(3)
  !

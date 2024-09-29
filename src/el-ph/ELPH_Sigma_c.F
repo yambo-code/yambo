@@ -47,7 +47,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use RT_control,    ONLY:RT_apply
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::en
  type(bz_samp) ::k,q

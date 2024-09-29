@@ -12,7 +12,7 @@ subroutine G_rot_grid(is,call_kind)
  use D_lattice,    ONLY:dl_sop,alat
  use zeros,        ONLY:G_iku_zero
  use vec_operate,  ONLY:v_is_zero
-#include<memory.h>
+#include<y_memory.h>
  !
  integer               :: is
  character(*)          :: call_kind

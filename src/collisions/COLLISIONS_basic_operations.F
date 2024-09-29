@@ -23,7 +23,7 @@ subroutine COLLISIONS_basic_operations( what, COLL )
  use wave_func,     ONLY:states_to_load
  use IO_m,          ONLY:io_COLLs
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*)           :: what
  type(COLLISIONS_group) :: COLL

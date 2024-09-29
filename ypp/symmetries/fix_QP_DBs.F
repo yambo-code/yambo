@@ -18,7 +18,7 @@ subroutine fix_QP_DBs(k,k_save,kpoints_map)
  use electrons,           ONLY:n_sp_pol
  use R_lattice,           ONLY:bz_samp
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp),intent(in) :: k
  type(bz_samp),intent(in) :: k_save

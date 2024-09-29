@@ -7,7 +7,7 @@
 !
 integer function MEM_LIB_finder( name )
  !
- use memory, ONLY:N_MEM_LIBs,MEM_LIBs
+ use y_memory, ONLY:N_MEM_LIBs,MEM_LIBs
  implicit none
  integer      :: i_l
  character(*) :: name
@@ -23,7 +23,7 @@ end function
 !
 integer function MEM_shelf_finder( shelf )
  !
- use memory, ONLY:N_MEM_max,MEMs
+ use y_memory, ONLY:N_MEM_max,MEMs
  implicit none
  integer      :: i_m
  character(*) :: shelf
@@ -39,7 +39,7 @@ end function
 !
 integer function MEM_save_finder( shelf )
  !
- use memory, ONLY:N_MEM_SAVE_elements,LARGE_MEMs
+ use y_memory, ONLY:N_MEM_SAVE_elements,LARGE_MEMs
  implicit none
  integer      :: i_m
  character(*) :: shelf
@@ -56,7 +56,7 @@ end function
 integer function MEM_component_finder( i_SHELF, name, Sz, desc, ADD )
  !
  use pars,   ONLY:schlen,IPL
- use memory, ONLY:MEMs
+ use y_memory, ONLY:MEMs
  implicit none
  integer      :: i_SHELF
  integer(IPL) :: Sz
@@ -106,7 +106,7 @@ integer function MEM_component_finder( i_SHELF, name, Sz, desc, ADD )
 end function
 !
 subroutine MEM_STAT_update
- use memory, ONLY:TOT_MEM_Kb_MEMSTAT,HOST_
+ use y_memory, ONLY:TOT_MEM_Kb_MEMSTAT,HOST_
  implicit none
  ! Process Memory Update
  !=======================

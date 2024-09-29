@@ -15,7 +15,7 @@ subroutine plot_gnuplot(eval_only)
 &                      plot_is_1D,plot_is_2D,l_free_hole,l_average_eh
  use LIVE_t,      ONLY:live_timing
  !
-#include<memory.h>
+#include<y_memory.h>
  logical    :: eval_only
  ! 
  ! Work Space...

@@ -23,7 +23,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use MAGNONS,        ONLY:BSS_MAGN_free
  use DICHROISM,      ONLY:BSS_DICH_free
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ::Ken
  type(bz_samp)::Xk,q

@@ -19,6 +19,3 @@
 #undef DEV_ATTR
 #undef DEV_PIN
 
-!#undef YAMBO_CUDA_OR_OMP
-!#undef YAMBO_CUDA_OR_OMP_END
-

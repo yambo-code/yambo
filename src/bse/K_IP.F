@@ -33,7 +33,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
  use units,         ONLY:SPEED_OF_LIGHT
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer       ::iq
  type(levels)  ::Ken

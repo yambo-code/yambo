@@ -16,7 +16,7 @@ subroutine RT_X_qssin
  use functions,      ONLY:theta_function
  use LIVE_t,         ONLY:live_timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Work Space
  !

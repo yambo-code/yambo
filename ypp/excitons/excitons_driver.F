@@ -22,7 +22,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use YPP_real_time, ONLY:l_RT_abs
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) ::Xk,k,q
  type(levels)  ::Xen,en

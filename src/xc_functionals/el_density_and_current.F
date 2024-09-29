@@ -52,16 +52,16 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  use parallel_int,  ONLY:PP_redux_wait
  use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,becp,pp_has_nlcc
  use qe_pseudo_m,   ONLY:qe_omega=>omega,qe_ngm=>ngm, becsum
+ use timing_m,      ONLY:timing
 #if defined _RT
  use drivers,       ONLY:l_real_time
- use timing_m,      ONLY:timing
 #endif
 #if defined _YPP_RT
  use RT_occupations,ONLY:RT_el_occ
  use real_time,     ONLY:RTibz
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp)::k
  type(levels) ::E       
@@ -77,12 +77,13 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  integer    :: ik_RT
 #endif
  integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2)
- integer    :: ig,i_dir,ifft
- real(SP)   :: f_occ,rho_no_sym(fft_size),drho_no_sym(fft_size,3),J_no_sym(fft_size,3)
- real(SP)   :: raux
+ integer    :: i_r,ig,i_dir,ifft
+ real(SP)   :: f_occ,raux,kw
+ logical    :: warn_done,l_si,l_rho,l_drho,l_J
+ !
+ real(SP),    allocatable :: rho_no_sym(:),drho_no_sym(:,:),J_no_sym(:,:)
  complex(SP), allocatable :: WF_der(:,:,:)
  complex(DP), allocatable :: rhog_aug_DP(:,:), aux_DP(:)
- logical    :: warn_done,l_si,l_rho,l_drho,l_J
  !
 #if defined _RT
  call timing('el_density',OPR='start')
@@ -96,7 +97,9 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  l_si      =.false.
  if (present(force_spatial_inversion)) l_si=force_spatial_inversion
  !
+ !
  if (l_rho) then
+   YAMBO_ALLOC(rho_no_sym,(fft_size))
    rho       =0._SP
    rho_no_sym=0._SP
  endif
@@ -105,6 +108,7 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
    if(pp_is_uspp)  call warning(" USPP corrections to rho gradient not implemented")
    if(pp_has_nlcc) call warning(" NLCC corrections to rho gradient not implemented")
    YAMBO_ALLOC(WF_der,(fft_size,n_spinor,3))
+   YAMBO_ALLOC(drho_no_sym,(fft_size,3))
    drho       =0._SP
    drho_no_sym=0._SP
  endif
@@ -167,8 +171,14 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
        !
        !
        if (l_rho) then
+         !
+         kw=k%weights(ik)
+         !
+         !$omp parallel do default(shared), private(i_spinor,i_r), collapse(2), reduction(+:rho_no_sym)
          do i_spinor=1,n_spinor
-           rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%c(:,i_spinor,i_wf))**2
+           do i_r = 1, fft_size
+             rho_no_sym(i_r)=rho_no_sym(i_r)+f_occ*kw*abs(WF%c(i_r,i_spinor,i_wf))**2
+           enddo
          enddo
          !
          ! uspp becsum
@@ -215,6 +225,7 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
      !
    enddo
  enddo
+ !
  !
  ! finalize USPP contribution
  !
@@ -269,9 +280,15 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  if (mag_syms) rho_syms=nsym 
  !
  if (l_rho) then
+   !
+   !#EV_OMP parallel do default(shared), private(i_symm,i_r), collapse(2), reduction(+:rho)
    do i_symm=1,rho_syms
-     rho(:)=rho(:)+rho_no_sym(fft_rot_r(:,i_symm))/real(nsym,SP)
+     do i_r = 1, fft_size
+       rho(i_r)=rho(i_r)+rho_no_sym(fft_rot_r(i_r,i_symm))/real(nsym,SP)
+     enddo
    enddo
+   !#EV_OMP end parallel do
+   !
    if (.not.mag_syms) then
      if (.not.l_si) rho(:)=real(1+i_time_rev,SP)*rho(:)
      if (     l_si) rho(:)=real(  i_time_rev,SP)*rho(fft_rot_r_inv(:))+rho(:)
@@ -296,6 +313,8 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
      J(:,:)=J(:,:)+real(J_no_sym(fft_rot_r(:,i_symm),:),SP)/real(nsym,SP)
    enddo
  endif
+ !
+ YAMBO_FREE(rho_no_sym)
  !
 #if defined _RT
  call timing('el_density',OPR='stop')

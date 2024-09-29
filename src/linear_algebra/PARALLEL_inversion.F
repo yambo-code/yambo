@@ -25,7 +25,7 @@ subroutine PARALLEL_inversion(M,N)
 &                         LINEAR_ALGEBRA_WS_reset
  use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing
-#include<memory.h>
+#include<y_memory.h>
  !
  integer           :: N
  type(PAR_matrix)  :: M

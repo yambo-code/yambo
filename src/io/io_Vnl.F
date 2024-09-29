@@ -17,7 +17,7 @@ integer function io_Vnl(Dip,Xen,ID)
  use IO_m,          ONLY:io_sec,io_status,read_is_on,write_is_on,io_extension,frag_WF
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(DIPOLE_t)::Dip
  type(levels)::Xen

@@ -26,7 +26,7 @@ subroutine PP_uspp_init()
 &                        qe_g=>g, qe_gg=>gg, qe_ngm=>ngm, qe_mill=>mill
  use timing_m,      ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Work Space 
  !

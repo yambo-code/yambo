@@ -33,7 +33,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset,MATRIX_copy
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::Xen 
  type(bz_samp) ::Xk,q

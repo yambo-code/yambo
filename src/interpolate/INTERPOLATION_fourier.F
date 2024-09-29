@@ -19,7 +19,7 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,NK,ID)
  use parallel_m,        ONLY:PP_indexes,PP_indexes_reset,myid
  use parallel_int,      ONLY:PP_redux_wait,PARALLEL_index 
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,intent(in)        :: nvalues
  integer,intent(in)        :: NK,ID

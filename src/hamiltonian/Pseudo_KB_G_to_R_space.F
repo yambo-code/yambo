@@ -23,7 +23,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  use parallel_int,  ONLY:PP_wait
  use parallel_m,    ONLY:master_cpu,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) :: Xk
  type(levels)  :: Xen

@@ -36,7 +36,7 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  !
  ! I/O
  !
-#include<memory.h>
+#include<y_memory.h>
  complex(SP),intent(out)  :: U_x(nkibz,maxval(n_met_bands),fft_size)
  type(levels), intent(in) :: E
  type(bz_samp), intent(in):: k,q

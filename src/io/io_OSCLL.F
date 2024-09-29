@@ -39,7 +39,7 @@ integer function io_OSCLL(q,ID)
  use timing_m,      ONLY:timing
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer     ::ID
  type(bz_samp), intent(in) :: q

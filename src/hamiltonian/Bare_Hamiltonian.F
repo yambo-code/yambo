@@ -30,7 +30,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
 #if defined _SC
  use drivers,        ONLY:l_sc_magnetic
 #endif
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)             :: E
  type(bz_samp)            :: Xk,k

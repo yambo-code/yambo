@@ -41,7 +41,7 @@ subroutine MAG_common_build_A(build)
 &                         A_magn_x,A_magn_y,A_magn_z,gauge_factors,       &
 &                         phase_trick,phase_radius,n_loops
  use vec_operate,    ONLY:v_norm
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Input variables
  logical   :: build

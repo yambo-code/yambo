@@ -16,7 +16,7 @@ subroutine PP_scatterBamp_init(isc)
  use vec_operate,   ONLY:c2a
  use timing_m,      ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! vars
  !

@@ -18,7 +18,7 @@ subroutine PP_compute_becp(becp, npwk, wf_nb, wf_c, wf_b_indx)
 &                        allocate_bec_type,calbec
  use timing_m,      ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! vars
  !

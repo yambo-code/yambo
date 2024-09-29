@@ -24,7 +24,7 @@ integer function io_QP_and_GF(what,qp,ID)
  use ELPH,           ONLY:ELPH_desc,use_PH_DbGd
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(QP_t)  ::qp
  character(*)::what ! 'QP'/'G'/filename

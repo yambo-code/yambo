@@ -19,7 +19,7 @@
  use qexml_module
  use qexsd_module
  ! 
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,     intent(in)   :: i_sp_pol,ikibz, ib_grp
  complex(SP), intent(out)  :: wf_disk(wf_ncx,n_spinor,wf_nb_io)

@@ -44,7 +44,7 @@ subroutine PARALLEL_global_Oscillators(E,Xk,q)
  use openmp,        ONLY:n_threads_OSCLL,OPENMP_set_threads
  use QP_m,          ONLY:QP_n_states,QP_table
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q

@@ -18,7 +18,7 @@ integer function io_HF_and_locXC(ID)
  use IO_int,         ONLY:io_connect,io_disconnect,io_header,io_elemental,io_bulk,&
 &                         ver_is_gt_or_eq
  use timing_m,       ONLY:timing
-#include<memory.h>
+#include<y_memory.h>
  integer :: ID
  !
  ! Work Space

@@ -20,7 +20,7 @@ subroutine SLK_matrix_init(M_slk, N, N_blocks)
  !
  use SLK_m,          ONLY:SLK_ORTHO
  use matrix,         ONLY:PAR_matrix
-#include<memory.h>
+#include<y_memory.h>
  !
  integer           :: N,N_blocks
  type(PAR_matrix)  :: M_slk

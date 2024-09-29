@@ -22,7 +22,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  use X_m,           ONLY:X_desc
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
  use timing_m,      ONLY:timing
-#include<memory.h>
+#include<y_memory.h>
  !
  integer, intent(inout)            ::ID
  type(COLLISIONS_group)            ::COLL

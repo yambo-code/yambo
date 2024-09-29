@@ -44,16 +44,16 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use parallel_m,    ONLY:PAR_COM_QP_A2A
  use SC,            ONLY:it_now,it_to_start
 #endif
- use deviceXlib_m,  ONLY:dev_memcpy
- use cuda_m,        ONLY:have_cuda
-#ifdef _CUDA
+ use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h
+ use gpu_m,         ONLY:have_gpu
+#ifdef _GPU
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
 #endif
  !
 #include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ::E
  type(bz_samp)::Xk,k,q
@@ -76,15 +76,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor
  complex(DP)      ::dp_dummy,ctmp
  !
-#ifdef _CUDA
- integer                      :: Xng, Xr1, Xr2
- real(SP)                     :: XppaE, bose_PPA_E
- real(DP)                     :: dp_dummy_r, dp_dummy_i
- complex(SP)                  :: W_i_w,W_i_w_2
- complex(SP), pointer, device :: isc_rhotw_d(:)
- complex(SP), pointer, device :: iscp_rhotw_d(:)
- complex(SP), pointer, device :: isc_gamp_d(:,:)
-#endif
+ integer          :: Xng, Xr1, Xr2
+ real(SP)         :: XppaE, bose_PPA_E
+ real(DP)         :: dp_dummy_r, dp_dummy_i
+ complex(SP)      :: W_i_w,W_i_W_2
+ complex(SP), pointer DEV_ATTR :: isc_rhotw_p(:)
+ complex(SP), pointer DEV_ATTR :: iscp_rhotw_p(:)
+ complex(SP), pointer DEV_ATTR :: isc_gamp_p(:,:)
  !
  integer,     external ::io_X
  complex(SP), external ::QP_ppa_EET_terminator
@@ -271,8 +269,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      X_range=(/1,Xw%n_freqs/)
      if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
      !
-     call DEV_SUB(scatter_Gamp)(isc,'c')
-     if (have_cuda) call dev_memcpy(isc%gamp,isc%gamp_d)
+     call scatter_Gamp_gpu(isc,'c')
+     if (have_gpu) call devxlib_memcpy_d2h(isc%gamp,DEV_VAR(isc%gamp))
      !
      ! I/O
      !
@@ -379,7 +377,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      X_is_TR_rotated=.true.
    endif
    !
-   if (have_cuda) call dev_memcpy(X_mat_d, X_mat)
+   if (have_gpu) call devxlib_memcpy_h2d(DEV_VAR(X_mat), X_mat)
    !
    QP_loop: do i_qp=i_qp_to_start,QP_n_states
      !
@@ -416,8 +414,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        isc%os=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
        isc%qs=(/1,1,1/)
 
-       call DEV_SUB(scatter_Bamp)(isc)
-       if (have_cuda) call dev_memcpy(isc%rhotw,isc%rhotw_d)
+       call scatter_Bamp_gpu(isc)
+       if (have_gpu) call devxlib_memcpy_d2h(isc%rhotw,DEV_VAR(isc%rhotw))
        !
        if (l_GW_terminator) then
          do is=1,n_sp_pol
@@ -504,16 +502,16 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        isc%os(1)=ib
        !
-       call DEV_SUB(scatter_Bamp)(isc)
-       if (have_cuda) call dev_memcpy(isc%rhotw, isc%rhotw_d)
+       call scatter_Bamp_gpu(isc)
+       if (have_gpu) call devxlib_memcpy_d2h(isc%rhotw, DEV_VAR(isc%rhotw))
        iscp%os=isc%os
        !
        if (any(isc%is/=iscp%is)) then
-         call DEV_SUB(scatter_Bamp)(iscp)
-         if (have_cuda) call dev_memcpy(iscp%rhotw, iscp%rhotw_d)
+         call scatter_Bamp_gpu(iscp)
+         if (have_gpu) call devxlib_memcpy_d2h(iscp%rhotw, DEV_VAR(iscp%rhotw))
        else
          iscp%rhotw=isc%rhotw
-         if (have_cuda) call dev_memcpy(iscp%rhotw_d, iscp%rhotw)
+         if (have_gpu) call devxlib_memcpy_h2d(DEV_VAR(iscp%rhotw), iscp%rhotw)
        endif
        !
        dc=cZERO
@@ -536,15 +534,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
          f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
          !
-#ifdef _CUDA
+#ifdef _GPU
          Xng = X%ng
          XppaE = X%ppaE
          Xr1 = X_range(1)
          Xr2 = X_range(2)
 
-         isc_gamp_d => isc%gamp_d
-         isc_rhotw_d => isc%rhotw_d
-         iscp_rhotw_d => iscp%rhotw_d
+         isc_gamp_p => DEV_VAR(isc%gamp)
+         isc_rhotw_p => DEV_VAR(isc%rhotw)
+         iscp_rhotw_p => DEV_VAR(iscp%rhotw)
 
          do i_w=1,QP_dSc_steps
            W_i_w = W_(i_w)
@@ -555,11 +553,19 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            dp_dummy_r = 0.0_DP
            dp_dummy_i = 0.0_DP
            !
-           !$cuf kernel do(2)
+           !DEV_ACC_DEBUG data present(X_mat,RIM_W,isc_gamp_p,isc_rhotw_p,iscp_rhotw_p)
+           !DEV_ACC parallel loop collapse(2) private(PPA_E,PPA_R,l_rim_W_g,bose_PPA_E,ctmp) &
+           !DEV_ACC               reduction(+:dp_dummy_r,dp_dummy_i)
+           !DEV_CUF kernel do(2)
+           !DEV_OMPGPU target map(present,alloc:X_mat,RIM_W,isc_gamp_p,isc_rhotw_p,iscp_rhotw_p) &
+           !DEV_OMPGPU &      map(tofrom:dp_dummy_r,dp_dummy_i)
+           !DEV_OMPGPU teams loop collapse(2) private(PPA_E,PPA_R,l_rim_W_g,bose_PPA_E,ctmp) &
+           !DEV_OMPGPU &          reduction(+:dp_dummy_r,dp_dummy_i)
+           !
            do ig2=1,Xng
              do ig1=1,Xng
                !
-               PPA_E= real(XppaE/X_mat_d(ig1,ig2,Xr2),kind=SP)
+               PPA_E= real(XppaE/DEV_VAR(X_mat)(ig1,ig2,Xr2),kind=SP)
                !
                ! RIM W support
                !
@@ -567,10 +573,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
                !
                if (l_RIM_W_g) then
-                 PPA_R=-cmplx(real(RIM_W_d(1,iqibz,ig1,ig2)/2._SP), &
-&                             aimag(X_mat_d(ig1,ig2,Xr1))*real(isc_gamp_d(ig1,ig2)),kind=SP)/2._SP*PPA_E
+                 PPA_R=-cmplx(real(DEV_VAR(RIM_W)(1,iqibz,ig1,ig2))/2._SP, &
+&                             aimag(DEV_VAR(X_mat)(ig1,ig2,Xr1))*real(isc_gamp_p(ig1,ig2)),kind=SP)/2._SP*PPA_E
                else
-                 PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_d(ig1,ig2)
+                 PPA_R=-DEV_VAR(X_mat)(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_p(ig1,ig2)
                endif
                !
                ! inline bose_f function
@@ -585,7 +591,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                  endif
                endif
                !
-               ctmp = -4._SP/spin_occ*pi*isc_rhotw_d(ig1)*conjg(iscp_rhotw_d(ig2))*(-PPA_R)*&
+               ctmp = -4._SP/spin_occ*pi*isc_rhotw_p(ig1)*conjg(iscp_rhotw_p(ig2))*(-PPA_R)*&
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_i_w-E_kmq-PPA_E)+&
 &                       (f_kmq+bose_PPA_E)/(conjg(W_i_w)-E_kmq+PPA_E))
                !
@@ -594,6 +600,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                !
              enddo
            enddo
+           !DEV_OMPGPU end target
+           !DEV_ACC_DEBUG end data
            !
            dp_dummy%re = dp_dummy_r
            dp_dummy%im = dp_dummy_i

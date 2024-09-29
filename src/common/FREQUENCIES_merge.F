@@ -13,7 +13,7 @@ subroutine FREQUENCIES_merge(W1,W2,table)
  !
  use pars,           ONLY:SP,cZERO
  use frequency,      ONLY:w_samp,W_reset
-#include<memory.h>
+#include<y_memory.h>
  !
  type(w_samp), intent(in)   :: W1
  type(w_samp), intent(inout):: W2

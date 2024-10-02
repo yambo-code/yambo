@@ -26,10 +26,6 @@ else ifneq (,$(findstring yambo_nl,$(MAKECMDGOALS)))
  PRECMP=-D_NL -D_RT -D_DOUBLE
  SRC_LIBS=$(PJ_NLLIBS)
  EXE_LIBS=$(PJ_NLLIBS_LD)
-else ifneq (,$(findstring yambo_qed,$(MAKECMDGOALS)))
- PRECMP=-D_QED -D_RT -D_RT_SCATT -D_ELPH
- SRC_LIBS=$(PJ_RTLIBS)
- EXE_LIBS=$(PJ_RTLIBS_LD)
 endif
 #
 # Compilation

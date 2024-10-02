@@ -33,8 +33,6 @@ netcdf:
 	@+URL="$(url_netcdf)"   ; LIB="$(pkgname_netcdf)"; $(getsrc)
 netcdff:
 	@+URL="$(url_netcdff)"  ; LIB="$(pkgname_netcdff)"; $(getsrc)
-pnetcdf:
-	@+URL="$(url_pnetcdf)"  ; LIB="$(pkgname_pnetcdf)"; $(getsrc)
 etsf_io:
 	@+URL="$(url_etsf_io)"  ; LIB="$(pkgname_etsf_io)"; $(getsrc)
 libxc:
@@ -73,7 +71,6 @@ clean_tgz:
           if test -s $(tarball_iotk)     && test "$(keep_iotk)"      != "yes" ;  then rm $(tarball_iotk)      ; fi ; \
           if test -s $(tarball_netcdf)   && test "$(keep_netcdf)"    != "yes" ;  then rm $(tarball_netcdf)    ; fi ; \
           if test -s $(tarball_netcdff)  && test "$(keep_netcdff)"   != "yes" ;  then rm $(tarball_netcdff)   ; fi ; \
-          if test -s $(tarball_pnetcdf)  && test "$(keep_pnetcdf)"   != "yes" ;  then rm $(tarball_pnetcdf)   ; fi ; \
           if test -s $(tarball_hdf5)     && test "$(keep_hdf5)"      != "yes" ;  then rm $(tarball_hdf5)      ; fi ; \
           if test -s $(tarball_etsf_io)  && test "$(keep_etsf_io)"   != "yes" ;  then rm $(tarball_etsf_io)   ; fi ; \
           if test -s $(tarball_lapack)   && test "$(keep_lapack)"    != "yes" ;  then rm $(tarball_lapack)    ; fi ; \

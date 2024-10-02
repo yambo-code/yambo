@@ -423,7 +423,8 @@ subroutine K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
        if(BS_blk(iB_p)%ira_k/=BS_blk(iB)%ira_k .or. BS_blk(iB_p)%ira_p/=BS_blk(iB)%ira_p) exit
        if(BS_blk(iB_p)%ik/=BS_blk(iB)%ik .or. BS_blk(iB_p)%ip/=BS_blk(iB)%ip) exit
        if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
-       if( iki>size(BS_blk(iB_p)%O_table(1,1,:,1,1,1,1)) .or. iko>size(BS_blk(iB_p)%O_table(1,1,1,:,1,1,1)) ) cycle
+       if( iki>size(BS_blk(iB_p)%O_table(1,1,:,1,BS_bands(1),BS_bands(1),1)) .or. &
+       &   iko>size(BS_blk(iB_p)%O_table(1,1,1,:,BS_bands(1),BS_bands(1),1)) ) cycle
        if(BS_blk(iB_p)%O_table(1,i_s_collision,iki,iko,ibi,ibo,i_sp_pol)==0) cycle
        iB_ref=iB_p
        exit

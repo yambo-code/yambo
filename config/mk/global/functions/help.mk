@@ -23,7 +23,6 @@ define yambo_help
    $(ECHO) -n " [ph-project]    "; for target in $(PH_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) -n " [rt-project]    "; for target in $(RT_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) -n " [nl-project]    "; for target in $(NL_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
-   $(ECHO) -n " [mod-project]   "; for target in $(MOD_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) "\n *** Libraries ***"; \
    $(ECHO) -n " [libs]           int-libs ext-libs download";$(ECHO) ;\
    $(ECHO) -n " [int-libs]      "; for target in $(INT_LIBS); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\

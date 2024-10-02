@@ -68,8 +68,6 @@ lnetcdf     = @NETCDF_LIBS@
 inetcdf     = @NETCDF_INCS@
 lnetcdff    = @NETCDFF_LIBS@
 inetcdff    = @NETCDFF_INCS@
-lpnetcdf    = @PNETCDF_LIBS@
-ipnetcdf    = @PNETCDF_INCS@
 netcdf_opt  = @NETCDF_OPT@
 netcdf_ver  = @NETCDF_VER@
 netcdf_flag = @NETCDFFLAGS@
@@ -91,6 +89,7 @@ ifutile     = @FUTILE_INCS@
 letsf       = @ETSF_LIBS@
 ietsf       = @ETSF_INCS@
 idriver     = @DRIVER_INCS@
+mpipath     = @MPI_PATH@
 #
 # VPATH
 #

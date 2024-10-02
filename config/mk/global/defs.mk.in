@@ -26,7 +26,6 @@ do_futile   = @compile_futile@
 do_yaml     = @compile_yaml@
 do_hdf5     = @compile_hdf5@
 do_netcdf   = @compile_netcdf@
-do_pnetcdf  = @compile_pnetcdf@
 do_etsf     = @compile_etsf@
 do_p2y      = @compile_p2y@
 do_e2y      = @compile_e2y@

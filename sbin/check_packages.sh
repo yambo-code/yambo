@@ -24,13 +24,14 @@ do
   MISS="$MISS $app"
  fi
 done
-if [ ! -z $MISS ] ; then
+if [ ! -z "$MISS" ] ; then
  repeat "="
  echo -e "${RED}Missing required packages:${NC}"
  repeat "="
  echo $MISS
  echo 
 fi
+MISS=" "
 #
 for app in   libmkl-avx libmkl-avx2 libmkl-avx512 libmkl-core libmkl-def \
 libmkl-dev libmkl-gf-ilp64 libmkl-gf-lp64 libmkl-gnu-thread

@@ -94,7 +94,10 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
      if(i1==10) SCATT_bands=NL_bands
 #endif
 #if defined _SC 
-     if(i1==11) SC_bands   =COLL_bands
+     if(i1==11) then
+       SC_bands   =COLL_bands
+       SCATT_bands=COLL_bands
+     endif
 #endif
 #if defined _RT || defined _QED || defined _NL
      if(i1==11) then

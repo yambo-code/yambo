@@ -27,7 +27,7 @@ function K_correlation_kernel_dir(i_block,i_p,i_pmq,                            
  !
  complex(SP)  :: K_correlation_kernel_dir
  !
- integer      :: iO1,i_block_1,iO2,i_block_2,i_g1,i_g2,i_g3
+ integer      :: iO1,iO2,i_g1,i_g2,i_g3
  complex(SP)  :: O1(BS_n_g_W),O2(BS_n_g_W),O_times_W(BS_n_g_W)
 #ifdef _CUDA
  attributes(device)   :: O1,O2,O_times_W
@@ -40,16 +40,13 @@ function K_correlation_kernel_dir(i_block,i_p,i_pmq,                            
    return
  endif
  !
- iO1       = BS_blk(i_block)%O_table1(i_k_s,i_p_s,1,1,i_n_k,i_n_p,i_k_sp_pol_n)
- i_block_1 = BS_blk(i_block)%O_table2(i_k_s,i_p_s,1,1,i_n_k,i_n_p,i_k_sp_pol_n)
- !
- iO2       = BS_blk(i_block)%O_table1(i_kmq_s,i_pmq_s,i_kmq_t,i_pmq_t,i_m_k,i_m_p,i_k_sp_pol_m)
- i_block_2 = BS_blk(i_block)%O_table2(i_kmq_s,i_pmq_s,i_kmq_t,i_pmq_t,i_m_k,i_m_p,i_k_sp_pol_m)
+ iO1       = BS_blk(i_block)%O_table(i_k_s,i_p_s,1,1,i_n_k,i_n_p,i_k_sp_pol_n)
+ iO2       = BS_blk(i_block)%O_table(i_kmq_s,i_pmq_s,i_kmq_t,i_pmq_t,i_m_k,i_m_p,i_k_sp_pol_m)
  !
 #ifdef _CUDA
  !
- O_c_d_iO1 => BS_blk(i_block_1)%O_c_d(:,iO1)
- O_c_d_iO2 => BS_blk(i_block_2)%O_c_d(:,iO2)
+ O_c_d_iO1 => BS_blk(i_block)%O_c_d(:,iO1)
+ O_c_d_iO2 => BS_blk(i_block)%O_c_d(:,iO2)
  !$cuf kernel do(1) <<<*,*>>>
  do i_g1=1,BS_n_g_W
    i_g2=G_m_G_d(g_rot_d(i_g1,iq_W_s)   ,ig_W   )
@@ -64,8 +61,8 @@ function K_correlation_kernel_dir(i_block,i_p,i_pmq,                            
  do i_g1=1,BS_n_g_W
    i_g2=G_m_G(g_rot(i_g1,iq_W_s)   ,ig_W   )
    i_g3=G_m_G(g_rot(i_g1,iq_W_s_mq),ig_W_mq)
-   O1(i_g1)=BS_blk(i_block_1)%O_c(i_g2,iO1)
-   O2(i_g1)=BS_blk(i_block_2)%O_c(i_g3,iO2)
+   O1(i_g1)=BS_blk(i_block)%O_c(i_g2,iO1)
+   O2(i_g1)=BS_blk(i_block)%O_c(i_g3,iO2)
  enddo
  !$omp end parallel do
  !

@@ -59,7 +59,7 @@ module LOGO
      !
      comment(3)=trim(code_libraries)//" Build"
      !
-     comment(4)='http://www.yambo-code.org'
+     comment(4)='http://www.yambo-code.eu'
      !
      if (ID_logo<0) then
        ID_logo=pickup_a_random(10._SP)

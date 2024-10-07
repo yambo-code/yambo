@@ -84,6 +84,7 @@ subroutine Build_W_operator(en,Xk,A_input,ik,i_sp,V_bands,H_nl_sc)
    else ! non-periodic directions 
      !
      ! <\phi_i | e^{iGr} | \phi_j >
+     ! It works in principle but it requires big supercells
      !
      Wop(H_ref_bands(1):,H_ref_bands(1):,:)=cZERO !DIP_S(H_ref_bands(1):,H_ref_bands(1):,id_red,ik,i_sp)*cI/(4._SP*pi)   
      !

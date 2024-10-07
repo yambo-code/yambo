@@ -7,7 +7,7 @@
 !
 module vec_operate
  !
- use pars,      ONLY:SP,pi,zero_dfl
+ use pars,      ONLY:SP,pi,zero_dfl,rZERO
  !
  implicit none
  !
@@ -147,6 +147,50 @@ module vec_operate
      if (.not.present(zero_)) rlu_v_is_zero=v_is_zero(u)
      if (     present(zero_)) rlu_v_is_zero=v_is_zero(u,zero_)
    end function rlu_v_is_zero
+   !
+   function axis_rotation(axis, vec, angle)
+     !
+     ! Generic rotation around a given axis
+     !
+     real(SP), intent(in) :: axis(3),vec(3), angle
+     !
+     ! Work space
+     !
+     real(SP)          :: R(3,3),U_cross(3,3),U_outer(3,3)
+     real(SP)          :: axis_rotation(3)
+     integer           :: i,j
+     !
+     R=rZERO
+     !
+     ! Diagonal
+     !
+     R(1,1)=cos(angle)
+     R(2,2)=cos(angle)
+     R(3,3)=cos(angle)
+     !
+     ! Outer product
+     !
+     U_outer=rZERO
+     U_outer(1,2)=-axis(3)
+     U_outer(2,1)= axis(3)
+     !
+     U_outer(1,3)= axis(2)
+     U_outer(1,3)=-axis(2)
+     !
+     U_outer(2,3)=-axis(1)
+     U_outer(3,2)= axis(1)
+     !
+     R=R+sin(angle)*U_outer
+     !
+     ! Cross product
+     !
+     U_cross=rZERO
+     forall (i=1:3,j=1:3) U_cross(i,j) = axis(i)*axis(j)
+     R=R+(1.0-cos(angle))*U_cross
+     !
+     axis_rotation=matmul(R,vec)
+     !
+   end 
    !
    subroutine v_rotate(plane,t,v_in,v_out)
      !

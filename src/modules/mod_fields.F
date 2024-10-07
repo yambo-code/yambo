@@ -3,8 +3,23 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, CA
 !
+! External fields:
+!
+! SIN:      E(t)=\theta(t) * sin(t)
+! SOFTSIN:  E(t)= (c*t^2 + b*t^3 + a*t^4 )* sin(t)  and 0 for t<=0
+! DELTA:    E(t)= \delta(t)
+! GAUSS:    E(t)= exp((t-t_o)^2/(2*sigma^2))
+! THETA:    E(t)= \theta(t)
+! RES:      E(t)= \theta(t)*exp(-i\omega t)
+! ANTIRES:  E(t)= \theta(t)*exp(i\omega t)
+! PULSE:    E(t)=(T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4 * cos(w t)
+! QSSIN:    E(t)= exp((t-t_o)^2/(2*sigma^2))*sin(w t)
+! SPULSE:   E(t)=((T-T_0)**2 - sigma**2)**2/sigma**4*cos(w t)
+! PHHG:     E(t)=sin^2(\pi*(T-T_0)/sigma)*cos( w * t) 
+! QSFIELD:  see below
+!      
 module fields
  !
  use pars,  ONLY:SP,DP,schlen,lchlen,pi,n_ext_fields_max
@@ -113,7 +128,7 @@ module fields
      !
      ! Workspace
      !
-     real(SP)          ::damp_func,a,b,c
+     real(SP)          ::damp_func,a,b,c,sarg,WT,Tl
      complex(SP), dimension(2) :: small_a
      !
      integer           ::i_fr,i_field,n_fields
@@ -225,6 +240,23 @@ module fields
            if (order==0 ) f_now=1._SP
            if (order> 0 ) f_now=0._SP
            if (order==-1) f_now=1._SP
+           !
+         case('PHHG')
+           sarg=pi*(T-T_0)/sigma     
+           WT  =W_field*T
+           if(T-T_0<=0.0.or.T-T_0>=sigma.and.order>0) then
+             f_now=0.0
+           elseif(T-T_0>=sigma.and.order==0) then
+             Tl=sigma+T_0
+             WT  =W_field*Tl
+             f_now=-(sigma*sin(((sigma*W_field+2*pi)*Tl-2*pi*T_0)/sigma))/(4*(sigma*W_field+2*pi))  & 
+&              -(sigma*sin(((sigma*W_field-2*pi)*Tl+2*pi*T_0)/sigma))/(4*(sigma*W_field-2*pi))+sin(WT)/(2*W_field)
+           else
+             if (order==0 ) f_now=-(sigma*sin(((sigma*W_field+2*pi)*T-2*pi*T_0)/sigma))/(4*(sigma*W_field+2*pi)) &
+&              -(sigma*sin(((sigma*W_field-2*pi)*T+2*pi*T_0)/sigma))/(4*(sigma*W_field-2*pi))+sin(WT)/(2*W_field)
+             if (order==1 ) f_now=sin(sarg)**2*cos(WT)
+             if (order==2 ) f_now=(2*pi*cos(WT)*cos(sarg)*sin(sarg))/sigma-W_field*sin(WT)*sin(sarg)**2
+           endif
            !
          case('GAUSS')
            if (order==0 ) f_now= sigma*sqrt(pi/2._SP)* ( erf( (T-T_0)/(sigma*sqrt(2._SP)) )+1._SP )

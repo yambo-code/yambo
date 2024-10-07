@@ -110,10 +110,12 @@ subroutine XCo_report(qp,E,k)
    !
  enddo
  !
- ! Direct GAP
+ ! Direct GAP (only if all IBZ corrections have been calculated 
  !
- call section('+',trim(Vnlxc_kind)//' occupations report')
- call REPORT_Occupations(trim(Vnlxc_kind),E_dummy)
+ if (QP_table(1,3)==1.and.QP_table(QP_n_states,3)==k%nibz) then
+   call section('+',trim(Vnlxc_kind)//' occupations report')
+   call REPORT_Occupations(trim(Vnlxc_kind),E_dummy)
+ endif
  !
  ! Output 
  !

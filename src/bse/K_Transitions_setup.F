@@ -63,7 +63,7 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
  ! Work Space
  !
  real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
- logical      :: l_trans_in_group,l_grp_to_grp
+ logical      :: l_trans_in_group,l_grp_to_grp,l_skip_unoccupied
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,i_star,ib1,ib2,isp1,isp2,  &
 &                i_T_now,i_T_group_now,i_T_group_last,i_T_group_start,i_g,n_loops,i_loop,i_T_in_the_grp,i_res_ares,&
 &                BS_nT_at_k_tmp(Xk%nibz*2),V_bands(2),C_bands(2),&
@@ -96,15 +96,18 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
    n_loops=1
  endif
  !
+ l_skip_unoccupied=.true.
  V_bands=(/BS_bands(1),maxval(Ken%nbm)/)
  C_bands=(/minval(Ken%nbf)+1,BS_bands(2)/)
 #if defined _RT
  ! Bands range. In the _RT case %nbf and %nbm turn metallic when carriers are used.
  if (l_rt_carriers_in_use.and.EQ_Transitions) then
+   l_skip_unoccupied=.false.
    V_bands=(/BS_bands(1),maxval(n_met_bands)/)
    C_bands=(/minval(n_full_bands)+1,BS_bands(2)/)
  endif
  if (EQ_NoOcc) then
+   l_skip_unoccupied=.false.
    V_bands=BS_bands
    C_bands=BS_bands
  endif
@@ -154,6 +157,11 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
                if(i_res_ares==1.and.i_sp_c==1) cycle
                if(i_res_ares==2.and.i_sp_c==2) cycle
                i_sp_v=mod(i_sp_c,n_sp_pol)+1
+             endif
+             !
+             if( l_skip_unoccupied) then
+                if( iv>Ken%nbm(i_sp_v) ) cycle
+                if( ic<Ken%nbf(i_sp_c) ) cycle
              endif
              !
              do i_star=1,Xk%nstar(ik)

@@ -9,11 +9,12 @@ subroutine NL_initialize(E,k)
  ! 
  use pars,           ONLY:SP,DP,pi
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
- use vec_operate,    ONLY:normalize_v
+ use vec_operate,    ONLY:normalize_v,v_norm,cross_product
  use collision_ext,  ONLY:COLLISIONS_CV_only
  use hamiltonian,    ONLY:H_potential
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
+ use X_m,            ONLY:global_gauge
  use zeros,          ONLY:zero_dfl
  use com,            ONLY:msg
  use R_lattice,      ONLY:bz_samp,k_map
@@ -24,7 +25,8 @@ subroutine NL_initialize(E,k)
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity, &
-&                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT,l_pump_and_probe,DephMult
+&                         l_eval_CURRENT,l_pump_and_probe,DephMult,l_velocity_IPA,n_angles, &
+&                         NL_ang_step,n_runs,NL_rot_axis,loop_on_frequencies,loop_on_angles,NL_initial_versor
  use electric,       ONLY:l_force_SndOrd,l_P_periodic
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
@@ -36,8 +38,9 @@ subroutine NL_initialize(E,k)
  !
  ! Working space
  !
- real(SP) :: Time, WF_sample_range(2),W_0,T_0,sigma 
+ real(SP) :: Time,W_0,T_0,sigma,E_dot_rot_axis 
  integer  :: i1,n_active_fields
+ real(SP) :: Sampling_Time
  !
  ! Parser
  ! ============
@@ -49,6 +52,32 @@ subroutine NL_initialize(E,k)
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
  if(l_P_periodic)  call msg('sr','[NL] Enforce periodicity of the polarization repect to Efield')
+ !
+ ! Velocity gauge mode
+ ! =======================================
+ l_velocity_IPA=.FALSE.
+ if(trim(global_gauge)=='velocity') then
+    !
+    ! Turn on current
+    !    
+    if(.not.l_eval_CURRENT)  then
+      l_eval_CURRENT=.true.
+      call warning('Current evaluation set to true')
+    endif
+    !
+    ! Turn off Berry phase
+    !
+    l_use_DIPOLES=.true.
+    call warning('Berry phase turned off in velocity gauge')
+    !
+    ! Improve parallelization in the IPA case (each k-point is independent)
+    !
+    if(trim(NL_Correlation)=='IPA') then
+      l_velocity_IPA=.TRUE.
+      call msg('rs','Fast parallelization: velocity gauge + IPA ')
+    endif
+    !
+ endif
  !
  ! Check double-precision and other possible errors
  ! ================================================
@@ -146,15 +175,15 @@ subroutine NL_initialize(E,k)
  !
  call msg('s','[NL] Number of active fields : ',n_active_fields)
  !
- if(all(NL_er<0._SP)) then
+ if(all(NL_er<0._SP).and.n_angles==0) then
    l_pump_and_probe=.true.
    l_NE_with_fields=.true.
-   call msg('s', '[NL] Variables NLEnSteps and NLEnRange are ignored ')
+   call msg('s', '[NL] Variables NLEnSteps,NLEnRange,NLAngSteps,NLrotaxis, are ignored ')
    call msg('sr','[NL] Pump and probe configuration: verbosity set to high')
    NL_verbosity=VERB_HIGH
  else
    call msg('sr','[NL] Non-linear optics configuration')
-   call msg('sr','[NL] Loop on frequencies of the first field ')
+   call msg('sr','[NL] Loop on frequencies/angles of the first field ')
    if(NL_er(1)==0._SP) call error("NLEnRange cannot start from zero (simulation time equal to infinity!!) ")
    call warning('Variables Field1_Freq and Field1_NFreqs ignored')
  endif
@@ -205,10 +234,19 @@ subroutine NL_initialize(E,k)
      !
      ! Add time to sample the response
      !
-     NE_tot_time=NE_tot_time+EtoT(E=NL_er(1))+5._SP*RT_step
+     Sampling_Time=EtoT(E=NL_er(1))+5._SP*RT_step
+     !
+     if(n_active_fields>1) then
+       if((Efield(2)%ef_name/='none').and.Efield(2)%frequency(1)>0._SP) &
+&         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(2)%frequency(1))+5._SP*RT_step/))
+       if((Efield(3)%ef_name/='none').and.Efield(3)%frequency(1)>0._SP) &
+&         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(3)%frequency(1))+5._SP*RT_step/))
+     endif
+     !
+     NE_tot_time=NE_tot_time+Sampling_Time
      !
      call msg('sr','Dephasing Time              ',DephMult*Phase_LifeTime*AUT2FS,"[fs]")
-     call msg('sr','Sampling  Time              ',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS,"[fs]")
+     call msg('sr','Sampling  Time              ',(Sampling_Time)*AUT2FS,"[fs]")
      !
    elseif(Efield(1)%ef_name=='PULSE'.or.Efield(1)%ef_name=='QSSIN' &
 &     .or.Efield(1)%ef_name=='QSFIELD'.or.Efield(1)%ef_name=='SPULSE') then
@@ -241,7 +279,7 @@ subroutine NL_initialize(E,k)
  ! NB.: This part duplicates what is in
  !      INIT.F 
  !
- select case (trim(NL_Correlation))
+ select case (trim(NL_correlation))
     case('IPA')
         Correlation=IPA
         RT_potential='IP'
@@ -294,9 +332,52 @@ subroutine NL_initialize(E,k)
  ! 
  H_potential = RT_potential
  !
- ! Frequencies range
+ ! Frequencies or Angle range
  ! =========================
- NL_estep=(NL_er(2)-NL_er(1))/real(n_frequencies,SP)
+ !
+ loop_on_frequencies=.false.
+ loop_on_angles     =.false.
+ !
+ if(n_frequencies>=1.and.n_angles>=1)  call error("Loops on frequencies and angles cannot be performed in the same run")
+ !
+ if(all(NL_er>0._SP).and.n_frequencies>=1) NL_estep=(NL_er(2)-NL_er(1))/real(n_frequencies,SP)
+ ! 
+ if(n_angles>=1) then
+   ! loop on angles
+   NL_ang_step=2.0*pi/real(n_angles,SP)
+   if(all(abs(NL_rot_axis)<epsilon(1.))) call error("Null rotation axis!!! ")
+   NL_rot_axis=normalize_v(NL_rot_axis)
+   n_runs=n_angles
+   loop_on_angles=.true.
+ elseif(n_frequencies>=1) then
+   ! loop on frequencies        
+   n_runs=n_frequencies
+   loop_on_frequencies=.true.
+   if(n_frequencies/=1.and.all(NL_er<0._SP)) call error("Please set a frequencies range") 
+ else
+   ! Pump and probe
+   n_runs=1
+ endif
+ !
+ if((loop_on_frequencies.or.loop_on_angles).and.l_pump_and_probe) & 
+   call error("Something wrong inpunt: pump and probe does not work with loop on angles/frequencies for the moment")
+ !
+ ! Initialize Efield1 versor (for the loop on angles)
+ ! ==================================================
+ if(loop_on_angles) then
+   E_dot_rot_axis=dot_product(Efield(1)%versor,NL_rot_axis)
+   if(E_dot_rot_axis<epsilon(1.)) then 
+     NL_initial_versor=Efield(1)%versor
+   else
+     call warning("Field versor not orthogonal to the rotation axis!! ")
+     NL_initial_versor=Efield(1)%versor-E_dot_rot_axis*NL_rot_axis
+     NL_initial_versor=NL_initial_versor
+   endif
+   if(v_norm(NL_initial_versor)<epsilon(1.)) call error("Initial field versor parallel to the rotation axis!!! ")
+   call msg( 'sr','Initial field versor        ',NL_initial_versor)
+   call Check_symmetries(NL_initial_versor,"electric")
+   call Check_symmetries(cross_product(NL_initial_versor,NL_rot_axis),"electric")
+ endif
  !
  ! Initialize Time variables
  ! =========================
@@ -312,18 +393,6 @@ subroutine NL_initialize(E,k)
    Time=real(NE_i_time-1,SP)*RT_step
    OBS_RT_IO_t%Time(NE_i_time)=Time
  enddo
- !
- ! WFs sampling
- ! =========================
- !
- call NL_INIT_WF_sample(WF_sample)
- WF_sample_range  = (/OBS_RT_IO_t%Time(NE_steps) - EtoT(E=NL_er(1))+5._SP*RT_step,OBS_RT_IO_t%Time(NE_steps)/)
- call NL_set_WF_sample(WF_sample,n_order,RT_step,WF_sample_range,v=E%nbf,k=k%nibz)
- if (Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') WF_sample%ison = .false.
- if (n_order > 0) then
-   if (WF_sample%ison.eqv..false.) call warning('WF sampling switched off (only available with SOFTSIN/SIN field')
-   if (WF_sample%n_order < n_order) call warning('WF sampling analysis order set to the maximum of 7')
- end if
  !
  ! LOG
  ! ===
@@ -348,11 +417,12 @@ subroutine NL_initialize(E,k)
  call msg( 'r', 'Frequencies range          ',NL_er*HA2EV)
  call msg( 'sr','Frequencies steps          ',n_frequencies)
  call msg( 'r', 'Frequency   step           ',NL_estep*HA2EV)
+ call msg( 'sr','Number of angles           ',n_angles)
+ call msg( 'r', 'Rotation axis              ',NL_rot_axis)
  call msg( 'r', 'Use Dipoles                ',l_use_DIPOLES)
  call msg( 'r', 'Induced Field              ',l_RT_induced_field)
  call msg( 'r', 'Force Snd Order Dipoles    ',l_force_SndOrd)
  call msg( 'r', 'Evaluate Current           ',l_eval_CURRENT)
  call msg( 'r', 'Enforce periodic pol.      ',l_P_periodic)
- call msg( 'r', 'WF sampling                ',WF_sample%ison) 
  !
 end subroutine NL_initialize

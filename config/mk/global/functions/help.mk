@@ -24,7 +24,6 @@ define yambo_help
    $(ECHO) -n " [rt-project]    "; for target in $(RT_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) -n " [nl-project]    "; for target in $(NL_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) -n " [surf-project]  "; for target in $(SURF_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
-   $(ECHO) -n " [mod-project]   "; for target in $(MOD_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) "\n *** Libraries ***"; \
    $(ECHO) -n " [libs]           int-libs ext-libs download";$(ECHO) ;\
    $(ECHO) -n " [int-libs]      "; for target in $(INT_LIBS); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
@@ -49,7 +48,7 @@ define yambo_help
    $(ECHO)  "\n *** Interfaces ***\n " ; \
    $(ECHO)  " a2y =  ABINIT to Yambo interface ";\
    $(ECHO)  " p2y =  QuantumEspresso to Yambo interface ";\
-   $(ECHO)  "        http://www.yambo-code.org/wiki/index.php?title=Bulk_material:_h-BN ";\
+   $(ECHO)  "        http://www.yambo-code.eu/wiki/index.php?title=Bulk_material:_h-BN ";\
    $(ECHO)  " c2y =  CPMD to Yambo interface";\
    $(ECHO)  "\n *** Main Components***\n" ;\
    $(ECHO)  " yambo =  main Yambo code ";\
@@ -57,10 +56,11 @@ define yambo_help
    $(ECHO)  "\n *** Other projects ***\n" ;\
    $(ECHO)  " yambo_sc =  Self-consistent (COHSEX, HF, DFT) project";\
    $(ECHO)  " yambo_rt =  Real-time dynamics project";\
-   $(ECHO)  "             http://www.yambo-code.org/wiki/index.php?title=Linear_response_from_real_time_simulations";\
+   $(ECHO)  "             http://www.yambo-code.eu/wiki/index.php?title=Linear_response_from_real_time_simulations";\
    $(ECHO)  " yambo_nl =  Non-linear optics project ";\
-   $(ECHO)  "             http://www.yambo-code.org/wiki/index.php?title=Tutorials#Non_linear_response";\
+   $(ECHO)  "             http://www.yambo-code.eu/wiki/index.php?title=Tutorials#Non_linear_response";\
    $(ECHO)  " yambo_ph =  Electron-phonon coupling project ";\
+   $(ECHO)  "             http://www.yambo-code.eu/wiki/index.php?title=Tutorials#Electron_phonon_coupling\n";\
    $(ECHO)  "             http://www.yambo-code.org/wiki/index.php?title=Tutorials#Electron_phonon_coupling\n";\
    $(ECHO)  " yambo_surf = Surface-spectroscyopy project ";\
    $(ECHO)  "             Missing tutorial\n";\

@@ -27,7 +27,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  ! ID's
  use parallel_m,    ONLY:PAR_IND_freqs_ID,PAR_IND_Q_ibz_ID,PAR_IND_WF_k_ID,&
 &                        PAR_IND_Xk_bz_ID,PAR_IND_Xk_ibz_ID
- use nl_optics,     ONLY:n_frequencies
+ use nl_optics,     ONLY:n_runs
  use openmp,        ONLY:n_threads_NL,OPENMP_set_threads
  use QP_m,          ONLY:QP_n_states,QP_table
  !
@@ -56,15 +56,15 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  !
  ! Freq-points
  !
- call PARALLEL_index(PAR_IND_freqs,(/n_frequencies/),COMM=PAR_COM_freqs_INDEX)
+ call PARALLEL_index(PAR_IND_freqs,(/n_runs/),COMM=PAR_COM_freqs_INDEX)
  PAR_IND_freqs_ID=PAR_COM_freqs_INDEX%CPU_id
  PAR_n_freqs     =PAR_IND_freqs%n_of_elements(PAR_IND_Q_ibz_ID+1)
  call PARALLEL_live_message("Freqs",ENVIRONMENT=ENVIRONMENT,         &
 &                           LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1), &
-&                           TOTAL=n_frequencies,NCPU=PAR_COM_freqs_INDEX%n_CPU)
+&                           TOTAL=n_runs,NCPU=PAR_COM_freqs_INDEX%n_CPU)
  !
- allocate(PAR_freqs_index(n_frequencies)) 
- call PAR_build_index(PAR_IND_freqs,n_frequencies,PAR_freqs_index,PAR_n_freqs)
+ allocate(PAR_freqs_index(n_runs)) 
+ call PAR_build_index(PAR_IND_freqs,n_runs,PAR_freqs_index,PAR_n_freqs)
  !
  ! K-points
  !

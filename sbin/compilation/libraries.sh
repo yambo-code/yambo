@@ -33,13 +33,13 @@ case $target in
    libs="-lint_modules $libs $llocal $lPLA $lIO $lextlibs -lm"
     ;;
   p2y*)
-   libs="-lint_modules $libs $llocal $lPLA $lIO $lextlibs -lm"
+   libs="-lint_modules $libs $llocal $lSL $lPLA $lIO $lextlibs -lm"
     ;;
   e2y)
    libs="-lint_modules $libs $llocal $lPLA $lIO $lextlibs -lm"
     ;;
   ypp*)
-   libs="$libs $llocal $lPLA $lIO $lextlibs -lm"
+   libs="$libs $llocal $lSL $lPLA $lIO $lextlibs -lm"
     ;;
   lib*)
     ;;

@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): CA DS
 !
-subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
+subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym)
  !
  use com,                 ONLY:msg
  use vec_operate,         ONLY:v_norm,sort
@@ -24,8 +24,6 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  type(bz_samp),intent(in)    :: k_save
  integer,intent(in)          :: kpoints_map(2,k%nibz)
  integer,intent(in)          :: old_nsym
- !
- integer,intent(in)          :: action_kind
  !
  ! Work space
  !
@@ -74,8 +72,6 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
  YAMBO_ALLOC(wf_nc_k,(k%nibz))
  YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))
  !
- select case(action_kind)
- case(1)
    !
    wf_igk=-1
    !
@@ -99,28 +95,6 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
      !
    enddo
    !
- case(2)
-   !
-   wf_igk=-1
-   do ik=1,k%nibz
-     wf_igk(1:wf_ncx,ik) = wf_igk_reduced(1:wf_ncx,kpoints_map(1,ik))
-     wf_nc_k(ik)         = wf_nc_k_reduced(kpoints_map(1,ik))
-   enddo
-   !
-   ! Close the G-vectors shell
-   !
-   if(nsym>old_nsym) then
-     !
-     call msg('s','Closing shells...')
-     !============================
-     !
-     do is=old_nsym+1,nsym
-       call G_rot_grid(is,'extend_grid')
-     enddo
-     !
-   endif
-   !
- end select
  !
  wf_ng=maxval(wf_igk)
  !

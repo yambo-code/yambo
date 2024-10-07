@@ -99,13 +99,18 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  ! ====================================================
  bands_to_correct=(/1,n_bands/)
  if (l_gw0)                  call QP_apply(bands_to_correct,en,k,"G",msg_fmt='rs',main_section=.TRUE.)
+ !
 #if defined _ELPH
+ ! 
+ ! AM, March 2024. When levels are corrected it may happen that the databases used to correct (QP or carriers)
+ ! have been produced WITHOUT e-p. In this case the E-P related variables may be erroneously overwritten
+ !
+ elph_branches_save  =elph_branches
+ QP_PH_n_G_bands_save=QP_PH_n_G_bands
  !
  ! Green's Function (k+q levels loaded for the _ELPH)
  !
  if (l_gw0.and.l_elph_corr) then
-   elph_branches_save  =elph_branches
-   QP_PH_n_G_bands_save=QP_PH_n_G_bands
    !
    ! Check which databases are present
    ! =================================
@@ -124,11 +129,13 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
    do iq=1,elph_nQ
      call io_control(ACTION=manage_action(OP_IF_START_RD_CL_IF_END,iq,1,elph_nQ),COM=NONE,SEC=(/iq+1/),ID=ID)
      io_err=io_ELPH(ID,db_name//' no_matrix_elements')
-     if (iq>0.and.io_err==0) call QP_apply(GKKP%Nb,GKKP%E_kpq(iq),k,"G",msg_fmt='rs',main_section=.TRUE.)
+     if (iq>0.and.io_err==0) then
+       call QP_apply(GKKP%Nb,GKKP%E_kpq(iq),k,"G",msg_fmt='rs',main_section=.TRUE.)
+#if defined _RT 
+       if (l_apply_RT_corrections) call RT_apply(GKKP%Nb,GKKP%E_kpq(iq),k,what="G",VERBOSE=.true.)
+#endif
+     endif
    enddo
-   !
-   elph_branches  =elph_branches_save
-   QP_PH_n_G_bands=QP_PH_n_G_bands_save
    !
  endif
  !
@@ -137,6 +144,11 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
 #if defined _RT
  l_apply_RT_corrections=l_cohsex.or.l_ppa.or.l_gw0
  if (l_apply_RT_corrections) call RT_apply(bands_to_correct,en,k,what="G",VERBOSE=.true.)
+#endif
+ !
+#if defined _ELPH
+ elph_branches  =elph_branches_save
+ QP_PH_n_G_bands=QP_PH_n_G_bands_save
 #endif
  !
  call E_duplicate(en,DIPen)

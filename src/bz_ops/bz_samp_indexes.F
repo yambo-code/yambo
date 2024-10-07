@@ -93,7 +93,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  if(l_nl_optics) then
    X_scattering    =.FALSE.
-   sigma_scattering=.FALSE.
+ !   sigma_scattering=.FALSE. ! I need them for the LSEX
  endif
  !
 #endif

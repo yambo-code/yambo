@@ -33,9 +33,12 @@ static char *str_trim(char *in)
 
 	for(c=s; isspace(*c); c++);
 	for(; *c != '\0'; *s++=*c++);
-	for(s--; isspace(*s); s--);
-	*(s+1) = '\0';
-
+	if (s != in)
+	{
+		for(s--; isspace(*s); s--);
+		*(s+1) = '\0';
+	}
+	else *s = '\0';
 	return in;
 }
 

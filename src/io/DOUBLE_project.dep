@@ -17,6 +17,7 @@
  io_MPA.o
  io_NL.o
  io_NLCC_pwscf.o
+ io_OSCLL.o
  io_PH.o
  io_QINDX.o
  io_QP_and_GF.o

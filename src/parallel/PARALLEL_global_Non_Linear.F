@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): CA MG DS
 !
-subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
+subroutine PARALLEL_global_Non_Linear(E,Xk,q)
  !
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
@@ -35,7 +35,6 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q
- character(*)         :: ENVIRONMENT
  !
  ! Work space
  !
@@ -59,7 +58,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  call PARALLEL_index(PAR_IND_freqs,(/n_runs/),COMM=PAR_COM_freqs_INDEX)
  PAR_IND_freqs_ID=PAR_COM_freqs_INDEX%CPU_id
  PAR_n_freqs     =PAR_IND_freqs%n_of_elements(PAR_IND_Q_ibz_ID+1)
- call PARALLEL_live_message("Freqs",ENVIRONMENT=ENVIRONMENT,         &
+ call PARALLEL_live_message("Freqs",ENVIRONMENT="Non_Linear",         &
 &                           LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1), &
 &                           TOTAL=n_runs,NCPU=PAR_COM_freqs_INDEX%n_CPU)
  !
@@ -87,7 +86,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  !
  ! Overlap indeces for WF distribution
  !
- call PARALLEL_live_message("H(ibz)",ENVIRONMENT=ENVIRONMENT,&
+ call PARALLEL_live_message("H(ibz)",ENVIRONMENT="Non_Linear",&
           LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=Xk%nibz,&
           NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
  !
@@ -116,7 +115,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    PAR_IND_QP%element_1D(i_qp)=.TRUE.
    PAR_IND_QP%n_of_elements=PAR_nQP
  enddo
- call PARALLEL_live_message("QPs",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_nQP,TOTAL=QP_n_states)
+ call PARALLEL_live_message("QPs",ENVIRONMENT="Non_Linear",LOADED=PAR_nQP,TOTAL=QP_n_states)
 
  !.........................................................................
  !   "COLLISIONS"

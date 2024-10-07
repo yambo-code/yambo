@@ -24,7 +24,7 @@ keep_hdf5=no
 #
 # package versions
 #
-version_Ydriver=1.4
+version_Ydriver=1.4.2
 version_iotk=y1.2.2
 version_netcdf=4.9.0
 version_netcdff=4.6.0
@@ -108,3 +108,15 @@ url_blacs=$(url_base)/$(tarball_blacs)
 url_fftqe=$(url_base)/$(tarball_fftqe)
 url_yaml=$(url_base)/$(tarball_yaml)
 url_futile=$(url_base)/$(tarball_futile)
+#
+# git repositories
+#
+git_Ydriver=git@github.com:yambo-code/yambo-libraries.git
+git_slepc=git@gitlab.com:slepc/slepc.git
+git_petsc=git@gitlab.com:petsc/petsc.git
+#
+# git default branches
+#
+branch_Ydriver=none
+branch_slepc=none
+branch_petsc=none

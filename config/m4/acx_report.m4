@@ -115,6 +115,7 @@ PETSC_check="-"
 if test "$internal_petsc" = "yes" ; then
   if test "$compile_petsc" = "yes" ; then PETSC_check="C"; fi
   if test "$compile_petsc" = "no"  ; then PETSC_check="I"; fi
+  if ! test "$with_petsc_branch" = "none"; then PETSC_LIBS="$PETSC_LIBS (git branch $with_petsc_branch)"; fi
 elif test "$enable_petsc" = "yes" ; then
   PETSC_check="E"
 fi
@@ -123,6 +124,7 @@ SLEPC_check="-"
 if test "$internal_slepc" = "yes" ; then
   if test "$compile_slepc" = "yes" ; then SLEPC_check="C"; fi
   if test "$compile_slepc" = "no"  ; then SLEPC_check="I"; fi
+  if ! test "$with_slepc_branch" = "none"; then SLEPC_LIBS="$SLEPC_LIBS (git branch $with_slepc_branch)"; fi
 elif test "$enable_slepc" = "yes" ; then
   SLEPC_check="E"
 fi

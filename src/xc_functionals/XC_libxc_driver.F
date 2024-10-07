@@ -26,6 +26,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use FFT_m,          ONLY:fft_size
  use wrapper,        ONLY:V_dot_V
  use BS,             ONLY:l_BS_magnons
+ use TDDFT,          ONLY:l_Fxc_from_Vxc
  use xc_functionals, ONLY:E_xc,E_xc_val,magn,F_xc,V_xc,xc_setup_hyb,&
 &                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl,xc_f03_func_end, &
 &                         xc_spin,xc_spin_map1, &
@@ -46,7 +47,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ! Work Space
  !
- logical  :: l_Fxc_from_Vxc
  integer  :: i1,i2,is_xc,is1,is2,ixc,ifft,ORDER_NOW
  integer(IPL) :: size_IPL
  real(SP) :: mod_magn

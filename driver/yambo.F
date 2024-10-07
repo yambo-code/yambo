@@ -242,10 +242,10 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
 #if defined _NL
  !
- ! RT
+ ! NL
  !====
  !
- if (l_nl_optics) call NL_driver(en,X(:2),k,q,Dip)
+ if (l_nl_optics) call NL_driver(en,X(:2),Xw(:2),k,q,Dip)
  if (l_nl_optics) call mem_manager_report
  !
 #endif

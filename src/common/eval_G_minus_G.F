@@ -18,7 +18,10 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  use vec_operate,  ONLY:iku_v_norm, c2a
  use parallel_m,   ONLY:yMPI_comm,PP_indexes,PP_indexes_reset,myid
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index,PARALLEL_live_message
- use R_lattice,    ONLY:G_m_G,G_m_G_d,g_vec,ng_in_shell,n_g_shells,E_of_shell
+ use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,E_of_shell,G_m_G_maxval
+#ifdef _CUDA
+ use R_lattice,    ONLY:G_m_G_d
+#endif
  use timing_m,     ONLY:timing
 #include<memory.h>
  !
@@ -32,8 +35,9 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  integer :: ngx1,ngx2,ngx3, iv1_rlu(3)
  real(SP):: E_iG, E_iGo, E_max
  real(SP):: v1(3),v2(3)
- real(SP), allocatable :: E_G_m_G(:,:),imap(:,:,:),g_vec_rlu(:,:)
- integer,  allocatable :: ig_vec_rlu(:,:)
+ real(SP), allocatable :: E_G_m_G(:,:),g_vec_rlu(:,:)
+ integer,  allocatable :: ig_vec_rlu(:,:), imap(:,:,:)
+ !integer,  allocatable :: G_m_G_maxval_tmp(:)
  type(PP_indexes) :: PAR_IND_G
  !
  integer, external :: G_index
@@ -145,6 +149,10 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  YAMBO_ALLOC(G_m_G,(iG_,iGo_))
  G_m_G=0
+ ! AF: replaced
+ !AMBO_ALLOC(G_m_G_maxval_tmp,(iGo_))
+ !G_m_G_maxval_tmp=0
+ G_m_G_maxval=0
  !
 ! * convert to g_vec to integer coords
 !   relative/crystal coords
@@ -208,11 +216,21 @@ integer function eval_G_minus_G(iG,iGo,COMM)
    endif
    !
    do i1=1,iG_
+     !
      iv1_rlu(:)=ig_vec_rlu(i1,:)-ig_vec_rlu(i2,:)
      G_m_G(i1,i2)=imap(iv1_rlu(1),iv1_rlu(2),iv1_rlu(3))
+     !
+     ! AF: replaced below by maxval(G_m_G)
+     !G_m_G_maxval_tmp(i2)=max(G_m_G_maxval_tmp(i2),G_m_G(i1,i2))
+     !
    enddo
  enddo
  !$omp end parallel do
+ !
+ G_m_G_maxval=maxval(G_m_G)
+ !
+ !G_m_G_maxval=maxval(G_m_G_maxval_tmp)
+ !AMBO_FREE(G_m_G_maxval_tmp)
  !
  if (present(COMM)) call PP_redux_wait(G_m_G,COMM=COMM%COMM)
  if (any(G_m_G(:,:)==0)) call error("[G-vec] unexpected invalid G_index in G_m_G")

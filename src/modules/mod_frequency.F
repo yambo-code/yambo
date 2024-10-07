@@ -33,10 +33,10 @@ module frequency
  !
  type w_samp
    integer      :: n_freqs
-   real(SP)     :: er(2)
+   real(SP)     :: er(2)  ! Energy range
    real(SP)     :: ir(2)
    real(SP)     :: damp_reference
-   real(SP)     :: dr(2)
+   real(SP)     :: dr(2)  ! Damping range
    real(SP)     :: per_memstps
    complex(SP),allocatable :: p(:)
    character(2) :: samp_type

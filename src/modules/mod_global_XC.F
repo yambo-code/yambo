@@ -101,6 +101,8 @@ module global_XC
    H_SE_SRPA_SLT      = 325, &  ! OEP-COHSEX (SLT apprx)
    H_SE_COH           = 326, &  ! Coulomb-Hole 
    H_SE_SEX           = 327, &  ! Screened-eXchange
+   H_SE_LSEX          = 328, &  ! Long range-screened-eXchange
+   H_SE_LHF           = 329, &  ! Long range-eXchange
    H_SE_COHSEX        = H_SE_SEX+H_SE_COH  ! Coulomb-Hole + Screened-eXchange
  !
  ! Phonons

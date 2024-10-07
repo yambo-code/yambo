@@ -7,7 +7,7 @@
 !
 #include<dev_defs.h>
 !
-subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
+subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k_out)
  !
  use pars,          ONLY:SP,cZERO
  use electrons,     ONLY:n_spinor,n_sp_pol
@@ -18,18 +18,18 @@ subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k
  !
  implicit none
  !
- integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2)
+ integer,       intent(in) :: wf_shift(3),ikbz,i_sp_pol,b_to_shift(2)
  type(bz_samp), intent(in) :: Xk
- complex(SP), intent(in)  DEV_ATTR :: WF_k_in (wf_ng_1st_BZ,  n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
- complex(SP), intent(out) DEV_ATTR :: WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
+ complex(SP), intent(in)  DEV_ATTR :: WF_k_in (wf_ng_1st_BZ,  n_spinor,b_to_shift(1):b_to_shift(2))
+ complex(SP), intent(out) DEV_ATTR :: WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2))
  !
  ! Work space
  !
  integer :: id,ik,is
- complex(SP) DEV_ATTR :: WF_tmp(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
+ complex(SP) DEV_ATTR :: WF_tmp(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2))
  integer :: ig,igp,i_b_ref
  integer :: g0_idx(3,2),g0_idx_val
- integer :: i_spinor,i_b,i_sp_pol
+ integer :: i_spinor,i_b
  !
  ik = Xk%sstar(ikbz,1)
  is = Xk%sstar(ikbz,2)
@@ -48,18 +48,16 @@ subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k
      g0_idx_val=k_map%g0_idx(id,WF_shift(id))
      !
 #if defined _CUDA
-     !$cuf kernel do(4) <<<*,*>>>
+     !$cuf kernel do(3) <<<*,*>>>
 #endif
-     do i_sp_pol=1,n_sp_pol
      do i_b=b_to_shift(1),b_to_shift(2)
      do i_spinor=1,n_spinor
      do ig=1,wf_ng_1st_BZ
        !
-       if(WF_tmp(ig,1,i_b_ref,1)==cZERO) cycle
+       if(WF_tmp(ig,1,i_b_ref)==cZERO) cycle
        igp=DEV_VAR(G_m_G)(ig,g0_idx_val)
-       WF_k_out(igp,i_spinor,i_b,i_sp_pol)=WF_tmp(ig,i_spinor,i_b,i_sp_pol)
+       WF_k_out(igp,i_spinor,i_b)=WF_tmp(ig,i_spinor,i_b)
        !
-     enddo
      enddo
      enddo
      enddo

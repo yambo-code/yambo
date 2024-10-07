@@ -159,7 +159,7 @@ subroutine NL_ypp_driver(en,k)
  !
  ! Check if total simulation time is long enough for analysis  
  !
- if((RT_conf%T_range(2) - RT_conf%T_range(1))<T_period) &
+ if((RT_conf%T_range(2) - RT_conf%T_range(1))<T_period.and.trim(Efield_probe%ef_name)/='DELTA') &
 &   call warning('Simulation time not long enough. Period is'//trim(real2ch(T_period*AUT2FS))//' fs')
  !
  call msg('s','Field type    ', trim(Efield_probe%ef_name))

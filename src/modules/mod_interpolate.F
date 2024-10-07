@@ -12,6 +12,9 @@ module interpolate
  !
  ! Interpolation according to PRB 38 p2721
  ! Code copied from BolzTraP 
+ ! Notice that this interpolation is the same interpolation
+ ! implemented in AbiPy (or YamboPy)
+ ! where is called Shankland-Koelling-Wood(SKW)
  !
  implicit none
  !

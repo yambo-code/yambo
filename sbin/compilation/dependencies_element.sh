@@ -33,7 +33,7 @@ fi
 # each line is of the form:
 # file_name.o : @module_name@
 # cast all module names to lowercase because Fortran is case insensitive
-egrep -H -i -e "include ?<memory.h>" -e "^ *use " $sources |  # look for "USE name"
+grep -E -H -i -e "include ?<memory.h>" -e "^ *use " $sources |  # look for "USE name"
 sed 's/F:/o /
      s/,/ /;s/#include/ use /;s/<memory.h>/memory/' | # replace extension, insert space
 #                                         #   and remove trailing comma
@@ -43,7 +43,7 @@ sort | uniq > $compdir/$CDIR/modulesdep.list              # remove duplicates
 # create list of available modules
 # for each module, create a line of the form:
 # s/@module_name@/file_name/g
-egrep -H -i "^ *module " $sources |           # look for "MODULE name"
+grep -E -H -i "^ *module " $sources |           # look for "MODULE name"
 sed 's/F:/o /
      s/\//\\\//g' |                            # replace extension, insert
 #                                              #   space and escape slashes

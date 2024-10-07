@@ -156,6 +156,11 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !-----------
  if (ENVIRONMENT=="Self_Energy"                     ) PAR_QP_range=QP_n_states
  !
+ ! Oscillators
+#if defined _NL || defined _RT
+ if (ENVIRONMENT=="Oscillators"                     ) PAR_n_bands =COLL_bands
+#endif
+ !
 #if defined _NL
  if (ENVIRONMENT=="Non_Linear"                      ) PAR_n_freqs =n_runs
 #endif

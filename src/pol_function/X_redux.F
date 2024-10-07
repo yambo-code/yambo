@@ -32,7 +32,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  use wrapper,       ONLY:M_by_M
  use interfaces,    ONLY:LINEAR_ALGEBRA_driver,MATRIX_transfer
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t,X_use_lin_sys,X_use_gpu,X_par_lower_triangle
+ use X_m,           ONLY:X_t,X_use_lin_sys,X_use_gpu,X_par_lower_triangle,X_redux_build_kernel
  use TDDFT,         ONLY:FXC_n_g_corr,F_xc_gspace,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
  use timing_m,      ONLY:timing
  use cuda_m
@@ -210,7 +210,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    !
    ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
-   call X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
+   call X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols,compute_on_gpu,iq)
    !
    ! X(g,gp)=Sum_gpp[KERNEL]^-1_(g,gpp)*Xo(gpp,gp)
    !
@@ -349,14 +349,16 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  YAMBO_FREE(PAR_FREQS_index)
  call PP_indexes_reset(PAR_IND_freqs)
  !
-contains
+end subroutine
    !
-   subroutine X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
+   subroutine X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols,compute_on_gpu,iq)
      use R_lattice,     ONLY:bare_qpg, bare_qpg_d
-     use pars,          ONLY:pi,cONE
+     use pars,          ONLY:pi,cONE,SP
+     use matrix,        ONLY:PAR_matrix
      implicit none
      type(PAR_matrix), target :: KERNEL,Xo
-     integer, intent(in)      :: Xo_rows(2),Xo_cols(2)
+     integer, intent(in)      :: Xo_rows(2),Xo_cols(2),iq
+     logical, intent(in)      :: compute_on_gpu
      integer :: ig1,ig2
      !
      complex(SP), pointer DEV_ATTR :: KERNEL_blc_d(:,:,:)
@@ -389,5 +391,3 @@ contains
      endif
      !
    end subroutine X_redux_build_kernel
-   !
-end subroutine

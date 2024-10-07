@@ -16,6 +16,7 @@
  NL_initialize.o
  NL_output.o
  NL_start_and_restart.o
+ NL_test_collisions.o
  RK_basestep.o
  el_density_vbands.o
 

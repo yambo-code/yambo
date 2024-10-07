@@ -11,6 +11,7 @@
 !! @param[in]       iGo_max_in                  ???
 !! @param[in]       bands_to_load               bands range 
 !! @param[in]       kpts_to_load                k-points range 
+!! @param[in]       k_extrema_only              k-points, load only !first and last in range
 !! @param[in]       sp_pol_to_load              spin-polarization range 
 !! @param[in]       space                       R = real-space,  G = G-space, C = ?, B = ?
 !! @param[in]       title                       purpose of the wave-function loading
@@ -21,12 +22,12 @@
 !!
 !! @param[out]      WF                  Wave-function object
 !
-subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load,&
+subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load,k_extrema_only,&
 &                  space,title,impose_free_and_alloc,force_WFo,keep_states_to_load,quiet)
  !
  ! Load and (eventually) FFTs the wavefunctions
  !
- use pars,          ONLY:SP,DP,schlen
+ use pars,          ONLY:SP,DP,schlen,cZERO
  use com,           ONLY:msg,core_io_path,fat_log
  use vec_operate,   ONLY:c2a
  use stderr,        ONLY:intc
@@ -58,6 +59,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  integer,     optional :: sp_pol_to_load(2)
  character(*),optional :: space
  character(*),optional :: title
+ logical,     optional :: k_extrema_only
  logical,     optional :: impose_free_and_alloc
  logical,     optional :: force_WFo
  logical,     optional :: keep_states_to_load
@@ -69,16 +71,18 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  character(schlen)::wf_title
  integer          ::i_sp_pol,ikibz,ifrag,ib_grp,ib_to_load,ib,ib1,ib2,i_spinor,ic,ig,igfft,&
 &                   iG_max,iG_bounds_loaded(2),iGo_max,sp_pol_to_load_(2),wf_grid_size,&
-&                   npwk
+&                   npwk,N
  real(SP)         ::mndp,mxdp,xk(3)
  complex(SP)      ::c
- logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_,QUIET_wf,SIZE_msg
+ logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,&
+                    k_extrema_only_,force_WFo_,QUIET_wf,SIZE_msg
  complex(SP), allocatable :: wf_disk(:,:,:)
  complex(DP), allocatable :: wf_DP(:)
  !
  complex(DP), allocatable DEV_ATTR :: wf_DP_d(:)
  complex(SP), allocatable DEV_ATTR :: wf_disk_d(:,:,:)
- complex(SP), pointer     DEV_ATTR :: wfc_d(:,:,:)
+ complex(SP),     pointer DEV_ATTR :: wfc_d(:,:,:)
+ !
  integer :: WFN
  !
  ! I/O
@@ -103,6 +107,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  force_WFo_=.false.
  if(present(force_WFo)) force_WFo_=force_WFo
+ !
+ k_extrema_only_=.false.
+ if(present(k_extrema_only)) k_extrema_only_=k_extrema_only
  !
  sp_pol_to_load_=(/1,n_sp_pol/)
  if(present(sp_pol_to_load)) sp_pol_to_load_=sp_pol_to_load
@@ -182,6 +189,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  QUIET_wf = .false.
  if (kpts_to_load(1)==kpts_to_load(2).and.kpts_to_load(2)>1) QUIET_wf = .true.
+ if (k_extrema_only_.and.kpts_to_load(1)>1)                  QUIET_wf = .true.
  if (present(quiet))                                         QUIET_wf = quiet
  if (QUIET_wf) call IO_and_Messaging_switch("-report -log")
  SIZE_msg=.not.QUIET_wf.and.(any((/fft_dim_loaded/=fft_dim/)).or.any((/fft_dim==0/)))
@@ -255,7 +263,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  ! Memory allocation
  !
- call WF_alloc(WF)
+ call WF_alloc(WF,k_extrema_only_)
  !
  if (WF%space=='R')  wf_grid_size=fft_size
  if (WF%space=='G')  wf_grid_size=wf_ng
@@ -304,6 +312,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    do ikibz=1,nkibz
      !
      if (any( (/ikibz<WF%k(1), ikibz>WF%k(2)/) )) cycle
+     if (k_extrema_only_ .and. all( (/ikibz>WF%k(1), ikibz<WF%k(2)/) )) cycle
      !
      ! USPP init
      !
@@ -401,7 +410,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               !
               WFN = WF%N
               !$cuf kernel do(1)
-              do ic=1,wf_grid_size
+              do ic=1,fft_size
                 wfc_d(ic,i_spinor,WFN)=cmplx(wf_DP_d(ic),kind=SP)*fft_norm
               enddo
               !
@@ -557,7 +566,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      !
      if ( WF%index(ib1,1,1)==0 .or. WF%index(ib2,1,1)==0 ) cycle
      !
-     c=Vstar_dot_V( size(WF%c(:,:,WF%index(1,1,1))),  WF%c(:,:,WF%index(ib1,1,1) ) , WF%c(:,:,WF%index(ib2,1,1)) )
+     N=size(WF%c(:,:,WF%index(ib1,1,1)))
+     c=Vstar_dot_V( N, WF%c(:,:,WF%index(ib1,1,1) ) , WF%c(:,:,WF%index(ib2,1,1)) )
      !
      if (abs(c)>mxdp) mxdp=abs(c)
      if (abs(c)<mndp) mndp=abs(c)

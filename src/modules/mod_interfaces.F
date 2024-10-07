@@ -178,8 +178,8 @@ module interfaces
      type(yMPI_comm), optional :: COMM
    end function
    !
-   subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,&
-&                     sp_pol_to_load,space,title,impose_free_and_alloc,&
+   subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,sp_pol_to_load,&
+&                     k_extrema_only,space,title,impose_free_and_alloc,&
 &                     force_WFo,keep_states_to_load,quiet)
      use wave_func,       ONLY:WAVEs
      integer :: iG_max,iGo_max,bands_to_load(2),kpts_to_load(2)
@@ -187,16 +187,18 @@ module interfaces
      integer,     optional :: sp_pol_to_load(2)
      character(*),optional :: space
      character(*),optional :: title
+     logical     ,optional :: k_extrema_only
      logical     ,optional :: impose_free_and_alloc
      logical     ,optional :: force_WFo
      logical     ,optional :: keep_states_to_load
      logical,     optional, intent(in) :: quiet
    end subroutine
    !
-   subroutine WF_free(WF,keep_fft)
+   subroutine WF_free(WF,keep_fft,keep_states_to_load)
      use wave_func,       ONLY:WAVEs
      type(WAVEs)           :: WF
      logical     ,optional :: keep_fft
+     logical     ,optional :: keep_states_to_load
    end subroutine
    !
    subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,N_f,N_m,I_dir,E_k_dir,E_k_ind)
@@ -212,20 +214,43 @@ module interfaces
      integer , optional :: E_k_ind(n_sp_pol,2)  ! k->k'   of the indirect gap
    end subroutine 
    !
-   subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
-     &                                  BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_PL)
+   subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
+     &                                  BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
      use BS_solvers,    ONLY:BSS_n_eig
      use pars,          ONLY:SP
      use frequency,     ONLY:w_samp
      type(w_samp),intent(in)  :: W
      integer,     intent(in)  :: iq,i_BS_mat
      complex(SP), intent(in)  :: BS_E(BSS_n_eig)
-     complex(SP), pointer, intent(in) :: BS_R_left(:),BS_R_right(:)
+     complex(SP), pointer, intent(in) :: BS_R_left_abs(:),BS_R_right_abs(:)
      real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
      complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
-     complex(SP), pointer, intent(in) :: BS_R_right_kerr(:)
+     complex(SP), pointer, intent(in) :: BS_R_left_kerr(:),BS_R_right_kerr(:),BS_R_right_dich(:,:)
      real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
    end subroutine
+   !
+   subroutine K_diago_right_residuals(mode,i_BS_mat,BS_E,BS_R_right,BS_V_right)
+     use BS_solvers,    ONLY:BSS_n_eig
+     use pars,          ONLY:SP
+     implicit none
+     character(*),intent(in)  :: mode
+     integer,     intent(in)  :: i_BS_mat
+     complex(SP), intent(in)  :: BS_E(BSS_n_eig)
+     complex(SP), intent(out) :: BS_R_right(BSS_n_eig)
+     complex(SP), intent(in)  :: BS_V_right(:,:)
+   end subroutine K_diago_right_residuals
+   !
+   subroutine K_diago_left_residuals(mode,i_BS_mat,BS_E,BS_R_left,BS_V_left,BS_overlap)
+     use BS_solvers,    ONLY:BSS_n_eig
+     use pars,          ONLY:SP
+     implicit none
+     character(*),intent(in)  :: mode
+     integer,     intent(in)  :: i_BS_mat
+     complex(SP), intent(in)  :: BS_E(BSS_n_eig)
+     complex(SP),target,  intent(out) :: BS_R_left(BSS_n_eig)
+     complex(SP),         intent(in)  :: BS_V_left(:,:)
+     complex(SP),optional,intent(in)  :: BS_overlap(BSS_n_eig,BSS_n_eig)
+   end subroutine K_diago_left_residuals
    !
    subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap) 
      use pars,           ONLY:SP
@@ -265,55 +290,55 @@ module interfaces
      type(QP_t),optional ::qp              
    end subroutine
    !
-   function TDDFT_ALDA_R_space(is,os,isp,osp,tddft_wf,mode)
+   function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
      use pars,           ONLY:SP
      use TDDFT,          ONLY:tddft_wf_t
-     complex(SP) :: TDDFT_ALDA_R_space
+     complex(SP) :: H_x
      integer,          intent(in)  :: is(4),os(4),isp(4),osp(4)
      character(3),     intent(in)  :: mode
      type(tddft_wf_t), target, intent(inout) :: tddft_wf
-   end function TDDFT_ALDA_R_space
+   end function TDDFT_ALDA_eh_space_R_kernel
    !
  end interface
  !
  interface WF_shift_kpoint
    !
-   subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
+   subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k_out)
      use pars,          ONLY:SP
-     use electrons,     ONLY:n_spinor,n_sp_pol
+     use electrons,     ONLY:n_spinor
      use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
      use R_lattice,     ONLY:bz_samp
-     integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2)
+     integer,       intent(in) :: wf_shift(3),ikbz,i_sp_pol,b_to_shift(2)
      type(bz_samp), intent(in) :: Xk
      complex(SP), intent(in)  DEV_ATTR :: &
-&         WF_k_in (wf_ng_1st_BZ,  n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
+&         WF_k_in (wf_ng_1st_BZ,  n_spinor,b_to_shift(1):b_to_shift(2))
      complex(SP), intent(out) DEV_ATTR :: &
-&         WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
+&         WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2))
    end subroutine
  end interface 
  !
  interface WF_symm_kpoint
    !
-   subroutine WF_symm_kpoint_cpu(b_to_load,ikbz,Xk,WF_k_out)
+   subroutine WF_symm_kpoint_cpu(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
      use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
      use wave_func,     ONLY:wf_ng_1st_BZ
-     use electrons,     ONLY:n_spinor,n_sp_pol
-     integer,       intent(in)  :: ikbz,b_to_load(2)
+     use electrons,     ONLY:n_spinor
+     integer,       intent(in)  :: ikbz,i_sp_pol,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
-     complex(SP),   intent(out) :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
+     complex(SP),   intent(out) :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2))
    end subroutine WF_symm_kpoint_cpu
    !
 #ifdef _CUDA
-   subroutine WF_symm_kpoint_gpu(b_to_load,ikbz,Xk,WF_k_out)
+   subroutine WF_symm_kpoint_gpu(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
      use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
      use wave_func,     ONLY:wf_ng_1st_BZ
-     use electrons,     ONLY:n_spinor,n_sp_pol
-     integer,       intent(in)  :: ikbz,b_to_load(2)
+     use electrons,     ONLY:n_spinor
+     integer,       intent(in)  :: ikbz,i_sp_pol,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
      complex(SP),   intent(out) DEV_ATTR :: &
-&       WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
+&       WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2))
    end subroutine WF_symm_kpoint_gpu
 #endif
  end interface

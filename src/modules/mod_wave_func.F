@@ -55,6 +55,7 @@ module wave_func
  integer                :: wf_ng          ! For WFs in the    IBZ
  integer                :: wf_ng_1st_BZ   ! For WFs in the 1st BZ
  integer                :: wf_ng_overlaps ! For WFs shifted used by the overlaps
+ integer                :: cutoff_ng      ! For G-vectors used in cutoff (if read, may be different from wf_ng)
  !
  ! Wave function derivatives
  !

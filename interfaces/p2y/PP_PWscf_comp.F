@@ -49,12 +49,18 @@ subroutine PP_PWscf_comp(basis,atoms)
       fl=0._SP
       dfl=0._SP
       do ipw=1,npw
-        if(KpG_norm(ipw) < 1.E-5) cycle
+        if(KpG_norm(ipw) < 1.E-5 .AND. l>0 ) cycle
         fl(ipw) = num_interpolation_calc(psp%interp_beta(ibeta),KpG_norm(ipw),3)
-        dfl(ipw) = num_interpolation_calc_der(psp%interp_beta(ibeta),KpG_norm(ipw),3,ider=1)
-        pp_kb(ipw,itype,ibeta,1) = sqrt(abs(kb_E))*fl(ipw)*KpG_norm(ipw)**l
-        pp_kbd(ipw,itype,ibeta,1) = sqrt(abs(kb_E))*(dfl(ipw)*KpG_norm(ipw)**l+ &
+        if(KpG_norm(ipw) < 1.E-5) then
+          ! for fl(x->0) ~ \delta_{l,0} * \int_{0}^\infty r beta_pp(r) dr
+          pp_kb(ipw,itype,ibeta,1) = sqrt(abs(kb_E))*fl(ipw)
+          pp_kbd(ipw,itype,ibeta,1) = 0._SP ! limit goes to zero
+        else
+          dfl(ipw) = num_interpolation_calc_der(psp%interp_beta(ibeta),KpG_norm(ipw),3,ider=1)
+          pp_kb(ipw,itype,ibeta,1) = sqrt(abs(kb_E))*fl(ipw)*KpG_norm(ipw)**l
+          pp_kbd(ipw,itype,ibeta,1) = sqrt(abs(kb_E))*(dfl(ipw)*KpG_norm(ipw)**l+ &
 &                                         fl(ipw)*real(l,SP)*KpG_norm(ipw)**(l-1) )
+        endif
       enddo
     enddo
   enddo

@@ -721,7 +721,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          call M_by_V('N',X_nrows,X_ncols, cONE, X_blc_p(:,:,X_range1),X_nrows,&
 &                        conjg_iscp_rhotw(X_cols1:X_cols2),1,cZERO,local_rhotw(X_rows1:X_rows2),1)
          !
-         pre_factor=V_dot_V(X_nrows,isc_rhotw_p(X_rows1:X_rows2),local_rhotw(X_rows1:X_rows2))
+         pre_factor=V_dot_V(X_nrows,DEV_VAR(isc%rhotw)(X_rows1:X_rows2),local_rhotw(X_rows1:X_rows2))
 
          !
          ! SEX

@@ -34,8 +34,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,&
-&                        PAR_Q_ibz_index,n_WF_bands_to_load,HEAD_QP_cpu,&
-&                        PAR_COM_SE_WORLD,PAR_COM_SE_WORLD_RL_resolved
+&                        PAR_Q_ibz_index,n_WF_bands_to_load,HEAD_QP_cpu
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use functions,     ONLY:bose_f
  use IO_int,        ONLY:io_control
@@ -53,7 +52,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use interfaces,    ONLY:QP_state_print,WF_load,WF_free,MATRIX_transpose,MATRIX_duplicate
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_G_b_INDEX
+ use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_QP_A2A,PAR_COM_G_b_INDEX
 #if defined _SC
  use SC,            ONLY:it_now,it_to_start
 #endif
@@ -583,17 +582,19 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          ! AF,MB: After the inclusion of G-parallelism, the communicator to use
          ! here (both SC and ordinary runs) has become   PAR_COM_G_b_INDEX
          !
-!#if defined _SC
-!         if (l_sc_run) then
-!           if (PAR_COM_QP_A2A%CPU_id==0) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
-!         else
-!#endif
-!           if (HEAD_QP_cpu)              QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
-!#if defined _SC
-!         endif
-!#endif
+         ! AF: for the time being, the SC case is treated as if g-parallelism is
+         ! disabled
          !
-         if (PAR_COM_G_b_INDEX%CPU_id==0) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+#if defined _SC
+         if (l_sc_run) then
+           if (PAR_COM_QP_A2A%CPU_id==0)    QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+         else
+#endif
+!          if (HEAD_QP_cpu)                 QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+           if (PAR_COM_G_b_INDEX%CPU_id==0) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+#if defined _SC
+         endif
+#endif
          !
          dc=cZERO
          !

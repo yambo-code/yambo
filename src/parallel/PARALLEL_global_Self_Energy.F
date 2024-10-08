@@ -9,7 +9,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nqbz,nXkibz,nXkbz
- use drivers,       ONLY:l_eval_collisions,l_sc_electric
+ use drivers,       ONLY:l_eval_collisions,l_sc_electric,l_sc_run,l_real_time
  use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,&
 &                        PARALLEL_live_message,PARALLEL_MATRIX_distribute
  use IO_m,          ONLY:io_COLLs
@@ -64,15 +64,29 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  integer              :: i_k,nb_mat
 #endif
  !
- CALL PARALLEL_structure(4,(/"q ","g ","qp","b "/))
+ ! AF: here we disable the RL parallelism (g) for SC and RT, where
+ !     the parallel structure needs to be adapted to the SE g parallelism
  !
- call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_Q_INDEX,&
-&                                        COMM_index_2=PAR_COM_RL_INDEX,&
-&                                        COMM_index_3=PAR_COM_QP_INDEX,&
-&                                        COMM_index_4=PAR_COM_G_b_INDEX,&
-&                                        COMM_A2A_1=PAR_COM_Q_A2A,&
-&                                        COMM_A2A_2=PAR_COM_RL_A2A,&
-&                                        COMM_A2A_3=PAR_COM_QP_A2A)
+ if (l_sc_run.or.l_real_time) then
+   !
+   call PARALLEL_structure(3,(/"q ","qp","b "/))
+   call PARALLEL_assign_chains_and_COMMs(3,COMM_index_1=PAR_COM_Q_INDEX,&
+&                                          COMM_index_2=PAR_COM_QP_INDEX,&
+&                                          COMM_index_3=PAR_COM_G_b_INDEX,&
+&                                          COMM_A2A_1=PAR_COM_Q_A2A,&
+&                                          COMM_A2A_2=PAR_COM_QP_A2A)
+   !
+ else
+   !
+   call PARALLEL_structure(4,(/"q ","g ","qp","b "/))
+   call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_Q_INDEX,&
+&                                          COMM_index_2=PAR_COM_RL_INDEX,&
+&                                          COMM_index_3=PAR_COM_QP_INDEX,&
+&                                          COMM_index_4=PAR_COM_G_b_INDEX,&
+&                                          COMM_A2A_1=PAR_COM_Q_A2A,&
+&                                          COMM_A2A_2=PAR_COM_RL_A2A,&
+&                                          COMM_A2A_3=PAR_COM_QP_A2A)
+ endif
  !
  ! COMMs setup
  !

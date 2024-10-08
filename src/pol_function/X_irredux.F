@@ -135,7 +135,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  if (iq/=current_iq) then
    !
-   n_poles=X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
+   n_poles=X_eh_setup(-iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_X_WORLD%CPU_id+1))
    !
    if (n_poles==0) call warning(' [CPU '//trim(intc(myid))//'] has no poles')
    !

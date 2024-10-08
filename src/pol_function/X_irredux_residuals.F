@@ -196,7 +196,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      enddo
    enddo
 #else
-   !DEV_OMP parallel do default(shared), private(ig2)
+   !DEV_OMP parallel do default(shared), private(ig2,ROWS)
    do ig2=X_cols(1),X_cols(2)
      ROWS=(/X_rows(1),min(ig2,X_rows(2))/)
      call V_plus_alpha_V(ROWS(2)-ROWS(1)+1,Z_eh_occ*Xo_scatt%rhotw(ig2),&

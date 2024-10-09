@@ -46,7 +46,9 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
  endif
  !
  X_rows = X_par%rows
+ !DEV_ACC update device(X_rows)
  X_cols = X_par%cols
+ !DEV_ACC update device(X_cols)
  !
  if (l_XUP.and..not.X_FILL_UP_matrix_only.and.X_par%INTER_comm%n_CPU>1) then
    !

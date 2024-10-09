@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2018 The Yambo Team
 !
-! Authors (see AUTHORS file for details): DSDV
+! Authors (see AUTHORS file for details): DS DV
 !
 subroutine p2y_atmproj(filename,k)
  !
@@ -113,7 +113,7 @@ subroutine p2y_atmproj(filename,k)
            !
            ! Case without SOC
            !
-           do im=1,2*il-1
+           do im=1,2*il+1
              !DEBUG <
              !write(*,*)ia,itype,il-1._SP,real(im-il,SP)
              !DEBUG >

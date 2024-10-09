@@ -22,7 +22,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use parser_m,      ONLY:parser
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PAR_COM_Q_A2A,&
 &                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,&
-&                        PAR_Q_ibz_index,n_WF_bands_to_load
+&                        PAR_Q_ibz_index,n_WF_bands_to_load,myid
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:manage_action,OP_RD_CL,OP_WR_CL,OP_APP_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
@@ -33,11 +33,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,RIM_W_ng,RIM_W
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
- use interfaces,    ONLY:QP_state_print,WF_load,WF_free
- use matrix_operate,ONLY:mat_transpose
+ use interfaces,    ONLY:QP_state_print,WF_load,WF_free,MATRIX_transpose
  use timing_m,      ONLY:timing
- use mpa_m,         ONLY:mpa_RE_solver,err_func_X,MPA_E_mat,MPA_R_mat,MPA_freqs,&
-&                        MPA_alloc,MPA_free,MPA_E_mat_d,MPA_R_mat_d, MPA_E_par,MPA_R_par,&
+ use mpa_m,         ONLY:mpa_RE_solver,err_func_X,MPA_freqs,MPA_alloc,MPA_free,MPA_E_par,MPA_R_par,&
 &                        MPA_E_par_d,MPA_R_par_d
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
@@ -75,22 +73,22 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), pointer DEV_ATTR :: isc_rhotw_p(:)
  complex(SP), pointer DEV_ATTR :: iscp_rhotw_p(:)
  complex(SP), pointer DEV_ATTR :: isc_gamp_p(:,:)
+ !
  complex(SP), pointer DEV_ATTR :: MPA_R_mat_p(:,:,:)
  complex(SP), pointer DEV_ATTR :: MPA_E_mat_p(:,:,:)
- !
- !MB:
  complex(SP), pointer DEV_ATTR :: MPA_R_par_p(:,:,:)
  complex(SP), pointer DEV_ATTR :: MPA_E_par_p(:,:,:)
  !
  ! MPA variables
  !
- integer          :: i_np,ID2
- logical          :: MPred,l_CPU_ONLY
- real(SP)         :: bose_PPA_E,MPred_rate,PPcond_rate,PPcond_Qrate,MP_err,MP_Qerr,cond_num(2),cond_numQ(2) 
+ integer           :: i_np,ID2
+ logical           :: MPred,l_CPU_ONLY
+ real(SP)          :: bose_PPA_E,MPred_rate,PPcond_rate,PPcond_Qrate,&
+&                     MP_err,MP_Qerr,cond_num(2),cond_numQ(2)
  complex(SP), allocatable :: MPA_Xo(:)
- character(len=99):: str
+ character(len=99) :: str
  !
- integer, external::io_X,io_MPA
+ integer, external ::io_X,io_MPA
 
  !
  ! Reset & checks
@@ -202,7 +200,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=io_X(X,Xw,ID)
- if (io_err<0.and.io_RESPONSE) call error('Incomplete and/or broken MPA/Static diel. fun. database')
+ if (io_err<0.and.io_RESPONSE) call error('[MPA] Incomplete and/or broken MPA/Static diel. fun. database')
  !
  ! Test the spatial Inversion
  !   
@@ -211,29 +209,29 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! ALLOCATION
  !------------
  !
- !MB: we load X_par and not X_mat. refer to QP_ppa_cohsex.
- ! deallocate X_mat
+ ! MB: we load X_par and not X_mat (refer to QP_ppa_cohsex)
+ !     Here deallocate X_mat
+ !
  call X_ALLOC_elemental("X")
+ !
+ if (.not.io_RESPONSE) call error("[MPA] .not. io_RESPONSE untested with MPA")
  !
  if (.not.allocated(X_par).and.io_RESPONSE) then
    allocate(X_par(1))
  endif
- !if (io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,2*X%mpa_npoles/))
  if (io_RESPONSE) call X_ALLOC_parallel(X_par(1),X%ng,2*X%mpa_npoles,"X")
+ !
  YAMBO_ALLOC(W_,(QP_dSc_steps))
  YAMBO_ALLOC(dc,(QP_dSc_steps))
  !
  ! MPA workspace
  !
- !Instead of MPA_alloc, we try MPA_ALLOC_parallel
- !call MPA_alloc((/X%ng,X%ng,X%mpa_npoles,2*X%mpa_npoles/))
- if (.not.allocated(MPA_E_par).and.io_RESPONSE) then
-  allocate(MPA_E_par(1))
+ if (.not.allocated(MPA_E_par).and.io_RESPONSE) allocate(MPA_E_par(1))
+ if (.not.allocated(MPA_R_par).and.io_RESPONSE) allocate(MPA_R_par(1))
+ if (io_RESPONSE) then
+   ! AF: GPU allocation is performed separately below
+   call MPA_ALLOC_parallel(MPA_E_par(1),MPA_R_par(1),X%ng,2*X%mpa_npoles,"CPU_ONLY")
  endif
- if (.not.allocated(MPA_R_par).and.io_RESPONSE) then
-  allocate(MPA_R_par(1))
- endif
- if (io_RESPONSE) call MPA_ALLOC_parallel(MPA_E_par(1),MPA_R_par(1),X%ng,2*X%mpa_npoles,"MPA")
  !
  !
  ! AF: the following line needs to be moved elsewhere
@@ -308,6 +306,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      PPcond_Qrate=0._SP
      MP_Qerr=0._SP
      cond_numQ(:)=0._SP
+
      !
      !$omp parallel default(shared),private(ig1,ig2,MPred,PPcond_rate,MP_err,cond_num,i_np,MPA_Xo,l_RIM_W_g), &
      !$omp &        reduction(+:MPred_rate,PPcond_Qrate,MP_Qerr,cond_numQ)
@@ -325,17 +324,16 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
            !DALV: the multiplication by isc%gamp(ig1,ig2) is performed later
            MPA_Xo(1:Xw%n_freqs)=X_par(iq_mem)%blc(ig1,ig2,1:Xw%n_freqs)
          endif
+         !
          MPred=.false.
          PPcond_rate=0._SP
          MP_err=0._SP
          cond_num(:)=0._SP
          !
-         !call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo,MPA_R_mat(ig1,ig2,:),MPA_E_mat(ig1,ig2,:),&
-!&                                                  Xw%mpa_solver,MPred,PPcond_rate,MP_err,cond_num)
-         !MB: in the following we introduce the MPA_E/R_par. should be same as X_par(iq_mem)%blc(ig1,ig2,X_range2),
-         ! where X_range2 -> : ... not sure if I have to introduce the iq_mem.
-         call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo,MPA_R_par(iq_mem)%blc(ig1,ig2,:),MPA_E_par(iq_mem)%blc(ig1,ig2,:),&
-&                                                  Xw%mpa_solver,MPred,PPcond_rate,MP_err,cond_num)
+         call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo, &
+&                           MPA_R_par(1)%blc(ig1,ig2,:),MPA_E_par(1)%blc(ig1,ig2,:), &
+&                           Xw%mpa_solver, MPred,PPcond_rate,MP_err,cond_num)
+         !
          if(MPred) MPred_rate=MPred_rate+1._SP
          PPcond_Qrate=PPcond_Qrate+PPcond_rate
          MP_Qerr=MP_Qerr+MP_err
@@ -361,7 +359,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! I/O MPA
      !
-     ! MB: is this the "fake loading?"
      if (io_MULTIPOLE) then
        !
        call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iqibz,2*iqibz+1/),ID=ID2)
@@ -388,34 +385,25 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    if (iqs>nsym/(i_time_rev+1) .and. (i_space_inv==0.or.mag_syms) .and..not.X_is_TR_rotated) then
      !
-     ! Note (AF) that $omp directives are inside mat_transpose
+     ! AF: note that X_par is nott transpose, so, when
+     !     the ig1,ig2 indexes are distributed, only MPA_E_par/MPA_R_par
+     !     have the right ranges for cols and rows
      !
-     do i_np=1,X%mpa_npoles
-       call mat_transpose(MPA_E_par(1)%blc(:,:,i_np))
-       call mat_transpose(MPA_R_par(1)%blc(:,:,i_np))
-     enddo
+     call MATRIX_transpose("T",M_out=MPA_E_par(1))
+     call MATRIX_transpose("T",M_out=MPA_R_par(1))
+     call MATRIX_transpose("T",M_out=X_par(iq_mem))
      !
      X_is_TR_rotated=.true.
    endif
    !
-   !if (have_cuda) then
-   !  call dev_memcpy(MPA_E_mat_d,MPA_E_mat)
-   !  call dev_memcpy(MPA_R_mat_d,MPA_R_mat)
-   !endif
-   !
-   !MPA_E_mat_p=>DEV_VAR(MPA_E_mat)
-   !MPA_R_mat_p=>DEV_VAR(MPA_R_mat)
-   !
-   !MB:
    if (have_cuda) then
-      !call dev_memcpy(MPA_E_par_d,MPA_E_par(1)%blc)
-      !call dev_memcpy(MPA_R_par_d,MPA_R_par(1)%blc)
-      YAMBO_ALLOC_SOURCE(MPA_E_par(1)%blc_d,MPA_E_par(1)%blc)
-      YAMBO_ALLOC_SOURCE(MPA_R_par(1)%blc_d,MPA_R_par(1)%blc)
+      YAMBO_ALLOC_SOURCE( DEV_VAR(MPA_E_par(1)%blc), MPA_E_par(1)%blc )
+      YAMBO_ALLOC_SOURCE( DEV_VAR(MPA_R_par(1)%blc), MPA_R_par(1)%blc )
    endif
    ! 
    MPA_E_par_p=>DEV_VAR(MPA_E_par(1)%blc)
    MPA_R_par_p=>DEV_VAR(MPA_R_par(1)%blc)
+   !
    !
    call timing('GW(mpa)_qp_loop',OPR='start')
    !

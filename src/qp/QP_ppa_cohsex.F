@@ -49,7 +49,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        RIM_W_is_diagonal,RIM_W_ng,RIM_W,RIM_W_d
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V,V_dot_V
- use interfaces,    ONLY:QP_state_print,WF_load,WF_free,MATRIX_transpose,MATRIX_duplicate
+ use interfaces,    ONLY:QP_state_print,WF_load,WF_free,MATRIX_transpose
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
  use timing_m,      ONLY:timing
  use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_QP_A2A,PAR_COM_G_b_INDEX

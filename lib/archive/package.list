@@ -27,7 +27,7 @@ keep_hdf5=no
 # package versions
 #
 version_Ydriver=1.4.2
-version_Ydiago=0.3.0
+version_Ydiago=0.3.1
 version_iotk=y1.2.2
 version_netcdf=4.9.0
 version_netcdff=4.6.0

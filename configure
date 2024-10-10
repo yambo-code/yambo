@@ -10238,6 +10238,10 @@ printf "%s\n" "$MPIKIND" >&6; }
 
 
   MPI_PATH=`which $CC |sed "s/bin\/$CC//g"`
+  if ! test -d "$MPI_PATH/include"; then
+    MPI_PATH=`$CC -show | sed "s/.*-I//g"` ;
+    MPI_PATH=`echo ${MPI_PATH} | sed "s/\/include.*//g"` ;
+  fi
   #
 else
   #

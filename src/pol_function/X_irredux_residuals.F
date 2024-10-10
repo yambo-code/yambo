@@ -16,7 +16,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  !
  use pars,          ONLY:SP,cZERO,cONE
  use wrapper,       ONLY:V_plus_alpha_V
- use DIPOLES,       ONLY:DIPOLE_t,DIP_rotated
+ use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,X_poles_tab,l_X_terminator,X_cols,X_rows,drude_n_states
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:bare_grid_N,coarse_grid_Pt
@@ -60,7 +60,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  !
  ! DIPOLES
  !
- complex(SP)        :: DIP_projected,field_dir(3)
+ complex(SP)        :: DIP_projected,field_dir(3),DIP_bare(3)
  !
  field_dir=Dip%q0/v_norm(Dip%q0)*q0_def_norm
  !
@@ -153,7 +153,8 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      endif
      !
      ! iG=1 case
-     DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ikbz,i_spin,"DIP_iR",Xk))
+     call DIPOLE_rotate(ic,iv,ikbz,i_spin,"DIP_iR",Xk,DIP_bare)
+     DIP_projected=dot_product(field_dir,DIP_bare)
      if(iv/=ic) DEV_VAR(Xo_scatt%rhotw)(1)=    -conjg(DIP_projected)
      !
      ! 2022/05/11 DS & AF
@@ -195,7 +196,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      enddo
    enddo
 #else
-   !DEV_OMP parallel do default(shared), private(ig2)
+   !DEV_OMP parallel do default(shared), private(ig2,ROWS)
    do ig2=X_cols(1),X_cols(2)
      ROWS=(/X_rows(1),min(ig2,X_rows(2))/)
      call V_plus_alpha_V(ROWS(2)-ROWS(1)+1,Z_eh_occ*Xo_scatt%rhotw(ig2),&

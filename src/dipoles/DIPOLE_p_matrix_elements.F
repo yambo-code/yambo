@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P2)
+subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P2,l_eval_M_spin)
  !
  use pars,          ONLY:SP,cZERO,pi
  use wrapper_omp,   ONLY:Vstar_dot_V_omp
@@ -18,7 +18,6 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  use R_lattice,     ONLY:g_vec_d
 #endif
 #if defined _RT
- use dipoles,       ONLY:compute_spin_dipoles
  use real_time,     ONLY:l_update_SOC
 #endif
  !
@@ -26,7 +25,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  !
  type(bz_samp), intent(in)  :: Xk
  integer,       intent(in)  :: iv_wf,ic_wf,ik
- logical,       intent(in)  :: l_eval_P2
+ logical,       intent(in)  :: l_eval_P2,l_eval_M_spin
  complex(SP),   intent(out) :: rho(3),rho_spinor(3,n_spinor,n_spinor),P2
  ! 
  ! Work Space
@@ -49,7 +48,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  ! 
  eval_spinor_matrix=.false.
 #if defined _RT
- eval_spinor_matrix=compute_spin_dipoles.and.n_spinor==2.and.l_update_SOC
+ eval_spinor_matrix=l_eval_M_spin.and.n_spinor==2.and.l_update_SOC
 #endif
  !
  do i1=1,3
@@ -139,7 +138,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
      do i_spinor=1,n_spinor
        do j_spinor=1,n_spinor
          rho_spinor(i1,i_spinor,j_spinor)=&
-         &  Vstar_dot_V_omp(wf_nc_k(ik),wf_grad(:wf_nc_k(ik),i_spinor),WF%c(:wf_nc_k(ik),j_spinor,ic_wf))
+&                   Vstar_dot_V_omp(wf_nc_k(ik),wf_grad(:wf_nc_k(ik),i_spinor),WF%c(:wf_nc_k(ik),j_spinor,ic_wf))
        enddo
        rho(i1)=rho(i1)+rho_spinor(i1,i_spinor,i_spinor)
      enddo

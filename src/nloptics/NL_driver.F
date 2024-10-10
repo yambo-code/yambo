@@ -16,14 +16,15 @@ subroutine NL_driver(E,X,k,q,Dip)
  use electrons,      ONLY:levels,n_sp_pol
  use collision_ext,  ONLY:COLLISIONS_CV_only 
  use X_m,            ONLY:X_t
- use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_S
+ use ALLOC,          ONLY:DIPOLE_ALLOC_elemental,DIPOLE_ALLOC_global
  use wave_func,      ONLY:WF,wf_ng
  use interfaces,     ONLY:WF_load,WF_free
  use hamiltonian,    ONLY:WF_Go_indx,H_QP_table_setup,H_potential
  use R_lattice,      ONLY:bz_samp,qindx_free
  use fields,         ONLY:Efield
  use QP_CTL_m,       ONLY:QP_apply
- use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J,NL_initial_versor, &
+ use nl_optics,      ONLY:n_frequencies,Correlation,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J,NL_initial_versor, &
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P,loop_on_angles,n_angles,&
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,runs_done,n_runs_todo,l_eval_CURRENT,NL_rot_axis,&
 &                         HF,SEX,NL_bands,NL_nbands,NL_alloc_k_distributed,NL_J_t,n_runs,loop_on_frequencies, &
@@ -50,7 +51,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  integer           :: i_f,i1,i_sp_pol,wf_ng_save,io_err
  character(schlen) :: l_message
  logical           :: l_dynamics_is_over
- integer           :: ID_RESTART
  real(SP)          :: Time,angle
  !
  ! In Non-Linear NL_bands always equal to RT_bands
@@ -106,13 +106,12 @@ subroutine NL_driver(E,X,k,q,Dip)
  ! =====================================================
  call qindx_free('ALL')
  !
- call DIP_alloc('P_square')
+ call DIPOLE_ALLOC_elemental('P_square')
  if(l_use_DIPOLES) then
-   call DIP_alloc('DIP_S')
+   call DIPOLE_ALLOC_elemental('DIP_S')
  else
    if(.not.l_eval_CURRENT) then
-!     call DIP_alloc('DIP_R')
-     call DIP_alloc('DIP_v')
+     call DIPOLE_ALLOC_elemental('DIP_v')
    endif
  endif
  !
@@ -274,8 +273,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  call WF_free(WF)
  call NL_free()
- call DIP_alloc('DIP_S')
- call DIP_alloc('DIP_R')
- call DIP_alloc('DIP_v')
+ call DIPOLE_ALLOC_global( )
  !
 end subroutine NL_driver

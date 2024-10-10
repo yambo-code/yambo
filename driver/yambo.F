@@ -184,7 +184,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (l_nl_optics.and.launch_me) call error('Please run the calculation of em1s/d/x in a separate run')
  !
- if (launch_me) i_err=X_dielectric_matrix(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
+ if (launch_me) i_err=X_dielectric_matrix(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.FALSE.,.FALSE.)
  if (launch_me) call mem_manager_report
  !
  ! HARTREE-FOCK AND VXC

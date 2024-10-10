@@ -18,9 +18,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     q_plus_G_direction,Q_Shift_Order,&
 &                     l_X_terminator,X_terminator_E,global_gauge,&
 &                     Chi_linalg_mode,X_use_lin_sys,X_use_gpu,X_DbGd_percentual
- use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,&
-&                     Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
-&                     compute_P2_dipoles,compute_Spin_dipoles,compute_Orb_dipoles
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
@@ -350,13 +347,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.
  X_FILL_UP_matrix_only=.FALSE.
- use_shifted_grids_approach = .FALSE.
- use_covariant_approach     = .FALSE.
- use_real_space_approach    = .FALSE.
- use_g_space_approach       = .TRUE.
- compute_P2_dipoles         = .FALSE.
- compute_Spin_dipoles       = .FALSE.
- compute_Orb_dipoles        = .FALSE.
  use_X_DbGd=.FALSE.
  X_DbGd_percentual=-1.
  eps_2_alpha=1._SP
@@ -364,7 +354,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  global_gauge='length'
  grid_paths=' '
  skip_cond_sum_rule=.FALSE.
- Vnl_commutator_warning=.FALSE.
  q_plus_G_direction=0._SP
  Q_Shift_Order=1
  l_X_terminator=.FALSE.

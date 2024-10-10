@@ -17,7 +17,7 @@ RT_objects_iterative  = mod_RT_iterative.o
 NL_objects       = mod_fields.o mod_electric.o mod_nl_optics.o mod_NL_interfaces.o
 #endif
 #if defined _ELPH
-ELPH_objects = mod_ELPH_intfcs.o mod_ELPH.o
+ELPH_objects = mod_ELPH.o
 #endif
 #if defined _io_lib
 objs = mod_pars.o mod_stderr.o mod_parallel.o mod_parallel_interface.o  \

@@ -38,7 +38,8 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use SC,              ONLY:it_now
  use IO_int,          ONLY:io_control
  use IO_m,            ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_IF_START_RD_CL_IF_END
- use X_m,             ONLY:X_ALLOC_elemental,X_mat,X_t
+ use ALLOC,           ONLY:X_ALLOC_elemental
+ use X_m,             ONLY:X_mat,X_t
  !
  ! I/O
  !

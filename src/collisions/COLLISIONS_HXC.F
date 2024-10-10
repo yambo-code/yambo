@@ -32,7 +32,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx,QP_ng_Sc
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:OP_RD_CL,REP,VERIFY,NONE,io_COLLs
- use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t
+ use ALLOC,         ONLY:X_ALLOC_elemental
+ use X_m,           ONLY:X_mat,X_t
  use interfaces,    ONLY:WF_load,TDDFT_ALDA_R_space
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use R_lattice,     ONLY:qindx_S,bz_samp,g_rot,minus_G

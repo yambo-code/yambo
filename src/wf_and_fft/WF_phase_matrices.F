@@ -19,7 +19,7 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  use units,             ONLY:HA2EV
  use LIVE_t,            ONLY:live_timing
  use R_lattice,         ONLY:bz_samp,G_m_G,minus_G,g_vec,rl_sop
- use D_lattice,         ONLY:nsym,i_time_rev,sop_tab,spin_sop
+ use D_lattice,         ONLY:nsym,i_time_rev,sop_tab,DEV_VAR(spin_sop)
  use electrons,         ONLY:levels,n_max_deg
  use wave_func,         ONLY:WAVEs,io_WF_phases,WF_phases_b_map
  use wave_func,         ONLY:wf_ng_overlaps,wf_ng_1st_BZ,WF_copy,wf_nc_k
@@ -175,7 +175,7 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
          !
          ! OPTION 2: Use the composed symmetry, importing the composed spin soc
          !call WF_copy(WF_k,WF_Rk_c)
-         !call WF_symm_kpoint_g_ssop(blim,ik,i_sp_pol,isk_c,iGk_c,DEV_VAR(spin_sop_composed),WF_Rk_c)
+         !call WF_symm_kpoint_g_ssop(blim,ik,i_sp_pol,isk_c,iGk_c,spin_sop_composed,WF_Rk_c)
          !
          call WF_copy(WF_k,WF_Rk_y)
          call WF_symm_kpoint_g(blim,ik,i_sp_pol,isk_y,iGk_y,WF_Rk_y)

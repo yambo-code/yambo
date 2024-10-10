@@ -35,7 +35,7 @@ subroutine EXC_dipole(Xk,E,q,X)
  use vec_operate,    ONLY:v_norm
  use X_m,            ONLY:X_t
  use BS,             ONLY:BS_bands,BS_T_grp,BSE_prop,BS_dip_size,BS_nT_grps
- use BS_solvers,     ONLY:BS_H_dim,BSS_Vnl_included,BSS_alloc,BSS_free
+ use BS_solvers,     ONLY:BS_mat,BS_H_dim,BSS_Vnl_included,BSS_alloc,BSS_free
  use parallel_int,   ONLY:PARALLEL_global_indexes,PP_redux_wait,PARALLEL_index,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,     ONLY:PAR_IND_WF_b_and_k
  !
@@ -102,7 +102,9 @@ subroutine EXC_dipole(Xk,E,q,X)
    ! Recalculate the residuals
    !
    i_BS_mat=1
-   call K_diago_hermitian_residuals(i_BS_mat,BS_E_in,BS_R_left,BS_R_right)
+   call K_diago_right_residuals("opt1", i_BS_mat,BS_E_in,BS_R_right,BS_mat)
+   !call K_diago_hermitian_residuals(i_BS_mat,BS_E_in,BS_R_left,BS_R_right)
+   BS_R_left =conjg(BS_R_right)
    !
  else
    !      

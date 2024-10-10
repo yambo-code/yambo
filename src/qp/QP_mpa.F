@@ -73,9 +73,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), pointer DEV_ATTR :: isc_rhotw_p(:)
  complex(SP), pointer DEV_ATTR :: iscp_rhotw_p(:)
  complex(SP), pointer DEV_ATTR :: isc_gamp_p(:,:)
- !
- complex(SP), pointer DEV_ATTR :: MPA_R_mat_p(:,:,:)
- complex(SP), pointer DEV_ATTR :: MPA_E_mat_p(:,:,:)
  complex(SP), pointer DEV_ATTR :: MPA_R_par_p(:,:,:)
  complex(SP), pointer DEV_ATTR :: MPA_E_par_p(:,:,:)
  !

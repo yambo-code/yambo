@@ -149,11 +149,17 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  YAMBO_ALLOC(G_m_G,(iG_,iGo_))
  G_m_G=0
+ !
  ! AF: replaced
  !AMBO_ALLOC(G_m_G_maxval_tmp,(iGo_))
  !G_m_G_maxval_tmp=0
+ !
  G_m_G_maxval=0
  !
+!--------------------
+! Algorithmic logic:
+!--------------------
+!
 ! * convert to g_vec to integer coords
 !   relative/crystal coords
 ! * alloc alternative g_vec array
@@ -176,7 +182,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
 !   imap(g_vec_i(1,ig),g_vec_i(2,ig),g_vec_i(3,ig)) = ig
 ! enddo
 !
-! * v1 becomes an integert triplet
+! * v1 becomes an integer triplet
 ! * G_m_G(i1,i2) = imap(v1(1),v1(2),v1(3))
 !
 ! * beware index ordering  g_vec(ng,3)...
@@ -204,7 +210,6 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  do i1 = 1, size(g_vec,1)
    imap(ig_vec_rlu(i1,1),ig_vec_rlu(i1,2),ig_vec_rlu(i1,3)) = i1
  enddo
- ! 
  !$omp end parallel do 
  !
  !$omp parallel do default(shared), private(i2,i1,iv1_rlu), schedule(dynamic)

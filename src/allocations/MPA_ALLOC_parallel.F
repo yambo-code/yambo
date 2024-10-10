@@ -8,11 +8,7 @@
 subroutine MPA_ALLOC_parallel(MPA_E_par,MPA_R_par,NG,NW,mode)
   !
   use pars,          ONLY:SP,DP,cZERO,cONE,cI
-  use functions,     ONLY:NAN
-  use parallel_m,    ONLY:COMM_copy,PAR_COM_RL_INDEX,PAR_COM_RL_A2A
   use matrix,        ONLY:MATRIX_reset,PAR_matrix
-  use X_m,           ONLY:X_par_lower_triangle,X_rows,X_cols,&
-&                         X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
   use parallel_int,  ONLY:PARALLEL_live_message
   use cuda_m,        ONLY:have_cuda
   !
@@ -35,7 +31,6 @@ subroutine MPA_ALLOC_parallel(MPA_E_par,MPA_R_par,NG,NW,mode)
   ! Type of allocation....
   !
   !l_XUP      = index(mode,"XUP")>0
-  !l_PAR      = index(mode,"X")>0.and.index(mode,"XUP")==0
   l_CPU_ONLY = index(mode,"CPU_ONLY")>0
   !
   ! Initialization

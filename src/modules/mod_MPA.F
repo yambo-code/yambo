@@ -32,31 +32,24 @@ module mpa_m
  !
  use pars,            ONLY:SP,DP,cZERO,cONE,cI
  use functions,       ONLY:NAN
- use parallel_m,    ONLY:COMM_copy,PAR_COM_RL_INDEX,PAR_COM_RL_A2A
- use matrix,        ONLY:MATRIX_reset,PAR_matrix
- use X_m,           ONLY:X_par_lower_triangle,X_rows,X_cols,&
- &                        X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
-  use parallel_int,  ONLY:PARALLEL_live_message
-  use cuda_m,        ONLY:have_cuda
+ use parallel_m,      ONLY:COMM_copy,PAR_COM_RL_INDEX,PAR_COM_RL_A2A
+ use matrix,          ONLY:MATRIX_reset,PAR_matrix
+ use X_m,             ONLY:X_par_lower_triangle,X_rows,X_cols,&
+ &                         X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
+ use parallel_int,    ONLY:PARALLEL_live_message
+ use cuda_m,          ONLY:have_cuda
  !
 #include <dev_defs.h>
 #include <memory.h>
 
- complex(SP), allocatable, target :: MPA_E_mat(:,:,:)
- complex(SP), allocatable, target :: MPA_R_mat(:,:,:)
- complex(SP), allocatable, target :: MPA_freqs(:)
- !
- complex(SP), allocatable DEV_ATTR, target :: MPA_E_mat_d(:,:,:)
- complex(SP), allocatable DEV_ATTR, target :: MPA_R_mat_d(:,:,:)
- !MB:
+ complex(SP),      allocatable, target :: MPA_freqs(:)
  type(PAR_matrix), allocatable, target :: MPA_E_par(:)
  type(PAR_matrix), allocatable, target :: MPA_R_par(:)
  complex(SP), allocatable DEV_ATTR, target :: MPA_E_par_d(:,:,:)
  complex(SP), allocatable DEV_ATTR, target :: MPA_R_par_d(:,:,:)
-
+ !
  public :: mpa_RE_solver,err_func_X
  public :: MPA_alloc,MPA_free
-
  !
 contains
  !
@@ -64,23 +57,11 @@ contains
    implicit none
    integer :: d(4)
    call MPA_free()
-   YAMBO_ALLOC(MPA_E_mat,(d(1),d(2),d(3)))
-   YAMBO_ALLOC(MPA_R_mat,(d(1),d(2),d(3)))
    YAMBO_ALLOC(MPA_freqs,(d(4)))
-#ifdef _CUDA
-   YAMBO_ALLOC(MPA_E_mat_d,(d(1),d(2),d(3)))
-   YAMBO_ALLOC(MPA_R_mat_d,(d(1),d(2),d(3)))
-#endif
  end subroutine
 
  subroutine MPA_free()
-   YAMBO_FREE(MPA_E_mat)
-   YAMBO_FREE(MPA_R_mat)
    YAMBO_FREE(MPA_freqs)
-#ifdef _CUDA
-   YAMBO_FREE(MPA_E_mat_d)
-   YAMBO_FREE(MPA_R_mat_d)
-#endif
  end subroutine
  !
  subroutine mpa_cond1(z, E, PPcond_rate)

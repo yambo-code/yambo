@@ -80,7 +80,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  lib_in_use=USE_LK
 #if defined _SCALAPACK 
- lib_in_use=USE_SLK
+ !lib_in_use=USE_SLK
 #endif
  if (present(lib_in)) then
    lib_in_use=lib_in

@@ -65,9 +65,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  YAMBO_ALLOC_MOLD(g_vec_rot,g_vec)
  g_vec_rot=transpose(matmul(mat,transpose(g_vec)))
  !
- if (have_gpu) then
-   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec_rot),g_vec_rot)
- endif
+#ifdef _GPU
+ YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec_rot),g_vec_rot)
+#endif
  !
  if (.not.ONLY_SIZE) then
    !

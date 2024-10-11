@@ -14,7 +14,6 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
 &                        Epsilon_ij,X_magnons,X_dichroism,                  &
 &                        X_fxc,EEL,Alpha,X_mat,DEV_VAR(X_mat),X_drude_term,X_RLcomp_ig
  use PHOTOLUM,      ONLY:PL
- use gpu_m,         ONLY:have_gpu
  use stderr,        ONLY:STRING_match
  !
 #include<y_memory.h>
@@ -71,9 +70,9 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
      if (allocated(X_mat)) return
      YAMBO_ALLOC(X_mat,(DIM(1),DIM(2),DIM(3)))
      X_mat=cZERO
-     if (have_gpu) then
-       YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(X_mat),X_mat)
-     endif
+#ifdef _GPU
+     YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(X_mat),X_mat)
+#endif
    end select
    return
  endif

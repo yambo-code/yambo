@@ -43,7 +43,6 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  use R_lattice,     ONLY: g_vec,DEV_VAR(g_vec),ng_vec
  use wave_func,     ONLY: wf_ng
  use devxlib,       ONLY: devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_mapped,devxlib_memset_d
- use gpu_m,         ONLY: have_gpu
 #ifdef _HIP
  use hipfft_m
 #endif
@@ -88,9 +87,11 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  YAMBO_ALLOC_GPU(DEV_VAR(V3g),(ng_,3))
  !
  ! Synchronize g_vec host/dev if needed
- if (have_gpu.and..not.devxlib_mapped(DEV_VAR(g_vec))) then
+#ifdef _GPU
+ if (.not.devxlib_mapped(DEV_VAR(g_vec))) then
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
  endif
+#endif
  !
  f_gradient = cZERO
  !

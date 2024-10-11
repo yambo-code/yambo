@@ -109,14 +109,13 @@ module global_XC
  !
  contains
    !
-   subroutine  setup_global_XC(what,kind,xc_functional,perturbation,exx_fraction,exx_screening,STRING)
+   subroutine  setup_global_XC(what,kind,xc_functional,perturbation,exx_fraction,exx_screening)
      character(*)           :: what          
      integer                :: kind          
      integer,      optional :: xc_functional 
      integer,      optional :: perturbation 
      real(SP),     optional :: exx_fraction
      real(SP),     optional :: exx_screening
-     character(*), optional :: STRING
      !
      ! Work Space
      !
@@ -136,33 +135,21 @@ module global_XC
        G_kind=kind
        G_xc_functional=local_xc_functional
        G_perturbation=local_perturbation
-       if (present(STRING)) then
-         G_E_xc_string=global_XC_string(kind,local_xc_functional,local_perturbation,STRING)
-       else
-         G_E_xc_string=global_XC_string(kind,local_xc_functional,local_perturbation)
-       endif
+       G_E_xc_string=global_XC_string(kind,local_xc_functional,local_perturbation)
      endif
      !
      if (what=='X'.or.what=='preset') then
        X_kind=kind
        X_xc_functional=local_xc_functional
        X_perturbation=local_perturbation
-       if (present(STRING)) then
-         X_E_xc_string=global_XC_string(kind,local_xc_functional,local_perturbation,STRING)
-       else
-         X_E_xc_string=global_XC_string(kind,local_xc_functional,local_perturbation)
-       endif
+       X_E_xc_string=global_XC_string(kind,local_xc_functional,local_perturbation)
      endif
      !
      if (what=='K'.or.what=='preset') then
        K_kind=kind
        K_xc_functional=local_xc_functional
        K_perturbation=local_perturbation
-       if (present(STRING)) then
-         K_E_xc_string=global_XC_string(kind,local_xc_functional,local_perturbation,STRING)
-       else
-         K_E_xc_string=global_XC_string(kind,local_xc_functional,local_perturbation)
-       endif
+       K_E_xc_string=global_XC_string(kind,local_xc_functional,local_perturbation)
      endif
      !
      if (what=='WF'.or.what=='preset') then
@@ -174,11 +161,7 @@ module global_XC
        ! loaded_WF_xc_string represents the xc kind of the WF that are loaded trough wf_load.
        ! G/X/K/Dipole_WF_xc_string, instead, may be overwritten by the value written in the databases.
        !
-       if (present(STRING)) then
-         loaded_WF_xc_string=global_XC_string(kind,local_xc_functional,local_perturbation,STRING)
-       else
-         loaded_WF_xc_string=global_XC_string(kind,local_xc_functional,local_perturbation)
-       endif
+       loaded_WF_xc_string=global_XC_string(kind,local_xc_functional,local_perturbation)
        !
        if (what=='preset') G_WF_xc_string     =loaded_WF_xc_string
        if (what=='preset') X_WF_xc_string     =loaded_WF_xc_string
@@ -191,14 +174,30 @@ module global_XC
      !
    end subroutine
    !
-   character(lchlen) function global_XC_string(kind,xc_functional,perturbation,STRING)
+   subroutine  correct_global_XC(what,STRING)
+    character(*), intent(in) :: what
+    character(*), intent(in) :: STRING
+    !
+    ! Work Space
+    !
+    integer :: i_X
+    !
+    if (what=='E'.or.what=='G')         G_E_xc_string=      trim(G_E_xc_string)//"+"//STRING
+    if (what=='X') then
+      forall(i_X=1:size(X_E_xc_string)) X_E_xc_string(i_X)= trim(X_E_xc_string(i_X))//"+"//STRING
+    endif
+    if (what=='K')                      K_E_xc_string=      trim(K_E_xc_string)//"+"//STRING
+    if (what=='WF')               loaded_WF_xc_string=trim(loaded_WF_xc_string)//"+"//STRING
+    !
+   end subroutine
+   !
+   character(lchlen) function global_XC_string(kind,xc_functional,perturbation)
     !
     use xc_functionals,  ONLY:xc_string,XC_CORRELATION
     !
     integer           :: kind          ! <300 (LDA's GGA's ...) >300 See above
     integer           :: xc_functional ! In case kind < 300 gives DFT functional
     integer           :: perturbation
-    character(*), optional :: STRING   ! Additional string
     ! 
     integer           :: local_kind
     character(1)      :: ch_plus
@@ -253,10 +252,6 @@ module global_XC
     !
     ch_plus='+'
     if (kind==0.or.len_trim(global_XC_string)==0) ch_plus=' '
-    !
-    if (present(STRING)) then
-      global_XC_string=trim(global_XC_string)//trim(ch_plus)//STRING
-    endif
     !
     if (perturbation/=EXT_NONE) then
       ch=global_XC_string

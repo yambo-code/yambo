@@ -393,10 +393,12 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      X_is_TR_rotated=.true.
    endif
    !
+#ifdef _CUDA
    if (have_cuda) then
       YAMBO_ALLOC_SOURCE( DEV_VAR(MPA_E_par(1)%blc), MPA_E_par(1)%blc )
       YAMBO_ALLOC_SOURCE( DEV_VAR(MPA_R_par(1)%blc), MPA_R_par(1)%blc )
    endif
+#endif
    ! 
    MPA_E_par_p=>DEV_VAR(MPA_E_par(1)%blc)
    MPA_R_par_p=>DEV_VAR(MPA_R_par(1)%blc)

@@ -38,21 +38,14 @@ subroutine X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
    if (     io_RESPONSE) iw_X_mat=iw
    if (.not.io_RESPONSE) iw_X_mat=(iq_mem-1)*X_MEM_n_freqs+iw
    !
-   ! XXX
-   write(*,*) "before zeroing X_mat",iw
    X_mat(:,:,iw_X_mat)=cZERO
    !
-   write(*,*) "before if PAR_COM_X_WORLD",iw
    if (PAR_COM_X_WORLD_RL_resolved%CPU_id==0) then
-   write(*,*) "inside if PAR_COM_X_WORLD",iw
      X_mat(X_par(iq_mem)%rows(1):X_par(iq_mem)%rows(2),&
 &          X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)=X_par(iq_mem)%blc(:,:,iw)
    endif
    !
-   write(*,*) "before PP_redux_wait", iw
-  !call PP_redux_wait(X_mat(:,:,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
    call PP_redux_wait(X_mat(:,:,iw_X_mat),IN_PLACE=.true.,COMM=PAR_COM_X_WORLD%COMM)
-   write(*,*) "after PP_redux_wait", iw
    !
  enddo
  !

@@ -31,7 +31,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,iq,slepc_mat)
  use IO_m,           ONLY:RD
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
- use cuda_m,         ONLY:have_cuda
+ use gpu_m,          ONLY:have_cuda
  !
  use petscmat
  use slepceps

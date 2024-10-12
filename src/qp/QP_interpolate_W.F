@@ -21,7 +21,6 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  use stderr,        ONLY:intc,STRING_pack,gen_fmt
  use D_lattice,     ONLY:alat,a
  use timing_m,      ONLY:timing
- use gpu_m,         ONLY:have_gpu
  use parallel_m,    ONLY:master_cpu
  !
 #include<dev_defs.h>
@@ -91,9 +90,9 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  if (io_err==0) then
    call timing('RIM-W-coeff',OPR='stop')
    YAMBO_FREE(f_coeff)
-   if (have_gpu) then
-     YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_W),RIM_W)
-   endif
+#ifdef _GPU
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_W),RIM_W)
+#endif
    return
  endif
  !
@@ -378,9 +377,9 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
    io_err=io_RIM_W(ID,mode,Xw)
  endif
  !
- if (have_gpu) then
-   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_W),RIM_W)
- endif
+#ifdef _GPU
+ YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_W),RIM_W)
+#endif
  !
  YAMBO_FREE(f_coeff)
  !

@@ -97,6 +97,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  X_rows2=X_par%rows(2)
  X_cols1=X_par%cols(1)
  X_cols2=X_par%cols(2)
+ lda=size(X_par%blc(:,1,1))
  PAR_COM_RL_INDEX_n_CPU=PAR_COM_RL_INDEX%n_CPU
  !
  !
@@ -211,6 +212,10 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  if (coarse_grid_N>=n_out_threads) call live_timing(trim(live_t_string),coarse_grid_N/n_out_threads)
  !
+ X_par_p => DEV_VAR(X_par%blc)
+ if (X_lower_triangle_matrix_in_use)  X_par_lowtri_p => DEV_VAR(X_par_lower_triangle%blc)
+
+ !
  ! OpenMP setup
  !==============
  ! AF: note that DEV_OMP is switched off by the precompiler when _GPU is defined
@@ -224,14 +229,13 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! memory estimate and local alloc
  !=================================
+ !
  YAMBO_ALLOC(Xo_res,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
  if (have_gpu) then
    YAMBO_ALLOC_GPU(DEV_VAR(Xo_res),(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
  endif
  !
  Xo_res_p => DEV_VAR(Xo_res)
- X_par_p  => DEV_VAR(X_par%blc)
- if (X_lower_triangle_matrix_in_use)  X_par_lowtri_p => DEV_VAR(X_par_lower_triangle%blc)
 
  !
  ! workspace used in X_irredux_residuals
@@ -426,11 +430,9 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
          X_cols_transp = (/X_rows1_l,X_rows2_l/)
          !
          if (PAR_COM_RL_INDEX_n_CPU>1) then
-           lda=size(X_par_lower_triangle%blc(:,1,1))
            call vv_caxpy(X_nrows_l,GreenF(iw),conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),1, & 
 &                        X_par_lower_triangle%blc(ig_row_transp,X_cols_transp(1),iw),lda)
          else
-           lda=size(X_par%blc(:,1,1))
            call vv_caxpy(X_nrows_l,GreenF(iw),conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),1, &
 &                        X_par%blc(ig_row_transp,X_cols_transp(1),iw),lda)
          endif

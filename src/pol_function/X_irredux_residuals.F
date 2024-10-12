@@ -38,9 +38,9 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  type(X_t),    intent(in) :: X
  type(DIPOLE_t),intent(in):: Dip
  integer,      intent(in) :: i_cg,iq
+ integer,      intent(in) :: lwork
  complex(SP),  intent(out) DEV_ATTR :: Xo_res(X_rows(1):X_rows(2),X_cols(1):X_cols(2))
  complex(SP),       target DEV_ATTR :: work(lwork)
- integer,      intent(in) :: lwork
  !
  ! Work sapce
  !
@@ -225,7 +225,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
    !
 #else
    !
-   !DEV_OMP parallel do default(shared), private(ig2)
+   !DEV_OMP parallel do default(shared), private(ig2,ROWS)
    do ig2=X_cols(1),X_cols(2)
      ROWS=(/X_rows(1),min(ig2,X_rows(2))/)
      call V_plus_alpha_V(ROWS(2)-ROWS(1)+1,Z_eh_occ*Xo_scatt%rhotw(ig2),&

@@ -118,7 +118,9 @@ module X_m
  type(PAR_matrix), target      :: X_par_lower_triangle
  logical                       :: X_lower_triangle_matrix_in_use=.FALSE.
  integer                       :: X_rows(2) = 0
+ !DEV_ACC declare device_resident(X_rows)
  integer                       :: X_cols(2) = 0
+ !DEV_ACC declare device_resident(X_cols)
  complex(SP), allocatable, target :: X_mat(:,:,:)
  complex(SP), allocatable, target DEV_ATTR :: X_mat_d(:,:,:)
  !

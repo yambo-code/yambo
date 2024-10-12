@@ -16,7 +16,6 @@ integer function io_GROT(io_db)
  use IO_int,         ONLY:io_connect,io_disconnect,io_elemental,&
 &                         io_bulk,io_header,ver_is_gt_or_eq
  use timing_m,       ONLY:timing
- use gpu_m,          ONLY:have_gpu
  !
 #include<y_memory.h>
  !
@@ -68,12 +67,14 @@ integer function io_GROT(io_db)
    call io_bulk(io_db,I1=minus_G(:ng_closed))
  endif
  !
- if (have_gpu.and.read_is_on(io_db)) then
+#ifdef _GPU
+ if (read_is_on(io_db)) then
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_rot),g_rot)
    if (inv_index<0) then
      YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(minus_G),minus_G)
    endif
  endif
+#endif
  !
  call initactivate(1,'Gmode')
  !

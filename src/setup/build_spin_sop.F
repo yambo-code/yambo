@@ -89,10 +89,10 @@ subroutine build_spin_sop()
    !
  enddo
  !
- if (have_gpu) then
-    YAMBO_FREE_GPU(DEV_VAR(spin_sop))
-    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(spin_sop),spin_sop)
- endif
+#ifdef _GPU
+ YAMBO_FREE_GPU(DEV_VAR(spin_sop))
+ YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(spin_sop),spin_sop)
+#endif
  !
  ! DEBUG <
  !do is=1,nsym

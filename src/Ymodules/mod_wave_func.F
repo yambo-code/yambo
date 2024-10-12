@@ -124,9 +124,11 @@ module wave_func
      WF_out%index  = WF_in%index
      !
      lpres=devxlib_mapped(DEV_VAR(WF_in%c))
+#ifdef _GPU
      if (lpres) then
        YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(WF_out%c),WF_in%c)
      endif
+#endif
    end subroutine
    !
    subroutine WF_derivative_alloc(cart_direction)

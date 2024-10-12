@@ -237,10 +237,10 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  call PP_indexes_reset(PAR_IND_G)
  YAMBO_FREE(E_G_m_G)
  !
- if (have_gpu) then
-   YAMBO_FREE_GPU(DEV_VAR(G_m_G))
-   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(G_m_G),G_m_G)
- endif
+#ifdef _GPU
+ YAMBO_FREE_GPU(DEV_VAR(G_m_G))
+ YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(G_m_G),G_m_G)
+#endif
  !
  call timing("eval_G_minus_G",opr="stop")
  !

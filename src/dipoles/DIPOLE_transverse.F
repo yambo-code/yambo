@@ -81,10 +81,10 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  l_eval_DIP_P2=compute_P2_dipoles
  !
  ! Synchronize some memory
- if (have_gpu) then
-   YAMBO_FREE_GPU(DEV_VAR(g_vec))
-   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
- endif
+#ifdef _GPU
+ YAMBO_FREE_GPU(DEV_VAR(g_vec))
+ YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
+#endif
  !
  l_use_comm=l_eval_dip_V.or.l_eval_dip_iR
  !

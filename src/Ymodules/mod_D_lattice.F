@@ -8,7 +8,6 @@
 module D_lattice
  !
  use pars,        ONLY:SP,lchlen,cONE,cZERO,cI,schlen
- use gpu_m,       ONLY:have_gpu
  use devxlib
  !
 #include<dev_defs.h>
@@ -126,9 +125,9 @@ module D_lattice
      if (any(sop_inv==0)) call error('[SYMs] check the input symmetries!')
      call msg(msg_where,'Group table correct   ',.true.)
      !
-     if (have_gpu) then
-       YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(sop_inv),sop_inv)
-     endif
+#ifdef _GPU
+     YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(sop_inv),sop_inv)
+#endif    
      !
    end subroutine symmetry_group_table
    !

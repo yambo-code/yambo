@@ -40,13 +40,13 @@ version_blacs=missing
 version_scalapack=2.2.1
 #version_elpa=release_2024_05_001   # This was neeeded for gitlab
 version_elpa=2024.05.001
-version_slepc=3.20.2
-version_petsc=3.20.5
+version_slepc=3.22.0
+version_petsc=3.22.0
 version_fftw=3.3.10
 version_fftqe=missing
 version_yaml=0.2.2
 version_futile=missing
-version_devxlib=0.8.3
+version_devxlib=0.8.4
 #
 # package names
 #

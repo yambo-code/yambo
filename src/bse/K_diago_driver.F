@@ -26,7 +26,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
 &                         BS_res_ares_n_mat,l_BS_optics,l_BS_dichroism !,BS_Blocks_symmetrize_K,&
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,BSS_slepc_double_grp,&
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E,BSS_slepc_pseudo_herm
  use X_m,            ONLY:X_t,X_OUTPUT_driver
  use electrons,      ONLY:n_sp_pol,n_spinor
  use frequency,      ONLY:w_samp
@@ -41,7 +41,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use timing_m,       ONLY:timing
 #if defined _SLEPC && !defined _NL
  use interfaces,     ONLY:MATRIX_slepc
- use BS_solvers,     ONLY:BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_custom,&
+ use BS_solvers,     ONLY:BSS_slepc_approach,BSS_slepc_matrix_format,&
 &                         Slepc_v,BS_HAYVEC_free
 #endif
  use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_photolum,l_BS_ares_from_res
@@ -187,29 +187,22 @@ subroutine K_diago_driver(iq,W,X_static)
      !
 #if defined _SLEPC && !defined _NL
      if(l_slepc) then
-       ! 1. Here we will define a PetscShell matrix and define the matrix-vector multiplication
-       ! using the K_multiply_by_V function used in the Haydock method
+       !
        if (index(BSS_slepc_matrix_format,"shell")>0) then
-         BSS_slepc_custom=(BSS_slepc_matrix_format=="shell").and.BS_K_coupling.and..not.BSS_slepc_double_grp
+         ! 1. Here we will define a PetscShell matrix and define the matrix-vector multiplication
+         ! using the K_multiply_by_V function used in the Haydock method
          call K_shell_matrix(i_BS_mat,slepc_mat)
+       else if (index(BSS_slepc_matrix_format,"explicit")>0) then
          ! 2. Here we create a distributed PETSC matrix from the BS_blks
-       else if (BSS_slepc_matrix_format=="explicit") then
-         if (BS_K_coupling.and.l_BS_ares_from_res) then
-           ! 2.1. With memory optimization using nest matrix (only possible for the coupling case)
-           call K_stored_in_a_nest_matrix(i_BS_mat,.FALSE.,slepc_mat)
-           BSS_slepc_custom=.not.BSS_slepc_double_grp
-           !BSS_slepc_nested=.TRUE. ! to replace BSS_slepc_custom (?)
+         !    There are 2 cases
+         if (BS_K_coupling.and.l_BS_ares_from_res.and..not.index(BSS_slepc_matrix_format,"debug")>0) then
+           ! 2.1. Nest matrix uses pseudo-hermitian structure of BSE, only for the coupling case
+           call K_stored_in_a_nest_matrix(i_BS_mat,iq,slepc_mat)
          else
-           ! 2.2. Explicit PETSc matrix for the rest of the cases
-           call K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
+           ! 2.2. Single PETSc matrix, for resonant case or coupling
+           call K_stored_in_a_slepc_matrix(i_BS_mat,iq,slepc_mat)
          endif
-       else if (BSS_slepc_matrix_format=="nest-debug".AND.BS_K_coupling.AND.l_BS_ares_from_res) then
-         call K_stored_in_a_nest_matrix(i_BS_mat,.TRUE.,slepc_mat)
-         ! 2.3 No optimization of memory for the coupling case (debug)
-       else if (BSS_slepc_matrix_format=="explicit-debug") then
-         call K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
-       else 
-         call error(" wrong value of slepc matrix format: "//trim(BSS_slepc_matrix_format))
+         !
        endif        
      endif
 #endif
@@ -418,7 +411,7 @@ subroutine K_diago_driver(iq,W,X_static)
          YAMBO_ALLOC(BS_E_real,(BSS_n_eig))
 #if defined _SLEPC && !defined _NL
          if(l_slepc) then
-           if (BS_K_coupling) then
+           if (BS_K_coupling.and.BSS_write_eig_2_db) then
              YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
            else
              YAMBO_ALLOC(BS_mat,(BS_K_dim(i_BS_mat),BSS_n_eig))
@@ -502,23 +495,21 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      ! Number of states for partial diagonalization
      !================================================
-     if (BSS_n_eig==0) then
-       BSS_n_eig = nint(BS_H_dim*.01)
-       call warning(' Calculating only 1% of the eigenvalues.')
+     if (BSS_n_eig<1) then
+       BSS_n_eig = nint(BS_H_dim*0.01)
+       call warning('N_eigen < 1. Calculating only 1% of the eigenvalues.')
      endif
      !
      ! if the number of eigenvalues to calculate is larger than matrix dimensions
      !
      if (BSS_n_eig>BS_H_dim) then
-       call warning(' Number of eigenvalues is larger than hamiltonian. Calculating only 1% of the eigenvalues.')
-       BSS_n_eig = nint(BS_H_dim*.01)
+       call warning('N_eigen > BS_H_dim. Calculating 10% of the eigenvalues.')
+       BSS_n_eig = nint(BS_H_dim*0.1)
      endif
      !
-     ! if the number of eigenvalued to calculate is smaller than 1
-     !
-     if (BSS_n_eig<1) then
-       call warning(' Number of eigenvalues is smaller than hamiltonian. Calculating 1 eigenvalue.')
-       BSS_n_eig = 1
+     if (BSS_n_eig>BS_K_dim(1) .and. BSS_slepc_pseudo_herm) then
+      call warning('N_eigen > BS_K_dim and pseudo-hermitian case. Calculating 10% of the eigenvalues.')
+      BSS_n_eig = nint(BS_K_dim(1)*0.1)
      endif
      !
      call SlepcInitialize(PETSC_NULL_CHARACTER,ierr)

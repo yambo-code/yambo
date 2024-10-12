@@ -13,8 +13,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_t
  use BS_solvers,     ONLY:BSS_desc,BSS_free,BS_mat,run_Haydock,&
-&                         run_inversion,run_Diago,run_Slepc
- use BS,             ONLY:BS_K_has_been_calculated_loaded,&
+&                         run_inversion,run_Diago,run_Slepc,BSS_kernel_IO_on_the_fly
+ use BS,             ONLY:BS_K_has_been_calculated_loaded,BS_ID,&
 &                         l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_int,         ONLY:IO_and_Messaging_switch
@@ -31,12 +31,11 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  type(w_samp) ::W_bss
  integer      ::iq
  !
- integer :: ID(3)
  logical :: l_partial_kernel_loaded
  !
  ! If the BS database was not loaded in memory, call K_restart
  !
- if (.not. BS_K_has_been_calculated_loaded ) call K_restart(iq,X_static,ID(1),ID(2),ID(3),l_partial_kernel_loaded)
+ if (.not. BS_K_has_been_calculated_loaded ) call K_restart(iq,X_static,BS_ID(1),BS_ID(2),BS_ID(3),l_partial_kernel_loaded)
  !
  if (.not. BS_K_has_been_calculated_loaded ) call error("Something went wrong in K_restart, cannot proceed with solver")
  !

@@ -158,17 +158,23 @@ subroutine K_blocks( )
 end subroutine
 !
 !
-subroutine K_block_alloc( iB )
+subroutine K_block_alloc( iB, mode )
  !
  use pars,         ONLY:SP,cZERO
- use BS,           ONLY:BS_blk
+ use BS,           ONLY:BS_blk,l_BSE_kernel_complete
+ use BS_solvers,   ONLY:BSS_kernel_IO_on_the_fly
  !
 #include<y_memory.h>
  !
  integer, intent(in) :: iB
+ character(*), intent(in) :: mode
  !
  integer :: diag_size
  !
+ if (mode=="matonly") then
+   allocate(BS_blk(iB)%mat(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
+   return
+ endif
  YAMBO_ALLOC(BS_blk(iB)%mat,(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
  allocate(BS_blk(iB)%done(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
  BS_blk(iB)%mat=cZERO
@@ -184,14 +190,20 @@ subroutine K_block_alloc( iB )
 end subroutine K_block_alloc
 !
 !
-subroutine K_block_free( iB )
+subroutine K_block_free( iB, mode )
  !
- use BS,           ONLY:BS_blk
+ use BS,           ONLY:BS_blk,l_BSE_kernel_complete
+ use BS_solvers,   ONLY:BSS_kernel_IO_on_the_fly
  !
 #include<y_memory.h>
  !
  integer, intent(in) :: iB
+ character(*), intent(in) :: mode
  !
+ if (mode=="matonly") then
+   deallocate(BS_blk(iB)%mat)
+   return
+ endif
  YAMBO_FREE(BS_blk(iB)%mat)
  deallocate(BS_blk(iB)%done)
  if (BS_blk(iB)%coordinate(1)==BS_blk(iB)%coordinate(2)) then
@@ -202,6 +214,44 @@ subroutine K_block_free( iB )
 end subroutine K_block_free
 !
 !
+subroutine K_block_symmetrize(i_B)
+ use BS,           ONLY:BS_blk,l_BS_ares_from_res
+ implicit none
+ integer, intent(in) :: i_B
+ !
+ ! Symmetrize the DIAGONAL blocks only (i_Tk=i_Tp)
+ !
+ integer :: i_Tk,i_Tp,i_r,i_c
+ !
+ i_Tk  =BS_blk(i_B)%iT_k
+ i_Tp  =BS_blk(i_B)%iT_p
+ !
+ if (i_Tk/=i_Tp) return
+ !
+ select case(BS_blk(i_B)%mode)
+ case("R","A")
+   ! Resonant ("R") and anti-resonant ("A") parts are hermitian
+   do i_r=1,BS_blk(i_B)%size(1)
+     BS_blk(i_B)%mat(i_r,i_r) = real(BS_blk(i_B)%mat(i_r,i_r))
+     do i_c=i_r+1,BS_blk(i_B)%size(2)
+       BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
+     enddo
+   enddo
+ case("C","Q")
+   if (.not.l_BS_ares_from_res) return
+   ! Coupling ("C") and anti-coupling ("Q") are symmetric if l_BS_ares_from_res=.TRUE.
+   do i_r=1,BS_blk(i_B)%size(1)
+     !This gives fails with test-suite test Benzene 06_tddft_cpl
+     !BS_blk(i_B)%mat(i_r,i_r) = real(BS_blk(i_B)%mat(i_r,i_r))
+     do i_c=i_r+1,BS_blk(i_B)%size(2)
+       BS_blk(i_B)%mat(i_c,i_r) = BS_blk(i_B)%mat(i_r,i_c)
+     enddo
+   enddo
+ end select
+ !
+end subroutine K_block_symmetrize
+!
+!
 subroutine BS_blks_free(i_BS_mat)
  use BS,           ONLY:BS_blk,n_BS_blks
  implicit none
@@ -210,6 +260,17 @@ subroutine BS_blks_free(i_BS_mat)
  do iB=1,n_BS_blks
    if(i_BS_mat/=BS_blk(iB)%ira_k) cycle
    if(.not.allocated(BS_blk(iB)%mat)) cycle
-   call K_block_free( iB )
+   call K_block_free( iB, "all" )
  enddo
 end subroutine
+!
+!
+subroutine BS_blks_symmetrize_K()
+ use BS,           ONLY:BS_blk,n_BS_blks
+ implicit none
+ integer :: i_B
+ do i_B=1,n_BS_blks
+   call K_block_symmetrize(i_B)
+ enddo
+end subroutine BS_blks_symmetrize_K
+

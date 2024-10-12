@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM MG DS IMA
 !
-subroutine K_multiply_by_V(Vi,Vo,iter_par,mode)
+subroutine K_multiply_by_V(Vi,Vo,iter_par,iq,mode)
  !
  ! Given K distributed on the processors, and Vi distributed on the processors
  ! multiply K by Vi.
@@ -15,13 +15,16 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par,mode)
  use pars,           ONLY:SP,cONE,cZERO,cI
  use parallel_int,   ONLY:PP_redux_wait
  use parallel_m,     ONLY:PAR_IND_T_Haydock,PAR_COM_T_Haydock
- use BS_solvers,     ONLY:Haydock_vector,BSS_Slepc_double_grp,BSS_uses_DbGd,FG_factor,BSS_uses_FKE
- use BS,             ONLY:BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,l_BS_ares_from_res
+ use BS_solvers,     ONLY:Haydock_vector,BSS_Slepc_double_grp,BSS_uses_DbGd,FG_factor,&
+ &                        BSS_uses_FKE,BSS_kernel_last_stored_block
+ use BS,             ONLY:BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,l_BS_ares_from_res,BS_ID
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:RD
  use wrapper,        ONLY:M_by_V
  !
  implicit none
  !
- integer                ::iter_par
+ integer,     intent(in)::iter_par,iq
  type(Haydock_vector)   ::Vi(BS_nT_grps),Vo(BS_nT_grps)
  character(*),intent(in)::mode
  !
@@ -52,10 +55,16 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par,mode)
    ColsFG_Tk = size(Vi(i_Tk)%fragment,2)
    ColsFG_Tp = size(Vi(i_Tp)%fragment,2)
    !
+   if (i_B>BSS_kernel_last_stored_block) then
+     call io_control(ACTION=RD,ID=BS_ID(2))
+     call io_BS_PAR_block(iq,i_B,BS_ID(2),"matonly")
+     call K_block_symmetrize(i_B)
+   endif
+   !
    select case(BS_blk(i_B)%mode)
    case("R")
      !
-     if (trim(mode)/="R".and.trim(mode)/="all") cycle
+     if (trim(mode)/="R".and.trim(mode)/="all") goto 100
      !
      if (.not. BSS_uses_FKE) then !Diagonal Kernel Extension
        !
@@ -125,7 +134,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par,mode)
      !
    case("C")
      !
-     if (trim(mode)/="C".and.trim(mode)/="all") cycle
+     if (trim(mode)/="C".and.trim(mode)/="all") goto 100
      !
      ! IA (2022/01/19):
      ! Preliminary implementation of DbGd into coupling case does not work - to be tested
@@ -255,6 +264,8 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par,mode)
      end if
      !
    end select
+   !
+100 if (i_B>BSS_kernel_last_stored_block) call K_block_free(i_B,"matonly")
    !
  end do
  !

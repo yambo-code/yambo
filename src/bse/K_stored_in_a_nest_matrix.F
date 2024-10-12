@@ -1,41 +1,11 @@
 !
 ! License-Identifier: GPL
 !
-! Copyright (C) 2006 The Yambo Team
+! Copyright (C) 2024 The Yambo Team
 !
-! Authors (see AUTHORS file for details): BM
+! Authors (see AUTHORS file for details): BM DS
 !
-module shellmat_module
-#include <petsc/finclude/petscmat.h>
-  use petscmat
-  Mat::R,C
-end module shellmat_module
-
-subroutine ignore_petsc_error_handler(comm,line,fun,file,n,p,mess,ctx,ierr)
-!
-! Handler to ignore error if MatMultHermitianTranspose cannot be set.
-! This operation is only available for shell matrices in PETSc from v3.21.
-! Setting MatMultTranspose is enough, but it is preferable to set both.
-!
-  use petscsysdef
-  integer line,n,p
-  PetscInt ctx 
-  PetscErrorCode ierr
-  MPI_Comm comm
-  character*(*) fun,file,mess
-  ierr = 0
-  return
-end subroutine ignore_petsc_error_handler
-
-subroutine K_stored_in_a_nest_matrix(i_BS_mat,nest_debug,slepc_mat)
-!
-! BS_K_coupling and l_BS_ares_from_res are assumed TRUE
-!
-! K is stored in a PETSc nest matrix, taking advantage of the four block
-! structure of the matrix in this case:
-!
-! | R     C  |
-! |-C^*  -R^T|
+! headers
 !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
@@ -44,304 +14,152 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,nest_debug,slepc_mat)
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
 !
-  use pars,           ONLY:cI,cONE
-  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks
-  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width,&
-  &                        run_inversion,run_Haydock
-  use LIVE_t,         ONLY:live_timing
-  use timing_m,       ONLY:timing
-  use gpu_m,          ONLY:have_cuda
-  !
-  use petscmat
-  use slepceps
-  use shellmat_module
-  !
-  implicit none
-  !
-  integer, intent(in)  :: i_BS_mat
-  logical, intent(in)  :: nest_debug
-  Mat,     intent(out) :: slepc_mat
-  Mat                  :: RT,CHT
-  Mat                  :: matArray(4)
-  !
-  integer     :: i_c,i_r,i_Tk,i_Tp,i_B,H_shift(2)
-  PetscScalar         :: Mij,Mij_star
-  PetscScalar         :: mone
-  PetscInt            :: H_pos(2),SL_K_dim(2),SL_H_dim
-  PetscInt            :: itwo
-  PetscErrorCode      :: ierr
-  !
-  external RT_mat_mult,CHT_mat_mult,& 
-           RT_mat_mult_transpose,CHT_mat_mult_transpose,&
-           RT_mat_mult_hermitian_transpose,CHT_mat_mult_hermitian_transpose,&
-           RT_get_diagonal,CHT_get_diagonal,&
-           ignore_petsc_error_handler
-  !
-  call timing('BSE mat slepc redist',OPR='start')
-  !
-  SL_H_dim=BS_H_dim
-  SL_K_dim=BS_K_dim
-  !
-  ! Allocate the explicit submatrices of the nest matrix
-  !
-  call MatCreate(PETSC_COMM_WORLD,R,ierr)
-  call MatSetSizes(R,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
-  call MatSetType(R,MATDENSE,ierr)
-#ifdef PETSC_HAVE_CUDA
-  if (have_cuda) then
-    call MatSetType(R,MATDENSECUDA,ierr)
-  endif
+subroutine K_stored_in_a_nest_matrix(i_BS_mat,iq,slepc_mat)
+ !
+ ! BS_K_coupling and l_BS_ares_from_res are assumed TRUE
+ !
+ ! K is stored in a PETSc nest matrix, taking advantage of the four block
+ ! structure of the matrix in this case:
+ !
+ ! | R     C  |
+ ! |-C^*  -R^T|
+ !
+ !
+ use pars,           ONLY:cI,cONE,lchlen
+ use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_ID
+ use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width,&
+ &                        run_inversion,run_Haydock,               &
+ &                        BSS_kernel_last_stored_block,BSS_slepc_pseudo_herm
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:RD
+ use LIVE_t,         ONLY:live_timing
+ use timing_m,       ONLY:timing
+ use cuda_m,         ONLY:have_cuda
+ !
+ use petscmat
+ use slepceps
+ !
+ implicit none
+ !
+ integer, intent(in)  :: i_BS_mat,iq
+ Mat,     intent(out) :: slepc_mat
+ !
+ integer     :: i_c,i_r,i_Tk,i_Tp,i_B,H_shift(2)
+ character(lchlen)   :: live_msg
+ Mat                 :: R,C
+ PetscScalar         :: Mij,Mij_star
+ PetscInt            :: H_pos(2),SL_K_dim(2),SL_H_dim
+ PetscErrorCode      :: ierr
+ !
+ call timing('BSE mat slepc redist',OPR='start')
+ !
+ SL_H_dim=BS_H_dim
+ SL_K_dim=BS_K_dim
+ !
+ ! Allocate the explicit submatrices of the nest matrix
+ !
+ call MatCreate(PETSC_COMM_WORLD,R,ierr)
+ call MatSetSizes(R,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
+ call MatSetType(R,MATDENSE,ierr)
+#if defined(PETSC_HAVE_CUDA)
+ if (have_cuda) call MatSetType(R,MATDENSECUDA,ierr)
 #endif
-  call MatSetFromOptions(R,ierr)
-  call MatSetUp(R,ierr)
-  !
-  call MatCreate(PETSC_COMM_WORLD,C,ierr)
-  call MatSetSizes(C,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
-  call MatSetType(C,MATDENSE,ierr)
+ call MatSetFromOptions(R,ierr)
+ call MatSetUp(R,ierr)
+ !
+ call MatCreate(PETSC_COMM_WORLD,C,ierr)
+ call MatSetSizes(C,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,ierr)
+ call MatSetType(C,MATDENSE,ierr)
 #ifdef PETSC_HAVE_CUDA
-  if (have_cuda) then
-    call MatSetType(C,MATDENSECUDA,ierr)
-  endif
+ if (have_cuda) call MatSetType(C,MATDENSECUDA,ierr)
 #endif
-  call MatSetFromOptions(C,ierr)
-  call MatSetUp(C,ierr)
-  !
-  ! Fill the values of the explicit submatrices of the nest matrix
-  !
-  if (n_BS_blks>0) call live_timing("Redistributing the BSE kernel in parallel slepc mat",n_BS_blks)
-  !
-  do i_B=1,n_BS_blks
-    i_Tk  =BS_blk(i_B)%iT_k
-    i_Tp  =BS_blk(i_B)%iT_p
-    !
-    H_shift=0
-    if(BS_blk(i_B)%mode=="C") H_shift(2)=BS_K_dim(1)
-    !
-    do i_r=1,BS_blk(i_B)%size(1)
-      !
-      H_pos(1)=BS_blk(i_B)%coordinate(1)+i_r-2
-      !
-      do i_c=1,BS_blk(i_B)%size(2)
-        !
-        H_pos(2)=BS_blk(i_B)%coordinate(2)+i_c-2
-        !
-        ! Then the upper triangle of each block and direct symmetrization
-        !
-        if (H_pos(1)+H_shift(1)>H_pos(2)+H_shift(2)) cycle
-        if (H_pos(1)>H_pos(2)) cycle
-        !
-        Mij     =      BS_blk(i_B)%mat(i_r,i_c)
-        Mij_star= real(BS_blk(i_B)%mat(i_r,i_c))-cI*aimag(BS_blk(i_B)%mat(i_r,i_c))
-        !
-        ! Add energies to the diagonal
-        !
-        if(H_pos(1)+H_shift(1)==H_pos(2)+H_shift(2)) then
-          Mij     =real(Mij)     +BSS_eh_E(H_pos(1)+H_shift(1)+1)*cONE
-          Mij_star=real(Mij_star)+BSS_eh_E(H_pos(1)+H_shift(1)+1)*cONE
-          if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
-            Mij     =Mij            +cI*BSS_eh_W(H_pos(1)+H_shift(1)+1)
-            Mij_star=Mij_star       -cI*BSS_eh_W(H_pos(1)+H_shift(1)+1)
-          endif
-        endif
-        !
-        select case(BS_blk(i_B)%mode)
-        case("R")
-           call MatSetValue( R, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
-           ! The resonant block is hermitian
-           call MatSetValue( R, H_pos(2), H_pos(1),   Mij_star, INSERT_VALUES, ierr )
-        case("C")
-           call MatSetValue( C, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
-           ! Anti-coupling from coupling: the whole BSE matrix is Pseudo-HErmitian
-           ! The coupling block and the anti-coupling block are symmetric
-           call MatSetValue( C, H_pos(2), H_pos(1),       Mij , INSERT_VALUES, ierr )
-        end select
-        !
-      enddo
-      !
-    enddo
-    !
-    ! After the re-distribution into slepc_mat the %mat's are (in some cases) not needed anymore 
-    !
-    if ( .not. (run_Haydock.or.run_inversion) ) call K_block_free(i_B)
-    !
-    call live_timing(steps=1)
-    !
-  enddo
-  !
-  if (n_BS_blks>0) call live_timing()
-  !
+ call MatSetFromOptions(C,ierr)
+ call MatSetUp(C,ierr)
+ !
+ ! Fill the values of the explicit submatrices of the nest matrix
+ !
+ live_msg="Redistribute BSE in slepc_mat"
+ if (BSS_kernel_last_stored_block<n_BS_blks) &
+ & live_msg="Load and distribute BSE in slepc mat"
+ if (n_BS_blks>0) call live_timing(trim(live_msg),n_BS_blks)
+ !
+ do i_B=1,n_BS_blks
+   !
+   i_Tk  =BS_blk(i_B)%iT_k
+   i_Tp  =BS_blk(i_B)%iT_p
+   !
+   H_shift=0
+   if(BS_blk(i_B)%mode=="C") H_shift(2)=BS_K_dim(1)
+   !
+   if (i_B>BSS_kernel_last_stored_block) then
+     call io_control(ACTION=RD,ID=BS_ID(2))
+     call io_BS_PAR_block(iq,i_B,BS_ID(2),"matonly")
+   endif
+   !
+   do i_r=1,BS_blk(i_B)%size(1)
+     !
+     H_pos(1)=BS_blk(i_B)%coordinate(1)+i_r-2
+     !
+     do i_c=1,BS_blk(i_B)%size(2)
+       !
+       H_pos(2)=BS_blk(i_B)%coordinate(2)+i_c-2
+       !
+       ! Then the upper triangle of each block and direct symmetrization
+       !
+       if (H_pos(1)+H_shift(1)>H_pos(2)+H_shift(2)) cycle
+       if (H_pos(1)>H_pos(2)) cycle
+       !
+       Mij     =      BS_blk(i_B)%mat(i_r,i_c)
+       Mij_star= real(BS_blk(i_B)%mat(i_r,i_c))-cI*aimag(BS_blk(i_B)%mat(i_r,i_c))
+       !
+       ! Add energies to the diagonal
+       !
+       if(H_pos(1)+H_shift(1)==H_pos(2)+H_shift(2)) then
+         Mij     =real(Mij)     +BSS_eh_E(H_pos(1)+H_shift(1)+1)*cONE
+         Mij_star=real(Mij_star)+BSS_eh_E(H_pos(1)+H_shift(1)+1)*cONE
+         if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
+           Mij     =Mij            +cI*BSS_eh_W(H_pos(1)+H_shift(1)+1)
+           Mij_star=Mij_star       -cI*BSS_eh_W(H_pos(1)+H_shift(1)+1)
+         endif
+       endif
+       !
+       select case(BS_blk(i_B)%mode)
+       case("R")
+          call MatSetValue( R, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
+          ! The resonant block is hermitian
+          call MatSetValue( R, H_pos(2), H_pos(1),   Mij_star, INSERT_VALUES, ierr )
+       case("C")
+          call MatSetValue( C, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
+          ! Anti-coupling from coupling: the whole BSE matrix is Pseudo-HErmitian
+          ! The coupling block and the anti-coupling block are symmetric
+          call MatSetValue( C, H_pos(2), H_pos(1),       Mij , INSERT_VALUES, ierr )
+       end select
+       !
+     enddo
+     !
+   enddo
+   !
+   ! After the re-distribution into slepc_mat the %mat are (in some cases) not needed anymore 
+   !
+   if ( i_B>BSS_kernel_last_stored_block)  then
+     call K_block_free(i_B,"matonly")
+   else if ( (.not.(run_Haydock.or.run_inversion)) ) then
+     call K_block_free(i_B,"all")
+   endif
+   !
+   call live_timing(steps=1)
+   !
+ enddo
+ !
+ if (n_BS_blks>0) call live_timing()
+ !
  call MatAssemblyBegin(R,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyEnd(R,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyBegin(C,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyEnd(C,MAT_FINAL_ASSEMBLY,ierr)
  !
- if (.NOT.nest_debug) then
-   !
-   ! Folded spectrum
-   !
-   call MatCreateBSE(R,C,slepc_mat,ierr);
-   !
- else
-   !
-   ! Nested matrix
-   !
-   ! Create the two shell submatrices and define the required operations
-   !
-   call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,RT,ierr)
-#ifdef PETSC_HAVE_CUDA
-   if (have_cuda) then
-     call MatSetVecType(RT,VECCUDA,ierr)
-   endif
-#endif
-   call MatShellSetOperation(RT,MATOP_GET_DIAGONAL,RT_get_diagonal,ierr)
-   call MatShellSetOperation(RT,MATOP_MULT,RT_mat_mult,ierr)
-   call MatShellSetOperation(RT,MATOP_MULT_TRANSPOSE,RT_mat_mult_transpose,ierr)
-   call PetscPushErrorHandler(ignore_petsc_error_handler,PETSC_NULL_INTEGER,ierr)
-   call MatShellSetOperation(RT,MATOP_MULT_HERMITIAN_TRANSPOSE,RT_mat_mult_hermitian_transpose,ierr)
-   call PetscPopErrorHandler(ierr)
-   !
-   call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,CHT,ierr)
-#ifdef PETSC_HAVE_CUDA
-   if (have_cuda) then
-     call MatSetVecType(CHT,VECCUDA,ierr)
-   endif
-#endif
-   call MatShellSetOperation(CHT,MATOP_GET_DIAGONAL,CHT_get_diagonal,ierr)
-   call MatShellSetOperation(CHT,MATOP_MULT,CHT_mat_mult,ierr)
-   call MatShellSetOperation(CHT,MATOP_MULT_TRANSPOSE,CHT_mat_mult_transpose,ierr)
-   call PetscPushErrorHandler(ignore_petsc_error_handler,PETSC_NULL_INTEGER,ierr)
-   call MatShellSetOperation(CHT,MATOP_MULT_HERMITIAN_TRANSPOSE,CHT_mat_mult_hermitian_transpose,ierr)
-   call PetscPopErrorHandler(ierr)
-   !
-   ! Build the nest matrix
-   !
-   matArray(1) = R
-   matArray(2) = C
-   matArray(3) = CHT
-   matArray(4) = RT
-   itwo = 2
-   call MatCreateNest(PETSC_COMM_WORLD,itwo,PETSC_NULL_INTEGER,itwo,PETSC_NULL_INTEGER,matArray,slepc_mat,ierr)
-#ifdef PETSC_HAVE_CUDA
-   if (have_cuda) then
-     call MatSetVecType(slepc_mat,VECCUDA,ierr)
-   endif
-#endif
- endif
+ call MatCreateBSE(R,C,slepc_mat,ierr);
  !
  call timing('BSE mat slepc redist',OPR='stop')
  !
 end subroutine K_stored_in_a_nest_matrix
-
-subroutine RT_mat_mult(M,X,F,ierr)
-  use shellmat_module
-  implicit none
-  Mat     M
-  Vec     X,F
-  PetscScalar mone
-  PetscErrorCode ierr
-  call MatMultTranspose(R,X,F,ierr)
-  mone = -1.0
-  call VecScale(F,mone,ierr)
-  return
-end subroutine RT_mat_mult
-
-subroutine CHT_mat_mult(M,X,F,ierr)
-  use shellmat_module
-  implicit none
-  Mat     M
-  Vec     X,F
-  PetscScalar mone
-  PetscErrorCode ierr
-  call MatMultHermitianTranspose(C,X,F,ierr)
-  mone = -1.0
-  call VecScale(F,mone,ierr)
-  return
-end subroutine CHT_mat_mult
-
-subroutine RT_mat_mult_transpose(M,X,F,ierr)
-  use shellmat_module
-  implicit none
-  Mat     M
-  Vec     X,F
-  PetscScalar mone
-  PetscErrorCode ierr
-  call MatMult(R,X,F,ierr)
-  mone = -1.0
-  call VecScale(F,mone,ierr)
-  return
-end subroutine RT_mat_mult_transpose
-
-subroutine CHT_mat_mult_transpose(M,X,F,ierr)
-  use shellmat_module
-  implicit none
-  Mat     M
-  Vec     X,X_conjugate,F
-  PetscScalar mone
-  PetscErrorCode ierr
-  call VecDuplicate(X,X_conjugate,ierr)
-  call VecCopy(X,X_conjugate,ierr)
-  call VecConjugate(X_conjugate,ierr)
-  call MatMult(C,X_conjugate,F,ierr)
-  mone = -1.0
-  call VecConjugate(F,ierr)
-  call VecScale(F,mone,ierr)
-  call VecDestroy(X_conjugate,ierr)
-  return
-end subroutine CHT_mat_mult_transpose
-
-subroutine RT_mat_mult_hermitian_transpose(M,X,F,ierr)
-  use shellmat_module
-  implicit none
-  Mat     M
-  Vec     X,X_conjugate,F
-  PetscScalar mone
-  PetscErrorCode ierr
-  call VecDuplicate(X,X_conjugate,ierr)
-  call VecCopy(X,X_conjugate,ierr)
-  call VecConjugate(X_conjugate,ierr)
-  call MatMult(R,X_conjugate,F,ierr)
-  mone = -1.0
-  call VecConjugate(F,ierr)
-  call VecScale(F,mone,ierr)
-  call VecDestroy(X_conjugate,ierr)
-  return
-end subroutine RT_mat_mult_hermitian_transpose
-
-subroutine CHT_mat_mult_hermitian_transpose(M,X,F,ierr)
-  use shellmat_module
-  implicit none
-  Mat     M
-  Vec     X,F
-  PetscScalar mone
-  PetscErrorCode ierr
-  call MatMult(C,X,F,ierr)
-  mone = -1.0
-  call VecScale(F,mone,ierr)
-  return
-end subroutine CHT_mat_mult_hermitian_transpose
-
-subroutine RT_get_diagonal(M,D)
-  use shellmat_module
-  implicit none
-  Mat     M
-  Vec     D
-  PetscScalar mone
-  PetscErrorCode ierr
-  call MatGetDiagonal(R,D,ierr)
-  mone = -1.0
-  call VecScale(D,mone,ierr)
-  return
-end subroutine RT_get_diagonal
-
-subroutine CHT_get_diagonal(M,D)
-  use shellmat_module
-  implicit none
-  Mat     M
-  Vec     D
-  PetscScalar mone
-  PetscErrorCode ierr
-  call MatGetDiagonal(C,D,ierr)
-  mone = -1.0
-  call VecScale(D,mone,ierr)
-  return
-end subroutine CHT_get_diagonal

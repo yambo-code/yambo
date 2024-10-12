@@ -12,6 +12,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  !
  use BS,             ONLY:BS_H_dim, BS_nT_grps,BS_res_ares_n_mat,BS_K_coupling,&
 &                         BS_Blocks_symmetrize_K,l_BS_ares_from_res
+ use BS_solvers,     ONLY:BSS_kernel_IO_on_the_fly
  !
  !      | (K_r)     (cI*K_c)    |  
  !  K = |                       |
@@ -90,6 +91,6 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  !
  ! Symmetrize BS_blk%mat to be used in K_multiply_by_V
  !
- call BS_blocks_symmetrize_K()
+ if(.not.BSS_kernel_IO_on_the_fly) call BS_blocks_symmetrize_K()
  !
 end subroutine K_shell_matrix

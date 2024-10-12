@@ -28,7 +28,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  use BS_solvers,    ONLY : BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_maxit,&
  &                         BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_precondition,&
  &                         BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_mpd,&
- &                         BSS_slepc_custom
+ &                         BSS_slepc_pseudo_herm
  !
  use petscsys
  use petscmat
@@ -74,7 +74,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  PetscReal                          :: tol, ferror
  PetscScalar                        :: target_energy
  PetscErrorCode                     :: ierr
- PetscInt                           :: nev, ncv, mpd, maxit, its, nconv, n, i, j
+ PetscInt                           :: nev, ncv, mpd, maxit, its, nconv, i_eig, Nsize, Msize
  PetscInt                           :: idx(2)
  PetscScalar                        :: kr, ki
  PetscScalar, pointer               :: xsr(:), xsi(:), xsr_left(:), xsi_left(:)
@@ -89,9 +89,9 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  logical           :: l_precondition
  character(len=30) :: rowfmt
  !
- ! Non hermitian not implemented yet!
  !
- call MatGetSize(M_slepc,n,j,ierr)
+ call MatGetSize(M_slepc,Nsize,Msize,ierr)
+ !
  call MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
  !
  call MatCreateVecs(M_slepc,xr,xr_left,ierr)
@@ -107,10 +107,12 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  call EPSSetOperators(eps,M_slepc,PETSC_NULL_MAT,ierr)
  if(     present(V_left)) then
-   if (BSS_slepc_custom) then
+   if (BSS_slepc_pseudo_herm) then
+     ! Uses the pseudo-hermitian properties of the bse matrix
      call EPSSetProblemType(eps,EPS_BSE,ierr)
    else
-     ! To do: to check if it can be cast in the form of a generalized hermitian problem
+     ! One could check if the problem can be cast in the form of a generalized hermitian problem
+     ! However, given the existence of the pseudo-hermitian scheme, this is not useful anymore
      call EPSSetProblemType(eps,EPS_NHEP,ierr)
      call EPSSetTwoSided(eps,PETSC_TRUE,ierr)
    endif
@@ -132,7 +134,10 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  ! Default Krylov-Schur used in case input is mispelled
  epskind=EPSKRYLOVSCHUR
- ! From user
+ !
+ ! Load eps from command line options. It overwrites input file
+ !call EPSSetFromOptions(eps,ierr)
+ ! From input. It overwrites command line options.
  if(index(BSS_slepc_approach,"Krylov-Schur")>0)          epskind=EPSKRYLOVSCHUR
  if(index(BSS_slepc_approach,"Generalized-Davidson")>0)  epskind=EPSGD
  if(index(BSS_slepc_approach,"Jacobi-Davidson")>0)       epskind=EPSJD
@@ -155,17 +160,29 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    !
  endif
  !
+ ! GD and JD always want stkind to be defined. This is done
+ ! automatically by slepc, however with this line, I get the info in output 
+ if (epskind==EPSGD)          stkind=STPRECOND
+ if (epskind==EPSJD)          stkind=STPRECOND
+ if (stkind==STPRECOND .and. epskind==EPSGD)      kspkind=KSPPREONLY
+ if (stkind==STPRECOND .and. epskind==EPSJD)      kspkind=KSPBCGS
+ !
+ call EPSGetST(eps,st,ierr)
+ call STGetKSP(st,ksp,ierr)
+ !
+ call STSetType(st,stkind,ierr)
+ call KSPSetType(ksp,kspkind,ierr)
+ !
+ pckind="nopc"
+ !
  if (l_precondition) then
    !
    if (epskind==EPSKRYLOVSCHUR) stkind=STSINVERT
-   if (epskind==EPSGD)          stkind=STPRECOND
-   if (epskind==EPSJD)          stkind=STPRECOND
    !
    ! Default
    !if (stkind==STSINVERT)                           kspkind=KSPBCGS
    if (stkind==STSINVERT)                           kspkind=KSPPREONLY
-   if (stkind==STPRECOND .and. epskind==EPSGD)      kspkind=KSPPREONLY
-   if (stkind==STPRECOND .and. epskind==EPSJD)      kspkind=KSPBCGS
+   !
    ! From user
    if(index(BSS_slepc_precondition,KSPPREONLY)/=0)  kspkind=KSPPREONLY
    if(index(BSS_slepc_precondition,KSPBCGS)/=0)     kspkind=KSPBCGS
@@ -178,18 +195,13 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    if(index(BSS_slepc_precondition,PCFIELDSPLIT)/=0)  pckind=PCFIELDSPLIT
    if(index(BSS_slepc_precondition,PCLU)/=0)          pckind=PCLU
    !
-   BSS_slepc_precondition=trim(stkind)//"+"//trim(kspkind)//"+"//trim(pckind)
-   !
-   call EPSGetST(eps,st,ierr)
-   call STGetKSP(st,ksp,ierr)
    call KSPGetPC(ksp,pc,ierr)
    !
-   call STSetType(st,stkind,ierr)
-   call KSPSetType(ksp,kspkind,ierr)
    call PCSetType(pc,pckind,ierr)
    !
  endif
  !
+ BSS_slepc_precondition=trim(stkind)//"+"//trim(kspkind)//"+"//trim(pckind)
  !
  if (BSS_slepc_extraction == 'ritz')              extr = EPS_RITZ
  if (BSS_slepc_extraction == 'harmonic')          extr = EPS_HARMONIC         
@@ -236,30 +248,26 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !Set monitor
  call EPSMonitorSet(eps,MyEPSMonitor,0,PETSC_NULL_FUNCTION,ierr)
  !
- ! Load eps from command line options. It overwrites input file
- call EPSSetFromOptions(eps,ierr)
- !
- if(present(V_left).and.BSS_slepc_custom.and.epskind==EPSKRYLOVSCHUR) then
+ if(present(V_left).and.BSS_slepc_pseudo_herm.and.epskind==EPSKRYLOVSCHUR) then
    ! Default Shao used in case input is mispelled or not set
    epsbsetype=EPS_KRYLOVSCHUR_BSE_SHAO
-   ! From user
+   ! Eventially load epsbsetype from command line options
+   call EPSKrylovSchurGetBSEType(eps,epsbsetype,ierr)
+   ! From input file. If set, it owrites command line options.
    if(index(BSS_slepc_approach,"Shao")>0)        epsbsetype=EPS_KRYLOVSCHUR_BSE_SHAO
    if(index(BSS_slepc_approach,"Gruning")>0)     epsbsetype=EPS_KRYLOVSCHUR_BSE_GRUNING
-   !if(index(BSS_slepc_approach,"Symplectic")>0)  epsbsetype=EPS_KRYLOVSCHUR_BSE_SYMPLECTIC  ! To be replaced
-   if(index(BSS_slepc_approach,"Projected")>0)   epsbsetype=EPS_KRYLOVSCHUR_BSE_PROJECTEDBSE   ! New replacement 
-   ! Eventially load epsbsetype from command line options. It overwrites input file
-   !call EPSKrylovSchurGetBSEType(eps,epsbsetype,ierr)
+   if(index(BSS_slepc_approach,"Projected")>0)   epsbsetype=EPS_KRYLOVSCHUR_BSE_PROJECTEDBSE
+   call EPSKrylovSchurSetBSEType(eps,epsbsetype,ierr)
  endif
  !
  ! Fix the BSS_slepc_approach string
  if (epskind==EPSKRYLOVSCHUR) BSS_slepc_approach="Krylov-Schur"
  !
  if(present(V_left)) then
-   if(BSS_slepc_custom.and.epskind==EPSKRYLOVSCHUR) then
+   if(BSS_slepc_pseudo_herm.and.epskind==EPSKRYLOVSCHUR) then
      if(epsbsetype==EPS_KRYLOVSCHUR_BSE_SHAO)         BSS_slepc_approach=trim(BSS_slepc_approach)//"+Shao" 
      if(epsbsetype==EPS_KRYLOVSCHUR_BSE_GRUNING)      BSS_slepc_approach=trim(BSS_slepc_approach)//"+Gruning" 
-     !if(epsbsetype==EPS_KRYLOVSCHUR_BSE_SYMPLECTIC)   BSS_slepc_approach=trim(BSS_slepc_approach)//"+Symplectic" !To be replaced
-     if(epsbsetype==EPS_KRYLOVSCHUR_BSE_PROJECTEDBSE) BSS_slepc_approach=trim(BSS_slepc_approach)//"+ProjectedBSE"  ! New replacement
+     if(epsbsetype==EPS_KRYLOVSCHUR_BSE_PROJECTEDBSE) BSS_slepc_approach=trim(BSS_slepc_approach)//"+ProjectedBSE"
    else
      BSS_slepc_approach=trim(BSS_slepc_approach)//"+NonHermitian"
    endif
@@ -324,19 +332,15 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    call VecScatterCreateToAll(xr,vs,vout,ierr)
  endif
 
- do i=0,n_eig-1
+ do i_eig=0,n_eig-1
    !Get converged eigenpairs: i-th eigenvalue is stored in kr
    !(real part) and ki (imaginary part)
-   if(present(V_left)) then
-     call EPSGetEigenpair(eps,i,kr,PETSC_NULL_SCALAR,xr,PETSC_NULL_VEC,ierr)
-     call EPSGetLeftEigenvector(eps,i,xr_left,PETSC_NULL_VEC,ierr)
-   else
-     call EPSGetEigenpair(eps,i,kr,PETSC_NULL_SCALAR,xr,PETSC_NULL_VEC,ierr)
-   endif
+   call EPSGetEigenpair(eps,i_eig,kr,PETSC_NULL_SCALAR,xr,PETSC_NULL_VEC,ierr)
+   if(present(V_left)) call EPSGetLeftEigenvector(eps,i_eig,xr_left,PETSC_NULL_VEC,ierr)
    !
    !save the eigenvalues and eigenvectors in the matrix of the hamiltonian
-   if(present(E_real)) E_real(i+1) = real(kr,SP)
-   if(present(E_cmpl)) E_cmpl(i+1) = cmplx(kr,kind=SP)
+   if(present(E_real)) E_real(i_eig+1) = real(kr,SP)
+   if(present(E_cmpl)) E_cmpl(i_eig+1) = cmplx(kr,kind=SP)
    !
    ! this is to write the vector to hdf5 directly
    !call VecView(xr,hdf5v,ierr)
@@ -352,10 +356,10 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
      call VecScatterEnd(vs2,xdown,vout2,INSERT_VALUES,SCATTER_FORWARD,ierr)
      !
      call VecGetArrayReadF90(vout,xsr,ierr)
-     V_right(1:n/2, i+1) = cmplx(xsr,kind=SP)
+     V_right(1:Nsize/2, i_eig+1) = cmplx(xsr,kind=SP)
      call VecRestoreArrayReadF90(vout,xsr,ierr)
      call VecGetArrayReadF90(vout2,xsr,ierr)
-     V_right(n/2+1:n, i+1) = cmplx(xsr,kind=SP)
+     V_right(Nsize/2+1:Nsize, i_eig+1) = cmplx(xsr,kind=SP)
      call VecRestoreArrayReadF90(vout2,xsr,ierr)
      !
      call VecRestoreSubVector(xr,is(1),xup,ierr)
@@ -372,10 +376,10 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
        call VecScatterEnd(vs2,xdown,vout2,INSERT_VALUES,SCATTER_FORWARD,ierr)
        !
        call VecGetArrayReadF90(vout,xsr_left,ierr)
-       V_left(1:n/2, i+1) = cmplx(xsr_left,kind=SP)
+       V_left(1:Nsize/2, i_eig+1) = cmplx(xsr_left,kind=SP)
        call VecRestoreArrayReadF90(vout,xsr_left,ierr)
        call VecGetArrayReadF90(vout2,xsr_left,ierr)
-       V_left(n/2+1:n, i+1) = cmplx(xsr_left,kind=SP)
+       V_left(Nsize/2+1:Nsize, i_eig+1) = cmplx(xsr_left,kind=SP)
        call VecRestoreArrayReadF90(vout2,xsr_left,ierr)
        !
        call VecRestoreSubVector(xr_left,is(1),xup,ierr)
@@ -388,8 +392,8 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
      call VecScatterEnd(vs,xr,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
      !
      call VecGetArrayReadF90(vout,xsr,ierr)
-     V_right(:, i+1) = cmplx(xsr,kind=SP)
-     !if (BSS_slepc_double_grp) V_right(BS_K_dim(1)+1:,i+1) =cI*V_right(BS_K_dim(1)+1:,i+1)
+     V_right(:, i_eig+1) = cmplx(xsr,kind=SP)
+     !if (BSS_slepc_double_grp) V_right(BS_K_dim(1)+1:,i_eig+1)=cI*V_right(BS_K_dim(1)+1:,i_eig+1)
      call VecRestoreArrayReadF90(vout,xsr,ierr)
      !
      if (present(V_left)) then
@@ -399,8 +403,8 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
        call VecScatterEnd(vs,xr_left,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
        !
        call VecGetArrayReadF90(vout,xsr_left,ierr)
-       V_left(:, i+1) = cmplx(xsr_left,kind=SP)
-       !if (BSS_slepc_double_grp) V_left(BS_K_dim(1)+1:,i+1) =cI*V_left(BS_K_dim(1)+1:,i+1)
+       V_left(:, i_eig+1) = cmplx(xsr_left,kind=SP)
+       !if (BSS_slepc_double_grp) V_left(BS_K_dim(1)+1:,i_eig+1) =cI*V_left(BS_K_dim(1)+1:,i_eig+1)
        call VecRestoreArrayReadF90(vout,xsr_left,ierr)
      endif
    endif

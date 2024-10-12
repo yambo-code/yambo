@@ -67,7 +67,9 @@ module BS
  integer :: MAX_BSK_LIN_size
  integer :: BS_bands(2)
  integer :: BS_q(2)
+ integer :: BS_iq_now
  integer :: BS_identifier
+ integer :: BS_ID(3)
  integer(IPL) :: BS_lin_size_compressed
  integer :: BS_dip_size
  real(SP):: BS_field_direction(3,3)

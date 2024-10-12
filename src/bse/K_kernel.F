@@ -26,7 +26,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use X_m,           ONLY:X_t
  use interfaces,    ONLY:el_density_and_current
  use QP_m,          ONLY:QP_ng_Vxc
- use BS,            ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
+ use BS_solvers,    ONLY:BSS_kernel_last_stored_block
+ use BS,            ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,BS_ID,&
 &                        BS_res_K_exchange,BS_Block_size,BS_n_g_W,&
 &                        O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
 &                        BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
@@ -203,7 +204,10 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    call msg('r','[BSE] Correlation components ',(/BS_n_g_W,O_ng/))
  endif
  !
- call K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
+ call K_restart(iq,X,BS_ID(1),BS_ID(2),BS_ID(3),l_partial_kernel_loaded)
+ ID_head =BS_ID(1)
+ ID      =BS_ID(2)
+ ID_compr=BS_ID(3)
  !
  if( l_BSE_kernel_complete ) return
  !
@@ -384,7 +388,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    do i_block=1,n_BS_blks
      !
-     if (.not. allocated(BS_blk(i_block)%mat) ) call K_block_alloc(i_block)
+     if (.not. allocated(BS_blk(i_block)%mat) ) call K_block_alloc(i_block,"all")
      !
      ! Read BS_blk to check if the transition was already computed
      !
@@ -409,7 +413,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      !
      if ( (.not.l_partial_kernel_loaded) .and. io_BS_K .and. l_write_kernel_step) then
        !
-       if (BS_blk_done(i_block) .or. BS_blk_todo) call K_block_free(i_block)
+       if (BS_blk_done(i_block) .or. BS_blk_todo) call K_block_free(i_block,"all")
        !
      endif
      !
@@ -474,7 +478,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      if(l_partial_kernel_loaded.and.l_write_kernel) then
        call io_control(ACTION=WR,ID=ID)
        call io_BS_PAR_block(iq,i_block,ID,"full")
-       if (io_BS_K.and.l_write_kernel_step) call K_block_free(i_block)
+       if (io_BS_K.and.l_write_kernel_step) call K_block_free(i_block,"all")
      endif
 #endif
      cycle
@@ -486,7 +490,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      if (iHxc==3) BSK_IO_sum_value=l_bs_exch.or.BS_K_is_ALDA
    endif
    !
-   if (.not. allocated(BS_blk(i_block)%mat) ) call K_block_alloc(i_block)
+   if (.not. allocated(BS_blk(i_block)%mat) ) call K_block_alloc(i_block,"all")
    !
    ! Read BS_blk to check if the transition was already computed
    !
@@ -821,7 +825,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      call io_control(ACTION=WR,COM=REP,SEC=(/i_block+1/),ID=ID)
      io_BS_err=io_BS(iq,X,ID)
 #endif
-     if (io_BS_K.and.l_write_kernel_step) call K_block_free(i_block)
+     if (io_BS_K.and.l_write_kernel_step) call K_block_free(i_block,"all")
    endif
    !
    call live_timing(steps=i_steps)
@@ -898,7 +902,10 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  call io_control(ACTION=WR_CL,COM=REP,ID=ID)
  call io_BS_PAR_free(ID_head,ID,"full",.true.)
  ! In this mode the blocks are written to disk after each step and the memory is freed
- if (io_BS_K.and.l_write_kernel_step) BS_K_has_been_calculated_loaded=.false.
+ if (io_BS_K) then
+   if(     l_write_kernel_step) BS_K_has_been_calculated_loaded=.false.
+   if(.not.l_write_kernel_step) BSS_kernel_last_stored_block=n_BS_blks
+ endif
 #else
  call io_control(ACTION=WR_CL,COM=REP,SEC=(/n_BS_blks+2/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)

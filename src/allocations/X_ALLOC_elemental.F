@@ -71,9 +71,6 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
      if (allocated(X_mat)) return
      YAMBO_ALLOC(X_mat,(DIM(1),DIM(2),DIM(3)))
      X_mat=cZERO
-#ifdef _CUDA
-     allocate(X_mat_d, source=X_mat)
-#endif
    end select
    return
  endif

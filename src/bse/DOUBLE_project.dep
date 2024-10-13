@@ -17,11 +17,7 @@
  K_correlation_kernel_dir.o
  K_correlation_kernel_std.o
  K_diago_driver.o
- K_diago_hermitian_residuals.o
- K_diago_kerr_residual.o
  K_diago_left_residuals.o
- K_diago_magnons_residual.o
- K_diago_non_hermitian_residuals.o
  K_diago_overlap_matrix.o
  K_diago_perturbative.o
  K_diago_response_functions.o

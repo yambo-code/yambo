@@ -36,7 +36,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
  use QP_CTL_m,      ONLY:QP_actions_reset,n_QP_actions,QP_action,QP_CTL_copy,&
 &                        QP_ctl_ID,QP_ctl_t,QP_ctl_msg_fmt,QP_ctl_xc_STRING,QP_ctl_what,&
 &                        At_least_one_band_corrected
- use global_XC,     ONLY:QP_SE_NONE,setup_global_XC
+ use global_XC,     ONLY:correct_global_XC
  !
 #include<memory.h>
  !
@@ -142,7 +142,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
    !
  endif
  !
- call setup_global_XC(trim(QP_ctl_what),QP_SE_NONE,STRING=QP_ctl_xc_STRING)
+ call correct_global_XC(trim(QP_ctl_what),QP_ctl_xc_STRING)
  !
  ! Energy corrected?
  !

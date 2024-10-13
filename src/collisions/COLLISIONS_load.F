@@ -229,9 +229,11 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      IO_ACT=RD
 #endif
      !
+#if defined _PAR_IO
 #if defined _NL
     COLL_full =rZERO
     cOLL_compr=rZERO
+#endif
 #endif
      do i_coll=1,COLL%N
        !

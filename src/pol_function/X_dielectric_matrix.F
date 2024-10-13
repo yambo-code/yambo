@@ -207,9 +207,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  if (.not.io_RESPONSE) X_MEM_n_tot_freqs=X_MEM_n_freqs*PAR_nQ_ibz
  if (.not.allocated(X_par)) then
    if (     io_RESPONSE) allocate(X_par(1))
-#if !defined _PAR_IO
-   if (     io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_tot_freqs/))
-#endif
+!#if !defined _PAR_IO
+!   if (     io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_tot_freqs/))
+!#endif
    if (.not.io_RESPONSE) allocate(X_par(PAR_nQ_ibz))
    if (.not.io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_tot_freqs/))
  endif
@@ -327,11 +327,32 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      call X_AVERAGE_setup("CLOSE",iq,X%q0)
    endif
    !
+   ! DS MERGE <
+   ! The following lines were after the call to X_redux and before the call to io_X before the merge
+   ! I moved them here after the merge
+   !
+   ! allocation of X_mat
+   if (io_RESPONSE.and..not.allocated(X_mat)) then
+#if ! defined _PAR_IO
+     call X_ALLOC_elemental('X',(/X%ng,X%ng,Xw%n_freqs/))
+#endif
+   endif
+   !
+   ! DS MERGE >
+   !
    ! X_par => X_mat
    !
    call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
    !
    call elemental_IO( iq , .FALSE. )
+   !
+   ! X_mat (and other few quantities) deallocate
+   !
+   if (io_RESPONSE.and.allocated(X_mat)) then
+#if ! defined _PAR_IO
+     call X_ALLOC_elemental('X')
+#endif
+   endif
    !
    ! CLEAN (1)
    ! Frequencies must not be cleaned in the case of lifetimes calculations when the EM1d

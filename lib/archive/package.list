@@ -14,6 +14,7 @@ keep_libxc=no
 keep_lapack=no
 keep_blacs=no
 keep_scalapack=no
+keep_magma=no
 keep_petsc=no
 keep_slepc=no
 keep_fftw=no
@@ -34,6 +35,7 @@ version_libxc=5.2.3
 version_lapack=3.12.0
 version_blacs=missing
 version_scalapack=2.2.1
+version_magma=2.8.0
 version_slepc=3.20.2
 version_petsc=3.20.5
 version_fftw=3.3.10
@@ -53,6 +55,7 @@ pkgname_libxc=libxc-$(version_libxc)
 pkgname_lapack=lapack-$(version_lapack)
 pkgname_blacs=blacs
 pkgname_scalapack=scalapack-$(version_scalapack)
+pkgname_magma=magma-$(version_magma)
 pkgname_slepc=slepc-$(version_slepc)
 pkgname_petsc=petsc-$(version_petsc)
 pkgname_fftw=fftw-$(version_fftw)
@@ -71,6 +74,7 @@ tarball_etsf_io=$(pkgname_etsf_io).tar.gz
 tarball_libxc=$(pkgname_libxc).tar.gz
 tarball_lapack=v$(version_lapack).tar.gz
 tarball_scalapack=v$(version_scalapack).tar.gz
+tarball_magma=$(pkgname_magma).tar.gz
 tarball_blacs=$(pkgname_blacs).tar.gz
 tarball_slepc=slepc-v$(version_slepc).tar.gz
 tarball_petsc=petsc-v$(version_petsc).tar.gz
@@ -97,6 +101,7 @@ url_libxc=https://gitlab.com/libxc/libxc/-/archive/$(version_libxc)/$(tarball_li
 # External URL's More
 #
 url_fftw=https://fftw.org/$(tarball_fftw)
+url_magma=https://icl.utk.edu/projectsfiles/magma/downloads/$(tarball_magma)
 #
 # Internal URL's
 #

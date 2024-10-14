@@ -23,6 +23,7 @@
  K_diago_response_functions.o
  K_diago_right_residuals.o
  K_diagonal.o
+ K_diagonalize.o
  K_dipoles.o
  K_dot_product.o
  K_driver.o
@@ -30,6 +31,7 @@
  K_eps_interpolate.o
  K_exchange_collisions.o
  K_exchange_kernel.o
+ K_fill_block_cyclic.o
  K_inversion_Lo.o
  K_inversion_do_it_SLK.o
  K_inversion_do_it_full.o
@@ -42,6 +44,7 @@
  K_multiply_by_V_transpose.o
  K_multiply_by_V_transpose_slepc.o
  K_observables.o
+ K_residuals.o
  K_restart.o
  K_screened_interaction.o
  K_shell_matrix.o

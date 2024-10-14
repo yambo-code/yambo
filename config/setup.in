@@ -54,6 +54,8 @@ lblaspetsc  = @BLAS_PETSC_LIBS@
 llapackpetsc= @LAPACK_PETSC_LIBS@
 lblacs      = @BLACS_LIBS@
 lscalapack  = @SCALAPACK_LIBS@
+lelpa       = @ELPA_LIBS@
+ielpa       = @ELPA_INCS@
 lslepc      = @SLEPC_LIBS@
 islepc      = @SLEPC_INCS@
 lpetsc      = @PETSC_LIBS@
@@ -88,6 +90,8 @@ lfutile     = @FUTILE_LIBS@
 ifutile     = @FUTILE_INCS@
 letsf       = @ETSF_LIBS@
 ietsf       = @ETSF_INCS@
+lydiago     = @YDIAGO_LIBS@
+iydiago     = @YDIAGO_INCS@
 idriver     = @DRIVER_INCS@
 mpipath     = @MPI_PATH@
 #

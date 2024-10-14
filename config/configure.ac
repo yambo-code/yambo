@@ -26,6 +26,7 @@ AC_CONFIG_SRCDIR([driver/yambo.F])
 m4_include([config/m4/yambo_remote_compilation_setup.m4])
 m4_include([config/m4/yambo_specific.m4])
 m4_include([config/m4/yambo_driver.m4])
+m4_include([config/m4/yambo_diago.m4])
 # 
 #  General
 #
@@ -238,6 +239,7 @@ AC_LANG_PUSH(Fortran)
 # ============================================================================
 # Yambo Libs
 AC_YDRIVER
+AC_YDIAGO
 # ============================================================================
 # YDB/YAMBOpy
 ACX_SCRIPTS

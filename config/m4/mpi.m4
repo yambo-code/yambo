@@ -52,6 +52,10 @@ if test "$mpibuild" = "yes"; then
   def_mpi="-D_MPI"
   ACX_GET_MPI_KIND()
   MPI_PATH=`which $CC |sed "s/bin\/$CC//g"`
+  if ! test -d "$MPI_PATH/include"; then
+    MPI_PATH=`$CC -show | sed "s/.*-I//g"` ;
+    MPI_PATH=`echo ${MPI_PATH} | sed "s/\/include.*//g"` ;
+  fi
   #
 else
   #

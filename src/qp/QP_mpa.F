@@ -22,22 +22,21 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use parser_m,      ONLY:parser
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PAR_COM_Q_A2A,&
 &                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,&
-&                        PAR_Q_ibz_index,n_WF_bands_to_load
+&                        PAR_Q_ibz_index,n_WF_bands_to_load,myid
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:manage_action,OP_RD_CL,OP_WR_CL,OP_APP_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
  &                       io_RESPONSE,io_MULTIPOLE,deliver_IO_error_message
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_Sc_steps,QP_dSc_steps,QP_solver,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta
- use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t
+ use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t,X_par
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,RIM_W_ng,RIM_W
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
- use interfaces,    ONLY:QP_state_print,WF_load,WF_free
- use matrix_operate,ONLY:mat_transpose
+ use interfaces,    ONLY:QP_state_print,WF_load,WF_free,MATRIX_transpose
  use timing_m,      ONLY:timing
- use mpa_m,         ONLY:mpa_RE_solver,MPA_E_mat,MPA_R_mat,MPA_freqs,&
-&                        MPA_alloc,MPA_free,MPA_E_mat_d,MPA_R_mat_d
+ use mpa_m,         ONLY:mpa_RE_solver,err_func_X,MPA_freqs,MPA_alloc,MPA_free,MPA_E_par,MPA_R_par,&
+&                        MPA_E_par_d,MPA_R_par_d
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
@@ -74,19 +73,19 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), pointer DEV_ATTR :: isc_rhotw_p(:)
  complex(SP), pointer DEV_ATTR :: iscp_rhotw_p(:)
  complex(SP), pointer DEV_ATTR :: isc_gamp_p(:,:)
- complex(SP), pointer DEV_ATTR :: MPA_R_mat_p(:,:,:)
- complex(SP), pointer DEV_ATTR :: MPA_E_mat_p(:,:,:)
- 
+ complex(SP), pointer DEV_ATTR :: MPA_R_par_p(:,:,:)
+ complex(SP), pointer DEV_ATTR :: MPA_E_par_p(:,:,:)
  !
  ! MPA variables
  !
- integer          :: i_np,ID2
- logical          :: MPred
- real(SP)         :: bose_PPA_E,MPred_rate,PPcond_rate,PPcond_Qrate,MP_err,MP_Qerr,cond_num(2),cond_numQ(2) 
+ integer           :: i_np,ID2
+ logical           :: MPred,l_CPU_ONLY
+ real(SP)          :: bose_PPA_E,MPred_rate,PPcond_rate,PPcond_Qrate,&
+&                     MP_err,MP_Qerr,cond_num(2),cond_numQ(2)
  complex(SP), allocatable :: MPA_Xo(:)
- character(len=99):: str
+ character(len=99) :: str
  !
- integer, external::io_X,io_MPA
+ integer, external ::io_X,io_MPA
 
  !
  ! Reset & checks
@@ -183,7 +182,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Elemental Collisions
  !====================== 
  isc%iqref=0
- call elemental_collision_alloc(isc,NG=isc%ngrho,NG_GAMP=(/X%ng,X%ng/),TITLE="GW")
+ call elemental_collision_alloc(isc,NG=isc%ngrho,GAMP_NG=(/X%ng,X%ng/),TITLE="GW")
  call elemental_collision_alloc(iscp,NG=isc%ngrho,TITLE="GW")
  !
  isc_gamp_p   => DEV_VAR(isc%gamp)
@@ -198,7 +197,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=io_X(X,Xw,ID)
- if (io_err<0.and.io_RESPONSE) call error('Incomplete and/or broken MPA/Static diel. fun. database')
+ if (io_err<0.and.io_RESPONSE) call error('[MPA] Incomplete and/or broken MPA/Static diel. fun. database')
  !
  ! Test the spatial Inversion
  !   
@@ -207,13 +206,30 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! ALLOCATION
  !------------
  !
- if (io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,2*X%mpa_npoles/))
+ ! MB: we load X_par and not X_mat (refer to QP_ppa_cohsex)
+ !     Here deallocate X_mat
+ !
+ call X_ALLOC_elemental("X")
+ !
+ if (.not.io_RESPONSE) call error("[MPA] .not. io_RESPONSE untested with MPA")
+ !
+ if (.not.allocated(X_par).and.io_RESPONSE) then
+   allocate(X_par(1))
+ endif
+ if (io_RESPONSE) call X_ALLOC_parallel(X_par(1),X%ng,2*X%mpa_npoles,"X")
+ !
  YAMBO_ALLOC(W_,(QP_dSc_steps))
  YAMBO_ALLOC(dc,(QP_dSc_steps))
  !
  ! MPA workspace
  !
- call MPA_alloc((/X%ng,X%ng,X%mpa_npoles,2*X%mpa_npoles/))
+ if (.not.allocated(MPA_E_par).and.io_RESPONSE) allocate(MPA_E_par(1))
+ if (.not.allocated(MPA_R_par).and.io_RESPONSE) allocate(MPA_R_par(1))
+ if (io_RESPONSE) then
+   ! AF: GPU allocation is performed separately below
+   call MPA_ALLOC_parallel(MPA_E_par(1),MPA_R_par(1),X%ng,2*X%mpa_npoles,"CPU_ONLY")
+ endif
+ !
  !
  ! AF: the following line needs to be moved elsewhere
  call parser('mpERdb',io_MULTIPOLE)
@@ -256,6 +272,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
    if (iqibz/=isc%iqref) then
      !
      iq_mem=PAR_Q_ibz_index(iqibz)
+     iq_mem = 1
      X_range=(/1,Xw%n_freqs/)
      if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
      !
@@ -286,30 +303,34 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      PPcond_Qrate=0._SP
      MP_Qerr=0._SP
      cond_numQ(:)=0._SP
+
      !
-     !$omp parallel default(shared),private(ig1,ig2,MPred,PPcond_rate,MP_err,cond_num,i_np,MPA_Xo), &
+     !$omp parallel default(shared),private(ig1,ig2,MPred,PPcond_rate,MP_err,cond_num,i_np,MPA_Xo,l_RIM_W_g), &
      !$omp &        reduction(+:MPred_rate,PPcond_Qrate,MP_Qerr,cond_numQ)
      !
      YAMBO_ALLOC(MPA_Xo,(Xw%n_freqs))
      !
      !$omp do collapse(2)
-     do ig2=1,X%ng
-       do ig1=1,X%ng
+     do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
+      do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
          !
          l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
          if(l_RIM_W_g) then
            MPA_Xo(1:Xw%n_freqs)=RIM_W(1:Xw%n_freqs,iqibz,ig1,ig2)/2._SP
          else
            !DALV: the multiplication by isc%gamp(ig1,ig2) is performed later
-           MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs)
+           MPA_Xo(1:Xw%n_freqs)=X_par(iq_mem)%blc(ig1,ig2,1:Xw%n_freqs)
          endif
+         !
          MPred=.false.
          PPcond_rate=0._SP
          MP_err=0._SP
          cond_num(:)=0._SP
          !
-         call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo,MPA_R_mat(ig1,ig2,:),MPA_E_mat(ig1,ig2,:),&
-&                                                  Xw%mpa_solver,MPred,PPcond_rate,MP_err,cond_num)
+         call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo, &
+&                           MPA_R_par(1)%blc(ig1,ig2,:),MPA_E_par(1)%blc(ig1,ig2,:), &
+&                           Xw%mpa_solver, MPred,PPcond_rate,MP_err,cond_num)
+         !
          if(MPred) MPred_rate=MPred_rate+1._SP
          PPcond_Qrate=PPcond_Qrate+PPcond_rate
          MP_Qerr=MP_Qerr+MP_err
@@ -318,7 +339,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        enddo
      enddo
      !$omp end do
-     !     
+     !   
      YAMBO_FREE(MPA_Xo)
      !
      !$omp end parallel
@@ -361,23 +382,27 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    if (iqs>nsym/(i_time_rev+1) .and. (i_space_inv==0.or.mag_syms) .and..not.X_is_TR_rotated) then
      !
-     ! Note (AF) that $omp directives are inside mat_transpose
+     ! AF: note that X_par is nott transpose, so, when
+     !     the ig1,ig2 indexes are distributed, only MPA_E_par/MPA_R_par
+     !     have the right ranges for cols and rows
      !
-     do i_np=1,X%mpa_npoles
-       call mat_transpose(MPA_E_mat(:,:,i_np))
-       call mat_transpose(MPA_R_mat(:,:,i_np))
-     enddo
+     call MATRIX_transpose("T",M_out=MPA_E_par(1))
+     call MATRIX_transpose("T",M_out=MPA_R_par(1))
+     call MATRIX_transpose("T",M_out=X_par(iq_mem))
      !
      X_is_TR_rotated=.true.
    endif
    !
+#ifdef _CUDA
    if (have_cuda) then
-     call dev_memcpy(MPA_E_mat_d,MPA_E_mat)
-     call dev_memcpy(MPA_R_mat_d,MPA_R_mat)
+      YAMBO_ALLOC_SOURCE( DEV_VAR(MPA_E_par(1)%blc), MPA_E_par(1)%blc )
+      YAMBO_ALLOC_SOURCE( DEV_VAR(MPA_R_par(1)%blc), MPA_R_par(1)%blc )
    endif
+#endif
+   ! 
+   MPA_E_par_p=>DEV_VAR(MPA_E_par(1)%blc)
+   MPA_R_par_p=>DEV_VAR(MPA_R_par(1)%blc)
    !
-   MPA_E_mat_p=>DEV_VAR(MPA_E_mat)
-   MPA_R_mat_p=>DEV_VAR(MPA_R_mat)
    !
    call timing('GW(mpa)_qp_loop',OPR='start')
    !
@@ -432,26 +457,26 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          W_1=W_(1)
          W_i=W_(i_w)
          !
-         !DEV_OMP parallel do default(shared), private(i_np,ig1,ig2,bose_PPA_E,ctmp), &
+         !DEV_OMP parallel do default(shared), private(i_np,ig1,ig2,bose_PPA_E,ctmp,l_RIM_W_g), &
          !DEV_OMP &           reduction(+:dp_dummy), collapse(3)
          !
          !DEV_CUF kernel do(3)
          !
          do i_np=1,X_mpa_npoles
-           do ig2=1,X_ng
-             do ig1=1,X_ng
+           do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
+             do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
                !
                ! DALV: inline bose_f function
                bose_PPA_E=0._SP
                !
-               if (real(MPA_E_mat_p(ig1,ig2,i_np),SP)<0._SP) bose_PPA_E=-spin_occ
+               if (real(MPA_E_par_p(ig1,ig2,i_np),SP)<0._SP) bose_PPA_E=-spin_occ
                if (Finite_Tel) then
-                 if (real(MPA_E_mat_p(ig1,ig2,i_np),SP)>epsilon(1._SP)) then
-                   if (real(MPA_E_mat_p(ig1,ig2,i_np),SP)<=bose_E_cut*Bose_Temp) then
-                     bose_PPA_E=spin_occ*Bose_Temp/real(MPA_E_mat_p(ig1,ig2,i_np),SP)
+                 if (real(MPA_E_par_p(ig1,ig2,i_np),SP)>epsilon(1._SP)) then
+                   if (real(MPA_E_par_p(ig1,ig2,i_np),SP)<=bose_E_cut*Bose_Temp) then
+                     bose_PPA_E=spin_occ*Bose_Temp/real(MPA_E_par_p(ig1,ig2,i_np),SP)
                    endif 
-                   if (real(MPA_E_mat_p(ig1,ig2,i_np),SP)> bose_E_cut*Bose_Temp) then
-                     bose_PPA_E=spin_occ/(exp(real(MPA_E_mat_p(ig1,ig2,i_np),SP)/Bose_Temp)-1._SP)
+                   if (real(MPA_E_par_p(ig1,ig2,i_np),SP)> bose_E_cut*Bose_Temp) then
+                     bose_PPA_E=spin_occ/(exp(real(MPA_E_par_p(ig1,ig2,i_np),SP)/Bose_Temp)-1._SP)
                    endif
                  else
                    bose_PPA_E=spin_occ*Bose_Temp/epsilon(1._SP)
@@ -463,21 +488,21 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
                if (l_RIM_W_g) then
                  !
                  ctmp = -4._DP/spin_occ*pi*isc_rhotw_p(ig1)*conjg(iscp_rhotw_p(ig2))  *&
-&                                 (sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np))) *MPA_R_mat_p(ig1,ig2,i_np))*&
+&                                 (sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np))) *MPA_R_par_p(ig1,ig2,i_np))*&
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_1-E_kmq &
-&                                             +sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np)))*MPA_E_mat_p(ig1,ig2,i_np))+&
+&                                             +sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np)))*MPA_E_par_p(ig1,ig2,i_np))+&
 &                       (f_kmq+bose_PPA_E)/(conjg(W_1)-E_kmq   &
-&                                             -sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np)))*MPA_E_mat_p(ig1,ig2,i_np)) )
+&                                             -sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np)))*MPA_E_par_p(ig1,ig2,i_np)) )
                  !
                else
                  !
                  ! DALV: the factor isc%gamp(ig1,ig2) is included here
                  ctmp = -4._DP/spin_occ*pi*isc_rhotw_p(ig1)*conjg(iscp_rhotw_p(ig2)) *isc_gamp_p(ig1,ig2) *&
-&                                 (sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np))) *MPA_R_mat_p(ig1,ig2,i_np))*&
+&                                 (sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np))) *MPA_R_par_p(ig1,ig2,i_np))*&
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_i-E_kmq &
-&                                             +sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np)))*MPA_E_mat_p(ig1,ig2,i_np))+&
+&                                             +sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np)))*MPA_E_par_p(ig1,ig2,i_np))+&
 &                       (f_kmq+bose_PPA_E)/(conjg(W_i)-E_kmq   &
-&                                             -sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np)))*MPA_E_mat_p(ig1,ig2,i_np)) )
+&                                             -sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np)))*MPA_E_par_p(ig1,ig2,i_np)) )
                  !
                endif
                !
@@ -520,6 +545,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  YAMBO_FREE(dc)
  YAMBO_FREE(W_)
  call X_ALLOC_elemental('X')
+ !
+ ! the following only unload 
+ !
  call MPA_free()
  !
  call timing('GW(mpa)',OPR='stop')

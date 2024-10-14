@@ -168,6 +168,7 @@ subroutine NL_initialize(E,k)
    ! see definition of "step_case" in function "theta_function" in src/modules/mod_functions.F
    Efield(i1)%t_initial_indx=max(nint(Efield(i1)%t_initial/RT_step)+1,2)
    Efield(i1)%t_initial     =real(Efield(i1)%t_initial_indx-1)*RT_step
+   if(Efield(i1)%ef_pol/="linear") call error("Only 'linear' polarization has been implemented and tested ")
    Efield(i1)%ef_pol        ="linear"
    !
    call Check_symmetries(Efield(i1)%versor,"electric")

@@ -151,7 +151,7 @@ fi
 #
 # switch off internal magma compilation
 #
-deactivate_internal=yes
+deactivate_internal=no
 if test "x$compile_magma" = "xyes" && test "x$internal_magma" = "xyes" && test "x$deactivate_internal" = "xyes"  ; then
   AC_MSG_RESULT([Internal Magma compilation not available yet. Deactivating it.]) ;
   compile_magma="no"

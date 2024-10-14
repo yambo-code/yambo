@@ -22,13 +22,25 @@ uncompress:
 	@$(uncompress)
 
 configure: uncompress
-	@$(configure)
+	@if test -d $(PACKAGE) && ! test -f configured.stamp ; then \
+         echo "\t[$(PACKAGE)] configuration"; \
+	 cd $(PACKAGE);  \
+	 cat $(compdir)/config/setup $(srcdir)/lib/magma/MGmake.inc_lib > make.inc ; \
+	 cp  $(srcdir)/lib/magma/Makefile.lib  Makefile ;  \
+         touch ../configured.stamp;\
+	fi
 
 compile: uncompress configure
 	@$(call compile)
 	
 install: uncompress configure compile
-	@$(call install_via_make,magma)
+	@if ! test -e installed.stamp ; then \
+         echo "\t[$(PACKAGE)] installation"; \
+         cd $(PACKAGE); cp *.a $(LIBPATH)/lib ; \
+         cp include/*.h $(LIBPATH)/include ; \
+         cp include/*.mod $(LIBPATH)/include ; \
+	 touch ../installed.stamp;\
+	fi
 
 $(LIBRARY): uncompress configure compile install
 #

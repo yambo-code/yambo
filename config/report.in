@@ -60,8 +60,8 @@
 #                 @PETSC_INCS_R@ 
 # [@SLEPC_check@] SLEPC     : @SLEPC_LIBS_R@
 #                 @SLEPC_INCS_R@ 
-# [@MAGMA_check@] MAGMA     : @MAGMA_LIBS@
-#                 @MAGMA_INCS@
+# [@MAGMA_check@] MAGMA     : @MAGMA_LIBS_R@
+#                 @MAGMA_INCS_R@ (fortran modules to be compiled: @do_magma_fmodules@) 
 #
 # > OTHERs
 #

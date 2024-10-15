@@ -13,6 +13,9 @@ endif
 include lib/archive/package.list
 #
 INT_LIBS      = qe_pseudo slatec math77 local
+ifeq ($(do_magma_fmodules),yes)
+  INT_LIBS = $(INT_LIBS) magma_fmodules
+endif
 YAMBO_INT_LIBS= Yio 
 YLIBDRIVER    = interface main options 
 YLIBDRIVER_LD = _Ydriver_options _Ydriver_interface _Ydriver_main 

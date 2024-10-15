@@ -35,9 +35,9 @@ AC_ARG_WITH(magma_includedir,AS_HELP_STRING([--with-magma-includedir=<path>],[Pa
 def_magma=""
 magma="no"
 enable_magma="no"
-do_magma_fmodules="no"
 internal_magma="no"
 compile_magma="no"
+compile_magma_fmodules="no"
 #
 if test x"$enable_magma_linalg" = "xyes"; then
   enable_magma="yes";
@@ -47,11 +47,11 @@ fi
 #
 if test  x"$with_magma_libs" = "xyes" ; then
   enable_magma="yes" ;
-  do_magma_fmodules="no" ;
+  compile_magma_fmodules="yes" ;
   with_magma_libs="";
 elif test  x"$with_magma_libs" = "xno" ; then
   enable_magma="no" ;
-  do_magma_fmodules="no" ;
+  compile_magma_fmodules="no" ;
   with_magma_libs="";
 fi
 #
@@ -141,13 +141,15 @@ if test "x$enable_magma" = "xyes" && test "x$magma" = "xno" ; then
   def_magma="-D_MAGMA"
   if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libmagma.a" ; then
     compile_magma="no" ;
+    compile_magma_fmodules="no" ;
     AC_MSG_RESULT([already compiled]) ;
   elif test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libmagma.so" ; then
     compile_magma="no" ;
+    compile_magma_fmodules="no" ;
     AC_MSG_RESULT([already compiled]) ;
   else
     compile_magma="yes" ;
-    do_magma_fmodules="no" ;
+    compile_magma_fmodules="no" ;
     AC_MSG_RESULT([Compatible external Magma not found/specified. To be compiled.]) ;
   fi
   #
@@ -155,7 +157,7 @@ fi
 #
 # Check if fortran modules are available
 #
-if test -e "$MAGMA_INCS/mod_magma2_common.F" ; then   do_magma_fmodules="no" ;  fi
+if test -e "$MAGMA_INCS/mod_magma2_common.F" ; then   compile_magma_fmodules="no" ;  fi
 #
 # switch off internal magma compilation
 #
@@ -173,8 +175,8 @@ AC_SUBST(MAGMA_LIBS)
 AC_SUBST(MAGMA_INCS)
 AC_SUBST(def_magma)
 AC_SUBST(enable_magma)
-AC_SUBST(do_magma_fmodules)
 AC_SUBST(compile_magma)
+AC_SUBST(compile_magma_fmodules)
 AC_SUBST(internal_magma)
 #
 ])

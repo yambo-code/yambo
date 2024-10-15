@@ -34,6 +34,7 @@ do_libxc    = @compile_libxc@
 do_petsc    = @compile_petsc@
 do_slepc    = @compile_slepc@
 do_magma    = @compile_magma@
+do_magma_fmodules = @compile_magma_fmodules@
 shell       = @SHELL@
 package_bugreport = @PACKAGE_BUGREPORT@
 prefix      = @prefix@

@@ -61,7 +61,7 @@
 # [@SLEPC_check@] SLEPC     : @SLEPC_LIBS_R@
 #                 @SLEPC_INCS_R@ 
 # [@MAGMA_check@] MAGMA     : @MAGMA_LIBS_R@
-#                 @MAGMA_INCS_R@ (fortran modules to be compiled: @do_magma_fmodules@) 
+#                 @MAGMA_INCS_R@ (fortran modules to be compiled: @compile_magma_fmodules@) 
 #
 # > OTHERs
 #

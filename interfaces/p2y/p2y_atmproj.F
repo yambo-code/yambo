@@ -113,7 +113,7 @@ subroutine p2y_atmproj(filename,k)
            !
            ! Case without SOC
            !
-           do im=1,2*il+1
+           do im=1,2*il-1
              !DEBUG <
              !write(*,*)ia,itype,il-1._SP,real(im-il,SP)
              !DEBUG >
@@ -127,7 +127,7 @@ subroutine p2y_atmproj(filename,k)
      enddo
      !
      !DEBUG <
-     !write(*,*) indx
+     !write(*,*) "nproj= ",indx
      !DEBUG >
      !
    end subroutine fill_atomic_table

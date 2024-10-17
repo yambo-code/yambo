@@ -115,12 +115,15 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  BUFFER%blc=cZERO
  !
  if (compute_on_gpu) then
-   YAMBO_ALLOC_GPU(DEV_VAR(KERNEL%blc),(KERNEL%BLCrows(1):KERNEL%BLCrows(2),KERNEL%BLCcols(1):KERNEL%BLCcols(2),1))
-   YAMBO_ALLOC_GPU(DEV_VAR(BUFFER%blc),(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
+   !
+   ! AF & MB: DEV_VAR(BUFFER%blc) allocation on gpu can be avoided to save ! memory 
+   !
    YAMBO_ALLOC_GPU(DEV_VAR(Xo%blc),(Xo%BLCrows(1):Xo%BLCrows(2),Xo%BLCcols(1):Xo%BLCcols(2),1))
-   call devxlib_memset_d(DEV_VAR(KERNEL%blc),cZERO)
-   call devxlib_memset_d(DEV_VAR(BUFFER%blc),cZERO)
+   YAMBO_ALLOC_GPU(DEV_VAR(KERNEL%blc),(KERNEL%BLCrows(1):KERNEL%BLCrows(2),KERNEL%BLCcols(1):KERNEL%BLCcols(2),1))
+   !AMBO_ALLOC_GPU(DEV_VAR(BUFFER%blc),(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
    call devxlib_memset_d(DEV_VAR(Xo%blc),cZERO)
+   call devxlib_memset_d(DEV_VAR(KERNEL%blc),cZERO)
+   !call devxlib_memset_d(DEV_VAR(BUFFER%blc),cZERO)
  endif
  !
  if (l_alda_fxc.and.Xo%kind=="SLK") then
@@ -175,7 +178,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    BUFFER%I   = iw_par
    KERNEL%blc = cZERO
    !
-   BUFFER_p => DEV_VAR(BUFFER%blc)
+   !BUFFER_p => DEV_VAR(BUFFER%blc)
    KERNEL_p => DEV_VAR(KERNEL%blc)
    Xo_p     => DEV_VAR(Xo%blc)
    if (compute_on_gpu) call devxlib_memset_d(KERNEL_p,cZERO)
@@ -232,25 +235,31 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    !
    ! X(g,gp)=Sum_gpp[KERNEL]^-1_(g,gpp)*Xo(gpp,gp)
    !
+   ! on input:  Xo irreducible polarizability
+   ! on output: Xo is overwritten
+   !
    if (X_use_lin_sys) then
      !
      ! Linear System
      !
-     if (compute_on_gpu) then
-       !call devxlib_memcpy_d2d(BUFFER_p(:,:,BUFFER%I), Xo_p(:,:,1))
-       call devxlib_memcpy_d2d(DEV_VAR(BUFFER%blc)(:,:,BUFFER%I), DEV_VAR(Xo%blc)(:,:,1))
-     else
-       BUFFER%blc(:,:,BUFFER%I) =  Xo%blc(:,:,1)
-     endif
+     !if (compute_on_gpu) then
+     !  call dev_memcpy(BUFFER%blc_d(:,:,BUFFER%I), Xo%blc_d(:,:,1))
+     !else
+     !                  BUFFER%blc(:,:,BUFFER%I) =  Xo%blc(:,:,1)
+     !endif
      !
-     call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=BUFFER)
+     !call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=BUFFER)
+     call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=Xo)
      !
    else
      !
      ! Matrix Inversion + Matmul
      !
+     if (compute_on_gpu) call error("[LA] inversion+matmul not available on GPUs")
+     !
      call LINEAR_ALGEBRA_driver(INV,M_slk=KERNEL)
      call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=KERNEL,B_slk=Xo,C_slk=BUFFER)
+     Xo%blc(:,:,1)=BUFFER%blc(:,:,BUFFER%I)
      !
    endif
    !
@@ -260,32 +269,34 @@ subroutine X_redux(iq,what,X_par,Xw,X)
      !
      if (compute_on_gpu) then
         !
-        !DEV_ACC_DEBUG data present(BUFFER_p,bare_qpg)
+        !DEV_ACC_DEBUG data present(Xo_p,bare_qpg)
         !DEV_ACC parallel loop collapse(2)
         !DEV_CUF kernel do(2)
-        !DEV_OMPGPU target map(present,alloc:BUFFER_p,bare_qpg)
+        !DEV_OMPGPU target map(present,alloc:Xo_p,bare_qpg)
         !DEV_OMPGPU teams loop collapse(2)
         do ig2=Xo_cols(1),Xo_cols(2)
         do ig1=Xo_rows(1),Xo_rows(2)
-           BUFFER_p(ig1,ig2,iw_par)=BUFFER_p(ig1,ig2,iw_par)*4._SP*pi/DEV_VAR(bare_qpg)(iq,ig1)/DEV_VAR(bare_qpg)(iq,ig2)
+           Xo_p(ig1,ig2,1)=Xo_p(ig1,ig2,1)*4._SP*pi/DEV_VAR(bare_qpg)(iq,ig1)/DEV_VAR(bare_qpg)(iq,ig2)
         enddo
         enddo
         !DEV_OMPGPU end target
         !DEV_ACC_DEBUG end data
         !
-        call devxlib_async_synchronize(async_default)
-        !call devxlib_memcpy_d2h(BUFFER%blc(:,:,BUFFER%I),BUFFER_p(:,:,BUFFER%I), async_d2h)
-        call devxlib_memcpy_d2h(BUFFER%blc(:,:,BUFFER%I),DEV_VAR(BUFFER%blc)(:,:,BUFFER%I), async_d2h)
+        !call devxlib_async_synchronize(async_default)
+        !call devxlib_memcpy_d2h(BUFFER%blc(:,:,BUFFER%I),DEV_VAR(BUFFER%blc)(:,:,BUFFER%I), async_d2h)
+        call devxlib_memcpy_d2h(BUFFER%blc(:,:,iw_par),DEV_VAR(Xo%blc)(:,:,1))
         !
      else
         !
         !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
         do ig2=Xo%cols(1),Xo%cols(2)
         do ig1=Xo%rows(1),Xo%rows(2)
-           BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+            Xo%blc(ig1,ig2,1)=Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
         enddo
         enddo
         !$omp end parallel do
+        !
+        BUFFER%blc(:,:,iw_par)=Xo%blc(:,:,1)
         !
      endif
      !
@@ -295,7 +306,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    !
  enddo
  !
- call devxlib_async_synchronize(async_d2h)
+ !call devxlib_async_synchronize(async_d2h)
  !
  if (PAR_n_freqs>0) call live_timing()
  !
@@ -400,7 +411,7 @@ end subroutine
        !
      else
        !
-       !DEV_OMP parallel do default(shared), private(ig1,ig2), collapse(2)
+       !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
        do ig2=Xo%cols(1),Xo%cols(2)
        do ig1=Xo%rows(1),Xo%rows(2)
           KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2

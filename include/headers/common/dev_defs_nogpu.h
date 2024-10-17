@@ -28,6 +28,7 @@
 
 #define DEV_ACC !!!!
 #define DEV_CUF !!!!
+#define DEV_OMPGPU !!!!
 
 #if defined _OPENMP
 #  define DEV_OMP $omp

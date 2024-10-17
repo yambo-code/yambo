@@ -50,12 +50,14 @@ integer function io_QP_and_GF(what,qp,ID)
  if (what=="G" ) type_two_DB=.TRUE.
  if (index(what,"QP_merged")>0.and.write_is_on(ID)) type_two_DB=.TRUE.
  if (index(what,"QP_expanded")>0.and.write_is_on(ID)) type_two_DB=.TRUE.
+ if (index(what,"QP_interpolated")>0.and.write_is_on(ID)) type_two_DB=.TRUE.
  !
  QP_type_DB=.FALSE.
  if (what=="QP") QP_type_DB=.TRUE.
  if (index(what,".QP")/=0) QP_type_DB=.TRUE.
  if (index(what,"QP_merged")>0.and.write_is_on(ID)) QP_type_DB=.TRUE.
  if (index(what,"QP_expanded")>0.and.write_is_on(ID)) QP_type_DB=.TRUE.
+ if (index(what,"QP_interpolated")>0.and.write_is_on(ID)) QP_type_DB=.TRUE.
  !
  if (type_two_DB) then
    io_QP_and_GF=io_connect(desc=what,type=2,ID=ID)

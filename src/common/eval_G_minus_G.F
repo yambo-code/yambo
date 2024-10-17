@@ -36,10 +36,10 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  integer :: ngx1,ngx2,ngx3, iv1_rlu(3)
  real(SP):: E_iG, E_iGo, E_max
  real(SP):: v1(3),v2(3)
+ real(SP), allocatable :: E_G_m_G(:,:),g_vec_rlu(:,:)
+ integer,  allocatable :: ig_vec_rlu(:,:), imap(:,:,:)
  integer,  allocatable :: G_m_G_maxval_tmp(:)
- real(SP), allocatable :: E_G_m_G(:,:),imap(:,:,:),g_vec_rlu(:,:)
- integer,  allocatable :: ig_vec_rlu(:,:)
- type(PP_indexes) :: PAR_IND_G
+ type(PP_indexes)  :: PAR_IND_G
  !
  integer, external :: G_index
  !
@@ -151,10 +151,15 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  YAMBO_ALLOC(G_m_G,(iG_,iGo_))
  G_m_G=0
+ !
  YAMBO_ALLOC(G_m_G_maxval_tmp,(iGo_))
  G_m_G_maxval_tmp=0
  G_m_G_maxval=0
  !
+!--------------------
+! Algorithmic logic:
+!--------------------
+!
 ! * convert to g_vec to integer coords
 !   relative/crystal coords
 ! * alloc alternative g_vec array
@@ -177,7 +182,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
 !   imap(g_vec_i(1,ig),g_vec_i(2,ig),g_vec_i(3,ig)) = ig
 ! enddo
 !
-! * v1 becomes an integert triplet
+! * v1 becomes an integer triplet
 ! * G_m_G(i1,i2) = imap(v1(1),v1(2),v1(3))
 !
 ! * beware index ordering  g_vec(ng,3)...
@@ -205,7 +210,6 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  do i1 = 1, size(g_vec,1)
    imap(ig_vec_rlu(i1,1),ig_vec_rlu(i1,2),ig_vec_rlu(i1,3)) = i1
  enddo
- ! 
  !$omp end parallel do 
  !
  !$omp parallel do default(shared), private(i2,i1,iv1_rlu), schedule(dynamic)
@@ -217,25 +221,32 @@ integer function eval_G_minus_G(iG,iGo,COMM)
    endif
    !
    do i1=1,iG_
+     !
      iv1_rlu(:)=ig_vec_rlu(i1,:)-ig_vec_rlu(i2,:)
      G_m_G(i1,i2)=imap(iv1_rlu(1),iv1_rlu(2),iv1_rlu(3))
-     G_m_G_maxval_tmp(i2)=max(G_m_G_maxval_tmp(i2),G_m_G(i1,i2))
+     !
    enddo
+   !
+   G_m_G_maxval_tmp(i2)=maxval(G_m_G(:,i2)) 
+   !
  enddo
  !$omp end parallel do
  !
+ if (present(COMM)) call PP_redux_wait(G_m_G_maxval_tmp,COMM=COMM%COMM)
  G_m_G_maxval=maxval(G_m_G_maxval_tmp)
- YAMBO_FREE(G_m_G_maxval_tmp)
  !
  if (present(COMM)) call PP_redux_wait(G_m_G,COMM=COMM%COMM)
  if (any(G_m_G(:,:)==0)) call error("[G-vec] unexpected invalid G_index in G_m_G")
  !
+ ! cleanup
+ !
  YAMBO_FREE(g_vec_rlu)
  YAMBO_FREE(ig_vec_rlu)
  YAMBO_FREE(imap)
+ YAMBO_FREE(G_m_G_maxval_tmp)
+ YAMBO_FREE(E_G_m_G)
  !
  call PP_indexes_reset(PAR_IND_G)
- YAMBO_FREE(E_G_m_G)
  !
 #ifdef _GPU
  YAMBO_FREE_GPU(DEV_VAR(G_m_G))
@@ -245,3 +256,4 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  call timing("eval_G_minus_G",opr="stop")
  !
 end function
+

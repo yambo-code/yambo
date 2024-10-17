@@ -45,7 +45,7 @@ subroutine X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
 &          X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)=X_par(iq_mem)%blc(:,:,iw)
    endif
    !
-   call PP_redux_wait(X_mat(:,:,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
+   call PP_redux_wait(X_mat(:,:,iw_X_mat),IN_PLACE=.true.,COMM=PAR_COM_X_WORLD%COMM)
    !
  enddo
  !

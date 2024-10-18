@@ -106,7 +106,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
        !
        WF_tmp=>WF_ik(:,:,ib:ib)
        !  
-       call WF_shift_kpoint_gpu((/ib,ib/),ikbz,i_sp_pol,WF_shifts(ikbz,:),Xk,WF_symm,WF_tmp)
+       call WF_shift_kpoint_gpu((/ib,ib/),1,ikbz,i_sp_pol,WF_shifts(ikbz,:),Xk,WF_symm,WF_tmp)
        !
        nullify(WF_tmp)
        !
@@ -149,8 +149,10 @@ subroutine DIPOLE_overlaps(Xk,Dip)
          !
          do ibp=1,Dip%ib(2) 
            if(.not.PAR_IND_CON_BANDS_OVLP%element_1D(ibp)) cycle
+           !
            call WF_symm_kpoint_gpu((/ibp,ibp/),ikbzp,i_sp_pol,Xk,WF_symm)
-           call WF_shift_kpoint_gpu((/ibp,ibp/),ikbzp,i_sp_pol,shift,Xk,WF_symm,WF_ikp)
+           call WF_shift_kpoint_gpu((/ibp,ibp/),1,ikbzp,i_sp_pol,shift,Xk,WF_symm,WF_ikp)
+           !
            do ib=1,Dip%ib(2)
              if(.not.PAR_IND_VAL_BANDS_OVLP%element_1D(ib)) cycle
              DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)= &

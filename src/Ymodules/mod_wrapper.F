@@ -81,7 +81,7 @@ module wrapper
    module procedure :: Vstar_dot_VV_c1_gpu
  end interface
  interface V_dot_V_gpu
-     module procedure :: V_dot_V_r1_cpu,V_dot_V_r2_cpu,V_dot_V_c1_cpu,V_dot_V_c2_cpu
+     module procedure :: V_dot_V_r1_gpu,V_dot_V_r2_gpu,V_dot_V_c1_gpu,V_dot_V_c2_gpu
  end interface
  interface V_dot_VV_gpu
    module procedure :: V_dot_VV_c1_gpu

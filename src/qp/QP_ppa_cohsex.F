@@ -50,7 +50,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use R_lattice,     ONLY:qindx_S,bz_samp,DEV_VAR(G_m_G),G_m_G_maxval,nqibz,RIM_W_E,&
 &                        RIM_W_is_diagonal,RIM_W_ng,DEV_VAR(RIM_W)
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
- use wrapper,       ONLY:M_by_V,V_dot_V_gpu
+ use wrapper,       ONLY:V_dot_V_gpu,devxlib_xGEMV_gpu
  use interfaces,    ONLY:QP_state_print,WF_load,WF_free,MATRIX_transpose
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
  use timing_m,      ONLY:timing
@@ -766,8 +766,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
        else if (l_sc_sex.or.l_cohsex.or.(l_sc_coh.and.COHSEX_use_empties)) then
          !
-         call M_by_V('N',X_nrows,X_ncols, cONE, X_blc_p(:,:,X_range1),X_nrows,&
-&                        conjg_iscp_rhotw(X_cols1:X_cols2),1,cZERO,local_rhotw(X_rows1:X_rows2),1)
+         call devxlib_xGEMV_gpu ('N',X_nrows,X_ncols, cONE, DEV_VAR(X_par(iq_mem)%blc)(:,:,X_range1),X_nrows,&
+&                                conjg_iscp_rhotw(X_cols1:X_cols2),1,cZERO,local_rhotw(X_rows1:X_rows2),1)
          !
          pre_factor=V_dot_V_gpu(X_nrows,DEV_VAR(isc%rhotw)(X_rows1:X_rows2),local_rhotw(X_rows1:X_rows2))
 

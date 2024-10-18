@@ -82,29 +82,23 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  !
  ! ordinary implementation
  !
-#ifdef _CUDA_LOC
- !$cuf kernel do(1) <<<*,*>>>
-#else
- !$omp parallel default(shared), private(ir)
- !$omp do
-#endif
+ !DEV_OMP parallel default(shared), private(ir)
+ !
+ !DEV_CUF kernel do(1) <<<*,*>>>
+ !DEV_OMP do
  do ir = 1, fft_size
    rho_tw_rs_p(ir) = cmplx(conjg(WF_symm_i_p(ir,1))*WF_symm_o_p(ir,1),kind=DP)
  enddo
  !
  if (n_spinor==2) then
-#ifdef _CUDA_LOC
-   !$cuf kernel do(1) <<<*,*>>>
-#else
-   !$omp do
-#endif
+   !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_OMP do
    do ir = 1, fft_size
      rho_tw_rs_p(ir) = rho_tw_rs_p(ir)+cmplx(conjg(WF_symm_i_p(ir,2))*WF_symm_o_p(ir,2),kind=DP)
    enddo
  endif
-#if !defined _CUDA_LOC
- !$omp end parallel
-#endif
+ !
+ !DEV_OMP end parallel
  !
 #endif
  !
@@ -162,22 +156,16 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  !
  if (qs==idt_index) then 
    !
-#ifdef _CUDA_LOC
-   !$cuf kernel do(1) <<<*,*>>>
-#else
-   !$omp parallel do default(shared), private(ig)
-#endif
+   !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_OMP parallel do default(shared), private(ig)
    do ig = 1, isc_ngrho
      rhotw_p(ig)= cmplx(rho_tw_rs_p(DEV_VAR(fft_g_table)(ig,iGo)),kind=SP)
    enddo
    !
  else
    !
-#ifdef _CUDA_LOC
-   !$cuf kernel do(1) <<<*,*>>>
-#else
-   !$omp parallel do default(shared), private(ig)
-#endif
+   !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_OMP parallel do default(shared), private(ig)
    do ig = 1, isc_ngrho
      rhotw_p(ig)= cmplx(rho_tw_rs_p(DEV_VAR(fft_g_table)(DEV_VAR(g_rot)(ig,qs),iGo)),kind=SP)
    enddo

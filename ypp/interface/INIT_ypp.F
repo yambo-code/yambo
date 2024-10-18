@@ -55,7 +55,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use YPP_real_time,  ONLY:l_FL_bands
 #endif
 #if defined _YPP_ELPH
- use YPP_ELPH
+ use YPP_ELPH,       ONLY:l_phonons,l_atomic_amplitude,l_eliashberg,l_gkkp,l_gkkp_db,l_gkkp_dg,l_gkkp_plot,&
+&                         l_ph_ass_dos,l_phonons
 #endif
 #if defined _YAML_OUTPUT
  use pars,           ONLY:logfile_index,repfile_index

@@ -213,12 +213,10 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  ! OpenMP setup
  !==============
  !
-#if !defined _CUDA
- !$omp parallel num_threads(n_out_threads) default(shared), &
- !$omp &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,ig_col,&
- !$omp &        ig1,ig_row_transp,iw,mutexid,&
- !$omp &        X_rows1_l,X_rows2_l,X_nrows_l,X_cols_transp)
-#endif
+ !DEV_OMP parallel num_threads(n_out_threads) default(shared), &
+ !DEV_OMP &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,ig_col,&
+ !DEV_OMP &        ig1,ig_row_transp,iw,mutexid,&
+ !DEV_OMP &        X_rows1_l,X_rows2_l,X_nrows_l,X_cols_transp)
  !
  call OPENMP_update(master_thread)
  !
@@ -267,9 +265,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  ! MAIN LOOP
  !===========
  !
-#if !defined _CUDA
- !$omp do
-#endif
+!DEV_OMP do
  do i_cg = 1,coarse_grid_N
    !
    i_bg=sum(bare_grid_N(1:i_cg-1))+1
@@ -426,9 +422,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
    !
  enddo 
  !
-#if !defined _CUDA
- !$omp end do
-#endif
+!DEV_OMP end do
  !
  ! CLEAN
  !=======
@@ -437,9 +431,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  YAMBO_FREE(rhotw_save_d)
  call elemental_collision_free(Xo_scatt)
  !
-#if !defined _CUDA
-!$omp end parallel
-#endif
+!DEV_OMP end parallel
  !
  if (iq==1.and.io_DIP) then
    call DIP_alloc('DIP_iR')

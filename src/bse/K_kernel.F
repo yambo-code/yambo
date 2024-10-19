@@ -36,7 +36,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
 &                        l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
 &                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val,l_BS_magnons,&
 &                        O1,O2,O_times_W
- use BS_interfaces, ONLY:K_exchange_kernel_resonant,K_exchange_kernel_coupling
  use collision_el,  ONLY:elemental_collision_free
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
@@ -90,6 +89,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  complex(SP),   external ::K_correlation_kernel_std,K_correlation_kernel_dir
  complex(SP),   external ::TDDFT_ALDA_eh_space_G_kernel
+ complex(SP),   external ::K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
  logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_bs_tddft_wf_in_loop,l_matrix_init,&
  &             l_load_kernel,l_write_kernel,l_skip_phases,l_std_alg,l_dir_alg,l_tddft_gsum,l_tddft_rsum

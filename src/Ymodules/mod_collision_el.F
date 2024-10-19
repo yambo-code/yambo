@@ -168,9 +168,11 @@ module collision_el
        if (present(GAMP_NG)) call error("[COLL] GAMP_NG should not be present")
        YAMBO_ALLOC(ggw%gamp,(GAMP_ROWS(1):GAMP_ROWS(2),GAMP_COLS(1):GAMP_COLS(2)))
      endif
+#ifdef _GPU
      if (have_gpu.and.allocated(ggw%gamp).and..not.CPU_ONLY_) then
        YAMBO_ALLOC_GPU_MOLD(DEV_VAR(ggw%gamp),ggw%gamp)
      endif
+#endif
      if (allocated(ggw%gamp)) then
        ggw%gamp_rows(1)=lbound(ggw%gamp,1)
        ggw%gamp_rows(2)=ubound(ggw%gamp,1)

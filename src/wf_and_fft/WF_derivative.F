@@ -25,7 +25,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,derivative_sppol,do_der
  use SC,             ONLY:SC_bands,found_SC_DB
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  ! Input variables
  integer,intent(in) :: derivative_bands(2)
  integer,intent(in) :: derivative_kpt(2)

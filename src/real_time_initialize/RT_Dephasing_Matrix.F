@@ -16,7 +16,7 @@ subroutine RT_Dephasing_Matrix(E)
 &                        RAD_LifeTime,RT_bands,RT_INPUT_Deph_limits,RT_deph_cv_only, &
 &                        RT_deph_deg_thresh
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels), intent(in) :: E
  !

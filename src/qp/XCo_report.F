@@ -19,7 +19,7 @@ subroutine XCo_report(qp,E,k)
  use stderr,        ONLY:intc,real2ch
  use xc_functionals,ONLY:E_xc_val
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(QP_t)    ::qp
  type(levels)  ::E

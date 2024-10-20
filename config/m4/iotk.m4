@@ -6,7 +6,7 @@
 # Authors (see AUTHORS file for details): AF, DS
 #
 AC_DEFUN([AC_HAVE_IOTK],[
-
+#
 AC_ARG_ENABLE(iotk, AS_HELP_STRING([--enable-iotk],[Activate the IOTK support]),[],[enable_iotk="yes"])
 AC_ARG_WITH(iotk_libs, AS_HELP_STRING([--with-iotk-libs=<libs>],[Use the IOTK library in <libs>],[32]),[],[])
 AC_ARG_WITH(iotk_path, AS_HELP_STRING([--with-iotk-path=<path>],[Path to the IOTK install directory],[32]),[],[])
@@ -49,13 +49,15 @@ if test "x$enable_iotk" = "xyes" ; then
       compile_p2y="yes"
       compile_iotk="no"
       IOTK_INCS="$IFLAG$try_iotk_incdir_src"
-      IOTK_LIBS="$try_iotk_libdir_src/libiotk.a"
+      #IOTK_LIBS="$try_iotk_libdir_src/libiotk.a"
+      IOTK_LIBS="-L$try_iotk_libdir_src/ -liotk"
       AC_MSG_RESULT([yes])
     elif test -r $try_iotk_libdir/libiotk.a  && test -e $try_iotk_incdir/iotk_module.mod ; then
       compile_p2y="yes"
       compile_iotk="no"
       IOTK_INCS="$IFLAG$try_iotk_incdir"
-      IOTK_LIBS="$try_iotk_libdir/libiotk.a"
+      #IOTK_LIBS="$try_iotk_libdir/libiotk.a"
+      IOTK_LIBS="-L$try_iotk_libdir/ -liotk"
       AC_MSG_RESULT([yes])
     else
       AC_MSG_RESULT([no. Fallback to internal library.])
@@ -79,7 +81,8 @@ if test "x$enable_iotk" = "xyes" ; then
     internal_iotk="yes"
     compile_p2y="yes"
     IOTK_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include/"
-    IOTK_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libiotk.a"
+    #IOTK_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libiotk.a"
+    IOTK_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -liotk"
     if ! test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libiotk.a" || ! test -e "${extlibs_path}/${FCKIND}/${FC}/include/iotk_base.mod" || ! test -e "${extlibs_path}/${FCKIND}/${FC}/include/iotk_specials.h"; then
       compile_iotk="yes"
       if test ! -d lib ; then mkdir lib ; fi

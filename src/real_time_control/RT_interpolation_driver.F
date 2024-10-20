@@ -16,7 +16,7 @@ subroutine RT_interpolation_driver(bands,E,K,what,Time,l_f,l_E,l_W,l_B,NN,VERB)
  use com,            ONLY:msg
  use interpolate,    ONLY:l_integral_respect,NN_n_of_nearest
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,       intent(in)    :: bands(2),NN
  type(levels),  intent(inout) :: E

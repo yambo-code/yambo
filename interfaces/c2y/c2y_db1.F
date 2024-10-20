@@ -21,7 +21,7 @@ subroutine c2y_db1(en,k,file_name_)
  use xc_functionals,        ONLY: XC_EXCHANGE_CORRELATION,XC_LDA_C_PW
  use mod_com2y,             ONLY: print_interface_dimensions,symmetries_check_and_load,&
 &                                 alat_mult_factor
-#include<memory.h>
+#include<y_memory.h>
  character(*)                   :: file_name_
  type(levels),     intent(out)  :: en
  type(bz_samp),    intent(out)  :: k  

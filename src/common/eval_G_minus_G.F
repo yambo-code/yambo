@@ -5,6 +5,8 @@
 !
 ! Authors (see AUTHORS file for details): AMAFDS
 !
+#include<dev_defs.h>
+!
 integer function eval_G_minus_G(iG,iGo,COMM)
  !
  ! Evaluates the  G-G' table :
@@ -16,14 +18,13 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  use pars,         ONLY:SP
  use vec_operate,  ONLY:iku_v_norm, c2a
- use parallel_m,   ONLY:yMPI_comm,PP_indexes,PP_indexes_reset,ncpu,myid
+ use parallel_m,   ONLY:yMPI_comm,PP_indexes,PP_indexes_reset,myid
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index,PARALLEL_live_message
- use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,E_of_shell,G_m_G_maxval
-#ifdef _CUDA
- use R_lattice,    ONLY:G_m_G_d
-#endif
+ use R_lattice,    ONLY:G_m_G,DEV_VAR(G_m_G),G_m_G_maxval,g_vec,ng_in_shell,n_g_shells,E_of_shell
+ use gpu_m,        ONLY:have_gpu
  use timing_m,     ONLY:timing
-#include<memory.h>
+ !
+#include<y_memory.h>
  !
  integer :: iG,iGo
  type(yMPI_comm), optional :: COMM
@@ -38,7 +39,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  real(SP), allocatable :: E_G_m_G(:,:),g_vec_rlu(:,:)
  integer,  allocatable :: ig_vec_rlu(:,:), imap(:,:,:)
  integer,  allocatable :: G_m_G_maxval_tmp(:)
- type(PP_indexes) :: PAR_IND_G
+ type(PP_indexes)  :: PAR_IND_G
  !
  integer, external :: G_index
  !
@@ -55,6 +56,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
      eval_G_minus_G=size(G_m_G,1)
      return
    else
+     YAMBO_FREE_GPU(DEV_VAR(G_m_G))
      YAMBO_FREE(G_m_G)
    endif
  endif
@@ -246,11 +248,12 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  call PP_indexes_reset(PAR_IND_G)
  !
-#ifdef _CUDA
- YAMBO_FREE(G_m_G_d)
- YAMBO_ALLOC_SOURCE(G_m_G_d,G_m_G)
+#ifdef _GPU
+ YAMBO_FREE_GPU(DEV_VAR(G_m_G))
+ YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(G_m_G),G_m_G)
 #endif
  !
  call timing("eval_G_minus_G",opr="stop")
  !
 end function
+

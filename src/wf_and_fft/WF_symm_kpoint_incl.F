@@ -8,13 +8,12 @@
 
 !
 !====================
-! WF_symm_kpoint_cpu
+! WF_symm_kpoint
 !====================
 !
-#include<dev_defs_nocuda.h>
-#undef _CUDA_LOC
+#include<dev_defs_nogpu.h>
+#undef _GPU_LOC
 #include"WF_symm_kpoint.F"
-!
 #include<dev_undefs.h>
 
 !
@@ -22,11 +21,18 @@
 ! WF_symm_kpoint_gpu
 !====================
 !
-#if defined _CUDA
-
-#include<dev_defs.h>
-#define _CUDA_LOC
-#include"WF_symm_kpoint.F"
-
+! This includes a host-fallback when GPUs are not
+! available
+!
+#if defined _GPU
+#  include<dev_defs.h>
+#  define _GPU_LOC
+#  include"WF_symm_kpoint.F"
+#else
+#  include<dev_defs_nogpu.h>
+#  undef _GPU_LOC
+#  define DEV_SUB(x)        CAT(x,_gpu)
+#  include"WF_symm_kpoint.F"
+#  include<dev_undefs.h>
 #endif
 

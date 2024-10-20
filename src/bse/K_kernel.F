@@ -18,7 +18,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G,TDDFT_ALDA_eh_space_R_kernel
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
  use R_lattice,     ONLY:qindx_X,bz_samp,&
-&                        qindx_B,qindx_B_max,qindx_B_load,RIM_W,&
+&                        qindx_B,qindx_B_max,qindx_B_load,RIM_W,RIM_W_d,&
 &                        RIM_ng,RIM_W_is_diagonal,RIM_W_ng
  use com,           ONLY:msg
  use stderr,        ONLY:intc
@@ -34,7 +34,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
 &                        WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                        BS_nT_grps,BS_blks_free,l_BS_ares_from_res,&
 &                        l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
-&                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val,l_BS_magnons
+&                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val,l_BS_magnons,&
+&                        O1,O2,O_times_W
  use collision_el,  ONLY:elemental_collision_free
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
@@ -51,7 +52,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use PHOTOLUM,      ONLY:BSS_PL_free
  use parser_m,      ONLY:parser
  !
-#include<memory.h>
+#include<dev_defs.h>
+#include<y_memory.h>
  !
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q
@@ -229,7 +231,17 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    call BSS_MAGN_free( )
    call BSS_PL_free( )
    !
+   YAMBO_FREE_GPU(BS_W)
    YAMBO_FREE(BS_W)
+   !
+   YAMBO_FREE_GPU(O1)
+   YAMBO_FREE_GPU(O2)
+   YAMBO_FREE_GPU(O_times_W)
+   YAMBO_FREE(O1)
+   YAMBO_FREE(O2)
+   YAMBO_FREE(O_times_W)
+   !
+   YAMBO_FREE_GPU(DEV_VAR(RIM_W))
    YAMBO_FREE(RIM_W)
    !
    return
@@ -519,17 +531,17 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Transition Loops
    !------------------
    !
-#if defined _OPENMP && ! defined _CUDA
-   !$omp parallel default(shared), &
-   !$omp private(i_Tk,i_Tp, &
-   !$omp &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol_c,i_k_sp_pol_v,i_k_s,is_k,os_k,i_k_s_m1,H_pos, &
-   !$omp &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol_c,i_p_sp_pol_v,i_p_s,is_p,os_p,i_kp_s, &
-   !$omp &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
-   !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t,ig_W_final, &
-   !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c, &
-   !$omp &       i_p_bz_last,i_k_bz_last,i_pmq_bz_last,i_kmq_bz_last, &
-   !$omp &       iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last, &
-   !$omp &       i_k_bz_mem,i_kmq_bz_mem,qindx_tmp,BS_mat_tmp,tddft_wf )
+#if defined _OPENMP
+   !DEV_OMP parallel default(shared), &
+   !DEV_OMP private(i_Tk,i_Tp, &
+   !DEV_OMP &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol_c,i_k_sp_pol_v,i_k_s,is_k,os_k,i_k_s_m1,H_pos, &
+   !DEV_OMP &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol_c,i_p_sp_pol_v,i_p_s,is_p,os_p,i_kp_s, &
+   !DEV_OMP &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
+   !DEV_OMP &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t,ig_W_final, &
+   !DEV_OMP &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c, &
+   !DEV_OMP &       i_p_bz_last,i_k_bz_last,i_pmq_bz_last,i_kmq_bz_last, &
+   !DEV_OMP &       iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last, &
+   !DEV_OMP &       i_k_bz_mem,i_kmq_bz_mem,qindx_tmp,BS_mat_tmp,tddft_wf )
 #endif
    !
    call OPENMP_update(master_thread)   
@@ -537,8 +549,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    i_p_bz_last=0   ; i_k_bz_last=0
    i_pmq_bz_last=0 ; i_kmq_bz_last=0
    !
-#if defined _OPENMP && ! defined _CUDA
-   !$omp do collapse(2), schedule(dynamic)
+#if defined _OPENMP
+   !DEV_OMP do collapse(2), schedule(dynamic)
 #endif
    do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
      do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
@@ -586,11 +598,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
            i_p_bz_last=i_p_bz 
            i_k_bz_last=i_k_bz 
            if (i_k_bz_mem==0) then 
-             !$omp critical 
+             !DEV_OMP critical 
              qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID_frag) 
              iq_W_bz=qindx_tmp(1) 
              ig_W   =qindx_tmp(2) 
-             !$omp end critical 
+             !DEV_OMP end critical 
            else 
              iq_W_bz=qindx_B(i_p_bz,i_k_bz_mem,1) 
              ig_W   =qindx_B(i_p_bz,i_k_bz_mem,2) 
@@ -625,11 +637,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
            i_pmq_bz_last=i_pmq_bz 
            i_kmq_bz_last=i_kmq_bz 
            if (i_kmq_bz_mem==0) then 
-             !$omp critical 
+             !DEV_OMP critical 
              qindx_tmp=qindx_B_load(i_pmq_bz,i_kmq_bz,qindx_ID_frag) 
              iq_W_bz_mq=qindx_tmp(1) 
              ig_W_mq   =qindx_tmp(2) 
-             !$omp end critical 
+             !DEV_OMP end critical 
            else 
              iq_W_bz_mq=qindx_B(i_pmq_bz,i_kmq_bz_mem,1) 
              ig_W_mq   =qindx_B(i_pmq_bz,i_kmq_bz_mem,2) 
@@ -765,9 +777,9 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        !
      enddo   ! i_Tk
    enddo     ! i_Tp
-#if defined _OPENMP && ! defined _CUDA
-   !$omp end do
-   !$omp end parallel
+#if defined _OPENMP
+   !DEV_OMP end do
+   !DEV_OMP end parallel
 #endif
    !
    call timing('X T_space Kernel sum',OPR='stop')
@@ -835,7 +847,17 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      YAMBO_FREE(WF_phase)
    endif
    qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
+   YAMBO_FREE_GPU(BS_W)
    YAMBO_FREE(BS_W)
+   !
+   YAMBO_FREE_GPU(O1)
+   YAMBO_FREE_GPU(O2)
+   YAMBO_FREE_GPU(O_times_W)
+   YAMBO_FREE(O1)
+   YAMBO_FREE(O2)
+   YAMBO_FREE(O_times_W)
+   !
+   YAMBO_FREE_GPU(DEV_VAR(RIM_W)) 
    YAMBO_FREE(RIM_W)
  endif
  !

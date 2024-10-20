@@ -275,9 +275,9 @@ subroutine X_redux(iq,what,X_par,Xw,X)
         !DEV_OMPGPU target map(present,alloc:Xo_p,bare_qpg)
         !DEV_OMPGPU teams loop collapse(2)
         do ig2=Xo_cols(1),Xo_cols(2)
-        do ig1=Xo_rows(1),Xo_rows(2)
-           Xo_p(ig1,ig2,1)=Xo_p(ig1,ig2,1)*4._SP*pi/DEV_VAR(bare_qpg)(iq,ig1)/DEV_VAR(bare_qpg)(iq,ig2)
-        enddo
+          do ig1=Xo_rows(1),Xo_rows(2)
+            Xo_p(ig1,ig2,1)=Xo_p(ig1,ig2,1)*4._SP*pi/DEV_VAR(bare_qpg)(iq,ig1)/DEV_VAR(bare_qpg)(iq,ig2)
+          enddo
         enddo
         !DEV_OMPGPU end target
         !DEV_ACC_DEBUG end data
@@ -290,9 +290,9 @@ subroutine X_redux(iq,what,X_par,Xw,X)
         !
         !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
         do ig2=Xo%cols(1),Xo%cols(2)
-        do ig1=Xo%rows(1),Xo%rows(2)
+          do ig1=Xo%rows(1),Xo%rows(2)
             Xo%blc(ig1,ig2,1)=Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
-        enddo
+          enddo
         enddo
         !$omp end parallel do
         !
@@ -401,10 +401,10 @@ end subroutine
        !DEV_OMPGPU target map(present,alloc:KERNEL_p,Xo_p,bare_qpg)
        !DEV_OMPGPU teams loop collapse(2)
        do ig2=Xo_cols(1),Xo_cols(2)
-       do ig1=Xo_rows(1),Xo_rows(2)
-          KERNEL_p(ig1,ig2,1) =KERNEL_p(ig1,ig2,1)-Xo_p(ig1,ig2,1)*4._SP*pi/DEV_VAR(bare_qpg)(iq,ig2)**2
-          if (ig1==ig2) KERNEL_p(ig1,ig1,1)=KERNEL_p(ig1,ig1,1)+cONE
-       enddo
+         do ig1=Xo_rows(1),Xo_rows(2)
+           KERNEL_p(ig1,ig2,1) =KERNEL_p(ig1,ig2,1)-Xo_p(ig1,ig2,1)*4._SP*pi/DEV_VAR(bare_qpg)(iq,ig2)**2
+           if (ig1==ig2) KERNEL_p(ig1,ig1,1)=KERNEL_p(ig1,ig1,1)+cONE
+         enddo
        enddo
        !DEV_OMPGPU end target
        !DEV_ACC_DEBUG end data
@@ -413,10 +413,10 @@ end subroutine
        !
        !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
        do ig2=Xo%cols(1),Xo%cols(2)
-       do ig1=Xo%rows(1),Xo%rows(2)
-          KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
-          if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
-       enddo
+         do ig1=Xo%rows(1),Xo%rows(2)
+           KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
+           if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
+         enddo
        enddo
        !
      endif

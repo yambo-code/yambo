@@ -4,5 +4,6 @@
  MATRIX_init.o
  MATRIX_transfer.o
  MATRIX_transfer_side_crop.o
+ MATRIX_transpose.o
  SLK_matrix_init.o
 

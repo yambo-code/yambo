@@ -55,8 +55,15 @@ module interfaces
      use matrix,         ONLY:PAR_matrix
      character(*)               :: operation
      type(PAR_matrix), optional :: M_in
-     type(PAR_matrix)           :: M_out
      integer         , optional :: INDEX_in
+     type(PAR_matrix)           :: M_out
+   end subroutine
+   !
+   subroutine MATRIX_transpose( operation, M_in, M_out )
+     use matrix,         ONLY:PAR_matrix,MATRIX_reset
+     character(*)               :: operation
+     type(PAR_matrix), optional :: M_in
+     type(PAR_matrix)           :: M_out
    end subroutine
    !
    subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV, COMM, COMM_name)
@@ -192,7 +199,7 @@ module interfaces
    integer function eval_G_minus_G(iG,iGo,force_recompute,COMM)
      use parallel_m,      ONLY:yMPI_comm
      integer :: iG,iGo
-     logical,        optional :: force_recompute
+     logical,         optional :: force_recompute
      type(yMPI_comm), optional :: COMM
    end function
    !
@@ -361,15 +368,15 @@ module interfaces
      type(tddft_wf_t), target, intent(inout) :: tddft_wf
    end function TDDFT_ALDA_eh_space_R_kernel
    !
-   subroutine WF_shift_kpoint_gpu(b_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k_out)
+   subroutine WF_shift_kpoint_gpu(b_to_shift,nb_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k_out)
      use pars,          ONLY:SP
      use electrons,     ONLY:n_spinor
      use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
      use R_lattice,     ONLY:bz_samp
-     integer,       intent(in) :: wf_shift(3),ikbz,i_sp_pol,b_to_shift(2)
+     integer,       intent(in) :: wf_shift(3),ikbz,i_sp_pol,b_to_shift(2),nb_to_shift
      type(bz_samp), intent(in) :: Xk
-     complex(SP),   intent(in)  DEV_ATTR :: WF_k_in (wf_ng_1st_BZ,n_spinor,b_to_shift(2))
-     complex(SP),   intent(out) DEV_ATTR :: WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(2))
+     complex(SP),   intent(in)  DEV_ATTR :: WF_k_in (wf_ng_1st_BZ,n_spinor,nb_to_shift)
+     complex(SP),   intent(out) DEV_ATTR :: WF_k_out(wf_ng_overlaps,n_spinor,nb_to_shift)
    end subroutine WF_shift_kpoint_gpu
    !
    subroutine WF_symm_kpoint(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
@@ -379,7 +386,7 @@ module interfaces
      use electrons,     ONLY:n_spinor
      integer,       intent(in)  :: ikbz,i_sp_pol,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
-     complex(SP),   intent(out) :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(2))
+     complex(SP),   intent(out) :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(2)-b_to_load(1)+1)
    end subroutine WF_symm_kpoint
    !
    subroutine WF_symm_kpoint_gpu(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
@@ -389,7 +396,7 @@ module interfaces
      use electrons,     ONLY:n_spinor
      integer,       intent(in)  :: ikbz,i_sp_pol,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
-     complex(SP),   intent(out) DEV_ATTR :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(2))
+     complex(SP),   intent(out) DEV_ATTR :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(2)-b_to_load(1)+1)
    end subroutine WF_symm_kpoint_gpu
    !
    subroutine WF_apply_symm(isc,WF_symm)

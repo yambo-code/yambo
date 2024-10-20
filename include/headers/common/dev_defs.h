@@ -6,7 +6,6 @@
   Authors (see AUTHORS file for details): AF
 */
 
-
 #ifdef __STDC__
 #  define CAT(a,b) a##b 
 #else

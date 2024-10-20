@@ -37,6 +37,10 @@ module collision_el
    !
    complex(SP), allocatable :: gamp(:,:)
    complex(SP), allocatable :: rhotw(:)
+   integer :: gamp_nrows
+   integer :: gamp_ncols
+   integer :: gamp_rows(2)
+   integer :: gamp_cols(2)
    !
    ! scatter bamp workspace
    !
@@ -99,33 +103,45 @@ module collision_el
      !
    end subroutine
    !
-   subroutine elemental_collision_alloc(ggw,NG,NG_GAMP,GRADIENT,TITLE)
+   subroutine elemental_collision_alloc(ggw,NG,GAMP_NG,GAMP_ROWS,GAMP_COLS,&
+&                                       CPU_ONLY,GRADIENT,TITLE)
      use electrons,      ONLY:n_spinor
      use FFT_m,          ONLY:fft_size
      type(elemental_collision), target ::ggw
      integer,         OPTIONAL :: NG
-     integer,         OPTIONAL :: NG_GAMP(2)
+     integer,         OPTIONAL :: GAMP_NG(2)
+     integer,         OPTIONAL :: GAMP_ROWS(2)
+     integer,         OPTIONAL :: GAMP_COLS(2)
+     logical,         OPTIONAL :: CPU_ONLY
      logical,         OPTIONAL :: GRADIENT
      character(*),    OPTIONAL :: TITLE
      !
      integer :: RHOSIZE
+     logical :: CPU_ONLY_
      !
      if (present(TITLE)) then
        ggw%name=TITLE
      endif
      !
+     CPU_ONLY_=.false.
+     if (present(CPU_ONLY)) CPU_ONLY_=CPU_ONLY
+     !
+     ! workspace
+     !
      !DEV_ACC enter data copyin(ggw)
-     if (fft_size>0) then
+     if (fft_size>0.and..not.allocated(ggw%rho_tw_rs)) then
        YAMBO_ALLOC(ggw%rho_tw_rs,(fft_size))
        YAMBO_ALLOC(ggw%WF_symm_i,(fft_size,n_spinor))
        YAMBO_ALLOC(ggw%WF_symm_o,(fft_size,n_spinor))
        !
-       if (have_gpu) then
+       if (have_gpu.and..not.CPU_ONLY_) then
          YAMBO_ALLOC_GPU(DEV_VAR(ggw%rho_tw_rs),(fft_size))
          YAMBO_ALLOC_GPU(DEV_VAR(ggw%WF_symm_i),(fft_size,n_spinor))
          YAMBO_ALLOC_GPU(DEV_VAR(ggw%WF_symm_o),(fft_size,n_spinor))
        endif
      endif
+     !
+     ! rhotw
      !
      if (present(NG)) then
        if (NG>0) then
@@ -133,20 +149,37 @@ module collision_el
          if (     present(GRADIENT)) RHOSIZE=3*NG
          if (.not.present(GRADIENT)) RHOSIZE=1*NG
          YAMBO_ALLOC(ggw%rhotw,(RHOSIZE))
-         if (have_gpu) then
+         if (have_gpu.and..not.CPU_ONLY_) then
            YAMBO_ALLOC_GPU(DEV_VAR(ggw%rhotw),(RHOSIZE))
          endif
          !
        endif
        ggw%ngrho=NG
      endif
-     if (present(NG_GAMP)) then
-       if (all((/NG_GAMP>0/))) then
-         YAMBO_ALLOC(ggw%gamp,(NG_GAMP(1),NG_GAMP(2)))
-         if (have_gpu) then
-           YAMBO_ALLOC_GPU(DEV_VAR(ggw%gamp),(NG_GAMP(1),NG_GAMP(2)))
-         endif
+     !
+     ! GAMP
+     !
+     if (present(GAMP_NG)) then
+       if (all((/GAMP_NG>0/))) then
+         YAMBO_ALLOC(ggw%gamp,(GAMP_NG(1),GAMP_NG(2)))
        endif
+     endif
+     if (present(GAMP_ROWS).and.present(GAMP_COLS)) then
+       if (present(GAMP_NG)) call error("[COLL] GAMP_NG should not be present")
+       YAMBO_ALLOC(ggw%gamp,(GAMP_ROWS(1):GAMP_ROWS(2),GAMP_COLS(1):GAMP_COLS(2)))
+     endif
+#ifdef _GPU
+     if (have_gpu.and.allocated(ggw%gamp).and..not.CPU_ONLY_) then
+       YAMBO_ALLOC_GPU_MOLD(DEV_VAR(ggw%gamp),ggw%gamp)
+     endif
+#endif
+     if (allocated(ggw%gamp)) then
+       ggw%gamp_rows(1)=lbound(ggw%gamp,1)
+       ggw%gamp_rows(2)=ubound(ggw%gamp,1)
+       ggw%gamp_cols(1)=lbound(ggw%gamp,2)
+       ggw%gamp_cols(2)=ubound(ggw%gamp,2)
+       ggw%gamp_nrows=ggw%gamp_rows(2)-ggw%gamp_rows(1)+1
+       ggw%gamp_ncols=ggw%gamp_cols(2)-ggw%gamp_cols(1)+1
      endif
      !
    end subroutine

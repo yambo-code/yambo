@@ -7,7 +7,7 @@
 !
 #include<dev_defs.h>
 !
-subroutine WF_shift_kpoint_gpu(b_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k_out)
+subroutine WF_shift_kpoint_gpu(b_to_shift,nb_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k_out)
  !
  use pars,          ONLY: SP,cZERO
  use electrons,     ONLY: n_spinor,n_sp_pol
@@ -19,10 +19,10 @@ subroutine WF_shift_kpoint_gpu(b_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k
  !
 #include<y_memory.h>
  !
- integer,       intent(in) :: wf_shift(3),ikbz,i_sp_pol,b_to_shift(2)
+ integer,       intent(in) :: wf_shift(3),ikbz,i_sp_pol,b_to_shift(2),nb_to_shift
  type(bz_samp), intent(in) :: Xk
- complex(SP), intent(in)  DEV_ATTR :: WF_k_in (wf_ng_1st_BZ,  n_spinor,b_to_shift(2))
- complex(SP), intent(out) DEV_ATTR :: WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(2))
+ complex(SP), intent(in)  DEV_ATTR :: WF_k_in (wf_ng_1st_BZ, n_spinor,nb_to_shift)
+ complex(SP), intent(out) DEV_ATTR :: WF_k_out(wf_ng_overlaps,n_spinor,nb_to_shift)
  !
  ! Work space
  !
@@ -35,21 +35,19 @@ subroutine WF_shift_kpoint_gpu(b_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k
  ik = Xk%sstar(ikbz,1)
  is = Xk%sstar(ikbz,2)
  !
- i_b1= b_to_shift(1)
- i_b2= b_to_shift(2)
+ i_b1= 1
+ i_b2= b_to_shift(2)-b_to_shift(1)+1
  !
- ! AF: note that here and above, instead of using   b_to_shift(2),
- !     one could use  b_to_shift(1):b_to_shift(2)
- !     We prefer the version below to avoid issues with devxlib calls
- !     in the presence of GPUs
+ if (i_b2 /= nb_to_shift) call error("[WF_shift_kpoint] Unexpected error")
  !
- YAMBO_ALLOC_GPU(WF_tmp,(wf_ng_overlaps,n_spinor,b_to_shift(2)))
-
+ YAMBO_ALLOC_GPU(WF_tmp,(wf_ng_overlaps,n_spinor,nb_to_shift))
  !
  ! dev2dev
  call devxlib_memset_d(WF_tmp,cZERO)
- call devxlib_memcpy_d2d(WF_tmp,WF_k_in, &
-&                        range1=(/1,wf_ng_1st_BZ/), range3=b_to_shift(1:2))
+ call devxlib_memcpy_d2d(WF_tmp,WF_k_in, range1=(/1,wf_ng_1st_BZ/))
+
+ !
+ ! main loop
  !
  do id=1,3
    !
@@ -85,11 +83,11 @@ subroutine WF_shift_kpoint_gpu(b_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k
      !
    else
      ! dev2dev
-     call devxlib_memcpy_d2d(WF_k_out,WF_tmp,range3=b_to_shift(1:2))
+     call devxlib_memcpy_d2d(WF_k_out,WF_tmp)
    endif
    ! dev2dev
    call devxlib_memset_d(WF_tmp,cZERO)
-   call devxlib_memcpy_d2d(WF_tmp,WF_k_out,range3=b_to_shift(1:2))
+   call devxlib_memcpy_d2d(WF_tmp,WF_k_out)
    !
  enddo
  !

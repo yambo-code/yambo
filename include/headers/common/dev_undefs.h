@@ -19,3 +19,7 @@
 #undef DEV_ATTR
 #undef DEV_PIN
 
+#undef DEV_CUF
+#undef DEV_ACC
+#undef DEV_OMP
+#undef DEV_OMPGPU

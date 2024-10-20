@@ -32,21 +32,21 @@ module mpa_m
  !
  use pars,            ONLY:SP,DP,cZERO,cONE,cI
  use functions,       ONLY:NAN
+ use matrix,          ONLY:PAR_matrix
  use gpu_m,           ONLY:have_gpu
  !
 #include <y_memory.h>
 #include <dev_defs.h>
 
- complex(SP), allocatable, target :: MPA_E_mat(:,:,:)
- complex(SP), allocatable, target :: MPA_R_mat(:,:,:)
- complex(SP), allocatable, target :: MPA_freqs(:)
+ complex(SP),      allocatable, target :: MPA_freqs(:)
+ type(PAR_matrix), allocatable, target :: MPA_E_par(:)
+ type(PAR_matrix), allocatable, target :: MPA_R_par(:)
+ complex(SP), allocatable DEV_ATTR, target :: MPA_E_par_d(:,:,:)
+ complex(SP), allocatable DEV_ATTR, target :: MPA_R_par_d(:,:,:)
  !
- complex(SP), allocatable, target DEV_ATTR :: MPA_E_mat_d(:,:,:)
- complex(SP), allocatable, target DEV_ATTR :: MPA_R_mat_d(:,:,:)
-
  public :: mpa_RE_solver,err_func_X
  public :: MPA_alloc,MPA_free
-
+ !
 contains
  !
  subroutine MPA_alloc(d)
@@ -54,30 +54,11 @@ contains
    integer :: d(4)
    !
    call MPA_free()
-   !
-   YAMBO_ALLOC(MPA_E_mat,(d(1),d(2),d(3)))
-   YAMBO_ALLOC(MPA_R_mat,(d(1),d(2),d(3)))
    YAMBO_ALLOC(MPA_freqs,(d(4)))
-   !
-   if (have_gpu) then
-     YAMBO_ALLOC_GPU(DEV_VAR(MPA_E_mat),(d(1),d(2),d(3)))
-     YAMBO_ALLOC_GPU(DEV_VAR(MPA_R_mat),(d(1),d(2),d(3)))
-   endif
-   !
  end subroutine
 
  subroutine MPA_free()
-   implicit none
-   !
-   if (have_gpu) then
-     YAMBO_FREE_GPU(DEV_VAR(MPA_E_mat))
-     YAMBO_FREE_GPU(DEV_VAR(MPA_R_mat))
-   endif
-   !
-   YAMBO_FREE(MPA_E_mat)
-   YAMBO_FREE(MPA_R_mat)
    YAMBO_FREE(MPA_freqs)
-   !
  end subroutine
  !
  subroutine mpa_cond1(z, E, PPcond_rate)
@@ -748,5 +729,7 @@ contains
    !
  end subroutine mpa_RQ_3p_solver
  !
+!
 end module mpa_m
+
 

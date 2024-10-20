@@ -20,12 +20,12 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
  !
  integer,       intent(in)  :: ikbz,i_sp_pol,b_to_load(2)
  type(bz_samp), intent(in)  :: Xk
- complex(SP),   intent(out) DEV_ATTR :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(2))
+ complex(SP),   intent(out) DEV_ATTR :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(2)-b_to_load(1)+1)
  !
  ! Work space
  !
  complex(SP), pointer DEV_ATTR :: WF_p(:,:,:)
- integer :: ik,is,ib,iwf
+ integer :: ik,is,ib,ibl,iwf
  integer :: i_g,i_spinor
  !
  ik = Xk%sstar(ikbz,1)
@@ -43,12 +43,13 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
      do ib=b_to_load(1),b_to_load(2)
        !
        iwf=WF%index(ib,ik,i_sp_pol)
+       ibl=ib-b_to_load(1)+1
        !
 #if defined _GPU_LOC
        ! dev2dev
-       call devxlib_memcpy_d2d(WF_k_out(:,:,ib),DEV_VAR(WF%c)(:,:,iwf))
+       call devxlib_memcpy_d2d(WF_k_out(:,:,ibl),DEV_VAR(WF%c)(:,:,iwf))
 #else
-       WF_k_out(:,:,ib)=WF_p(:,:,iwf)
+       WF_k_out(:,:,ibl)=WF_p(:,:,iwf)
 #endif
        !
      enddo
@@ -58,6 +59,7 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
      do ib=b_to_load(1),b_to_load(2)
        !
        iwf=WF%index(ib,ik,i_sp_pol)
+       ibl=ib-b_to_load(1)+1
        !
        if (n_spinor==1) then
          !
@@ -68,7 +70,7 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
          !DEV_OMPGPU teams loop collapse(2)
          do i_spinor=1,n_spinor
          do i_g=1,wf_ng
-           WF_k_out(DEV_VAR(g_rot)(i_g,is),i_spinor,ib)=WF_p(i_g,i_spinor,iwf)
+           WF_k_out(DEV_VAR(g_rot)(i_g,is),i_spinor,ibl)=WF_p(i_g,i_spinor,iwf)
          enddo
          enddo
          !DEV_OMPGPU end target
@@ -82,10 +84,10 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
          !DEV_OMPGPU target map(present,alloc:WF_k_out,g_rot,WF_p,spin_sop)
          !DEV_OMPGPU teams loop
          do i_g=1,wf_ng
-           WF_k_out(DEV_VAR(g_rot)(i_g,is),1,ib)=DEV_VAR(spin_sop)(1,1,is)*WF_p(i_g,1,iwf)+ &
-&                                                DEV_VAR(spin_sop)(1,2,is)*WF_p(i_g,2,iwf)
-           WF_k_out(DEV_VAR(g_rot)(i_g,is),2,ib)=DEV_VAR(spin_sop)(2,1,is)*WF_p(i_g,1,iwf)+ &
-&                                                DEV_VAR(spin_sop)(2,2,is)*WF_p(i_g,2,iwf)
+           WF_k_out(DEV_VAR(g_rot)(i_g,is),1,ibl)=DEV_VAR(spin_sop)(1,1,is)*WF_p(i_g,1,iwf)+ &
+&                                                 DEV_VAR(spin_sop)(1,2,is)*WF_p(i_g,2,iwf)
+           WF_k_out(DEV_VAR(g_rot)(i_g,is),2,ibl)=DEV_VAR(spin_sop)(2,1,is)*WF_p(i_g,1,iwf)+ &
+&                                                 DEV_VAR(spin_sop)(2,2,is)*WF_p(i_g,2,iwf)
          enddo
          !DEV_OMPGPU end target
          !DEV_ACC_DEBUG end data

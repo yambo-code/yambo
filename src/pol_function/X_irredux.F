@@ -97,9 +97,10 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  X_rows2=X_par%rows(2)
  X_cols1=X_par%cols(1)
  X_cols2=X_par%cols(2)
- lda=size(X_par%blc(:,1,1))
  PAR_COM_RL_INDEX_n_CPU=PAR_COM_RL_INDEX%n_CPU
  !
+ if (PAR_COM_RL_INDEX_n_CPU> 1) lda=size(X_par_lower_triangle%blc(:,1,1))
+ if (PAR_COM_RL_INDEX_n_CPU==1) lda=size(X_par%blc(:,1,1))
  !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
  !=======================================================

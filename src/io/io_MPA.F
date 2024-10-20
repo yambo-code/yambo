@@ -12,12 +12,12 @@ integer function io_MPA(X,Xw,ID)
  use frequency,     ONLY:w_samp
  use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_header,io_fragment,&
 &                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental
- use IO_m,          ONLY:io_sec,io_com,io_status,read_is_on,&
+ use IO_m,          ONLY:io_sec,io_com,io_status,read_is_on,write_is_on,&
 &                        io_MULTIPOLE,IO_NOT_ALLOWED,io_extension,&
 &                        frag_MULTIPOLE,IO_NO_DATABASE,io_mode,DUMP,frag_RESPONSE
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
- use mpa_m,         ONLY:MPA_E_mat,MPA_R_mat
+ use mpa_m,         ONLY:MPA_freqs,MPA_alloc,MPA_E_par,MPA_R_par
  !
 #include<y_memory.h>
  !
@@ -101,7 +101,7 @@ integer function io_MPA(X,Xw,ID)
    !            must go through the definitions of the variables although only one is writing
    !
    io_com_save=io_com(ID_frag)
-   call def_variable_elemental(ID_frag,trim(ch),sec_size,SP,1)
+   call def_variable_elemental(ID_frag,trim(ch),sec_size,SP,1,par_io_kind='independent')
    !
    call io_variable_elemental(ID_frag,  VAR=" :: Current Q-pt index     :",I0=iq)
    call io_variable_elemental(ID_frag,  VAR=" :: Number of poles  :",I0=Xw%n_freqs/2,CHECK=.true.,OP=(/"=="/))
@@ -128,16 +128,35 @@ integer function io_MPA(X,Xw,ID)
    !
    ch="MPA_E_Q_"//trim(intc(iq))
    !
-   !
-   call def_variable_bulk(ID_frag,trim(ch),1,(/2,shape(MPA_E_mat)/),SP)
-   call  io_variable_bulk(ID_frag,1,C3=MPA_E_mat,IPOS=(/1,1,1,1/))
+   if(write_is_on(ID)) then
+#if defined _PAR_IO
+     call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP,par_io_kind='collective')
+#else
+     call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP,par_io_kind='independent')
+#endif
+     call  io_variable_bulk(ID_frag,1,C3=MPA_E_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,MPA_E_par(1)%rows(1),MPA_E_par(1)%cols(1),1/))
+     !
+   else if(read_is_on(ID)) then
+     call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
+     call  io_variable_bulk(ID_frag,1,C3=MPA_E_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,MPA_E_par(1)%rows(1),MPA_E_par(1)%cols(1),1/))
+   endif
    !
    ! residues @iq
    !
    ch="MPA_R_Q_"//trim(intc(iq))
    !
-   call def_variable_bulk(ID_frag,trim(ch),1,(/2,shape(MPA_R_mat)/),SP)
-   call  io_variable_bulk(ID_frag,1,C3=MPA_R_mat,IPOS=(/1,1,1,1/))
+   if(write_is_on(ID)) then
+#if defined _PAR_IO
+     call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP,par_io_kind='collective')
+#else
+     call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP,par_io_kind='independent')
+#endif
+     call  io_variable_bulk(ID_frag,1,C3=MPA_R_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,MPA_R_par(1)%rows(1),MPA_R_par(1)%cols(1),1/))
+     !
+   else if(read_is_on(ID)) then
+     call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
+     call  io_variable_bulk(ID_frag,1,C3=MPA_R_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,MPA_R_par(1)%rows(1),MPA_R_par(1)%cols(1),1/))
+   endif
    !
    if (read_is_on(ID) .and. different_db_RL_order) then 
      call error('[io_MPA] different_db_RL_order    not implemented')

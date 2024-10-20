@@ -124,6 +124,7 @@ integer function io_COLLISIONS_header(ID,COLL)
    !
    io_COLLISIONS_header=io_descriptors(X_desc,"X",ID,.FALSE.)
    !
+   call io_elemental(ID,VAR="RIM_PARAMETERS",VAR_SZ=2,MENU=0)
    call io_elemental(ID,I0=RIM_ng,VAR=        ' RIM RL components      ',WARN=.true.)
    call io_elemental(ID,I0=RIM_n_rand_pts,VAR=' RIM random points      ',WARN=.true.)
    !

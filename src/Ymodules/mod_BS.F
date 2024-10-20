@@ -404,30 +404,4 @@ module BS
    end subroutine BS_Blocks_symmetrize_K
    !
 end module BS
-!
-!
-module BS_interfaces
-  !
-  implicit none
-  !
-  interface
-    !
-    function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp_ik, i_Tk) result(H_x)
-      use pars,         ONLY: SP
-      use BS,           ONLY: BS_T_group
-      integer,                  intent(in) :: iq,BS_n_g_exch,i_Tp,i_Tk
-      type(BS_T_group), target, intent(in) :: BS_T_grp_ip,BS_T_grp_ik
-      complex(SP) :: H_x
-    end function K_exchange_kernel_resonant
-    !
-    function K_exchange_kernel_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp_ik, i_Tk) result(H_x)
-      use pars,         ONLY: SP
-      use BS,           ONLY: BS_T_group
-      integer,                  intent(in) :: iq,BS_n_g_exch,i_Tp,i_Tk
-      type(BS_T_group), target, intent(in) :: BS_T_grp_ip,BS_T_grp_ik
-      complex(SP) :: H_x
-    end function K_exchange_kernel_coupling
-    !
-   end interface
-   !
-end module BS_interfaces
+

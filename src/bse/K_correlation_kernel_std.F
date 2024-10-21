@@ -74,6 +74,7 @@ function K_correlation_kernel_std(i_block,i_p,i_pmq,                            
    O1(i_g1)=O_c1_p(i_g2,iO1)*PHASE_1
    O2(i_g1)=O_c2_p(i_g3,iO2)*PHASE_2
  enddo
+ !DEV_OMP end parallel do
  !DEV_ACC_DEBUG end data
  !
  !

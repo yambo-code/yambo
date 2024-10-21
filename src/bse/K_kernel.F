@@ -45,6 +45,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
+ use gpu_m,         ONLY:have_gpu
  use timing_m,      ONLY:timing
  use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme,PARALLEL_default_mode,master_cpu
  use parallel_int,  ONLY:PP_redux_wait
@@ -233,13 +234,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    YAMBO_FREE_GPU(BS_W)
    YAMBO_FREE(BS_W)
-   !
-   YAMBO_FREE_GPU(O1)
-   YAMBO_FREE_GPU(O2)
-   YAMBO_FREE_GPU(O_times_W)
-   YAMBO_FREE(O1)
-   YAMBO_FREE(O2)
-   YAMBO_FREE(O_times_W)
    !
    YAMBO_FREE_GPU(DEV_VAR(RIM_W))
    YAMBO_FREE(RIM_W)
@@ -533,7 +527,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
 #if defined _OPENMP
    !DEV_OMP parallel default(shared), &
-   !DEV_OMP private(i_Tk,i_Tp, &
+   !DEV_OMP private(i_Tk,i_Tp, O1,O2,O_times_W, &
    !DEV_OMP &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol_c,i_k_sp_pol_v,i_k_s,is_k,os_k,i_k_s_m1,H_pos, &
    !DEV_OMP &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol_c,i_p_sp_pol_v,i_p_s,is_p,os_p,i_kp_s, &
    !DEV_OMP &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
@@ -548,6 +542,16 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    i_p_bz_last=0   ; i_k_bz_last=0
    i_pmq_bz_last=0 ; i_kmq_bz_last=0
+   !
+   ! workspace (for thread-safety, these vars are kept as
+   !            local in K_correlation_kernel*, and only allocated
+   !            here for performance in the presence of GPUs)
+   !
+   if (iHxc==3.and.have_gpu) then
+     YAMBO_ALLOC_GPU(O1,(BS_n_g_W))
+     YAMBO_ALLOC_GPU(O2,(BS_n_g_W))
+     YAMBO_ALLOC_GPU(O_times_W,(BS_n_g_W))
+   endif
    !
 #if defined _OPENMP
    !DEV_OMP do collapse(2), schedule(dynamic)
@@ -777,8 +781,21 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        !
      enddo   ! i_Tk
    enddo     ! i_Tp
+   !
 #if defined _OPENMP
    !DEV_OMP end do
+#endif
+   !
+   if (iHxc==3.and.have_gpu) then
+     YAMBO_FREE_GPU(O1)
+     YAMBO_FREE_GPU(O2)
+     YAMBO_FREE_GPU(O_times_W)
+     YAMBO_FREE(O1)
+     YAMBO_FREE(O2)
+     YAMBO_FREE(O_times_W)
+   endif
+   !
+#if defined _OPENMP
    !DEV_OMP end parallel
 #endif
    !
@@ -849,13 +866,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
    YAMBO_FREE_GPU(BS_W)
    YAMBO_FREE(BS_W)
-   !
-   YAMBO_FREE_GPU(O1)
-   YAMBO_FREE_GPU(O2)
-   YAMBO_FREE_GPU(O_times_W)
-   YAMBO_FREE(O1)
-   YAMBO_FREE(O2)
-   YAMBO_FREE(O_times_W)
    !
    YAMBO_FREE_GPU(DEV_VAR(RIM_W)) 
    YAMBO_FREE(RIM_W)

@@ -255,7 +255,6 @@ module BS
  ! Screened interaction
  !======================
  complex(SP),allocatable DEV_ATTR :: BS_W(:,:,:)
- complex(SP),allocatable DEV_ATTR :: O1(:),O2(:),O_times_W(:)
  !
  contains
    !

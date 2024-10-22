@@ -20,6 +20,9 @@ case "${FC}" in
   *gfortran | *g95)
      if test -z "$FPP";    then FPP="${FC} -E -P -cpp"; fi
      ;;
+  *nvfortran*)
+     if test -z "$FPP";    then FPP="${FC} -Mpreprocess -E"; fi
+     ;;
   #
   # some of the following could be uncommented once explicitly checked
   #

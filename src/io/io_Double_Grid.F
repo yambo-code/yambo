@@ -20,7 +20,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
  use ELPH,           ONLY:EkplusQ_mode
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) :: E
  type(bz_samp):: Xk

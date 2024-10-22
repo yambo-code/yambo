@@ -18,7 +18,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G,TDDFT_ALDA_eh_space_R_kernel
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
  use R_lattice,     ONLY:qindx_X,bz_samp,&
-&                        qindx_B,qindx_B_max,qindx_B_load,RIM_W,&
+&                        qindx_B,qindx_B_max,qindx_B_load,RIM_W,RIM_W_d,&
 &                        RIM_ng,RIM_W_is_diagonal,RIM_W_ng
  use com,           ONLY:msg
  use stderr,        ONLY:intc
@@ -52,7 +52,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use PHOTOLUM,      ONLY:BSS_PL_free
  use parser_m,      ONLY:parser
  !
-#include<memory.h>
+#include<dev_defs.h>
+#include<y_memory.h>
  !
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q
@@ -79,16 +80,19 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  integer ::     i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & 
 &               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last
  !
- integer    :: i_block,O_ng_shift,O_ng_exch,O_ng_tddft,iHxc,NG(2),NK(2),&
-&              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
-&              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4)
- complex(SP):: Co,H_x,H_c,BS_mat_tmp
- complex(SP):: sqrt_f_itk,sqrt_f_itp
- real(SP), allocatable :: BS_max_val_CPU(:),rho(:)
+ integer ::     i_block,O_ng_shift,O_ng_exch,O_ng_tddft,iHxc,NG(2),NK(2),&
+&               ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
+&               bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4)
  !
- complex(SP),   external ::K_correlation_kernel_std,K_correlation_kernel_dir
- complex(SP),   external ::TDDFT_ALDA_eh_space_G_kernel
- complex(SP),   external ::K_exchange_kernel_resonant,K_exchange_kernel_coupling
+ complex(SP) :: Co,H_x,H_c,BS_mat_tmp
+ complex(SP) :: sqrt_f_itk,sqrt_f_itp
+ !
+ real(SP),    allocatable :: BS_max_val_CPU(:),rho(:)
+ complex(SP), allocatable DEV_ATTR :: O1(:),O2(:),O_times_W(:)
+ !
+ complex(SP),   external :: K_correlation_kernel_std,K_correlation_kernel_dir
+ complex(SP),   external :: TDDFT_ALDA_eh_space_G_kernel
+ complex(SP),   external :: K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
  logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_bs_tddft_wf_in_loop,l_matrix_init,BS_blk_todo,&
  &             l_load_kernel,l_write_kernel,l_write_kernel_step,l_skip_phases,l_std_alg,l_dir_alg,l_tddft_gsum,l_tddft_rsum
@@ -233,7 +237,10 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    call BSS_MAGN_free( )
    call BSS_PL_free( )
    !
+   YAMBO_FREE_GPU(BS_W)
    YAMBO_FREE(BS_W)
+   !
+   YAMBO_FREE_GPU(DEV_VAR(RIM_W))
    YAMBO_FREE(RIM_W)
    !
    return
@@ -537,27 +544,34 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Transition Loops
    !------------------
    !
-#if defined _OPENMP && ! defined _CUDA
-   !$omp parallel default(shared), &
-   !$omp private(i_Tk,i_Tp, &
-   !$omp &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol_c,i_k_sp_pol_v,i_k_s,is_k,os_k,i_k_s_m1,H_pos, &
-   !$omp &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol_c,i_p_sp_pol_v,i_p_s,is_p,os_p,i_kp_s, &
-   !$omp &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
-   !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t,ig_W_final, &
-   !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c, &
-   !$omp &       i_p_bz_last,i_k_bz_last,i_pmq_bz_last,i_kmq_bz_last, &
-   !$omp &       iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last, &
-   !$omp &       i_k_bz_mem,i_kmq_bz_mem,qindx_tmp,BS_mat_tmp,tddft_wf )
-#endif
+   !DEV_OMP parallel default(shared), &
+   !DEV_OMP private(i_Tk,i_Tp, O1,O2,O_times_W, &
+   !DEV_OMP &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol_c,i_k_sp_pol_v,i_k_s,is_k,os_k,i_k_s_m1,H_pos, &
+   !DEV_OMP &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol_c,i_p_sp_pol_v,i_p_s,is_p,os_p,i_kp_s, &
+   !DEV_OMP &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
+   !DEV_OMP &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t,ig_W_final, &
+   !DEV_OMP &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c, &
+   !DEV_OMP &       i_p_bz_last,i_k_bz_last,i_pmq_bz_last,i_kmq_bz_last, &
+   !DEV_OMP &       iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last, &
+   !DEV_OMP &       i_k_bz_mem,i_kmq_bz_mem,qindx_tmp,BS_mat_tmp,tddft_wf )
    !
    call OPENMP_update(master_thread)   
    !
    i_p_bz_last=0   ; i_k_bz_last=0
    i_pmq_bz_last=0 ; i_kmq_bz_last=0
    !
-#if defined _OPENMP && ! defined _CUDA
-   !$omp do collapse(2), schedule(dynamic)
-#endif
+   ! workspace (for thread-safety, these vars are kept as
+   !            local in K_correlation_kernel*, and only allocated
+   !            here for performance in the presence of GPUs)
+   !
+   if (iHxc==3) then
+     YAMBO_ALLOC_GPU(O1,(BS_n_g_W))
+     YAMBO_ALLOC_GPU(O2,(BS_n_g_W))
+     YAMBO_ALLOC_GPU(O_times_W,(BS_n_g_W))
+   endif
+   !
+   !DEV_OMP do collapse(2), schedule(dynamic)
+   !
    do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
      do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
        !
@@ -604,11 +618,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
            i_p_bz_last=i_p_bz 
            i_k_bz_last=i_k_bz 
            if (i_k_bz_mem==0) then 
-             !$omp critical 
+             !DEV_OMP critical 
              qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID_frag) 
              iq_W_bz=qindx_tmp(1) 
              ig_W   =qindx_tmp(2) 
-             !$omp end critical 
+             !DEV_OMP end critical 
            else 
              iq_W_bz=qindx_B(i_p_bz,i_k_bz_mem,1) 
              ig_W   =qindx_B(i_p_bz,i_k_bz_mem,2) 
@@ -643,11 +657,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
            i_pmq_bz_last=i_pmq_bz 
            i_kmq_bz_last=i_kmq_bz 
            if (i_kmq_bz_mem==0) then 
-             !$omp critical 
+             !DEV_OMP critical 
              qindx_tmp=qindx_B_load(i_pmq_bz,i_kmq_bz,qindx_ID_frag) 
              iq_W_bz_mq=qindx_tmp(1) 
              ig_W_mq   =qindx_tmp(2) 
-             !$omp end critical 
+             !DEV_OMP end critical 
            else 
              iq_W_bz_mq=qindx_B(i_pmq_bz,i_kmq_bz_mem,1) 
              ig_W_mq   =qindx_B(i_pmq_bz,i_kmq_bz_mem,2) 
@@ -710,11 +724,13 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
            if (l_std_alg)       H_c=K_correlation_kernel_std(i_block,i_p,i_pmq, &
 &                                   i_k_s,i_kp_s,i_c_k,i_c_p,i_kmq_s,i_kp_mq_s,i_v_k,i_v_p,     &
 &                                   i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
-&                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+&                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1,&
+&                                   BS_n_g_W,O1,O2,O_times_W)
            if (l_dir_alg)       H_c=K_correlation_kernel_dir(i_block,i_p,i_pmq, &
 &                                   i_k_s,i_p_s, i_c_k,i_c_p,i_kmq_s,i_pmq_s  ,i_v_k,i_v_p,     &
 &                                   i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
-&                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+&                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1,&
+&                                   BS_n_g_W,O1,O2,O_times_W)
          endif
          !         
        case ("C","Q")
@@ -738,11 +754,13 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
            if (l_std_alg)       H_c=K_correlation_kernel_std(i_block,i_p,i_pmq, &
 &                                 i_k_s,i_kp_s,i_c_k,i_v_p,i_kmq_s,i_kp_mq_s,i_v_k,i_c_p,    &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
-&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1,&
+&                                 BS_n_g_W,O1,O2,O_times_W)
            if (l_dir_alg)       H_c=K_correlation_kernel_dir(i_block,i_p,i_pmq, &
 &                                 i_k_s,i_p_s ,i_c_k,i_v_p,i_kmq_s,i_pmq_s  ,i_v_k,i_c_p,    &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
-&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1,&
+&                                 BS_n_g_W,O1,O2,O_times_W)
          endif
          !
        end select
@@ -783,10 +801,19 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        !
      enddo   ! i_Tk
    enddo     ! i_Tp
-#if defined _OPENMP && ! defined _CUDA
-   !$omp end do
-   !$omp end parallel
-#endif
+   !
+   !DEV_OMP end do
+   !
+   if (iHxc==3) then
+     YAMBO_FREE_GPU(O1)
+     YAMBO_FREE_GPU(O2)
+     YAMBO_FREE_GPU(O_times_W)
+     YAMBO_FREE(O1)
+     YAMBO_FREE(O2)
+     YAMBO_FREE(O_times_W)
+   endif
+   !
+   !DEV_OMP end parallel
    !
    call timing('X T_space Kernel sum',OPR='stop')
    !
@@ -854,7 +881,10 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      YAMBO_FREE(WF_phase)
    endif
    qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
+   YAMBO_FREE_GPU(BS_W)
    YAMBO_FREE(BS_W)
+   !
+   YAMBO_FREE_GPU(DEV_VAR(RIM_W)) 
    YAMBO_FREE(RIM_W)
  endif
  !

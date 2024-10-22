@@ -55,7 +55,7 @@ subroutine MAG_Hamiltonian()
  use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
  use QP_m,           ONLY:QP_table,QP_n_states
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Dummies
  !

@@ -54,7 +54,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use petscmatdef,    ONLY:tMat
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  ! 
  type(w_samp)  :: W
  integer       :: iq

@@ -28,12 +28,13 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,iq,slepc_mat)
  use pars,           ONLY:cI,cONE,lchlen
  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_ID
  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width,&
- &                        run_inversion,run_Haydock,BSS_kernel_last_stored_block,BSS_slepc_pseudo_herm
+ &                        run_inversion,run_Haydock,               &
+ &                        BSS_kernel_last_stored_block,BSS_slepc_pseudo_herm
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:RD
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
- use cuda_m,         ONLY:have_cuda
+ use gpu_m,          ONLY:have_cuda
  !
  use petscmat
  use slepceps

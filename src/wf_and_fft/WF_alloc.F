@@ -1,4 +1,4 @@
-!
+  !
 ! License-Identifier: GPL
 !
 ! Copyright (C) 2013 The Yambo Team
@@ -12,9 +12,11 @@ subroutine WF_alloc(WF,k_extrema_only)
  use FFT_m,         ONLY:fft_size
  use electrons,     ONLY:n_spinor
  use parallel_int,  ONLY:PARALLEL_live_message
- use cuda_m,        ONLY:have_cuda
+ use gpu_m,         ONLY:have_gpu
+ use devxlib,       ONLY:devxlib_memset_d
  !
-#include<memory.h>
+#include<dev_defs.h>
+#include<y_memory.h>
  !
  type(WAVEs)           :: WF
  logical, intent(in)   :: k_extrema_only
@@ -61,13 +63,15 @@ subroutine WF_alloc(WF,k_extrema_only)
  if (WF%space=='B')  wf_grid_size=wf_ncx
  !
  YAMBO_ALLOC(WF%c,(wf_grid_size,n_spinor,WF%N))
- WF%c=cZERO
- if (have_cuda) then
-   YAMBO_ALLOC_MOLD(WF%c_d,WF%c)
-   WF%c_d=cZERO
+ if (have_gpu) then
+   YAMBO_ALLOC_GPU(DEV_VAR(WF%c),(wf_grid_size,n_spinor,WF%N))
  endif
  !
  YAMBO_ALLOC(WF%index,(WF%b(2),WF%k(2),WF%sp_pol(2)))
+ !
+ WF%c=cZERO
+ if (have_gpu) call devxlib_memset_d(DEV_VAR(WF%c),cZERO)
+ !
  WF%index=0
  !
 end subroutine

@@ -16,7 +16,7 @@ subroutine PARALLEL_WF_index(COMM)
 &                          COMM_copy,PAR_COM_density
  use wave_func,       ONLY:states_to_load
  use parallel_int,    ONLY:PP_redux_wait
-#include<memory.h>
+#include<y_memory.h>
  !
  type(yMPI_comm), optional :: COMM
  !

@@ -35,7 +35,7 @@ subroutine SC_start_and_restart(X,E,Xk,Dip)
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_have_HARTREE
  use descriptors,    ONLY:IO_desc_reset
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ::E
  type(X_t)    ::X(2)  ! Xx Em1s

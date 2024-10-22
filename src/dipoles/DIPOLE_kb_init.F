@@ -18,7 +18,7 @@ subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table, &
 &                              pp_factor,pp_n_l_max
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels),  intent(in)    :: Xen
  type(DIPOLE_t),intent(inout) :: Dip

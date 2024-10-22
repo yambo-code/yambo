@@ -32,7 +32,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  use petscmatdef
  use slepcepsdef
  !
-#include <memory.h>
+#include <y_memory.h>
  !
  integer, intent(in)  :: i_BS_mat
  Mat,     intent(out) :: slepc_mat

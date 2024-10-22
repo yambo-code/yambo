@@ -10,7 +10,7 @@ subroutine NL_exc_driver(en,k)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  :: en
  type(bz_samp) :: k

@@ -14,7 +14,7 @@ integer function io_COL_CUT(ID)
  use IO_m,           ONLY:io_sec,io_status
  use IO_int,         ONLY:io_connect,io_disconnect,io_header,io_elemental,io_bulk
  use timing_m,       ONLY:timing
-#include<memory.h>
+#include<y_memory.h>
  !
  integer :: ID
  ! 

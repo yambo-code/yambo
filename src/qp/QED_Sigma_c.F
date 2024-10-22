@@ -29,7 +29,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use functions,           ONLY:theta_function
  use timing_m,            ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)              ::E
  type(bz_samp)             ::k,q

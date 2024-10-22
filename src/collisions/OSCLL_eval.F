@@ -35,7 +35,7 @@ subroutine OSCLL_eval(q,k,en)
 &                              PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_A2A,PAR_COM_G_b_INDEX
  !
 #include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !  
  type(bz_samp), intent(in) :: q,k
  type(levels),  intent(in) :: en

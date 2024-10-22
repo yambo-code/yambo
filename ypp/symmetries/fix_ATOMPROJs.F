@@ -19,7 +19,7 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
  use electrons,           ONLY:levels
  use atom_proj
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels),intent(in)  :: E
  !

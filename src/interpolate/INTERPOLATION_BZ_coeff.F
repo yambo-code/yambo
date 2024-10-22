@@ -25,7 +25,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  use parallel_m,        ONLY:PP_indexes,PP_indexes_reset,myid,PAR_build_index,ncpu
  use parallel_int,      ONLY:PP_redux_wait,PARALLEL_index 
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,       intent(in)  :: nvalues
  integer,       intent(in)  :: Nk,ID

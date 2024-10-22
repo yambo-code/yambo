@@ -20,7 +20,7 @@ integer function variables_ELPH(ID,what)
  use zeros,          ONLY:k_rlu_zero
  use descriptors,    ONLY:IO_desc_reset
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer, intent(in) ::ID
  character(*) ::what

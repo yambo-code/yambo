@@ -20,7 +20,7 @@ integer function c2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use mod_wf2y,            ONLY:WF_splitter
  use parallel_int,        ONLY:PARALLEL_live_message
  !
-#include<memory.h>
+#include<y_memory.h>
  type(levels)                 :: en 
  type(bz_samp)                :: k 
  integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid,icd

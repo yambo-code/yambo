@@ -14,7 +14,7 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt,pp_range,npp,i_atom,is,ia,ik)
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use D_lattice,     ONLY:atom_pos,x_cc,a,n_atoms
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,     intent(in)  :: npp,pp_range(2),i_atom,is,ia,ik
  complex(SP), intent(in)  :: kbv(wf_ncx,n_spinor,4,npp)

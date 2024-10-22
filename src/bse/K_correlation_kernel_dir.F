@@ -10,10 +10,11 @@
 function K_correlation_kernel_dir(i_block,i_p,i_pmq,                               &
 &                                 i_k_s,i_p_s,i_n_k,i_n_p,i_kmq_s,i_pmq_s,i_m_k,i_m_p,  &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_n,i_p_sp_pol_n,i_k_sp_pol_m,i_p_sp_pol_m, &
-&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1,&
+&                                 BS_n_g_W,O1,O2,O_times_W)
  !
  use pars,         ONLY:SP,cZERO,pi
- use BS,           ONLY:BS_blk,BS_n_g_W,BS_W,BS_W_is_diagonal,O1,O2,O_times_W
+ use BS,           ONLY:BS_blk,BS_W,BS_W_is_diagonal
  use R_lattice,    ONLY:DEV_VAR(G_m_G),DEV_VAR(g_rot)
  use wrapper,      ONLY:V_by_V_pwise_gpu,Vstar_dot_V_gpu,M_by_V_gpu
  !
@@ -23,6 +24,8 @@ function K_correlation_kernel_dir(i_block,i_p,i_pmq,                            
 &                                 i_k_s,i_p_s,i_n_k,i_n_p,i_kmq_s,i_pmq_s,i_m_k,i_m_p, &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_n,i_p_sp_pol_n,i_k_sp_pol_m,i_p_sp_pol_m, &
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1
+ integer,     intent(in) :: BS_n_g_W
+ complex(SP), intent(inout) DEV_ATTR :: O1(BS_n_g_W),O2(BS_n_g_W),O_times_W(BS_n_g_W)
  !
  complex(SP)  :: K_correlation_kernel_dir
  !

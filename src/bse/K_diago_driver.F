@@ -55,7 +55,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use MAGNONS,        ONLY:BSS_MAGN_free
  use PHOTOLUM,       ONLY:BSS_PL_free
  !
-#include<memory.h>
+#include<y_memory.h>
  ! 
  type(w_samp)  :: W
  integer       :: iq

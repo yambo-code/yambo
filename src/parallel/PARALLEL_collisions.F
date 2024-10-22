@@ -134,7 +134,7 @@ subroutine PARALLEL_collisions( k, COLL )
  use hamiltonian,   ONLY:B_mat_index
  use R_lattice,     ONLY:bz_samp,qindx_S,nqbz
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp)          :: k
  type(COLLISIONS_group) :: COLL
@@ -214,7 +214,7 @@ subroutine PARALLEL_collisions_reset(COLL)
  !
  use collision_ext, ONLY:COLLISIONS_group
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(COLLISIONS_group), intent(inout) :: COLL
  !

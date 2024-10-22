@@ -30,7 +30,7 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
  use real_time,     ONLY:l_RT_uses_E_FineGd
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer                       :: iq
  type(bz_samp)                 :: k

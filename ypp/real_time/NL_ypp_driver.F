@@ -23,7 +23,7 @@ subroutine NL_ypp_driver(en,k)
  use RT_control,     ONLY:OBS_RT_IO_t
  use LIVE_t,         ONLY:live_timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  :: en
  type(bz_samp) :: k

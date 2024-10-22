@@ -23,7 +23,7 @@ subroutine ELPH_atomic_amplitude(q)
  use linear_algebra,      ONLY:DIAGO,USE_LK
  use stderr,              ONLY:intc
  !
-#include<memory.h>
+#include<y_memory.h>
  type(bz_samp)::q
  !
  ! Work Space 

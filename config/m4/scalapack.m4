@@ -209,9 +209,9 @@ if test "$mpibuild"  = "yes"; then
   if test "$mpif_found" = "yes" && test "$enable_elpa" = "internal"; then
     enable_elpa="yes"
     internal_elpa="yes"
-    ELPA_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libelpa.a"
-    ELPA_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include/"
-    if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libelpa.a"; then
+    ELPA_LIBS="${extlibs_path}/${FCKIND}/${FC}/${GPU_SUPPORT}/lib/libelpa.a"
+    ELPA_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${GPU_SUPPORT}/include/"
+    if test -e "${extlibs_path}/${FCKIND}/${FC}/${GPU_SUPPORT}/lib/libelpa.a"; then
       compile_elpa="no"
     else
       compile_elpa="yes"

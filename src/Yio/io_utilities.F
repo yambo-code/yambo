@@ -203,7 +203,7 @@ function desc_to_varname(desc)
  VARNAME=STRING_remove(VARNAME,"(","_") 
  VARNAME=STRING_remove(VARNAME,")","_") 
  !
-#ifdef _PGI
+#if defined _PGI || defined _NV
  VARNAME=STRING_remove(VARNAME,"\\","_")
 #else
  VARNAME=STRING_remove(VARNAME,"\","_")

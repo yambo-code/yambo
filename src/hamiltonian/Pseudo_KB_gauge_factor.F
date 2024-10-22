@@ -21,7 +21,7 @@ subroutine Pseudo_KB_gauge_factor(gauge_factor)
  use fields,        ONLY:A_tot
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  complex(SP)             :: gauge_factor(fft_size,n_atoms)
  !

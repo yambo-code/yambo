@@ -21,7 +21,7 @@ integer function io_X(X,Xw,ID)
  use stderr,        ONLY:intc,STRING_same
  use timing_m,      ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(X_t)   :: X
  type(w_samp):: Xw

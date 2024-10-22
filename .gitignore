@@ -30,9 +30,12 @@ lib/archive/git.list
 *.a
 *.so
 *.mod
+*.smod
+*.modmic
 *modules.dep
 *.save
 *.f90
+*.i
 *.s
 *.swp*
 *dSYM
@@ -81,6 +84,7 @@ lib/*/slepc-*
 lib/*/futile*
 lib/*/yaml*
 lib/*/Ydiago*
+lib/*/devicexlib*
 lib/hdf5/hdf5*
 lib/external/*
 compile.sh
@@ -130,3 +134,8 @@ Thumbs.db
 myconfig*
 nohup.out
 autom4te.cache
+
+#Scripts
+gfortran*.sh
+pgi*.sh
+nvidia*.sh

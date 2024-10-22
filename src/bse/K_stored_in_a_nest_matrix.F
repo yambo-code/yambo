@@ -47,7 +47,7 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
   use pars,           ONLY:cI,cONE
   use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks
   use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width
-  use cuda_m,         ONLY:have_cuda
+  use gpu_m,          ONLY:have_cuda
   !
   use petscmat
   use slepceps

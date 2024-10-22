@@ -7,7 +7,8 @@ include ../../config/setup
 include ../archive/package.list
 
 LIBNAME=libelpa.a
-LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${gpu_support}
+LIBPATH_SLK=$(libs_prefix)/$(fc_kind)/${fc}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_elpa)
@@ -21,12 +22,20 @@ include ../config/external_libs_defs.mk
 CONFFLAGS=--prefix=$(LIBPATH) \
 	  --disable-avx512-kernels --disable-shared \
 	  --disable-c-tests --disable-cpp-tests --disable-fortran-tests \
-	  CPP="$(cpp)" CPPFLAGS="$(cppflags) ${impi}" \
+	  CPP="$(cpp)" CPPFLAGS="${impi}" \
 	  CC="$(cc)" \
 	  CFLAGS="$(cflags)" \
 	  FC="$(fc)" \
 	  FCFLAGS="$(fcflags)" \
-	  LDFLAGS="-L$(LIBPATH)/lib"
+	  LDFLAGS="-L$(LIBPATH_SLK)/lib" \
+	  LIBS="$(lmpi)"
+
+ifeq ($(gpu_support),cudaf)
+  CONFFLAGS:=$(CONFFLAGS) \
+	  --enable-nvidia-gpu-kernels \
+	  --with-cuda-path="$(dcudalib)" \
+	  --with-NVIDIA-GPU-compute-capability="sm_$(cudacc)"
+endif
 
 #
 all: $(LIBRARY)

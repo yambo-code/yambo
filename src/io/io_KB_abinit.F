@@ -19,7 +19,7 @@ integer function io_KB_abinit(ID)
  use IO_int,           ONLY:io_connect,io_disconnect,io_fragment, &
 &                           io_elemental,io_bulk,io_header,ver_is_gt_or_eq
  use timing_m,         ONLY:timing
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,       intent(in) :: ID
  !

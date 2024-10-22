@@ -1,0 +1,64 @@
+#
+#===============================
+# Yambo package
+#===============================
+#
+include ../../config/setup
+include ../archive/package.list
+
+LIBNAME=libdevXlib.a
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${gpu_support}
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
+PACKAGE=$(pkgname_devxlib)
+TARBALL=$(tarball_devxlib)
+#
+include ../config/external_libs_commons.mk
+include ../config/external_libs_defs.mk
+#
+# Flags
+#
+BLAS_LIBS=$(lblas)
+LAPACK_LIBS=$(llapack)
+CONFFLAGS=--prefix=$(LIBPATH) $(devxlib_flgs) \
+          --with-blas-libs="$(BLAS_LIBS)" --with-lapack-libs="$(LAPACK_LIBS)" \
+          F90="$(fc)" MPIF90="$(fc)" 
+#
+# MAIN target
+#
+all: $(LIBRARY)
+#
+uncompress:
+	@if test -e ../archive/$(TARBALL)  && ! test -e $(PACKAGE) ; then (gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -); fi
+	@if test -d ../archive/devxlib-src && ! test -e $(PACKAGE) ; then (ln -s ../archive/devxlib-src ./$(PACKAGE)); fi
+	@if ! test -f Makefile ; then (cp Makefile.loc Makefile); fi
+	@touch uncompressed.stamp
+
+configure: uncompress
+	@export BLAS_LIBS="$(lblas)"    ; export LAPACK_LIBS="$(llapack)"
+	@export CUDA_LIBS="$(lcudalib)" ; export CUDA_INCS="$(icudalib)"
+	@if ! test -e configured.stamp && test -d $(PACKAGE); then \
+	    echo "\t[$(PACKAGE)] configuration"; \
+	    rm -f ${compdir}/log/config_$(PACKAGE).log; \
+	    CWD=`pwd`;\
+	    echo "./config/configure $(CONFFLAGS)" >> ${compdir}/log/config_$(PACKAGE).log ; \
+	    cd $(PACKAGE);  ./config/configure $(CONFFLAGS) >> ${compdir}/log/config_$(PACKAGE).log 2>&1 ; \
+	    touch $$CWD/configured.stamp;\
+	fi
+
+compile: uncompress configure
+	@$(call compile,all)
+	
+install: uncompress configure compile
+	@$(call install_via_make,devXlib)
+
+$(LIBRARY): uncompress configure compile install
+#
+# cleaning
+#
+clean:
+	@$(call clean_the_lib,distclean-recursive)
+
+clean_all: clean
+	@$(rm_the_lib)
+#

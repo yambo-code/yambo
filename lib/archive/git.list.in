@@ -7,5 +7,6 @@
 #
 branch_Ydriver=@with_ydriver_branch@
 branch_Ydiago=@with_ydiago_branch@
+branch_devxlib=@with_devxlib_branch@
 branch_slepc=@with_slepc_branch@
 branch_petsc=@with_petsc_branch@

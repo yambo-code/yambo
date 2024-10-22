@@ -22,7 +22,7 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  use fields,          ONLY:Efield
  use interfaces,      ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra,  ONLY:INV
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,     intent(in)   :: NW,NX
  real(SP),    intent(in)   :: P(NE_steps),W(NW),T_period

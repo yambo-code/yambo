@@ -36,7 +36,7 @@ subroutine K_WF_phases(Xk)
  use interfaces,    ONLY:WF_apply_symm
  use timing_m,      ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Work Space
  !
@@ -44,9 +44,6 @@ subroutine K_WF_phases(Xk)
  !
  complex(SP) :: wf_cmp,WF_symm1(fft_size,n_spinor),WF_symm2(fft_size,n_spinor)
  integer     :: i_k,i_s,i_s_star,i_b,i_sp_pol,n_phases(1)
-!#ifdef _CUDA
-! attributes(device):: WF_symm1,WF_symm2
-!#endif
  
  if (.not.BS_res_K_corr) return 
  !

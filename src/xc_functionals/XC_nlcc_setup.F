@@ -23,7 +23,7 @@ subroutine XC_nlcc_setup()
  use parser_m,      ONLY:parser
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,REP
-#include <memory.h>
+#include <y_memory.h>
  !
  ! Work Space 
  !

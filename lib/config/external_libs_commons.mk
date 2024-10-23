@@ -17,6 +17,7 @@ if ! test -e configured.stamp && test -d $(PACKAGE); then \
  echo "\t[$(PACKAGE)] configuration"; \
  rm -f ${compdir}/log/config_$(PACKAGE).log; \
  CWD=`pwd`;\
+ echo "./configure $(CONFFLAGS)" >> ${compdir}/log/config_$(PACKAGE).log ; \
  cd $(PACKAGE);  ./configure $(CONFFLAGS) >> ${compdir}/log/config_$(PACKAGE).log 2>&1 ; \
  touch $$CWD/configured.stamp;\
 fi

@@ -21,10 +21,10 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  use stderr,        ONLY:intc,STRING_pack,gen_fmt
  use D_lattice,     ONLY:alat,a
  use timing_m,      ONLY:timing
- use cuda_m,        ONLY:have_cuda
  use parallel_m,    ONLY:master_cpu
  !
-#include<memory.h>
+#include<dev_defs.h>
+#include<y_memory.h>
  !
  type(X_t)    :: X
  type(w_samp) :: Xw
@@ -90,9 +90,9 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  if (io_err==0) then
    call timing('RIM-W-coeff',OPR='stop')
    YAMBO_FREE(f_coeff)
-   if (have_cuda) then
-     YAMBO_ALLOC_SOURCE(RIM_W_d,RIM_W)
-   endif
+#ifdef _GPU
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_W),RIM_W)
+#endif
    return
  endif
  !
@@ -377,9 +377,9 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
    io_err=io_RIM_W(ID,mode,Xw)
  endif
  !
- if (have_cuda) then
-   YAMBO_ALLOC_SOURCE(RIM_W_d,RIM_W)
- endif
+#ifdef _GPU
+ YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_W),RIM_W)
+#endif
  !
  YAMBO_FREE(f_coeff)
  !
@@ -390,7 +390,7 @@ subroutine find_q_nns(q,q_grid_b_iku,idx_q,idx_is,idx_G)
  use R_lattice,     ONLY:bz_samp,RIM_W_ng,g_vec,ng_vec,rl_sop
  use vec_operate,   ONLY:v_is_zero
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp):: q
  real(SP)     :: q_grid_b_iku(3,2)

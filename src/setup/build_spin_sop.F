@@ -5,18 +5,19 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+#include<dev_defs.h>
+!
 subroutine build_spin_sop()
  !
  use pars,           ONLY:SP,pi,cI,cONE
  use matrix_operate, ONLY:m3det
  use D_lattice,      ONLY:dl_sop,spin_sop,nsym,i_time_rev,&
 &                         sigma_0,sigma_x,sigma_y,sigma_z
-#if defined _CUDA
- use D_lattice,      ONLY:spin_sop_d
-#endif
+ use D_lattice,      ONLY:DEV_VAR(spin_sop)
  use electrons,      ONLY:n_spinor
+ use gpu_m,          ONLY:have_gpu
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  complex(SP)    ::t_rev(2,2)
  complex(SP)    ::spin_RX_delta(2,2),spin_RY_beta(2,2),spin_RZ_alpha(2,2)
@@ -88,9 +89,9 @@ subroutine build_spin_sop()
    !
  enddo
  !
-#if defined _CUDA
- if (allocated(spin_sop_d)) deallocate(spin_sop_d)
- allocate(spin_sop_d,source=spin_sop)
+#ifdef _GPU
+ YAMBO_FREE_GPU(DEV_VAR(spin_sop))
+ YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(spin_sop),spin_sop)
 #endif
  !
  ! DEBUG <

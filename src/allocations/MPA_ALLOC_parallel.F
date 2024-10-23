@@ -10,9 +10,9 @@ subroutine MPA_ALLOC_parallel(MPA_E_par,MPA_R_par,NG,NW,mode)
   use pars,          ONLY:SP,DP,cZERO,cONE,cI
   use matrix,        ONLY:MATRIX_reset,PAR_matrix
   use parallel_int,  ONLY:PARALLEL_live_message
-  use cuda_m,        ONLY:have_cuda
+  use gpu_m,         ONLY:have_gpu
   !
-#include <memory.h>
+#include <y_memory.h>
   !
   type(PAR_matrix) :: MPA_E_par,MPA_R_par
   integer          :: NG,NW
@@ -45,7 +45,7 @@ subroutine MPA_ALLOC_parallel(MPA_E_par,MPA_R_par,NG,NW,mode)
   YAMBO_ALLOC(MPA_E_par%blc,(MPA_rows(1):MPA_rows(2),MPA_cols(1):MPA_cols(2),NW))
   MPA_E_par%blc=cZERO
   !
-  if (have_cuda.and..not.l_CPU_ONLY) then
+  if (have_gpu.and..not.l_CPU_ONLY) then
     YAMBO_ALLOC(MPA_E_par%blc_d,(MPA_rows(1):MPA_rows(2),MPA_cols(1):MPA_cols(2),NW))
     MPA_E_par%blc_d=cZERO
   endif
@@ -53,7 +53,7 @@ subroutine MPA_ALLOC_parallel(MPA_E_par,MPA_R_par,NG,NW,mode)
   YAMBO_ALLOC(MPA_R_par%blc,(MPA_rows(1):MPA_rows(2),MPA_cols(1):MPA_cols(2),NW))
   MPA_R_par%blc=cZERO
   !
-  if (have_cuda.and..not.l_CPU_ONLY) then
+  if (have_gpu.and..not.l_CPU_ONLY) then
     YAMBO_ALLOC(MPA_R_par%blc_d,(MPA_rows(1):MPA_rows(2),MPA_cols(1):MPA_cols(2),NW))
     MPA_R_par%blc_d=cZERO
   endif

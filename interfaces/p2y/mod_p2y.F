@@ -19,7 +19,7 @@ module P2Ym
  use parallel_int,          ONLY : PP_bcast   
  use units,                 ONLY : Da2AU
  ! 
-#include<memory.h>
+#include<y_memory.h>
  !
  character(lchlen) :: index_filename
  character(lchlen) :: dftdata_fmt
@@ -310,7 +310,7 @@ contains
    use D_lattice,   ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species, &
 &                        atom_pos, Z_species,atomic_number,atom_mass,atoms_map
    ! 
-#include<memory.h>
+#include<y_memory.h>
    !
    ! Work Space
    !
@@ -548,7 +548,7 @@ contains
    use D_lattice,   ONLY:alat
    use vec_operate, ONLY:v_is_zero 
    !
-#include<memory.h> 
+#include<y_memory.h> 
    !
    type(bz_samp) :: k
    !
@@ -617,7 +617,7 @@ contains
    use pars,        only: pi
    use R_lattice,   ONLY: b, ng_vec, g_vec
    use D_lattice,   ONLY: alat
-#include<memory.h>
+#include<y_memory.h>
    !
    YAMBO_ALLOC(g_vec,(ng_vec,3)) ! The YAMBO array
    !

@@ -60,7 +60,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use yaml_output,    ONLY:yaml_close_stream
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)     ::E
  character(*)     ::instr

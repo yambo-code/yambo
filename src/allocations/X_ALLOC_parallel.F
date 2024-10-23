@@ -13,9 +13,11 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
  use X_m,           ONLY:X_par_lower_triangle,X_rows,X_cols,&
 &                        X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
  use parallel_int,  ONLY:PARALLEL_live_message
- use cuda_m,        ONLY:have_cuda
+ use gpu_m,         ONLY:have_gpu
+ use devxlib,       ONLY:devxlib_memset_d
  !
-#include<memory.h>
+#include<dev_defs.h>
+#include<y_memory.h>
  !
  type(PAR_matrix) :: X_par
  integer          :: NG,NW
@@ -44,11 +46,15 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
  endif
  !
  X_rows = X_par%rows
+ !DEV_ACC update device(X_rows)
  X_cols = X_par%cols
+ !DEV_ACC update device(X_cols)
  !
  if (l_XUP.and..not.X_FILL_UP_matrix_only.and.X_par%INTER_comm%n_CPU>1) then
    !
    call MATRIX_reset(X_par_lower_triangle)
+   !DEV_ACC enter data copyin(X_par_lower_triangle)
+   !
    X_lower_triangle_matrix_in_use=.TRUE.
    X_par_lower_triangle%kind ="XDN"
    X_par_lower_triangle%rows =X_par%cols
@@ -58,9 +64,10 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
    !
    YAMBO_ALLOC(X_par_lower_triangle%blc,(X_par%cols(1):X_par%cols(2),X_par%rows(1):X_par%rows(2),NW))
    X_par_lower_triangle%blc=cZERO
-   if (have_cuda.and..not.l_CPU_ONLY) then
-     YAMBO_ALLOC(X_par_lower_triangle%blc_d,(X_par%cols(1):X_par%cols(2),X_par%rows(1):X_par%rows(2),NW))
-     X_par_lower_triangle%blc_d=cZERO
+   !
+   if (have_gpu.and..not.l_CPU_ONLY) then
+     YAMBO_ALLOC_GPU(DEV_VAR(X_par_lower_triangle%blc),(X_par%cols(1):X_par%cols(2),X_par%rows(1):X_par%rows(2),NW))
+     call devxlib_memset_d(DEV_VAR(X_par_lower_triangle%blc),cZERO)
    endif
    !
    call COMM_copy(PAR_COM_RL_A2A,   X_par_lower_triangle%INTRA_comm)
@@ -69,9 +76,9 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
  !
  YAMBO_ALLOC(X_par%blc,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),NW))
  X_par%blc=cZERO
- if (have_cuda.and..not.l_CPU_ONLY) then
-   YAMBO_ALLOC(X_par%blc_d,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),NW))
-   X_par%blc_d=cZERO
+ if (have_gpu.and..not.l_CPU_ONLY) then
+   YAMBO_ALLOC_GPU(DEV_VAR(X_par%blc),(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),NW))
+   call devxlib_memset_d(DEV_VAR(X_par%blc),cZERO)
  endif
  !
  call PARALLEL_live_message("RL vectors(X)",LOADED=X_par%ncols*X_par%nrows,TOTAL=NG**2,NCPU=X_par%INTER_comm%n_CPU)

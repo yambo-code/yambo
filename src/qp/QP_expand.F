@@ -13,7 +13,7 @@ subroutine QP_expand(k,qp,qp_expanded)
  use electrons,     ONLY:n_sp_pol
  use descriptors,   ONLY:IO_desc_duplicate
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp)    ::k
  type(QP_t)       ::qp,qp_expanded

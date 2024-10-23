@@ -11,7 +11,7 @@ subroutine eval_R_minus_R()
  ! 
  use FFT_m,     ONLY:fft_size,fft_dim,modx
  use D_lattice, ONLY:R_m_R
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Work Space
  ! 

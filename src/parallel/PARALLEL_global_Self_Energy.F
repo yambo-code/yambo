@@ -52,7 +52,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use ELPH,          ONLY:elph_use_q_grid
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q

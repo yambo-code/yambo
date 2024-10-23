@@ -15,7 +15,7 @@ subroutine K_IP_sort(what,I,N,Indexes,vI,El,vC)
  use units,         ONLY:HA2EV
  use parallel_int,  ONLY:PP_redux_wait
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*)  ::what
  integer       ::I,N,Indexes(5),vI(BS_H_dim,5)

@@ -19,7 +19,7 @@ integer function io_ELPH(ID,what)
  use D_lattice,      ONLY:n_atoms
  use timing_m,       ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer      ::ID
  character(*) ::what

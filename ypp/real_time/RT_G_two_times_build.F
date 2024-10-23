@@ -27,7 +27,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  use YPP_real_time,  ONLY:RT_time,RT_conf,GreenF_T_and_W,Rho_deph
  use LIVE_t,         ONLY:live_timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels),  intent(in)    :: en
  type(bz_samp), intent(in)    :: kpt,qpt

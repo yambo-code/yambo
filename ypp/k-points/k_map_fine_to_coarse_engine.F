@@ -15,7 +15,7 @@ subroutine k_map_fine_to_coarse_engine(zone,pts_fg,N_pts_fg,pts_cg,N_pts_cg,MAP)
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:msg
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*)      , intent(in)    :: zone
  integer           , intent(in)    :: N_pts_fg,N_pts_cg

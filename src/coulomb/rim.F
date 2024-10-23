@@ -22,7 +22,7 @@ subroutine rim(mode,Xw)
  use timing_m,      ONLY:timing
  use frequency,     ONLY:w_samp
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(1)   :: mode
  type(w_samp)   :: Xw

@@ -5,6 +5,8 @@
 !
 ! Authors (see AUTHORS file for details): DALV AF AM
 ! 
+#include<dev_defs.h>
+!
 subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Multipole approximation to the Correlation Self-Energy
@@ -29,22 +31,21 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  &                       io_RESPONSE,io_MULTIPOLE,deliver_IO_error_message
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_Sc_steps,QP_dSc_steps,QP_solver,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta
- use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t,X_par
+ use X_m,           ONLY:X_ALLOC_elemental,X_t,X_par
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,RIM_W_ng,RIM_W
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use interfaces,    ONLY:QP_state_print,WF_load,WF_free,MATRIX_transpose
  use timing_m,      ONLY:timing
- use mpa_m,         ONLY:mpa_RE_solver,err_func_X,MPA_freqs,MPA_alloc,MPA_free,MPA_E_par,MPA_R_par,&
-&                        MPA_E_par_d,MPA_R_par_d
+ use mpa_m,         ONLY:mpa_RE_solver,err_func_X,MPA_freqs,MPA_alloc,MPA_free,&
+&                        MPA_E_par,MPA_R_par
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
- use deviceXlib_m,  ONLY:dev_memcpy
- use cuda_m,        ONLY:have_cuda
+ use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memcpy_d2d
+ use gpu_m,         ONLY:have_gpu
  !
-#include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)        ::E
  type(bz_samp)       ::Xk,k,q
@@ -276,8 +277,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      X_range=(/1,Xw%n_freqs/)
      if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
      !
-     call DEV_SUB(scatter_Gamp)(isc,'c')
-     if (have_cuda) call dev_memcpy(isc%gamp,isc%gamp_d)
+     call scatter_Gamp_gpu(isc,'c')
+     if (have_gpu) call devxlib_memcpy_d2h(isc%gamp,DEV_VAR(isc%gamp))
      !
      ! I/O
      !
@@ -393,8 +394,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      X_is_TR_rotated=.true.
    endif
    !
-#ifdef _CUDA
-   if (have_cuda) then
+#ifdef _GPU
+   if (have_gpu) then
       YAMBO_ALLOC_SOURCE( DEV_VAR(MPA_E_par(1)%blc), MPA_E_par(1)%blc )
       YAMBO_ALLOC_SOURCE( DEV_VAR(MPA_R_par(1)%blc), MPA_R_par(1)%blc )
    endif
@@ -434,13 +435,14 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        isc%os(1)=ib
        !
-       call DEV_SUB(scatter_Bamp)(isc)
+       call scatter_Bamp_gpu(isc)
        iscp%os=isc%os
        !
        if (any(isc%is/=iscp%is))  then
          call scatter_Bamp(iscp)
        else
-         call dev_memcpy(iscp_rhotw_p, isc_rhotw_p)
+         if (     have_gpu) call devxlib_memcpy_d2d(iscp_rhotw_p, isc_rhotw_p)
+         if (.not.have_gpu) iscp_rhotw_p=isc_rhotw_p
        endif
        !
        dc=cZERO
@@ -457,10 +459,16 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          W_1=W_(1)
          W_i=W_(i_w)
          !
+         !DEV_ACC_DEBUG data present(MPA_E_par_p,MPA_R_par_p,isc_rhotw_p,iscp_rhotw_p,isc_gamp_p)
+         !DEV_ACC parallel loop collapse(3) private(i_np,ig1,ig2,bose_PPA_E,ctmp,l_RIM_W_g) &
+         !DEV_ACC               reduction(+:dp_dummy_r,dp_dummy_i)
+         !DEV_CUF kernel do(3)
+         !DEV_OMPGPU target map(present,alloc:MPA_E_par_p,MPA_R_par_p,isc_gamp_p,isc_rhotw_p,iscp_rhotw_p) &
+         !DEV_OMPGPU &      map(tofrom:dp_dummy_r,dp_dummy_i)
+         !DEV_OMPGPU teams loop collapse(3) private(i_np,ig1,ig2,bose_PPA_E,ctmp,l_RIM_W_g) &
+         !DEV_OMPGPU &        reduction(+:dp_dummy_r,dp_dummy_i)
          !DEV_OMP parallel do default(shared), private(i_np,ig1,ig2,bose_PPA_E,ctmp,l_RIM_W_g), &
          !DEV_OMP &           reduction(+:dp_dummy), collapse(3)
-         !
-         !DEV_CUF kernel do(3)
          !
          do i_np=1,X_mpa_npoles
            do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
@@ -506,7 +514,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
                  !
                endif
                !
-#ifdef _CUDA
+#ifdef _GPU
                dp_dummy_r=dp_dummy_r+real(ctmp,DP)
                dp_dummy_i=dp_dummy_i+imag(ctmp)
 #else
@@ -517,9 +525,11 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
            enddo
          enddo
          !
+         !DEV_OMPGPU end target
+         !DEV_ACC_DEBUG end data
          !DEV_OMP end parallel do
          !
-         if (have_cuda) dp_dummy=cmplx(dp_dummy_r,dp_dummy_i,kind=DP)
+         if (have_gpu) dp_dummy=cmplx(dp_dummy_r,dp_dummy_i,kind=DP)
          !
          dc(i_w) = cmplx(dp_dummy,KIND=SP)
          !

@@ -193,12 +193,12 @@
 #  macros should be obvious from the names.
 #=============================================================================
    F77            = $(fc)
-   F77NO_OPTFLAGS = $(fcuflags) 
+   F77NO_OPTFLAGS = $(fcuflags)
    F77FLAGS       = $(fcflags)
    F77LOADER      = $(fc)
-   F77LOADFLAGS   = $(fcflags) 
+   F77LOADFLAGS   = $(fcflags)
    CC             = $(cc)
-   CCFLAGS        = $(ccflags) 
+   CCFLAGS        = $(cflags)
    CCLOADER       = $(cc)
    CCLOADFLAGS    = $(cflags)
 

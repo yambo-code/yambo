@@ -110,6 +110,13 @@ if test "$internal_slk" = "yes" ; then
   if test "$compile_slk" = "no" ; then SLK_check="I"; fi
 fi
 #
+ELPA_check="-"
+if test "$enable_elpa" = "yes" ; then ELPA_check="E"; fi
+if test "$internal_elpa" = "yes" ; then
+  if test "$compile_elpa" = "yes"; then ELPA_check="C"; fi
+  if test "$compile_elpa" = "no" ; then ELPA_check="I"; fi
+fi
+#
 BLACS_check="-"
 if test "$enable_scalapack" = "yes" ; then BLACS_check="E"; fi
 if test "$internal_blacs" = "yes" ; then
@@ -222,6 +229,7 @@ AC_SUBST(BLAS_check)
 AC_SUBST(LAPACK_check)
 AC_SUBST(BLACS_check)
 AC_SUBST(SLK_check)
+AC_SUBST(ELPA_check)
 AC_SUBST(PETSC_check)
 AC_SUBST(SLEPC_check)
 #
@@ -235,6 +243,13 @@ AC_SUBST(MPI_check)
 AC_SUBST(MPI_info)
 #
 # STRIPE [LIB] from paths
+#
+ACX_STRIPE_SUBPATH2($YDIAGO_LIBS,"LIB")
+YDIAGO_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH2($YDIAGO_INCS,"INC")
+YDIAGO_INCS_R=$STRIPE
+AC_SUBST(YDIAGO_LIBS_R)
+AC_SUBST(YDIAGO_INCS_R)
 #
 ACX_STRIPE_SUBPATH($IOTK_LIBS,"LIB")
 IOTK_LIBS_R=$STRIPE
@@ -312,6 +327,13 @@ ACX_STRIPE_SUBPATH($SCALAPACK_INCS,"INC")
 SCALAPACK_INCS_R=$STRIPE
 AC_SUBST(SCALAPACK_LIBS_R)
 AC_SUBST(SCALAPACK_INCS_R)
+#
+ACX_STRIPE_SUBPATH($ELPA_LIBS,"LIB")
+ELPA_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($ELPA_INCS,"INC")
+ELPA_INCS_R=$STRIPE
+AC_SUBST(ELPA_LIBS_R)
+AC_SUBST(ELPA_INCS_R)
 #
 ACX_STRIPE_SUBPATH($BLACS_LIBS,"LIB")
 BLACS_LIBS_R=$STRIPE

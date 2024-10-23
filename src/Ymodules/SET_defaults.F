@@ -50,7 +50,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,BSS_P_dir,BSS_E_dir,BSS_Q_dir,&
 &                     Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
-&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH,BSS_desc
+&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH,BSS_desc,BSS_ydiago_solver
  use descriptors,ONLY:IO_desc_reset
 #if defined _SLEPC && !defined _NL
  use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_maxit,&
@@ -447,6 +447,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BS_K_cutoff=0.0000_SP
  BSS_mode=' '
  BSS_inversion_mode='pf'
+ BSS_ydiago_solver='s'
+#if defined _ELPA
+ BSS_ydiago_solver='e'
+#endif
  BSS_er=(/0._SP,10._SP/)/HA2EV
  BSS_dr=0.1_SP/HA2EV
  BSS_E_dir=(/1._SP,0._SP,0._SP/)

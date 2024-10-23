@@ -84,6 +84,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
 #ifdef _GPU
  YAMBO_FREE_GPU(DEV_VAR(g_vec))
  YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
+ if(l_eval_DIP_P2) call warning("P2 not coded with GPUs, CPU only algorithm for it")
 #endif
  !
  l_use_comm=l_eval_dip_V.or.l_eval_dip_iR

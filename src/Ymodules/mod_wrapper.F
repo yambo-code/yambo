@@ -238,8 +238,8 @@ module wrapper
      real(SP), intent(in) :: ALPHA,BETA
      integer,  intent(in) :: INCX,INCY,LDA,M,N
      character,intent(in) :: TRANS
-     real(SP), device, intent(in) :: A(LDA,*),X(*)
-     real(SP), device, intent(out):: Y(*)
+     real(SP) DEV_ATTR, intent(in) :: A(LDA,*),X(*)
+     real(SP) DEV_ATTR, intent(out):: Y(*)
 #if defined _DOUBLE
      call cublasDgemv(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
 #else
@@ -266,8 +266,8 @@ module wrapper
      complex(SP), intent(in) :: ALPHA,BETA
      integer,     intent(in) :: INCX,INCY,LDA,M,N
      character,   intent(in) :: TRANS
-     complex(SP), device, intent(in) :: A(LDA,*),X(*)
-     complex(SP), device, intent(out):: Y(*)
+     complex(SP) DEV_ATTR, intent(in) :: A(LDA,*),X(*)
+     complex(SP) DEV_ATTR, intent(out):: Y(*)
 #if defined _DOUBLE
      call cublasZgemv(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
 #else

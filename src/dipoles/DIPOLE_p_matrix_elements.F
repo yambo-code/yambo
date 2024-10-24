@@ -120,10 +120,6 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
    !
  enddo
  !
- if(l_eval_P2) then
-   call error("P2 not coded with GPUs")
- endif
- !
 #else
    !
    wf_grad=cZERO
@@ -169,23 +165,23 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
      !
    endif
    !
-enddo
+ enddo
+ !
+#endif
  !
  if(l_eval_P2) then
    !DEV_OMP parallel do default(shared), private(ic,ig,i_spinor), collapse(2)
    do i_spinor=1,n_spinor
      do ic=1,wf_nc_k(ik)
        ig=wf_igk(ic,ik)
-       wf_der_sq(ic,i_spinor) = WF_p(ic,i_spinor,iv_wf) *  & 
+       wf_der_sq(ic,i_spinor) = WF%c(ic,i_spinor,iv_wf) *  &
 &                      ( (Xk%pt(ik,1) + g_vec(ig,1))**2 * (2.0_SP*pi/alat(1))**2  &
 &                      + (Xk%pt(ik,2) + g_vec(ig,2))**2 * (2.0_SP*pi/alat(2))**2  &
 &                      + (Xk%pt(ik,3) + g_vec(ig,3))**2 * (2.0_SP*pi/alat(3))**2 )
      enddo
    enddo
    !DEV_OMP end parallel do
-   P2=Vstar_dot_V_omp(wf_nc_k(ik)*n_spinor,wf_der_sq(:wf_nc_k(ik),:),WF_p(:wf_nc_k(ik),:,ic_wf))
+   P2=Vstar_dot_V_omp(wf_nc_k(ik)*n_spinor,wf_der_sq(:wf_nc_k(ik),:),WF%c(:wf_nc_k(ik),:,ic_wf))
  endif
- !
-#endif
  !
 end subroutine

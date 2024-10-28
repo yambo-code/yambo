@@ -155,7 +155,7 @@ subroutine k_find_smallest_g0(g0_idx,g0_length)
  !
  ! Find the smallest G0 in each direction
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP
  use vec_operate,    ONLY:c2a
  use R_lattice,      ONLY:g_vec,ng_closed
  use com,            ONLY:msg                                                                                   

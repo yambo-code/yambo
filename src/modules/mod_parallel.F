@@ -179,17 +179,6 @@ module parallel_m
    integer,allocatable :: table(:)
  end type
  !
- ! ... GENERAL 
- !-------------
- !type(PAR_scheme),SAVE :: PARs_K_ibz
- !type(PAR_scheme),SAVE :: PARs_G_b
- !type(PAR_scheme),SAVE :: PARs_Q_bz
- !
- ! ... DIPOLES 
- !-------------
- !type(PAR_scheme),SAVE :: PARs_DIP_K_ibz
- !type(PAR_scheme),SAVE :: PARs_DIP_K_bz
- !
  ! ... PH Self Energy
  !--------------------
  type(PAR_scheme),SAVE :: PARs_PH_Q_ibz

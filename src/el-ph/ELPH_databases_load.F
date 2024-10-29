@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM FP
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,q_range,K_mode,SCATT_mode)
  ! 
  ! mode can be combination of
@@ -24,7 +28,9 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,q_range,K_mode,SCATT_mode)
  use parallel_m,     ONLY:PAR_Q_bz_index,PAR_IND_Q_bz,PAR_nQ_bz,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
 &                         PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX,PARs_PH_Q_ibz,PARs_PH_Q_ibz
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  ! 
  integer,      intent(in)    :: n_bands(2),q_range(2)
  type(levels), intent(in)    :: E

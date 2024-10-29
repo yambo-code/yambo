@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM, DS
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 !************************* WARNING **************************
 !* In this subroutine there is a bug for finite q (iq/=1)   *
 !* plus spin-orbit that we were not able to solve yet.      * 
@@ -14,7 +19,6 @@
 !* iq/=1 and spin_orbit is present.                         *
 !************************************************************
 !
-#include<dev_defs.h>
 !
 function K_correlation_kernel_std(i_block,i_p,i_pmq,                               &
 &                                 i_k_s,i_kp_s,i_n_k,i_n_p,i_kmq_s,i_kp_mq_s,i_m_k,i_m_p,  &
@@ -29,7 +33,9 @@ function K_correlation_kernel_std(i_block,i_p,i_pmq,                            
  use wrapper,      ONLY:V_by_V_pwise_gpu,Vstar_dot_V_gpu
  use devxlib,      ONLY:devxlib_conjg,devxlib_xgemv_gpu
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer,     intent(in) :: i_block,i_p,i_pmq,                                            &
 &                                 i_k_s,i_kp_s,i_n_k,i_n_p,i_kmq_s,i_kp_mq_s,i_m_k,i_m_p, &

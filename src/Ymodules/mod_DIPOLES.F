@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include <dev_defs.h>
+#include <y_memory.h>
+!
 module DIPOLES
  !
  use pars,          ONLY:SP,lchlen,schlen
@@ -12,8 +17,9 @@ module DIPOLES
  use descriptors,   ONLY:IO_desc
  use gpu_m,         ONLY:have_gpu
  !
-#include <dev_defs.h>
-#include <y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! Logicals
  !

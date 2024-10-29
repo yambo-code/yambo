@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM MG DS
 !
+! headers
+!
+#include <y_memory.h>
+!
 subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
  !
  ! Here I fill the kernel (coupling included) in an entire BIG matrix to be
@@ -19,7 +23,9 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
 &                         BSS_eh_E,BSS_eh_W
  use timing_m,       ONLY:timing
  !
-#include <y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer,      intent(in) :: i_BS_mat,iq
  character(*), intent(in) :: what

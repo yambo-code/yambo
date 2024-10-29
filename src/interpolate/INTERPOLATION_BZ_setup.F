@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine INTERPOLATION_BZ_setup(Xk)
  !
  ! Code inspired by BolzTraP
@@ -20,7 +24,9 @@ subroutine INTERPOLATION_BZ_setup(Xk)
  use matrix_operate,    ONLY:m3inv
  use com,               ONLY:msg
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp) :: Xk
  !

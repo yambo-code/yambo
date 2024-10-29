@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): DALV,AF
 !
+! headers
+!
+#include <y_memory.h>
+#include <dev_defs.h>
+!
 !------------------------------------------------------------
 ! Multipole interpolation:
 !                         - analytical solution for 1-3 poles
@@ -35,8 +40,9 @@ module mpa_m
  use matrix,          ONLY:PAR_matrix
  use gpu_m,           ONLY:have_gpu
  !
-#include <y_memory.h>
-#include <dev_defs.h>
+ USE_MEMORY
+ !
+ implicit none
 
  complex(SP),      allocatable, target :: MPA_freqs(:)
  type(PAR_matrix), allocatable, target :: MPA_E_par(:)

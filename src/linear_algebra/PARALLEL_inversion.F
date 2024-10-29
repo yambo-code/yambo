@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! Copyright (C) 2004 WanT Group
 !
 ! This file is distributed under the terms of the
@@ -16,6 +20,10 @@
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_inversion(M,N)
  !
  ! perform the inversion by using scalapack
@@ -25,7 +33,9 @@ subroutine PARALLEL_inversion(M,N)
 &                         LINEAR_ALGEBRA_WS_reset
  use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer           :: N
  type(PAR_matrix)  :: M

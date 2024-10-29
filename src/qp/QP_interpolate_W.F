@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AG
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 subroutine QP_interpolate_W(X,Xw,q,mode)
  !
  use pars,          ONLY:SP,pi,zero_dfl,schlen,DP,rZERO
@@ -23,8 +28,9 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  use timing_m,      ONLY:timing
  use parallel_m,    ONLY:master_cpu
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(X_t)    :: X
  type(w_samp) :: Xw
@@ -390,7 +396,9 @@ subroutine find_q_nns(q,q_grid_b_iku,idx_q,idx_is,idx_G)
  use R_lattice,     ONLY:bz_samp,RIM_W_ng,g_vec,ng_vec,rl_sop
  use vec_operate,   ONLY:v_is_zero
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp):: q
  real(SP)     :: q_grid_b_iku(3,2)

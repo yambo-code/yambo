@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_COL_CUT(ID)
  !
  use wave_func,      ONLY:wf_ng,cutoff_ng
@@ -14,7 +18,9 @@ integer function io_COL_CUT(ID)
  use IO_m,           ONLY:io_sec,io_status
  use IO_int,         ONLY:io_connect,io_disconnect,io_header,io_elemental,io_bulk
  use timing_m,       ONLY:timing
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer :: ID
  ! 

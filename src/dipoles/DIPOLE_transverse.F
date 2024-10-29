@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine Dipole_transverse(Xen,Xk,Dip)
  !
@@ -33,7 +37,9 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use gpu_m,               ONLY:have_gpu,  gpu_devsync
  use devxlib,             ONLY:devxlib_memcpy_h2d,devxlib_memset_d
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen

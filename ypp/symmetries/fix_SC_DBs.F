@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine fix_SC_DBs(k,k_save,kpoints_map)
  !
  use pars,                ONLY:SP,lchlen
@@ -18,7 +22,9 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map)
  use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp,nkibz
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp),intent(in) :: k
  type(bz_samp),intent(in) :: k_save

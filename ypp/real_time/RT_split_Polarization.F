@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  !
  use pars,           ONLY:SP,cI,schlen,DP
@@ -17,7 +21,9 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  !
  ! Fourier
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer,     intent(in)   :: nt,nh
  real(SP),    intent(inout):: P(nt,3),W(nh)

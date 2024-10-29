@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine TDDFT_do_X_W_typs(iq,X,wv)
  !
  ! Prepare X and wv types for a TDDFT calculation
@@ -21,7 +25,9 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,VERIFY,REP
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(X_t)   :: X
  type(w_samp):: wv

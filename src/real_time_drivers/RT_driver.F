@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM CA DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_driver(E,X,k,q,Dip)
  !
  use pars,           ONLY:SP,lchlen
@@ -45,7 +49,9 @@ subroutine RT_driver(E,X,k,q,Dip)
  use units,           ONLY:FS2AUT
  use RT_lifetimes,    ONLY:l_initial_equilibrium
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! Notice that E is never changed!
  !

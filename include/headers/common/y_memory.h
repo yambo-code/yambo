@@ -3,14 +3,18 @@
  
   Copyright (C) 2016 The Yambo Team
  
-  Authors (see AUTHORS file for details): HM AM
+  Authors (see AUTHORS file for details): HM AM DS
  
 */
- use y_memory,     ONLY:MEM_err,MEM_msg,MEM_count,MEM_count_d,MEM_global_mesg,IPL
+
 #if defined _OPENACC || defined _OPENMP_GPU
+#define USE_MEMORY \
+ use y_memory,     ONLY:MEM_err,MEM_msg,MEM_count,MEM_count_d,MEM_global_mesg,IPL NEWLINE \
  use devxlib,      ONLY:devxlib_map,devxlib_unmap,devxlib_mapped,devxlib_memcpy_h2d
+#else
+#define USE_MEMORY \
+ use y_memory,     ONLY:MEM_err,MEM_msg,MEM_count,MEM_count_d,MEM_global_mesg,IPL
 #endif
- implicit none
 
 #if defined _MPI
 

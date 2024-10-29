@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
+! headers
+!
+#include<y_memory.h> 
+!
 subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,report)
  !
  ! This subroutine read and interpolate exciton 
@@ -18,7 +22,9 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,report)
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  !
-#include<y_memory.h> 
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp) ::Xk,k,q
  type(levels)  ::Xen,en

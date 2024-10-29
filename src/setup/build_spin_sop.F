@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine build_spin_sop()
  !
@@ -17,7 +21,9 @@ subroutine build_spin_sop()
  use electrons,      ONLY:n_spinor
  use gpu_m,          ONLY:have_gpu
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  complex(SP)    ::t_rev(2,2)
  complex(SP)    ::spin_RX_delta(2,2),spin_RY_beta(2,2),spin_RZ_alpha(2,2)

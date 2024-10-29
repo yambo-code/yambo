@@ -1,5 +1,4 @@
 
-#include <dev_defs.h>
 
 !====================
 module dev_memory_m

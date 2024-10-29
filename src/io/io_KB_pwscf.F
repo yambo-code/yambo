@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_KB_pwscf(ID)
  !
  use pars,             ONLY:SP
@@ -20,7 +24,9 @@ integer function io_KB_pwscf(ID)
 &                           PP_alloc_pwscf
  use timing_m,       ONLY:timing
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer,intent(in) :: ID
  ! 

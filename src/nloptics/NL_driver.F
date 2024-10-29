@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine NL_driver(E,X,Xw,k,q,Dip)
  !
  use pars,           ONLY:pi,SP,cZERO,cONE,schlen
@@ -37,7 +41,9 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use collision_ext,  ONLY:ng_oscll,OSCLL,W
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! Notice that E is never changed!
  !

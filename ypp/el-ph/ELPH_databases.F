@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine ELPH_databases(k,E,q)
  !
  use units,               ONLY:HA2EV
@@ -28,7 +32,9 @@ subroutine ELPH_databases(k,E,q)
  use IO_m,                ONLY:OP_APP_CL,REP,OP_RD_CL
  use parallel_int,        ONLY:PARALLEL_global_indexes
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp) ::k,q
  type(levels)  ::E

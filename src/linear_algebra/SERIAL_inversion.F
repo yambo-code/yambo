@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine SERIAL_inversion(n,M,det,eval_det)
  !
  use pars,           ONLY: SP,cONE
@@ -12,7 +16,9 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  use linear_algebra, ONLY: LINEAR_ALGEBRA_error,LU_factorization,LU_inversion,&
 &                          LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY: timing
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer           :: n
  complex(SP)       :: M(n,n),det

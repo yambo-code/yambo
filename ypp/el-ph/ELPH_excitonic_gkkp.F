@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine ELPH_excitonic_gkkp(Xk)
  !
  use pars,                ONLY:SP,schlen,cZERO
@@ -24,7 +28,9 @@ subroutine ELPH_excitonic_gkkp(Xk)
  use stderr,              ONLY:intc
  use YPPm,                ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp) :: Xk
  !

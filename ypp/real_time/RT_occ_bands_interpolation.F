@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_occ_bands_interpolation(en,k,q,n_T_steps)
  !
  use pars,           ONLY:SP,schlen,rZERO
@@ -24,7 +28,9 @@ subroutine RT_occ_bands_interpolation(en,k,q,n_T_steps)
 &                         INTERP_obj,INTERP_mode,GRID_k
  use LIVE_t,         ONLY:live_timing
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer,       intent(in)    :: n_T_steps
  type(bz_samp), intent(in)    :: k,q

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS AF
 !
+! headers
+!
+#include <y_memory.h>
+!
 module pseudo
  !
  use pars,        ONLY:SP,DP,LP
@@ -13,7 +17,9 @@ module pseudo
  use D_lattice,   ONLY:n_atomic_species,n_atoms_species
  use qe_pseudo_m, ONLY:qe_pseudo_deallocate, qe_pseudo_allocate,&
 &                      bec_type, deallocate_bec_type
-#include <y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! *** Non-Local pseudo. The [r,Vnl] commutator ***
  !

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MG
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  !
  !  Exchange KLI/CEDA
@@ -38,7 +42,9 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  !
  ! I/O
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  real(SP),    intent(out):: Vkli(fft_size)
  real(SP),    intent(in) :: Vslt(fft_size),rho(fft_size)
  complex(SP), intent(in) :: U(nkibz,maxval(n_met_bands),fft_size)

@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine fft_free()
  !
@@ -30,7 +34,9 @@ subroutine fft_free()
 #  endif
 #endif
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer :: ierr
  !

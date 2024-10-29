@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  !
  ! Important:
@@ -29,7 +33,9 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  use units,          ONLY:SPEED_OF_LIGHT
  use com,            ONLY:msg,of_open_close
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! Input variables
  integer                  :: nkpt_angular(2), nband_angular(2)

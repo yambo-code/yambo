@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_KB_abinit(ID)
  !
  use pars,             ONLY:SP
@@ -19,7 +23,9 @@ integer function io_KB_abinit(ID)
  use IO_int,           ONLY:io_connect,io_disconnect,io_fragment, &
 &                           io_elemental,io_bulk,io_header,ver_is_gt_or_eq
  use timing_m,         ONLY:timing
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer,       intent(in) :: ID
  !

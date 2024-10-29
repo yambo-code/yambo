@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include <dev_defs.h>
+#include <y_memory.h>
+!
 module X_m
  !
  use descriptors,    ONLY:IO_desc
@@ -14,8 +19,9 @@ module X_m
  use OUTPUT,         ONLY:N_MAX_columns
  use gpu_m,          ONLY:have_gpu
  !
-#include <dev_defs.h>
-#include <y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! Observables
  !

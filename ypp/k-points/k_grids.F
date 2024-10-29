@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine k_grids(en,k,Xk,q)
  !
  use pars,                ONLY:SP,schlen,zero_dfl
@@ -23,7 +27,9 @@ subroutine k_grids(en,k,Xk,q)
  use zeros,               ONLY:k_iku_zero
  use YPP_interfaces,      ONLY:k_special
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels) ::en       
  type(bz_samp)::k,Xk,q

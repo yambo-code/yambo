@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_SC_components(what,E_sc,ID)
  !
  ! what can be E WF V OBSERVABLES (J,P,D...) G
@@ -23,7 +27,9 @@ integer function io_SC_components(what,E_sc,ID)
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:levels,n_sp_pol,n_spin
  use timing_m,      ONLY:timing
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer, intent(in)      :: ID
  type(levels)             :: E_sc

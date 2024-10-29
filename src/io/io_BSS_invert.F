@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_BSS_invert(iq,W,ID)
  !
  use units,         ONLY:HA2EV
@@ -15,7 +19,9 @@ integer function io_BSS_invert(iq,W,ID)
  use IO_m,          ONLY:io_sec,io_status,read_is_on
  use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header
  use timing_m,      ONLY:timing
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  integer      :: iq
  type(w_samp) :: W
  !

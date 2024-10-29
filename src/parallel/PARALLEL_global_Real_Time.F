@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  use drivers,       ONLY:l_eval_collisions
@@ -34,7 +38,9 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,&
 &                        PAR_IND_DIPk_ibz_ID,PAR_IND_Q_bz_ID,PAR_IND_WF_b_ID
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q

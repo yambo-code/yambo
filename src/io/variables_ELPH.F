@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM AC
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function variables_ELPH(ID,what)
  !
  use pars,           ONLY:SP
@@ -20,7 +24,9 @@ integer function variables_ELPH(ID,what)
  use zeros,          ONLY:k_rlu_zero
  use descriptors,    ONLY:IO_desc_reset
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer, intent(in) ::ID
  character(*) ::what

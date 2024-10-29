@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QP_state_print(qp)
  !
  ! Print the contents of the QP_state logical array
@@ -15,7 +19,9 @@ subroutine QP_state_print(qp)
  use stderr,        ONLY:intc
  use descriptors,   ONLY:IO_desc_add
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(QP_t), optional :: qp    
  !

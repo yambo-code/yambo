@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  !
  use pars,          ONLY:SP,IP,pi,cZERO,cI
@@ -32,7 +36,9 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  use timing_m,      ONLY:timing
  use vec_operate,   ONLY:v_rotate,cross_product
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer       ::iq
  type(levels)  ::Ken

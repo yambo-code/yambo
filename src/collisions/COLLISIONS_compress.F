@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! This subroutine works directly with collisions in single-precision
 ! if present
 !
@@ -14,7 +18,9 @@ subroutine COLLISIONS_compress(COLL)
  use collision_ext,   ONLY:COLLISIONS_element,COLL_bands,COLLISIONS_cutoff
  use R_lattice,       ONLY:nXkibz
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(COLLISIONS_element), intent(inout) :: COLL
  !

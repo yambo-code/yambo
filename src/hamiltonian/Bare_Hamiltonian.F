@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DV DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine Bare_Hamiltonian(E,Xk,k)
  !
  use pars,           ONLY:cZERO
@@ -30,7 +34,9 @@ subroutine Bare_Hamiltonian(E,Xk,k)
 #if defined _SC
  use drivers,        ONLY:l_sc_magnetic
 #endif
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)             :: E
  type(bz_samp)            :: Xk,k

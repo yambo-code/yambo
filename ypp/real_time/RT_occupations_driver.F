@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_occupations_driver(k,q,en)
  !
  use drivers,        ONLY:l_rt_carriers_in_use
@@ -18,7 +22,9 @@ subroutine RT_occupations_driver(k,q,en)
  use YPPm,           ONLY:DIPs_mask,l_dipoles,DIPs,DIPs_V_bands
  use YPP_real_time,  ONLY:l_RT_time,l_RT_energy,l_RT_bands,l_RT_dos,RT_conf
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp) :: k,q
  type(levels)  :: en

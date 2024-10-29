@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_start_and_restart(E,k,q)
  !
  ! This subroutine initialize some variables and restart from SC
@@ -51,7 +55,9 @@ subroutine RT_start_and_restart(E,k,q)
  use parallel_int,   ONLY:PP_wait,PP_redux_wait
  use RT_output_m,    ONLY:RT_desc,TIME_STEP_desc,Gr_desc
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)      :: E
  type(bz_samp)     :: k,q

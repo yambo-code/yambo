@@ -4,6 +4,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
 ! modify it under the terms of the GNU General Public 
@@ -32,7 +36,9 @@ subroutine MATRIX_transpose( operation, M_in, M_out )
  !
  use interfaces,     ONLY:MATRIX_duplicate
  use matrix,         ONLY:PAR_matrix,MATRIX_reset
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(*)               :: operation
  type(PAR_matrix), optional :: M_in

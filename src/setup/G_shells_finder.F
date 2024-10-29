@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine G_shells_finder()
  !
@@ -27,7 +31,9 @@ subroutine G_shells_finder()
  use parallel_m,   ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index 
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! Work Space
  !

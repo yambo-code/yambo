@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 ! DESCRIPTION :
 ! 
 ! the variables generated/read in this series of rotuines are:
@@ -24,7 +29,6 @@
 ! 4 pi / |q+G|^2 = 2 pi DLVol NqBZ qpg(q,G)                                  
 ! |q+G| = Sqrt[ 2 / ( DLVol NqBZ qpg(q,G)) ]                                  
 !
-#include<dev_defs.h>
 !
 subroutine col_driver(bare_NG,q)
  !
@@ -47,7 +51,9 @@ subroutine col_driver(bare_NG,q)
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,REP,VERIFY
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer       :: bare_NG
  type(bz_samp) :: q

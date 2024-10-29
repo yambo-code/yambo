@@ -3,6 +3,11 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
+!
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -36,8 +41,9 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  use cublas,         ONLY:CUBLAS_OP_N
 #endif
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer     :: n,nrhs
  complex(SP) DEV_ATTR :: A_d(n,n),B_d(n,nrhs)

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
  use pars,           ONLY:cZERO,rZERO,DP,SP
@@ -19,7 +23,9 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  use collision_ext,  ONLY:P_COLL_element
 #endif
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(*)             :: what,elements,actions
  integer                  :: I

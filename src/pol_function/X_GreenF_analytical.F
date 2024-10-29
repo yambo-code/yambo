@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no_occupations,X_terminator)
  !
  ! Compute the GreenF in frequency space starting from it analytical
@@ -24,7 +28,9 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  use frequency,  ONLY:w_samp
  use parallel_m, ONLY:PAR_Xk_bz_index
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer      :: iq,transitions(4)
  type(w_samp) :: Xw

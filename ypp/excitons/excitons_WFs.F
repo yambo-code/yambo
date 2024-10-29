@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DV
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine exciton_WFs(Xk,BS_E_degs,iq)
  !
  use pars,          ONLY:SP,cZERO,pi
@@ -30,7 +34,9 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  use wrapper,       ONLY:V_dot_V
  use vec_operate,   ONLY:c2a
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp)     :: Xk
  integer           :: BS_E_degs(BSS_n_eig),iq
@@ -304,7 +310,9 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    subroutine expand_grid()
      !
      use FFT_m,       ONLY:fft_size
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
      ! 
      ! Work Space
      !

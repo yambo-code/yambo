@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include <y_memory.h>
+!#include <netcdf.inc>
+!
 subroutine setup(en,Xen,Ken,k,Xk)
  !
  use pars,           ONLY:SP,pi,schlen
@@ -44,11 +49,12 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !use IO_m,           ONLY:netcdf_call
 #endif
  !
-#include <y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! For I/O debug, see below
 #if defined _HDF5_IO
-!#include <netcdf.inc>
 #endif
  !
  type(levels)    ::en,Xen,Ken

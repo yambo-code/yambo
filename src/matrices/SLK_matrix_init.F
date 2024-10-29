@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! Copyright (C) 2004 WanT Group
 !
 ! This file is distributed under the terms of the
@@ -16,11 +20,17 @@
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine SLK_matrix_init(M_slk, N, N_blocks)
  !
  use SLK_m,          ONLY:SLK_ORTHO
  use matrix,         ONLY:PAR_matrix
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer           :: N,N_blocks
  type(PAR_matrix)  :: M_slk

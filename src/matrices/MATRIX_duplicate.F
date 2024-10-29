@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
  !
  ! operation can be "none/free/+1/-1/-C/+T/+TC"
@@ -12,7 +16,9 @@ subroutine MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
  use parallel_m,     ONLY:COMM_copy
  use pars,           ONLY:cZERO,SP
  use matrix,         ONLY:PAR_matrix,MATRIX_reset
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(*)               :: operation
  type(PAR_matrix), optional :: M_in

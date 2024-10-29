@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS CA AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine k_circuit_driver(PATH,n_points)
  !
  use pars,           ONLY:SP
@@ -19,7 +23,9 @@ subroutine k_circuit_driver(PATH,n_points)
 &                         CIRCUIT_made_of_SPECIAL_k,BANDS_from_db,SPECIAL_k,&
 &                         BANDS_path,CIRCUIT_k_label,SPECIAL_k_label
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(*) :: PATH
  integer      :: n_points

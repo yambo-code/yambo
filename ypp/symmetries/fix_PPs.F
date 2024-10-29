@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  !
  use pars,                ONLY:SP,lchlen
@@ -26,7 +30,9 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
 &                              wf_nc_k_new,wf_igk_new,&
 &                              wf_nc_k_new,wf_ncx_new,wf_ncx_save
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels),intent(in)  :: E
  !

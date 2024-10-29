@@ -4,6 +4,11 @@
 ! Copyright (C) 2022 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM, DS
+!
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
 ! 
 subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
  !
@@ -21,8 +26,9 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer,       intent(in)  :: iq,i_block,qindx_ID_frag
  type(bz_samp), intent(in)  :: Xk,q

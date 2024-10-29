@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QP_load_DB(i_ACTION,bands,en,k)
  !
  use drivers,       ONLY:l_chi,l_bss
@@ -15,7 +19,9 @@ subroutine QP_load_DB(i_ACTION,bands,en,k)
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,DUMP,REP
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)    ::en
  type(bz_samp)   ::k

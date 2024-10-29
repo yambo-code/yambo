@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_k_grid(E,k,q)
  !
  use pars,           ONLY:SP
@@ -18,7 +22,9 @@ subroutine RT_k_grid(E,k,q)
 &                         bz_samp_FineGd_default
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels), intent(in)    :: E
  type(bz_samp),intent(in)    :: k

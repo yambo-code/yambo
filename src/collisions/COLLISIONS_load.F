@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM CA DS
 !
+! headers
+!
+#include<collisions.h>
+!
 subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  ! Load all collisions contribution from any kind of self-energy 
@@ -37,7 +41,6 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 #endif
  !
  ! Define io_COLLs_header to handle either serial or parallel I/O
-#include<collisions.h>
  !
  implicit none
  !

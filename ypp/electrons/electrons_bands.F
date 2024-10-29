@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine electrons_bands(Xk,Xen)
  !
  ! Levels produced by this routine:
@@ -33,7 +37,9 @@ subroutine electrons_bands(Xk,Xen)
  use SC,             ONLY:SC_neq_kind
 #endif
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp), intent(inout) :: Xk
  type(levels),  intent(inout) :: Xen

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine electrons_WFs(Xen)
  !
  use pars,           ONLY:SP,lchlen
@@ -35,7 +39,9 @@ subroutine electrons_WFs(Xen)
  use R_lattice,      ONLY:nkibz
 #endif
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)  ::Xen
  !

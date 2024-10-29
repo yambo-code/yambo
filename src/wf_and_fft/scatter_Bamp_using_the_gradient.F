@@ -5,7 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
 #include<dev_defs.h>
+!
 !
 subroutine scatter_Bamp_using_the_gradient(isc,which)
  !

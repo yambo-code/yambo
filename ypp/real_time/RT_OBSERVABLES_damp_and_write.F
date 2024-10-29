@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM CA DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  !
  use YPP_real_time,  ONLY:l_force_min_damp,RT_time,OBS_el,RT_ctl
@@ -14,7 +18,9 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  use RT_control,     ONLY:RT_output
  use real_time,      ONLY:RT_ind_J,RT_P
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(OBS_el) :: OBS
  type(RT_ctl) :: RT

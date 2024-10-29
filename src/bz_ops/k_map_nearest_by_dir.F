@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine k_map_nearest_by_dir(Xk,k_map)
  !
  ! Map k-points on a regular grid along the b directions
@@ -14,7 +18,9 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  use com,            ONLY:msg
  use pars,           ONLY:zero_dfl
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_map), intent(inout) :: k_map
  type(bz_samp),intent(inout) :: Xk

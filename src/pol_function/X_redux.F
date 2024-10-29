@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM AF 
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine X_redux(iq,what,X_par,Xw,X)
  !
@@ -42,7 +46,9 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  use devxlib_async, ONLY:devxlib_async_synchronize
  use gpu_m
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(PAR_matrix) :: X_par
  type(X_t)        :: X

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  !
  use pars,           ONLY:SP
@@ -18,7 +22,9 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  use D_lattice,      ONLY:lattice
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)  :: en
  type(bz_samp) :: kpt,qpt,RT_k

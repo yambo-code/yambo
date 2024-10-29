@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine FREQUENCIES_setup(W)
  !
  ! %er %dr %n_freqs -> %p
@@ -12,7 +16,9 @@ subroutine FREQUENCIES_setup(W)
  use pars,          ONLY:SP,cI
  use frequency,     ONLY:w_samp
  use parser_m,      ONLY:parser
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(w_samp):: W 
  ! 

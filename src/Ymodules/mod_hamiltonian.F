@@ -5,12 +5,18 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 module hamiltonian
  !
  use pars,       ONLY:SP,schlen
  use electrons,  ONLY:levels
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer           :: H_ref_bands(2)
  integer           :: H_ref_nbands

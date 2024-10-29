@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID,&
 &                                   IND_q,COMM,q_range,k,q)
  !
@@ -14,7 +18,9 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
  use R_lattice,     ONLY:k_map
  use vec_operate,   ONLY:k_periodic_idx
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(*)           ::ZONE
  type(PP_indexes)       ::IND_in,IND_k_out,IND_q

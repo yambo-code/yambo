@@ -5,12 +5,18 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_scheme_initialize(WHAT,ENVIRONMENT,PARALL_PARs,N,TABLE,MATRIX)
  !
  use parallel_m,   ONLY:PAR_scheme
  use parallel_int, ONLY:PARALLEL_live_message,PARALLEL_index,PARALLEL_MATRIX_distribute
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(*)               :: WHAT
  character(*)               :: ENVIRONMENT

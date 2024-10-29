@@ -5,12 +5,18 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 module frequency
  !
  use pars,  ONLY:SP
  use units, ONLY:HA2EV
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! Bare 2 Coarse grid
  !

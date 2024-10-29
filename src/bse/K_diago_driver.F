@@ -7,6 +7,8 @@
 !
 ! headers
 !
+#include<y_memory.h>
+!
 #if defined _SLEPC && !defined _NL
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
@@ -53,7 +55,9 @@ subroutine K_diago_driver(iq,W,X_static)
  use MAGNONS,        ONLY:BSS_MAGN_free
  use PHOTOLUM,       ONLY:BSS_PL_free
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  ! 
  type(w_samp)  :: W
  integer       :: iq

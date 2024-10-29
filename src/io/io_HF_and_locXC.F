@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_HF_and_locXC(ID)
  !
  use pars,           ONLY:SP,schlen
@@ -18,7 +22,9 @@ integer function io_HF_and_locXC(ID)
  use IO_int,         ONLY:io_connect,io_disconnect,io_header,io_elemental,io_bulk,&
 &                         ver_is_gt_or_eq
  use timing_m,       ONLY:timing
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  integer :: ID
  !
  ! Work Space

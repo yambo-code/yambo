@@ -4,12 +4,16 @@
 ! Copyright (C) 2015 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): MG CA
+!
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
 !      
 !> @brief Calculate overlaps between wave-function <\psi_k | \psi_{k+q} > for q = 1,2
 !
 !! @param[out]      DIP_S               Overlap matrices
 !
-#include<dev_defs.h>
 !
 subroutine DIPOLE_overlaps(Xk,Dip)
  !    
@@ -30,7 +34,9 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use gpu_m,             ONLY:have_gpu
  use timing_m,          ONLY:timing
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp), intent(in)    :: Xk 
  type(DIPOLE_t),intent(in)    :: Dip

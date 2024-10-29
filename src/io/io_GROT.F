@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 integer function io_GROT(io_db)
  !
@@ -17,7 +21,9 @@ integer function io_GROT(io_db)
 &                         io_bulk,io_header,ver_is_gt_or_eq
  use timing_m,       ONLY:timing
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer :: io_db,nsym_db
  !

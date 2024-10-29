@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_Dephasing_Matrix(E)
  !
  use pars,          ONLY:SP
@@ -16,7 +20,9 @@ subroutine RT_Dephasing_Matrix(E)
 &                        RAD_LifeTime,RT_bands,RT_INPUT_Deph_limits,RT_deph_cv_only, &
 &                        RT_deph_deg_thresh
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels), intent(in) :: E
  !

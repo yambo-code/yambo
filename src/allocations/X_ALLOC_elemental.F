@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine X_ALLOC_elemental(WHAT,DIM)
  !
@@ -16,7 +20,9 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
  use PHOTOLUM,      ONLY:PL
  use stderr,        ONLY:STRING_match
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(*)      :: WHAT
  integer, optional :: DIM(:)

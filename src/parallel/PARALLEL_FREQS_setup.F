@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_FREQS_setup(W,IND,COMM)
  !
  use frequency,   ONLY:w_samp
@@ -12,7 +16,9 @@ subroutine PARALLEL_FREQS_setup(W,IND,COMM)
 &                      PAR_build_index,PAR_FREQS_index
  use parallel_int,ONLY:PARALLEL_index,PARALLEL_live_message
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(w_samp)    :: W
  type(PP_indexes):: IND

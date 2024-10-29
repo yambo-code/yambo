@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include <dev_defs.h>
+#include <y_memory.h>
+!
 subroutine MATRIX_init( what, M_par, N, Nb)
  !
  ! I initialize a general parallel matrix here. Note the meaning of the two COMMS: INTRA and INTER.
@@ -21,8 +26,9 @@ subroutine MATRIX_init( what, M_par, N, Nb)
  use matrix,         ONLY:PAR_matrix,MATRIX_reset
  use parallel_m,     ONLY:COMM_copy,PAR_COM_SLK,PAR_COM_SLK_INDEX_local,&
 &                         PAR_COM_RL_INDEX,PAR_COM_RL_A2A,ncpu
-#include <dev_defs.h>
-#include <y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(*)           :: what
  type(PAR_matrix)       :: M_par

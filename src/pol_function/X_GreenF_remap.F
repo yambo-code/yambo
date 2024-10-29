@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine X_GreenF_remap(bands,E,W)
  !
  use pars,          ONLY:SP,pi
@@ -12,7 +16,9 @@ subroutine X_GreenF_remap(bands,E,W)
  use LIVE_t,        ONLY:live_timing
  use electrons,     ONLY:levels,n_sp_pol,E_reset
  use frequency,     ONLY:w_samp,W_reset
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  integer      :: bands(2)
  type(w_samp) :: W
  type(levels) :: E

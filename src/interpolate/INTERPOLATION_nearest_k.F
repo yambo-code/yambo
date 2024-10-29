@@ -4,6 +4,10 @@
 ! Copyright (C) 2018 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): DS AM
+!
+! headers
+!
+#include<y_memory.h>
 !                  
 subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
  !
@@ -14,7 +18,9 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
  use parallel_m,        ONLY:PP_indexes,PP_indexes_reset,ncpu,myid
  use parallel_int,      ONLY:PP_redux_wait,PARALLEL_index 
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  real(SP)                :: K_in(:,:)
  real(SP)                :: K_out(:,:)

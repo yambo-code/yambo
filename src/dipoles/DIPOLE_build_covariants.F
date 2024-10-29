@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MG CA DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  ! Build the covariant dipole operator at zero field
@@ -24,7 +28,9 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels),           intent(in)     :: Xen
  type(bz_samp),          intent(inout)  :: Xk

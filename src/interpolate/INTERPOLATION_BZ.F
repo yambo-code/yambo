@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine INTERPOLATION_BZ(K,NK,ID,R1D,R2D,C1D,C2D,E)
  use pars,        ONLY:SP
  use R_lattice,   ONLY:bz_samp
@@ -12,7 +16,9 @@ subroutine INTERPOLATION_BZ(K,NK,ID,R1D,R2D,C1D,C2D,E)
  use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D
  use timing_m,    ONLY:timing
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp), intent(in)              :: K
  integer,       intent(in)              :: ID,NK

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine FREQUENCIES_merge(W1,W2,table)
  !
  ! Merge W1 into W2 and create a table of the W1 points in the new merged type
@@ -13,7 +17,9 @@ subroutine FREQUENCIES_merge(W1,W2,table)
  !
  use pars,           ONLY:SP,cZERO
  use frequency,      ONLY:w_samp,W_reset
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(w_samp), intent(in)   :: W1
  type(w_samp), intent(inout):: W2

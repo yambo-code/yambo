@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine ELPH_eliashberg_dos(k,en,q)
  !
  use pars,                ONLY:SP,schlen,pi
@@ -26,7 +30,9 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 
  use functions,           ONLY:Fermi_fnc_derivative
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  type(levels) ::en
  type(bz_samp)::k,q
  !

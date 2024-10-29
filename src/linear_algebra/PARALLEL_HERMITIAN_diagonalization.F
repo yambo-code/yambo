@@ -6,6 +6,10 @@
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  !
  ! perform the diagonalization by using scalapack
@@ -16,7 +20,9 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer           :: N
  type(PAR_matrix)  :: M,V

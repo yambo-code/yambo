@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include <y_memory.h>
+!
 integer function io_RIM_W(ID,mode,Xw)
  !
  use pars,           ONLY:SP
@@ -16,7 +20,9 @@ integer function io_RIM_W(ID,mode,Xw)
 &                         io_elemental,io_bulk
  use frequency,      ONLY:w_samp
  !
-#include <y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer :: ID
  type(w_samp) :: Xw

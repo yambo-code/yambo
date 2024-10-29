@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine ELPH_double_grid(k,E,q)
  !
  use pars,                ONLY:SP,pi,schlen
@@ -20,7 +24,9 @@ subroutine ELPH_double_grid(k,E,q)
  use IO_m,                ONLY:OP_RD_CL,REP,DUMP,OP_WR_CL
  use parser_m,            ONLY:parser
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp) ::k,q
  type(levels)  ::E

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  use pars,                ONLY:SP
@@ -16,7 +20,9 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:REP,OP_WR_CL
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp) :: Xk
  type(levels)  :: Xen

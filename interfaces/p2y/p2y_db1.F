@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CH
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine p2y_db1(en,k)
  !
  use P2Ym,                  ONLY : get_dimensions,get_cell,get_atoms,get_symmetries,get_xc,get_k_points,get_more,get_energies,&
@@ -16,7 +20,9 @@ subroutine p2y_db1(en,k)
  use R_lattice,             ONLY : ng_vec,g_vec,bz_samp
  use wave_func,             ONLY : wf_ng, wf_nc_k, wf_ncx, wf_igk
  use mod_com2y,             ONLY : force_noWFs
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  type(levels),     intent(out)  :: en     ! Energies
  type(bz_samp),    intent(out)  :: k      ! K/Q points
  !---------------------------------------------------------------------*

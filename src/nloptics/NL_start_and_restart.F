@@ -6,6 +6,10 @@
 !
 ! Authors (see AUTHORS file for details): AMCA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine NL_start_and_restart(E,k,Dip)
  !
  ! This subroutine initialize some variables and 
@@ -40,7 +44,9 @@ subroutine NL_start_and_restart(E,k,Dip)
  use stderr,         ONLY:intc
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)      :: E
  type(bz_samp)     :: k

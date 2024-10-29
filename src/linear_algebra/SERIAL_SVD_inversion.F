@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine SERIAL_SVD_inversion(n,M,SVD_digits)
  !
  use pars,           ONLY:SP,cZERO
@@ -12,7 +16,9 @@ subroutine SERIAL_SVD_inversion(n,M,SVD_digits)
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,SV_decomposition,&
 &                         LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer     :: n
  complex(SP) :: M(n,n)

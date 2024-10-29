@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine G_rot_grid(is,call_kind)
  !
  use pars,         ONLY:SP
@@ -12,7 +16,9 @@ subroutine G_rot_grid(is,call_kind)
  use D_lattice,    ONLY:dl_sop,alat
  use zeros,        ONLY:G_iku_zero
  use vec_operate,  ONLY:v_is_zero
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer               :: is
  character(*)          :: call_kind

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DV
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine plot_gnuplot(eval_only)
  !
  use pars,        ONLY:SP,schlen
@@ -15,7 +19,9 @@ subroutine plot_gnuplot(eval_only)
 &                      plot_is_1D,plot_is_2D,l_free_hole,l_average_eh
  use LIVE_t,      ONLY:live_timing
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  logical    :: eval_only
  ! 
  ! Work Space...

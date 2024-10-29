@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_free( )
  !
  use R_lattice,      ONLY:bz_samp_FineGd_reset
@@ -26,7 +30,9 @@ subroutine RT_free( )
 #endif
  use RT_lifetimes,   ONLY:RT_ALL_lifetimes_free,q_weight_RT
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  call H_free()
  !

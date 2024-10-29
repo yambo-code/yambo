@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 !> @brief Load wave-function in different forms
 !!
@@ -57,7 +61,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memcpy_d2d,&
                          devxlib_allocated,devxlib_memset_d
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
  type(WAVEs), target   :: WF

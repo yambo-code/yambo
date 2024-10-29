@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM, DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! 
  ! Optics driver
@@ -28,7 +32,9 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use interfaces,    ONLY:WF_load,WF_free,WF_load
  use matrix,        ONLY:MATRIX_reset
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)  :: Xen
  type(bz_samp) :: Xk,q

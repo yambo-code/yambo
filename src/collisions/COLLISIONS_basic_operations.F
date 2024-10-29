@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine COLLISIONS_basic_operations( what, COLL )
  !
  ! Here I allocate and define some objects of the COLLISIONS_group kind.
@@ -23,7 +27,9 @@ subroutine COLLISIONS_basic_operations( what, COLL )
  use wave_func,     ONLY:states_to_load
  use IO_m,          ONLY:io_COLLs
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(*)           :: what
  type(COLLISIONS_group) :: COLL

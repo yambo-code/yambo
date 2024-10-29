@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
  !
  use pars,             ONLY:SP
@@ -17,7 +21,9 @@ integer function io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
  use IO_int,           ONLY:io_connect,io_disconnect,io_fragment, &
 &                           io_elemental,io_bulk,io_header
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer,       intent(in)    :: ID
  integer,       intent(inout) :: kbv_real_space_table(pp_kbv_dim_yambo)

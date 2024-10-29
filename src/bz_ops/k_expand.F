@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine k_expand(k)
  !
  ! Outputs:
@@ -49,7 +53,9 @@ subroutine k_expand(k)
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:rl_sop,bz_samp
  use zeros,          ONLY:k_rlu_zero
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp)::k
  !

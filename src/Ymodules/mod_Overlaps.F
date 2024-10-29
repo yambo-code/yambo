@@ -5,10 +5,16 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 module Overlaps_m
  !
  use pars,  ONLY:SP
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  complex(SP), allocatable :: S_det(:,:)        
  complex(SP), allocatable :: Sm1_plus(:,:,:,:)

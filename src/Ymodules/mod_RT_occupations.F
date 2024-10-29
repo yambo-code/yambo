@@ -5,13 +5,19 @@
 !
 ! Authors (see AUTHORS file for details): AM 
 !
+! headers
+!
+#include<y_memory.h>
+!
 module RT_occupations
  !
  use pars,           ONLY:SP,rZERO,schlen
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt,&
 &                         l_phel_scatt,l_phel_corr
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type RT_occupation
    character(schlen)        :: KIND

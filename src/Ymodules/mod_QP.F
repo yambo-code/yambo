@@ -5,12 +5,18 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 module QP_m
  !
  use descriptors,    ONLY:IO_desc,IO_desc_duplicate,IO_desc_reset
  use pars,           ONLY:SP,schlen,cZERO
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! Mixing for non perturbative calculations
  integer           :: SC_bands_mixed

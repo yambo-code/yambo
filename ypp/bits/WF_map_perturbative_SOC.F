@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine WF_map_perturbative_SOC(kpt,En)
  !
  use YPPm,                ONLY:perturbative_SOC_path,SOC_split,SOC_bands_to_map,&
@@ -25,7 +29,9 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  use LIVE_t,              ONLY:live_timing
  use interfaces,          ONLY:io_DB1_selective_scan
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp), intent(in)    :: kpt
  type(levels),  intent(inout) :: En

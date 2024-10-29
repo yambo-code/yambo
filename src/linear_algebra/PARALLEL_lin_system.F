@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AF AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_lin_system(A,B,n,nrhs)
  !
  !  Solve the linear system
@@ -18,7 +22,9 @@ subroutine PARALLEL_lin_system(A,B,n,nrhs)
 &                         LINEAR_ALGEBRA_WS_reset
  use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer           :: n,nrhs
  type(PAR_matrix)  :: A, B

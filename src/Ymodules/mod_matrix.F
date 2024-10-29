@@ -5,14 +5,20 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 module matrix
  !
  use pars,       ONLY:schlen,SP
  use parallel_m, ONLY:yMPI_comm
  use devxlib,    ONLY:devxlib_mapped,devxlib_memset_d
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! Distributed Matrix structure
  !

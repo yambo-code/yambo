@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_NL(what,ID)
  !
  use pars,          ONLY:schlen,SP,IP,CR_YIO,IP_YIO
@@ -24,7 +28,9 @@ integer function io_NL(what,ID)
  use timing_m,      ONLY:timing
 #endif
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer,      intent(in) :: ID
  character(*), intent(in) :: what 

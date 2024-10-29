@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AC
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine LSEX_potential(q,X,Xw) 
  !
  ! Construct the screeend potential W(G=G'=0,q)
@@ -28,7 +32,9 @@ subroutine LSEX_potential(q,X,Xw)
  use stderr,              ONLY:intc
  use parallel_int,        ONLY:PP_wait
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp), intent(in) :: q
  type(w_samp)              :: Xw

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_PH(ID)
  !
  use units,               ONLY:HA2EV
@@ -21,7 +25,9 @@ integer function io_PH(ID)
  use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps
  use descriptors,         ONLY:IO_desc_reset
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer           ::ID
  character(schlen) ::QP_solver_disk

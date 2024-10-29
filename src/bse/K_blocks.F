@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM HM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_blocks( )
  !
  ! Create and Fill the BSK blocks
@@ -27,7 +31,9 @@ subroutine K_blocks( )
 &                       BS_n_eh_spaces,BS_res_ares_n_mat,BS_IO_dim,l_BS_ares_from_res
  use com,          ONLY:msg
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! YAMBO_PAR_ALLOC
  !

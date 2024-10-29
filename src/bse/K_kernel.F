@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM DS AF
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! K = <2V-W> for n_spin=1; K=<V-W> for n_spin>1
@@ -51,8 +56,9 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use PHOTOLUM,      ONLY:BSS_PL_free
  use parser_m,      ONLY:parser
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q

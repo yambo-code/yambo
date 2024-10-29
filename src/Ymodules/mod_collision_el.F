@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 module collision_el
  !
  !=====================
@@ -16,8 +21,9 @@ module collision_el
  use qe_pseudo_m, ONLY:bec_type,deallocate_bec_type
  use gpu_m,       ONLY:have_gpu
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type elemental_collision
    !

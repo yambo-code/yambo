@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include <y_memory.h>
+!
 subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  ! 
  use units,          ONLY:HA2EV,HA2KEL,AUT2FS
@@ -25,7 +29,9 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  use QP_m,           ONLY:QP_table,QP_n_states
  use interfaces,     ONLY:DESC_write
  !
-#include <y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp) :: kpt
  type(levels)  :: En

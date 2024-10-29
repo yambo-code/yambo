@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine TDDFT_ALDA_G_space(E,k)
  !
  use pars,          ONLY:DP,SP
@@ -18,7 +22,9 @@ subroutine TDDFT_ALDA_G_space(E,k)
  use global_XC,     ONLY:WF_xc_functional,WF_kind
  use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels) ::E
  type(bz_samp)::k

@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 integer function io_DB1(E,k,ID)
  !
@@ -44,7 +48,9 @@ integer function io_DB1(E,k,ID)
  use real_time,        ONLY:RT_bands
 #endif
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)  :: E
  type(bz_samp) :: k

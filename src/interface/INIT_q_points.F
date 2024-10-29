@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine INIT_q_points( )
  !
  ! This routine:
@@ -22,7 +26,9 @@ subroutine INIT_q_points( )
 #endif
  use parser_m,    ONLY:PARSER_array
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! Work Space
  !

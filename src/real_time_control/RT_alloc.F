@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_alloc(en,what)
  !
  use pars,           ONLY:SP,cZERO
@@ -27,7 +31,9 @@ subroutine RT_alloc(en,what)
 &                         magn_reference,RT_bands,RT_nk,l_RT_is_WFfree,l_RT_rotate_DM,&
 &                         l_velocity_gauge_corr
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels), intent(in) :: en
  character(*), intent(in) :: what

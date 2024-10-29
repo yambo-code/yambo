@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine XCo_local(E,Xk)
  !
  ! Local V_xc
@@ -37,7 +41,9 @@ subroutine XCo_local(E,Xk)
 #endif
  use timing_m,      ONLY:timing
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels) ::E       
  type(bz_samp)::Xk

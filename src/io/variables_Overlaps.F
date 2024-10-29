@@ -10,7 +10,7 @@ integer function variables_Overlaps(Dip,ID)
  use pars,          ONLY:IP_YIO,LP_YIO,CR_YIO
  use DIPOLES,       ONLY:DIPOLE_t,DIP_desc
  use IO_m,          ONLY:io_status
- use IO_int,        ONLY:io_variable_elemental,def_variable_elemental,io_elemental
+ use IO_int,        ONLY:io_variable_elemental,def_variable_elemental
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
  use descriptors,   ONLY:IO_desc_reset
  !

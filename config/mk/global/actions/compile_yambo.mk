@@ -29,6 +29,6 @@ yambo yambo_ph yambo_sc yambo_rt yambo_nl:
 	@$(MAKE) $(MAKEFLAGS) ext-libs
 	@$(MAKE) $(MAKEFLAGS) int-libs
 	@+LIBS="$(YLIBDRIVER)";LAB="$@_Ydriver_";BASE="lib/yambo/Ydriver/src";ADF="$(PRECMP) -D_yambo";$(todo_lib);$(mk_lib)
-	@+LIBS="$(Y_LIBS)";BASE="src";ADF="$(PRECMP)";$(todo_lib);$(mk_lib)
+	@+LIBS="$(Y_LIBS)";LAB="_Y_";BASE="src";ADF="$(PRECMP)";$(todo_lib);$(mk_lib)
 	@+X2DO="$@";BASE="driver";XLIBS="$(Y_LIBS_LD)";ADF="$(PRECMP)";$(todo_driver)
 	@+X2DO="$@";BASE="driver";XLIBS="$(Y_LIBS_LD)";ADF="$(PRECMP)";$(mk_exe)

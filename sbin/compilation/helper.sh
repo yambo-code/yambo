@@ -91,7 +91,7 @@ fi
 #
 # CHECK
 if [ ! -f $cdir/$ofile ]; then 
- source ./sbin/compilation/verbosity.sh "WARNING helper.sh: $cdir/$ofile is not there. Exiting"
+ source ./sbin/compilation/verbosity.sh "WARNING helper.sh: $cdir/$ofile is not a file. Exiting"
  exit 0 
 fi
 #

@@ -33,7 +33,7 @@ ypp ypp_ph ypp_sc ypp_rt ypp_nl:
 	@$(MAKE) $(MAKEFLAGS) ext-libs
 	@$(MAKE) $(MAKEFLAGS) int-libs
 	@+LIBS="$(YLIBDRIVER)";LAB="$@_Ydriver_";BASE="lib/yambo/Ydriver/src";ADF="$(YPP_PRECMP) -D_ypp";$(todo_lib);$(mk_lib)
-	@+LIBS="$(Y_LIBS)";BASE="src";ADF="$(Y_PRECMP)";$(todo_lib);$(mk_lib)
-	@+LIBS="$(YPP_LIBS)";LAB="_ypp_";BASE="ypp";ADF="$(YPP_PRECMP)";$(todo_lib);$(mk_lib)
+	@+LIBS="$(Y_LIBS)";LAB="_Y_";BASE="src";ADF="$(Y_PRECMP)";$(todo_lib);$(mk_lib)
+	@+LIBS="$(YPP_LIBS)";LAB="_YPP_";BASE="ypp";ADF="$(YPP_PRECMP)";$(todo_lib);$(mk_lib)
 	@+X2DO="$@";BASE="driver";XLIBS="$(Y_LIBS_LD)";X_ypp_LIBS="$(YPP_LIBS_LD)";ADF="$(YPP_PRECMP)";$(todo_driver)
 	@+X2DO="$@";BASE="driver";XLIBS="$(Y_LIBS_LD)";X_ypp_LIBS="$(YPP_LIBS_LD)";ADF="$(YPP_PRECMP)";$(mk_exe)

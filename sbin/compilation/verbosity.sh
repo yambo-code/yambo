@@ -6,7 +6,7 @@
 #
 # Authors (see AUTHORS file for details): AM
 #
-VERB=1
+VERB=0
 #
 if [ "$VERB" == 0 ] ; then return; fi
 #

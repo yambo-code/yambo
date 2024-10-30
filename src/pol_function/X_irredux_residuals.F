@@ -28,7 +28,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  use R_lattice,     ONLY:qindx_X,bz_samp,q0_def_norm
  use vec_operate,   ONLY:v_norm
  use collision_el,  ONLY:elemental_collision
- use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_conjg,devxlib_memset_d
+ use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_conjg_d,devxlib_memset_d
  !
  implicit none
  !
@@ -158,7 +158,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
        !DEV_ACC_DEBUG end data
        !
        if (is>nsym/(i_time_rev+1)) then
-         call devxlib_conjg( Xo_scatt_rhotw_p )
+         call devxlib_conjg_d( Xo_scatt_rhotw_p )
        endif
        !
      endif
@@ -279,7 +279,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      !DEV_ACC_DEBUG end data
      !
      if (is>nsym/(i_time_rev+1)) then
-       call devxlib_conjg(Xo_scatt_rhotw_p)
+       call devxlib_conjg_d(Xo_scatt_rhotw_p)
      endif
      !
 #ifdef _GPU

@@ -41,7 +41,7 @@ version_fftw=3.3.10
 version_fftqe=missing
 version_yaml=0.2.2
 version_futile=missing
-version_devxlib=0.8.4
+version_devxlib=0.8.5
 #
 # package names
 #

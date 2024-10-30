@@ -14,7 +14,7 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
  use wave_func,     ONLY:WF,wf_ng,wf_ng_1st_BZ
  use R_lattice,     ONLY:bz_samp,DEV_VAR(g_rot)
  use D_lattice,     ONLY:idt_index,DEV_VAR(spin_sop),i_time_rev,nsym
- use devxlib,       ONLY:devxlib_conjg,devxlib_memcpy_d2d,devxlib_memset_d
+ use devxlib,       ONLY:devxlib_conjg_d,devxlib_memcpy_d2d,devxlib_memset_d
  !
  implicit none
  !
@@ -96,7 +96,7 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
      enddo
    !
 #ifdef _GPU_LOC
-   if(is>nsym/(1+i_time_rev)) call devxlib_conjg(WF_k_out)
+   if(is>nsym/(1+i_time_rev)) call devxlib_conjg_d(WF_k_out)
 #else
    if(is>nsym/(1+i_time_rev)) WF_k_out=conjg(WF_k_out)
 #endif

@@ -39,6 +39,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use timing_m,      ONLY:timing
  use mpa_m,         ONLY:mpa_RE_solver,err_func_X,MPA_freqs,MPA_alloc,MPA_free,&
 &                        MPA_E_par,MPA_R_par
+ use matrix,        ONLY:MATRIX_reset
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
@@ -66,7 +67,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  character(schlen):: ch,SECTION_name
  !
  integer          :: X_mpa_npoles,X_ng
- logical          :: X_is_TR_rotated,l_RIM_W_g
+ logical          :: X_is_TR_rotated,l_X_ALLOC_elemental,l_RIM_W_g
  real(SP)         :: E_kmq,f_kmq
  real(DP)         :: dp_dummy_r,dp_dummy_i
  complex(DP)      :: dp_dummy,ctmp,W_1,W_i
@@ -396,8 +397,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
 #ifdef _GPU
    if (have_gpu) then
-      YAMBO_ALLOC_SOURCE( DEV_VAR(MPA_E_par(1)%blc), MPA_E_par(1)%blc )
-      YAMBO_ALLOC_SOURCE( DEV_VAR(MPA_R_par(1)%blc), MPA_R_par(1)%blc )
+      YAMBO_ALLOC_GPU_SOURCE( DEV_VAR(MPA_E_par(1)%blc), MPA_E_par(1)%blc )
+      YAMBO_ALLOC_GPU_SOURCE( DEV_VAR(MPA_R_par(1)%blc), MPA_R_par(1)%blc )
    endif
 #endif
    ! 
@@ -542,6 +543,11 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
    enddo QP_loop
    !
+   if (have_gpu) then
+     YAMBO_FREE_GPU(DEV_VAR(MPA_E_par(1)%blc))
+     YAMBO_FREE_GPU(DEV_VAR(MPA_R_par(1)%blc))
+   endif
+   !
    call timing('GW(mpa)_qp_loop',OPR='stop') 
    !
  enddo Q_loop 
@@ -554,11 +560,27 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  YAMBO_FREE(dc)
  YAMBO_FREE(W_)
+ !
+ l_X_ALLOC_elemental=.true.
+#if defined _SC
+ l_X_ALLOC_elemental=l_sc_run.and.io_RESPONSE
+#endif
+ if(l_X_ALLOC_elemental) then
+   do iq_mem = 1,size(X_par)
+     call MATRIX_reset(X_par(iq_mem))
+   enddo
+   if (allocated(X_par)) deallocate(X_par)
+ endif
  call X_ALLOC_elemental('X')
  !
- ! the following only unload 
+ ! MPA specific data
  !
  call MPA_free()
+ !
+ call MATRIX_reset(MPA_E_par(1))
+ call MATRIX_reset(MPA_R_par(1))
+ if(allocated(MPA_E_par)) deallocate(MPA_E_par)
+ if(allocated(MPA_R_par)) deallocate(MPA_R_par)
  !
  call timing('GW(mpa)',OPR='stop')
  !

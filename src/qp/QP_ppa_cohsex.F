@@ -59,7 +59,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use SC,            ONLY:it_now,it_to_start
 #endif
  use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,&
-&                        devxlib_memcpy_d2d,devxlib_memset_d,devxlib_conjg
+&                        devxlib_memcpy_d2d,devxlib_memset_d,devxlib_conjg_d
  use gpu_m,         ONLY:have_gpu
  !
  use drivers,       ONLY:Finite_Tel
@@ -657,7 +657,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        endif
        !conjg_iscp_rhotw=conjg(iscp%rhotw)
        call devxlib_memcpy_d2d(conjg_iscp_rhotw,iscp_rhotw_p)
-       call devxlib_conjg(conjg_iscp_rhotw)
+       call devxlib_conjg_d(conjg_iscp_rhotw)
        !
        dc=cZERO
        !

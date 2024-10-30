@@ -258,8 +258,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    YAMBO_ALLOC(W_,(QP_dSc_steps))
    YAMBO_ALLOC(dc,(QP_dSc_steps))
  endif
- YAMBO_ALLOC(local_rhotw,(X%ng))
- YAMBO_ALLOC(conjg_iscp_rhotw,(X%ng))
+ YAMBO_ALLOC_GPU(local_rhotw,(X%ng))
+ YAMBO_ALLOC_GPU(conjg_iscp_rhotw,(X%ng))
+
  !
  ! Elemental Collisions
  !====================== 

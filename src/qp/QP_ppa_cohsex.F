@@ -551,7 +551,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          if (X_is_TR_rotated) then
            !
-           !DEV_ACC_DEBUG data present(G_m_G,isc_rhotw_p)
+           !DEV_ACC_DEBUG data present(G_m_G,isc_rhotw_p,X_blc_p)
            !DEV_ACC parallel loop collapse(2) private(ctmp) reduction(+:dp_dummy_r,dp_dummy_i)
            !DEV_CUF kernel do(2)
            !DEV_OMPGPU target map(present,alloc:G_m_G,isc_rhotw_p) &
@@ -577,7 +577,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !
          else
            !
-           !DEV_ACC_DEBUG data present(G_m_G,isc_rhotw_p)
+           !DEV_ACC_DEBUG data present(G_m_G,isc_rhotw_p,X_blc_p)
            !DEV_ACC parallel loop collapse(2) private(ctmp) reduction(+:dp_dummy_r,dp_dummy_i)
            !DEV_CUF kernel do(2)
            !DEV_OMPGPU target map(present,alloc:G_m_G,isc_rhotw_p) &

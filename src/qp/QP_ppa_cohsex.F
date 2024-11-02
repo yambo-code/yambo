@@ -59,7 +59,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use SC,            ONLY:it_now,it_to_start
 #endif
  use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,&
-&                        devxlib_memcpy_d2d,devxlib_memset_d,devxlib_conjg
+&                        devxlib_memcpy_d2d,devxlib_memset_d,devxlib_conjg_d
  use gpu_m,         ONLY:have_gpu
  !
  use drivers,       ONLY:Finite_Tel
@@ -258,8 +258,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    YAMBO_ALLOC(W_,(QP_dSc_steps))
    YAMBO_ALLOC(dc,(QP_dSc_steps))
  endif
- YAMBO_ALLOC(local_rhotw,(X%ng))
- YAMBO_ALLOC(conjg_iscp_rhotw,(X%ng))
+ YAMBO_ALLOC_GPU(local_rhotw,(X%ng))
+ YAMBO_ALLOC_GPU(conjg_iscp_rhotw,(X%ng))
+
  !
  ! Elemental Collisions
  !====================== 
@@ -550,7 +551,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          if (X_is_TR_rotated) then
            !
-           !DEV_ACC_DEBUG data present(G_m_G,isc_rhotw_p)
+           !DEV_ACC_DEBUG data present(G_m_G,isc_rhotw_p,X_blc_p)
            !DEV_ACC parallel loop collapse(2) private(ctmp) reduction(+:dp_dummy_r,dp_dummy_i)
            !DEV_CUF kernel do(2)
            !DEV_OMPGPU target map(present,alloc:G_m_G,isc_rhotw_p) &
@@ -576,7 +577,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !
          else
            !
-           !DEV_ACC_DEBUG data present(G_m_G,isc_rhotw_p)
+           !DEV_ACC_DEBUG data present(G_m_G,isc_rhotw_p,X_blc_p)
            !DEV_ACC parallel loop collapse(2) private(ctmp) reduction(+:dp_dummy_r,dp_dummy_i)
            !DEV_CUF kernel do(2)
            !DEV_OMPGPU target map(present,alloc:G_m_G,isc_rhotw_p) &
@@ -657,7 +658,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        endif
        !conjg_iscp_rhotw=conjg(iscp%rhotw)
        call devxlib_memcpy_d2d(conjg_iscp_rhotw,iscp_rhotw_p)
-       call devxlib_conjg(conjg_iscp_rhotw)
+       call devxlib_conjg_d(conjg_iscp_rhotw)
        !
        dc=cZERO
        !
@@ -699,11 +700,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            dp_dummy_i = 0.0_DP
            dp_dummy = 0.0_DP
            !
-           !DEV_ACC_DEBUG data present(X_blc_p,RIM_W,isc_gamp_p,isc_rhotw_p,iscp_rhotw_p)
+           !DEV_ACC_DEBUG data present(X_blc_p,RIM_W,isc_gamp_p,conjg_iscp_rhotw,isc_rhotw_p,iscp_rhotw_p)
            !DEV_ACC parallel  loop collapse(2) private(PPA_E,PPA_R,l_RIM_W_g,bose_PPA_E,ctmp) &
            !DEV_ACC                reduction(+:dp_dummy_r,dp_dummy_i)
            !DEV_CUF kernel do(2)
-           !DEV_OMPGPU target map(present,alloc:X_blc_p,RIM_W,isc_gamp_p,isc_rhotw_p,iscp_rhotw_p) &
+           !DEV_OMPGPU target map(present,alloc:X_blc_p,RIM_W,isc_gamp_p,conjg_iscp_rhotw,isc_rhotw_p,iscp_rhotw_p) &
            !DEV_OMPGPU &      map(tofrom:dp_dummy_r,dp_dummy_i)
            !DEV_OMPGPU teams  loop collapse(2) private(PPA_E,PPA_R,l_rim_W_g,bose_PPA_E,ctmp) &
            !DEV_OMPGPU &           reduction(+:dp_dummy_r,dp_dummy_i)

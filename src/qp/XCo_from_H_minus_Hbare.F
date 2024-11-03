@@ -30,7 +30,7 @@
 !
 ! @param[out]      QP_Vxc          DFT xc potential +U term
 !
-subroutine XCo_from_H_minus_Hbare(E,Xk,k,Dip)
+subroutine XCo_from_H_minus_Hbare(E,Xk,k,q,Dip)
  !
  ! Local V_xc (+ Hubbard term if present): 
  ! 
@@ -58,8 +58,8 @@ subroutine XCo_from_H_minus_Hbare(E,Xk,k,Dip)
  !
 #include<y_memory.h>
  !
- type(levels) ::E       
- type(bz_samp)::Xk,k
+ type(levels) ::E
+ type(bz_samp)::Xk,k,q
  type(DIPOLE_t)::Dip
  !
  ! Work Space
@@ -101,7 +101,7 @@ subroutine XCo_from_H_minus_Hbare(E,Xk,k,Dip)
  !
  ! Here we get Hzero in H space and V_Hartree_sc in real space
  !
- call Bare_Hamiltonian_from_Scratch(E,Xk,k,Dip)
+ call Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
  !
  ! PARALLEL EFFICIENCY FOR THE FOLLOWING LOOPS NEED TO BE CHECKED!
  ! (may include call to V_real_space_to_H in QP loop but seems wasteful)

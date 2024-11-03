@@ -21,19 +21,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,Dip)
+subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
  !
  use pars,           ONLY:DP,SP,cZERO,schlen,lchlen
- use electrons,      ONLY:levels,n_sp_pol,n_spin,l_spin_orbit,spin_occ
+ use electrons,      ONLY:levels,n_sp_pol,n_spin,l_spin_orbit,spin_occ,n_spinor
  use dipoles,        ONLY:DIPOLE_t,compute_P2_dipoles,P_square
- use QP_m,           ONLY:QP_nk
+ use QP_m,           ONLY:QP_nk,QP_ng_Vxc
  use interfaces,     ONLY:el_density_and_current,el_magnetization,WF_load
  use hamiltonian,    ONLY:Hzero,H_ref_bands,WF_G_max,WF_Go_indx,Hext_nl,Hext_loc,&
 &                         V_hartree_sc,rho_n,magn_n,H_alloc_real_space
- use parallel_m,     ONLY:PAR_IND_WF_k
- use parallel_int,   ONLY:PP_redux_wait
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_QP,&
+&                        PAR_IND_QP_ID,PAR_IND_Q_ibz,PAR_IND_G_b,&
+&                        PAR_IND_Q_ibz_ID,n_WF_bands_to_load
  use wave_func,      ONLY:WF
- use R_lattice,      ONLY:bz_samp,nkibz
+ use R_lattice,      ONLY:bz_samp,nkibz,qindx_S
  use D_lattice,      ONLY:DL_vol
  use timing_m,       ONLY:timing
  use pseudo,         ONLY:becp,pp_is_uspp,qe_atoms_map
@@ -43,7 +45,8 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,Dip)
  use ions_base,      ONLY:nat,ityp,ntyp=>nsp
  use vlocal,         ONLY:vloc_dealloc
  use wrapper,        ONLY:Vstar_dot_VV
- use fft_m,          ONLY:fft_size
+ use fft_m,          ONLY:fft_size,fft_g_table
+ use cuda_m,         ONLY:have_cuda
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:NONE,OP_RD_CL,REP,DUMP
  use gvect,          ONLY:ngm
@@ -59,7 +62,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,Dip)
 #include<y_memory.h>
  !
  type(levels)             :: E ! This is so far not needed by the subroutine 
- type(bz_samp)            :: Xk,k
+ type(bz_samp)            :: Xk,k,q
  type(DIPOLE_t)           :: Dip
  !
  ! Work space
@@ -128,13 +131,29 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,Dip)
  ! (NB3: quantities in real space [vlocal and VHartree] require loading all occupied states)
  !=====================================================================
  WFbands=(/1,max(H_ref_bands(2),maxval(E%nbm))/)
- call WF_load(WF,WF_G_max,WF_Go_indx,WFbands,(/1,nkibz/),title='-vloc')
+ ! 
+ ! WF distributed & load
+ !=======================
+ !
+ if (.not.l_sc_run) then
+  call PARALLEL_global_indexes(E,k,q,"Self_Energy")
+  ! 
+  ! Final states (k-q,np)...
+  call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+  ! Initial states (k,n \in QP)...
+  call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
+  call PARALLEL_WF_index( )
+ endif
+ !
+ call WF_load(WF,QP_ng_Vxc,maxval(qindx_S(:,:,2)),WFbands,(/1,k%nibz/),title='-vloc')
+ !
+ !****************************************************
  !
  ! FFT of vloc into real space
  !
  ! (NB: grid dimensions are determined by the FFT_setup previously run by WF_load)
  !=====================================================================
- allocate(vloc_full_r(fft_size))
+ YAMBO_ALLOC(vloc_full_r,(fft_size))
  vloc_full_r=cZERO
  !
  call FFT_vloc_G_to_R(vloc_full_r)
@@ -170,7 +189,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,Dip)
          !
          !
          Hext_loc(ib1,ib2) = Hext_loc(ib1,ib2) + &
-                             Vstar_dot_VV(fft_size,WF%c(:,i_sp_pol,i_wf1),vloc_full_r,WF%c(:,i_sp_pol,i_wf2))
+                             Vstar_dot_VV(fft_size,WF%c(:,1,i_wf1),vloc_full_r,WF%c(:,1,i_wf2))
          !
          ! Calculate the nonlocal part of Hext ...
          !
@@ -290,7 +309,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,Dip)
  !
  pp_is_uspp=.false. 
  call vloc_dealloc() ! Dealloc here since we couldn't do it in PP_uspp_init 
- deallocate(vloc_full_r)
+ YAMBO_FREE(vloc_full_r)
  !
  if(l_write_Hsc) call of_open_close(Hsc_file)
  !close(1)

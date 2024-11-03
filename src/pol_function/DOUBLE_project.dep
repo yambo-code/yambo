@@ -6,6 +6,7 @@
  X_GreenF_analytical.o
  X_GreenF_convoluted.o
  X_GreenF_remap.o
+ X_OUTPUT.o
  X_delta_part.o
  X_dielectric_matrix.o
  X_drude.o

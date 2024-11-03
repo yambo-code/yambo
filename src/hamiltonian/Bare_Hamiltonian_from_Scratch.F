@@ -56,7 +56,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,Dip)
  use drivers,        ONLY:l_real_time
 #endif
 #include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)             :: E ! This is so far not needed by the subroutine 
  type(bz_samp)            :: Xk,k

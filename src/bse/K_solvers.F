@@ -12,12 +12,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_t
- use BS_solvers,     ONLY:BSS_desc,BSS_free,BS_mat,run_Haydock,run_inversion,run_Diago
-#if defined _SLEPC && !defined _NL
- use BS_solvers,     ONLY:run_Slepc
-#endif
+ use BS_solvers,     ONLY:BSS_desc,BSS_free,BS_mat,run_Haydock,&
+&                         run_inversion,run_Diago,run_Slepc
  use BS,             ONLY:BS_K_has_been_calculated_loaded,&
-&                         BS_blks_free,l_BS_abs,l_BS_kerr,l_BS_magnons
+ &                       BS_blks_free,l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_int,         ONLY:IO_and_Messaging_switch
  use linear_algebra, ONLY:INV,DIAGO
@@ -25,7 +23,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use MAGNONS,        ONLY:BSS_MAGN_free
  use DICHROISM,      ONLY:BSS_DICH_free
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ::Ken
  type(bz_samp)::Xk,q
@@ -62,9 +60,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
  endif
  !
-#if defined _SLEPC && !defined _NL
  if (run_Slepc) call K_diago_driver(iq,W_bss,X_static)
-#endif
  !
  ! Inversion
  !
@@ -99,12 +95,14 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    ! The jdos (l_BS_jdos) cannot be computed easely via the Haydock solver.
    ! it could be obtained as the average of N calls to K_Haydock
    ! with random intial vectors. See https://doi.org/10.1002/nla.2170
+   !
    ! A possible alternative could be to use the algorithm with Cf
    ! from both the left and the right hand side to get from a single Haydock loop
    !
    if (l_BS_abs)     call K_Haydock(iq,W_bss,"optics",Xk)
    if (l_BS_kerr)    call K_Haydock(iq,W_bss,"kerr",Xk)
    if (l_BS_magnons) call K_Haydock(iq,W_bss,"magnons",Xk)
+   if (l_BS_dichroism) call K_Haydock(iq,W_bss,"dichroism",Xk)
    !
  endif
  !

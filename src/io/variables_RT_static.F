@@ -55,7 +55,7 @@ integer function variables_RT_static(ID)
  !
  ! ELPH_vars
  !
-#if defined _ELPH
+#if defined _ELPH 
  call def_variable_elemental(ID,VAR="ELPH_vars",VAR_SZ=5,VAR_KIND=IP_YIO,MENU=0) 
  call io_variable_elemental(ID,L0=l_elph_scatt,&
 &   VAR=" [E-P] Electron-phonon", CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)

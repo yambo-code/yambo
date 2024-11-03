@@ -5,23 +5,20 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+#include<dev_defs.h>
+!
 integer function io_DB1(E,k,ID)
  !
  use pars,             ONLY:SP
  use units,            ONLY:HA2EV
  use com,              ONLY:msg
  use C_driver,         ONLY:code_version,code_revision,code_GPL_revision
- use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
-&                           n_spinor
+ use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,n_spinor
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, input_GS_Tel, dl_sop, &
 &                           Tel, n_atoms_species_max,n_atomic_species,n_atoms_species,atom_pos, &
 &                           Z_species, n_atoms, mag_syms, atom_mass, atoms_map
- use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&
-&                           QP_states_k,nXkibz,ng_closed
- use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng,wf_nb_io
-#ifdef _CUDA
- use wave_func,        ONLY:wf_igk_d
-#endif
+ use R_lattice,        ONLY:ng_vec,g_vec,bz_samp,nkibz,QP_states_k,nXkibz,ng_closed
+ use wave_func,        ONLY:wf_ncx,wf_nc_k,wf_igk,wf_igk_d,wf_ng,wf_nb_io
  use LIVE_t,           ONLY:live_timing_is_on
  use IO_int,           ONLY:io_connect,io_disconnect,io_elemental,io_bulk,ver_is_gt_or_eq
  use IO_m,             ONLY:io_sec,variable_exist,io_status,read_is_on,&
@@ -31,6 +28,8 @@ integer function io_DB1(E,k,ID)
  use BS,               ONLY:BS_bands
  use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,GS_exx_FRACTION,GS_exx_SCREENING
  use global_XC,        ONLY:setup_global_XC,EXT_NONE
+ use gpu_m,            ONLY:have_gpu
+ use devxlib,          ONLY:devxlib_memcpy_h2d
 #if defined _SC || defined _RT
  use collision_ext,    ONLY:COLL_bands
  use hamiltonian,      ONLY:H_ref_bands
@@ -44,7 +43,8 @@ integer function io_DB1(E,k,ID)
 #if defined _RT
  use real_time,        ONLY:RT_bands
 #endif
-#include<memory.h>
+ !
+#include<y_memory.h>
  !
  type(levels)  :: E
  type(bz_samp) :: k
@@ -52,12 +52,10 @@ integer function io_DB1(E,k,ID)
  !
  ! Work Space
  !
- integer :: code_version_local(3),code_revision_local,MENU
+ integer :: code_version_local(3),code_revision_local
  !
  io_DB1 =io_connect(desc="db1",type=0,ID=ID)
  if (io_DB1/=0) goto 1
- !
- MENU=1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
@@ -209,8 +207,7 @@ integer function io_DB1(E,k,ID)
      io_code_revision(ID,2)=code_GPL_revision
    endif
    !
-   call io_elemental(ID, VAR="",VAR_SZ=0,MENU=MENU)
-   MENU=0
+   call io_elemental(ID, VAR="",VAR_SZ=0,MENU=1)
    !
    ! Exporting E%nb/k%nibz when in DUMP
    !
@@ -271,9 +268,10 @@ integer function io_DB1(E,k,ID)
    YAMBO_ALLOC(k%pt,(k%nibz,3))
    YAMBO_ALLOC(wf_nc_k,(k%nibz))
    YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))
-#ifdef _CUDA
-   YAMBO_ALLOC(wf_igk_d,(wf_ncx,k%nibz))
-#endif
+   !
+   if (have_gpu) then
+     YAMBO_ALLOC_GPU(DEV_VAR(wf_igk),(wf_ncx,k%nibz))
+   endif
    !
    if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
      YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
@@ -346,11 +344,13 @@ integer function io_DB1(E,k,ID)
  !
  call io_bulk(ID, VAR="WFC_GRID", VAR_SZ=shape(wf_igk) )
  call io_bulk(ID, I2=wf_igk )
-#ifdef _CUDA
- if(read_is_on(ID)) then
-   wf_igk_d = wf_igk
+ !
+ if(have_gpu.and.read_is_on(ID)) then
+   !
+   ! host2dev,  wf_igk_d = wf_igk
+   call devxlib_memcpy_h2d(DEV_VAR(wf_igk),wf_igk)
+   !
  endif
-#endif
  !
 1 call io_disconnect(ID=ID)
  !

@@ -9,21 +9,17 @@
 !
 subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
- use pars,          ONLY:SP,cZERO,schlen
+ use pars,          ONLY:SP,cZERO
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_ppa,l_mpa,l_elel_corr,l_cohsex,l_rim_w
  use com,           ONLY:msg
  use DIPOLES,       ONLY:DIPOLE_t
- use X_m,           ONLY:X_t,current_iq,l_recalculate_X
- use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,QP_table,&
-&                        QP_n_states,QP_dSc,QP_dSc_delta,report_Sc,&
-&                        On_Mass_Shell_approx
+ use X_m,           ONLY:X_t
+ use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,&
+&                        QP_n_states,QP_dSc,QP_dSc_delta,On_Mass_Shell_approx
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels,n_bands,spin
+ use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
- use interfaces,    ONLY:OCCUPATIONS_Fermi
- use stderr,        ONLY:intc
- use IO_int,        ONLY:IO_and_Messaging_switch
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr
 #endif
@@ -31,6 +27,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use drivers,       ONLY:l_elphoton_corr
 #endif
  implicit none
+ !
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
  type(X_t)    ::X
@@ -41,7 +38,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  ! Work Space
  !
  integer     :: i1,i2,iter
- integer     :: ik,is,ib
+ integer     :: is
  complex(SP) :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
  !
  ! Dyson equation: Newton solver 
@@ -53,7 +50,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    !
  endif
  !
- ! Self-consisnte GW or GWo can be performed using external scripts
+ ! Self-consistent GW or GWo can be performed using external scripts
  ! see the wiki 
  ! https://www.yambo-code.eu/wiki/index.php/Self-consistent_GW_on_eigenvalues_only
  ! in this subroutine iter is always 0
@@ -156,4 +153,3 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  enddo
  !
 end subroutine
-

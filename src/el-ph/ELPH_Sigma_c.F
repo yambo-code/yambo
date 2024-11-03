@@ -43,8 +43,11 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        INTERPOLATE_is_quiet    
  use stderr,        ONLY:STRING_same
  use timing_m,      ONLY:timing
+#if defined _RT
+ use RT_control,    ONLY:RT_apply
+#endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::en
  type(bz_samp) ::k,q
@@ -287,6 +290,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        if (io_err<0) call error('Missing Q-database')
        !
      endif
+
      !
      if (.not.elph_use_q_grid.or.elph_grids_are_expanded) then
        !
@@ -295,6 +299,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        call setup_k_plus_q_levels(iq_db,E_random_shift)
        !
        call QP_apply((/1,elph_nb/),GKKP%E_kpq(iq_db),k,"G",msg_fmt=' ')
+#if defined _RT
+       call RT_apply((/1,elph_nb/),GKKP%E_kpq(iq_db),k,"G",VERBOSE=iq_bz==1)
+#endif
        !
      endif
      !

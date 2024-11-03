@@ -10,10 +10,10 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  use pars,           ONLY:schlen,SP
  use units,          ONLY:HA2EV
  use R_lattice,      ONLY:bz_samp,nXkibz,MAX_kpts_to_report
- use electrons,      ONLY:n_sp_pol,nel,n_full_bands
+ use electrons,      ONLY:n_sp_pol,nel,n_full_bands,n_bands
  use stderr,         ONLY:intc
  use wave_func,      ONLY:wf_nc_k
- use com,            ONLY:msg,fat_log
+ use com,            ONLY:msg,fat_log,com_compose_msg,msg_length_set
  use vec_operate,    ONLY:c2a
  !
  implicit none
@@ -31,12 +31,12 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  character(schlen) :: dumb_ch1,dumb_ch2
  real(SP)          :: E_(n_bands_)
  !
- if(l_kpoints) then
-   call msg('nr','IBZ '//trim(what)//'-points ',k%nibz)
+ if (l_kpoints) then
+   call msg('nr',com_compose_msg(body='IBZ '//trim(what)//'-points'),k%nibz)
    if (trim(what)/="Q".and.Xk%nibz/=k%nibz) then
-     call msg('r', 'IBZ K-points for X ',nXkibz)
+     call msg('r', com_compose_msg(body='IBZ K-points for X'),nXkibz)
    endif
-   call msg('rn','BZ  '//trim(what)//'-points ',k%nbz)
+   call msg('rn',com_compose_msg(body='BZ  '//trim(what)//'-points'),k%nbz)
    call msg('r','K/Q-points units:')
    call msg('rn','rlu = crystal or reduced units; cc = cartesian coordinates; iku = interal k-units')
  endif
@@ -61,15 +61,14 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
    if(trim(what)=="Q") dumb_ch1='Q ['//trim(dumb_ch1)
    if(trim(what)/="Q") dumb_ch1='K ['//trim(dumb_ch1)
    !
+   call msg_length_set(length=20)
    if (l_kpoints) then
-     call msg('r',trim(dumb_ch1),k_al,'[rlu]')
-     if (fat_log) call msg('r','      :',k%pt(ik,:),'[iku]')
-     if (fat_log) call msg('r','      :',k_cc,'[cc]')
-     call msg('r','      : weight ',k%weights(ik))
-     if (trim(what)/="Q") then
-       call msg('r','      : wf components',wf_nc_k(ik) )
-     endif
+     call msg('r',trim(com_compose_msg(body=trim(dumb_ch1),post="[rlu]")),k_al)
+     if (fat_log) call msg('r',trim(com_compose_msg(body=" ",post="[iku]")),k%pt(ik,:))
+     if (fat_log) call msg('r',trim(com_compose_msg(body=" ",post="[cc]")),k_cc)
+     if (trim(what)/="Q") call msg('r',trim(com_compose_msg(body=" ",post="WF components")),wf_nc_k(ik) )
    endif
+   call msg_length_set()
    !
    if (l_what) then
      !
@@ -77,6 +76,7 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
        !
        nb_to_print=n_full_bands(is_pol)+4*int(nel)
        if (.not.fat_log) nb_to_print=2*n_full_bands(is_pol)
+       if (nb_to_print==0) nb_to_print=n_bands
        !
        E_=E(:,ik,is_pol)*HA2EV
        dumb_ch2=trim(what)

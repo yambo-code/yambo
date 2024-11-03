@@ -33,7 +33,6 @@
 #  The platform identifier to suffix to the end of library names
 #  -------------------------------------------------------------
    PLAT = LINUX
-
 #  ----------------------------------------------------------
 #  Name and location of the BLACS library.  See section 2 for 
 #  details on BLACS debug level (BLACSDBGLVL).
@@ -43,9 +42,6 @@
    BLACSFINIT  = $(BLACSdir)/libblacs_init.a
    BLACSCINIT  = $(BLACSdir)/libblacs_C_init.a
    BLACSLIB    = $(BLACSdir)/libblacs.a
-#   BLACSFINIT  = $(BLACSdir)/blacsF77init_$(COMMLIB)-$(PLAT)-$(BLACSDBGLVL).a
-#   BLACSCINIT  = $(BLACSdir)/blacsCinit_$(COMMLIB)-$(PLAT)-$(BLACSDBGLVL).a
-#   BLACSLIB    = $(BLACSdir)/blacs_$(COMMLIB)-$(PLAT)-$(BLACSDBGLVL).a
 
 #  Name and location of the MPI library.
 #  -------------------------------------
@@ -87,7 +83,7 @@
 #  The directory to find the required communication library include files, 
 #  if they are required by your system.
 #  -----------------------------------------------------------------------
-   SYSINC = $(impi)
+   SYSINC = $(impi) -I$(libdir)/blacs/blacs/SRC/MPI
 
 #  ---------------------------------------------------------------------------
 #  The Fortran 77 to C interface to be used.  If you are unsure of the correct
@@ -95,7 +91,6 @@
 #  Choices are: Add_, NoChange, UpCase, or f77IsF2C.
 #  ---------------------------------------------------------------------------
    INTFACE =-DAdd_
-# -DF77_CALL_C=NOCHANGE
 
 #  ------------------------------------------------------------------------
 #  Allows the user to vary the topologies that the BLACS default topologies

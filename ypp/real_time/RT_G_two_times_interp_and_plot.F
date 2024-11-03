@@ -18,7 +18,7 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  use D_lattice,      ONLY:lattice
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  :: en
  type(bz_samp) :: kpt,qpt,RT_k

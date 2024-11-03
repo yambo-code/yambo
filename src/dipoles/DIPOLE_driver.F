@@ -39,9 +39,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  use parser_m,       ONLY:parser
  use DIPOLES,        ONLY:DIP_spin,DIP_orbital,P_square
  use electrons,      ONLY:n_spin,n_spinor
-#if defined _NL
- use nl_optics,      ONLY:l_use_DIPOLES
-#endif
 #if defined _RT
  use DIPOLES,        ONLY:DIP_P_spinor
 #endif
@@ -64,6 +61,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  integer           :: ik,io_err
  character(schlen) :: msg
  logical           :: l_warning,use_dipole_transverse,idir_not_done(3),l_Hbare
+#if defined _NL
+ logical           :: l_dip_appr_from_user
+#endif
  !
  call timing('Dipoles',OPR='start')
  !
@@ -84,12 +84,22 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
 #endif
  !
 #if defined _NL
+ !
  if (l_nl_optics) then
-   call parser('UseDipoles',l_use_DIPOLES)
-   if(.not.l_use_DIPOLES) then
+   !      
+   ! In NL I always force the use of covariant dipoles
+   ! because they have a coerent phase, while normal dipole don't
+   ! this can be see in a districtive interference in the polarization
+   ! perpendicular to the field direction
+   ! I expect that dipole covariant decently reproduce non-linear response
+   !
+   l_dip_appr_from_user=.false.
+   call parser("DipApproach",l_dip_appr_from_user)
+   if (.not.l_dip_appr_from_user) then
      Dip%approach="Covariant"
      Dip%ib(1)   =1
    endif
+   !
  endif
 #endif
  ! Needed for kinetic part of bare Hamiltonian

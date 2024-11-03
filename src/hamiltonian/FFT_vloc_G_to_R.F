@@ -28,7 +28,7 @@ subroutine FFT_vloc_G_to_R(vloc_full_r)
   use fft_m,      ONLY:fft_dim,fftw_plan,fft_g_table,fft_size
   use gvect,      ONLY:ngm
   !
-#include<memory.h>
+#include<y_memory.h>
   !  
   complex(SP), intent(out) :: vloc_full_r(fft_size)
   !

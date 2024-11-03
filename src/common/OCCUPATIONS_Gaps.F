@@ -84,7 +84,7 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir,E_k_dir,E_k_ind)
  endif
 #endif
  !
- if (any(E%Nbm+1 > E%nb)) call warning(' No completely empy band found. Include more states in the DFT run?')
+ if (any(E%Nbm+1 > E%nb)) call warning('No empty bands found. Include more states in the DFT run?')
  !
  ! VBM/CBM
  !

@@ -24,7 +24,7 @@ integer function io_QP_and_GF(what,qp,ID)
  use ELPH,           ONLY:ELPH_desc,use_PH_DbGd
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(QP_t)  ::qp
  character(*)::what ! 'QP'/'G'/filename
@@ -50,12 +50,14 @@ integer function io_QP_and_GF(what,qp,ID)
  if (what=="G" ) type_two_DB=.TRUE.
  if (index(what,"QP_merged")>0.and.write_is_on(ID)) type_two_DB=.TRUE.
  if (index(what,"QP_expanded")>0.and.write_is_on(ID)) type_two_DB=.TRUE.
+ if (index(what,"QP_interpolated")>0.and.write_is_on(ID)) type_two_DB=.TRUE.
  !
  QP_type_DB=.FALSE.
  if (what=="QP") QP_type_DB=.TRUE.
  if (index(what,".QP")/=0) QP_type_DB=.TRUE.
  if (index(what,"QP_merged")>0.and.write_is_on(ID)) QP_type_DB=.TRUE.
  if (index(what,"QP_expanded")>0.and.write_is_on(ID)) QP_type_DB=.TRUE.
+ if (index(what,"QP_interpolated")>0.and.write_is_on(ID)) QP_type_DB=.TRUE.
  !
  if (type_two_DB) then
    io_QP_and_GF=io_connect(desc=what,type=2,ID=ID)
@@ -127,7 +129,7 @@ integer function io_QP_and_GF(what,qp,ID)
      call IO_desc_add(qp%desc,kind="s",str=" ",S=" ")
      call IO_desc_append(ELPH_desc,qp%desc)
      if (ver_is_gt_or_eq(ID,revision=19875)) then 
-       call IO_desc_add(qp%desc,kind="l",str='PH double-grid',L=use_PH_DbGd)
+       call IO_desc_add(qp%desc,kind="l",str='[ELPH] PH double-grid',L=use_PH_DbGd)
      endif
    endif
 #endif

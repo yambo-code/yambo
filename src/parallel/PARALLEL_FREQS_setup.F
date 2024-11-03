@@ -12,7 +12,7 @@ subroutine PARALLEL_FREQS_setup(W,IND,COMM)
 &                      PAR_build_index,PAR_FREQS_index
  use parallel_int,ONLY:PARALLEL_index,PARALLEL_live_message
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(w_samp)    :: W
  type(PP_indexes):: IND

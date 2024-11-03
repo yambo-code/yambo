@@ -21,7 +21,8 @@ subroutine MATRIX_init( what, M_par, N, Nb)
  use matrix,         ONLY:PAR_matrix,MATRIX_reset
  use parallel_m,     ONLY:COMM_copy,PAR_COM_SLK,PAR_COM_SLK_INDEX_local,&
 &                         PAR_COM_RL_INDEX,PAR_COM_RL_A2A,ncpu
-#include <memory.h>
+#include <dev_defs.h>
+#include <y_memory.h>
  !
  character(*)           :: what
  type(PAR_matrix)       :: M_par
@@ -33,13 +34,14 @@ subroutine MATRIX_init( what, M_par, N, Nb)
  integer, allocatable :: rows(:,:),cols(:,:)
  !
  call MATRIX_reset(M_par)
+ !DEV_ACC enter data copyin(M_par)
  !
  ! COMMs
  !
  if (what=="SLK") then
    call COMM_copy(PAR_COM_SLK_INDEX_local, M_par%INTRA_comm)
    call COMM_copy(PAR_COM_SLK,             M_par%INTER_comm)
- else if (what=="XUP".or.what=="XDN".or.what=="X") then
+ else if (what=="XUP".or.what=="XDN".or.what=="X".or.what=="MPA") then
    call COMM_copy(PAR_COM_RL_A2A,   M_par%INTRA_comm)
    call COMM_copy(PAR_COM_RL_INDEX, M_par%INTER_comm)
  endif
@@ -95,7 +97,7 @@ subroutine MATRIX_init( what, M_par, N, Nb)
  !
  ! Entire Matrix
  !
- if (what=="X".or.what=="PAR") then
+ if (what=="X".or.what=="PAR".or.what=="MPA") then
    !
    M_par%I     = 1
    M_par%Nb    = Nb

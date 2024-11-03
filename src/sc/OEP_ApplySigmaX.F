@@ -36,7 +36,7 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  !
  ! I/O
  !
-#include<memory.h>
+#include<y_memory.h>
  complex(SP),intent(out)  :: U_x(nkibz,maxval(n_met_bands),fft_size)
  type(levels), intent(in) :: E
  type(bz_samp), intent(in):: k,q
@@ -55,7 +55,7 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  call elemental_collision_free(isc)
  call PP_indexes_reset(px)
  !
- call elemental_collision_alloc(isc,NG=QP_ng_Sx,NG_GAMP=(/QP_ng_Sx,1/),TITLE="OEP_SigmaX")
+ call elemental_collision_alloc(isc,NG=QP_ng_Sx,GAMP_NG=(/QP_ng_Sx,1/),TITLE="OEP_SigmaX")
  YAMBO_ALLOC(local_u,(fft_size))
  YAMBO_ALLOC(u,(fft_size))
  YAMBO_ALLOC(u_rs,(fft_size))

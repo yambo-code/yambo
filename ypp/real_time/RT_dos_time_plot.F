@@ -22,9 +22,9 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  use LIVE_t,         ONLY:live_timing
  use RT_control,     ONLY:RT_output,RT_apply,RT_carriers_to_RT_k,RT_carriers_to_RT_E
  use real_time,      ONLY:RT_carriers,RT_bands
- use interpolate,    ONLY:GRID_k,INTERPOLATION_driver_seed,INTERPOLATION_driver_do,INTERP_obj
+ use interpolate,    ONLY:GRID_k,INTERPOLATION_driver_seed,INTERPOLATION_driver_do
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) ::k
  type(levels)  ::En

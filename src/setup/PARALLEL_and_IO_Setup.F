@@ -22,10 +22,13 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use parallel_int,   ONLY:PP_bcast,PP_redux_wait 
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:WF_buffered_IO
- use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads
- use memory,         ONLY:USER_MEM_limit_string
+ use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads,n_threads_OSCLL
+ use y_memory,       ONLY:USER_MEM_limit_string
  use LIVE_t,         ONLY:USER_wall_time_string
- use cuda_m,         ONLY:cuda_visible_devices,have_cuda_devices,cuda_gpu_subscription
+ use gpu_m,          ONLY:gpu_visible_devices,have_gpu_devices,gpu_subscription,gpu_str
+#if defined _GPU
+ use gpu_m,          ONLY:gpu_GetDevice
+#endif
  !
  implicit none
  !
@@ -37,9 +40,6 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  integer           :: ID,i_err,i_s,n_max_threads,i_cpu,i_dev,ierr
  character(lchlen) :: dumb_ch
  integer, external :: io_DB1
-#ifdef _CUDA
- integer, external :: cudaGetDevice
-#endif
  !
  !
  call section('*','MPI/OPENMP structure, Files & I/O Directories') 
@@ -84,7 +84,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! CPU structure REPORT
  !======================
  !
- n_max_threads=maxval((/n_threads,n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL/))
+ n_max_threads=maxval((/n_threads,n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads_OSCLL/))
  !
  if (ncpu>1.or.n_max_threads>1) then
    !
@@ -106,12 +106,12 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r', 'Threads total       ',n_max_threads*ncpu)
  call msg('r', 'Nodes Computing     ',n_nodes(1))
  call msg('r', 'Nodes IO            ',n_IO_nodes)
-#ifdef _CUDA
- call msg('r', 'CUDA support        ',"yes")
- call msg('r', 'CUDA devices        ',have_cuda_devices)
- if (len_trim(cuda_visible_devices)>0) call msg('r', 'CUDA visible dev    ',trim(cuda_visible_devices))
- call msg('r', 'MPI tasks / GPU     ',cuda_gpu_subscription)
- ierr = cudaGetDevice(i_dev)
+#ifdef _GPU
+ call msg('r', 'GPU support         ',"yes  ("//trim(gpu_str)//")")
+ call msg('r', 'GPU devices         ',have_gpu_devices)
+ if (len_trim(gpu_visible_devices)>0) call msg('r', 'GPU visible dev    ',trim(gpu_visible_devices))
+ call msg('r', 'MPI tasks / GPU     ',gpu_subscription)
+ ierr = gpu_GetDevice(i_dev)
  call msg('s', 'MPI assigned to GPU ',i_dev)
 #endif
  !
@@ -133,7 +133,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  !=================================
  !
  if (len_trim(USER_wall_time_string)>0)  call msg('r','User walltime limit ',trim(USER_wall_time_string))
- if (len_trim(USER_MEM_limit_string)>0)  call msg('r','User Memory   limit ',trim(USER_MEM_limit_string))
+ if (len_trim(USER_MEM_limit_string)>0) call msg('r','User Memory   limit ',trim(USER_MEM_limit_string))
  !
  ! Strings & Dirs
  !-----------------

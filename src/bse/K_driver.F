@@ -12,21 +12,23 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use stderr,         ONLY:intc,STRING_match
  use electrons,      ONLY:levels,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
- use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge,X_OUTPUT_driver
+ use X_m,            ONLY:X_t,X_duplicate,X_reset,X_OUTPUT_driver
  use DIPOLES,        ONLY:DIPOLE_t
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,REP
- use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0,BSS_eels_to_eps,BSS_uses_DbGd
+ use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0,BSS_uses_DbGd,&
+&                         BSS_Q_dir,BSS_E_dir
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_res_K_corr,BS_n_g_W,BS_cpl_K_corr,&
-&                         BS_Blocks_and_Transitions_free,BSqpts,l_BS_photolum
+&                         BS_Blocks_and_Transitions_free,BSqpts,O_ng
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded
  use drivers,        ONLY:l_rpa_IP,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PAR_IND_WF_b_and_k,PAR_K_scheme,PARALLEL_default_mode
  use parallel_int,   ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use interfaces,     ONLY:eval_G_minus_G
- use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free
+ use vec_operate,    ONLY:v_norm
+ use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free,G_m_G_maxval,q0_def_norm
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
@@ -37,7 +39,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  ! Work Space
  !
  type(X_t)         :: X_tddft,X_oscillators
- integer           :: iq,Max_G_m_G,iG_BSE,iGo_BSE
+ integer           :: iq,Max_G_m_G,iG_BSE,iGo_BSE,VB(2),CB(2)
  type(w_samp)      :: W_bss 
  !
  ! I/O
@@ -57,17 +59,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !=========================
  call K_driver_init("init",1,Ken,Xk)
  !
- ! Observables initialization
- !============================
- call K_observables( )
+ ! q0 renormalization and field direction
  !
- ! PL is implemented only in velocity gauge
- if (l_BS_photolum) global_gauge="velocity"
- !
- if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
-   call warning(" Not a valid gauge in input. Switching to length gauge")
-   global_gauge="length"
- endif
+ BSS_E_dir(:) = BSS_E_dir(:)/v_norm(BSS_E_dir)
+ BSS_Q_dir(:) = BSS_Q_dir(:)/v_norm(BSS_Q_dir)
+ BSS_q0(:) = BSS_E_dir(:)*q0_def_norm
  !
  ! Energy points
  !===============
@@ -79,6 +75,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  W_bss%per_memstps=FXC_per_memstps
  call FREQUENCIES_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n_freqs
+ !
+ ! Observables initialization
+ !============================
+ call K_observables(W_bss)
  !
  ! Double Grid support
  !=====================
@@ -151,24 +151,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
      ! W/X RL size setup looking at the max index of G-G' 
      ! =========
      !
-     iGo_BSE=qindx_B_max
      iG_BSE =BS_n_g_W
-     if (.not.iq==1) then
-       iGo_BSE=maxval((/4*qindx_B_max,qindx_X(iq,:,2)/))
-       iG_BSE =max(BS_n_g_exch,BS_n_g_W)
-       !iG_BSE =maxval((/BS_n_g_exch,BS_n_g_W,qindx_B_max/))
-     endif
+     iGo_BSE=qindx_B_max
+     ! This needs be changed in case i_gW is redefined vi G_m_G
+     !if (.not.iq==1) iGo_BSE=maxval((/4*qindx_B_max,qindx_X(iq,:,2)/))
      !
+     ! This is the size of the first dimension of the G_m_G table
      Max_G_m_G=eval_G_minus_G(iG_BSE,iGo_BSE)
-     !
-     if (.not.iq==1) then
-       if (BS_n_g_exch> Max_G_m_G ) then
-         call warning (' Exch size reduced from '//trim(intc(BS_n_g_exch))//' to '&
-&                        //trim(intc(Max_G_m_G))//' due to symmetry constraints')
-         BS_n_g_exch= Max_G_m_G
-         call msg('s','[BSE-exch] Exch size forced by symmetry to be ',BS_n_g_exch)
-       endif
-     endif
+     O_ng=G_m_G_maxval
      !
      if (BS_n_g_W> Max_G_m_G ) then
        call warning (' W size reduced from '//trim(intc(BS_n_g_W))//' to '&
@@ -182,20 +172,20 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call DIPOLE_dimensions(Ken,Dip,BS_bands,BSS_q0)
    !
    ! ... EH space (no parallelization)
-   call K_Transitions_setup("K",iq,Ken,Xk,Dip)
+   call K_Transitions_dimensions(iq,Ken,Xk,Dip,VB,CB)
    !
    !... Parallel distribution
    call PARALLEL_global_Response_T_transitions(Xk)
    !
    ! ... EH space (with parallelization) and Transition groups build-up
-   call K_Transitions_setup("T",iq,Ken,Xk,Dip)
+   call K_Transitions_setup(iq,Ken,Xk,Dip,VB,CB)
    !
    !... Blocks build-up
    if (.not.l_rpa_IP) call K_blocks()
    !
    ! Wave Functions distribution 
    !=============================
-   call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.FALSE.)
+   call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=iq==BS_q(1))
    call PARALLEL_WF_index( )
    !
    ! 0. The Dipoles 
@@ -208,7 +198,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    ! 2. The KERNEL
    ! ================
-   if (.not.l_rpa_IP) call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
+   if (.not.l_rpa_IP) call K_kernel(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
    !
    ! 3. The SOLVER
    ! =================

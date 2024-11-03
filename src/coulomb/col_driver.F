@@ -24,6 +24,8 @@
 ! 4 pi / |q+G|^2 = 2 pi DLVol NqBZ qpg(q,G)                                  
 ! |q+G| = Sqrt[ 2 / ( DLVol NqBZ qpg(q,G)) ]                                  
 !
+#include<dev_defs.h>
+!
 subroutine col_driver(bare_NG,q)
  !
  !Here I launch the routine to create/read the 
@@ -35,6 +37,7 @@ subroutine col_driver(bare_NG,q)
  use stderr,        ONLY:STRING_pack,intc,gen_fmt,STRING_split
  use com,           ONLY:msg
  use vec_operate,   ONLY:iku_v_norm,sort
+ use frequency,     ONLY:w_samp
  use D_lattice,     ONLY:DL_vol
  use R_lattice,     ONLY:d3q_factor,RIM_is_diagonal,RIM_qpg,bare_qpg,&
 &                        nqibz,g_vec,q_pt,nqbz,RIM_ng,RIM_n_rand_pts,&
@@ -43,14 +46,15 @@ subroutine col_driver(bare_NG,q)
  use wave_func,     ONLY:wf_ng
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,REP,VERIFY
- use cuda_m,        ONLY:have_cuda
-#include<memory.h>
+ !
+#include<y_memory.h>
  !
  integer       :: bare_NG
  type(bz_samp) :: q
  !
  ! Work Space
  !
+ type(w_samp) :: Xw
  logical          :: l_RandQpts,is_cut(3)
  integer          :: ig,iq,ID,io_err
  integer, external:: io_RIM
@@ -129,7 +133,7 @@ subroutine col_driver(bare_NG,q)
      if (cut_is_slab) then
        call msg('nr','Performing RIM of v_slab')
      endif
-     call rim("x")
+     call rim("x",Xw)
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
      io_err=io_RIM(ID)
    endif
@@ -177,11 +181,11 @@ subroutine col_driver(bare_NG,q)
  ! copy again,
  ! bare_qpg is modified by cutff_driver
  !
- if (have_cuda) then
-   YAMBO_FREE(bare_qpg_d)
-   if (size(bare_qpg)>0) then
-     YAMBO_ALLOC_SOURCE(bare_qpg_d,bare_qpg)
-   endif
+#ifdef _GPU
+ YAMBO_FREE_GPU(DEV_VAR(bare_qpg))
+ if (size(bare_qpg)>0) then
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(bare_qpg),bare_qpg)
  endif
+#endif
  !
 end subroutine

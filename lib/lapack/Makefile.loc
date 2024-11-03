@@ -15,8 +15,6 @@ PACKAGE=$(pkgname_lapack)
 include ../config/external_libs_commons.mk
 include ../config/external_libs_defs.mk
 #
-#CONFFLAGS=-DCMAKE_INSTALL_LIBDIR=$(LIBPATH)/lib
-#
 all: $(LIBRARY)
 #
 uncompress:
@@ -27,9 +25,9 @@ configure: uncompress
          echo "\t[$(PACKAGE)] configuration"; \
 	 cd $(PACKAGE); \
 	 mkdir build_static ; cd build_static ; \
-	 ( cmake -DCMAKE_INSTALL_LIBDIR=$(LIBPATH)/lib -DBUILD_SHARED_LIBS=OFF .. ) >> ${compdir}/log/config_$(PACKAGE).log 2>&1 ; \
+	 ( cmake -DCMAKE_C_COMPILER=$(cc) -DCMAKE_Fortran_COMPILER=$(fc) -DCMAKE_INSTALL_PREFIX=$(LIBPATH) -DBUILD_SHARED_LIBS=OFF .. ) >> ${compdir}/log/config_$(PACKAGE)_static.log 2>&1 ; \
 	 cd .. ; mkdir build_shared ; cd build_shared ; \
-	 ( cmake -DCMAKE_INSTALL_LIBDIR=$(LIBPATH)/lib -DBUILD_SHARED_LIBS=ON .. ) >> ${compdir}/log/config_$(PACKAGE).log 2>&1 ; \
+	 ( cmake -DCMAKE_C_COMPILER=$(cc) -DCMAKE_Fortran_COMPILER=$(fc) -DCMAKE_INSTALL_PREFIX=$(LIBPATH) -DBUILD_SHARED_LIBS=ON .. ) >> ${compdir}/log/config_$(PACKAGE)_shared.log 2>&1 ; \
 	 cd .. ; \
 	 touch ../configured.stamp ; \
 	fi
@@ -38,8 +36,9 @@ compile: uncompress configure
 	@if test -d $(PACKAGE) && ! test -f compiled.stamp ; then \
          echo "\t[$(PACKAGE)] compilation"; \
          cd $(PACKAGE); \
-	 cd build_static ; ( cmake --build . ) >> ${compdir}/log/compile_$(PACKAGE).log 2>&1 ; cd .. ; \
-	 cd build_shared ; ( cmake --build . ) >> ${compdir}/log/compile_$(PACKAGE).log 2>&1 ; cd .. ; \
+	 cd build_static ; ( cmake --build . ) >> ${compdir}/log/compile_$(PACKAGE)_static.log 2>&1 ; cd .. ; \
+	 cd build_shared ; ( cmake --build . ) >> ${compdir}/log/compile_$(PACKAGE)_shared.log 2>&1 ; cd .. ; \
+         cd ..; \
 	 touch compiled.stamp; \
 	fi
 
@@ -47,9 +46,10 @@ install: uncompress configure compile
 	@if ! test -e installed.stamp ; then \
          echo "\t[$(PACKAGE)] installation"; \
          cd $(PACKAGE); \
-	 cd build_static ; ( cmake --build . --target install ) >> ${compdir}/log/install_$(PACKAGE).log 2>&1 ; cd .. ; \
-	 cd build_shared ; ( cmake --build . --target install ) >> ${compdir}/log/install_$(PACKAGE).log 2>&1 ; cd .. ; \
-	 touch ../installed.stamp; \
+	 cd build_static ; ( cmake --build . --target install ) >> ${compdir}/log/install_$(PACKAGE)_static.log 2>&1 ; cd .. ; \
+	 cd build_shared ; ( cmake --build . --target install ) >> ${compdir}/log/install_$(PACKAGE)_shared.log 2>&1 ; cd .. ; \
+         cd ..; \
+	 touch installed.stamp; \
 	fi
 
 $(LIBRARY): uncompress configure compile install

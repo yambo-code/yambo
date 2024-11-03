@@ -14,7 +14,7 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  use frequency,     ONLY:ordered_grid_index
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,PAR_IND_VAL_BANDS_X
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::Xen 
  type(bz_samp) ::Xk

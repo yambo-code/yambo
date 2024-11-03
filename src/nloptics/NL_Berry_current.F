@@ -19,7 +19,6 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  use parallel_int,   ONLY:PP_redux_wait
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:NL_bands
- use electric,	     ONLY:l_force_SndOrd
  !
  implicit none           
  !

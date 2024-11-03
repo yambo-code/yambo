@@ -14,6 +14,7 @@ integer function io_BS_header(iq,X,ID,mode)
  use pars,          ONLY:schlen,lchlen
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
+ use parallel_m,    ONLY:master_cpu
  use BS,            ONLY:BS_K_cutoff_done,l_BSE_restart,l_BSE_kernel_complete
  use BS_solvers,    ONLY:variables_BS,BSS_desc
  use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,io_mode,io_BS_K,DUMP
@@ -57,6 +58,8 @@ integer function io_BS_header(iq,X,ID,mode)
    !
  endif
  !
+ if(.not. (read_is_on(ID) .or. (write_is_on(ID).and.master_cpu)) ) return
+ !
  db_name='BS_head_Q'//trim(intc(iq))
  !
  io_BS_header=io_connect(desc=trim(db_name),type=2,ID=ID)
@@ -64,10 +67,6 @@ integer function io_BS_header(iq,X,ID,mode)
  if (trim(mode)=="connect") return
  !
  ! Check if the file already contains data and it is consistent
- ! DS: warning. This is potentially dangerous since all MPI tasts are all writing
- !              both the header and the variables
- !              I cannot put here if(master_cpu) because I need all MPI_tasks to
- !              go through the definition of the variables (see similar issue in io_X.F)
  !
  io_BS_header=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,&
 &                       IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",CUTOFF=.true.,FRAG=frag_BS_K)

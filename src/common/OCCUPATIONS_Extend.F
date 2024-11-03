@@ -17,13 +17,11 @@ subroutine OCCUPATIONS_Extend(Xe,E,k)
  !
  use pars,       ONLY:SP
  use units,      ONLY:HA2EV
- use electrons,  ONLY:levels,n_sp_pol,spin_occ
+ use electrons,  ONLY:levels,n_sp_pol
  use R_lattice,  ONLY:bz_samp
- use D_lattice,  ONLY:T_elecs,T_holes
- use functions,  ONLY:Fermi_fnc
  use interfaces, ONLY:OCCUPATIONS_Gaps
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)    ::Xe,E
  type(bz_samp)   ::k

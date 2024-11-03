@@ -18,9 +18,9 @@ function get_ph_E_DbGd(il,iq_fg,iq_bz,q)
  !
  use pars,          ONLY:SP
  use R_lattice,     ONLY:bz_samp
- use ELPH,          ONLY:PH_freqs,FAN_deltaE_treshold,PH_freqs_sq
+ use ELPH,          ONLY:PH_freqs,PH_freqs_sq
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,       intent(in)  :: il,iq_bz,iq_fg
  type(bz_samp), intent(in)  :: q

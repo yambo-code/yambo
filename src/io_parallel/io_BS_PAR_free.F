@@ -10,6 +10,7 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
  ! close BSE netcdf parallel file
  !
  use pars,          ONLY:SP
+ use parallel_m,    ONLY:master_cpu
  use parallel_int,  ONLY:PP_wait
  use BS,            ONLY:l_BSE_kernel_complete,BS_K_has_been_calculated_loaded,BS_K_cutoff
  use IO_m,          ONLY:read_is_on,write_is_on,io_BS_K
@@ -31,7 +32,7 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
      BS_K_has_been_calculated_loaded=l_kernel_complete
      l_BSE_kernel_complete          =l_kernel_complete.and.(io_BS_K.or.BS_K_cutoff>0._SP)
    endif
-   if(write_is_on(ID_head).or.read_is_on(ID_head)) then
+   if((write_is_on(ID_head).and.master_cpu).or.read_is_on(ID_head)) then
      io_BS=variables_BS_more(ID_head,'end')
      call io_disconnect(ID_head)
    endif

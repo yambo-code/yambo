@@ -31,7 +31,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use D_lattice,     ONLY:DL_vol
  use wrapper,       ONLY:M_by_V
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)             ::E
  type(bz_samp)            ::k,q,Xk
@@ -93,7 +93,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  call X_ALLOC_elemental('X',(/X%ng,X%ng,1/))
  YAMBO_ALLOC(EM1s,(X%ng,X%ng))
  !
- call elemental_collision_alloc(isc, NG=isc%ngrho,NG_GAMP=(/X%ng,X%ng/),TITLE="NEQ_GW")
+ call elemental_collision_alloc(isc, NG=isc%ngrho,GAMP_NG=(/X%ng,X%ng/),TITLE="NEQ_GW")
  call elemental_collision_alloc(iscp,NG=isc%ngrho,TITLE="NEQ_GW")
  !
  ! Parallel Indexes & LIVE-TIMING STEPS

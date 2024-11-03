@@ -30,14 +30,14 @@ integer function io_QINDX(Xk,q,io_db)
  use timing_m,       ONLY:timing
  use parallel_m,     ONLY:PAR_K_scheme
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp)::q,Xk
  integer      ::io_db,i3,i2,i2_dn,i2_up,i2_mem,i2_step,IO_size
  !
  ! Work Space
  !
- integer      :: ioScatt,id_frag,n_pars
+ integer      :: ioScatt,id_frag
  !
  call timing('io_QINDX',OPR='start')
  !

@@ -56,7 +56,7 @@ subroutine XCo_from_H_minus_Hbare(E,Xk,k,Dip)
  use FFT_m,         ONLY:fft_size
  use parser_m,      ONLY:parser
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ::E       
  type(bz_samp)::Xk,k

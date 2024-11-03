@@ -9,6 +9,8 @@ download:
 	@LIB2DO="all"; $(get_external_libraries)
 libxc-dl: 
 	@LIB2DO="libxc"; $(get_external_libraries)
+devxlib-dl: 
+	@LIB2DO="devxlib"; $(get_external_libraries)
 lapack-dl: 
 	@LIB2DO="lapack"; $(get_external_libraries)
 fftw-dl: 
@@ -25,8 +27,6 @@ hdf5-dl:
 	@LIB2DO="hdf5"; $(get_external_libraries)
 netcdf-dl: 
 	@LIB2DO="netcdf"; $(get_external_libraries)
-pnetcdf-dl: 
-	@LIB2DO="pnetcdf"; $(get_external_libraries)
 netcdff-dl: 
 	@LIB2DO="netcdff"; $(get_external_libraries)
 etsf_io-dl: 

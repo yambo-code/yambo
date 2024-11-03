@@ -13,14 +13,14 @@ integer function io_Double_Grid(E,Xk,ID,what)
  use R_lattice,      ONLY:bz_samp,BZ_FineGd_mode,bz_samp_FineGd_alloc,FineGd_desc
  use IO_int,         ONLY:io_connect,io_disconnect,io_variable_elemental,def_variable_bulk,&
 &                         io_header,ver_is_gt_or_eq,io_variable_bulk,def_variable_elemental
- use IO_m,           ONLY:read_is_on,write_is_on,IO_OUTDATED_DB,variable_exist,io_sec,frag_DG 
+ use IO_m,           ONLY:read_is_on,write_is_on,IO_OUTDATED_DB,variable_exist,io_sec,frag_DG,DUMP,io_mode
  use timing_m,       ONLY:timing
  use pars,           ONLY:IP,SP
 #if defined _ELPH
  use ELPH,           ONLY:EkplusQ_mode
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) :: E
  type(bz_samp):: Xk
@@ -31,7 +31,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
  ! Work Space
  !
  logical :: l_R_LATT
- integer :: VAR_SZ
+ integer :: VAR_SZ,MENU
  logical :: l_PH_DG=.FALSE.
  !
  call timing('io_Double_Grid',OPR='start')
@@ -51,7 +51,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
  !
  if (io_Double_Grid/=0) goto 1
  !
- l_R_LATT=(write_is_on(ID).or.variable_exist(ID,"HEAD_R_LATT"))
+ l_R_LATT=(write_is_on(ID).or.variable_exist(ID,"HEAD_R_LATT")).and.io_mode(ID)/=DUMP
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
@@ -67,7 +67,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
    !
    if (io_Double_Grid/=0) goto 1
    !
-   call def_variable_elemental(ID,VAR="GLOBAL_SYMM_MODE",VAR_SZ=1,VAR_KIND=CR_YIO,MENU=0) 
+   call def_variable_elemental(ID,VAR="GLOBAL_SYMM_MODE",VAR_SZ=1,VAR_KIND=CR_YIO,MENU=1) 
    call io_variable_elemental(ID,CH0=BZ_FineGd_mode,VAR=' [FineGd] Brillouin Symmetry  mode'&
 &                             ,CHECK=.TRUE.,OP=(/"=="/),DESCRIPTOR=FineGd_desc)
    call def_variable_elemental(ID,VAR="BZ_SYMM_MODE",VAR_SZ=1,VAR_KIND=CR_YIO,MENU=0) 
@@ -87,15 +87,24 @@ integer function io_Double_Grid(E,Xk,ID,what)
    call io_variable_elemental(ID,I0=Xk%FGbz%N,VAR=' [FineGd] Number of pts (fine+coarse, BZ-map)'&
 &                             ,DESCRIPTOR=FineGd_desc)
    !
-   call def_variable_elemental(ID,VAR="",VAR_SZ=0,VAR_KIND=CR_YIO,MENU=1) 
+   MENU=1
+#if defined _ELPH
+   if(l_PH_DG) MENU=0
+#endif
+   !
+   call def_variable_elemental(ID,VAR="",VAR_SZ=0,VAR_KIND=CR_YIO,MENU=MENU) 
    !
 #if defined _ELPH
    if(l_PH_DG) then
-     call def_variable_elemental(ID,VAR="EKplusQmode",VAR_SZ=1,VAR_KIND=CR_YIO,MENU=0) 
+     call def_variable_elemental(ID,VAR="EKplusQmode",VAR_SZ=1,VAR_KIND=CR_YIO,MENU=1) 
      call io_variable_elemental(ID,CH0=EkplusQ_mode,VAR='[Ekpq_mode] E(k+q) energy mode'&
 &                             ,CHECK=.TRUE.,OP=(/"=="/),DESCRIPTOR=FineGd_desc)
    endif
 #endif
+   !
+ endif
+ !
+ if (any((/io_sec(ID,:)==2/))) then
    !
    ! Eigenvalues
    !

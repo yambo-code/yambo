@@ -18,12 +18,13 @@ subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM,DO_IT)
  ! c) ( ) + ( ) => IO PAR COMM = null
  !                 IO PAR CPU  = IO_read/IO_write defaults
  !
- use parallel_int,  ONLY:PP_bcast,PP_redux_wait
- use parallel_m,    ONLY:master_cpu,mpi_comm_null,yMPI_comm,mpi_comm_world,ncpu,myid
+ use parallel_int,  ONLY:PP_bcast
+ use parallel_m,    ONLY:master_cpu,mpi_comm_null,yMPI_comm,mpi_comm_world,ncpu
  use IO_m,          ONLY:io_unit,io_mode,io_com,io_action,io_sec,max_io_units, &
 &                        RD,WR,RD_CL,WR_CL,OP_APP,OP_APP_CL,OP_WR,OP_RD,OP_WR_CL,OP_RD_CL,&
 &                        io_reset,io_PAR_comm,io_PAR_cpu,IO_read,IO_write,&
-&                        read_is_on,write_is_on
+&                        write_is_on
+ use stderr,        ONLY:intc
  !
  implicit none
  !
@@ -41,14 +42,14 @@ subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM,DO_IT)
  if ( .not. any( (/ ACTION==RD_CL, ACTION==OP_RD_CL, ACTION==OP_WR_CL,   &
 &                   ACTION==OP_APP_CL, ACTION==OP_RD, ACTION==OP_APP,    &
 &                   ACTION==OP_WR, ACTION==RD, ACTION==WR,ACTION==WR_CL/) ) ) &
-&  call error("io_control called with a non proper action")
+&  call error("io_control called with a non proper action :"//intc(ACTION))
  !
  ! Assign a new ID if the unit is not already open
  !
  define_ID_WR=any((/ACTION==OP_WR_CL, ACTION==OP_WR, ACTION==OP_APP_CL, ACTION==OP_APP/))
  define_ID_RD=any((/ACTION==OP_RD_CL, ACTION==OP_RD/))
  !
- ! Except for the cases where the ID is defined, io_control is a trivial subrtouine
+ ! Except for the cases where the ID is defined, io_control is a trivial subrtouine (this is a joke)
  !
  if (.not. (define_ID_RD .or. define_ID_WR) ) then
    call set_action_mode_com_and_sec()

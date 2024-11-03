@@ -19,8 +19,8 @@ done
 llocal="-lqe_pseudo -lmath77 -lslatec -llocal"
 lPLA="\$(lscalapack) \$(lblacs) \$(llapack) \$(lblas)"
 lSL="\$(lslepc) \$(lpetsc)"
-lIO="\$(liotk) \$(letsf) \$(lpnetcdf) \$(lnetcdff) \$(lnetcdf) \$(lhdf5)"
-lextlibs="\$(llibxc) \$(lfft) \$(lfutile) \$(lyaml)"
+lIO="\$(liotk) \$(lnetcdff) \$(lnetcdf) \$(lhdf5)"
+lextlibs="\$(llibxc) \$(lfft) \$(lfutile) \$(lyaml)  \$(ldevxlib) \$(llapack) \$(lblas) \$(lcudalib)"
 #
 case $target in
   yambo_nl)
@@ -33,13 +33,13 @@ case $target in
    libs="-lint_modules $libs $llocal $lPLA $lIO $lextlibs -lm"
     ;;
   p2y*)
-   libs="-lint_modules $libs $llocal $lPLA $lIO $lextlibs -lm"
+   libs="-lint_modules $libs $llocal $lSL $lPLA $lIO $lextlibs -lm"
     ;;
   e2y)
    libs="-lint_modules $libs $llocal $lPLA $lIO $lextlibs -lm"
     ;;
   ypp*)
-   libs="$libs $llocal $lPLA $lIO $lextlibs -lm"
+   libs="$libs $llocal $lSL $lPLA $lIO $lextlibs -lm"
     ;;
   lib*)
     ;;

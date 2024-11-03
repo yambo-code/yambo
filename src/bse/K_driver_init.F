@@ -8,22 +8,26 @@
 subroutine K_driver_init(what,iq,Ken,Xk)
  !
  use R_lattice,    ONLY:bz_samp
- use electrons,    ONLY:levels,n_sp_pol,n_spinor
+ use electrons,    ONLY:levels,n_sp_pol,n_spinor,n_spin
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
- use stderr,       ONLY:STRING_match,STRING_same
- use BS_solvers,   ONLY:BSS_eels_to_eps,BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,&
-&                       BSS_slepc_double_grp
+ use stderr,       ONLY:STRING_match
+ use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix_format,BSS_uses_DbGd,&
+&                       BSS_slepc_double_grp,run_Slepc,BSS_mode,       &
+&                       l_abs_prop_chi_bse,l_eels_can_be_computed,l_eels_from_inversion
  use BS,           ONLY:BSE_L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
 &                       BS_perturbative_SOC,l_BS_magnons,l_BS_photolum,&
 &                       BS_cpl_K_exchange,BS_n_g_exch,BS_res_K_exchange,BS_K_coupling,BS_res_ares_n_mat,&
 &                       BS_n_eh_spaces,l_BS_ares_from_res,BS_bands,BS_K_anti_resonant
- use TDDFT,        ONLY:FXC_is_retarded,FXC_n_g_corr
+ use TDDFT,        ONLY:FXC_is_retarded,FXC_n_g_corr,l_Fxc_from_Vxc
  use drivers,      ONLY:l_col_cut,l_rpa_IP,l_alda_fxc,l_bs_fxc
- use D_lattice,    ONLY:l_0D,i_time_rev,i_space_inv,l_1D,l_2D
+ use D_lattice,    ONLY:i_time_rev,i_space_inv,l_3D
 #if defined _RT
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:NEQ_Kernel,EQ_Transitions,EQ_NoOcc,NEQ_Residuals,RT_BSE_Occ_Mode
+#endif
+#if defined _CUDA
+ use TDDFT,        ONLY:FXC_mode
 #endif
  !
  implicit none
@@ -35,21 +39,92 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  ! Work Space
  !
- logical :: l_flag,l_slepc_special
+ logical :: l_flag,l_slepc_special,l_Fxc_Libxc
  !
  ! Defaults
  !==========
  BS_n_eh_spaces=1
  BS_res_ares_n_mat=1
  !
- ! BSE_L_kind check
- !==============
- if (.not.STRING_match(BSE_L_kind,"bar").and..not.STRING_match(BSE_L_kind,"full")) call error('set Lkind = BAR or FULL')
+ ! default mode
+ if(STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-bar"
  !
- if (trim(BSE_L_kind)=="full".and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
-   call warning(' Lkind=full with retarded leads to bad epsilon. Use either resonant or coupling. Setting resonant. ')
-   BSE_mode="resonant"
+ if (l_col_cut) then
+   ! We are here in 0D, 1D or 2D
+   ! The G=0 term included in L-full is representative
+   ! of the portion of the line (2D) / plane (1D) / volume (0D)  around G=0
+   ! which contributes to the L-T splitting.
+   ! Such term goes to zero as the volume goes to infinity.
+   if (iq==1) then
+     ! At q=0 there is no L-T spliting. So Lbar and Lfull give the same result
+     ! It is useless to compute the non analytical Lfull and better to
+     ! directly remove the G=0 term
+     call warning('Coulomb cutoff at q=0. Default/Suggested Lkind= bar')
+     if(STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-bar"
+   endif
+   if (iq/=1) then
+     ! We are here in 1D or 2D.
+     ! At q>0 there is L-T spliting in 1D or 2D
+     ! Lbar and Lfull give the same result only in the limit V->infinity
+     ! The above mentioned G=0 term is part of this effect.
+     ! Here we assume it would be better to include it, to be double checked
+     call warning('Coulomb cutoff at q>0. Default/Suggested Lkind= full')
+     if(STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-full"
+     ! N.B.: One could compute the calculation without L-T slitting,
+     ! by removing such full line (2D) / plane (1D). Not coded at the moment.
+     ! I would define it as L="transverse"
+   endif
  endif
+ !
+ ! Is absorption (alpha or epsilon) proportional to chi
+ !===================================
+ !
+ ! * In 3D Alpha and epsilon are proporitonal to Lbar
+ !
+ ! * In 2D, 1D, and 0D Alpha is proportional to L(low_dim), where
+ !   L(low_dim)=Lfull=Lbar in the V-> infinity volume
+ !
+ !   - If the cut-off is not used Lbar is a better approximation to L(low_dim)
+ !     e.g. same situation of the 3D case
+ !
+ !   - If the cut-off is used Lfull is probably a better approximation to L(low_dim),
+ !     e.g. opposite situation of the 3D case
+ !
+ ! Thus, overall, only without the coulomb cutoff Alpha il proporional to Lbar,
+ ! e.g. it is proportional to epsilon. This is important without cut-off only
+ !
+ if (       l_col_cut .and. iq> 1) l_abs_prop_chi_bse=STRING_match(BSE_L_kind,"full")
+ if ( (.not.l_col_cut) .or. iq==1) l_abs_prop_chi_bse=STRING_match(BSE_L_kind,"bar")
+ !
+ ! However in general the difference with the coulomb cutoff is expected to be tiny.
+ ! Advanced user can impose to change behaviour.
+ ! With Slepc this must be imposed by the code
+ call parser('ImposeAbsPropChiBSE',l_flag)
+ if (.not.(l_3D.or.l_abs_prop_chi_bse).and.l_flag) then
+   l_abs_prop_chi_bse=.true.
+   call warning("Imposting absorption ot be proportional to computed L")
+ endif
+ if (run_Slepc .and. .not.l_abs_prop_chi_bse) then
+   if (l_col_cut .and. iq>1) then
+     call warning("Slepc with coulomb cutoff at finite-q, and Lbar. abs not printed")
+     call warning("You can print it by adding in input the flag ImposeAbsPropChiBse")
+   else if (.not.l_3D) then
+     call warning("Slepc without coulomb cutoff or q=0, and Lfull in low dim. abs not printed")
+     call warning("You can print it by adding in input the flag ImposeAbsPropChiBse")
+   endif
+ endif
+ !
+ ! Either I'm forced to get the epsilon from extension + inversion
+ ! or I want to get the epsilon from extension + inversion
+ ! to account of G=0 term in  coupling mode
+ ! Not needed if already in coupling mode
+ ! Not possible with slepc
+ l_eels_from_inversion= (l_abs_prop_chi_bse .or. .not.trim(BSE_mode)=="coupling")
+ !
+ ! If I cannot get the eels from the inversion and I'm in Lbar case I'm in troubles
+ l_eels_can_be_computed = l_eels_from_inversion .or. .not.l_abs_prop_chi_bse
+ !
+ if (.not.l_eels_can_be_computed) call warning("EELs evaluation will be switched-off")
  !
  ! RES/ANTI-RES (q-dependent)
  !==============
@@ -71,7 +146,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  if (iq/=1.and.i_time_rev==0.and.i_space_inv==0 )  l_BS_ares_from_res=.FALSE.
  if (l_BS_photolum)                                l_BS_ares_from_res=.FALSE.
  if (l_BS_magnons.and.n_sp_pol==2)                 l_BS_ares_from_res=.FALSE.
- ! The next line is to switch of section of the codes due to the calculation
+ ! The next line is to switch off sections of the code due to the calculation
  ! of the ARES part without checking the BSE_mode (see io_BS_PAR_init for example)
  if (trim(BSE_mode)=="resonant")                   l_BS_ares_from_res=.TRUE.
  !
@@ -82,28 +157,24 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    if (.not.BS_K_coupling) BS_res_ares_n_mat=2
  endif
  !
- ! Need to convert eels to epsilon ? (part A, part B in K_driver)
- !================================================================
- !
- ! If the Coulomb cutoff is not used (ie the system is 3D) eps/=eps^-1
- if (.not.l_col_cut)          BSS_eels_to_eps=trim(BSE_L_kind)=="full"
- !
- ! If the Coulomb cutoff is     used ...
- if (l_col_cut) then
-   !
-   !...the system is 0D  eps= eps^-1=1 since vbar=0
-   if (l_0D)  BSS_eels_to_eps=.false.
-   !
-   ! If the Coulomb cutoff is used and the system is 1D or 2D eps and eels are different at finite q
-   if (l_1D.or.l_2D) then
-     if (iq==1) BSS_eels_to_eps=.false.
-     if (iq/=1) BSS_eels_to_eps=STRING_same(BSE_L_kind,"full")
-   endif
- endif
- !
  if (what=="loop-init") return
  !
+ ! BSE_L_kind check
+ !==============
+ if (.not.STRING_match(BSE_L_kind,"bar").and..not.STRING_match(BSE_L_kind,"full")) &
+ & call error('set Lkind = DEFAULT or BAR or FULL')
+ !
  BS_K_is_ALDA=l_alda_fxc
+ if (l_alda_fxc) then
+   call parser('FxcLibxc',l_Fxc_Libxc)
+   l_Fxc_from_Vxc=(n_spin==1).and..not.l_Fxc_Libxc
+ endif
+#if defined _CUDA
+ if ( BS_K_is_alda.and. index(FXC_mode,"G-")>0 ) then
+   call warning(" Tddft with G-integrals is not GPU ported. Fallback to R-integrals")
+   FXC_mode="R-def"
+ endif
+#endif
  BS_dip_size=1
  !
  ! Memory saving
@@ -149,7 +220,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  endif
  !
  ! Remove exchange if computing the irreducible response
- if (trim(BSE_L_kind)=="tilde") then
+ if (STRING_match(BSE_L_kind,"tilde") ) then
    BS_res_K_exchange=.FALSE.
    BS_cpl_K_exchange=.FALSE.
  endif
@@ -169,13 +240,11 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  ! SLEPC
  !=======
- ! Here we will have two options to initialize the slepc matrix:
- call parser('BSSSlepcMatrix',BSS_slepc_matrix)
  !
 #if defined _SLEPC && !defined _NL
  !
  ! Special case, slepc with distributed matrix need to explicitly compute the anti-resonant block
- l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (.not.BSS_slepc_matrix)
+ l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (BSS_slepc_matrix_format=="shell")
  !
  ! The doubling is activated unless explicily imposed by input since slepc
  ! with shells requires the extended K_multiply_by_V for the non hermitian algorithm

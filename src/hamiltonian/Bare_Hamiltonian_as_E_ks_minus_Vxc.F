@@ -28,8 +28,10 @@ subroutine Bare_Hamiltonian_as_E_ks_minus_Vxc(E,Xk,k)
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc,rho_reference,magn_reference
 #endif
- !
-#include<memory.h>
+#if defined _SC
+ use drivers,        ONLY:l_sc_magnetic
+#endif
+#include<y_memory.h>
  !
  type(levels)             :: E
  type(bz_samp)            :: Xk,k

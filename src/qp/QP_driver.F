@@ -4,7 +4,7 @@
 ! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-!
+! 
 subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  use pars,          ONLY:SP,pi,cONE,cZERO
@@ -29,14 +29,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
 #endif
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
- use global_XC,     ONLY:QP_DB_kind,QP_SE_COHSEX,QP_SE_GoWo_PPA,QP_SE_GoWo,QP_SE_GWo_PPA,&
-&                        QP_SE_GWo,QP_SE_POLARON,QP_SE_GW_QED,QP_SE_GW_PPA
+ use global_XC,     ONLY:QP_DB_kind,QP_SE_COHSEX,QP_SE_GoWo_PPA,QP_SE_GoWo,&
+&                        QP_SE_POLARON,QP_SE_GW_QED
  use interfaces,    ONLY:eval_G_minus_G
  use parallel_m,    ONLY:PAR_COM_WORLD,PAR_IND_WF_linear
  use stderr,        ONLY:intc
  use descriptors,   ONLY:IO_desc,IO_desc_reset,IO_desc_add
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::en,Xen
  type(bz_samp) ::Xk,k,q
@@ -52,7 +52,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  integer, external ::io_QP_and_GF
  real(SP),external ::G2E
  !
- ! Logicals
+ ! Logicals (and basic setups)
  !==========
  call QP_logicals( )
  !
@@ -202,10 +202,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    ! has been added already
    !
    qp%E(i1)=en%E(QP_table(i1,1),QP_table(i1,3),i_spin)
+   qp%E_bare(i1)=qp%E(i1)
    if (allocated(en%Eo)) then
-      qp%E_bare(i1)=en%Eo(QP_table(i1,1),QP_table(i1,3),i_spin)
-   else
-      qp%E_bare(i1)=qp%E(i1)
+     qp%E_bare(i1)=en%Eo(QP_table(i1,1),QP_table(i1,3),i_spin)
    endif
    !
    qp%k(QP_table(i1,3),:)=k%pt(QP_table(i1,3),:)
@@ -435,7 +434,7 @@ subroutine check_qp_states(QP_table,QP_state,qp,en,Xen)
   !  
   use QP_m,          ONLY:QP_t
   use electrons,     ONLY:n_sp_pol,levels
-#include<memory.h>
+#include<y_memory.h>
   !
   !
   type(QP_t), intent(in)      :: qp

@@ -137,21 +137,21 @@ module it_tools
      enddo
    end function
    !
-   subroutine switch_off_runlevel(off_name,on_name)
+   subroutine switch_off_runlevel(off_name,except)
      use stderr,    ONLY:STRING_split
-     character(*)     :: off_name,on_name
+     character(*)     :: off_name,except
      !
      ! Work Space
      !
-     character(schlen):: on_names(maxrnlvls),off_names(maxrnlvls)
+     character(schlen):: excepts(maxrnlvls),off_names(maxrnlvls)
      integer          :: i2,i3
-     call STRING_split(on_name,on_names)
+     call STRING_split(except,excepts)
      call STRING_split(off_name,off_names)
      ext_loop: do i2=1,nrnlvls
        if (rstatus(i2)==0) cycle
        do i3=1,maxrnlvls
-         if (len_trim(on_names(i3))==0) cycle
-         if (trim(rnlvls(i2,1))==trim(on_names(i3))) cycle ext_loop
+         if (len_trim(excepts(i3))==0) cycle
+         if (trim(rnlvls(i2,1))==trim(excepts(i3))) cycle ext_loop
        enddo
        do i3=1,maxrnlvls
          if (len_trim(off_names(i3))==0) cycle

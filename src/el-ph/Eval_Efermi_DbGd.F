@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AC
 !
+! This subroutine calculate the occupation for the double-grid
+! energy levels at en(k+q) using the Fermi level calculate
+! on the original grid
+! 
 function Eval_Efermi_DbGd(k,q,en)
  !
  use pars,          ONLY:SP
@@ -16,7 +20,7 @@ function Eval_Efermi_DbGd(k,q,en)
  use interfaces,    ONLY:OCCUPATIONS_Fermi
  use com,           ONLY:msg
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(in)  :: q,k
  type(levels) :: en
@@ -24,7 +28,7 @@ function Eval_Efermi_DbGd(k,q,en)
  ! Work space
  !
  real(SP) :: Eval_Efermi_DbGd
- integer  :: ikbz,iq_fine,N_k_plus_q,ic,ik
+ integer  :: N_k_plus_q,ic
  type(bz_samp) :: all_k_plus_q
  type(levels)  :: all_E_kpq
  !

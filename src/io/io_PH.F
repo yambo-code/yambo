@@ -21,7 +21,7 @@ integer function io_PH(ID)
  use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps
  use descriptors,         ONLY:IO_desc_reset
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer           ::ID
  character(schlen) ::QP_solver_disk

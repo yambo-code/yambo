@@ -29,7 +29,7 @@ subroutine XCo_driver(E,k,Xk,q,Dip)
  use global_XC,     ONLY:H_SE_FOCK,H_SE_HARTREE,H_SE_COH,H_SE_SEX
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ::E       
  type(bz_samp)::k,Xk,q

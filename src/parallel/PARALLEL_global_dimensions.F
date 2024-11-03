@@ -24,7 +24,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  use SC,            ONLY:SC_bands
 #endif
 #if defined _NL
- use nl_optics,     ONLY:n_frequencies
+ use nl_optics,     ONLY:n_runs
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_bands
@@ -35,7 +35,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
  use QP_m,          ONLY:QP_n_states,QP_nb,QP_n_G_bands
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q
@@ -90,7 +90,9 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
 #if defined _PHEL
  if (ENVIRONMENT=="Phonon_Self_Energy")        PAR_Q_ibz_range=PH_Q
 #endif
+ !
  if (ENVIRONMENT=="Self_Energy"       ) then
+   PAR_n_G_vectors= X_ng
 #if defined _SC
    if (l_sc_run.and.&
 &      any( (/P_collisions%N,COH_collisions%N,HXC_collisions%N/)> 0))  &
@@ -154,8 +156,13 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !-----------
  if (ENVIRONMENT=="Self_Energy"                     ) PAR_QP_range=QP_n_states
  !
+ ! Oscillators
+#if defined _NL || defined _RT
+ if (ENVIRONMENT=="Oscillators"                     ) PAR_n_bands =COLL_bands
+#endif
+ !
 #if defined _NL
- if (ENVIRONMENT=="Non_Linear"                      ) PAR_n_freqs =n_frequencies
+ if (ENVIRONMENT=="Non_Linear"                      ) PAR_n_freqs =n_runs
 #endif
  !
 end subroutine PARALLEL_global_dimensions

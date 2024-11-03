@@ -12,7 +12,7 @@ subroutine rim(mode,Xw)
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,        ONLY:live_timing
- use vec_operate,   ONLY:v_norm2
+ use vec_operate,   ONLY:v_norm_square
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,nqbz,&
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
@@ -22,14 +22,14 @@ subroutine rim(mode,Xw)
  use timing_m,      ONLY:timing
  use frequency,     ONLY:w_samp
  !
-#include<memory.h>
+#include<y_memory.h>
  !
- character(1)       :: mode
+ character(1)   :: mode
+ type(w_samp)   :: Xw
  !
  ! Work Space
  !
  type(PP_indexes)      ::px
- type(w_samp),optional :: Xw
  integer               :: iq
  real(SP)              :: em1_anis(3),G_radii,G_circ
  !
@@ -103,7 +103,7 @@ subroutine rim(mode,Xw)
  enddo
  ! Precompute the neighbours distances
  do inn1=1,26
-  fn_dist(inn1)=v_norm2(first_neighbour(inn1,:))  
+  fn_dist(inn1)=v_norm_square(first_neighbour(inn1,:))  
  end do
  !
  ! Loop setup
@@ -124,13 +124,13 @@ subroutine rim(mode,Xw)
    ! From rlu in the k_grid_b units (v2) to Cartesian (v1)
    !
    v1=matmul(transpose(k_grid_b),v2) 
-   !v1_norm(1)=v_norm2(v1)
+   !v1_norm(1)=v_norm_square(v1)
    do inn1=1,26
      v1_norm(2)=(v1(1)* first_neighbour(inn1,1) &
                 +v1(2)* first_neighbour(inn1,2) &
                 +v1(3)* first_neighbour(inn1,3))*2._SP
      if (fn_dist(inn1)<v1_norm(2))  cycle loop
-     !v1_norm(2)=v_norm2(v1-first_neighbour(inn1,:))
+     !v1_norm(2)=v_norm_square(v1-first_neighbour(inn1,:))
      !if (v1_norm(2)<v1_norm(1)) cycle loop
      !if (v1_norm(2)<v1_norm(1)-1.E-5) cycle loop
      !

@@ -101,35 +101,39 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        !
        ! Matrix head
        !
-!$omp parallel do default(shared), private(i1,i2), collapse(2) 
-       do i2=1,H_ref_bands(1)-1
-         do i1=1,H_ref_bands(1)-1
-           Sm1_minus(i1,i2,id+(istep-1)*3)=conjg(DIP_S(i2,i1,id+(istep-1)*3,ikm,i_sp))
+       if (H_ref_bands(1)>1) then
+	 !
+         !$omp parallel do default(shared), private(i1,i2), collapse(2) 
+         do i2=1,H_ref_bands(1)-1
+           do i1=1,H_ref_bands(1)-1
+             Sm1_minus(i1,i2,id+(istep-1)*3)=conjg(DIP_S(i2,i1,id+(istep-1)*3,ikm,i_sp))
+           enddo
          enddo
-       enddo
-!$omp end parallel do
-       !
-       ! Matrix wings
-       !
-!$omp parallel do default(shared), private(i1,i2), collapse(2)
-       do i2=1,H_ref_bands(1)-1
-         do i1=H_ref_bands(1),en%nbf(i_sp)
-           Sm1_minus(i1,i2,id+(istep-1)*3)=Vstar_dot_V(H_ref_bands(2),V_bands(:,i1,ik_ibz), &
-&                conjg(DIP_S(i2,:,id+(istep-1)*3,ikm,i_sp)))
-          enddo
-       enddo
-!$omp end parallel do
+         !$omp end parallel do
+         !
+         ! Matrix wings
+         !
+         !$omp parallel do default(shared), private(i1,i2), collapse(2)
+         do i2=1,H_ref_bands(1)-1
+           do i1=H_ref_bands(1),en%nbf(i_sp)
+             Sm1_minus(i1,i2,id+(istep-1)*3)=Vstar_dot_V(H_ref_bands(2),V_bands(:,i1,ik_ibz), &
+&                  conjg(DIP_S(i2,:,id+(istep-1)*3,ikm,i_sp)))
+            enddo
+         enddo
+         !$omp end parallel do
+	 !
+       endif
        !
        ! Matrix core
        !
-!$omp parallel do default(shared), private(i2,vtmp)
+       !$omp parallel do default(shared), private(i2,vtmp)
        do i2=H_ref_bands(1),en%nbf(i_sp)
          call M_by_V('C',H_ref_bands(2),DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),V_bands(:,i2,ikm_ibz),vtmp)
          !
          call mv_cgemv('C',H_ref_bands(2),en%nbf(i_sp),cONE,V_bands(:,:,ik_ibz),&
 &                      H_ref_bands(2),vtmp,1,cZERO,Sm1_minus(:,i2,id+(istep-1)*3),1)
        enddo
-!$omp end parallel do
+       !$omp end parallel do
        !
        !DEBUG>
        !call SERIAL_inversion(en%nbf(i_sp),Sm1_minus(:,:,id+(istep-1)*3),tmp_det,.FALSE.)
@@ -157,35 +161,39 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        !
        ! Matrix head
        !
-!$omp parallel do default(shared), private(i1,i2), collapse(2)
-       do i2=1,H_ref_bands(1)-1
-         do i1=1,H_ref_bands(1)-1
-           Sm1_plus(i1,i2,id+(istep-1)*3)=DIP_S(i1,i2,id+(istep-1)*3,ikbz,i_sp)
+       if (H_ref_bands(1)>1) then
+	 !
+         !$omp parallel do default(shared), private(i1,i2), collapse(2)
+         do i2=1,H_ref_bands(1)-1
+           do i1=1,H_ref_bands(1)-1
+             Sm1_plus(i1,i2,id+(istep-1)*3)=DIP_S(i1,i2,id+(istep-1)*3,ikbz,i_sp)
+           enddo
          enddo
-       enddo
-!$omp end parallel do
-       !
-       ! Matrix wings
-       !
-!$omp parallel do default(shared), private(i1,i2), collapse(2)
-       do i2=1,H_ref_bands(1)-1
-         do i1=H_ref_bands(1),en%nbf(i_sp)
-            Sm1_plus(i1,i2,id+(istep-1)*3)=&
-            &  Vstar_dot_V(H_ref_bands(2),V_bands(:,i1,ik_ibz),DIP_S(:,i2,id+(istep-1)*3,ikbz,i_sp))
+         !$omp end parallel do
+         !
+         ! Matrix wings
+         !
+         !$omp parallel do default(shared), private(i1,i2), collapse(2)
+         do i2=1,H_ref_bands(1)-1
+           do i1=H_ref_bands(1),en%nbf(i_sp)
+              Sm1_plus(i1,i2,id+(istep-1)*3)=&
+              &  Vstar_dot_V(H_ref_bands(2),V_bands(:,i1,ik_ibz),DIP_S(:,i2,id+(istep-1)*3,ikbz,i_sp))
+           enddo
          enddo
-       enddo
-!$omp end parallel do
+         !$omp end parallel do
+	 !
+       endif
        !
        ! Matrix Core
        !
-!$omp parallel do default(shared), private(i2,vtmp)
+       !$omp parallel do default(shared), private(i2,vtmp)
        do i2=H_ref_bands(1),en%nbf(i_sp)
          call M_by_V('N',H_ref_bands(2),DIP_S(:,:,id+(istep-1)*3,ikbz,i_sp),V_bands(:,i2,ikp_ibz),vtmp)
          !
          call mv_cgemv('C',H_ref_bands(2),en%nbf(i_sp),cONE,V_bands(:,:,ik_ibz),&
 &                      H_ref_bands(2),vtmp,1,cZERO,Sm1_plus(:,i2,id+(istep-1)*3),1)
        enddo
-!$omp end parallel do
+       !$omp end parallel do
        !DEBUG>
        !call SERIAL_inversion(en%nbf(i_sp),Sm1_plus(:,:,id+(istep-1)*3),S_det(id+(istep-1)*3),.TRUE.)
        !DEBUG>

@@ -32,7 +32,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  use real_time,     ONLY:Ho_plus_sigma,H_pseudo_eq
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) :: Xk
  type(levels)  :: Xen

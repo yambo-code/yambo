@@ -9,7 +9,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
  !
  ! LOGICALS
  use parallel_m,    ONLY:l_par_X_T,l_par_RT,l_par_SE,l_par_X_G,l_par_X_G_finite_q,&
-&                        l_par_DIP,l_par_BZINDX,l_par_NL,l_par_SC
+&                        l_par_DIP,l_par_BZINDX,l_par_NL,l_par_SC,l_par_OSCLL
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_CON_INDEX_X,PAR_COM_VAL_INDEX_X
  ! IND
@@ -27,7 +27,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
  use R_lattice,     ONLY:bz_samp
  use pars,          ONLY:SP
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)               ::E
  type(bz_samp)              ::Xk,q
@@ -81,6 +81,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
  l_par_RT           =ENVIRONMENT=="Real_Time"
  l_par_NL           =ENVIRONMENT=="Non_Linear"
  l_par_SC           =ENVIRONMENT=="Self_Energy"
+ l_par_OSCLL        =ENVIRONMENT=="Oscillators"
  !
  !==================================
  ! USER provided PARALLEL structure
@@ -148,7 +149,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
 #endif
  !
 #if defined _NL
- if (      ENVIRONMENT=="Non_Linear")          call PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
+ if (      ENVIRONMENT=="Non_Linear")          call PARALLEL_global_Non_Linear(E,Xk,q)
+ if (      ENVIRONMENT=="Oscillators")         call PARALLEL_global_Oscillators(E,Xk,q)
 #endif
  !
 #if defined _SCALAPACK

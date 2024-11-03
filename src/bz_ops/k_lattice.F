@@ -20,10 +20,9 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
 &                         k_grid_uc_vol,nkibz,nkbz,nXkibz,nXkbz,d3k_factor,&
 &                         bz_samp,g_vec,ng_in_shell,Xk_grid_new_mapping
  use zeros,          ONLY:k_rlu_zero
- use parser_m,       ONLY:parser
  use drivers,        ONLY:l_rim_w
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp)::k,Xk
  integer      ::G_shell

@@ -25,7 +25,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  use LIVE_t,              ONLY:live_timing
  use interfaces,          ONLY:io_DB1_selective_scan
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(in)    :: kpt
  type(levels),  intent(inout) :: En
@@ -42,7 +42,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
 &                        i_sp_pol,n_miss,n_tot,i_sorted,i_deg,i_fft,i_fft_rot,i_k_SOC,i_k_SOC_bz,i_symm,i_star,&
 &                        i_spinor,SOC_bands_to_point(2)
  integer              :: n_spin_save,n_spinor_save,n_sp_pol_save,fft_size_save,NB_to_map,NK_to_map,NB_up
- logical              :: group_already_mapped(En%nb*n_sp_pol),DB_is_ok,map_up,map_dw,kpoint_to_map(kpt%nibz)
+ logical              :: group_already_mapped(En%nb*n_sp_pol),DB_is_OK,map_up,map_dw,kpoint_to_map(kpt%nibz)
  real(SP)             :: sq2,proj_up,proj_dw,mapping_tresh,min_sq(kpt%nibz),max_overlap,&
 &                        kpt_diff(3),a_save(3,3),alat_save(3)
  !
@@ -72,10 +72,10 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  !
  call fft_setup(0,1,.true.)
  !
- DB_is_ok=(kpt_SOC%nibz==kpt%nibz).and.(fft_size_save==fft_size).and. &
+ DB_is_OK=(kpt_SOC%nibz==kpt%nibz).and.(fft_size_save==fft_size).and. &
 &         (all(a==a_save)).and.(all(alat==alat_save))
  !
- if (.not.DB_is_ok) call error(' SOC DBs and without SOC DB do not match')
+ if (.not.DB_is_OK) call error(' SOC DBs and without SOC DB do not match')
  !
  call k_build_up_BZ_tables(kpt_SOC)
  call k_ibz2bz(kpt_SOC,'i',.false.)

@@ -24,9 +24,12 @@ BSSNEig
 Choose the number of eigenstates to calculate from lower energy to higher
 The default is to calculate 1% of the states of the hamiltonian.
 
-BSSSlepcShell
-This creates a PETSC Shell matrix intead of re-allocating a PETSC sparse matrix.
-This is more memory efficient and yields the same results as with the re-allocation.
+BSSSlepcMatrixFormat
+Choose the format of the matrix for the SLEPc solver. The options are:
+'shell'          -> This is the default option. Creates a PETSc Shell matrix instead of re-allocating a PETSc matrix. 
+                    The most memory efficient but less time efficient.
+'explicit'       -> Creates the PETSc matrix. Requires more memory but it is more time efficient. 
+'explicit-debug' -> Same as explicit but without memory optimization for the coupling case.
 
 BSSEnTarget
 Choose this value to look for eigenvalues close to a certain energy

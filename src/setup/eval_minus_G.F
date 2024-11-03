@@ -5,6 +5,8 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+#include<dev_defs.h>
+!
 subroutine eval_minus_G()
  !
  ! Output: minus_G(ng_closed)
@@ -13,17 +15,17 @@ subroutine eval_minus_G()
  !
  use D_lattice,    ONLY:inv_index
  use R_lattice,    ONLY:ng_closed,g_rot,minus_G
-#ifdef _CUDA
- use R_lattice,    ONLY:minus_G_d
-#endif
+ use R_lattice,    ONLY:DEV_VAR(minus_G)
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Work Space
  !
  integer  :: ig
  !
+ YAMBO_FREE_GPU(DEV_VAR(minus_G))
  YAMBO_FREE(minus_G)
+ !
  YAMBO_ALLOC(minus_G,(ng_closed))
  !
  minus_G=0
@@ -37,9 +39,9 @@ subroutine eval_minus_G()
    if (ng_closed>1) call G_rot_grid(-1,'set_table')
  endif
  !
-#ifdef _CUDA
- YAMBO_FREE(minus_G_d)
- allocate(minus_G_d,source=minus_G)
+#ifdef _GPU
+ YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(minus_G),minus_G)
 #endif
  !
 end subroutine
+

@@ -76,7 +76,7 @@ end subroutine a2y_kb_pp
 
 
 
-subroutine a2y_kb_pp_wfk( ikibz, ncid )
+subroutine a2y_kb_pp_wfk( ikibz, i_sp_pol, ncid )
   !
   ! Structure of KB form factors in WFK file
   !   vkb(  max_number_of_coefficients,    
@@ -106,7 +106,7 @@ subroutine a2y_kb_pp_wfk( ikibz, ncid )
   !
   implicit none
   !
-  integer, intent(in)   :: ncid, ikibz
+  integer, intent(in)   :: ncid, ikibz, i_sp_pol
   ! 
   ! Work Space
   !
@@ -132,7 +132,7 @@ subroutine a2y_kb_pp_wfk( ikibz, ncid )
     do ip=1,pp_n_l_times_proj_max
       do ic=1,wf_nc_k(ikibz)
         ig=wf_igk_indx(ic)
-        pp_kb(ic,ia,ip,1) = pp_section(ig,ip,ia)
+        pp_kb(ic,ia,ip,i_sp_pol) = pp_section(ig,ip,ia)
       end do
     end do
   end do
@@ -148,7 +148,7 @@ subroutine a2y_kb_pp_wfk( ikibz, ncid )
     do ip=1,pp_n_l_times_proj_max
       do ic=1,wf_nc_k(ikibz)
         ig=wf_igk_indx(ic)
-        pp_kbd(ic,ia,ip,1) = pp_section(ig,ip,ia)
+        pp_kbd(ic,ia,ip,i_sp_pol) = pp_section(ig,ip,ia)
       end do
     end do
   end do

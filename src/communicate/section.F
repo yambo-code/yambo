@@ -80,6 +80,7 @@ subroutine section(mode,name)
  !
  ! Get HostName date & time etc...
  !
+ ch=" "
  if (depth==-1) then
    ch=date_and_time_string(dt_out=date_time_at_start)
    if (write_to_report) write (repfile_unit,'(1x,a)') trim(ch)
@@ -106,6 +107,7 @@ subroutine section(mode,name)
      write (ch,'(6a)') 'Timing [Min/Max/Average]: ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
      call msg('nr',trim(ch))
    endif
+   ch=" "
    call ct(INIT_SEC=.true.)
  case ('+','+P')
    depth=depth+1
@@ -143,10 +145,10 @@ subroutine section(mode,name)
  write (chs,'(3a)') trim(secnm),'] ',trim(name)
  secnm=chs
  call msg('nrs',trim(secnm))
- call msg('rn',repeat('=',len_trim(secnm)))
+ if (len_trim(ch)==0) call msg('rn',repeat('=',len_trim(secnm)))
+ if (len_trim(ch)> 0) call msg('rn',repeat('=',len_trim(ch)))
  !
 #if defined _YAML_OUTPUT
- !if(depth_yaml>0) call yaml_newline(unit=of_yaml_IDs(repfile_index))
  if(depth_yaml>0) call yaml_comment(" ",unit=of_yaml_IDs(repfile_index))
  call yaml_sequence_open(mapname=trim(name),unit=of_yaml_IDs(repfile_index))
  depth_yaml=depth_yaml+1

@@ -7,20 +7,22 @@
 !
 integer function io_COL_CUT(ID)
  !
- use wave_func,      ONLY:wf_ng
+ use wave_func,      ONLY:wf_ng,cutoff_ng
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,CUTOFF_plus_RIM,&
 &                         cyl_ph_radius,box_length,cyl_length,cut_geometry,&
 &                         ng_closed,nqibz,bare_qpg,cut_description
  use IO_m,           ONLY:io_sec,io_status
  use IO_int,         ONLY:io_connect,io_disconnect,io_header,io_elemental,io_bulk
  use timing_m,       ONLY:timing
-#include<memory.h>
+#include<y_memory.h>
  !
  integer :: ID
  ! 
  ! Work Space
  !
- integer             ::CUT_RIM_ng,CUT_RIM_npts,wf_ng_db
+ integer             ::CUT_RIM_ng,CUT_RIM_npts,cutoff_ng_db
+ !
+ cutoff_ng = wf_ng ! when writing, the cutoff_ng is the same as the wavefunction ng
  !
  call timing('io_COL_CUT',OPR='start')
  io_COL_CUT=io_connect(desc="cutoff",type=2,ID=ID)
@@ -49,7 +51,7 @@ integer function io_COL_CUT(ID)
 &       VAR=' Sphere/Cylinder radius      [au]',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,R0=cyl_length,&
 &       VAR=' Cylinder length             [au]',CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,I0=wf_ng,DB_I0=wf_ng_db,&
+   call io_elemental(ID,I0=cutoff_ng,DB_I0=cutoff_ng_db,&
 &       VAR=' RL components                   ',CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,I0=ng_closed,&
 &       VAR=' RL components used in the sum   ',CHECK=.true.,OP=(/"=="/))
@@ -73,8 +75,8 @@ integer function io_COL_CUT(ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   call io_bulk(ID,VAR='CUT_BARE_QPG',VAR_SZ=(/2,nqibz,wf_ng/))
-   call io_bulk(ID,C2=bare_qpg(:,:wf_ng))
+   call io_bulk(ID,VAR='CUT_BARE_QPG',VAR_SZ=(/2,nqibz,cutoff_ng/))
+   call io_bulk(ID,C2=bare_qpg(:,:cutoff_ng))
    !
  endif
  !

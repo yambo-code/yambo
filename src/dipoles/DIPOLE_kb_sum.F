@@ -5,88 +5,109 @@
 !
 ! Authors (see AUTHORS file for details): AM DS AF
 !
-subroutine DIPOLE_kb_project(pp_range,npp,ncomp,WF_ib,kbv,XX)
- !
- use pars,          ONLY:SP,cONE,cZERO
- use wrapper,       ONLY:M_by_M
- use electrons,     ONLY:n_spinor
- use deviceXlib_m,  ONLY:dev_memcpy
- use iso_c_binding, ONLY:C_F_POINTER
-#if defined _CUDA
- use cudafor,       ONLY:C_DEVLOC
-#else
- use iso_c_binding, ONLY:C_LOC
-#endif
-!
 #include<dev_defs.h>
+!
+subroutine DIPOLE_kb_project(pp_range,ib_range,ib,i_wf,wf_ncx,nbndx,npp,pp_dim_yambo,WF,kbv,XX)
+ !
+ use iso_c_binding, ONLY:c_f_pointer,c_loc
+ use pars,          ONLY:SP,cONE,cZERO
+ use electrons,     ONLY:n_spinor
+#if defined _CUDAF
+ use cudafor,       ONLY:c_devloc
+#endif
+use devxlib,       ONLY:devxlib_xGEMM_gpu
  !
  implicit none
  !
- integer,                      intent(in)    :: pp_range(2),npp,ncomp
- complex(SP) DEV_ATTR,         intent(in)    :: WF_ib(ncomp,n_spinor)
- complex(SP) DEV_ATTR, target, intent(in)    :: kbv(ncomp,n_spinor,4,npp)
- complex(SP) DEV_ATTR, target, intent(out)   :: XX(n_spinor,n_spinor,4,pp_range(1):pp_range(1))
+ integer,                      intent(in)  :: pp_range(2),ib_range(2),ib,i_wf,wf_ncx,nbndx,npp,pp_dim_yambo
+ complex(SP) DEV_ATTR, target, intent(in)  :: WF(wf_ncx,n_spinor,nbndx)
+ complex(SP) DEV_ATTR, target, intent(in)  :: kbv(wf_ncx,n_spinor,4,npp)
+ complex(SP) DEV_ATTR, target, intent(out) :: XX(n_spinor,n_spinor,4,pp_dim_yambo,ib_range(1):ib_range(2))
  ! 
  ! Work Space
  !
  integer     :: dim_flat
  complex(SP) DEV_ATTR, pointer :: kbv_p(:,:),XX_p(:,:)
- !
+ complex(SP) DEV_ATTR, pointer :: WF_p(:,:)
+
+! XXX
+!integer :: ierr
+ 
+ WF_p => WF(:,:,i_wf)
  dim_flat=n_spinor*4*npp
  !
-#if defined _CUDA
- call C_F_POINTER(C_DEVLOC(kbv), kbv_p, (/ncomp,dim_flat/) )
- call C_F_POINTER(C_DEVLOC(XX),  XX_p,  (/n_spinor,dim_flat/) )
+ ! GPU treatment
+ !
+#if defined _CUDAF
+ !
+ call c_f_pointer(c_devloc(kbv), kbv_p, (/wf_ncx,dim_flat/) )
+ call c_f_pointer(c_devloc(XX(:,:,:,pp_range(1):pp_range(2),ib)),  XX_p,  (/n_spinor,dim_flat/) )
+ !
+#elif defined _OPENACC || defined _OPENMP_GPU
+ !
+ call c_f_pointer(c_loc(kbv), kbv_p, (/wf_ncx,dim_flat/) )
+ call c_f_pointer(c_loc(XX(:,:,:,pp_range(1):pp_range(2),ib)),  XX_p, (/n_spinor,dim_flat/) )
+ !
 #else
- call C_F_POINTER(C_LOC(kbv), kbv_p, (/ncomp,dim_flat/) )
- call C_F_POINTER(C_LOC(XX),  XX_p, (/n_spinor,dim_flat/) )
+ !
+ ! CPU-only
+ !
+ call c_f_pointer(c_loc(kbv), kbv_p, (/wf_ncx,dim_flat/) )
+ call c_f_pointer(c_loc(XX(:,:,:,pp_range(1):pp_range(2),ib)),  XX_p,  (/n_spinor,dim_flat/) )
+ ! 
 #endif
  !
- call M_by_M('T','N', n_spinor, dim_flat, ncomp, cONE, WF_ib, ncomp, kbv_p, ncomp, cZERO, XX_p, n_spinor)
+ ! AF: the following call falls back on CPU
+ !     when GPUs are not available at compile time
+ !
+ call devxlib_xGEMM_gpu('T','N', n_spinor, dim_flat, wf_ncx, cONE, WF_p, wf_ncx, &
+&                                kbv_p, wf_ncx, cZERO, XX_p, n_spinor)
  !
 end subroutine DIPOLE_kb_project
 !
 !
-subroutine DIPOLE_kb_sum(rho,XXv,XXc)
+subroutine DIPOLE_kb_sum(rho,pp_dim_yambo,ib_range,iv,ic,XX)
  !
  use pars,          ONLY:SP
  use electrons,     ONLY:n_spinor
- use pseudo,        ONLY:pp_kbv_dim_yambo
- use cuda_m,        ONLY:have_cuda
- use deviceXlib_m,  ONLY:dev_memcpy
+ use gpu_m,         ONLY:have_gpu
+ use devxlib,       ONLY:devxlib_memcpy_d2h
+ use DIPOLES,       ONLY:drho=>DEV_VAR(DIP_work_drho)
  !
 #include<dev_defs.h>
  !
  implicit none
  !
  complex(SP),          intent(inout) :: rho(3)
- complex(SP) DEV_ATTR, intent(in)    :: XXv(n_spinor,n_spinor,4,pp_kbv_dim_yambo)
- complex(SP) DEV_ATTR, intent(in)    :: XXc(n_spinor,n_spinor,4,pp_kbv_dim_yambo)
+ integer,              intent(in)    :: pp_dim_yambo,ib_range(2),iv,ic
+ complex(SP) DEV_ATTR, intent(in)    :: XX(n_spinor,n_spinor,4,pp_dim_yambo,ib_range(1):ib_range(2))
  ! 
  ! Work Space
  !
  integer     :: i1,i2,i_spinor
+ complex(SP) :: drho_loc(n_spinor,3,pp_dim_yambo)
  !
- complex(SP)          :: drho(n_spinor,3,pp_kbv_dim_yambo)
-#ifdef _CUDA
- complex(SP) DEV_ATTR :: DEV_VAR(drho)(n_spinor,3,pp_kbv_dim_yambo)
-#endif
+ if (pp_dim_yambo==0) return
  !
-#if defined _CUDA
- !$cuf kernel do(3) <<<*,*>>>
-#else
- !$omp parallel do default(shared), private(i1,i2,i_spinor), collapse(3)
-#endif
- do i1=1,pp_kbv_dim_yambo
+ !DEV_ACC_DEBUG data present(drho,XX)
+ !DEV_ACC parallel loop collapse(3)
+ !DEV_CUF kernel do(3)
+ !DEV_OMPGPU target map(present,alloc:drho,XX)
+ !DEV_OMPGPU teams loop collapse(3)
+ !DEV_OMP parallel do default(shared), private(i1,i2,i_spinor), collapse(3)
+ do i1=1,pp_dim_yambo
    do i2=1,3
      do i_spinor=1,n_spinor
-       DEV_VAR(drho)(i_spinor,i2,i1)=conjg(XXv(i_spinor,i_spinor,1,i1))*XXc(i_spinor,i_spinor,i2+1,i1)+ &
-&                                    conjg(XXv(i_spinor,i_spinor,i2+1,i1))*XXc(i_spinor,i_spinor,1,i1)
+        drho(i_spinor,i2,i1) = conjg(XX(i_spinor,i_spinor,1,i1,iv))*XX(i_spinor,i_spinor,i2+1,i1,ic)+ &
+&                              conjg(XX(i_spinor,i_spinor,i2+1,i1,iv))*XX(i_spinor,i_spinor,1,i1,ic)
      enddo
    enddo
  enddo
+ !DEV_OMPGPU end target
+ !DEV_ACC_DEBUG end data
  !
- if (have_cuda) call dev_memcpy(drho,DEV_VAR(drho))
- forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(:,i1,:))
+ call devxlib_memcpy_d2h(drho_loc,drho)
+ forall(i1=1:3) rho(i1)=rho(i1)+sum(drho_loc(:,i1,:))
  !
 end subroutine DIPOLE_kb_sum
+

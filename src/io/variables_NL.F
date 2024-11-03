@@ -10,15 +10,15 @@ integer function variables_NL(ID)
  use pars,           ONLY:SP,IP,LP,IP_YIO,LP_YIO,CR_YIO
  use units,         ONLY:AUT2FS, HA2EV, AU2KWCMm2
  use nl_optics,     ONLY:NL_damping,l_use_DIPOLES,NL_correlation,NL_er,NL_correlation,n_frequencies,      &
-&                        WF_sample_ondisk,n_order,NL_desc
+&                        NL_desc,NL_rot_axis,n_angles,NL_initial_versor,l_eval_CURRENT
+ use collision_ext, ONLY:ng_oscll
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx
  use real_time,     ONLY:Integrator_name,NE_steps,RT_step,l_RT_induced_field,RT_bands,RAD_LifeTime
- use electrons,     ONLY:n_sp_pol
  use electric,      ONLY:l_force_SndOrd
  use fields,        ONLY:n_ext_fields
  use fields,        ONLY:Efield
  use IO_m,          ONLY:io_status
- use IO_int,        ONLY:io_elemental,ver_is_gt_or_eq,io_variable_elemental,def_variable_elemental
+ use IO_int,        ONLY:io_variable_elemental,def_variable_elemental
  use descriptors,   ONLY:IO_desc_reset
  use stderr,        ONLY:intc
  !
@@ -56,12 +56,28 @@ integer function variables_NL(ID)
  call io_variable_elemental(ID,VAR="[NL] Number of freqs",I0=n_frequencies,CHECK=.true.,OP=(/"=="/), & 
 &         DESCRIPTOR=NL_desc)
 
+ call def_variable_elemental(ID,"NL_rot_axis",3,SP,0)
+ call io_variable_elemental(ID,VAR="Rotation axis            ",R1=NL_rot_axis,CHECK=.true.,OP=(/"==","==","=="/), &
+&         DESCRIPTOR=NL_desc)
+
+ call def_variable_elemental(ID,"NL_initial_versor",3,SP,0)
+ call io_variable_elemental(ID,VAR="Initial versor (for rotation)     ",R1=NL_initial_versor,CHECK=.true.,OP=(/"==","==","=="/), &
+&         DESCRIPTOR=NL_desc)
+
+ call def_variable_elemental(ID,"n_angles",1,IP_YIO,0)
+ call io_variable_elemental(ID,VAR="[NL] Number of angles",I0=n_angles,CHECK=.true.,OP=(/"=="/), & 
+&         DESCRIPTOR=NL_desc)
+
  call def_variable_elemental(ID,"l_force_SndOrd",1,LP_YIO,0)
  call io_variable_elemental(ID,VAR="[NL] Force 2nd approx",L0=l_force_SndOrd,CHECK=.true.,OP=(/"=="/), & 
 &         DESCRIPTOR=NL_desc)
 
  call def_variable_elemental(ID,"l_use_DIPOLES",1,LP_YIO,0)
  call io_variable_elemental(ID,VAR="[NL] Use DIPOLES",L0=l_use_DIPOLES,CHECK=.true.,OP=(/"=="/), & 
+&         DESCRIPTOR=NL_desc)
+
+ call def_variable_elemental(ID,"l_eval_CURRENT",1,LP_YIO,0)
+ call io_variable_elemental(ID,VAR="[NL] Evaluate currrent and store on disk",L0=l_eval_CURRENT,CHECK=.true.,OP=(/"=="/), & 
 &         DESCRIPTOR=NL_desc)
 
  call def_variable_elemental(ID,"l_RT_induced_field",1,LP_YIO,0)
@@ -75,27 +91,11 @@ integer function variables_NL(ID)
  call def_variable_elemental(ID,"QP_ng_Sx",1,IP_YIO,0)
  call io_variable_elemental(ID,VAR="[NL] Number of G in EXCHANGE(DFT)",I0=QP_ng_Sx,CHECK=.true.,OP=(/"=="/), &
      &         DESCRIPTOR=NL_desc)
-
+ call def_variable_elemental(ID,"ng_OSCLL",1,IP_YIO,0)
+ call io_variable_elemental(ID,VAR="[NL] Number of G in LSEX",I0=ng_oscll,CHECK=.true.,OP=(/"=="/), &
+     &         DESCRIPTOR=NL_desc)
  call def_variable_elemental(ID,"RAD_LifeTime",1,SP,0)
  call io_variable_elemental(ID,VAR="[NL] Radiative Life-Time",R0=RAD_LifeTime,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=NL_desc)
- !
- ! WF SAMPLING
- !
-! if (ver_is_gt_or_eq(ID,revision=15726)) then !THIS NEEDS TO BE UPDATED IN CASE ENTERS INTO A DISTRO
-!   call io_elemental(ID,VAR="WF_SAMPLE",VAR_SZ=2+n_sp_pol,MENU=0)
-!   call io_elemental(ID,VAR="[NL] WF sample order   ",I0=n_order,CHECK=.true.,OP=(/"=="/), & 
-!        &         DESCRIPTOR=NL_desc)
-!   if (n_sp_pol==1) then
-!     call io_elemental(ID,VAR="[NL] WF sample valence ",I0=WF_sample_ondisk%n_val(1),CHECK=.true.,OP=(/"=="/), & 
-!          &         DESCRIPTOR=NL_desc)
-!   else
-!     call io_elemental(ID,VAR="[NL] WF sample valence ",I1=WF_sample_ondisk%n_val,CHECK=.true.,OP=(/"==","=="/), & 
-!          &         DESCRIPTOR=NL_desc)
-!   endif
-!   call io_elemental(ID,VAR="[NL] WF sample kpoints ",I0=WF_sample_ondisk%n_k,CHECK=.true.,OP=(/"=="/), & 
-!        &         DESCRIPTOR=NL_desc)
-!   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-! end if
  !
  ! INTEGRATOR
  !

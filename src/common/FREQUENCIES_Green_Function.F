@@ -11,7 +11,7 @@ subroutine FREQUENCIES_Green_Function(iqp,W,E,Spectral_Function)
  use R_lattice,  ONLY:nkibz
  use electrons,  ONLY:n_bands,spin,n_sp_pol
  use frequency,  ONLY:w_samp
- use QP_m,       ONLY:QP_table,QP_G_solver,QP_G_dr,QP_G_er,QP_G_ir,QP_G_damp,&
+ use QP_m,       ONLY:QP_table,QP_G_solver,QP_G_dr,QP_G_er,QP_G_ir,&
 &                     QP_G_zoom_er,GF_energy_range_mode
 #if defined _ELPH
  use ELPH,       ONLY:PH_W_debye,QP_PH_n_G_bands

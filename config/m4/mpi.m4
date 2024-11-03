@@ -14,7 +14,6 @@ AC_ARG_ENABLE(mpi, AS_HELP_STRING([--enable-mpi],[Enable mpi parallelization . D
 if test "$enable_mpi" = "no"; then mpibuild="no"; fi
 #
 CC_serial=$CC
-#CXX_serial=$CXX
 F77_serial=$F77
 FC_serial=$FC
 #
@@ -52,18 +51,24 @@ if test "$mpibuild" = "yes"; then
   #
   def_mpi="-D_MPI"
   ACX_GET_MPI_KIND()
+  MPI_PATH=`which $CC |sed "s/bin\/$CC//g"`
+  if ! test -d "$MPI_PATH/include"; then
+    MPI_PATH=`$CC -show | sed "s/.*-I//g"` ;
+    MPI_PATH=`echo ${MPI_PATH} | sed "s/\/include.*//g"` ;
+  fi
   #
 else
   #
   def_mpi=""
   #
   CC=$CC_serial
-  #CXX=$CXX_serial
   F77=$F77_serial
   FC=$FC_serial
+  MPI_PATH=""
   #
 fi
 #
+AC_SUBST(MPI_PATH)
 AC_SUBST(def_mpi)
 AC_SUBST(mpibuild)
 

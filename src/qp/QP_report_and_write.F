@@ -103,6 +103,12 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    endif
  endif 
  !
+ ! Quasi-particle correctioin in standard GoWo
+ ! ===========================================
+ ! In standard GoWo calculation the correction is given by
+ ! \delta E = z*(So+nlXC-lXC) 
+ ! where So is the self-energy calculate with \tildeW = W - v
+ !
  ! Store temporary shadows of the Self-energy components
  !=========================
  ! and define a logical that define the first band of each

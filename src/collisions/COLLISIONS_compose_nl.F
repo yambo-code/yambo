@@ -11,8 +11,7 @@ subroutine COLLISIONS_compose_nl(G_in)
  ! 
  use pars,             ONLY:SP,cZERO,cI
  use drivers,          ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_sc_hartree!l_sc_hf,l_sc_cohsex,l_sc_exx
- use collision_ext,        ONLY:HXC_COLL_element,COLL_bands,&
-&                           HXC_collisions
+ use collision_ext,    ONLY:HXC_COLL_element,COLL_bands,HXC_collisions,COLLISIONS_load_SP
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
  use parallel_m,       ONLY:HEAD_QP_cpu,PAR_COM_Xk_ibz_INDEX
@@ -30,6 +29,7 @@ subroutine COLLISIONS_compose_nl(G_in)
  !
  integer           :: i_coll,ib,ibp,i_k,i_k_NL,i_kmq,i_comp,i_coll_mem,i_spin
  integer           :: i_n,i_m
+ complex(SP)       :: COLL
  !
  if(.not.l_sc_fock.and..not.l_sc_coh.and..not.l_sc_sex.and..not.l_sc_exx.and..not.l_sc_hartree) return
  !
@@ -58,9 +58,13 @@ subroutine COLLISIONS_compose_nl(G_in)
       do ibp=COLL_bands(1),COLL_bands(2)
        do ib=COLL_bands(1),COLL_bands(2)
          !
-         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)=="t") then
-           RT_Vnl_xc(i_n,i_m,i_k_NL,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_NL,i_spin) &
-&                                               -cI*HXC_COLL_element(i_coll_mem)%v_c(i_comp)*G_in(ib,ibp,i_kmq)
+         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)=='t') then
+           if(COLLISIONS_load_SP) then
+             COLL=cmplx(HXC_COLL_element(i_coll_mem)%v_c_SP(i_comp),kind=SP)
+           else
+             COLL=cmplx(HXC_COLL_element(i_coll_mem)%v_c(i_comp),kind=SP)
+           endif
+           RT_Vnl_xc(i_n,i_m,i_k_NL,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_NL,i_spin)-cI*COLL*G_in(ib,ibp,i_kmq)
            i_comp=i_comp+1
          endif
          !
@@ -79,7 +83,7 @@ subroutine COLLISIONS_compose_nl(G_in)
    i_n       =HXC_collisions%state(i_coll,1)
    i_m       =HXC_collisions%state(i_coll,2)
    !
-   RT_Vnl_xc(i_n,i_n,i_k,:) =real(RT_Vnl_xc(i_n,i_n,i_k,:))
+   RT_Vnl_xc(i_n,i_n,i_k,:) =real(RT_Vnl_xc(i_n,i_n,i_k,:),SP)
    RT_Vnl_xc(i_m,i_n,i_k,:)=conjg(RT_Vnl_xc(i_n,i_m,i_k,:))
    ! 
  enddo

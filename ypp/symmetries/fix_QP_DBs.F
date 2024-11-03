@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
-subroutine fix_QP_DBs(k,k_save,kpoints_map,action_kind)
+subroutine fix_QP_DBs(k,k_save,kpoints_map)
  !
  use pars,                ONLY:lchlen
  use QP_m,                ONLY:QP_t,QP_reset
@@ -18,13 +18,11 @@ subroutine fix_QP_DBs(k,k_save,kpoints_map,action_kind)
  use electrons,           ONLY:n_sp_pol
  use R_lattice,           ONLY:bz_samp
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp),intent(in) :: k
  type(bz_samp),intent(in) :: k_save
  integer,intent(in)       :: kpoints_map(2,k%nibz)
- !
- integer,intent(in)       :: action_kind
  !
  ! Work space
  !
@@ -37,8 +35,6 @@ subroutine fix_QP_DBs(k,k_save,kpoints_map,action_kind)
  !
  integer, external :: io_QP_and_GF
  !
- !
- if(action_kind==2) return
  !
  core_io_path_save=core_io_path
  !

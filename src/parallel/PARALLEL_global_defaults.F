@@ -7,6 +7,7 @@
 !
 subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
+ use drivers,       ONLY:l_sc_run
  use parallel_m,    ONLY:PARALLEL_n_structures_active,PARALLEL_CPU_used, &
 &                        ncpu,CPU_structure,i_PAR_structure,PARALLEL_ENV_uses_default,PARALLEL_CPU_role
  use parallel_int,  ONLY:PARALLEL_live_message
@@ -64,20 +65,23 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
    case("DIPOLES_SHIFTED")
      call GIMME_a_parallel_proposal(2,(/"c","k"/))
    case("Response_G_space_and_IO","Response_G_space")
-     call GIMME_a_parallel_proposal(5,(/"g","v","c","k","q"/))
+     call GIMME_a_parallel_proposal(5,(/"c","v","k","q","g"/))
    case("Real_Time") 
      call GIMME_a_parallel_proposal(4,(/" k"," b","qp"," q"/))
    case("Phonon_Self_Energy") 
      call GIMME_a_parallel_proposal(3,(/"q","k","b"/))
    case("Non_Linear") 
      call GIMME_a_parallel_proposal(2,(/" k"," w"/))
+   case("Oscillators") 
+     call GIMME_a_parallel_proposal(2,(/" k"," b"/))
    case("ScaLapacK") 
      CPU_structure(i_PAR_structure)%ROLE(1)="p"
      CPU_structure(i_PAR_structure)%CPU(1)=ncpu
      CPU_structure(i_PAR_structure)%ROLE(2)="d"
      CPU_structure(i_PAR_structure)%CPU(2)=1
    case("Self_Energy") 
-      call GIMME_a_parallel_proposal(3,(/" b","qp"," q"/))
+      if (     l_sc_run) call GIMME_a_parallel_proposal(3,(/" b","qp"," q"/))
+      if (.not.l_sc_run) call GIMME_a_parallel_proposal(4,(/" b","qp"," g"," q"/))
    case("Response_T_space") 
       call GIMME_a_parallel_proposal(2,(/"eh"," k"/))
    case("BZ_Indexes")

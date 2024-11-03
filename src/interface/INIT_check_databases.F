@@ -34,7 +34,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
 #include<collisions.h>
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(X_t)        :: X(5),Xbsk
  type(QP_t)       :: qp
@@ -54,7 +54,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
 &                     io_HF_and_locXC,io_QP_and_GF,io_DB1,io_KB_abinit,io_KB_pwscf,&
-&                     io_COL_CUT,io_E_SOC_map,io_ATMPROJ_pwscf
+&                     io_COL_CUT,io_E_SOC_map,io_ATMPROJ_pwscf,io_Double_Grid
 #if !defined _PAR_IO
  integer, external :: io_BS
 #endif
@@ -128,7 +128,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  if ((io_err==-1.or.io_QINDX_err==-1).and.infile_editing) then
    !
    ! switch off all logicals loaded in read_command_line
-   call switch_off_runlevel('all',on_name="")
+   call switch_off_runlevel('all',except="")
    !
    ! force a setup run
    instr="setup"
@@ -222,7 +222,6 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  ! BS
  !
- !
  if (nqibz>0) then
    YAMBO_ALLOC(BSqpts,(3,nqibz))
    do i_io=1,nqibz
@@ -258,6 +257,10 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_BS_Fxc_err=io_BS_Fxc(1,Xxcw,io_ID,X=Xbsk)
+ !
+ ! DbGd (electrons)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_err=io_Double_Grid(en,k,io_ID,'electrons')
  !
  ! ELPH 
  !
@@ -305,4 +308,3 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
 #endif
  !
 end subroutine
-

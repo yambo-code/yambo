@@ -19,7 +19,7 @@ subroutine XCo_report(qp,E,k)
  use stderr,        ONLY:intc,real2ch
  use xc_functionals,ONLY:E_xc_val
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(QP_t)    ::qp
  type(levels)  ::E
@@ -29,7 +29,7 @@ subroutine XCo_report(qp,E,k)
  !
  type(levels)      ::E_dummy
  integer           ::i_qp,ib,ik,ibp,ikp,i_s
- character(schlen) ::sec_mode_and_message(2),ch,ch_spin,nloc_fmt,loc_fmt
+ character(schlen) ::ch,ch_spin,nloc_fmt,loc_fmt
  logical           ::l_Vxc,l_Vnl_xc
  !
  ! Logicals
@@ -110,10 +110,12 @@ subroutine XCo_report(qp,E,k)
    !
  enddo
  !
- ! Direct GAP
+ ! Direct GAP (only if all IBZ corrections have been calculated 
  !
- call section('+',trim(Vnlxc_kind)//' occupations report')
- call REPORT_Occupations(trim(Vnlxc_kind),E_dummy)
+ if (QP_table(1,3)==1.and.QP_table(QP_n_states,3)==k%nibz) then
+   call section('+',trim(Vnlxc_kind)//' occupations report')
+   call REPORT_Occupations(trim(Vnlxc_kind),E_dummy)
+ endif
  !
  ! Output 
  !

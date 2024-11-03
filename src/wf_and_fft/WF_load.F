@@ -5,42 +5,47 @@
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
+#include<dev_defs.h>
+!
 !> @brief Load wave-function in different forms
 !!
 !! @param[in]       iG_in                       max-number of G-vectors
 !! @param[in]       iGo_max_in                  ???
 !! @param[in]       bands_to_load               bands range 
 !! @param[in]       kpts_to_load                k-points range 
+!! @param[in]       k_extrema_only              k-points, load only !first and last in range
 !! @param[in]       sp_pol_to_load              spin-polarization range 
 !! @param[in]       space                       R = real-space,  G = G-space, C = ?, B = ?
 !! @param[in]       title                       purpose of the wave-function loading
-!! @param[in]       impose_free_and_alloc       force deallocation of already loaded WF 
+!! @param[in]       impose_free_and_alloc       force deallocation of already loaded WF
 !! @param[in]       force_WFo                   do not rotate the WF (for yambo_sc)
-!! @param[in]       keep_states_to_load         keep (.TRUE.) or not (.FALSE.) states already loaded 
-!! @param[in]       quiet                       turn off report and log for the WF_laod 
+!! @param[in]       keep_states_to_load         keep (.TRUE.) or not (.FALSE.) states already loaded
+!! @param[in]       quiet                       turn off report and log for the WF_laod
 !!
 !! @param[out]      WF                  Wave-function object
 !
-subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load,&
+subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load,k_extrema_only,&
 &                  space,title,impose_free_and_alloc,force_WFo,keep_states_to_load,quiet)
  !
  ! Load and (eventually) FFTs the wavefunctions
  !
- use pars,          ONLY:SP,DP,schlen
+ use iso_fortran_env
+ use pars,          ONLY:SP,DP,schlen,cZERO_DP
  use com,           ONLY:msg,core_io_path,fat_log
  use vec_operate,   ONLY:c2a
  use stderr,        ONLY:intc
  use electrons,     ONLY:nel,n_spinor,n_sp_pol
  use R_lattice,     ONLY:nkibz,k_pt,b
  use interfaces,    ONLY:WF_free
- use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size,&
-&                        fftw_plan,cufft_plan,fft_g_table_d
- use wave_func,     ONLY:wf_nc_k,wf_igk,wf_igk_d,WF_buffer,&
+ use FFT_m
+! use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size,&
+!&                        fftw_plan,cufft_plan,hipfft_plan,mklgpu_desc,DEV_VAR(fft_g_table)
+ use wave_func,     ONLY:wf_nc_k,wf_igk,DEV_VAR(wf_igk),WF_buffer,&
 &                        wf_ng,wf_norm_test,wf_ncx,io_WF,wf_b_indx,&
 &                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,WAVEs,states_to_load
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:OP_RD,NONE,VERIFY,RD,RD_CL,DUMP
- use wrapper,       ONLY:Vstar_dot_V
+ use wrapper,       ONLY:Vstar_dot_V_gpu
 #if defined _SC
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB,&
 &                        SC_bands
@@ -49,17 +54,19 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use pseudo,        ONLY:pp_is_uspp,becp,l_use_p2_Vloc_becp
  use qe_pseudo_m,   ONLY:vkb,tpiba
  use timing_m,      ONLY:timing
- use cuda_m,        ONLY:have_cuda
  use wvfct,         ONLY:npwx
+ use gpu_m,         ONLY:have_gpu, gpu_devsync, gpu_getstat
+ use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memcpy_d2d,&
+                         devxlib_allocated,devxlib_memset_d
  !
-#include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
  type(WAVEs), target   :: WF
  integer,     optional :: sp_pol_to_load(2)
  character(*),optional :: space
  character(*),optional :: title
+ logical,     optional :: k_extrema_only
  logical,     optional :: impose_free_and_alloc
  logical,     optional :: force_WFo
  logical,     optional :: keep_states_to_load
@@ -71,17 +78,18 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  character(schlen)::wf_title
  integer          ::i_sp_pol,ikibz,ifrag,ib_grp,ib_to_load,ib,ib1,ib2,i_spinor,ic,ig,igfft,&
 &                   iG_max,iG_bounds_loaded(2),iGo_max,sp_pol_to_load_(2),wf_grid_size,&
-&                   npwk
+&                   npwk,N
  real(SP)         ::mndp,mxdp,xk(3)
  complex(SP)      ::c
- logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_,QUIET_wf,SIZE_msg,do_becp
+ logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,&
+		    k_extrema_only_,force_WFo_,QUIET_wf,SIZE_msg,do_becp
  complex(SP), allocatable :: wf_disk(:,:,:)
  complex(DP), allocatable :: wf_DP(:)
  !
  complex(DP), allocatable DEV_ATTR :: wf_DP_d(:)
  complex(SP), allocatable DEV_ATTR :: wf_disk_d(:,:,:)
- complex(SP), pointer     DEV_ATTR :: wfc_d(:,:,:)
- integer :: WFN
+ complex(SP), pointer     DEV_ATTR :: wfc_p(:,:,:)
+ integer :: WF_N
  !
  ! I/O
  !
@@ -112,10 +120,13 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  force_WFo_=.false.
  if(present(force_WFo)) force_WFo_=force_WFo
  !
+ k_extrema_only_=.false.
+ if(present(k_extrema_only)) k_extrema_only_=k_extrema_only
+ !
  sp_pol_to_load_=(/1,n_sp_pol/)
  if(present(sp_pol_to_load)) sp_pol_to_load_=sp_pol_to_load
  !
- ! Imposed Freeing and Allocating of WF's...
+ ! Imposed Freeing and Allocating of WFs...
  !
  free_and_alloc=.FALSE.
  !... when a single k-point is loaded each time... (no _SC)
@@ -127,7 +138,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    free_and_alloc=impose_free_and_alloc
  endif
  !
- ! [1]: check that loaded bounds are larger(equal) then bounds 
+ ! [1]: check that loaded bounds are larger(equal) then bounds
  !      asked now
  !
  call check_bounds(WF,loaded_bounds_ok)
@@ -176,7 +187,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      if (iG_bounds_loaded(1)>=iG_max.and.&
 &        iG_bounds_loaded(2)>=iGo_max) then
        !
-       ! Reset dimensions to fft dim loaded 
+       ! Reset dimensions to fft dim loaded
        !
        fft_dim=fft_dim_loaded
        fft_size=product(fft_dim)
@@ -190,6 +201,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  QUIET_wf = .false.
  if (kpts_to_load(1)==kpts_to_load(2).and.kpts_to_load(2)>1) QUIET_wf = .true.
+ if (k_extrema_only_.and.kpts_to_load(1)>1)                  QUIET_wf = .true.
  if (present(quiet))                                         QUIET_wf = quiet
  if (QUIET_wf) call IO_and_Messaging_switch("-report -log")
  SIZE_msg=.not.QUIET_wf.and.(any((/fft_dim_loaded/=fft_dim/)).or.any((/fft_dim==0/)))
@@ -206,7 +218,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  WF%space=wf_space_here
  !
  ! If the cpu has no WF to load %state must be set to .FALSE. before returning.
- ! This is needed, for example, when in a group of cpus some of them do not 
+ ! This is needed, for example, when in a group of cpus some of them do not
  ! read the DB
  !
  if (allocated(states_to_load)) then
@@ -231,7 +243,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
 #if defined _SC
  !
- ! First check and fix the number of bands 
+ ! First check and fix the number of bands
  !
  call load_SC_components('check_WF_DB',n_bands=bands_to_load(2))
  !
@@ -242,7 +254,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      call warning(' [WF'//trim(wf_title)//'] WF-distribution turned off, not compatible with SC wave functions')
    endif
    !
-   if (any ( WF%b/=(/1,SC_bands(2)/) )) then 
+   if (any ( WF%b/=(/1,SC_bands(2)/) )) then
      call warning(' [WF'//trim(wf_title)//'] Forced '//trim(intc(SC_bands(2)))//' bands to be loaded')
      if(allocated(states_to_load)) states_to_load(WF%b(2)+1:SC_bands(2),:,:)=.TRUE.
    endif
@@ -263,7 +275,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  ! Memory allocation
  !
- call WF_alloc(WF)
+ call WF_alloc(WF,k_extrema_only_)
  !
  if (WF%space=='R')  wf_grid_size=fft_size
  if (WF%space=='G')  wf_grid_size=wf_ng
@@ -271,12 +283,13 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  if (WF%space=='B')  wf_grid_size=wf_ncx
  !
  YAMBO_ALLOC(wf_DP,(wf_grid_size))
- !
- if (have_cuda) then
-   YAMBO_ALLOC(wf_DP_d,(wf_grid_size))
-   wfc_d => WF%c_d
-   WFN = WF%N
+ if (have_gpu) then
+   YAMBO_ALLOC_GPU(DEV_VAR(wf_DP),(wf_grid_size))
  endif
+ !
+ wfc_p => DEV_VAR(WF%c)
+ WF_N = WF%N
+ !
  !
  ! LOG the states loaded
  !
@@ -312,6 +325,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    do ikibz=1,nkibz
      !
      if (any( (/ikibz<WF%k(1), ikibz>WF%k(2)/) )) cycle
+     if (k_extrema_only_ .and. all( (/ikibz>WF%k(1), ikibz<WF%k(2)/) )) cycle
      !
      ! USPP init
      !
@@ -355,16 +369,14 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
        if (.not.buffer_is_ok) then
          !
          YAMBO_ALLOC(wf_disk,(wf_ncx,n_spinor,wf_nb_to_load))
-         if (have_cuda) then
-           YAMBO_ALLOC(wf_disk_d,(wf_ncx,n_spinor,wf_nb_to_load))
+         if (have_gpu) then
+           YAMBO_ALLOC_GPU(DEV_VAR(wf_disk),(wf_ncx,n_spinor,wf_nb_to_load))
          endif
          !
          call io_control(ACTION=RD,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
-         if (have_cuda) then
-           io_err=io_WF(ID,wf_disk,wf_disk_d)
-         else
-           io_err=io_WF(ID,wf_disk)
-         endif
+         !
+         io_err=io_WF(ID,wf_disk)
+         call devxlib_memcpy_h2d(DEV_VAR(wf_disk),wf_disk)
          !
          ! [FP]
          if (do_becp) then
@@ -386,36 +398,55 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
          WF%N=WF%N+1
          WF%index(ib,ikibz,i_sp_pol)=WF%N
          !
-#ifdef _CUDA
-         ! This is a specialized CUDA version performing FFT on the device
+#ifdef _GPU
+         ! This is a specialized GPU version performing FFT on the device
          !
-         if(buffer_is_ok) call error(" [CUDA WF_LOAD] buffering not yet implemented")
+         if(buffer_is_ok) call error(" [GPU WF_LOAD] buffering not yet implemented")
          !
          if(WF%space=='R') then
             !
             do i_spinor=1,n_spinor
               !
-              wf_DP_d=(0._DP,0._DP)
+              call devxlib_memset_d(DEV_VAR(wf_DP), cZERO_DP)
+              !
               npwk=wf_nc_k(ikibz)
               !
-              !$cuf kernel do(1) <<<*,*>>>
+              !DEV_ACC_DEBUG data present(wf_igk,fft_g_table,wf_DP,wf_disk)
+              !DEV_ACC parallel loop
+              !DEV_CUF kernel do(1) <<<*,*>>>
+              !DEV_OMPGPU target map(present,alloc:wf_igk,fft_g_table,wf_DP,wf_disk)
+              !DEV_OMPGPU teams loop private(ig,igfft)
               do ic=1,npwk
                 !
-                ig=wf_igk_d(ic,ikibz)
+                ig=DEV_VAR(wf_igk)(ic,ikibz)
                 if (ig>wf_ng) cycle
-                igfft=fft_g_table_d(ig,1)
+                igfft=DEV_VAR(fft_g_table)(ig,1)
                 !
-                wf_DP_d(igfft)=cmplx(wf_disk_d(ic,i_spinor,ib_to_load),kind=DP)
+                DEV_VAR(wf_DP)(igfft)=cmplx(DEV_VAR(wf_disk)(ic,i_spinor,ib_to_load),kind=DP)
                 !
               enddo
+              !DEV_OMPGPU end target
+              !DEV_ACC_DEBUG end data
               !
-              call fft_3d_cuda(wf_DP_d,fft_dim,+1,cufft_plan)
+#ifdef _CUDA
+              call fft_3d_cuda( DEV_VAR(wf_DP),fft_dim,+1,cufft_plan)
+#elif defined _HIP
+              call fft_3d_hip( DEV_VAR(wf_DP),fft_dim,+1,hipfft_plan)
+#elif defined _MKLGPU
+              call fft_3d_mklgpu( DEV_VAR(wf_DP),fft_dim,+1,mklgpu_desc)
+#endif
+              WF_N = WF%N
               !
-              WFN = WF%N
-              !$cuf kernel do(1)
+              !DEV_ACC_DEBUG data present(wfc_p,wf_DP)
+              !DEV_ACC parallel loop
+              !DEV_CUF kernel do(1)
+              !DEV_OMPGPU target map(present,alloc:wfc_p,wf_DP)
+              !DEV_OMPGPU teams loop
               do ic=1,wf_grid_size
-                wfc_d(ic,i_spinor,WFN)=cmplx(wf_DP_d(ic),kind=SP)*fft_norm
+                wfc_p(ic,i_spinor,WF_N)=cmplx(DEV_VAR(wf_DP)(ic),kind=SP)*fft_norm
               enddo
+              !DEV_OMPGPU end target
+              !DEV_ACC_DEBUG end data
               !
             enddo  ! i_spinor
             !
@@ -454,28 +485,30 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               WF%c(:,i_spinor,WF%N)=cmplx(wf_DP(:),kind=SP)*fft_norm
               !
             enddo  ! i_spinor
-#ifdef _CUDA
+#ifdef _GPU
          endif
 #endif
          !
        enddo    ! i_b
        !
        if (.not.buffer_is_ok) then
+         YAMBO_FREE_GPU(DEV_VAR(wf_disk))
          YAMBO_FREE(wf_disk)
-         YAMBO_FREE(wf_disk_d)
        endif
        !
      enddo      ! i_b_grp
    enddo        ! i_k
  enddo          ! i_sp_pol
 
- if (have_cuda) then
+ if (have_gpu) then
    !
    call msg('rns', '[WF] Copying WF data from GPU device')
    if(WF%space=='R') then
-     WF%c = WF%c_d
+     ! dev2host
+     call devxlib_memcpy_d2h(WF%c, DEV_VAR(WF%c))
    else
-     WF%c_d = WF%c
+     ! host2dev
+     call devxlib_memcpy_h2d( DEV_VAR(WF%c), WF%c)
    endif
    !
  endif
@@ -493,19 +526,19 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    !
  endif
  !
+ YAMBO_FREE_GPU(DEV_VAR(wf_DP))
  YAMBO_FREE(wf_DP)
- YAMBO_FREE(wf_DP_d)
 
  !
  ! The states_to_load is a temporary array that points to the states to be loaded
- ! here. It is defined in PARALLEL_WF_distribute and, therefore, only by calling 
- ! WF_load after a PARALLEL_WF_distribute OR by using the buffered components 
+ ! here. It is defined in PARALLEL_WF_distribute and, therefore, only by calling
+ ! WF_load after a PARALLEL_WF_distribute OR by using the buffered components
  ! the states_to_load are used.
  !
- ! With the next lines I assume that whatever next call of WF_load will 
+ ! With the next lines I assume that whatever next call of WF_load will
  ! occur AFTER a PARALLEL_WF_distribute. But this is not true when I call
  ! WF_load with the same distribution of states but different spaces ("G" or "R").
- ! 
+ !
  ! This is the reason of the KEEP_STATES_TO_LOAD logical
  !
  if(allocated(states_to_load)) then
@@ -569,7 +602,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      !
      if ( WF%index(ib1,1,1)==0 .or. WF%index(ib2,1,1)==0 ) cycle
      !
-     c=Vstar_dot_V( size(WF%c(:,:,WF%index(1,1,1))),  WF%c(:,:,WF%index(ib1,1,1) ) , WF%c(:,:,WF%index(ib2,1,1)) )
+     N=size(WF%c(:,:,WF%index(ib1,1,1)))
+     c=Vstar_dot_V_gpu( N, DEV_VAR(WF%c)(:,:,WF%index(ib1,1,1)), DEV_VAR(WF%c)(:,:,WF%index(ib2,1,1)) )
      !
      if (abs(c)>mxdp) mxdp=abs(c)
      if (abs(c)<mndp) mndp=abs(c)
@@ -599,9 +633,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      i_sp_pol=WF_%sp_pol(1)
      do while(i_sp_pol<=WF_%sp_pol(2).and.flag_)
        ikibz=WF_%k(1)
-       do while(ikibz<=WF_%k(2).and.flag_) 
+       do while(ikibz<=WF_%k(2).and.flag_)
          ib   =WF_%b(1)
-         do while(ib<=WF_%b(2).and.flag_) 
+         do while(ib<=WF_%b(2).and.flag_)
            flag_=states_to_load(ib,ikibz,i_sp_pol).eqv.WF_%state(ib,ikibz,i_sp_pol)
            ib=ib+1
          enddo

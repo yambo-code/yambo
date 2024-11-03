@@ -20,7 +20,7 @@ subroutine ELPH_double_grid(k,E,q)
  use IO_m,                ONLY:OP_RD_CL,REP,DUMP,OP_WR_CL
  use parser_m,            ONLY:parser
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) ::k,q
  type(levels)  ::E
@@ -213,7 +213,7 @@ subroutine ELPH_double_grid(k,E,q)
  ! .. restoring of built-in value of nkibz to be used in io_header 
  nkibz=q%nibz
  !
- call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=REP,ID=ID)
+ call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),COM=REP,ID=ID)
  io_err=io_Double_Grid(PH_freqs,q,ID,'phonons')
  !
  ! CLEAN

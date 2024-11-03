@@ -50,7 +50,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use parser_m,       ONLY:parser
  use pseudo,         ONLY:l_use_p2_Vloc_becp 
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ::E
  type(bz_samp)::k,q,Xk

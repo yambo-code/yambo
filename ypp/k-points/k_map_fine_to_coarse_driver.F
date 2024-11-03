@@ -16,7 +16,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:REP,OP_WR_CL
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) :: Xk
  type(levels)  :: Xen
@@ -128,7 +128,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  ! .. restoring of built-in value of nkibz to be used in io_header 
  nkibz=Xk%nibz
  !
- call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=REP,ID=ID)
+ call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),COM=REP,ID=ID)
  i_err=io_Double_Grid(Xen,Xk,ID,'electrons')
  !
  ! CLEAN

@@ -36,8 +36,8 @@ subroutine FREQUENCIES_set_reference_point(omega,n_freq,iw_ref)
  !endif
  !
  do iw=1,n_freq
-   if(abs(real(omega(iw)))>0.01) cycle
-   if(abs(omega(iw))<abs(omega(iw_ref))) iw_ref=iw
+   if (  abs(omega(iw)) < abs(omega(iw_ref)) ) iw_ref=iw
+   if ( real(omega(iw)) > abs(omega(iw_ref)) ) exit
  enddo
  !
  if(trim(global_gauge)=="velocity" .and. abs(real(omega(iw_ref)))==0._SP) omega(iw_ref)=cmplx(1.E-10,aimag(omega(iw_ref)))

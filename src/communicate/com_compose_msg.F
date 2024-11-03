@@ -7,7 +7,8 @@
 !
 function com_compose_msg(pre,body,post)
  !
- use pars,       ONLY:msg_len
+ use pars,      ONLY:msg_len
+ use com,       ONLY:msg_length
  !
  implicit none
  !
@@ -41,16 +42,14 @@ function com_compose_msg(pre,body,post)
    post_len=len_trim(post)
  endif
  !
- if (body_len>msg_len) body_len=msg_len
- if (post_len+pre_len+body_len>msg_len) body_len=msg_len-post_len-pre_len
+ if (body_len>msg_length) body_len=msg_length
+ if (post_len+pre_len+body_len>msg_length) body_len=msg_length-post_len-pre_len
  !
  com_compose_msg=" "
  if (present(pre)) then
    com_compose_msg(1:pre_len)=pre
  endif
- if (body_start==0) return
- com_compose_msg(pre_len+1:pre_len+body_len-body_start+1)=trim(body(body_start:body_len))
- if (post_start==0) return
- com_compose_msg(msg_len-post_len+post_start:msg_len)=trim(post(post_start:post_len))
+ if (body_start>0) com_compose_msg(pre_len+1:pre_len+body_len-body_start+1)=trim(body(body_start:body_len))
+ if (post_start>0) com_compose_msg(msg_length-post_len+post_start:msg_length)=trim(post(post_start:post_len))
  !
 end function

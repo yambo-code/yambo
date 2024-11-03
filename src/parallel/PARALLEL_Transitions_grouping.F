@@ -17,7 +17,7 @@ subroutine PARALLEL_Transitions_grouping()
  use R_lattice,     ONLY:nXkibz
  use vec_operate,   ONLY:sort
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Work Space
  !

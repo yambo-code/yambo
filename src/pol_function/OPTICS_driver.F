@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 !
 subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! 
@@ -11,28 +11,24 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  !
  ! Calculates dielectric function for a generic q vector.
  ! 
- use pars,          ONLY:pi,SP
- use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc,l_col_cut
+ use pars,          ONLY:SP,cZERO,pi
+ use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
- use D_lattice,     ONLY:l_0D
- use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg,FineGd_desc
- use DIPOLES,       ONLY:DIPOLE_t,DIP_desc
- use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,X_Double_Grid_setup,&
-&                        use_X_DbGd,eps_2_alpha,EPS_2_eels,X_par_lower_triangle,X_OUTPUT_messages,&
-&                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,X_OUTPUT_driver,X_do_obs,&
-&                        i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus
+ use R_lattice,     ONLY:bz_samp
+ use DIPOLES,       ONLY:DIPOLE_t
+ use X_m,           ONLY:X_t,X_par,X_fxc,X_Double_Grid_setup,X_par_lower_triangle,&
+&                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,use_X_DbGd,&
+&                        i_G_shift,Q_plus_G_sq_modulus
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_COM_Q_A2A,PAR_COM_RL_INDEX,PAR_IND_CON_BANDS_X,&
-&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,master_cpu
+&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
- use TDDFT,         ONLY:FXC_desc,FXC_type,&
-&                        F_xc_gspace,FXC_K_diagonal
+ use TDDFT,         ONLY:F_xc_gspace,FXC_K_diagonal
  use interfaces,    ONLY:WF_load,WF_free,WF_load
  use matrix,        ONLY:MATRIX_reset
- use IO_int,        ONLY:IO_and_Messaging_switch
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  :: Xen
  type(bz_samp) :: Xk,q
@@ -42,9 +38,9 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! 
  ! Work Space
  !
- integer          :: iw,iq
- real(SP)         :: output_data(5),a_xc,b_xc
- logical          :: l_skip_non_int_eps,Macroscopic_CPU,l_eels
+ integer          :: iq
+ complex(SP)      :: fac,spectra(wv%n_freqs,2)
+ logical          :: l_skip_non_int_eps,Macroscopic_CPU
  !
  integer,external :: OPTICS_select_q_and_G
  !
@@ -56,10 +52,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  allocate(X_par(1))
  !
  do iq=X%iq(1),X%iq(2)
-   !
-   ! Output files init 
-   !===================
-   call X_OUTPUT_driver("DEF INIT")
    !
    ! PARALLEL indexes
    !==================
@@ -116,132 +108,51 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    Macroscopic_CPU=X_par(1)%rows(1)<=i_G_shift.and.i_G_shift<=X_par(1)%rows(2).and.&
 &                  X_par(1)%cols(1)<=i_G_shift.and.i_G_shift<=X_par(1)%cols(2)
    !
-   ! Observables allocation
-   call X_ALLOC_global("ALLOC",wv)
-   !
-   ! Check if EELS can be evaluated
-   if (X_do_obs("eel")) l_eels=EPS_2_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
-   !
-   ! OutPut files...
-   if (.not.l_rpa_IP) call X_OUTPUT_driver("keys ALL",IQ=iq,keys="inv "//trim(FXC_type)//" dyson",IG=i_G_shift)
-   if (     l_rpa_IP) call X_OUTPUT_driver("keys ALL",IQ=iq,keys="ip",IG=i_G_shift)
-   !
-   ! ... permissions ...
-   if (iq==1) call IO_and_Messaging_switch("+output SAVE",CONDITION=master_cpu)
-   !
-   ! ... open ...
-   call X_OUTPUT_driver("open ALL")
-   if (iq==1) call IO_and_Messaging_switch("+output RESTORE")
-   !
-   ! Initial Messages
-   call X_OUTPUT_messages(iq,Q_plus_G=Q_plus_G_pt,ig=i_G_shift,MORE="X_size")
-   if (l_bs_fxc) call X_OUTPUT_messages(iq,MORE="FXC_size")
-   !
-   if (iq==1) call PP_wait
+   if (iq==1) call PP_wait()
    if (iq> 1) call PP_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
    ! Irredux (Xo) 
    call X_irredux(iq,"Xo",X_par(1),Xen,Xk,wv,X,Dip)
    !
-   ! Without LF eps
-   if (Macroscopic_CPU) Alpha(:,1)=-X_par(1)%blc(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
-   call PP_redux_wait(Alpha(:,1),COMM=PAR_COM_RL_INDEX%COMM)
-   Epsilon_ii(:,1)=1._SP+Alpha(:,1)
-   !
-   ! X Dyson equation solver
-   if (.not.l_rpa_IP) call X_redux(iq,"X",X_par(1),wv,X)
-   !
-   ! X_redux can change the matrix distribution. Need to recheck who is Macroscopic CPU
-   Macroscopic_CPU=X_par(1)%rows(1)<=i_G_shift.and.i_G_shift<=X_par(1)%rows(2).and.&
-&                  X_par(1)%cols(1)<=i_G_shift.and.i_G_shift<=X_par(1)%cols(2)
-   !
+   ! Without LF. I start defining spectra=eps-1
+   spectra=cZERO
    if (Macroscopic_CPU) then
+     ! I start defining spectra=eps-1
+     ! using the definition of epsilon-1 in terms of chi-bar
+     fac=4._SP*pi/Q_plus_G_sq_modulus
+     spectra(:,1)=-X_par(1)%blc(i_G_shift,i_G_shift,:)*fac
+   endif
+   call PP_redux_wait(spectra(:,1),COMM=PAR_COM_RL_INDEX%COMM)
+   !
+   if (.not.l_rpa_IP) then
      !
-     if (     l_rpa_IP) then
-       Alpha(:,2)=Alpha(:,1)
-     else
-       if (.not.l_col_cut) Alpha(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)-1._SP
-       ! Here I assume X_par is small and I use 1/(1+x)~1-x 
-       if (     l_col_cut) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
+     ! X Dyson equation solver
+     call X_redux(iq,"X",X_par(1),wv,X)
+     !
+     ! X_redux can change the matrix distribution. Need to recheck who is Macroscopic CPU
+     Macroscopic_CPU=X_par(1)%rows(1)<=i_G_shift.and.i_G_shift<=X_par(1)%rows(2).and.&
+&                    X_par(1)%cols(1)<=i_G_shift.and.i_G_shift<=X_par(1)%cols(2)
+     !
+     if (Macroscopic_CPU) then
+       !
+       ! At variance with the IP case, after the call to X_redux,
+       ! X_par now contains the factor 4*pi/bare_qpg**2
+       ! constructed with the coulomb cutoff-term
+       spectra(:,2)=X_par(1)%blc(i_G_shift,i_G_shift,:)
+       !
      endif
-   endif
-   call PP_redux_wait(Alpha(:,2),COMM=PAR_COM_RL_INDEX%COMM)
-   !
-   Epsilon_ii(:,2)=1._SP+Alpha(:,2)
-   !
-   ! I make alpha consistent with the above, IP, definition
-   ! To check if this need to be fixed with i_G_shift/=1
-   if (l_col_cut.or.l_0D) Alpha(:,2)=Alpha(:,2)*bare_qpg(iq,1)**2/q_norm(iq)**2
-   !
-   if (l_pf_fxc) then
-     call TDDFT_PF_coefficient(Xen,Xk,a_xc,b_xc)
-     if (abs(b_xc).le.1.e-5) then
-       Epsilon_ii(:,2)= 1._SP + 4._SP*pi*(Epsilon_ii(:,2)-1._SP)/(4._SP*pi -a_xc*(Epsilon_ii(:,2)-1._SP))
-     else
-       do iw=1,wv%n_freqs
-         Epsilon_ii(iw,2)= 1._SP + 4._SP*pi*(Epsilon_ii(iw,2)-1._SP)/& 
-&                          (4._SP*pi -(a_xc + b_xc*real(wv%p(iw))**2) *(Epsilon_ii(iw,2)-1._SP))
-       enddo
-     end if
-   end if
-   !
-   !
-   ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
-   call X_OUTPUT_messages(iq,GF=allocated(Xen%GreenF),Vnl=X%Vnl_included,ordering=X%ordering)
-   !
-   ! Descriptors 
-   call X_OUTPUT_driver("DESC",DESC=DIP_desc)
-   call X_OUTPUT_driver("DESC",DESC=FineGd_desc)
-   if (l_bs_fxc) call X_OUTPUT_driver("DESC",DESC=FXC_desc)
-   !
-   ! Epsilon
-   do iw=1,wv%n_freqs
-     output_data=(/real(wv%p(iw)),aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),&
-&                  aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1))/)
-     if (     l_rpa_IP) call X_OUTPUT_driver("WRITE eps",data=output_data(:3))
-     if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE eps",data=output_data)
-   enddo
-   !
-   ! EEL
-   if (X_do_obs("eel")) then 
-     l_eels= EPS_2_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
-     if(     l_rpa_IP) EEL(:,2) = EEL(:,1)
-     if(.not.l_rpa_IP) l_eels= EPS_2_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2),EEL(:,2))
-     do iw=1,wv%n_freqs
-       output_data=(/real(wv%p(iw)),aimag(EEL(iw,2)),real(EEL(iw,2)),aimag(EEL(iw,1)),real(EEL(iw,1))/)
-       if (     l_rpa_IP) call X_OUTPUT_driver("WRITE eel",data=output_data(:3))
-       if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE eel",data=output_data)
-     enddo
+     call PP_redux_wait(spectra(:,2),COMM=PAR_COM_RL_INDEX%COMM)
+     !
    endif
    !
-   ! Alpha
-   if (X_do_obs("alpha")) then 
-     ! alpha = -eps_2_alpha X(1,1) / |q|^2    
-     !       =  (1 -eps_M^-1) eps_2_alpha/4/pi
-     !       =  (1 +eels    ) eps_2_alpha/4/pi  
-     if (      l_col_cut.or.l_0D ) Alpha(:,1:2)=Alpha(:,1:2)*eps_2_alpha/4._SP/pi
-     if (.not.(l_col_cut.or.l_0D)) Alpha(:,1:2)=(1._SP+EEL(:,1:2))*eps_2_alpha/4._SP/pi
-     do iw=1,wv%n_freqs
-       output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
-       if (     l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data(:3))
-       if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data)
-     enddo
-   endif
-   !
-   ! TDDFT Kernel output
    if (l_bs_fxc) then
      if (iq==1) call PP_redux_wait(X_fxc)
      if (iq> 1) call PP_redux_wait(X_fxc,COMM=PAR_COM_Q_A2A%COMM)
-     do iw=1,wv%n_freqs
-       output_data(1:3)=(/real(wv%p(iw)),real(X_fxc(iw)*q_norm(iq)**2),aimag(X_fxc(iw)*q_norm(iq)**2)/)
-       call X_OUTPUT_driver("WRITE fxc",data=output_data(:3))
-     enddo
    endif
    !
-   call X_OUTPUT_driver("close ALL")
+   call X_OUTPUT(iq,Xen,Xk,wv,X,spectra)
    !
    ! CLEAN (each q)
-   call X_ALLOC_global("FREE",wv)
    call FREQUENCIES_reset(wv,"all")
    call MATRIX_reset(X_par(1))
    YAMBO_FREE(X_par_lower_triangle%blc)

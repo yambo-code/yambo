@@ -285,7 +285,7 @@ SUBROUTINE readpp ( input_dft, printout, ecutwfc_pp, ecutrho_pp )
      ! check for zero atomic wfc, 
      ! check that (occupied) atomic wfc are properly normalized
      !
-     call check_atwfc_norm(nt)
+     call check_atwfc_norm(nt,printout_)
      !
   enddo
   !
@@ -330,7 +330,7 @@ integer function pseudo_type (psfile)
 end function pseudo_type
 
 !---------------------------------------------------------------
-SUBROUTINE check_atwfc_norm(nt)
+SUBROUTINE check_atwfc_norm(nt,printout)
   !---------------------------------------------------------------
   !  check for the presence of zero wavefunctions first
   !  check the normalization of the atomic wfc (only those with non-negative
@@ -343,7 +343,8 @@ SUBROUTINE check_atwfc_norm(nt)
 
   implicit none
 
-  integer,intent(in) :: nt ! index of the pseudopotential to be checked
+  integer, intent(in) :: nt ! index of the pseudopotential to be checked
+  LOGICAL, intent(in) :: printout
   !
   integer ::             &
      mesh, kkbeta,       & ! auxiliary indices of integration limits
@@ -374,7 +375,7 @@ SUBROUTINE check_atwfc_norm(nt)
      gi(1:mesh) = upf(nt)%chi(1:mesh,iwfc) * upf(nt)%chi(1:mesh,iwfc)
      call simpson (mesh, gi, upf(nt)%grid%rab, norm)
      !
-     IF ( norm < eps8 ) then
+     IF ( norm < eps8 .and. printout ) then
         WRITE( stdout,'(5X,"WARNING: atomic wfc # ",i2, &
              & " for atom type",i2," has zero norm")') iwfc, nt
        !
@@ -413,7 +414,7 @@ SUBROUTINE check_atwfc_norm(nt)
      end if
   end do
   deallocate (work, gi )
-  IF ( LEN_TRIM(renorm) > 0 ) WRITE( stdout, &
+  IF ( LEN_TRIM(renorm) > 0 .and. printout ) WRITE( stdout, &
      '(15x,"file ",a,": wavefunction(s) ",a," renormalized")') &
      TRIM(psfile(nt)),TRIM(renorm)
   RETURN

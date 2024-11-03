@@ -17,8 +17,19 @@ if ! test -e configured.stamp && test -d $(PACKAGE); then \
  echo "\t[$(PACKAGE)] configuration"; \
  rm -f ${compdir}/log/config_$(PACKAGE).log; \
  CWD=`pwd`;\
+ echo "./configure $(CONFFLAGS)" >> ${compdir}/log/config_$(PACKAGE).log ; \
  cd $(PACKAGE);  ./configure $(CONFFLAGS) >> ${compdir}/log/config_$(PACKAGE).log 2>&1 ; \
  touch $$CWD/configured.stamp;\
+fi
+endef
+#
+define autoconf
+if ! test -e autoconf.stamp && test -d $(PACKAGE); then \
+ echo "\t[$(PACKAGE)] autoconf"; \
+ rm -f ${compdir}/log/autoconf_$(PACKAGE).log; \
+ CWD=`pwd`;\
+ cd $(PACKAGE);  autoreconf -i >> ${compdir}/log/autoconf_$(PACKAGE).log 2>&1 ; \
+ touch $$CWD/autoconf.stamp;\
 fi
 endef
 #
@@ -28,11 +39,11 @@ if ! test -e compiled.stamp && test -d $(PACKAGE); then \
  rm -f ${compdir}/log/compile_$(PACKAGE).log; \
  CWD=`pwd`;\
  FLGS="$(MAKEFLAGS)";\
- if [ "$(PACKAGE)" = "scalapack-2.1.0" ]; then \
-  FLGS=`echo "$(MAKEFLAGS)" | sed 's/-j//g'`; \
+ if [ "$(PACKAGE)" = "$(pkgname_scalapack)" ]; then \
+  FLGS="-j1";\
  fi;\
  cd $(PACKAGE); \
- $(make) $(MAKEFLAGS) $(1) >> ${compdir}/log/compile_$(PACKAGE).log 2>&1;  \
+ $(make) $$FLGS $(1) >> ${compdir}/log/compile_$(PACKAGE).log 2>&1;  \
  if [ ! "$(1)" = "blaslib" ] &&  [ ! "$(1)" = "loclib_only" ]; then touch $$CWD/compiled.stamp; fi;\
 fi
 endef

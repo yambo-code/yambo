@@ -65,7 +65,6 @@ if [ "$DIR_saved" == "yes" ] ; then
 fi
 if [ "$DIR_restored" == "yes" ] ; then
  source ./sbin/compilation/verbosity.sh "check_updated_locks.sh: $dir has been restored"
- return
 fi
 #
 # tag new objects to be compiled
@@ -78,7 +77,9 @@ do
   for dep_file in $deps; do
    source ./sbin/compilation/verbosity.sh "check_updated_locks.sh: $dep_file must be recompiled"
    source ./sbin/compilation/name_me.sh $dir/$dep_file "no_search"
-   DIR_is_to_recompile=1
+   if [ ! "$DIR_restored" == "yes" ] ; then
+     DIR_is_to_recompile=1
+   fi
    if [ "$lock" == "DOUBLE" ]; then
     source ./sbin/compilation/object_remove.sh "remove" "locks"
     continue;

@@ -19,7 +19,7 @@ subroutine RT_X_response(en,k,q)
  use fields,         ONLY:Efield
  use parser_m,       ONLY:parser
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  :: en
  type(bz_samp) :: k,q

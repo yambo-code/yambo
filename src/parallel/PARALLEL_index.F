@@ -14,16 +14,16 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  use stderr,      ONLY:intc
  use vec_operate, ONLY:sort
  !
-#include<memory.h>
+#include<y_memory.h>
  !
- type(PP_indexes)       ::px
- integer                ::uplim(:)
- integer,       optional::low_range(:)
+ type(PP_indexes)        ::px
+ integer                 ::uplim(:)
+ integer        ,optional::low_range(:)
  type(yMPI_comm),optional::COMM
- logical       ,optional::CONSECUTIVE
- logical       ,optional::ORDERED
- logical       ,optional::NO_EMPTIES
- logical       ,optional::MASK(:)
+ logical        ,optional::CONSECUTIVE
+ logical        ,optional::ORDERED
+ logical        ,optional::NO_EMPTIES
+ logical        ,optional::MASK(:)
  ! 
  ! Work Space
  !

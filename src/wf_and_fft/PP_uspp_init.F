@@ -30,7 +30,7 @@ subroutine PP_uspp_init()
  use timing_m,      ONLY:timing
  use parser_m,      ONLY:parser
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Work Space 
  !

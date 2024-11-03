@@ -26,6 +26,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use FFT_m,          ONLY:fft_size
  use wrapper,        ONLY:V_dot_V
  use BS,             ONLY:l_BS_magnons
+ use TDDFT,          ONLY:l_Fxc_from_Vxc
  use xc_functionals, ONLY:E_xc,E_xc_val,magn,F_xc,V_xc,xc_setup_hyb,&
 &                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl,xc_f03_func_end, &
 &                         xc_spin,xc_spin_map1, &
@@ -37,7 +38,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use interfaces,     ONLY:el_density_and_current,el_magnetization
  use pseudo,         ONLY:pp_rho_nlcc,pp_has_nlcc,PP_nlcc_free
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ::en
  type(bz_samp)::Xk
@@ -46,7 +47,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ! Work Space
  !
- logical  :: l_Fxc_from_Vxc
  integer  :: i1,i2,is_xc,is1,is2,ixc,ifft,ORDER_NOW
  integer(IPL) :: size_IPL
  real(SP) :: mod_magn
@@ -129,20 +129,20 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  if(n_spin==1) spin_rho_SP(:,1)=rho(:)
  if(n_spin> 1) then
    if (n_spinor==1) then
-!$omp parallel do default(shared), private(ifft)
+     !$omp parallel do default(shared), private(ifft)
      do ifft=1,fft_size
        spin_rho_SP(ifft,1)=0.5*(rho(ifft)+magn(ifft,3))
        spin_rho_SP(ifft,2)=0.5*(rho(ifft)-magn(ifft,3))
      enddo
-!$omp end parallel do
+     !$omp end parallel do
    else
-!$omp parallel do default(shared), private(ifft,mod_magn)
+     !$omp parallel do default(shared), private(ifft,mod_magn)
      do ifft=1,fft_size
        mod_magn=sqrt(magn(ifft,1)**2+magn(ifft,2)**2+magn(ifft,3)**2)
        spin_rho_SP(ifft,1)=0.5*(rho(ifft)+mod_magn)
        spin_rho_SP(ifft,2)=0.5*(rho(ifft)-mod_magn)
      enddo
-!$omp end parallel do
+     !$omp end parallel do
    endif
  endif
  !

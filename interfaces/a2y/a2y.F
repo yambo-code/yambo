@@ -174,7 +174,7 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
        !
        if(trim(NETCDF_kind)=='KSS') call a2y_kb_pp(ik,ncid) 
        if( pp_n_l_times_proj_max/=-1 ) then
-         if(trim(NETCDF_kind)=='WFK') call a2y_kb_pp_wfk(ik,ncid) 
+         if(trim(NETCDF_kind)=='WFK') call a2y_kb_pp_wfk(ik,i_sp_pol,ncid) 
          if (n_atoms_species_max>0.and.ib_grp==1) then
            if (ifrag==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
            if (ifrag> 1) call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)

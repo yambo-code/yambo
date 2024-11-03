@@ -21,7 +21,9 @@ subroutine k_reduce(k,FORCE_BZ)
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:b,rl_sop,bz_samp
  use zeros,          ONLY:k_rlu_zero
-#include<memory.h>
+ !
+#include<y_memory.h>
+ !
  type(bz_samp)::k
  logical      ::FORCE_BZ
  !

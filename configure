@@ -2969,8 +2969,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 SVERSION="5"
 SSUBVERSION="3"
 SPATCHLEVEL="0"
-SREVISION="23797"
-SHASH="d2fc7ed91f"
+SREVISION="23827"
+SHASH="12ce580f99"
 
 
 

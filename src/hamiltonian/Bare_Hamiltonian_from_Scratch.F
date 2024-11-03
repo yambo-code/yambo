@@ -189,7 +189,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
          !
          !
          Hext_loc(ib1,ib2) = Hext_loc(ib1,ib2) + &
-                             Vstar_dot_VV(fft_size,WF%c(:,1,i_wf1),vloc_full_r,WF%c(:,1,i_wf2))
+                             Vstar_dot_VV(fft_size*n_spinor,WF%c(:,:,i_wf1),vloc_full_r,WF%c(:,:,i_wf2))
          !
          ! Calculate the nonlocal part of Hext ...
          !

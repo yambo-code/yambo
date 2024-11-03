@@ -46,7 +46,6 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
  use vlocal,         ONLY:vloc_dealloc
  use wrapper,        ONLY:Vstar_dot_VV
  use fft_m,          ONLY:fft_size,fft_g_table
- use cuda_m,         ONLY:have_cuda
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:NONE,OP_RD_CL,REP,DUMP
  use gvect,          ONLY:ngm
@@ -189,7 +188,12 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
          !
          !
          Hext_loc(ib1,ib2) = Hext_loc(ib1,ib2) + &
-                             Vstar_dot_VV(fft_size*n_spinor,WF%c(:,:,i_wf1),vloc_full_r,WF%c(:,:,i_wf2))
+                             Vstar_dot_VV(fft_size,WF%c(:,1,i_wf1),vloc_full_r,WF%c(:,1,i_wf2))
+         !
+         if (n_spinor==2) then
+           Hext_loc(ib1,ib2) = Hext_loc(ib1,ib2) + &
+                             Vstar_dot_VV(fft_size,WF%c(:,2,i_wf1),vloc_full_r,WF%c(:,2,i_wf2))
+         endif
          !
          ! Calculate the nonlocal part of Hext ...
          !

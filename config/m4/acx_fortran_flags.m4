@@ -122,7 +122,7 @@ i?86*linux*)
     NETCDFFLAGS="-Df2cFortran"
   esac
  ;;
-*86*apple* )
+*86*apple* | *arm*apple* )
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"

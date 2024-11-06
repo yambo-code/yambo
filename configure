@@ -7087,7 +7087,7 @@ case "${host}" in
    #TIMER="ct_etime.o"
    if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
    ;;
- *arm*apple* )
+ aarch*apple* | arm*apple* )
    build_os="apple"
    #TIMER="ct_etime.o"
    if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
@@ -7483,7 +7483,7 @@ i?86*linux*)
     NETCDFFLAGS="-Df2cFortran"
   esac
  ;;
-*86*apple* | *arm*apple* )
+*86*apple* | aarch*apple* | arm*apple* )
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"

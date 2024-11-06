@@ -63,7 +63,7 @@ case "${host}" in
    #TIMER="ct_etime.o"
    if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
    ;;
- *arm*apple* )
+ aarch*apple* | arm*apple* )
    build_os="apple"
    #TIMER="ct_etime.o"
    if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi

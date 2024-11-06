@@ -7092,6 +7092,11 @@ case "${host}" in
    #TIMER="ct_etime.o"
    if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
    ;;
+ aarch*linux* | arm*linux* )
+   build_os="linux"
+   #TIMER="ct_etime.o"
+   if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
+   ;;
  powerpc64*linux* )
    build_os="linux"
    #TIMER="ct_etime.o"
@@ -7627,6 +7632,23 @@ ia64*linux* )
     SYSFLAGS="-g -O"
     FUFLAGS="-O0"
     OMPFLAGS="-openmp"
+    NETCDFFLAGS="-Df2cFortran"
+  esac
+  ;;
+aarch*linux* | arm*linux* )
+  case "${FC}" in
+  *gfortran*)
+    SYSFLAGS="-O3 -g -mtune=native -fno-lto"
+    FUFLAGS="-O0 -g -mtune=native"
+    SLK_FC_FLAGS="-fallow-argument-mismatch"
+    FCMFLAG=""
+    OMPFLAGS="-fopenmp"
+    NETCDFFLAGS="-DgFortran"
+    DEBUG_FLAGS="-Og -g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
+    ;;
+  *)
+    SYSFLAGS="-g -O"
+    FUFLAGS="-O0"
     NETCDFFLAGS="-Df2cFortran"
   esac
   ;;

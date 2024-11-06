@@ -269,6 +269,23 @@ ia64*linux* )
     NETCDFFLAGS="-Df2cFortran"
   esac
   ;;
+aarch*linux* | arm*linux* )
+  case "${FC}" in
+  *gfortran*)
+    SYSFLAGS="-O3 -g -mtune=native -fno-lto"
+    FUFLAGS="-O0 -g -mtune=native"
+    SLK_FC_FLAGS="-fallow-argument-mismatch"
+    FCMFLAG=""
+    OMPFLAGS="-fopenmp"
+    NETCDFFLAGS="-DgFortran"
+    DEBUG_FLAGS="-Og -g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
+    ;;
+  *)
+    SYSFLAGS="-g -O"
+    FUFLAGS="-O0"
+    NETCDFFLAGS="-Df2cFortran"
+  esac
+  ;;
 *x86*64* )
   case "${FC}" in
   *ftn* )

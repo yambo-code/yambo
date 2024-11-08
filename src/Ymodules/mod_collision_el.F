@@ -77,6 +77,9 @@ module collision_el
    !
    subroutine elemental_collision_free(ggw)
      type(elemental_collision), target::ggw
+     logical :: l_allocated
+     !
+     l_allocated = allocated(ggw%gamp)
      !
      YAMBO_FREE_GPU(DEV_VAR(ggw%gamp))
      YAMBO_FREE_GPU(DEV_VAR(ggw%rhotw))
@@ -98,6 +101,8 @@ module collision_el
      YAMBO_FREE(ggw%qgm)
      YAMBO_FREE(ggw%becprod)
      YAMBO_FREE(ggw%eiqtau)
+     !
+     if (.not.l_allocated) return
      !
      !DEV_ACC exit data delete(ggw)
      !

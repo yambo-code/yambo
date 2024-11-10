@@ -16,7 +16,7 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
  use parallel_m,    ONLY:myid
  use electrons,     ONLY:n_spinor
  use D_lattice,     ONLY:nsym,DEV_VAR(spin_sop),i_time_rev,idt_index
- use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_conjg
+ use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_conjg_d
  !
  implicit none
  !
@@ -88,7 +88,7 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
  ! take care of time reversal if needed
  !
 #ifdef _GPU_LOC
- if(isc(3)>nsym/(i_time_rev+1)) call devxlib_conjg(WF_symm)
+ if(isc(3)>nsym/(i_time_rev+1)) call devxlib_conjg_d(WF_symm)
 #else
  if(isc(3)>nsym/(i_time_rev+1)) WF_symm=conjg(WF_symm)
 #endif

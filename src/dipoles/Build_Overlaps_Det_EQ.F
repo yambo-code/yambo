@@ -14,8 +14,6 @@ subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Sm1_plus,Sm1_minus,S_det)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:k_map
  use matrix_operate, ONLY:hermitian
- use interfaces,     ONLY:LINEAR_ALGEBRA_driver
- use linear_algebra, ONLY:INV,USE_LK
  use vec_operate,    ONLY:k_periodic_idx
  use DIPOLES,        ONLY:DIP_S
  !
@@ -31,7 +29,7 @@ subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Sm1_plus,Sm1_minus,S_det)
  ! Work Space
  !
  integer     :: idx(3),id,ikm,istep,max_step,nb
- complex(SP) :: S_val(1:Xen%nbf(i_sp_pol),1:Xen%nbf(i_sp_pol))
+ complex(SP) :: S_val(1:Xen%nbf(i_sp_pol),1:Xen%nbf(i_sp_pol)),det
  !
  S_det    =cZERO
  Sm1_plus =cZERO
@@ -55,13 +53,13 @@ subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Sm1_plus,Sm1_minus,S_det)
        ! Overlap S(k, k-dk)
        !
        S_val=hermitian(DIP_S(1:nb,1:nb,id+(istep-1)*3,ikm,i_sp_pol))
-       call LINEAR_ALGEBRA_driver(INV,M=S_val,lib_in=USE_LK)
+       call SERIAL_inversion(nb,S_val,det,.false.)
        Sm1_minus(:,:,id+(istep-1)*3)=S_val
        !
        ! Overlap S(k, k+dk)
        !
        S_val=DIP_S(1:nb,1:nb,id+(istep-1)*3,ikbz,i_sp_pol)
-       call LINEAR_ALGEBRA_driver(INV,M=S_val,lib_in=USE_LK,det=S_det(id+(istep-1)*3))
+       call SERIAL_inversion(nb,S_val,S_det(id+(istep-1)*3),.true.)
        Sm1_plus(:,:,id+(istep-1)*3)=S_val
        !
      enddo

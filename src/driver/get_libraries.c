@@ -23,10 +23,6 @@ char *running_libraries()
 #else
  strcpy(strings[i_str], "Serial");
 #endif
-#if defined _OPENMP
- i_str++;
- strcpy(strings[i_str], "OpenMP");
-#endif
 #if defined _GPU
  i_str++;
  strcpy(strings[i_str], "GPU");
@@ -42,6 +38,10 @@ char *running_libraries()
 #if defined _OPENACC
  i_str++;
  strcpy(strings[i_str], "OpenACC");
+#endif
+#if defined _OPENMP
+ i_str++;
+ strcpy(strings[i_str], "OpenMP");
 #endif
 #if defined _OPENMP_GPU
  i_str++;

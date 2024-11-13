@@ -160,32 +160,43 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    !
  endif
  !
- ! GD and JD always want stkind to be defined. This is done
- ! automatically by slepc, however with this line, I get the info in output 
- if (epskind==EPSGD)          stkind=STPRECOND
- if (epskind==EPSJD)          stkind=STPRECOND
- if (stkind==STPRECOND .and. epskind==EPSGD)      kspkind=KSPPREONLY
- if (stkind==STPRECOND .and. epskind==EPSJD)      kspkind=KSPBCGS
- !
- call EPSGetST(eps,st,ierr)
- call STGetKSP(st,ksp,ierr)
- !
- call STSetType(st,stkind,ierr)
- call KSPSetType(ksp,kspkind,ierr)
- !
+ stkind="none"
+ kspkind="none"
  pckind="nopc"
  !
+ if (epskind==EPSGD.or.epskind==EPSJD) then
+  ! GD and JD always want stkind to be defined. This is done
+  ! automatically by slepc, however with this line, I get the info in output 
+  stkind=STPRECOND
+  if (epskind==EPSGD)      kspkind=KSPPREONLY
+  if (epskind==EPSJD)      kspkind=KSPBCGS
+  !
+ endif
+ !
  if (l_precondition) then
-   !
-   if (epskind==EPSKRYLOVSCHUR) stkind=STSINVERT
-   !
-   ! Default
-   !if (stkind==STSINVERT)                           kspkind=KSPBCGS
-   if (stkind==STSINVERT)                           kspkind=KSPPREONLY
-   !
-   ! From user
-   if(index(BSS_slepc_precondition,KSPPREONLY)/=0)  kspkind=KSPPREONLY
-   if(index(BSS_slepc_precondition,KSPBCGS)/=0)     kspkind=KSPBCGS
+  !
+  if (epskind==EPSKRYLOVSCHUR) stkind=STSINVERT
+  !
+  ! Default
+  !if (stkind==STSINVERT)                           kspkind=KSPBCGS
+  if (stkind==STSINVERT)                           kspkind=KSPPREONLY
+  !
+  ! From user
+  if(index(BSS_slepc_precondition,KSPPREONLY)/=0)  kspkind=KSPPREONLY
+  if(index(BSS_slepc_precondition,KSPBCGS)/=0)     kspkind=KSPBCGS
+  !
+ endif
+ !
+ if (epskind==EPSGD.or.epskind==EPSJD.or.l_precondition) then
+  call EPSGetST(eps,st,ierr)
+  call STGetKSP(st,ksp,ierr)
+  !
+  call STSetType(st,stkind,ierr)
+  call KSPSetType(ksp,kspkind,ierr)
+  !
+ endif
+ !
+ if (l_precondition) then
    !
    ! Default
    if (stkind==STSINVERT)   pckind=PCLU

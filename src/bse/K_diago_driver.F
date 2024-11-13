@@ -487,11 +487,15 @@ subroutine K_diago_driver(iq,W,X_static)
      call msg( 'sr', '[SLEPC] BSS_slepc_matrix_format                          ',BSS_slepc_matrix_format)
      !
      call parser('BSSEnTarget',l_target_energy)
+     if(l_target_energy .and. BSS_slepc_pseudo_herm) then 
+       BSS_slepc_pseudo_herm = .false. 
+       call warning('Target energy not supported in pseudo-hermitian case. Switching to non-hermitian diagonalization')
+     endif
      !
      if (index(BSS_slepc_matrix_format,'explicit')>0) &
-     & call msg( 's', '[SLEPC] Faster algorithm but BSE matrix re-distributed from internal to slepc parallel scheme')
+     & call msg( 's', '[SLEPC] Faster algorithm, BSE matrix re-distributed from internal to slepc parallel scheme')
      if (BSS_slepc_matrix_format=='shell')            &
-     & call msg( 's', '[SLEPC] Slower algorithm but BSE matrix used with yambo parallel distribution scheme')
+     & call msg( 's', '[SLEPC] Slower algorithm, BSE matrix used with yambo parallel distribution scheme')
      !
      ! Number of states for partial diagonalization
      !================================================

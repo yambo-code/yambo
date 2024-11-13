@@ -302,7 +302,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  l_write_kernel=.false.
  l_write_kernel_step= index(BSK_IO_mode,"write_all_steps")/=0
  !
- if (l_write_kernel_step) call warning("Experimental mode, IO at every step. Restart not possible")
+ if (l_write_kernel_step) then
+   call warning("Experimental mode, IO at every step. Restart not possible")
+ else
+   BSS_kernel_last_stored_block=n_BS_blks
+ endif
  !
  BS_blk_done=.false.
  !
@@ -910,10 +914,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  call io_control(ACTION=WR_CL,COM=REP,ID=ID)
  call io_BS_PAR_free(ID_head,ID,"full",.true.)
  ! In this mode the blocks are written to disk after each step and the memory is freed
- if (io_BS_K) then
-   if(     l_write_kernel_step) BS_K_has_been_calculated_loaded=.false.
-   if(.not.l_write_kernel_step) BSS_kernel_last_stored_block=n_BS_blks
- endif
+ if (io_BS_K.and.l_write_kernel_step) BS_K_has_been_calculated_loaded=.false.
 #else
  call io_control(ACTION=WR_CL,COM=REP,SEC=(/n_BS_blks+2/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)

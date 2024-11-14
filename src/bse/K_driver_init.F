@@ -251,16 +251,12 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  & call error("Wrong value of slepc matrix format: "//trim(BSS_slepc_matrix_format))
  !
  ! Special case, slepc with distributed matrix need to explicitly compute the anti-resonant block
+ ! This was needed in the past. Now the older implementation can be imposed
+ ! chosing shell-debug matric format
  l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (BSS_slepc_matrix_format=="shell-debug")
  !
- ! The doubling is activated unless explicily imposed by input since slepc
- ! with shells requires the extended K_multiply_by_V for the non hermitian algorithm
- ! Slepc are not (yet) able to deal with a pseudo-hermitian algorithm in some cases 
- ! or if imposed with "debug" input value of slepc matrix
- !
- call parser('ImposeSymm',l_flag)
- if (l_slepc_special.and..not.l_flag) l_BS_ares_from_res=.FALSE.
  BSS_slepc_double_grp=l_BS_ares_from_res.and.l_slepc_special
+ if (l_slepc_special) l_BS_ares_from_res=.FALSE.
  !
  BSS_slepc_pseudo_herm=BS_K_coupling .and. l_BS_ares_from_res .and. &
  &                     (.not.BSS_slepc_double_grp) .and. index(BSS_slepc_matrix_format,"debug")==0

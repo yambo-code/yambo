@@ -14,7 +14,7 @@
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
 !
-subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cmpl)
+subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
  !
  ! 10/06/2016 HM
  ! Use slepc to obtain the first few eigenpairs of a large matrix
@@ -45,7 +45,6 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  ! arguments
  !
  Mat                         :: M_slepc
- logical                     :: l_target_energy
  integer                     :: n_eig         ! number of eigenvalues to compute
  complex(SP)                 :: V_right(:,:)  ! right eigenvalues
  complex(SP),  optional      :: V_left(:,:)   ! left eigenvalues
@@ -165,9 +164,13 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  pckind="nopc"
  !
  if (epskind==EPSGD.or.epskind==EPSJD) then
+  !
+  ! Define stkind
   ! GD and JD always want stkind to be defined. This is done
   ! automatically by slepc, however with this line, I get the info in output 
   stkind=STPRECOND
+  !
+  ! Define kspkind
   if (epskind==EPSGD)      kspkind=KSPPREONLY
   if (epskind==EPSJD)      kspkind=KSPBCGS
   !
@@ -175,12 +178,16 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  if (l_precondition) then
   !
+  ! (re)Define stkind
+  ! Default
   if (epskind==EPSKRYLOVSCHUR) stkind=STSINVERT
+  ! From user
+  if(index(BSS_slepc_precondition,STSINVERT)/=0)   stkind=STSINVERT
   !
+  ! (re)Define stkind
   ! Default
   !if (stkind==STSINVERT)                           kspkind=KSPBCGS
   if (stkind==STSINVERT)                           kspkind=KSPPREONLY
-  !
   ! From user
   if(index(BSS_slepc_precondition,KSPPREONLY)/=0)  kspkind=KSPPREONLY
   if(index(BSS_slepc_precondition,KSPBCGS)/=0)     kspkind=KSPBCGS
@@ -190,13 +197,14 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  if (epskind==EPSGD.or.epskind==EPSJD.or.l_precondition) then
   call EPSGetST(eps,st,ierr)
   call STGetKSP(st,ksp,ierr)
-  !
+  ! Pass stkind and kspkind to slepc
   call STSetType(st,stkind,ierr)
   call KSPSetType(ksp,kspkind,ierr)
-  !
  endif
  !
  if (l_precondition) then
+   !
+   ! Define pckind
    !
    ! Default
    if (stkind==STSINVERT)   pckind=PCLU
@@ -207,7 +215,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    if(index(BSS_slepc_precondition,PCLU)/=0)          pckind=PCLU
    !
    call KSPGetPC(ksp,pc,ierr)
-   !
+   ! Pass pckind to slepc
    call PCSetType(pc,pckind,ierr)
    !
  endif
@@ -224,9 +232,8 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  call EPSSetExtraction(eps, extr, ierr)
  !
- if (l_target_energy.or.l_precondition) then
-   target_energy=0._SP
-   if(l_target_energy) target_energy=BSS_slepc_target_E
+ if (BSS_slepc_target_E/=0._SP.or.l_precondition) then
+   target_energy=BSS_slepc_target_E
    call EPSSetTarget(eps,target_energy,ierr)
    call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)
  else
@@ -290,7 +297,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  call msg( 'sr', '[SLEPC] Extraction method                 ',BSS_slepc_extraction)
  call msg( 'sr', '[SLEPC] Number of requested eigenvalues   ', n_eig ) 
  !
- if (l_target_energy.or.l_precondition) then
+ if (BSS_slepc_target_E/=0._SP.or.l_precondition) then
    call msg( 'nsr', '[SLEPC] Criterion is target energy        ', real(target_energy,SP)*HA2EV,'[eV]')
  else
    call msg( 'nsr', '[SLEPC] Criterion is smaller eigenvalues')

@@ -63,7 +63,8 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
        if (H_pos(1)+H_shift(1)>H_pos(2)+H_shift(2)) cycle
        if (l_BS_ares_from_res.and.H_pos(1)>H_pos(2)) cycle
        !
-       Mij=BS_blk(i_B)%mat(i_r,i_c)
+       if(     allocated(BS_blk(i_B)%mat)) Mij=BS_blk(i_B)%mat(i_r,i_c)
+       if(.not.allocated(BS_blk(i_B)%mat)) Mij=cZERO
        !
        ! Add energies to the diagonal
        !

@@ -94,13 +94,13 @@ void options_ypp(struct options_struct options[],int *i_opt)
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Mean Potential";
  options[*i_opt].long_opt= "potential";
+ strcpy(options[*i_opt].long_desc[0],"<string>=(h)artree,(f)ock,(coh),(sex),(cohsex),(exx),(exxc),(srpa),(d)ef,(ip)");
  options[*i_opt].short_opt='v';
  options[*i_opt].bin="ypp_sc";
  options[*i_opt].yambo_string="MeanPot";
  options[*i_opt].section="Plots";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Electronic properties";
- strcpy(options[*i_opt].long_desc[0],"<string>=(h)artree,(f)ock,(coh),(sex),(cohsex),(exx),(exxc),(srpa),(d)ef,(ip)");
 #if defined _ELPH  
  strcpy(options[*i_opt].long_desc[0],"<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent,(e)lias");
 #elif defined _YPP_MAGNETIC 

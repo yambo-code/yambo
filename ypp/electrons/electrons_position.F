@@ -20,7 +20,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  use stderr,         ONLY:intc
  use interfaces,     ONLY:WF_load,WF_free
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Input variables
  integer                  :: nkpt_pos(2),nband_pos(2)

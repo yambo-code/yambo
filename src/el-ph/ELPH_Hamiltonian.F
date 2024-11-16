@@ -26,7 +26,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use QP_m,          ONLY:QP_G_damp
  use parser_m,      ONLY:parser
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::en
  type(bz_samp) ::k,q

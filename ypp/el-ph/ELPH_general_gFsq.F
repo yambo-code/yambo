@@ -30,7 +30,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  use parallel_int,        ONLY:PP_wait,PP_redux_wait,PARALLEL_index 
  use functions,           ONLY:Fermi_fnc_derivative
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ::en,Xen
  type(bz_samp)::k,Xk,q

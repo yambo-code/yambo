@@ -18,7 +18,7 @@ subroutine RT_occupations_driver(k,q,en)
  use YPPm,           ONLY:DIPs_mask,l_dipoles,DIPs,DIPs_V_bands
  use YPP_real_time,  ONLY:l_RT_time,l_RT_energy,l_RT_bands,l_RT_dos,RT_conf
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) :: k,q
  type(levels)  :: en

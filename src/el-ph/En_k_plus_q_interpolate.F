@@ -13,7 +13,7 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  use ELPH,                ONLY:elph_bands,ID_E_kpq,GKKP,FineGd_E_kpq_alloc,Efermi_DbGd
  use interpolate,         ONLY:INTERPOLATION_BZ
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(in)   :: k,q
  type(levels) , intent(in)   :: E

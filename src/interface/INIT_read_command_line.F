@@ -15,7 +15,7 @@ subroutine INIT_read_command_line(rstr,init_)
  use BS_solvers,     ONLY:BSS_mode
  use X_m,            ONLY:Chi_mode
  use QP_m,           ONLY:QP_solver
- use memory,         ONLY:USER_MEM_limit_string,GET_user_MEM_limit
+ use y_memory,         ONLY:USER_MEM_limit_string,GET_user_MEM_limit
  use LIVE_t,         ONLY:USER_wall_time_string,GET_user_WALL_time
  use stderr,         ONLY:STRING_split,STRING_match,STRING_same
  use it_tools,       ONLY:runlevel_is_on,switch_off_runlevel

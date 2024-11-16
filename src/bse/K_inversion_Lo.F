@@ -29,7 +29,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  use BS,             ONLY:l_BS_photolum
  use PHOTOLUM,       ONLY:BSS_PL_f,BSS_dipoles_PL,PL,PL_prefactor
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(w_samp),  intent(inout) :: W
  type(levels),  intent(in)    :: E

@@ -30,7 +30,7 @@ subroutine ELPH_databases(k,E,q)
  use IO_m,                ONLY:OP_APP_CL,REP,OP_RD_CL
  use parallel_int,        ONLY:PARALLEL_global_indexes
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) ::k,q
  type(levels)  ::E

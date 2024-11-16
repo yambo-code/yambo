@@ -35,7 +35,7 @@ subroutine electrons_bands(Xk,Xen)
  use SC,             ONLY:SC_neq_kind
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(inout) :: Xk
  type(levels),  intent(inout) :: Xen

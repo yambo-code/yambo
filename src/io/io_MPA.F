@@ -19,7 +19,7 @@ integer function io_MPA(X,Xw,ID)
  use timing_m,      ONLY:timing
  use mpa_m,         ONLY:MPA_freqs,MPA_alloc,MPA_E_par,MPA_R_par
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(X_t)   :: X
  type(w_samp):: Xw

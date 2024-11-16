@@ -1,7 +1,7 @@
 #
 # Libs list
 #
-EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff etsf_io libxc lapack blacs scalapack petsc slepc fftw fftqe Ydriver
+EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff etsf_io libxc lapack blacs scalapack petsc slepc fftw fftqe Ydriver devxlib
 #
 # storing options
 #
@@ -20,11 +20,12 @@ keep_fftw=no
 keep_fftqe=no
 keep_yaml=no
 keep_futile=no
+keep_devxlib=no
 keep_hdf5=no
 #
 # package versions
 #
-version_Ydriver=1.4.2
+version_Ydriver=1.4.3
 version_iotk=y1.2.2
 version_netcdf=4.9.0
 version_netcdff=4.6.0
@@ -34,12 +35,13 @@ version_libxc=5.2.3
 version_lapack=3.12.0
 version_blacs=missing
 version_scalapack=2.2.1
-version_slepc=3.20.2
-version_petsc=3.20.5
+version_slepc=3.22.0
+version_petsc=3.22.0
 version_fftw=3.3.10
 version_fftqe=missing
 version_yaml=0.2.2
 version_futile=missing
+version_devxlib=0.8.5
 #
 # package names
 #
@@ -59,6 +61,7 @@ pkgname_fftw=fftw-$(version_fftw)
 pkgname_fftqe=fftqe
 pkgname_yaml=yaml-$(version_yaml)
 pkgname_futile=futile-yambo
+pkgname_devxlib=devicexlib-$(version_devxlib)
 #
 # tarball names
 #
@@ -78,6 +81,7 @@ tarball_fftw=$(pkgname_fftw).tar.gz
 tarball_fftqe=$(pkgname_fftqe).tar.gz
 tarball_yaml=$(pkgname_yaml).tar.gz
 tarball_futile=$(pkgname_futile).tar.gz
+tarball_devxlib=$(pkgname_devxlib).tar.gz
 #
 # External URL's on Github
 #
@@ -92,7 +96,10 @@ url_netcdff=https://github.com/Unidata/netcdf-fortran/archive/refs/tags/$(tarbal
 #
 url_slepc=https://gitlab.com/slepc/slepc/-/archive/v$(version_slepc)/$(tarball_slepc)
 url_petsc=https://gitlab.com/petsc/petsc/-/archive/v$(version_petsc)/$(tarball_petsc)
-url_libxc=https://gitlab.com/libxc/libxc/-/archive/$(version_libxc)/$(tarball_libxc)  # this requires to run "autoreconf -i" (coded)
+url_devxlib=https://gitlab.com/max-centre/components/devicexlib/-/archive/$(version_devxlib)/$(tarball_devxlib)
+#
+#...this requires to run "autoreconf -i" (coded)
+url_libxc=https://gitlab.com/libxc/libxc/-/archive/$(version_libxc)/$(tarball_libxc)
 #
 # External URL's More
 #
@@ -112,11 +119,13 @@ url_futile=$(url_base)/$(tarball_futile)
 # git repositories
 #
 git_Ydriver=git@github.com:yambo-code/yambo-libraries.git
+git_devxlib=git@gitlab.com:max-centre/components/devicexlib.git
 git_slepc=git@gitlab.com:slepc/slepc.git
 git_petsc=git@gitlab.com:petsc/petsc.git
 #
 # git default branches
 #
 branch_Ydriver=none
+branch_devxlib=none
 branch_slepc=none
 branch_petsc=none

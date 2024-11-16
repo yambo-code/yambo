@@ -13,7 +13,7 @@ subroutine INIT_DephMatrix()
  use parser_m,       ONLY:PARSER_array
  use real_time,      ONLY:RT_INPUT_Deph_limits
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Work Space
  !

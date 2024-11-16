@@ -22,7 +22,7 @@ subroutine symmetries_driver(E,Xk)
  use interfaces,          ONLY:WF_load,WF_free,el_magnetization
  use parser_m,            ONLY:parser
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels),intent(in)     :: E
  type(bz_samp),intent(inout) :: Xk

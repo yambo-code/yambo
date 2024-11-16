@@ -12,7 +12,7 @@ subroutine COLLISIONS_map_to_QP_table(what,COLL)
  use electrons,     ONLY:n_sp_pol
  use R_lattice,     ONLY:nXkibz
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*)                            :: what
  type(COLLISIONS_group),   intent(inout) :: COLL

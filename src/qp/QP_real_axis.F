@@ -48,7 +48,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use wrapper_omp,   ONLY:Vstar_dot_V_omp,V_dot_V_omp
  use timing_m,      ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)   :: en,Xen
  type(bz_samp)  :: Xk,k,q

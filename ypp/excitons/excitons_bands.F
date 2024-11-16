@@ -29,7 +29,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  use EXCPH,         ONLY:alphaQ
 #endif
  !
-#include<memory.h> 
+#include<y_memory.h> 
  !
  type(bz_samp) ::Xk,k,q
  type(levels)  ::Xen,en

@@ -52,7 +52,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  use ELPH,           ONLY:elph_use_q_grid
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels),      intent(in)    :: en
  type(bz_samp),     intent(inout) :: k,Xk,q

@@ -21,11 +21,12 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  use collision_el,  ONLY:elemental_collision
  use R_lattice,     ONLY:d3q_factor,RIM_ng,RIM_qpg,RIM_is_diagonal,&
 &                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts,cut_is_slab,&
-&                        RIM_qpg_d,bare_qpg_d
- use deviceXlib_m
+&                        DEV_VAR(RIM_qpg),DEV_VAR(bare_qpg)
+ use devxlib,       ONLY:devxlib_mapped
+ use gpu_m
  use timing_m
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(elemental_collision), target::isc
  character(1) ::mode
@@ -38,7 +39,8 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  !
  complex(SP), pointer DEV_ATTR :: gamp_p(:,:)
  integer :: ng_rows1,ng_rows2,ng_cols1,ng_cols2
-#ifdef _CUDA_LOC
+ logical :: lpres
+#ifdef _GPU_LOC
  character(32) :: subname="scatter_Gamp_gpu"
 #else
  character(32) :: subname="scatter_Gamp"
@@ -79,12 +81,12 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
    reg_q_m2=RIM_qpg(iq,1,1)/2._SP
  endif
  !
-#ifdef _CUDA_LOC
- if (allocated(RIM_qpg).and..not.allocated(RIM_qpg_d)) then
-   YAMBO_ALLOC_SOURCE(RIM_qpg_d,RIM_qpg)
+#ifdef _GPU_LOC
+ if (allocated(RIM_qpg).and..not.devxlib_mapped(DEV_VAR(RIM_qpg))) then
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_qpg),RIM_qpg)
  endif
- if (.not.allocated(bare_qpg_d)) then
-   YAMBO_ALLOC_SOURCE(bare_qpg_d,bare_qpg)
+ if (.not.devxlib_mapped(DEV_VAR(bare_qpg))) then
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(bare_qpg),bare_qpg)
  endif
 #endif
  !
@@ -100,7 +102,11 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  !
  gamp_p => DEV_VAR(isc%gamp)
  !
+ !DEV_ACC_DEBUG data present(gamp_p,RIM_qpg,bare_qpg)
+ !DEV_ACC parallel loop collapse(2)
  !DEV_CUF kernel do(2)
+ !DEV_OMPGPU target map(present,alloc:gamp_p,RIM_qpg,bare_qpg)
+ !DEV_OMPGPU teams loop collapse(2)
  !DEV_OMP parallel do default(shared), private(i1,i2,ig1,ig2,l_RIM), collapse(2)
  !
  do i2=ng_cols1,ng_cols2
@@ -171,11 +177,19 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
      !
    enddo
  enddo
+ !DEV_OMPGPU end target
+ !DEV_ACC_DEBUG end data
  !
  ! Anisotropy correction
  !
  if (.not.l_col_cut.and.ng_rows1==1.and.ng_cols1==1) then
+   !DEV_ACC_DEBUG data present(gamp_p)
+   !DEV_ACC serial
+   !DEV_OMPGPU target map(present,alloc:gamp_p)
    if (all((/iq==1,RIM_ng>0,mode=='c',RIM_anisotropy/=0._SP/))) gamp_p(1,1)=RIM_anisotropy/2._SP
+   !DEV_OMPGPU end target
+   !DEV_ACC end serial
+   !DEV_ACC_DEBUG end data
  endif
  !
  call timing(subname,opr="stop")

@@ -17,7 +17,7 @@ subroutine QP_DBs_manipulate( E )
  use interfaces,    ONLY:QP_DBs_merge,DESC_write
  use electrons,     ONLY:levels,n_sp_pol
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)     ::E
  !

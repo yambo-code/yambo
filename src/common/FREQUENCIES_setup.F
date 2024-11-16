@@ -12,7 +12,7 @@ subroutine FREQUENCIES_setup(W)
  use pars,          ONLY:SP,cI
  use frequency,     ONLY:w_samp
  use parser_m,      ONLY:parser
-#include<memory.h>
+#include<y_memory.h>
  !
  type(w_samp):: W 
  ! 

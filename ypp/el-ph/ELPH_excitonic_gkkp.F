@@ -24,7 +24,7 @@ subroutine ELPH_excitonic_gkkp(Xk)
  use stderr,              ONLY:intc
  use YPPm,                ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) :: Xk
  !

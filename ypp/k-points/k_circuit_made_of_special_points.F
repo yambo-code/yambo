@@ -17,7 +17,7 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
 &                              n_SPECIAL_k_MAX,CIRCUIT_k_label,CIRCUIT_k_norm,CIRCUIT_made_of_SPECIAL_k
  use stderr,              ONLY:STRING_split,STRING_same,intc
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*) :: PATH
  integer      :: n_points

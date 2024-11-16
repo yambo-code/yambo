@@ -11,7 +11,7 @@ subroutine INTERPOLATION_driver_end(ID)
  use interpolate,          ONLY:INTERPOLATE_msg_fmt,INTERPOLATE_initialized,&
 &                               lattice_vectors,INTERP_obj,max_interpls,int_sop,NN_nk_exact
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer, intent(in) :: ID
  !

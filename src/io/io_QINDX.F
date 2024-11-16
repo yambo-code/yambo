@@ -30,7 +30,7 @@ integer function io_QINDX(Xk,q,io_db,convention)
  use timing_m,       ONLY:timing
  use parallel_m,     ONLY:PAR_K_scheme
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(inout) :: q
  type(bz_samp), intent(in)    :: Xk

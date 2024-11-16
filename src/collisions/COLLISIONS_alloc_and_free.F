@@ -19,7 +19,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  use collision_ext,  ONLY:P_COLL_element
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*)             :: what,elements,actions
  integer                  :: I
@@ -206,13 +206,15 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
          YAMBO_FREE(COLL(J)%v_r)
        endif
        if (l_alloc.and.(l_table.or.l_all)) then
-         YAMBO_ALLOC(COLL(J)%table,(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
+         !AMBO_ALLOC(COLL(J)%table,(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
+         allocate(COLL(J)%table(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
          COLL(J)%table='f'
          COLL_grp%D=D
          mem_size(5)=mem_size(5)+size(COLL(J)%table)
        endif
        if (l_clean.and.(l_table.or.l_all)) then
-         YAMBO_FREE(COLL(J)%table)
+         !AMBO_FREE(COLL(J)%table)
+         deallocate(COLL(J)%table)
        endif
      enddo
      !

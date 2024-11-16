@@ -21,9 +21,13 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
 #if defined _SCALAPACK
  use drivers,       ONLY:l_slk_test
 #endif
+#if defined _GPU
+ use drivers,       ONLY:l_gpu_test
+#endif
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
 #endif
+ use gpu_m,         ONLY:GPU_test_dim
  use X_m,           ONLY:X_t,i_X_kind_existing_DB
  use DIPOLES,       ONLY:DIPOLE_t
  use parallel_m,    ONLY:myid,ncpu
@@ -89,7 +93,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! not resetted in INIT call
  !
- call bz_samp_reset(Xk)  
+ call bz_samp_reset(Xk) 
  call E_reset(Xen) 
  call E_reset(Ken) 
  call E_reset(DIPen) 
@@ -116,23 +120,31 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! Basical 
  !
- call setup(en,Xen,Ken,k,Xk)
+ launch_me= .not.(l_slk_test.or.l_gpu_test)
+ if(launch_me) call setup(en,Xen,Ken,k,Xk)
  !
  ! Update the default variables
  !
- i_err=INIT(en,q,k,X,Xw,Dip,instr,lnstr,.true.,.false.)
+ if(launch_me) i_err=INIT(en,q,k,X,Xw,Dip,instr,lnstr,.true.,.false.)
  !
  ! BZ sampling
  !==============
  !
- call bz_samp_indexes(en,k,Xk,q) 
+ if(launch_me) call bz_samp_indexes(en,k,Xk,q) 
  !
  ! COLOUMB DRIVER
  !================
  ! In non-linear optics we do not need bare_qpg
  ! it will be loaded only if required
  !
- if(.not.l_nl_optics) call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
+ launch_me= .not.(l_slk_test.or.l_gpu_test.or.l_nl_optics)
+ if(launch_me) call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
+ !
+ ! MAGN and DEN
+ !=============
+ !
+ !launch_me= .not.(l_slk_test.or.l_gpu_test)
+ !if(launch_me) call eval_Mtot(en,k,q)
  !
  ! reset the section numbering
  !=============================
@@ -142,7 +154,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! QP and RT CORRECTIONS
  !=======================
  !
- call External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
+ launch_me= .not.(l_slk_test.or.l_gpu_test)
+ if(launch_me) call External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  !
  ! DIPOLES
  !=========
@@ -279,6 +292,13 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (l_slk_test) call mem_manager_report
  !
 #endif
+ !
+ ! GPU TESTER
+ !============
+ !
+ !if (l_gpu_test) call GPU_test(GPU_test_dim)
+ if (l_gpu_test) call mem_manager_report
+ !
  ! 
  ! CLOSING
  !=========

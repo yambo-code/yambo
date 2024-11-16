@@ -23,7 +23,7 @@ subroutine PARALLEL_global_Response_T_transitions(Xk)
  ! ID's
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_DIP_ID,PAR_IND_VAL_BANDS_DIP_ID
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp)        :: Xk
  !

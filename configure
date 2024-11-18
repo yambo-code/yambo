@@ -842,10 +842,6 @@ internal_blas
 FLIBS
 YDB_dir
 GIT
-with_ydriver_branch
-DRIVER_INCS
-Ydriver_check
-Ydriver_LIB
 MPI_LIB_DIR
 MPI_INC_DIR
 MPI_LIBS
@@ -1004,7 +1000,6 @@ with_mpi_libs
 with_mpi_path
 with_mpi_libdir
 with_mpi_includedir
-with_ydriver_branch
 enable_ydb
 with_blas_libs
 enable_int_linalg
@@ -1799,8 +1794,6 @@ Optional Packages:
   --with-mpi-path=<path>        Path to the MPI install directory
   --with-mpi-libdir=<path>      Path to the MPI lib directory
   --with-mpi-includedir=<path>  Path to the MPI include directory
-  --with-ydriver-branch=<branch>
-                                Use the <branch> of the ydriver repository.
   --with-blas-libs=<libs>       Use BLAS libraries <libs>
   --with-lapack-libs=<libs>     Use LAPACK libraries <libs>
   --with-fft-libs=<libs>        Link to FFT libraries
@@ -3361,8 +3354,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 SVERSION="5"
 SSUBVERSION="3"
 SPATCHLEVEL="0"
-SREVISION="23988"
-SHASH="b0e6e937ec"
+SREVISION="23800"
+SHASH="7db510283b"
 
 
 
@@ -4713,15 +4706,6 @@ then :
 fi
 
 fi
-
-#
-# License-Identifier: GPL
-#
-# Copyright (C) 2016 The Yambo Team
-#
-# Authors (see AUTHORS file for details): AM
-#
-
 
 #
 #  General
@@ -10589,34 +10573,6 @@ ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-# ============================================================================
-# Yambo Libs
-
-
-DRIVER_INCS="-I$PWD/lib/yambo/Ydriver/include/ -I$PWD/include/driver"
-#
-
-# Check whether --with-ydriver-branch was given.
-if test ${with_ydriver_branch+y}
-then :
-  withval=$with_ydriver_branch;
-else $as_nop
-  with_ydriver_branch=none
-fi
-
-#
-if test x"$with_ydriver_branch" = "xnone"; then
- Ydriver_check="D";
- Ydriver_LIB="Download"
-else
- Ydriver_check="G";
- Ydriver_LIB="GIT, branch $with_ydriver_branch"
-fi
-
-
-
-
 
 # ============================================================================
 # YDB/YAMBOpy

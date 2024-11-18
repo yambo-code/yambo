@@ -26,6 +26,7 @@
  fft_1d.o
  fft_3d_cuda.o
  fft_3d_fftw.o
+ fft_3d_hip.o
  fft_3d_qe.o
  fft_3d_sg.o
  fft_check_size.o

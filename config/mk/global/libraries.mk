@@ -14,8 +14,6 @@ include lib/archive/package.list
 #
 INT_LIBS      = qe_pseudo slatec math77 local
 YAMBO_INT_LIBS= Yio 
-YLIBDRIVER    = interface main options 
-YLIBDRIVER_LD = _Ydriver_options _Ydriver_interface _Ydriver_main 
 YLIBIO        = Ymodules Yio
 YLIBIO_LD     = $(YLIBIO)
 #

@@ -22,7 +22,7 @@ include $(compdir)/config/setup
 #
 # VARIABLES
 #
-idriver=$(IFLAG)$(libdir)/yambo/Ydriver/include $(IFLAG)$(includedir)/driver $(IFLAG)$(includedir)/version
+idriver=$(IFLAG)$(includedir)/driver $(IFLAG)$(includedir)/version
 lf90include=$(IFLAG)$(includedir) $(IFLAG)$(includedir)/headers/common $(IFLAG)$(includedir)/headers/parser $(idriver)
 lf90libinclude=$(iiotk) $(inetcdff) $(inetcdf) $(ipetsc) $(islepc) $(ihdf5) $(ilibxc) $(idevxlib) $(icudalib) $(ifft) $(ifutile) $(iyaml) $(idriver)
 mfiles=find . -maxdepth 1 -name '*.mod'

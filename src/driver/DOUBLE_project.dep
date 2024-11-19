@@ -1,6 +1,25 @@
+ C_driver_transfer.o
+ mod_C_driver.o
+ command_line.o
+ driver.o
+ get_libraries.o
+ get_runlevel.o
+ get_running_project.o
+ get_running_tool.o
+ get_version.o
+ input_file.o
+ launcher.o
+ load_environments.o
  options_control.o
+ options_help.o
  options_interfaces.o
+ options_maker.o
  options_projects.o
  options_yambo.o
  options_ypp.o
+ title.o
+ tool_init.o
+ usage.o
+ use_me.o
+ winsize.o
 

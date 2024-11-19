@@ -322,10 +322,6 @@ module interfaces
      type (WAVEs), target, intent(inout) :: WF
    end subroutine WF_symm_kpoint_g_BZ
    !
- end interface
- !
- interface WF_shift_kpoint
-   !
    subroutine WF_shift_kpoint_gpu(b_to_shift,nb_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k_out)
      use pars,          ONLY:SP
      use electrons,     ONLY:n_spinor

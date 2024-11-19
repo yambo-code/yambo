@@ -36,7 +36,7 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  use IO_m,              ONLY:VERIFY,DUMP,REP,OP_WR,WR,WR_CL,OP_RD_CL
  use timing_m,          ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,       intent(in) :: blim(2),klim(2)
  type(levels),  intent(in) :: En

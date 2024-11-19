@@ -29,7 +29,7 @@ module EXCPH
  use ELPH,           ONLY:ph_modes
  use R_lattice,      ONLY:bz_samp
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Exciton-Phonon 
  !================
@@ -135,7 +135,7 @@ module EXCPH
      use electrons,      ONLY:n_sp_pol 
      use BS,             ONLY:BS_bands
      !
-#include<memory.h>
+#include<y_memory.h>
      !
      type(bz_samp) ::k
      ! 
@@ -253,7 +253,7 @@ module EXCPH
      use BS,             ONLY:BS_H_dim,BS_bands,BSqpts
      use R_lattice,      ONLY:bz_samp
      !
-#include<memory.h>
+#include<y_memory.h>
      !
      type(bz_samp) ::k,q
      !      
@@ -280,7 +280,7 @@ module EXCPH
      use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BSS_eh_table_m1,BS_H_dim,BSS_n_eig
      use BS,             ONLY:BSqpts
      !
-#include<memory.h>
+#include<y_memory.h>
      !
      YAMBO_FREE(BS_mat)
      YAMBO_FREE(BSS_eh_table)

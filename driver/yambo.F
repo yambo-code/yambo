@@ -16,16 +16,13 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_mpa,l_bss,l_bse,l_em1d,l_X,&
-&                        l_EXCPH_gkkp,l_EXCPH_optics,l_EXCPH_lifetime,&
-&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_phel_corr
-#if defined _SCALAPACK
- use drivers,       ONLY:l_slk_test
-#endif
-#if defined _GPU
- use drivers,       ONLY:l_gpu_test
-#endif
+&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_phel_corr,&
+&                        l_gpu_test,l_slk_test
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
+#endif
+#if defined _ELPH && !defined _RT
+ use drivers,       ONLY:l_EXCPH_gkkp,l_EXCPH_optics,l_EXCPH_lifetime
 #endif
  use gpu_m,         ONLY:GPU_test_dim
  use X_m,           ONLY:X_t,i_X_kind_existing_DB

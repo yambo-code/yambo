@@ -16,7 +16,6 @@ subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF)
  use vec_operate,   ONLY:c2a
  use R_lattice,     ONLY:DEV_VAR(g_rot),DEV_VAR(G_m_G),&
  &                       k_pt,rl_sop,g_vec
- use deviceXlib_m,  ONLY:dev_conjg,dev_memcpy
  use D_lattice,     ONLY:idt_index,DEV_VAR(spin_sop),sop_inv, &
  &                       dl_sop,i_time_rev,nsym
  !
@@ -36,6 +35,10 @@ subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF)
  integer :: ib,i_wf,isymm_m1
  integer :: ic,ig,igp,igr,igs,i_spinor
  !
+#if defined _GPU
+ call error("subroutine WF_symm_kpoint_g is not gpu ported")
+#endif
+ !
  if(isymm==idt_index) return
  !
  isymm_m1=sop_inv(isymm)
@@ -49,9 +52,11 @@ subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF)
    !
    if (n_spinor==1) then
      !
-#ifdef _CUDA
-     !$cuf kernel do(1) <<<*,*>>>
-#endif
+     !DEV_ACC_DEBUG data present(WF_k_tmp,g_rot,WF_p)
+     !DEV_ACC parallel loop private(ig,igr,igs)
+     !DEV_CUF kernel do(1) <<<*,*>>>
+     !DEV_OMPGPU target map(present,alloc:WF_k_tmp,g_rot,WF_p)
+     !DEV_OMPGPU teams loop
      do ic=1,wf_nc_k(ik)
        ig=DEV_VAR(wf_igk)(ic,ik)
        igr=DEV_VAR(g_rot)(ig,isymm)
@@ -61,9 +66,11 @@ subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF)
      !
    else
      !
-#ifdef _CUDA
-     !$cuf kernel do(1) <<<*,*>>>
-#endif
+     !DEV_ACC_DEBUG data present(WF_k_tmp,g_rot,WF_p)
+     !DEV_ACC parallel loop private(ig,igr,igs)
+     !DEV_CUF kernel do(1) <<<*,*>>>
+     !DEV_OMPGPU target map(present,alloc:WF_k_tmp,g_rot,WF_p)
+     !DEV_OMPGPU teams loop
      do ic=1,wf_nc_k(ik)
        ig=DEV_VAR(wf_igk)(ic,ik)
        igr=DEV_VAR(g_rot)(ig,isymm)
@@ -76,9 +83,11 @@ subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF)
    endif
    !
    ! take care of time reversal if needed
-   if(isymm>nsym/(1+i_time_rev)) call dev_conjg(WF_k_tmp)
+   !if(isymm>nsym/(1+i_time_rev)) call dev_conjg(WF_k_tmp)
+   if(isymm>nsym/(1+i_time_rev)) WF_k_tmp=conjg(WF_k_tmp)
    !
-   call dev_memcpy(WF_p,WF_k_tmp)
+   !call dev_memcpy(WF_p,WF_k_tmp)
+   WF_p=WF_k_tmp
    !
    nullify(WF_p)
    !
@@ -96,7 +105,6 @@ subroutine WF_symm_kpoint_g_BZ(b_to_load,ik,i_sp_pol,isymm,ig0,isref,igref,WF)
   use vec_operate,   ONLY:c2a
   use R_lattice,     ONLY:DEV_VAR(g_rot),DEV_VAR(G_m_G),&
   &                       k_pt,rl_sop,g_vec
-  use deviceXlib_m,  ONLY:dev_conjg,dev_memcpy
   use D_lattice,     ONLY:idt_index,DEV_VAR(spin_sop),sop_inv, &
   &                       dl_sop,i_time_rev,nsym
   !
@@ -118,6 +126,10 @@ subroutine WF_symm_kpoint_g_BZ(b_to_load,ik,i_sp_pol,isymm,ig0,isref,igref,WF)
   !
   if(isymm==idt_index) return
   !
+#if defined _GPU
+  call error("subroutine WF_symm_kpoint_g_BZ is not gpu ported")
+#endif
+  !
   isymm_m1=sop_inv(isymm)
   !  
   do ib=b_to_load(1),b_to_load(2)
@@ -129,9 +141,6 @@ subroutine WF_symm_kpoint_g_BZ(b_to_load,ik,i_sp_pol,isymm,ig0,isref,igref,WF)
     !
     if (n_spinor==1) then
       !
-#ifdef _CUDA
-      !$cuf kernel do(1) <<<*,*>>>
-#endif
       do ic=1,wf_nc_k(ik)
         ig=DEV_VAR(G_m_G)(DEV_VAR(g_rot)(DEV_VAR(wf_igk)(ic,ik),isref),igref)
         igr=DEV_VAR(g_rot)(ig,isymm)
@@ -141,9 +150,6 @@ subroutine WF_symm_kpoint_g_BZ(b_to_load,ik,i_sp_pol,isymm,ig0,isref,igref,WF)
       !
     else
       !
-#ifdef _CUDA
-      !$cuf kernel do(1) <<<*,*>>>
-#endif
       do ic=1,wf_nc_k(ik)
         ig=DEV_VAR(G_m_G)(DEV_VAR(g_rot)(DEV_VAR(wf_igk)(ic,ik),isref),igref)
         igr=DEV_VAR(g_rot)(ig,isymm)
@@ -156,9 +162,11 @@ subroutine WF_symm_kpoint_g_BZ(b_to_load,ik,i_sp_pol,isymm,ig0,isref,igref,WF)
     endif
     !
     ! take care of time reversal if needed
-    if(isymm>nsym/(1+i_time_rev)) call dev_conjg(WF_k_tmp)
+    !if(isymm>nsym/(1+i_time_rev)) call dev_conjg(WF_k_tmp)
+    if(isymm>nsym/(1+i_time_rev)) WF_k_tmp=conjg(WF_k_tmp)
     !
-    call dev_memcpy(WF_p,WF_k_tmp)
+    !call dev_memcpy(WF_p,WF_k_tmp)
+    WF_p=WF_k_tmp
     !
     nullify(WF_p)
     !
@@ -176,7 +184,6 @@ subroutine WF_symm_kpoint_g_ssop(b_to_load,ik,i_sp_pol,isymm,ig0,ssop,WF)
   use vec_operate,   ONLY:c2a
   use R_lattice,     ONLY:DEV_VAR(g_rot),DEV_VAR(G_m_G),&
   &                       k_pt,rl_sop,g_vec
-  use deviceXlib_m,  ONLY:dev_conjg,dev_memcpy
   use D_lattice,     ONLY:idt_index,DEV_VAR(spin_sop),sop_inv, &
   &                       dl_sop,i_time_rev,nsym
   !
@@ -199,6 +206,10 @@ subroutine WF_symm_kpoint_g_ssop(b_to_load,ik,i_sp_pol,isymm,ig0,ssop,WF)
   !
   if(isymm==idt_index) return
   !
+#if defined _GPU
+  call error("subroutine WF_symm_kpoint_g_ssop is not gpu ported")
+#endif
+  !
   isymm_m1=sop_inv(isymm)
   !  
   do ib=b_to_load(1),b_to_load(2)
@@ -210,9 +221,6 @@ subroutine WF_symm_kpoint_g_ssop(b_to_load,ik,i_sp_pol,isymm,ig0,ssop,WF)
     !
     if (n_spinor==1) then
       !
-#ifdef _CUDA
-      !$cuf kernel do(1) <<<*,*>>>
-#endif
       do ic=1,wf_nc_k(ik)
         ig=DEV_VAR(wf_igk)(ic,ik)
         igr=DEV_VAR(g_rot)(ig,isymm)
@@ -222,9 +230,6 @@ subroutine WF_symm_kpoint_g_ssop(b_to_load,ik,i_sp_pol,isymm,ig0,ssop,WF)
       !
     else
       !
-#ifdef _CUDA
-      !$cuf kernel do(1) <<<*,*>>>
-#endif
       do ic=1,wf_nc_k(ik)
         ig=DEV_VAR(wf_igk)(ic,ik)
         igr=DEV_VAR(g_rot)(ig,isymm)
@@ -236,10 +241,13 @@ subroutine WF_symm_kpoint_g_ssop(b_to_load,ik,i_sp_pol,isymm,ig0,ssop,WF)
       enddo
     endif
     !
-    ! take care of time reversal if needed
-    if(isymm>nsym/(1+i_time_rev)) call dev_conjg(WF_k_tmp)
     !
-    call dev_memcpy(WF_p,WF_k_tmp)
+    ! take care of time reversal if needed
+    !if(isymm>nsym/(1+i_time_rev)) call dev_conjg(WF_k_tmp)
+    if(isymm>nsym/(1+i_time_rev)) WF_k_tmp=conjg(WF_k_tmp)
+    !
+    !call dev_memcpy(WF_p,WF_k_tmp)
+    WF_p=WF_k_tmp
     !
     nullify(WF_p)
     !

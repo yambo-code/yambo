@@ -18,7 +18,7 @@ subroutine EXC_WF_symm_qpoint(Xk,qpt,first_state,nstates,iq,isq,igq,&
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:DUMP,REP,RD
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(in)   :: Xk,qpt
  integer,       intent(in)   :: first_state,nstates

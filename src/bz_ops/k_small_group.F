@@ -20,7 +20,7 @@ subroutine k_small_group(k)
  use R_lattice,      ONLY:rl_sop,bz_samp
  use zeros,          ONLY:k_rlu_zero
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp)::k
  !

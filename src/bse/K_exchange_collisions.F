@@ -24,7 +24,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp,NG,l_bs_exch_wf_in_loop)
  use openmp,         ONLY:OPENMP_update,master_thread
  use collision_el,   ONLY:elemental_collision_free,elemental_collision_alloc
  use devxlib,        ONLY:devxlib_memcpy_d2d,devxlib_memcpy_h2d,devxlib_memcpy_d2h,&
-&                         devxlib_conjg,devxlib_memset_d
+&                         devxlib_conjg_d,devxlib_memset_d
  !
  !
  implicit none
@@ -150,7 +150,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp,NG,l_bs_exch_wf_in_loop)
        enddo
        !DEV_ACC_DEBUG end data
        !
-       if (i_s>nsym/(i_time_rev+1)) call devxlib_conjg(BS_T_grp(i_T_grp)%DEV_VAR(O_x)(:,i_T_el),range1=(/2,BS_n_g_exch/) )
+       if (i_s>nsym/(i_time_rev+1)) call devxlib_conjg_d(BS_T_grp(i_T_grp)%DEV_VAR(O_x)(:,i_T_el),range1=(/2,BS_n_g_exch/) )
        !
      endif
      !

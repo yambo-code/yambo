@@ -63,8 +63,6 @@
 #
 # > OTHERs: @DEVXLIB_info@
 #
-# [@Ydriver_check@] Ydriver   : @Ydriver_LIB@
-#
 # [@LIBXC_check@] LibXC     : @LIBXC_LIBS_R@
 #                 @LIBXC_INCS_R@
 # [@DEVXLIB_check@] DevXlib   : @DEVXLIB_LIBS_R@

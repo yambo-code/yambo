@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
-subroutine SC_Energy(E_total,E_eigen,E_zero,E_Hartree,E_xc_,E_Fermi,E,k,rho)
+subroutine SC_Energy(E_total,E_eigen,E_zero,E_Hartree,E_xc_,E_Fermi,E,k,rho,it)
  !
  ! Total energy defined in terms of the KS orbitals
  !
@@ -26,6 +26,7 @@ subroutine SC_Energy(E_total,E_eigen,E_zero,E_Hartree,E_xc_,E_Fermi,E,k,rho)
  type(bz_samp)::k
  real(SP)     ::E_eigen,E_zero,E_total,E_Hartree,E_xc_,E_Fermi
  real(SP)     ::rho(fft_size)
+ integer, intent(in) :: it
  !
  ! Work Space
  !
@@ -63,7 +64,7 @@ subroutine SC_Energy(E_total,E_eigen,E_zero,E_Hartree,E_xc_,E_Fermi,E,k,rho)
  do i_sp_pol=1,n_sp_pol
    do ik=1,k%nibz
      H_tmp=Hzero(:,:,ik,i_sp_pol)
-     call OBS_rotate(H_rotation(:,:,ik,i_sp_pol),H_tmp,H_ref_nbands,i_sp_pol)
+     if(it>0) call OBS_rotate(H_rotation(:,:,ik,i_sp_pol),H_tmp,H_ref_nbands,i_sp_pol)
      do ib=H_ref_bands(1),H_ref_bands(2)
        E_zero=E_zero+H_tmp(ib,ib)*E%f(ib,ik,i_sp_pol)*k%weights(ik)
      enddo

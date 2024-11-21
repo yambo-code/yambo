@@ -18,11 +18,11 @@ subroutine p2y_pseudo(k)
  use wave_func,             ONLY:wf_ng
  use pseudo,                ONLY:PP_alloc_PWscf,PP_free,pp_n_l_comp,     &
 &                                pp_n_l_times_proj_max,pp_n_l_max,pp_table,&
-&                                PP_nlcc_alloc,PP_nlcc_free
+&                                PP_nlcc_alloc,PP_nlcc_free,pp_is_uspp
  use IO_int,                ONLY:io_control
  use IO_m,                  ONLY:OP_WR_CL,OP_APP_CL,REP
  use read_pseudo_mod,       ONLY:readpp
- use mod_com2y,             ONLY:write_Vloc_Vnl
+ use mod_com2y,             ONLY:force_noPseudo
  use pw_data,               ONLY:ngm_,nsp_
  use vlocal,                ONLY:vloc_yambo
  !
@@ -42,7 +42,7 @@ subroutine p2y_pseudo(k)
  !
  integer, external :: io_KB_pwscf
  integer, external :: io_NLCC_pwscf
- integer, external :: io_USPP_pwscf
+ integer, external :: io_VPRJ_pwscf
  integer, external :: io_VLOC_pwscf
  !
  interface
@@ -79,7 +79,7 @@ subroutine p2y_pseudo(k)
  l_Vnl=.true.
  if( all(atoms%pseudo(:)%nbeta==0) ) l_Vnl=.false. 
  !
- if(.not.l_Vnl.and..not.write_Vloc_Vnl) return
+ if((.not.l_Vnl).and.force_noPseudo) return
  !
  if(l_Vnl) then
    !
@@ -139,34 +139,31 @@ subroutine p2y_pseudo(k)
    call warning(' Pseudo-potentials contain only local part!! ')
  endif
  !
- ! write USPP data
+ ! write pseudo-potential data
  !
  call qe_pseudo_init()
  call readpp(input_dft)
  !
+ pp_is_uspp=any(atoms%pseudo(:)%is_uspp)
+#ifndef _USPP
+ if ( pp_is_uspp ) call error("[PPs] Ultrasoft PP not supported")
+#endif
+ !
  call pre_init()
  call allocate_nlpot()
- ! [FP]
- if ( any(atoms%pseudo(:)%is_uspp) .or. write_Vloc_Vnl ) then
+ !
+ if ( .not. force_noPseudo ) then
    !
-#ifndef _USPP
-   if (.not. write_Vloc_Vnl) call error("[PPs] Ultrasoft PP not supported")
-#endif
-   ! [FP]
    call init_us_1()
    !
-   if (write_Vloc_Vnl) then
-     !
-     allocate(vloc_yambo(ngm_,nsp_))
-     call set_vloc_yambo()
-     !
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID_vloc)
-     io_err = io_VLOC_pwscf(ID_vloc)
-     !
-   endif
+   allocate(vloc_yambo(ngm_,nsp_))
+   call set_vloc_yambo()
+   !
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID_vloc)
+   io_err = io_VLOC_pwscf(ID_vloc)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-   io_err=io_USPP_pwscf(ID)
+   io_err=io_VPRJ_pwscf(ID)
    !
    !call PP_uspp_free()
    !

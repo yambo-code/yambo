@@ -3,11 +3,11 @@
 !
 ! Copyright (C) 2009 The Yambo Team
 !
-! Authors (see AUTHORS file for details): DV DS
+! Authors (see AUTHORS file for details): DV DS FP
 !
 subroutine Bare_Hamiltonian_as_E_ks_minus_Vxc(E,Xk,k)
  !
- use pars,           ONLY:cZERO
+ use pars,           ONLY:cZERO,schlen,lchlen
  use electrons,      ONLY:levels,n_sp_pol,spin,n_spin
  use QP_m,           ONLY:QP_nk,QP_Vxc,QP_n_states
  use hamiltonian,    ONLY:Hzero,E_reference,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
@@ -15,6 +15,7 @@ subroutine Bare_Hamiltonian_as_E_ks_minus_Vxc(E,Xk,k)
  use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_WF_linear
  use parallel_int,   ONLY:PP_redux_wait
  use wave_func,      ONLY:WF
+ use com,            ONLY:msg,of_open_close
  use R_lattice,      ONLY:bz_samp,nkibz
  use xc_functionals, ONLY:V_xc
  use interfaces,     ONLY:el_density_and_current,el_magnetization,WF_load
@@ -38,16 +39,30 @@ subroutine Bare_Hamiltonian_as_E_ks_minus_Vxc(E,Xk,k)
  !
  ! Work space
  !
- integer     :: ik,ib,i_sp_pol,WFbands(2)
+ integer     :: ik,ib,i_sp_pol,WFbands(2),ib1,ib2
+ logical     :: l_write_Hsc
+ character(schlen) :: Hsc_file,headings(6),msg_format
+ character(lchlen) :: msg_to_dump
  !
  Hzero=cZERO
  !
  call timing('Bare_Hamiltonian_as_E_ks_minus_Vxc',OPR='start')
  !
- ! [DEBUG>]
- open(1, file='REF_Hbare_real.dat')
- open(2, file='REF_Hbare_imag.dat')
- ! [<DEBUG]
+ l_write_Hsc=.false.  
+ call parser('WriteHsc',l_write_Hsc) ! write Hamiltonian on file only for testing purpose 
+ !
+ if(l_write_Hsc) then
+   Hsc_file='H_sc'
+   call of_open_close(Hsc_file,'ot')
+   call msg('o '//Hsc_file,'#')
+   call msg('o '//Hsc_file,'# H-Bare Hamiltonian from Eks - Vxc ') 
+   call msg('o '//Hsc_file,'#')
+   headings=(/'is_pol','kpt   ','bnd1  ','bnd2  ','Re[H] ','Img[H]'/)
+   call msg('o '//Hsc_file,'#',headings,INDENT=0,USE_TABS=.TRUE.)
+   call msg('o '//Hsc_file,'#')
+   msg_format='(t006,i7,t025,i7,t044,i7,t063,i7,t082,f16.10,t101,f16.10)'
+ endif
+ !
 #if defined _SC
  !
  if (l_sc_magnetic) then
@@ -141,16 +156,16 @@ subroutine Bare_Hamiltonian_as_E_ks_minus_Vxc(E,Xk,k)
      !
      call V_qp_basis_to_H(ik,i_sp_pol,-QP_Vxc,Hzero(:,:,ik,i_sp_pol))
      !
-     ! [DEBUG>]
-     write (*,*) "H_bare (ik,i_sp_pol) ",ik,i_sp_pol
-     write(1,*) "#Re H_bare (ik,i_sp_pol) ",ik,i_sp_pol
-     write(2,*) "#Im H_bare (ik,i_sp_pol) ",ik,i_sp_pol
-     do ib=H_ref_bands(1),H_ref_bands(2)
-       write(*,*) Hzero(ib,:,ik,i_sp_pol)
-       write(1,*) real (Hzero(ib,:,ik,i_sp_pol))
-       write(2,*) aimag(Hzero(ib,:,ik,i_sp_pol))
-     enddo
-     ! [<DEBUG]
+     if(l_write_Hsc) then
+       do ib1=H_ref_bands(1),H_ref_bands(2)
+         do ib2=H_ref_bands(1),H_ref_bands(2)
+           write(msg_to_dump,msg_format) i_sp_pol,ik,ib1,ib2,&
+&             real(Hzero(ib1,ib2,ik,i_sp_pol)),aimag(Hzero(ib1,ib2,ik,i_sp_pol))
+           call msg('o '//Hsc_file,msg_to_dump)
+         enddo
+       enddo
+     endif
+     !
    enddo
    !
  enddo
@@ -167,13 +182,11 @@ subroutine Bare_Hamiltonian_as_E_ks_minus_Vxc(E,Xk,k)
  !
 #endif
  !
+ if(l_write_Hsc) call of_open_close(Hsc_file)
+ !
  YAMBO_FREE(QP_Vxc)
  !
  call PP_redux_wait(Hzero)
- !
- close(2)
- close(1)
- write (*,*) "End of Bare Hamiltonian as E_ks-V_xc "
  !
  call timing('Bare_Hamiltonian_as_E_ks_minus_Vxc',OPR='stop')
  !

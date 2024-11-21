@@ -12,6 +12,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use drivers,        ONLY:l_setup
  use C_driver,       ONLY:code_bin
  use parser_m,       ONLY:parser
+ use pseudo,         ONLY:pp_is_known,PP_uspp_alloc
  use wave_func,      ONLY:wf_ng,wf_ncx,wf_igk
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,atom_mass,atom_pos,atoms_map,&
@@ -30,6 +31,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
  use interfaces,     ONLY:OCCUPATIONS_Fermi,DESC_write
  use wave_func,      ONLY:wf_ng,wf_ng_1st_BZ
+ use vlocal,         ONLY:vloc_alloc,vloc_dealloc
 #if defined _SC
  use wave_func,      ONLY:WF_buffered_IO 
  use drivers,        ONLY:l_sc_run
@@ -57,10 +59,13 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Work Space
  !
  real(SP)          :: Tel_SAVE,tmp_V(3)
- integer           :: i1,i2,i3,ik,is,ia,i_err,nbf_SAVE(2),nbm_SAVE(2),ID,n_to_print
+ integer           :: i1,i2,i3,ik,is,ia,nbf_SAVE(2),nbm_SAVE(2),ID,n_to_print
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch
- integer, external :: k_lattice,io_Double_Grid
+ !
+ integer           :: i_err
+ integer, external :: k_lattice,io_Double_Grid,io_VLOC_pwscf,io_VPRJ_pwscf
+
  !
 #if defined _HDF5_IO
  ! This is very useful for I/O debug
@@ -326,6 +331,39 @@ subroutine setup(en,Xen,Ken,k,Xk)
    !========================================
    !
    call check_periodic_directions((/.false.,.false.,.false./))
+   !
+ endif
+ !
+ if (pp_is_known) then
+   !
+   call section('=','Pseudopotentials')
+   !===============================
+   ! 
+   ! Alloc the local part
+   call vloc_alloc(.true.)
+   !
+   ! Alloc the non-local part
+   call PP_uspp_alloc()
+   !
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2/),MODE=DUMP,ID=ID)
+   i_err=io_VLOC_pwscf(ID)
+   if (i_err/=0) call error("While reading the local part of the pseudo something went wrong")
+   !
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2/),MODE=DUMP,ID=ID)
+   i_err=io_VPRJ_pwscf(ID)
+   if (i_err/=0) call error("While reading the projectors of the pseudo something went wrong")
+   !
+   call PP_uspp_init()
+   !
+   ! This term depends on the atomic coordinates
+   call PP_compute_Vloc()
+   !
+   ! Compute D_ij coefficients for nonlocal part of PP 
+   call PP_compute_deeq()
+   !
+   ! The non local part of the pseudo (beta projectors) will be computed later,
+   ! since it requires loading the projectors in real space, which is rather demanding
+   ! See subroutine init_us_2
    !
  endif
  !

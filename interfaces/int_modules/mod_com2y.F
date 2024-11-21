@@ -16,7 +16,7 @@ module mod_com2y
  logical :: force_noSYMM
  logical :: artificial_spin_pol
  logical :: verboseIO
- logical :: write_Vloc_Vnl
+ logical :: force_noPseudo
  !
  integer :: ng_vec_abinit, wf_nb_io_user
  !
@@ -48,7 +48,7 @@ module mod_com2y
      force_noWFs          =index(in_string,'nowf')>0
      artificial_spin_pol  =index(in_string,'dupl')>0
      verboseIO            =index(in_string,'verb')>0
-     write_Vloc_Vnl       =index(in_string,'pseu')>0
+     force_noPseudo       =index(in_string,'nops')>0
      !
      alat_mult_factor=1.
      wf_nb_io_user=0

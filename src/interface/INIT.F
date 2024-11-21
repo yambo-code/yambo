@@ -384,6 +384,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      logical :: all_bands,l_local
      !
      call parser('DipBandsALL',all_bands)
+     call parser('BareHfromScratch',l_local)
+     !
+     if (l_local.and.index(Dip%computed,"P2")==0)   Dip%computed=trim(Dip%computed)//' P2'
      !
      Dip%bands_ordered=.not.all_bands
      l_local=l_sc_run.or.l_real_time.or.l_nl_optics 

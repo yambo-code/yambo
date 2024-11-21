@@ -57,6 +57,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
 #if defined _RT
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:rho_reference,magn_reference
+ use parallel_m,     ONLY:PAR_IND_WF_k
 #endif
 #include<dev_defs.h>
 #include<y_memory.h>
@@ -73,7 +74,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
  character(schlen)  :: DIP_par_scheme
  character(schlen) :: Hsc_file,headings(6),msg_format
  character(lchlen) :: msg_to_dump
- logical :: l_rho_not_ok,l_compute_rho
+ logical :: l_rho_not_ok,l_compute_rho,l_distribute_wfs
  !
  integer, external :: io_DIPOLES
  !
@@ -135,14 +136,18 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
  ! WF distributed & load
  !=======================
  !
- if (.not.l_sc_run) then
-  call PARALLEL_global_indexes(E,k,q,"Self_Energy")
-  ! 
-  ! Final states (k-q,np)...
-  call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
-  ! Initial states (k,n \in QP)...
-  call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
-  call PARALLEL_WF_index( )
+ l_distribute_wfs=.true.
+#if defined _SC
+ l_distribute_wfs=.not.l_sc_run
+#endif
+ if (l_distribute_wfs) then
+   call PARALLEL_global_indexes(E,k,q,"Self_Energy")
+   ! 
+   ! Final states (k-q,np)...
+   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+   ! Initial states (k,n \in QP)...
+   call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
+   call PARALLEL_WF_index( )
  endif
  !
  call WF_load(WF,QP_ng_Vxc,WF_Go_indx,WFbands,(/1,k%nibz/),title='-vloc')

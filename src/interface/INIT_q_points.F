@@ -22,7 +22,7 @@ subroutine INIT_q_points( )
 #endif
  use parser_m,    ONLY:PARSER_array
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Work Space
  !

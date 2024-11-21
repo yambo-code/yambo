@@ -24,7 +24,7 @@ subroutine RT_X_LRR_real_field(en)
  use functions,      ONLY:theta_function
  use parser_m,       ONLY:parser
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  :: en
  !

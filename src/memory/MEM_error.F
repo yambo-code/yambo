@@ -7,7 +7,7 @@
 !
 subroutine MEM_error(what)
  !
- use memory,       ONLY:MEM_err,MEM_msg
+ use y_memory,       ONLY:MEM_err,MEM_msg
  use LIVE_t,       ONLY:LIVE_message
  use stderr,       ONLY:intc
  !

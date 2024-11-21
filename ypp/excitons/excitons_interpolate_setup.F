@@ -18,7 +18,7 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,report)
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  !
-#include<memory.h> 
+#include<y_memory.h> 
  !
  type(bz_samp) ::Xk,k,q
  type(levels)  ::Xen,en

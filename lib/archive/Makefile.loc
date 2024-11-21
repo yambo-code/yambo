@@ -14,8 +14,8 @@ all: $(EXT_LIBS)
 #
 # Libraries (GIT + archives)
 #
-Ydriver:
-	@+URL="$(url_Ydriver)"  ;  GBRANCH="$(branch_Ydriver)"  ;  GIT="$(git_Ydriver)"; LIB="$(pkgname_Ydriver)"; $(call getsrc_git,"Ydriver"); $(call copy_driver,"Ydriver")
+devxlib:
+	@+URL="$(url_devxlib)" ;  GBRANCH="$(branch_devxlib)" ;  GIT="$(git_devxlib)"; LIB="$(pkgname_devxlib)" ; $(call getsrc_git,"devxlib")
 #
 # Libraries (archives)
 #
@@ -58,15 +58,11 @@ clean: clean_git_folders clean_tgz
 #
 clean_git_folders:
 	if test ! -e keep-extlibs-stamp ; then \
-          if test -d $(pkgname_Ydriver)  ; then \
-	    if test "$(keep_Ydriver)"   != "yes" ;  then rm -rf $(pkgname_Ydriver) ; fi ; \
-	    rm -f Ydriver.pulled ; \
-	  fi ; \
+		echo "to do: cleaning of git folders"; \
 	fi
 #
 clean_tgz:
 	if test ! -e keep-extlibs-stamp ; then \
-          if test -s $(tarball_Ydriver)  && test "$(keep_Ydriver)"   != "yes" ;  then rm $(tarball_Ydriver)   ; fi ; \
           if test -s $(tarball_libxc)    && test "$(keep_libxc)"     != "yes" ;  then rm $(tarball_libxc)     ; fi ; \
           if test -s $(tarball_iotk)     && test "$(keep_iotk)"      != "yes" ;  then rm $(tarball_iotk)      ; fi ; \
           if test -s $(tarball_netcdf)   && test "$(keep_netcdf)"    != "yes" ;  then rm $(tarball_netcdf)    ; fi ; \
@@ -82,12 +78,13 @@ clean_tgz:
           if test -s $(tarball_yaml)     && test "$(keep_yaml)"      != "yes" ;  then rm $(tarball_yaml)      ; fi ; \
           if test -s $(tarball_fftw)     && test "$(keep_fftw)"      != "yes" ;  then rm $(tarball_fftw)      ; fi ; \
           if test -s $(tarball_fftqe)    && test "$(keep_fftqe)"     != "yes" ;  then rm $(tarball_fftqe)     ; fi ; \
+          if test -s $(tarball_devxlib)  && test "$(keep_devxlib)"   != "yes" ;  then rm $(tarball_devxlib)   ; fi ; \
           if test -s $(tarball_futile)   && test "$(keep_futile)"    != "yes" ;  then rm $(tarball_futile)    ; fi ; \
 	fi
 #
 define getsrc
  if test ! -s $$LIB".tar.gz" ; then \
-  echo "\t[$$LIB] download";\
+  echo "\t[$$LIB] download $$LIB.tar.gz";\
   if ! test -d  ../../log; then mkdir ../../log; fi; \
   if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
    wget $(WGETFLAGS) -O $$LIB".tar.gz" $$URL > ../../log/download_$$LIB.log 2>&1; \
@@ -117,22 +114,18 @@ define getsrc_git
   fi ; \
  else \
   if test ! -s $$LIB".tar.gz" ; then \
-   echo "\t[$(1)] download $$LIB.tar.gz";\
+   echo "\t[$$LIB] download $$LIB.tar.gz";\
    if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
     wget $(WGETFLAGS) -O $$LIB".tar.gz" $$URL >> ../../log/download_$$LIB.log 2>&1; \
    elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
     curl -L --progress-bar -o $$LIB".tar.gz" $$URL >> ../../log/download_$$LIB.log 2>&1; \
    fi ; \
+   if test ! -s $$LIB".tar.gz" ; then \
+    echo "*** Unable to download $$LIB. Test whether curl or wget is installed and working," ; \
+    echo "*** if you have direct access to the internet." ; \
+    echo "*** If not, copy $$LIB".tar.gz" into extlibs/archive/" ; \
+   fi; \
   fi ; \
- fi
-endef
-#
-define link_it
- if ! test -d $(srcdir)/lib/$(1); then mkdir $(srcdir)/lib/$(1); fi; \
- if test -s $$LIB".tar.gz" ; then \
-  if ! test -d  ../$(1); then mkdir ../$(1); fi; \
-  cd ../$(1); \
-  gunzip < ../archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
  fi
 endef
 #

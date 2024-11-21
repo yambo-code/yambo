@@ -38,7 +38,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  !
  ! I/O
  !
-#include<memory.h>
+#include<y_memory.h>
  real(SP),    intent(out):: Vkli(fft_size)
  real(SP),    intent(in) :: Vslt(fft_size),rho(fft_size)
  complex(SP), intent(in) :: U(nkibz,maxval(n_met_bands),fft_size)

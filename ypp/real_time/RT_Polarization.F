@@ -25,7 +25,7 @@ subroutine RT_Polarization(en,k,q)
  use DIPOLES,        ONLY:DIP_iR
  use functions,      ONLY:Fermi_fnc_derivative
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  :: en
  type(bz_samp) :: k,q

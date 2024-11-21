@@ -13,7 +13,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,&
 &                         LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
-#include<memory.h>
+#include<y_memory.h>
  !
  integer     :: n
  complex(SP) :: M(n,n)

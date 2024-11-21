@@ -38,7 +38,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
 &                        At_least_one_band_corrected
  use global_XC,     ONLY:correct_global_XC
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer       ::bands(2)
  type(levels)  ::en

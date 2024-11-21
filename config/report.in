@@ -26,9 +26,9 @@
 # [@YDB_check@] YDB: Yambo DataBase
 # [@YPY_check@] YAMBOpy: Yambo Python scripts
 # 
-# - PARALLEL/CUDA SUPPORT -
+# - PARALLEL/GPU SUPPORT -
 #
-# [@CUDA_check@] CUDA
+# [@GPU_check@] GPU support ( @GPU_SUPPORT@ @GPU_libinfo@@LIBCUDA_PATH@)
 # [@MPI_check@] MPI
 # [@OPENMP_check@] OpenMP
 # [@PARIO_check@] Parallel I/O
@@ -63,12 +63,14 @@
 # [@MAGMA_check@] MAGMA     : @MAGMA_LIBS_R@
 #                 @MAGMA_INCS_R@ (fortran modules to be compiled: @compile_magma_fmodules@) 
 #
-# > OTHERs
-#
-# [@Ydriver_check@] Ydriver   : @Ydriver_LIB@
+# > OTHERs: @DEVXLIB_info@
 #
 # [@LIBXC_check@] LibXC     : @LIBXC_LIBS_R@
 #                 @LIBXC_INCS_R@
+# [@DEVXLIB_check@] DevXlib   : @DEVXLIB_LIBS_R@
+#                 @DEVXLIB_INCS_R@
+# [@LIBCUDA_check@] LibCUDA   : @LIBCUDA_LIBS_R@   
+#                 @LIBCUDA_INCS_R@
 # [@MPI_check@] MPI       : @MPI_LIBS@ @MPI_info@
 #                 @MPI_INCS@
 # [@FUTILE_check@] FUTILE    : @FUTILE_LIBS_R@
@@ -81,13 +83,13 @@
 # FC kind = @FCKIND@ @FCVERSION@
 # MPI kind= @MPIKIND@
 #
-# [ CPP ] @CPP@ @CPPFLAGS_yambo@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@ @def_cuda@ @def_yaml@ @PW_CPP@ @def_magma@
-# [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@ @def_cuda@ @def_yaml@ @def_magma@
+# [ CPP ] @CPP@ @CPPFLAGS_yambo@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@ @def_gpu@ @def_yaml@ @PW_CPP@ @def_magma@
+# [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@ @def_gpu@ @def_yaml@ @def_magma@
 # [ CC  ] @CC@ @CFLAGS@
-# [ FC  ] @FC@ @FCFLAGS@ @OPENMPLIBS@ @CUDA_FLAGS@
-# [ FCUF] @FCUFLAGS@ @CUDA_FLAGS@
-# [ F77 ] @F77@ @FFLAGS@ @CUDA_FLAGS@
-# [ F77U] @FUFLAGS@ @CUDA_FLAGS@
+# [ FC  ] @FC@ @FCFLAGS@ @OPENMPLIBS@ @GPU_FLAGS@
+# [ FCUF] @FCUFLAGS@ @GPU_FLAGS@
+# [ F77 ] @F77@ @FFLAGS@ @GPU_FLAGS@
+# [ F77U] @FUFLAGS@ @GPU_FLAGS@
 # [Cmain] @FCMFLAG@
 #
 # You can modify compilers and flags by editing the file "config/setup"

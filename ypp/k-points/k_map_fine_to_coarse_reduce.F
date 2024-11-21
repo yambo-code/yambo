@@ -13,7 +13,7 @@ logical function k_map_fine_to_coarse_reduce(FineGd_k)
  use R_lattice,           ONLY:bz_samp
  use LIVE_t,              ONLY:live_timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(inout)      :: FineGd_k
  !

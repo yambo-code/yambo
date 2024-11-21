@@ -22,7 +22,7 @@ if test "$enable_time_profile" = "yes" ; then TIME_profile_check="X"; fi
 MEM_profile_check="-"
 if test "$enable_memory_profile" = "yes" ; then MEM_profile_check="X"; fi
 # 
-# - PARALLEL/CUDA SUPPORT -
+# - PARALLEL/GPU SUPPORT -
 # 
 CUDA_check="-"
 if ! test x"$enable_cuda" = "x"; then CUDA_check="X"; fi
@@ -40,6 +40,12 @@ fi
 #
 OPENMP_check="-"
 if test "$enable_open_mp" = "yes" ; then OPENMP_check="X"; fi
+#
+GPU_check="-"
+if test "$enable_cuda_fortran" = "yes" ; then GPU_check="X"; fi
+if test "$enable_openacc"      = "yes" ; then GPU_check="X"; fi
+if test "$enable_openmp5"      = "yes" ; then GPU_check="X"; fi
+
 #
 # - LIBRARIES -
 #
@@ -143,6 +149,18 @@ elif test "$enable_magma" = "yes" ; then
   MAGMA_check="E"
 fi
 #
+DEVXLIB_check="E"
+if test "$internal_devxlib" = "yes" ; then
+  if test "$compile_devxlib" = "yes"; then DEVXLIB_check="C"; fi
+  if test "$compile_devxlib" = "no" ; then DEVXLIB_check="I"; fi
+fi
+#
+LIBCUDA_check="-"
+if test "$use_libcuda" = "yes" ; then LIBCUDA_check="E"; fi
+
+GPU_libinfo=""
+if test "$GPU_SUPPORT" = "cudaf" && test "$LIBCUDA_check" = "-" ; then GPU_libinfo="with internal cuda library"; fi 
+#
 YDB_check="-";
 if test "$enable_ydb" = "yes" ; then YDB_check="X"; fi
 YPY_check="-";
@@ -194,6 +212,8 @@ AC_SUBST(MEM_profile_check)
 #
 AC_SUBST(CUDA_check)
 AC_SUBST(OPENMP_check)
+AC_SUBST(GPU_check)
+AC_SUBST(GPU_libinfo)
 AC_SUBST(PARIO_check)
 AC_SUBST(HDF5_check)
 AC_SUBST(HDF5_info)
@@ -218,6 +238,8 @@ AC_SUBST(YPY_check)
 #
 AC_SUBST(LIBXC_check)
 AC_SUBST(MAGMA_check)
+AC_SUBST(DEVXLIB_check)
+AC_SUBST(LIBCUDA_check)
 AC_SUBST(MPI_check)
 AC_SUBST(MPI_info)
 #
@@ -341,6 +363,20 @@ ACX_STRIPE_SUBPATH($LIBXC_INCS,"INC")
 LIBXC_INCS_R=$STRIPE
 AC_SUBST(LIBXC_LIBS_R)
 AC_SUBST(LIBXC_INCS_R)
+#
+ACX_STRIPE_SUBPATH($DEVXLIB_LIBS,"LIB")
+DEVXLIB_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($DEVXLIB_INCS,"INC")
+DEVXLIB_INCS_R=$STRIPE
+AC_SUBST(DEVXLIB_LIBS_R)
+AC_SUBST(DEVXLIB_INCS_R)
+#
+ACX_STRIPE_SUBPATH($LIBCUDA_LIBS,"LIB")
+LIBCUDA_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($LIBCUDA_INCS,"INC")
+LIBCUDA_INCS_R=$STRIPE
+AC_SUBST(LIBCUDA_LIBS_R)
+AC_SUBST(LIBCUDA_INCS_R)
 #
 ACX_STRIPE_SUBPATH($BLAS_PETSC_LIBS,"LIB")
 BLAS_PETSC_LIBS_R=$STRIPE

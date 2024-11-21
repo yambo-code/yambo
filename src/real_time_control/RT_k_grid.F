@@ -18,7 +18,7 @@ subroutine RT_k_grid(E,k,q)
 &                         bz_samp_FineGd_default
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels), intent(in)    :: E
  type(bz_samp),intent(in)    :: k

@@ -9,6 +9,8 @@ download:
 	@LIB2DO="all"; $(get_external_libraries)
 libxc-dl: 
 	@LIB2DO="libxc"; $(get_external_libraries)
+devxlib-dl: 
+	@LIB2DO="devxlib"; $(get_external_libraries)
 lapack-dl: 
 	@LIB2DO="lapack"; $(get_external_libraries)
 fftw-dl: 
@@ -39,5 +41,3 @@ petsc-dl:
 	@LIB2DO="petsc"; $(get_external_libraries)
 slepc-dl: 
 	@LIB2DO="slepc"; $(get_external_libraries)
-Ydriver-dl: 
-	@LIB2DO="Ydriver"; $(get_external_libraries)

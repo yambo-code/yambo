@@ -28,11 +28,6 @@ define clean_driver
  if [ "$(1)" = "driver"    ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="driver";$(clean_dir_driver);\
  fi
- if [ "$(1)" = "Ydriver"   ] ||                  [ "$(1)" = "all" ] ; then \
-   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(libdir)/yambo/Ydriver/src";TARG="$(YLIBDRIVER)";$(clean_dir_driver);\
-   WDIR="$(libdir)";TARG="Ydriver";$(clean_lib_driver);\
-   WDIR="$(libdir)/Ydriver/src";TARG="$(YLIBDRIVER)";$(clean_mod_driver);\
- fi;\
  if                             [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
    $(clean_libs_using_stamps_driver); \
    $(call clean_src_driver,"src");\
@@ -44,7 +39,7 @@ define clean_driver
  if [ "$(1)" = "interfaces" ] ; then $(call clean_src_driver,"interfaces"); fi; \
  if [ "$(1)" = "conf"      ] ||                  [ "$(1)" = "all" ] ; then $(clean_config); fi; \
  if [ "$(1)" = "dep"       ] ||                  [ "$(1)" = "all" ] ; then $(clean_dependencies); fi ; \
- if                                              [ "$(1)" = "all" ] ; then $(clean_log_and_Ydriver_folder); fi 
+ if                                              [ "$(1)" = "all" ] ; then $(clean_log_folder); fi 
 endef
 #
 # Drivers (intermediate)
@@ -184,10 +179,8 @@ define clean_project_dependencies_stamp
  rm -f $(prefix)/config/stamps_and_lists/project_dependencies.stamp; \
  fi
 endef
-define clean_log_and_Ydriver_folder
- $(ECHO) "\t[CLEANING] folders and log" ; \
- rm -fr $(srcdir)/lib/yambo;\
- rm -fr $(prefix)/lib/yambo;\
+define clean_log_folder
+ $(ECHO) "\t[CLEANING] log" ; \
  rm -fr $(prefix)/log 
 endef
 define clean_archive

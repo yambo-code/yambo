@@ -26,7 +26,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 
  use functions,           ONLY:Fermi_fnc_derivative
  !
-#include<memory.h>
+#include<y_memory.h>
  type(levels) ::en
  type(bz_samp)::k,q
  !

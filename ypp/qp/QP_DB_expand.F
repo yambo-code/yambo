@@ -14,7 +14,7 @@ subroutine QP_DB_expand( k )
  use IO_m,          ONLY:OP_WR_CL,DUMP,OP_RD_CL,LOG
  use QP_m,          ONLY:QP_t,QP_reset
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp)           :: k
  !

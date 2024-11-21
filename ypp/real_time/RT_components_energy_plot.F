@@ -25,7 +25,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  use QP_m,           ONLY:QP_table,QP_n_states
  use interfaces,     ONLY:DESC_write
  !
-#include <memory.h>
+#include <y_memory.h>
  !
  type(bz_samp) :: kpt
  type(levels)  :: En

@@ -30,7 +30,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  use interpolate,   ONLY:NN_n_of_nearest,INTERP_obj,INTERPOLATE_msg_fmt,&
 &                        INTERPOLATION_driver_seed,INTERPOLATION_driver_do,INTERP_shell_factor
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::en
  type(QP_t)    ::qp

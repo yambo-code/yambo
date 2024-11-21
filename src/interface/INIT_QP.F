@@ -14,7 +14,7 @@ subroutine INIT_QP(comment)
  use parser_m,  ONLY:PARSER_array
  use it_tools,  ONLY:check_verbosity
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*) ::comment
  ! 

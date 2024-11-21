@@ -135,9 +135,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  ! If we have additional nonlocal contributions such as Hubbard U,
  ! we need to switch to the covariant approach to capture them
+ ! 2024/04/10 DS: error/warning should be changed, checking for lda+U, and not for l_Hbare
  if (l_Hbare.and..not.use_covariant_approach) then
-  !if(.not.exp_user) call error(' Dipoles approach should be set to Covariant for BareH calculations')
-   if(     exp_user) call warning(' Dipoles approach should be set to Covariant for BareH calculations')
+   if(.not.exp_user) call error(' Set Covariant dipoles for BareH calculations or switch to expert user mode')
+   if(     exp_user) call warning(' Covariant dipoles should be used with non local terms in the Hamiltonian')
  endif
  !
  call parser('PDirect'  ,Dip%force_v_g_space)

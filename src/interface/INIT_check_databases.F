@@ -12,6 +12,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  use electrons,      ONLY:levels,n_spinor
  use C_driver,       ONLY:code_branch
  use drivers,        ONLY:infile_editing
+ use pseudo,         ONLY:pp_is_known
  use X_m,            ONLY:X_t
  use DIPOLES,        ONLY:DIPOLE_t
  use frequency,      ONLY:w_samp
@@ -50,9 +51,10 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  ! Workspace
  !
- integer           :: i_io,io_ID,io_err,io_DIP_err,io_WF_err,io_KB_abinit_err,io_KB_pwscf_err,io_ATMPROJ_pwscf_err
+ integer           :: i_io,io_ID,io_err,io_DIP_err,io_WF_err,io_KB_abinit_err,io_KB_pwscf_err,&
+&                     io_ATMPROJ_pwscf_err,io_VLOC_pwscf_err,io_VPRJ_pwscf_err
  !
- integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
+ integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,io_VLOC_pwscf,io_VPRJ_pwscf, &
 &                     io_HF_and_locXC,io_QP_and_GF,io_DB1,io_KB_abinit,io_KB_pwscf,&
 &                     io_COL_CUT,io_E_SOC_map,io_ATMPROJ_pwscf,io_Double_Grid
 #if !defined _PAR_IO
@@ -102,6 +104,16 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
    call IO_make_directories("COM")
    if (INIT==0) call IO_make_directories("LOG")
  endif
+ !
+ ! Pseudo
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
+ io_VLOC_pwscf_err=io_VLOC_pwscf(io_ID)
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
+ io_VPRJ_pwscf_err=io_VPRJ_pwscf(io_ID)
+ !
+ pp_is_known= (io_VLOC_pwscf_err==0) .and. (io_VPRJ_pwscf_err==0)
  !
  ! gops
  !

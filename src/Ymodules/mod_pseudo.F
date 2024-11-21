@@ -57,15 +57,14 @@ module pseudo
  complex(DP), allocatable:: pp_rho_nlcc(:)
  integer(LP), allocatable:: pp_has_nlcc_atom(:)
  ! 
- ! USPP
+ ! PSEUDO PROJECTORS
  !=====================
+ logical                 :: pp_is_known=.FALSE. 
  logical                 :: pp_is_uspp=.FALSE. 
  logical                 :: qe_pseudo_alloc=.FALSE. 
+ logical                 :: l_use_p2_Vloc_becp
  integer,     allocatable:: qe_atoms_map(:,:)
  type(bec_type), allocatable:: becp(:,:)
- ! [FP] Direct H bare calculation (testing)
- logical              :: l_use_p2_Vloc_becp
- ! [FP]
  !
  ! PW (OLD)
  !=========

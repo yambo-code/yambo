@@ -34,6 +34,7 @@ subroutine SC_start_and_restart(X,E,Xk,Dip)
  use FFT_m,          ONLY:fft_size
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_have_HARTREE
  use descriptors,    ONLY:IO_desc_reset
+ use pseudo,         ONLY:l_use_p2_Vloc_becp 
  !
 #include<y_memory.h>
  !
@@ -57,6 +58,7 @@ subroutine SC_start_and_restart(X,E,Xk,Dip)
  call parser('SCdiag',         l_SC_diagonal)
  call parser('SCnlMix',        l_SC_nl_mix)
  call parser('FrozeDensity',   l_froze_density)
+ call parser('BareHfromScratch',l_use_p2_Vloc_becp)
  !
  ! Preconditioning
  !=================

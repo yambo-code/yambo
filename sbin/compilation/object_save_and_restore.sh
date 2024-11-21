@@ -13,10 +13,6 @@ if [[ "$goal" == "$target" ]]; then
  source $compdir/sbin/compilation/verbosity.sh "goal(=target)= $goal . Here I'm doing the driver folder, but there is no connected library"
  library="NONE"
 fi
-if [[ "$target" == *"_Ydriver_"* ]] ; then
- source $compdir/sbin/compilation/verbosity.sh "Ydriver => no library saving"
- library="NONE"
-fi
 source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh is running in $library using $dir/$restore_dir (restore) $dir/$save_dir (save)"
 #
 # Let's count

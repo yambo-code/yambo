@@ -99,7 +99,6 @@ lfutile     = @FUTILE_LIBS@
 ifutile     = @FUTILE_INCS@
 letsf       = @ETSF_LIBS@
 ietsf       = @ETSF_INCS@
-idriver     = @DRIVER_INCS@
 mpipath     = @MPI_PATH@
 #
 # VPATH

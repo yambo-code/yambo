@@ -90,7 +90,7 @@ module wrapper
    module procedure :: vv_c_gpu
  end interface
  interface M_by_V_gpu
-   module procedure :: mv_c_gpu
+   module procedure :: mv_c_gpu, mv_sgemv_gpu, mv_cgemv_gpu
  end interface
  !
  !
@@ -233,20 +233,15 @@ module wrapper
 #endif
    end subroutine mv_sgemv
    !
-#ifdef _CUDA
    subroutine mv_sgemv_gpu(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
      real(SP), intent(in) :: ALPHA,BETA
      integer,  intent(in) :: INCX,INCY,LDA,M,N
      character,intent(in) :: TRANS
-     real(SP) DEV_ATTR, intent(in) :: A(LDA,*),X(*)
-     real(SP) DEV_ATTR, intent(out):: Y(*)
-#if defined _DOUBLE
-     call cublasDgemv(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
-#else
-     call cublasSgemv(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
-#endif
+     real(SP), intent(in)  DEV_ATTR :: A(:,:),X(:)
+     real(SP), intent(out) DEV_ATTR :: Y(:)
+     !
+     call devxlib_xGEMV_gpu(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
    end subroutine mv_sgemv_gpu
-#endif
    !
    subroutine mv_cgemv(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
      complex(SP), intent(in) :: ALPHA,BETA
@@ -261,20 +256,15 @@ module wrapper
 #endif
    end subroutine mv_cgemv
    !
-#ifdef _CUDA
    subroutine mv_cgemv_gpu(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
      complex(SP), intent(in) :: ALPHA,BETA
      integer,     intent(in) :: INCX,INCY,LDA,M,N
      character,   intent(in) :: TRANS
-     complex(SP) DEV_ATTR, intent(in) :: A(LDA,*),X(*)
-     complex(SP) DEV_ATTR, intent(out):: Y(*)
-#if defined _DOUBLE
-     call cublasZgemv(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
-#else
-     call cublasCgemv(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
-#endif
+     complex(SP), intent(in)  DEV_ATTR :: A(:,:),X(:)
+     complex(SP), intent(out) DEV_ATTR :: Y(:)
+     !
+     call devxlib_xGEMV_gpu(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
    end subroutine mv_cgemv_gpu
-#endif
    !
    subroutine mv_c(TRANS,msize,A,X,Y)
      integer,     intent(in) :: msize

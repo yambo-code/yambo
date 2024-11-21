@@ -14,8 +14,6 @@ all: $(EXT_LIBS)
 #
 # Libraries (GIT + archives)
 #
-Ydriver:
-	@+URL="$(url_Ydriver)"  ;  GBRANCH="$(branch_Ydriver)"  ;  GIT="$(git_Ydriver)"; LIB="$(pkgname_Ydriver)"; $(call getsrc_git,"Ydriver"); $(call copy_driver,"Ydriver")
 ydiago:
 	@+URL="$(url_Ydiago)"  ;   GBRANCH="$(branch_Ydiago)"   ;  GIT="$(git_Ydiago)";  LIB="$(pkgname_Ydiago)";  $(call getsrc_git,"Ydiago");
 devxlib:
@@ -62,15 +60,11 @@ clean: clean_git_folders clean_tgz
 #
 clean_git_folders:
 	if test ! -e keep-extlibs-stamp ; then \
-          if test -d $(pkgname_Ydriver)  ; then \
-	    if test "$(keep_Ydriver)"   != "yes" ;  then rm -rf $(pkgname_Ydriver) ; fi ; \
-	    rm -f Ydriver.pulled ; \
-	  fi ; \
+		echo "to do: cleaning of git folders"; \
 	fi
 #
 clean_tgz:
 	if test ! -e keep-extlibs-stamp ; then \
-          if test -s $(tarball_Ydriver)  && test "$(keep_Ydriver)"   != "yes" ;  then rm $(tarball_Ydriver)   ; fi ; \
           if test -s $(tarball_Ydiago)   && test "$(keep_Ydiago)"    != "yes" ;  then rm $(tarball_Ydiago)    ; fi ; \
           if test -s $(tarball_libxc)    && test "$(keep_libxc)"     != "yes" ;  then rm $(tarball_libxc)     ; fi ; \
           if test -s $(tarball_iotk)     && test "$(keep_iotk)"      != "yes" ;  then rm $(tarball_iotk)      ; fi ; \

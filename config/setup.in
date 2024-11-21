@@ -105,7 +105,6 @@ letsf       = @ETSF_LIBS@
 ietsf       = @ETSF_INCS@
 lydiago     = @YDIAGO_LIBS@
 iydiago     = @YDIAGO_INCS@
-idriver     = @DRIVER_INCS@
 mpipath     = @MPI_PATH@
 #
 # VPATH

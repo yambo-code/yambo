@@ -17,7 +17,7 @@ repeat(){
 #
 for app in  install build-essential ca-certificates curl file \
 make gcc g++ gfortran git gnupg2 iproute2 \
-unzip m4 wget git zlib1g-dev ssh 
+unzip m4 wget git zlib1g-dev ssh cmake
 do
  res=`apt-cache policy $app |grep Installed|grep none`
  if [ ! -z "$res" ]; then

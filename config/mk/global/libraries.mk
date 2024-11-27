@@ -22,7 +22,7 @@ YLIBIO_LD     = $(YLIBIO)
 #
 BASIC_LIBS   = driver tools modules memory allocations matrices linear_algebra parallel parser communicate output common timing Yio io $(IO_MODE) \
                xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
-BASIC_LIBS_LD= tools memory allocations communicate modules matrices linear_algebra bz_ops parallel parser output common timing Yio io $(IO_MODE) \
+BASIC_LIBS_LD= driver tools memory allocations communicate modules matrices linear_algebra bz_ops parallel parser output common timing Yio io $(IO_MODE) \
                xc_functionals interface stop_and_restart wf_and_fft coulomb
 
 MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse

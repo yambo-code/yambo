@@ -22,6 +22,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
  use D_lattice,           ONLY:n_atomic_species,n_atoms_species
  use R_lattice,           ONLY:bz_samp,g_vec_d,g_vec
  use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,g_space_obs
+ use ALLOC,               ONLY:DIPOLE_alloc_elemental 
  use X_m,                 ONLY:l_X_terminator
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:manage_action,RD_CL_IF_END,OP_RD,OP_RD_CL
@@ -138,7 +139,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
    !
    ! sum_kb workspace
    !
-   call DIP_alloc("DIP_work",[pp_dim_yambo])
+   call DIPOLE_alloc_elemental("DIP_work",[pp_dim_yambo])
    !
  endif
                                       live_t_string='Dipoles: P (T)'
@@ -332,7 +333,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
  ! CLEAN
  !
  if (l_use_comm) then
-   call DIP_alloc("DIP_work")
+   call DIPOLE_alloc_elemental("DIP_work")
    if (have_gpu) then
      YAMBO_FREE_GPU(DEV_VAR(kbv))
      YAMBO_FREE_GPU(XX)

@@ -52,7 +52,7 @@ ypp ypp_ph ypp_sc ypp_rt_gpl ypp_rt ypp_nl:
 	@$(MAKE) $(MAKEFLAGS) dependencies
 	@$(MAKE) $(MAKEFLAGS) ext-libs
 	@$(MAKE) $(MAKEFLAGS) int-libs
-	@+LIBS="$(Y_SRC_LIBS)";LAB="_Y_";BASE="src";ADF="$(Y_PRECMP)";$(todo_lib);$(mk_lib)
+	@+LIBS="$(Y_SRC_LIBS)";LAB="_Y_";BASE="src";ADF="$(Y_PRECMP) -D_ypp";$(todo_lib);$(mk_lib)
 	@+LIBS="$(YPP_SRC_LIBS)";LAB="_YPP_";BASE="ypp";ADF="$(YPP_PRECMP)";$(todo_lib);$(mk_lib)
 	@+X2DO="$@";BASE="driver";XLIBS="$(Y_EXE_LIBS)";X_ypp_LIBS="$(YPP_EXE_LIBS)";ADF="$(YPP_PRECMP)";$(todo_driver)
 	@+X2DO="$@";BASE="driver";XLIBS="$(Y_EXE_LIBS)";X_ypp_LIBS="$(YPP_EXE_LIBS)";ADF="$(YPP_PRECMP)";$(mk_exe)

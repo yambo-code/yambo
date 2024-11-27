@@ -27,7 +27,7 @@ subroutine K_diago_driver(iq,W,X_static)
 &                         BS_res_ares_n_mat,l_BS_ares_from_res !,BS_Blocks_symmetrize_K,&
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode, BSS_resize, &
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E, write_bs_ev_par, &
-&                         BSS_ydiago_solver
+&                         BSS_ydiago_solver,BSS_first_eig
  use X_m,            ONLY:X_t,X_OUTPUT_driver
  use electrons,      ONLY:n_sp_pol,n_spinor
  use frequency,      ONLY:w_samp
@@ -62,7 +62,7 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  ! Work Space
  !
- integer          :: i_BS_mat,Input_n_eig, neigs_this_cpu, neig_shift, elpa_solver = 2
+ integer          :: i_BS_mat,Input_n_eig, tmp_neig, neigs_this_cpu, neig_shift, elpa_solver = 2
  logical          :: K_is_not_hermitian,l_diago,l_slepc,l_target_energy,l_ydiago,l_kerr_lft,l_kerr_rgt,l_abs_res
  character(1)     :: sec
  character(10)    :: Solver
@@ -150,16 +150,19 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  do i_BS_mat=1,BS_res_ares_n_mat
    !
-   if(l_diago .or. l_ydiago) then
-     ! NM : In case of ydiago, BSS_n_eig will be overwritten after the solver is called! 
-     if(.not.BS_K_coupling) BSS_n_eig = BS_K_dim(i_BS_mat)
-     if(     BS_K_coupling) BSS_n_eig = BS_H_dim
-   endif
+   if(.not.BS_K_coupling) tmp_neig = BS_K_dim(i_BS_mat)
+   if(     BS_K_coupling) tmp_neig = BS_H_dim
+   !
+   ! NM : In case of ydiago, BSS_n_eig will be overwritten after the solver is called! 
+   if(l_diago .or. (l_ydiago .and. BSS_n_eig==0) ) BSS_n_eig = tmp_neig
    Input_n_eig=BSS_n_eig
 
    ! set a Ydiago defaults.
-   if(.not.BS_K_coupling) neigs_range = (/1, BS_K_dim(i_BS_mat)/)
-   if(     BS_K_coupling) neigs_range = (/1, BS_H_dim/)
+   if(l_ydiago) then
+      neigs_range = (/BSS_First_eig, BSS_First_eig+BSS_n_eig-1/)
+      if (neigs_range(1)<1)        neigs_range(1) = 1
+      if (neigs_range(2)>tmp_neig) neigs_range(2) = tmp_neig
+   endif
    ! NM  : FIX , create a user varaible and 
    l_eval_range = .false. ! Incase user gives value range, then set this to true.
    ! false for index range
@@ -193,7 +196,6 @@ subroutine K_diago_driver(iq,W,X_static)
      !   to a distributed (SLEPC shells / or eventually BLACS) matrix
      ! - The resulting matrix is symmetrized
      !
-     if (.not. l_ydiago) then
      if (l_diago) then
        !
        call K_stored_in_a_big_matrix(i_BS_mat,iq,"DIAGO")
@@ -234,7 +236,6 @@ subroutine K_diago_driver(iq,W,X_static)
        endif        
      endif
 #endif
-     endif !l_ydiago
      !
    endif
    !

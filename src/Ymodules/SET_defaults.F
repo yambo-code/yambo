@@ -47,8 +47,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,frag_WF
- use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,BSS_P_dir,BSS_E_dir,BSS_Q_dir,&
-&                     Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,&
+ use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,BSS_P_dir,BSS_E_dir,BSS_Q_dir,BSS_first_eig,&
+&                     Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,BSS_n_eig,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH,BSS_desc,BSS_ydiago_solver
  use descriptors,ONLY:IO_desc_reset
@@ -474,6 +474,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  K_INV_EPS%treshold=0.01_SP
  K_INV_EPS%max_treshold=40._SP
  BSS_n_freqs=100
+ BSS_n_eig=0
+ BSS_first_eig=1
  MAX_BSK_LIN_size=45000*45000 ! 46341 is the sqare root of the maximum integer in IP: 2147483647
  !
  call IO_desc_reset(BSS_desc)

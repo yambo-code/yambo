@@ -55,6 +55,7 @@ module BS_solvers
  complex(SP)      :: BSS_Wd
  integer  :: BSS_n_freqs
  integer  :: BSS_n_eig            !number of eigenvalues to find
+ integer  :: BSS_first_eig        !index of the first eigenvalue to find
  real(SP) :: BSS_er(2)
  real(SP) :: BSS_dr(2)
  real(SP) :: BSS_damp_reference

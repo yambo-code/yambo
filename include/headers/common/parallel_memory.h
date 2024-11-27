@@ -7,11 +7,11 @@
  
 */
 
- use memory,       ONLY:MEM_global_mesg
+ use y_memory,       ONLY:MEM_global_mesg
  use parallel_m,   ONLY:PAR_COM_HOST
  use parallel_int, ONLY:PP_redux_wait,PP_wait
 
-#include<memory.h>
+#include<y_memory.h>
 
  integer(IPL) :: HOST_SIZE(1),LOCAL_SIZE(1)
 

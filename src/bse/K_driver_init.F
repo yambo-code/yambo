@@ -8,7 +8,7 @@
 subroutine K_driver_init(what,iq,Ken,Xk)
  !
  use R_lattice,    ONLY:bz_samp
- use electrons,    ONLY:levels,n_sp_pol
+ use electrons,    ONLY:levels,n_sp_pol,n_spin
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match

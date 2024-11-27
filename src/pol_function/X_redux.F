@@ -82,9 +82,6 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  !
  if (PAR_COM_SLK%n_CPU>=4.and.have_gpu) compute_on_gpu=.false.
  !
- ! AF_FIX: openacc + GPU linalg should be enabled
- if (have_openacc) compute_on_gpu=.false.
- !
  ! AMD-GPUs + GPU linalg not yet implemented
  if (have_hip) compute_on_gpu=.false.
  !

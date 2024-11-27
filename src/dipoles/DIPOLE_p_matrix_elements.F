@@ -5,6 +5,8 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+#include<dev_defs.h>
+!
 subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P2,l_eval_M_spin)
  !
  use pars,          ONLY:SP,cZERO,pi

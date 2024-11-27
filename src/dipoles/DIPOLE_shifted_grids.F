@@ -29,7 +29,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,DIP_v,num_shifted_grids,shifted_grids_obs
  use vec_operate,         ONLY:degeneration_finder
  use timing_m,            ONLY:timing
- use wrapper,             ONLY:Vstar_dot_V
+ use wrapper,             ONLY:Vstar_dot_V_gpu
  use wave_func,           ONLY:wf_ng,wf_igk,WF,wf_ncx,WAVEs
 #if defined _SC           
  use SC,                  ONLY:SC_bands

@@ -5,11 +5,13 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+#include<dev_defs.h>
+!
 subroutine DIPOLE_g_space(Xen,Xk,Dip)
  !
  ! This routine returns <iR> and <P^2>.
  !
- use pars,                ONLY:SP,cZERO
+ use pars,                ONLY:SP,cZERO,schlen
  use drivers,             ONLY:l_sc_run
  use interfaces,          ONLY:WF_load,WF_free
  use LIVE_t,              ONLY:live_timing
@@ -38,7 +40,8 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
  !
  ! Work Space
  !
- logical                      :: l_use_comm,l_check
+ character(schlen)            :: live_t_string
+ logical                      :: l_eval_DIP_iR,l_eval_DIP_V,l_eval_DIP_P2,l_use_comm,l_check
  logical, allocatable         :: element_1D_spin(:)
  integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,pp_dim_yambo,pp_dim_atom,&
 &                                i_sp_pol,N_elements_todo,ik_mem,ic_min,is,ia,pp_range(2),npp,npp_tab
@@ -146,7 +149,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
  !
  ! Main loop over k in IBZ
  !
- if (N_elements_todo>0) call live_timing(trim(g_space_obs)//" [g-space]",N_elements_todo)
+ if (N_elements_todo>0) call live_timing(trim(live_t_string),N_elements_todo)
  !
  do i_sp_pol=1,n_sp_pol
    !

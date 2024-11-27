@@ -11,7 +11,7 @@ subroutine DIPOLE_ALLOC_elemental(what,d)
  use electrons,      ONLY:n_sp_pol,n_spinor
  use pars,           ONLY:cZERO
  !
-#include <memory.h>
+#include <y_memory.h>
  !
  character(*)                :: what
  integer, optional           :: d(:)

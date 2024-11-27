@@ -11,7 +11,7 @@ integer function io_X(X,Xw,ID)
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:g_vec
  use ALLOC,         ONLY:X_ALLOC_elemental
- use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_desc
+ use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_desc,X_par
  use frequency,     ONLY:w_samp
  use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header,&
 &                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental,&

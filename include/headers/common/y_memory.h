@@ -8,7 +8,7 @@
 */
 
  use pars,         ONLY:IPL
- use memory,       ONLY:MEM_err,MEM_msg,MEM_count,MEM_global_mesg
+ use y_memory,     ONLY:MEM_err,MEM_msg,MEM_count,MEM_global_mesg
 
  implicit none
 

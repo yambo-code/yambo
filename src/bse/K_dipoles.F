@@ -15,6 +15,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  use stderr,        ONLY:intc
  use com,           ONLY:msg
  use wave_func,     ONLY:WF
+ use ALLOC,         ONLY:DIPOLE_ALLOC_global
  use stderr,        ONLY:STRING_match
  use interfaces,    ONLY:WF_load,WF_free
  use electrons,     ONLY:levels,spin
@@ -40,15 +41,15 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  type(X_t)     ::X_oscillators
  type(DIPOLE_t)::Dip
  !
- integer,external :: OPTICS_select_q_and_G
- !
  ! Work space
  !
  logical           ::geometry_ok
  integer           ::ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol_c,i_sp_pol_v,i_T_g,i_T,&
 &                    io_err,i_res_ares,i_dip
- complex(SP)       ::DIP_Splus,DIP_Smins,DIP_projected(BS_dip_size),DIP_expanded(3)
+ complex(SP)       ::DIP_Splus,DIP_Smins,DIP_projected(BS_dip_size),DIP_expanded(3),DIP_bare(3)
  character(6)      ::DIP_kind
+ !
+ integer,      external :: OPTICS_select_q_and_G
  !
  type(elemental_collision):: BSE_scatt
  !
@@ -154,7 +155,8 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
      if(l_BS_abs.or.l_BS_kerr.or.l_BS_photolum.or.l_BS_dichroism) then
        !
        if(iq==1.and.i_G_shift==1) then
-         DIP_expanded=-cI*DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,DIP_kind,Xk)
+         call DIPOLE_rotate(ic,iv,ik_bz,i_sp_pol_c,trim(DIP_kind),Xk,DIP_bare)
+         DIP_expanded=-cI*DIP_bare
          do i_dip=1,BS_dip_size
            DIP_projected(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
          enddo
@@ -176,7 +178,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
      ! Dichroism
      if (l_BS_dichroism) then
        if(iq==1.and.i_G_shift==1) then  
-         DIP_expanded=DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,"DIP_L",Xk)
+         call DIPOLE_rotate(ic,iv,ik_bz,i_sp_pol_c,"DIP_L",Xk,DIP_expanded)
          do i_dip=1,BS_dip_size
            DIP_projected(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
          enddo
@@ -199,7 +201,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
        ! The implementation with scatter can be used to double check the spin dipoles
        !
        if(iq==1.and.i_G_shift==1) then
-         DIP_expanded   = DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,"DIP_S",Xk)
+         call DIPOLE_rotate(ic,iv,ik_bz,i_sp_pol_c,"DIP_S",Xk,DIP_expanded)
        else
          call scatter_Bamp_spin(BSE_scatt,'x')
          DIP_expanded(1)=-conjg(BSE_scatt%rhotw(1))
@@ -250,14 +252,8 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  ! CLEAN
  !
  if (iq==1.and.i_G_shift==1.and.io_DIP) then
-   call DIP_alloc('DIP_iR')
-   call DIP_alloc('DIP_P')
-   call DIP_alloc('DIP_v')
-   call DIP_alloc('DIP_S')
-   call DIP_alloc('DIP_spin')
-   call DIP_alloc('DIP_orbital')
-   call DIP_alloc('P_square') 
-   call DIP_alloc('DIP_P_spinor')
+   !
+   call DIPOLE_ALLOC_global( )
    !
    ! Here I need the distribution over k
    call PARALLEL_SETUP_K_scheme("Kdef")

@@ -36,8 +36,8 @@ subroutine NL_ypp_driver(en,k)
  integer  :: i_f,i_d,i_order
  character(9) :: dbname
  real(SP) :: W_step,T_period,time_range_save(2)
- real(SP), allocatable :: RT_P_probe(:,:,:),Harmonic_Frequency(:,:), 
-&                         Probe_frequency(:),Probe_versors(:,:),RT_J_probe(:,:)
+ real(SP), allocatable :: RT_P_probe(:,:,:),Harmonic_Frequency(:,:), & 
+&                         Probe_frequency(:),Probe_versors(:,:),RT_J_probe(:,:,:)
  complex(SP), allocatable :: X_effective(:,:,:),Susceptibility(:,:,:)
  logical  :: Probe_consistency_error,l_print_pwr_spectrum
  type(ext_field)   :: Efield_probe
@@ -121,9 +121,8 @@ subroutine NL_ypp_driver(en,k)
 &                abs(Efield_probe%intensity-Efield(i_Probe)%intensity)>1.E-5/))) Probe_consistency_error=.TRUE.
    endif
    !
-   do i_d=1,3
-     RT_P_probe(:,i_f,i_d)=NL_P_t(:,i_d)
-   enddo
+   RT_P_probe(:,i_f,:)=NL_P_t(:,:)
+   if(l_eval_CURRENT) RT_P_probe(:,i_f,:)=NL_P_t(:,:)
    !
    Probe_frequency(i_f)=Efield(i_Probe)%frequency(1)
    if(loop_on_angles) Probe_versors(:,i_f)=Efield(i_Probe)%versor(:)

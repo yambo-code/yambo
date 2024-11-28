@@ -34,7 +34,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use IO_m,          ONLY:OP_RD_CL,REP,VERIFY,NONE,io_COLLs
  use ALLOC,         ONLY:X_ALLOC_elemental
  use X_m,           ONLY:X_mat,X_t
- use interfaces,    ONLY:WF_load,TDDFT_ALDA_R_space
+ use interfaces,    ONLY:WF_load,TDDFT_ALDA_eh_space_R_kernel
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use R_lattice,     ONLY:qindx_S,bz_samp,g_rot,minus_G
  use hamiltonian,   ONLY:B_mat_index

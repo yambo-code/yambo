@@ -29,6 +29,7 @@
 #else
 #  include<dev_defs_nogpu.h>
 #  undef _GPU_LOC
+#  undef  DEV_SUB
 #  define DEV_SUB(x)        CAT(x,_gpu)
 #  include"scatter_Bamp.F"
 #  include<dev_undefs.h>

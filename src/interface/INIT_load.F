@@ -12,7 +12,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use electrons,     ONLY:levels,nel,filled_tresh
  use zeros,         ONLY:G_mod_zero
  use frequency,     ONLY:w_samp
- use it_tools,      ONLY:it,runlevel_is_on
+ use it_tools,      ONLY:it
  use it_m,          ONLY:initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,V_ph,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time,V_nl_optics
@@ -51,8 +51,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use QP_m,          ONLY:QP_QED_ng
 #endif
 #if defined _SC || defined _RT || defined _QED
- use hamiltonian,   ONLY:H_ref_bands,H_potential
- use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands,ng_oscll
+ use hamiltonian,   ONLY:H_potential
+ use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands
 #endif
  use QP_m,          ONLY:SC_E_threshold
 #if defined _SC
@@ -124,9 +124,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  integer  :: i_field
 #endif
  real(SP) :: IO_times(3)
+ logical  :: l_USER_fields(16)
  !
  ! RunLevels...
  !==============
+ !
+ ! ... list of USER fields 
+ call LEVELS_mirror("USER_fields",en,X,Dip,l_USER_fields)
  !
  ! ... from C_driver
  !
@@ -203,6 +207,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
  call it('f',defs,'WFbuffIO','[IO] Wave-functions buffered I/O',verb_level=V_io) 
  call it('f',defs,'NoDiagSC','New setup for non-diagonal supercells',verb_level=V_general) 
+ call it('f',defs,'SkipDegFix','Do not force the code to impose the energy levels to respect their degeneracy',verb_level=V_general) 
  !
  ! Parallel Setup
  !
@@ -412,7 +417,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'RTBands',    '[RT] Bands',RT_bands)
  !
- call TMP_mirror_bands( )
+ ! This call is a temporary fix due to the multiple definition of energy ranges.
+ ! The call is needed to align the different values based on the USER definition.
  !
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic QP_secant (HS)',Gr_kind,Verb_level=V_real_time)
@@ -669,8 +675,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  !
- call TMP_mirror_bands( )
- !
  call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
  call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
  call it(defs,'SC_precondition','[SC] Kind of preconditionin: thomas-fermi, simple, none',SC_preconditioning,verb_level=V_sc)
@@ -701,15 +705,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'COLLBands',   '[COLL] Bands for the collisions',COLL_bands)
  !
- call TMP_mirror_bands( )
- !
  call it(defs,'HXC_Potential', '[SC] SC HXC Potential',H_potential,protect=.FALSE.,case="A")
  call it(defs,'COLLCut',    '[SC,RT] Cutoff on the collisions, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
  !
 #endif
  !
 #if defined _RT
- call TMP_mirror_bands( )
 #endif
  !
 #if defined _SC
@@ -717,7 +718,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
 #endif
  !
- call DIP_mirror_bands_and_Qs(en)
+ if (initmode==4) then
+   call LEVELS_mirror("MIRROR_q",en,X,Dip,l_USER_fields)
+   call LEVELS_mirror("MIRROR_bands",en,X,Dip,l_USER_fields)
+ endif
  ! 
  contains 
    !
@@ -890,127 +894,5 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call it(defs,nms(18),des(18),wv%damp_reference,E_unit,verb_level=V_resp)
      !
    end subroutine
-   !
-   subroutine DIP_mirror_bands_and_Qs(E_in)
-     !
-     use parser_m,       ONLY:parser
-     !
-     type(levels), intent(in) :: E_in
-     !
-     logical :: is_def(16)
-     integer :: i1,bands(2),tmp_bands(2)
-     !
-     if (initmode/=4) return
-     !
-     is_def=.false.
-     !
-     call parser('BndsRnXx', is_def(1))
-     call parser('BndsRnXs', is_def(2))
-     call parser('BndsRnXd', is_def(3))
-     call parser('BndsRnXp', is_def(4))
-     call parser('BndsRnXm', is_def(5))
-     call parser('DipBands', is_def(6))
-     call parser('BSEBands', is_def(7))
-     call parser('RTBands',  is_def(8))
-     call parser('SCBands',  is_def(9))
-     call parser('NLBands',  is_def(10))
-     call parser('COLLBands',is_def(11))
-     call parser('el_photon_corr',is_def(12))
-     if (is_def(12)) call parser('life',is_def(12))
-     call parser('QpntsRXd',is_def(13))
-     call parser('QpntsRXs',is_def(14))
-     call parser('QpntsRXx',is_def(15))
-     call parser('BSEQptR', is_def(16))
-     !
-     ! Q's
-     !
-     if (is_def(13).and.runlevel_is_on('optics')) Dip%iq=X(3)%iq
-     if (is_def(13).and.runlevel_is_on('em1d')  ) Dip%iq=X(3)%iq
-     if (is_def(13).and.runlevel_is_on('ppa')   ) Dip%iq=X(4)%iq
-     if (is_def(13).and.runlevel_is_on('mpa')   ) Dip%iq=X(5)%iq
-     if (is_def(14)                             ) Dip%iq=X(2)%iq
-     if (is_def(15)                             ) Dip%iq=X(1)%iq
-     if (is_def(16).and..not.(runlevel_is_on('ppa').or.runlevel_is_on('em1s').or.runlevel_is_on('mpa') )) Dip%iq=BS_q
-     !
-     ! Bands
-     !
-     bands=-1 
-     do i1=1,11
-       if(.not.(is_def(i1))) cycle
-       if(i1< 6) tmp_bands=X(i1)%ib
-       if(i1==6) tmp_bands=Dip%ib
-       if(i1==7) tmp_bands=BS_bands
-#if defined _RT || defined _NL
-       if(i1==8) tmp_bands=RT_bands
-#endif
-#if defined _SC
-       if(i1==9) tmp_bands=SC_bands
-#endif
-#if defined _NL
-       if(i1==10) tmp_bands=NL_bands
-#endif
-#if defined _RT || defined _SC || defined _NL
-       if(i1==11) tmp_bands=COLL_bands
-#endif
-#if defined _QED
-       if(i1==12) tmp_bands=QP_n_G_bands
-#endif
-       if(any((/bands==-1/))) then
-         bands(1)=max(tmp_bands(1),   1   )
-         bands(2)=min(tmp_bands(2),E_in%nb)
-       else
-         bands(1)=max(min(tmp_bands(1),bands(1)),   1   )
-         bands(2)=min(max(tmp_bands(2),bands(2)),E_in%nb)
-       endif
-     enddo
-     !
-     Dip%ib=bands
-     !
-   end subroutine
-   !
-#if defined _SC || defined _RT || defined _QED
-   !TMP>
-   subroutine TMP_mirror_bands( )
-     use parser_m,       ONLY:parser
-     logical :: is_def(4)
-     integer :: bands_(2)
-     !
-     if(initmode/=4) return
-     !
-     call parser('SCBands',  is_def(1))
-     call parser('RTBands',  is_def(2))
-     call parser('COLLBands',is_def(3))
-     call parser('NLBands',  is_def(4))
-#endif
-     !
-#if defined _SC 
-     if (is_def(1)) bands_=SC_bands
-#endif
-#if defined _RT || defined _QED
-     if (is_def(2)) bands_=RT_bands
-#endif
-#if defined _SC || defined _RT || defined _QED || defined _NL
-     if (is_def(3)) bands_=COLL_bands
-#endif
-#if defined _NL
-     if (is_def(4)) bands_=NL_bands
-#endif
-     !
-#if defined _SC 
-     SC_bands  =bands_
-#endif
-#if defined _RT || defined _QED
-     RT_bands  =bands_
-#endif
-#if defined _NL
-     NL_bands  =bands_
-#endif
-#if defined _SC || defined _RT || defined _QED || defined _NL
-     COLL_bands=bands_
-     H_ref_bands=bands_     
-     !
-   end subroutine
-   !TMP<
-#endif
    !
 end subroutine

@@ -31,7 +31,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  &                       io_RESPONSE,io_MULTIPOLE,deliver_IO_error_message
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_Sc_steps,QP_dSc_steps,QP_solver,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta
- use X_m,           ONLY:X_ALLOC_elemental,X_t,X_par
+ use ALLOC,         ONLY:X_ALLOC_elemental
+ use X_m,           ONLY:X_par,X_t
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,RIM_W_ng,RIM_W
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms

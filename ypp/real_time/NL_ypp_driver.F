@@ -13,7 +13,8 @@ subroutine NL_ypp_driver(en,k)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
- use nl_optics,      ONLY:n_frequencies,NL_P_t,loop_on_frequencies,loop_on_angles,n_runs,n_angles
+ use nl_optics,      ONLY:n_frequencies,NL_P_t,loop_on_frequencies,loop_on_angles,n_runs,n_angles,&
+&                         l_eval_CURRENT
  use fields,         ONLY:Efield,EtoT,Divide_by_Field,ext_field,Efield_duplicate,Efield_strength
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
@@ -35,8 +36,9 @@ subroutine NL_ypp_driver(en,k)
  integer  :: i_f,i_d,i_order
  character(9) :: dbname
  real(SP) :: W_step,T_period,time_range_save(2)
- real(SP),    allocatable  :: RT_P_probe(:,:,:),Harmonic_Frequency(:,:),Probe_frequency(:),Probe_versors(:,:)
- complex(SP), allocatable  :: X_effective(:,:,:),Susceptibility(:,:,:)
+ real(SP), allocatable :: RT_P_probe(:,:,:),Harmonic_Frequency(:,:), 
+&                         Probe_frequency(:),Probe_versors(:,:),RT_J_probe(:,:)
+ complex(SP), allocatable :: X_effective(:,:,:),Susceptibility(:,:,:)
  logical  :: Probe_consistency_error,l_print_pwr_spectrum
  type(ext_field)   :: Efield_probe
  logical, allocatable :: runs_ok(:)
@@ -91,6 +93,10 @@ subroutine NL_ypp_driver(en,k)
  !
  YAMBO_ALLOC(RT_P_probe,(NE_steps,n_runs,3))
  RT_P_probe=0._SP
+ if(l_eval_CURRENT) then
+   YAMBO_ALLOC(RT_J_probe,(NE_steps,n_runs,3))
+   RT_J_probe=0._SP
+ endif
  !
  allocate(runs_ok(n_runs))
  runs_ok=.true.

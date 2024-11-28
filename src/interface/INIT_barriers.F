@@ -7,7 +7,7 @@
 !
 subroutine INIT_barriers()
  !
- use drivers,    ONLY:l_acfdt,l_bse,l_bss,l_cohsex,l_elph_corr,l_gw0,l_phel_corr,&
+ use drivers,    ONLY:l_acfdt,l_bse,l_bss,l_cohsex,l_gw0,&
 &                     l_eval_collisions,l_life,l_ppa,l_mpa,l_real_time,l_sc_run,l_tddft,l_nl_optics,l_screen
  use pars,       ONLY:lchlen
  use D_lattice,  ONLY:i_time_rev,i_space_inv
@@ -61,9 +61,6 @@ subroutine INIT_barriers()
  if (l_real_time) then
    on_runlevels='HF_and_locXC cohsex em1s dipoles negf collisions el_el_corr el_ph_corr ph_el_corr '//&
 &               'el_el_scatt el_ph_scatt el_photon_scatt el_photon_corr'
-#if defined _PHEL
-   on_runlevels=trim(on_runlevels)//' ph_el_scatt'
-#endif
    call switch_off_runlevel('all',except=trim(on_runlevels)//' '//trim(always_on_runlevels))
    goto 1
  endif
@@ -150,7 +147,6 @@ subroutine INIT_barriers()
  !===================
  if (.not.Xk_grid_is_uniform) then
    on_runlevels='optics chi bse bss negf'
-   if (l_elph_corr) on_runlevels='optics chi bse bss el_ph_corr ph_el_corr dyson gw0'
    if (tddft_r_space.or.bse_sex.or.bse_bsfxc) BSK_mode='hartree'    
    call switch_off_runlevel('all',except=trim(on_runlevels)//' '//trim(always_on_runlevels))
  endif 
@@ -166,8 +162,5 @@ subroutine INIT_barriers()
  ! MORE
  !======
  if ( (l_ppa.and.trim(QP_solver)=='s').or.l_cohsex ) QP_solver='n'
-#if defined  _PHEL 
- if ( l_phel_corr.and.trim(QP_solver)=='s' ) QP_solver='n'
-#endif
  !
 end subroutine

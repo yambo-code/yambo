@@ -25,7 +25,9 @@ subroutine PARALLEL_global_Oscillators(E,Xk,q)
  !
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
+#if defined _SC || defined _RT || defined _NL
  use collision_ext, ONLY:COLL_bands
+#endif
  use IO_int,        ONLY:IO_and_Messaging_switch
  use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use parallel_m,    ONLY:ncpu,COMM_copy,PAR_build_index,PAR_INDEX_copy
@@ -80,6 +82,7 @@ if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) then
  !
  ! Bands
  !
+#if defined _SC || defined _RT || defined _NL
  nb_mat=(COLL_bands(2)-COLL_bands(1)+1)**2
  !
  n_WF_bands_to_load=PAR_n_bands(2)
@@ -93,6 +96,7 @@ if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) then
  call PARALLEL_live_message("OSCL bands",ENVIRONMENT="Oscillators",&
 &                             LOADED=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1),&
 &                             TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
+#endif
  !
  ! Copy to WF
  !

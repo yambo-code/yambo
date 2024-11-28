@@ -9,5 +9,6 @@ SLEPC_objs = MATRIX_slepc.o
 #if defined _GPU && defined _PGI
 GPU_objs = SERIAL_lin_system_gpu.o
 #endif
-objs = LINEAR_ALGEBRA_driver.o SERIAL_SVD_inversion.o SERIAL_inversion.o SERIAL_diagonalization.o \
+objs = mod_wrapper.o mod_wrapper_omp.o mod_linear_algebra.o \
+       LINEAR_ALGEBRA_driver.o SERIAL_SVD_inversion.o SERIAL_inversion.o SERIAL_diagonalization.o \
        SERIAL_HERMITIAN_diagonalization.o SERIAL_lin_system.o $(SLK_objs) $(SLEPC_objs) $(GPU_objs)

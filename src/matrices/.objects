@@ -1,5 +1,8 @@
 #if defined _SCALAPACK
 SLK_objs = SLK_matrix_init.o
 #endif
-objs =  $(SLK_objs) MATRIX_init.o MATRIX_duplicate.o MATRIX_transfer_side_crop.o \
+objs =  mod_collision_el.o mod_matrix.o mod_matrix_operate.o mod_SLK.o mod_frequency.o \
+        mod_DIPOLES.o mod_BS.o mod_X.o mod_parallel_interface.o mod_D_lattice.o \
+        mod_functions.o mod_QP.o mod_TDDFT.o mod_BS_solvers.o mod_timing.o mod_interfaces.o \
+        $(SLK_objs) MATRIX_init.o MATRIX_duplicate.o MATRIX_transfer_side_crop.o \
         MATRIX_BSE_to_PAR.o MATRIX_PAR_to_from_PAR.o MATRIX_transfer.o MATRIX_transpose.o

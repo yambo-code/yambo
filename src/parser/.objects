@@ -1,4 +1,6 @@
-objs =  PARSER_math.o PARSER_interface.o PARSER.o PARSER_exp.o PARSER_symbols.o \
+objs =  mod_pars.o mod_units.o mod_stderr.o mod_lexical_sort.o mod_descriptors.o mod_OUTPUT.o mod_drivers.o \
+        mod_openmp.o mod_memory.o mod_parallel.o mod_R_lattice.o mod_electrons.o mod_com_interfcs.o mod_com.o \
+        PARSER_math.o PARSER_interface.o PARSER.o PARSER_exp.o PARSER_symbols.o \
         PARSER_lib.o mod_parser_m.o mod_itm.o mod_it_tools.o PARSER_close_G.o \
         PARSER_convert_INT.o PARSER_convert_REAL.o PARSER_array.o \
         PARSER_dump_the_additional_lines.o \

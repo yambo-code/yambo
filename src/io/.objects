@@ -19,7 +19,8 @@ COLL_objects =
 #if defined _SC || _RT 
 COLL_objects = io_OSCLL.o 
 #endif
-objs = ver_is_gt_or_eq.o \
+objs = mod_pseudo.o mod_MPA.o mod_atom_proj.o \
+       ver_is_gt_or_eq.o \
        io_Vnl.o       io_E_SOC_map.o \
        io_RIM.o io_RIM_W.o    io_GROT.o     $(ELPH_objects) $(PHEL_objects) \
        io_QINDX.o    io_QP_and_GF.o   io_X.o           io_MPA.o  \

@@ -1,2 +1,3 @@
-objs = OUTPUT_unit_conversion.o OUTPUT_driver.o X_OUTPUT_messages.o X_OUTPUT_driver.o K_OUTPUT.o \
+objs = mod_xc_functionals.o mod_global_XC.o \
+       OUTPUT_unit_conversion.o OUTPUT_driver.o X_OUTPUT_messages.o X_OUTPUT_driver.o K_OUTPUT.o \
        EPS_extend.o EPS_2_trasmission_and_reflection.o EPS_2_moke.o

@@ -15,6 +15,7 @@ subroutine DIPOLE_ALLOC_elemental(what,d)
  use pars,           ONLY:cZERO
  use gpu_m,          ONLY:have_gpu
  !
+#include <dev_defs.h>
 #include <y_memory.h>
  !
  character(*)                :: what
@@ -91,7 +92,7 @@ subroutine DIPOLE_ALLOC_elemental(what,d)
    case('DIP_work')
      YAMBO_ALLOC(DIP_work_drho,(n_spinor,3,d(1)))
      if (have_gpu) then
-        YAMBO_ALLOC_GPU(DEV_VAR(DIP_work_drho),(n_spinor,3,d(1)))
+       YAMBO_ALLOC_GPU(DEV_VAR(DIP_work_drho),(n_spinor,3,d(1)))
      endif
  end select
  !

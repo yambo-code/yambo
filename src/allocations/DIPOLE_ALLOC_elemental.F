@@ -7,10 +7,13 @@
 !
 subroutine DIPOLE_ALLOC_elemental(what,d)
  !
- use DIPOLES,        ONLY:DIP_iR,DIP_v,DIP_P,DIP_orbital,DIP_spin,DIP_P_spinor,P_square,DIP_S
+ use DIPOLES,        ONLY:DIP_iR,DIP_v,DIP_P,DIP_orbital,DIP_spin,DIP_P_spinor,P_square, &
+&                         DIP_S,DIP_work_drho
  use electrons,      ONLY:n_sp_pol,n_spinor
  use pars,           ONLY:cZERO
+ use gpu_m,          ONLY:have_gpu
  !
+#include <dev_defs.h>
 #include <y_memory.h>
  !
  character(*)                :: what
@@ -42,6 +45,9 @@ subroutine DIPOLE_ALLOC_elemental(what,d)
    case('P_square')
      if (.not.allocated(P_square)) return
      YAMBO_FREE(P_square)
+   case('DIP_work')
+     YAMBO_FREE_GPU(DEV_VAR(DIP_work_drho))
+     YAMBO_FREE(DIP_work_drho)
    end select
    !
    return
@@ -81,6 +87,11 @@ subroutine DIPOLE_ALLOC_elemental(what,d)
      if (allocated(P_square)) return
      YAMBO_ALLOC(P_square,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
      P_square=cZERO
+   case('DIP_work')
+     YAMBO_ALLOC(DIP_work_drho,(n_spinor,3,d(1)))
+     if (have_gpu) then
+       YAMBO_ALLOC_GPU(DEV_VAR(DIP_work_drho),(n_spinor,3,d(1)))
+     endif
  end select
  !
 end subroutine

@@ -25,9 +25,6 @@ subroutine INIT_activate()
 #if defined _RT
  use fields,         ONLY:n_ext_fields
 #endif
-#if defined  _ELPH 
- use ELPH,           ONLY:elph_use_q_grid
-#endif
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
@@ -121,18 +118,9 @@ subroutine INIT_activate()
    call initactivate(1,'X_Threads DIP_Threads K_Threads')
  endif
  !
-#if defined  _ELPH 
- if ((l_life.or.l_gw0).and.l_phel_corr) then
-   call CPU_activate("PH_SE")
- endif
-#endif
- !
  !Setup
  !
  if (l_setup) call initactivate(1,'MaxGvecs Gthresh K_grids IkSigLim IkXLim NoDiagSC EvalMagn')
-#if defined  _ELPH 
- if (l_setup) call initactivate(1,'BSEscatt')
-#endif
  !
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse)/)))  call initactivate(1,'NonPDirs MolPos')
@@ -294,9 +282,6 @@ subroutine INIT_activate()
    ! Special project dependent variables
    !
    if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSPLInvTrs')
-#if defined _ELPH 
-   if (l_elph_corr.and..not.elph_use_q_grid) call initactivate(1,'ElPhRndNq')
-#endif
  endif
  !
  ! Static screen 
@@ -419,45 +404,10 @@ subroutine INIT_activate()
      endif
    endif
    !
-#if defined  _PHEL 
-   !
-   if (l_phel_corr) then
-     call initactivate(1,'ElecTemp BoseTemp PH_SE_mode GphBRnge GDamping PHELQpts ElPhModes PHDbGdsize DbGdQsize GDamping')
-     call initactivate(1,'ExtendOut OnMassShell')
-     if (      l_gw0) call initactivate(1,'DysSolver GEnSteps GEnRnge PHEL_QPH_En')
-     if (.not. l_gw0) call initactivate(1,'GDamping PHELTrans') 
-   endif
-   !
-#endif
-#if defined  _ELPH 
-   !
-   if (l_elph_corr) then
-     call INIT_QP_ctl_switch('G')
-     call initactivate(1,'DysSolver')
-     call initactivate(1,'GphBRnge FANdEtresh DWdEtresh ElPhModes GDamping dScStep ExtendOut ElPhRndNq RandQpts')
-     call initactivate(1,'GkkpDB WRgFsq NewtDchk OnMassShell')
-   endif
-   if (trim(QP_solver)=="g".and.l_elph_corr) then
-     call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
-     call initactivate(-1,'WRgFsq NewtDchk GDamping ExtendOut OnMassShell')
-   endif
-   !
-#endif
-   !
  endif
  !
  if(l_alda_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_mpa,l_cohsex,l_gw0/)) ) call initactivate(1,'FxcGRLc')
  if( l_lrc_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_mpa,l_cohsex,l_gw0/)) ) call initactivate(1,'LRC_alpha LRC_beta')
- !
- ! El-Ph: Frohlich Hamiltonian
- !
-#if defined _ELPH 
- !
- if (l_elph_Hamiltonian) then
-   call initactivate(1,'ElPhHBRnge ElPhModes ElPhHKpt GDamping REStresh')
- endif
- !
-#endif
  !
 #if defined _SC || defined _RT
  !

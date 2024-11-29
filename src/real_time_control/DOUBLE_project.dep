@@ -28,4 +28,8 @@
  RT_output_INIT.o
  RT_output_and_IO_driver.o
  RT_update_TIME_CONF_descriptions.o
+ mod_RT_control.o
+ mod_RT_occupations.o
+ mod_RT_operations.o
+ mod_RT_output.o
 

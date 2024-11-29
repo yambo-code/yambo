@@ -25,8 +25,8 @@ BASIC_LIBS_LD= driver tools memory allocations communicate matrices linear_algeb
 MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse
 MAIN_LIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse
 
-PJ_PHLIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function el-ph qp acfdt bse
-PJ_PHLIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_function el-ph qp acfdt bse
+PJ_PHLIBS    = driver_ph el-ph interface_ph qp_ph
+PJ_PHLIBS_LD = $(MAIN_LIBS_LD) driver_ph interface_ph el-ph qp_ph
 
 PJ_SCLIBS    = $(MAIN_LIBS) collisions hamiltonian sc
 PJ_SCLIBS_LD = $(MAIN_LIBS_LD) hamiltonian collisions sc

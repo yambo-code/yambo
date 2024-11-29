@@ -7,9 +7,23 @@
  initactivate.o
  initinfio.o
  initverbosity.o
+ mod_OUTPUT.o
+ mod_R_lattice.o
+ mod_com.o
+ mod_com_interfcs.o
+ mod_descriptors.o
+ mod_drivers.o
+ mod_electrons.o
  mod_it_tools.o
  mod_itm.o
+ mod_lexical_sort.o
+ mod_memory.o
+ mod_openmp.o
+ mod_parallel.o
+ mod_pars.o
  mod_parser_m.o
+ mod_stderr.o
+ mod_units.o
  PARSER.o
  PARSER_exp.o
  PARSER_interface.o

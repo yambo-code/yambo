@@ -229,9 +229,11 @@ subroutine INIT_read_command_line(rstr,init_)
        QP_solver=trim(rstr_piece(i1+1))
        if (.not.any((/STRING_match(QP_solver,'n'),STRING_match(QP_solver,'s'),&
 &                     STRING_match(QP_solver,'g')/)))  QP_solver='n'
-#if !defined  _ELPH && !defined _QED
-       l_elel_corr=.true.
-#endif
+       !
+       ! removed
+       !#if !defined  (elph_def) && !defined (qe_def)
+       !l_elel_corr=.true.
+       !#endif
        !
        if ( i_cycle == 2 .and. trim(Chi_mode)==' ') Chi_mode='HARTREE'
        !
@@ -240,7 +242,7 @@ subroutine INIT_read_command_line(rstr,init_)
      ! Lifetimes
      !
      if ( i_cycle==2 .and. trim(rstr_piece(i1)) == 'life' )  then
-#if defined _ELPH || defined _QED || defined _PHEL
+#if defined _QED
        if ( (.not.l_elph_corr.and..not.l_elphoton_corr.and..not.l_phel_corr) .or. l_elel_corr) then
          call initactivate(1,'em1d')
          call initactivate(1,'el_el_corr')
@@ -281,20 +283,6 @@ subroutine INIT_read_command_line(rstr,init_)
          infile_editing=.true.
          if (i_cycle==1) QP_solver="s"
          call initactivate(1,'em1d el_el_corr')
-#if defined  _ELPH 
-       else if (trim(rstr_piece(i1+1))=='fan') then
-         infile_editing=.true.
-         if (i_cycle==1) QP_solver="n"
-         call initactivate(1,'el_ph_corr')
-         l_elph_corr=.TRUE.
-#endif
-#if defined _PHEL
-       else if (trim(rstr_piece(i1+1))=='X') then
-         infile_editing=.true.
-         if (i_cycle==1) QP_solver="n"
-         call initactivate(1,'ph_el_corr')
-         l_phel_corr=.TRUE.
-#endif
        endif
        !
      endif

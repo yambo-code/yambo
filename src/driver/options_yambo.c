@@ -25,14 +25,6 @@ void options_yambo(struct options_struct options[],int *i_opt)
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="GW approximation";
  strcpy(options[*i_opt].long_desc[i_desc],"<string>=(p)PA/(m)PA/(c)HOSEX/(r)eal-axis");
-#if defined _ELPH
- i_desc=i_desc+1;
- strcpy(options[*i_opt].long_desc[i_desc],"<string>=fan");
-#endif
-#if defined _ELPH
- i_desc=i_desc+1;
- strcpy(options[*i_opt].long_desc[i_desc],"<string>=X");
-#endif
  options[*i_opt].long_opt="gw0";
  options[*i_opt].short_opt='p';
  options[*i_opt].bin="yambo";
@@ -43,9 +35,6 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].short_desc="Dyson Equation solver";
  strcpy(options[*i_opt].long_desc[0],"<string>=(g)reen [any scattering]");
  strcpy(options[*i_opt].long_desc[1],"<string>=(n)ewton [order 1]/(s)ecant [e-e scattering]");
-#if defined _PHEL
- strcpy(options[*i_opt].long_desc[2],"<string>=(n)ewton [order 2] [p-e scattering]");
-#endif
  options[*i_opt].long_opt="dyson";
  options[*i_opt].short_opt='g';
  options[*i_opt].bin="yambo";

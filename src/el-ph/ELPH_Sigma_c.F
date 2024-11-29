@@ -38,7 +38,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        E_kpq_sh_fact,Efermi_DbGd,gsqF_energy_steps,eval_G_using_KK,PH_qpt,ID_E_kpq,ID_E_kpq_obj, &
 &                        elph_branches,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold
  use interfaces,    ONLY:QP_state_print
- use ALLOC,         ONLY:ELPH_alloc
+ use ELPH_intfcs,   ONLY:ELPH_alloc
  use interpolate,   ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
 &                        INTERPOLATE_is_quiet    
  use stderr,        ONLY:STRING_same

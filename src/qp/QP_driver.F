@@ -9,7 +9,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  use pars,          ONLY:SP,pi,cONE,cZERO
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_life,l_ppa,l_mpa,l_elel_corr,l_elph_corr,l_cohsex,&
+ use drivers,       ONLY:l_life,l_ppa,l_mpa,l_elel_corr,l_cohsex,&
 &                        Finite_Tel,l_elphoton_corr,l_rim_w
  use electrons,     ONLY:levels,n_sp_pol,spin
  use R_lattice,     ONLY:bz_samp,RIM_W_is_diagonal,RIM_ng,RIM_W_ng
@@ -24,9 +24,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
 &                        GF_is_causal,QP_G_amplitude_integral,use_GreenF_to_eval_QP,&
 &                        l_GW_terminator,QP_G_info
  use parser_m,      ONLY:parser
-#if defined _ELPH
- use ELPH,          ONLY:QP_DW,QP_OMS_Fan
-#endif
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
  use global_XC,     ONLY:QP_DB_kind,QP_SE_COHSEX,QP_SE_GoWo_PPA,QP_SE_GoWo,&
@@ -73,7 +70,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_elel_corr.and..not.l_life) return
 #endif
  !
- if (.not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr/))) then
+ if (.not.any((/l_elel_corr,l_elphoton_corr/))) then
    call warning('e-p, e-e and e-photon correlation switched off')
    return
  endif
@@ -108,7 +105,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    call IO_desc_add(qp%desc,kind="s",str='GW solver',S="Full Green`s function",check=.TRUE.,ops=(/"=="/))
    !
-   GF_is_causal=Finite_Tel.or.l_elph_corr 
+   GF_is_causal=Finite_Tel
    !
  else if (l_life) then
    call section('*','Dyson equation: QP lifetimes')
@@ -142,18 +139,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    if (l_elel_corr) then
       call IO_desc_add(qp%desc,kind="s",str='GW approximation',S="Real Axis",check=.TRUE.,ops=(/"=="/))
-   else if (l_elph_corr) then
-      call IO_desc_add(qp%desc,kind="s",str='GW approximation',S="Fan + DW",check=.TRUE.,ops=(/"=="/))
    else if (l_elphoton_corr) then
       call IO_desc_add(qp%desc,kind="s",str='GW approximation',S="Lamb",check=.TRUE.,ops=(/"=="/))
    endif
    !
-   ! Here I am not considering the case where ELPH + GW is used.
-   ! For this case I need to create a new global KIND.
-   !
    QP_DB_kind=QP_SE_GoWo
-   !
-   if (l_elph_corr) QP_DB_kind=QP_SE_POLARON 
    !
    if (l_elphoton_corr) QP_DB_kind=QP_SE_GW_QED
    !
@@ -310,12 +300,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
      !
    endif
    !
-#if defined _ELPH 
-   !
-   if (l_elph_corr) call ELPH_Sigma_c(en,k,q,qp)
-   !
-#endif
-   !
    call QP_Green_Function(qp,en,-1)
    !
    call QP_report_and_write(k,qp,en,-1)
@@ -381,13 +365,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
      !
      YAMBO_ALLOC(QP_Sc,(QP_n_states,QP_Sc_steps))
      !
-#if defined _ELPH
-     if (l_elph_corr) then
-       YAMBO_ALLOC(QP_OMS_Fan,(QP_n_states))
-       YAMBO_ALLOC(QP_DW,(QP_n_states))
-     endif
-#endif
-     !
      if (trim(QP_solver)=='g') then
        YAMBO_ALLOC(qp%GreenF,(QP_n_states,QP_Sc_steps))
        YAMBO_ALLOC(qp%S_total,(QP_n_states,QP_Sc_steps))
@@ -410,10 +387,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
      YAMBO_FREE(qp%table)
      YAMBO_FREE(QP_table)
      YAMBO_FREE(QP_state)
-#if defined _ELPH
-     YAMBO_FREE(QP_DW)
-     YAMBO_FREE(QP_OMS_Fan)
-#endif
      YAMBO_FREE(QP_Sc)
      YAMBO_FREE(QP_dSc)
      YAMBO_FREE(QP_Vnl_xc)

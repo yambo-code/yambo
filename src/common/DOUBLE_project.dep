@@ -33,5 +33,6 @@
  eval_Gradient_cpu.o
  eval_Gradient_gpu.o
  f_build_ext.o
+ mod_zeros.o
  spline_fit.o
 

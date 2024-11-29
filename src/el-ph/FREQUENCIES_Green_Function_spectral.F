@@ -19,7 +19,6 @@ subroutine FREQUENCIES_Green_Function_spectral(iqp,W,E)
  integer,      intent(in)    :: iqp
  type(w_samp), intent(inout) :: W
  real(SP),     intent(in)    :: E(n_bands,nkibz,n_sp_pol)
- logical,      intent(in)    :: Spectral_Function
  !
  ! Work Space
  !

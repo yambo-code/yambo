@@ -40,41 +40,15 @@ struct tool_struct tool_init( )
  t.tool=tool;
  t.desc=tool_desc;
  /*
-   Projects
+   Projects for naming the tool removed for now. Part to be fixed
  */ 
  char *pj=NULL;
-#if defined _YPP_ELPH || defined _ELPH
- pj="ph";
-#endif
-#if defined _YPP_RT || defined _RT
- pj="rt";
-#endif
-#if defined _YPP_SC || defined _SC
- pj="sc";
-#endif
-#if defined _YPP_NL || defined _NL
- pj="nl";
-#endif
-#if defined _YPP_FL || defined _FL
- pj="fl";
-#endif
-#if defined _QED
- pj="qed";
-#endif
 
- if (pj!=NULL) {
-  t.bin = malloc(strlen(tool) + strlen(pj) + 2);
-  strcpy(t.bin,t.tool);
-  t.pj=pj;
-  strcat(t.bin,"_");
-  strcat(t.bin,t.pj);
- }else{
-  t.bin = malloc(strlen(tool) + 1);
-  strcpy(t.bin,t.tool);
-  pj="";
-  t.pj=pj;
- }
- if (pj==NULL) pj=" ";
+ t.bin = malloc(strlen(tool) + 1);
+ strcpy(t.bin,t.tool);
+ pj="";
+ t.pj=pj;
+ 
  sprintf(t.version_string,"%i.%i.%i Revision %i Hash %s",t.version,t.subversion,t.patchlevel,t.revision,t.hash);
  return(t);
 };

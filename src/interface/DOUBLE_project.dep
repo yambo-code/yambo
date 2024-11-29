@@ -16,4 +16,6 @@
  INIT_read_command_line_corr_scatt.o
  INIT_read_command_line_potentials.o
  INIT_report_and_log_files.o
+ mod_ACFDT.o
+ mod_QP_CTL.o
 

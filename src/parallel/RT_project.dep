@@ -1,5 +1,7 @@
+ PARALLEL_MATRIX_distribute.o
  PARALLEL_WF_distribute.o
  PARALLEL_collisions.o
+ PARALLEL_global_Oscillators.o
  PARALLEL_global_Real_Time.o
  PARALLEL_global_Self_Energy.o
  PARALLEL_global_dimensions.o

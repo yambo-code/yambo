@@ -11,4 +11,6 @@
  INTERPOLATION_nearest_E.o
  INTERPOLATION_nearest_k.o
  INTERPOLATION_vec_in_star.o
+ mod_interpolate.o
+ mod_interpolate_tools.o
 

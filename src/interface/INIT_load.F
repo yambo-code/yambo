@@ -89,10 +89,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _SC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
 #endif
-#if defined _ELPH 
- use ELPH,          ONLY:QP_PH_n_G_bands,elph_nQ_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
-&                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,E_kpq_sh_fact,gkkp_db
-#endif
 #if defined _OPENMP
  use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads_NL, &
 &                        n_threads_OSCLL
@@ -151,20 +147,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _RT_SCATT
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')
 #endif
-#if defined _RT_SCATT && _ELPH
- call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
-#endif
-#if defined _RT_SCATT && _PHEL
- call it('r',defs,'ph_el_scatt','[R] Phonon-Electron Scattering')   
-#endif
 #if defined _RT_SCATT
  call it('r',defs,'el_photon_scatt','[R] Electron-Photon   Scattering')   
-#endif
-#if defined _ELPH 
- call it('r',defs,'el_ph_corr',    '[R] Electron-Phonon Correlation')   
-#endif
-#if defined _PHEL 
- call it('r',defs,'ph_el_corr',    '[R] Phonon-Electron Correlation')   
 #endif
  call it('r',defs,'el_el_corr',    '[R] Electron-Electron Correlation') 
 #if defined _QED
@@ -200,11 +184,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_general)
  call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit,verb_level=V_general)
  call it(defs,'BoseCut', '[BOSE] Finite T Bose function cutoff',bose_E_cut,verb_level=V_general)
-#if defined _ELPH 
- call it('f',defs,'BSEscatt', '[KPT] Compute extended k/q scatering',verb_level=V_kpt)
- call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level=V_ph) 
- call it(defs,'EkpqShFact', '[ELPH] E(k+q) Interpolation shell factor (used only with double-grid)',E_kpq_sh_fact,verb_level=V_ph)
-#endif
  call it('f',defs,'WFbuffIO','[IO] Wave-functions buffered I/O',verb_level=V_io) 
  call it('f',defs,'NoDiagSC','New setup for non-diagonal supercells',verb_level=V_general) 
  call it('f',defs,'SkipDegFix','Do not force the code to impose the energy levels to respect their degeneracy',verb_level=V_general) 
@@ -655,20 +634,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'SPINprojected', '[DIP] Project the spin dipoles in the c/v channels ',verb_level=V_real_time)
 #endif
  !
- ! El-Ph
- !
-#if defined _ELPH 
- call it(defs,'GphBRnge',  '[ELPH] G[W] bands range',QP_PH_n_G_bands)
- call it(defs,'ElPhModes', '[ELPH] Phonon modes included',elph_branches)
- call it(defs,'FANdEtresh','[ELPH] Energy treshold for Fan denominator',FAN_deltaE_treshold,verb_level=V_ph,unit=E_unit)
- call it(defs,'DWdEtresh', '[ELPH] Energy treshold for DW denominator',DW_deltaE_treshold,verb_level=V_ph,unit=E_unit)
- call it(defs,'GkkpDB',    '[ELPH] GKKP database (gkkp | gkkp_expanded | genFroh )',gkkp_db,verb_level=V_ph)
- call it(defs,'ElPhHBRnge','[ELPH] Hamiltonian bands range',elph_Ham_bands)
- call it(defs,'ElPhHKpt',  '[ELPH] Hamiltonian k-point',elph_Ham_ik)
- call it(defs,'REStresh',  '[ELPH] Residual treshold to report in output files',RES_tresh)
- call it('f',defs,'WRgFsq','[ELPH] Dump on file gFsq coefficients')
-#endif
- ! 
  ! SC
  !
 #if defined _SC
@@ -794,7 +759,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        if (i_s==7) possible_fields='(p,d) '      ! SLK
        if (i_s==8) possible_fields='(w,k) '      ! NL
        if (i_s==9) possible_fields='(k) '        ! BZ
-       if (i_s==10)possible_fields='(q,k,b) '    ! PH_SE
        if (i_s==11)possible_fields='(k,b) '      ! OSCLL
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle

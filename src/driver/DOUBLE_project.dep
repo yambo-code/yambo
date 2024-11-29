@@ -1,7 +1,6 @@
  C_driver_transfer.o
  mod_C_driver.o
  command_line.o
- driver.o
  get_libraries.o
  get_runlevel.o
  get_running_project.o

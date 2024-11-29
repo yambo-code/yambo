@@ -76,9 +76,6 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
 #if defined _SC || defined _RT
  integer, external :: io_SC_components,io_RT_components
 #endif
-#if defined _ELPH 
- integer, external :: io_ELPH
-#endif 
  !
  ! BASICAL DATABASES
  !
@@ -261,15 +258,6 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  ! DbGd (electrons)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_err=io_Double_Grid(en,k,io_ID,'electrons','')
- !
- ! ELPH 
- !
-#if defined _ELPH 
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_ELPH_err(1)=io_ELPH(io_ID,'gkkp')
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_ELPH_err(2)=io_ELPH(io_ID,'gkkp_expanded')
-#endif
  !
  ! RT 
  !

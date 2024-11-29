@@ -11,4 +11,5 @@
  PLASMA_parallel_setup.o
  PLASMA_tables_and_dimensions.o
  SCATTERING_GW_kinematics.o
+ mod_COLL_interfaces.o
 

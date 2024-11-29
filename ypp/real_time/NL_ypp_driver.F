@@ -14,7 +14,7 @@ subroutine NL_ypp_driver(en,k)
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
  use nl_optics,      ONLY:n_frequencies,NL_P_t,loop_on_frequencies,loop_on_angles,n_runs,n_angles,&
-&                         l_eval_CURRENT
+&                         l_eval_CURRENT,NL_J_t
  use fields,         ONLY:Efield,EtoT,Divide_by_Field,ext_field,Efield_duplicate,Efield_strength
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
@@ -39,6 +39,7 @@ subroutine NL_ypp_driver(en,k)
  real(SP), allocatable :: RT_P_probe(:,:,:),Harmonic_Frequency(:,:), & 
 &                         Probe_frequency(:),Probe_versors(:,:),RT_J_probe(:,:,:)
  complex(SP), allocatable :: X_effective(:,:,:),Susceptibility(:,:,:)
+ complex(SP), allocatable :: Sigma_effective(:,:,:),Conducibility(:,:,:)
  logical  :: Probe_consistency_error,l_print_pwr_spectrum
  type(ext_field)   :: Efield_probe
  logical, allocatable :: runs_ok(:)
@@ -122,7 +123,7 @@ subroutine NL_ypp_driver(en,k)
    endif
    !
    RT_P_probe(:,i_f,:)=NL_P_t(:,:)
-   if(l_eval_CURRENT) RT_P_probe(:,i_f,:)=NL_P_t(:,:)
+   if(l_eval_CURRENT) RT_J_probe(:,i_f,:)=NL_P_t(:,:)
    !
    Probe_frequency(i_f)=Efield(i_Probe)%frequency(1)
    if(loop_on_angles) Probe_versors(:,i_f)=Efield(i_Probe)%versor(:)
@@ -134,11 +135,10 @@ subroutine NL_ypp_driver(en,k)
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1+i_f/),MODE=DUMP,ID=ID_REF)
      io_Nonlinear=io_NL(dbname,ID_REF)
      jobstr=jobstr_save
-     do i_d=1,3
-       RT_P_probe(:,i_f,i_d)=RT_P_probe(:,i_f,i_d)-NL_P_t(:,i_d)
-     enddo
-      ! Restore original parameters of the Probe
-      call Efield_duplicate(Efield_probe,Efield(i_Probe))
+     RT_P_probe(:,i_f,:)=RT_P_probe(:,i_f,:)-NL_P_t(:,:)
+     if(l_eval_CURRENT)  RT_J_probe(:,i_f,:)=RT_J_probe(:,i_f,:)-NL_J_t(:,:)
+     ! Restore original parameters of the Probe
+     call Efield_duplicate(Efield_probe,Efield(i_Probe))
    endif
 
    !
@@ -178,6 +178,10 @@ subroutine NL_ypp_driver(en,k)
      YAMBO_ALLOC(X_effective,(0:X_order,n_runs,3))
      YAMBO_ALLOC(Susceptibility,(0:X_order,n_runs,3))
      YAMBO_ALLOC(Harmonic_Frequency,(0:X_order,n_runs))
+     if(l_eval_CURRENT) then
+       YAMBO_ALLOC(Sigma_effective,(0:X_order,n_runs,3))
+       YAMBO_ALLOC(Conducibility,(0:X_order,n_runs,3))
+     endif
      !
      do i_order=0,X_order
        Harmonic_Frequency(i_order,:)=real(i_order,SP)*Probe_Frequency(:)
@@ -202,6 +206,10 @@ subroutine NL_ypp_driver(en,k)
        do i_d = 1,3
          call RT_coefficients_Inversion(X_order+1,X_order+1,RT_P_probe(:,i_f,i_d),X_effective(0:,i_f,i_d),&
 &                                     Harmonic_Frequency(0:,i_f),T_period)
+         if(l_eval_CURRENT) then
+           call RT_coefficients_Inversion(X_order+1,X_order+1,RT_P_probe(:,i_f,i_d),Sigma_effective(0:,i_f,i_d),&
+&                                     Harmonic_Frequency(0:,i_f),T_period)
+         endif
        end do
        !
        call live_timing(steps=1)
@@ -262,6 +270,9 @@ subroutine NL_ypp_driver(en,k)
  end select
  !
  YAMBO_FREE(RT_P_probe)
+ if(l_eval_CURRENT) then
+   YAMBO_FREE(RT_J_probe)
+ endif
  !
  contains
    !

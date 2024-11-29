@@ -9,12 +9,6 @@ RT_objects = io_RT_components.o io_RT_components_G_lesser.o io_RT_components_hea
 #if defined _NL 
 NL_objects = variables_NL.o io_NL.o
 #endif
-#if defined _ELPH 
-ELPH_objects = variables_ELPH.o io_ELPH.o io_gFsq.o
-#endif
-#if defined _PHEL 
-PHEL_objects = io_PH.o
-#endif
 COLL_objects =
 #if defined _SC || _RT 
 COLL_objects = io_OSCLL.o 
@@ -22,7 +16,7 @@ COLL_objects = io_OSCLL.o
 objs = mod_pseudo.o mod_MPA.o mod_atom_proj.o \
        ver_is_gt_or_eq.o \
        io_Vnl.o       io_E_SOC_map.o \
-       io_RIM.o io_RIM_W.o    io_GROT.o     $(ELPH_objects) $(PHEL_objects) \
+       io_RIM.o io_RIM_W.o    io_GROT.o \
        io_QINDX.o    io_QP_and_GF.o   io_X.o           io_MPA.o  \
        io_DB1.o       io_WF.o       io_KB_abinit.o   io_KB_pwscf.o   io_HF_and_locXC.o \
        io_BS_Fxc.o  io_NLCC_pwscf.o \

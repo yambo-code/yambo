@@ -68,7 +68,7 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
    ! Setup energy range for Sc/G plotting (II)
    !
    if ( trim(QP_solver)=='g' ) then
-     call FREQUENCIES_Green_Function(i_qp,Sc_local_W,en%E,.FALSE.)
+     call FREQUENCIES_Green_Function(i_qp,Sc_local_W,en%E)
      !
      ! Overwrites the damping defined in FREQUENCIES_Green_Function
      !

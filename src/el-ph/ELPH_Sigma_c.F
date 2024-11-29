@@ -60,7 +60,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  type(w_samp)     ::Sc_W(qp%n_states)
  integer          ::io_err,ID,IO_ACT,ID_DG
  integer, external::io_ELPH,io_Double_Grid,io_gFsq
- character(schlen)::ch
+ character(schlen)::tmp_ch
  real(SP)         ::ph_E,factor,elph_gkkp_sq,E_random_shift
  logical          ::l_WRgFsq,l_GF_from_CA,load_gkkp_DB
  real(SP), allocatable :: q_weight(:)
@@ -135,7 +135,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      !
      Sc_W(i_qp)%n_freqs =QP_Sc_steps
      !
-     call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),en%E,.not.l_GF_from_CA)
+     if(     l_GF_from_CA) call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),en%E)
+     if(.not.l_GF_from_CA) call FREQUENCIES_Green_Function_spectral(i_qp,Sc_W(i_qp),en%E)
      !
    enddo
    QP_Sc_steps      =Sc_W(1)%n_freqs
@@ -162,7 +163,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! Parallelization
  !-----------------
- call PARALLEL_global_indexes(en,k,q,"Self_Energy")
+ if (     elph_use_q_grid)    tmp_ch="bz"
+ if (.not.elph_use_q_grid)    tmp_ch="RIM"
+ call PARALLEL_global_indexes(en,k,q,"Self_Energy elph "//tmp_ch)
  !
  ! Note that only by using causal ordering it is correct to use 
  ! the KK to calculate the Green's function
@@ -209,7 +212,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  YAMBO_ALLOC(PH_freqs%E,(nq_to_sum,ph_modes,1))
  ! 
  call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID_DG)
- io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
+ io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons',EkplusQ_mode)
  !
  if(io_err==0) then
    if(elph_use_q_grid) then

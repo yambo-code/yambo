@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine PARALLEL_global_Self_Energy(E,Xk,q)
+subroutine PARALLEL_global_Self_Energy(E,Xk,q,WHAT)
  !
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nqbz,nXkibz,nXkbz
@@ -47,19 +47,15 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  ! DIMENSIONS
  use parallel_m,    ONLY:PAR_DIPk_nibz
 #endif
-#if defined _ELPH
- use drivers,       ONLY:l_elph_corr
- use ELPH,          ONLY:elph_use_q_grid
-#endif
  !
 #include<y_memory.h>
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q
+ character(10)        :: WHAT
  !
  ! Work space
  !
- character(10)        :: WHAT
 #if defined _SC || defined _RT
  integer              :: i_k,nb_mat
 #endif
@@ -118,12 +114,6 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  ! Q-points
  !
- WHAT="ibz"
- if (l_eval_collisions)                       WHAT="bz"
-#if defined _ELPH
- if (l_elph_corr.and.elph_use_q_grid)         WHAT="bz"
- if (l_elph_corr.and..not.elph_use_q_grid)    WHAT="RIM"
-#endif
  !
  if (trim(WHAT)=="ibz") then
    !

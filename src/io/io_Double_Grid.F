@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-integer function io_Double_Grid(E,Xk,ID,what)
+integer function io_Double_Grid(E,Xk,ID,what,EkplusQ_mode)
  !
  use pars,           ONLY:schlen,IP_YIO,CR_YIO
  use electrons,      ONLY:levels,FineGd_E_components_alloc
@@ -16,9 +16,6 @@ integer function io_Double_Grid(E,Xk,ID,what)
  use IO_m,           ONLY:read_is_on,write_is_on,IO_OUTDATED_DB,variable_exist,io_sec,frag_DG,DUMP,io_mode
  use timing_m,       ONLY:timing
  use pars,           ONLY:IP,SP
-#if defined _ELPH
- use ELPH,           ONLY:EkplusQ_mode
-#endif
  !
 #include<y_memory.h>
  !
@@ -26,13 +23,14 @@ integer function io_Double_Grid(E,Xk,ID,what)
  type(bz_samp):: Xk
  integer      :: ID,ID_frag=0
  character(*) ::what 
- character(schlen)  ::db_name 
+ character(schlen)  ::EkplusQ_mode
  !
  ! Work Space
  !
  logical :: l_R_LATT
  integer :: VAR_SZ,MENU
  logical :: l_PH_DG=.FALSE.
+ character(schlen)  ::db_name 
  !
  call timing('io_Double_Grid',OPR='start')
  !
@@ -88,19 +86,15 @@ integer function io_Double_Grid(E,Xk,ID,what)
 &                             ,DESCRIPTOR=FineGd_desc)
    !
    MENU=1
-#if defined _ELPH
    if(l_PH_DG) MENU=0
-#endif
    !
    call def_variable_elemental(ID,VAR="",VAR_SZ=0,VAR_KIND=CR_YIO,MENU=MENU) 
    !
-#if defined _ELPH
    if(l_PH_DG) then
      call def_variable_elemental(ID,VAR="EKplusQmode",VAR_SZ=1,VAR_KIND=CR_YIO,MENU=1) 
      call io_variable_elemental(ID,CH0=EkplusQ_mode,VAR='[Ekpq_mode] E(k+q) energy mode'&
 &                             ,CHECK=.TRUE.,OP=(/"=="/),DESCRIPTOR=FineGd_desc)
    endif
-#endif
    !
  endif
  !

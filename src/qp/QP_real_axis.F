@@ -116,7 +116,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    !
    do i_qp=1,qp%n_states
      Sc_W(i_qp)%n_freqs =QP_Sc_steps
-     call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),en%E,.FALSE.)
+     call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),en%E)
      QP_Sc_steps=Sc_W(i_qp)%n_freqs
    enddo
  endif

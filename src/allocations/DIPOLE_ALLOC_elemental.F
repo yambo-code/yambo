@@ -5,10 +5,12 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+#include <dev_defs.h>
+!
 subroutine DIPOLE_ALLOC_elemental(what,d)
  !
- use DIPOLES,        ONLY:DIP_iR,DIP_v,DIP_P,DIP_orbital,DIP_spin,DIP_P_spinor,P_square, &
-&                         DIP_S,DIP_work_drho
+ use DIPOLES,        ONLY:DIP_iR,DIP_v,DIP_P,DIP_orbital,DIP_spin,DIP_P_spinor,P_square,DIP_S,&
+&                         DIP_work_drho,DEV_VAR(DIP_work_drho)
  use electrons,      ONLY:n_sp_pol,n_spinor
  use pars,           ONLY:cZERO
  use gpu_m,          ONLY:have_gpu

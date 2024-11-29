@@ -236,13 +236,22 @@ subroutine NL_ypp_driver(en,k)
            Susceptibility(i_order,i_f,:)=X_effective(i_order,i_f,:)*Divide_by_Field(Efield(i_Probe),i_order)
          end if
          !
+         ! Calculate Conducibilities from the current
+         !
+         if(l_eval_CURRENT) then
+           Conducibility(i_order,i_f,:)=Sigma_effective(i_order,i_f,:)*Divide_by_Field(Efield(i_Probe),i_order)
+         endif
+         !
        enddo
        ! 
      enddo
      !
      ! Plot
      !
-     if(loop_on_frequencies) call plot_X_effective()
+     if(loop_on_frequencies) then
+        call plot_X_effective()
+        if(l_eval_CURRENT) call plot_X_effective() 
+     endif
      if(loop_on_angles)      call plot_X_angle()
      YAMBO_FREE(X_effective)
      YAMBO_FREE(Susceptibility)

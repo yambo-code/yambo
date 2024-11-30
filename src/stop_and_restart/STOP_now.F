@@ -19,6 +19,9 @@ logical function STOP_now(DO_IT_NOW)
 #if defined _RT || defined _QED || defined _NL
  use real_time,      ONLY:RT_bands
 #endif
+#if defined NL
+ use nl_optics,      ONLY:NL_bands
+#endif
  !
  implicit none
  !
@@ -57,6 +60,9 @@ logical function STOP_now(DO_IT_NOW)
 #endif
 #if defined _RT || defined _QED || defined _NL
  RT_bands=bands_save(3,:)
+#endif
+#if defined _NL
+ NL_bands=bands_save(3,:)
 #endif
  !
  if (len_trim(USER_wall_time_string)>0.and.&

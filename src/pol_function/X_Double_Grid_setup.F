@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
-subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
+subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius,DO_it)
  !
  ! Define which kpts I will use in a consistent way between q=0 and q/=0
  ! For q/=0 this change makes the code much faster as it avoids the use of all
@@ -14,20 +14,16 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
  ! For q==0 the approach can be used to properly describe the q->0 limit
  !
  use pars,          ONLY:SP
- use X_m,           ONLY:use_X_DbGd,X_DbGd_nkpt_at_q,X_DbGd_percentual,X_DbGd_nkpt_at_q_table
+ use X_m,           ONLY:X_DbGd_nkpt_at_q,X_DbGd_percentual,X_DbGd_nkpt_at_q_table
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  use R_lattice,     ONLY:nXkbz,bz_samp,qindx_X,smallest_q_norm,bz_fine_grid
  use vec_operate,   ONLY:v_norm,iku_v_norm
  use parallel_m,    ONLY:PAR_Xk_nbz,PAR_IND_Xk_bz,PAR_Xk_bz_index,PAR_COM_Xk_bz_INDEX
  use parallel_int,  ONLY:PP_redux_wait
- use BS_solvers,    ONLY:BSS_uses_DbGd
  use drivers,       ONLY:l_phel_corr,l_real_time
 #if defined _PHEL
  use PHEL,          ONLY:l_PH_uses_E_FineGd,PHEL_gimme_Ks
-#endif
-#if defined _RT
- use real_time,     ONLY:l_RT_uses_E_FineGd
 #endif
  !
 #include<y_memory.h>
@@ -35,19 +31,14 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
  integer                       :: iq
  type(bz_samp)                 :: k
  type(bz_fine_grid),intent(in) :: k_FGbz
+ logical,           intent(in) :: DO_it
  real(SP),            optional :: nTrans_percent,Radius
  ! 
  ! Work Space
  !
  integer   :: ikbz,ikpbz,ikbz_mem,ikbz_FineGd,ikpbz_FineGd,N_all_pairs,ikibz
  real(SP)  :: central_q(3),running_q(3),k_pt_loc(3),kp_pt_loc(3),q_radius,PERC(1)
- logical   :: FILL_it,DO_it
- !
- DO_it=.TRUE.
-#if defined _RT
- if (l_real_time.and..not.l_RT_uses_E_FineGd) DO_it=.FALSE.
-#endif
- if (DO_it.and..not.any((/use_X_DbGd,BSS_uses_DbGd/))) DO_it=.FALSE.
+ logical   :: FILL_it
  !
 #if defined _PHEL
  if (l_phel_corr) then

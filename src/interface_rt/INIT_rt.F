@@ -18,9 +18,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_mpa,l_phel_corr,l_X,l_screen
-#if defined _SCALAPACK
- use drivers,        ONLY:l_slk_test
-#endif
  use drivers,        ONLY:l_gpu_test
  use pars,           ONLY:SP
  use parser_m,       ONLY:parser
@@ -41,12 +38,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use BS,             ONLY:BS_bands,BS_n_g_W,BS_eh_en,BSE_mode,BSK_mode,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_cpl_K_corr,BS_cpl_K_exchange
  use BS_solvers,     ONLY:BSS_mode,BSS_q0
-#if defined _SC
- use QP_m,           ONLY:QP_ng_Sx
- use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size
-#endif
 #if defined _OPENMP
- use openmp,         ONLY:n_threads_X,n_threads_DIP,n_threads_SE,n_threads_K,n_threads_NL
+ use openmp,         ONLY:n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K,n_threads_NL
 #endif
 #if defined _YAML_OUTPUT
  use pars,           ONLY:logfile_index,repfile_index
@@ -96,9 +89,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    call SET_logicals()
    !
    call E_reset(en)
-#if defined _SC
-   call E_reset(en_sc)
-#endif
    call bz_samp_reset(k)
    call bz_samp_reset(q)
    call W_reset(Xw(1),damping=0.001_SP)
@@ -219,6 +209,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call INIT_activate()
  !
+ if (check_verbosity("real_time").and.l_real_time) call INIT_DephMatrix()
+ !
  ! Q-points (from input)
  !
  if (l_setup.and.io_QINDX_err/=0) call INIT_q_points( )
@@ -311,27 +303,12 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_rim_w=runlevel_is_on('rim_w')
        l_col_cut=l_rim.or.l_rim_w
        l_acfdt=runlevel_is_on('acfdt')
-#if defined _SCALAPACK
-       l_slk_test =runlevel_is_on('slktest')
-#endif
        l_gpu_test =runlevel_is_on('gputest')
-#if defined _SC && defined _MODELS
-       l_sc_run=runlevel_is_on('scrun')
-#endif
-#if defined _SC
-       l_sc_run=runlevel_is_on('scrun')
-       l_sc_magnetic=runlevel_is_on('magnetic')
-       l_sc_electric=runlevel_is_on('electric')
-#endif
-#if defined _SC
+       l_real_time=runlevel_is_on('negf')
+       l_elel_scatt =runlevel_is_on('el_el_scatt')
+       l_elph_scatt=runlevel_is_on('el_ph_scatt')
+       l_elphoton_scatt=runlevel_is_on('el_photon_scatt')
        l_eval_collisions=runlevel_is_on('collisions')
-#endif
-#if defined _NL
-       l_nl_optics=runlevel_is_on('nloptics')
-#endif
-#if defined  _QED
-       l_elphoton_corr=runlevel_is_on('el_photon_corr')
-#endif
        l_elel_corr    =runlevel_is_on('el_el_corr')
        !
        ! Check if this runlevel is allowed in the
@@ -416,17 +393,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_gw0.and.l_cohsex) call parser('UseEbands',COHSEX_use_empties)
      !
-#if defined _SC
-     if (l_sc_magnetic) call initactivate(1,'potential')
-     if (l_sc_run.and.io_SC_E_err==0) then
-       QP_ng_Sx=SC_ng_Sx
-       X(2)%ib=SC_X_bands
-       X(2)%ng=SC_X_size
-     endif
-#endif
-#if defined _ELECTRIC
-     if (l_sc_electric) call initactivate(1,'dipoles')
-#endif
 #if defined _OPENMP
      if (l_dipoles) then
        n_threads_DIP=0
@@ -438,13 +404,11 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
      if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run&
 &                               .or.l_ppa.or.l_mpa)       n_threads_SE=0
+     if (l_real_time)                                     n_threads_RT=0
      if (l_nl_optics)                                     n_threads_NL=0
 #endif
-#if defined _OPENMP && defined _SC && !defined _NL
-     if (l_eval_collisions)    n_threads_SE=0
-#endif
-#if defined _OPENMP && defined _SC && defined _NL
-     if (l_eval_collisions)    n_threads_NL=0
+#if defined _OPENMP
+     if (l_eval_collisions)    n_threads_RT=0
 #endif
      !
    end subroutine LOCAL_setup_before_input_IO

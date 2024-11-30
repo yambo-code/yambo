@@ -1,4 +1,4 @@
-objs = yambo_ph_driver.o yambo_ph.o 
-#if defined _ypp || _ypp_ph || _ypp_rt || _ypp_surf || _ypp_magnetic || _ypp_sc || _ypp_nl
-objs = ypp_ph.o 
+objs = ph_driver.o yambo_ph.o 
+#if defined _ypp_ph
+objs = ph_driver.o ypp_ph.o 
 #endif

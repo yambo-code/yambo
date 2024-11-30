@@ -22,10 +22,9 @@ subroutine INIT_read_command_line(rstr,init_)
  use it_m,           ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,      &
 &                         V_real_time,V_nl_optics,V_all,V_parallel,V_ph,   &
 &                         infile_verbosity,nrnlvls,rnlvls
-#if defined _SC
  use hamiltonian,    ONLY:H_potential
- use magnetic,       ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
-#endif
+ use fields,         ONLY:n_ext_fields,n_ext_fields_max
+ use stderr,         ONLY:intc
  !
  implicit none
  !
@@ -224,11 +223,6 @@ subroutine INIT_read_command_line(rstr,init_)
        if (.not.any((/STRING_match(QP_solver,'n'),STRING_match(QP_solver,'s'),&
 &                     STRING_match(QP_solver,'g')/)))  QP_solver='n'
        !
-       ! removed
-       !#if !defined  (elph_def) && !defined (qe_def)
-       !l_elel_corr=.true.
-       !#endif
-       !
        if ( i_cycle == 2 .and. trim(Chi_mode)==' ') Chi_mode='HARTREE'
        !
      endif
@@ -281,8 +275,6 @@ subroutine INIT_read_command_line(rstr,init_)
        !
      endif
      !
-#if defined _SC
-     !
      if ( trim(rstr_piece(i1)) == 'potential' )  then
        !
        H_potential=""
@@ -295,20 +287,14 @@ subroutine INIT_read_command_line(rstr,init_)
        enddo P_loop
      endif
      !
-     ! SC
+     ! NEGF
      !
      if ( trim(rstr_piece(i1)) == 'potential' )  then
        !
-       V_is_defined=INIT_read_command_line_potentials(V_string,"exx")
-       if (i_cycle==2.and..not.runlevel_is_on('negf').and.V_is_defined) call initactivate(1,'em1s')
-       V_is_defined=INIT_read_command_line_potentials(V_string,"exxc")
-       V_is_defined=INIT_read_command_line_potentials(V_string,"srpa")
        V_is_defined=INIT_read_command_line_potentials(V_string,"coh")
        if (i_cycle==2.and..not.runlevel_is_on('negf').and.V_is_defined) call initactivate(1,'em1s')
        V_is_defined=INIT_read_command_line_potentials(V_string,"sex")
        if (i_cycle==2.and..not.runlevel_is_on('negf').and.V_is_defined) call initactivate(1,'em1s')
-       V_is_defined=INIT_read_command_line_potentials(V_string,"ldax")
-       V_is_defined=INIT_read_command_line_potentials(V_string,"pz")
        V_is_defined=INIT_read_command_line_potentials(V_string,"gs")
        V_is_defined=INIT_read_command_line_potentials(V_string,"d")
        V_is_defined=INIT_read_command_line_potentials(V_string,"ip")
@@ -318,46 +304,28 @@ subroutine INIT_read_command_line(rstr,init_)
        !
      endif
      !
-     if ( trim(rstr_piece(i1)) == 'magnetic' )  then
-       if ( STRING_match(rstr_piece(i1+1),'p') ) then
-         MAG_hamiltonian_type='pauli'
-         MAG_pauli=.true.
-       else if ( STRING_match(rstr_piece(i1+1),'l') ) then
-         MAG_hamiltonian_type='landau'
-         MAG_landau=.true.
-       else if ( STRING_match(rstr_piece(i1+1),'a') ) then
-         MAG_hamiltonian_type='all'
-         MAG_pauli=.true.
-         MAG_landau=.true.
-       endif
-     endif
-#endif
-     !
      ! Correlation(s)
      call INIT_read_command_line_corr_scatt("corrtp",rstr_piece,i1,l_elel_corr,l_elph_corr,l_phel_corr,l_elphoton_corr)
      !
      ! Scattering(s)
      call INIT_read_command_line_corr_scatt("scattp",rstr_piece,i1,l_elel_scatt,l_elph_scatt,l_phel_scatt,l_elphoton_scatt)
      !
-#if defined _NL
+     ! RT
      !
-     ! NL
-     !
-     if ( trim(rstr_piece(i1)) == 'nloptics' ) then
+     if ( trim(rstr_piece(i1)) == 'negf' ) then
        !
-       if ( trim(rstr_piece(i1+1)) == 'n'   ) n_ext_fields=3
-       if ( trim(rstr_piece(i1+1)) == 'p'   ) then
-          n_ext_fields=3
-          l_nl_p_and_p=.TRUE.
-       endif
+       if ( trim(rstr_piece(i1+1)) == 'p'    ) n_ext_fields=1
+       if ( trim(rstr_piece(i1+1)) == 'pp'   ) n_ext_fields=2
+       !
+       do i_field=1,n_ext_fields_max
+         if ( index(rstr_piece(i1+1),'p'//trim(intc(i_field))) > 0 ) n_ext_fields=i_field
+       enddo
        !
        if( n_ext_fields==0) n_ext_fields=1
        !
+       if ( i_cycle == 2 .and. .not. V_is_defined ) H_potential='IP'
+       !
      endif
-     !
-#endif
-     !
-#if defined _SC
      !
      ! COLLISIONS
      !
@@ -365,8 +333,6 @@ subroutine INIT_read_command_line(rstr,init_)
        if ( l_elel_scatt.or.trim(H_potential)=='COH+SEX'.or.&
 &               trim(H_potential)=='COH'.or.trim(H_potential)=='SEX' ) call initactivate(1,'em1s')
      endif
-     !
-#endif
      !
    enddo INPUT_strings_loop
    !

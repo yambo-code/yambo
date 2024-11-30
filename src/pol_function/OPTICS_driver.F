@@ -70,7 +70,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    call TDDFT_do_X_W_typs(iq,X,wv)
    !
    ! DbGd setup
-   call X_Double_Grid_setup(iq,Xk,Xk%FGbz)
+   call X_Double_Grid_setup(iq,Xk,Xk%FGbz,use_X_DbGd)
    !
    ! ALDA (only once) 
    if (l_alda_fxc.and..not.allocated(F_xc_gspace)) then

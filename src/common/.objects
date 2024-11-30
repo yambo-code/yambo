@@ -1,6 +1,3 @@
-#if defined _RT
-RT_objects= HyperbolicSecant_FT.o Fermi_fnc_fit.o
-#endif
 objs = mod_zeros.o eval_G_minus_G.o G_rot_grid.o G_index.o G_index_energy_factor.o eval_Gradient.o \
        FREQUENCIES_damping.o FREQUENCIES_setup.o FREQUENCIES_coarse_grid.o \
        FREQUENCIES_Green_Function.o FREQUENCIES_reset.o FREQUENCIES_set_reference_point.o \
@@ -10,4 +7,4 @@ objs = mod_zeros.o eval_G_minus_G.o G_rot_grid.o G_index.o G_index_energy_factor
        OCCUPATIONS_Fermi.o OCCUPATIONS_Extend.o OCCUPATIONS_Gaps.o OCCUPATIONS_Extend_Double_Grid.o \
        LEVELS_respect_degenerations.o LEVELS_mirror.o f_build_ext.o \
        crystal_lattice.o QP_state_print.o QP_state_group.o \
-       spline_fit.o OBS_rotate.o $(RT_objects)
+       spline_fit.o OBS_rotate.o

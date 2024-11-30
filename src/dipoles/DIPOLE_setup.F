@@ -77,9 +77,7 @@ subroutine DIPOLE_setup(Dip)
  !---------------------------------------------
  call parser('PDirect'  ,Dip%force_v_g_space)
  if (.not.STRING_same(Dip%approach,"g-space v")) then
-#if defined _SC || defined _RT || defined _NL
    Dip%force_v_g_space=Dip%force_v_g_space.or.l_sc_run.or.l_real_time.or.l_nl_optics
-#endif
    ! For some reason (to understand) also in the PL case Dip%force_v_g_space=.TRUE.
    Dip%force_v_g_space     =Dip%force_v_g_space.or.l_BS_photolum
  endif
@@ -111,30 +109,22 @@ subroutine DIPOLE_setup(Dip)
  if (Dip%force_v_g_space.and..not.STRING_match(g_space_obs,"V")) g_space_obs=trim(g_space_obs)//" V"
  !
  ! ... P2 
-#if defined _RT
  if (l_real_time) then
    g_space_obs=trim(g_space_obs)//" P2"
  endif
-#else
- if (STRING_match(Dip%computed,"p2")) g_space_obs=trim(g_space_obs)//" P2"
-#endif
+ if (STRING_match(Dip%computed,"p2").and..not.STRING_match(g_space_obs,"P2")) g_space_obs=trim(g_space_obs)//" P2"
  !
  ! ... P_spinor
  if (n_spinor==2) then
-#if defined _RT
    if (l_real_time) g_space_obs=trim(g_space_obs)//" P_spinor"
-#else
-   if (STRING_match(Dip%computed,"spin").or.l_BS_magnons) g_space_obs=trim(g_space_obs)//" P_spinor"
-#endif
+   if ((STRING_match(Dip%computed,"spin").or.l_BS_magnons).and..not.STRING_match(g_space_obs,"P2"))
+   & g_space_obs=trim(g_space_obs)//" P_spinor"
  endif
  ! ...M_spin, M_orb, M_iti, M_orb_CD
  if (n_spin>1) then
-#if defined _RT
    if (l_real_time) specific_obs=" M_spin M_orb M_it"
-#else
-   if (STRING_match(Dip%computed,"orb")) specific_obs=trim(specific_obs)//" M_orb M_it"
-#endif
-   if (STRING_match(Dip%computed,"spin").or.l_BS_magnons) specific_obs=" M_spin"
+   if (STRING_match(Dip%computed,"orb").and..not.STRING_match(g_space_obs,"M_orb")) specific_obs=trim(specific_obs)//" M_orb M_it"
+   if ((STRING_match(Dip%computed,"spin").or.l_BS_magnons).and..not.STRING_match(g_space_obs,"M_spin")) specific_obs=" M_spin"
  endif
  if (l_BS_dichroism) specific_obs=trim(specific_obs)//" M_CD_orb"
  ! 

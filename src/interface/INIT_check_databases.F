@@ -23,7 +23,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  use it_tools,       ONLY:switch_off_runlevel
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
-#if defined _SC || defined _RT
+#if defined _SC
  use collision_ext,  ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
 # if !defined _PAR_IO
  use COLL_interfaces,ONLY:io_COLLISIONS
@@ -66,15 +66,8 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
 #if defined _SC
  integer           :: io_SC_V_err
-#endif
-#if defined _RT
- integer           :: io_G,io_OBS
-#endif
-#if defined _SC || defined _RT
  integer           :: io_COLLISIONS_err
-#endif
-#if defined _SC || defined _RT
- integer, external :: io_SC_components,io_RT_components
+ integer, external :: io_SC_components
 #endif
  !
  ! BASICAL DATABASES
@@ -259,15 +252,6 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_err=io_Double_Grid(en,k,io_ID,'electrons','')
  !
- ! RT 
- !
-#if defined _RT
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_OBS=io_RT_components('OBSERVABLES',io_ID)
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_G=io_RT_components('G_lesser_RESTART',io_ID)
-#endif
- !
  ! SC 
  !
 #if defined _SC
@@ -276,21 +260,15 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_SC_E_err=io_SC_components('E',en_sc,io_ID)
  if (io_SC_E_err==0.and.io_SC_V_err/=0) io_SC_E_err=-1
-#endif
  !
  ! COLLISIONS 
  !
-#if defined _SC || defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_COLLISIONS_err=io_COLLs_header(io_ID,COH_collisions)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_COLLISIONS_err=io_COLLs_header(io_ID,HXC_collisions)
 #endif
-#if defined _RT
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLs_header(io_ID,GW_NEQ_collisions)
-#endif
-#if defined _QED && defined _RT
+#if defined _QED
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_COLLISIONS_err=io_COLLs_header(io_ID,P_collisions)
 #endif

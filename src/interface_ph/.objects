@@ -1,2 +1,7 @@
-objs = INIT_load_ph.o INIT_ph.o INIT_read_command_line_ph.o INIT_check_databases_ph.o INIT_activate_ph.o \
-       INIT_q_points_ph.o INIT_barriers_ph.o
+objs = INIT_load_ph.o \
+INIT_ph.o \
+INIT_read_command_line_ph.o \
+INIT_check_databases_ph.o \
+INIT_activate_ph.o \
+INIT_q_points_ph.o \
+INIT_barriers_ph.o

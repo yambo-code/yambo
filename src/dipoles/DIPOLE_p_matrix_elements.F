@@ -7,7 +7,7 @@
 !
 #include<dev_defs.h>
 !
-subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P2,l_eval_M_spin)
+subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P2,l_eval_M_spin,l_update_SOC)
  !
  use pars,          ONLY:SP,cZERO,pi
  use wrapper_omp,   ONLY:Vstar_dot_V_omp
@@ -15,15 +15,12 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  use wave_func,     ONLY:WF,wf_ncx,wf_nc_k,wf_igk,DEV_VAR(wf_igk)
  use electrons,     ONLY:n_spinor
  use R_lattice,     ONLY:g_vec,DEV_VAR(g_vec),bz_samp
-#if defined _RT
- use real_time,     ONLY:l_update_SOC
-#endif
  !
  implicit none
  !
  type(bz_samp), intent(in)  :: Xk
  integer,       intent(in)  :: iv_wf,ic_wf,ik
- logical,       intent(in)  :: l_eval_P2,l_eval_M_spin
+ logical,       intent(in)  :: l_eval_P2,l_eval_M_spin,l_update_SOC
  complex(SP),   intent(out) :: rho(3),rho_spinor(3,n_spinor,n_spinor),P2
  ! 
  ! Work Space
@@ -46,9 +43,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  P2=cZERO
  ! 
  eval_spinor_matrix=.false.
-#if defined _RT
  eval_spinor_matrix=l_eval_M_spin.and.n_spinor==2.and.l_update_SOC
-#endif
  !
  WF_p => DEV_VAR(WF%c)
  !

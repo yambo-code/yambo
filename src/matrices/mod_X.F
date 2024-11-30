@@ -188,12 +188,13 @@ module X_m
      integer,      optional:: indexes(:)
    end subroutine
    !
-   subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
+   subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius,DO_it)
      use R_lattice,     ONLY:bz_samp,bz_fine_grid
      use pars,          ONLY:SP
      integer                       :: iq
      type(bz_samp)                 :: k
      type(bz_fine_grid),intent(in) :: k_FGbz
+     logical,           intent(in) ::
      real(SP),            optional :: nTrans_percent,Radius
    end subroutine
    !

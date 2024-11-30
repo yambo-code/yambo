@@ -46,11 +46,9 @@ subroutine DIPOLE_ALLOC_global(D,NK)
  if (STRING_match(D%computed,"M_spin")) then
    call DIPOLE_ALLOC_elemental('DIP_spin',(/3,D%ib_lim(2),D%ib(2),D%ib(1),D%ib_lim(1),NK/))
  endif
-#if defined _RT
  if (STRING_match(D%computed,"P_spinor")) then
    call DIPOLE_ALLOC_elemental('DIP_P_spinor',(/3,D%ib_lim(2),D%ib(2),D%ib(1),D%ib_lim(1),NK/))
  endif
-#endif
  !
  if (STRING_match(D%computed,"P2")) then
    call DIPOLE_ALLOC_elemental('P_square',(/D%ib_lim(2),D%ib(2),D%ib(1),D%ib_lim(1),NK/))

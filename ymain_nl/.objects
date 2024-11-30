@@ -1,0 +1,4 @@
+objs = nl_driver.o yambo_nl.o 
+#if defined _ypp_nl
+objs = nl_driver.o ypp_nl.o 
+#endif

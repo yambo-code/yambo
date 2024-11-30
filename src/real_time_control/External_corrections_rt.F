@@ -14,6 +14,8 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  use R_lattice,     ONLY:bz_samp
  use BS,            ONLY:BS_bands
  use QP_CTL_m,      ONLY:QP_apply
+ use drivers,       ONLY:l_cohsex,l_real_time,l_ppa
+ use RT_control,    ONLY:RT_apply
  !
  implicit none
  !
@@ -25,6 +27,8 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  ! 
  integer  :: iq,i_sp_pol
  character(schlen) :: db_name
+ !
+ logical           :: l_apply_RT_corrections
  !
  logical       ::l_apply_QP_corrections,l_dynamical
  integer       ::X_kind,bands_to_correct(2)
@@ -41,6 +45,11 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  if( l_dynamical .and. .not.l_ppa ) X_kind=4
  if (l_apply_QP_corrections) call QP_apply(X(X_kind)%ib,Xen,Xk,"X",msg_fmt='rs',main_section=.TRUE.)
  !
+ l_apply_RT_corrections=l_apply_QP_corrections.and.        &
+&    (     ((l_em1s.or.l_ppa.or.l_gw0).and..not.l_real_time)   &
+&      .or.(l_optics.and.l_chi)          )
+ if (l_apply_RT_corrections) call RT_apply(X(X_kind)%ib,Xen,Xk,what="X",VERBOSE=.true.)
+ !
  ! 2) BSE
  ! ========
  bands_to_correct=BS_bands
@@ -52,10 +61,16 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  l_apply_QP_corrections=(l_optics.and.l_bse.and..not.l_ppa).or.l_bss
  if (l_apply_QP_corrections) call QP_apply(BS_bands,Ken,Xk,"K",msg_fmt='rs',main_section=.TRUE.)
  !
+ l_apply_RT_corrections=l_apply_QP_corrections.and..not.l_real_time
+ if (l_apply_RT_corrections) call RT_apply(BS_bands,Ken,Xk,what="K",VERBOSE=.true.)
+ !
  ! 3) Green's Function used to compute QP corrections
  ! ====================================================
  bands_to_correct=(/1,n_bands/)
  if (l_gw0)                  call QP_apply(bands_to_correct,en,k,"G",msg_fmt='rs',main_section=.TRUE.)
+ !
+ l_apply_RT_corrections=l_cohsex.or.l_ppa.or.l_gw0
+ if (l_apply_RT_corrections) call RT_apply(bands_to_correct,en,k,what="G",VERBOSE=.true.)
  !
  call E_duplicate(en,DIPen)
  !

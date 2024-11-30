@@ -1,18 +1,3 @@
-#if defined _SC
-SC_objects = load_SC_components.o io_SC_components.o variables_SC.o io_KB_real_space.o
-#endif
-#if defined _RT 
-RT_objects = io_RT_components.o io_RT_components_G_lesser.o io_RT_components_header.o io_RT_components_OBS.o \
-             io_RT_components_Reference.o io_RT_components_TIME_points.o \
-             variables_RT_static.o variables_RT_dynamic.o io_KB_real_space.o
-#endif
-#if defined _NL 
-NL_objects = variables_NL.o io_NL.o
-#endif
-COLL_objects =
-#if defined _SC || _RT 
-COLL_objects = io_OSCLL.o 
-#endif
 objs = mod_pseudo.o mod_MPA.o mod_atom_proj.o \
        ver_is_gt_or_eq.o \
        io_Vnl.o       io_E_SOC_map.o \
@@ -24,5 +9,4 @@ objs = mod_pseudo.o mod_MPA.o mod_atom_proj.o \
        io_BSS_diago.o  io_BSS_Haydock.o io_BSS_invert.o io_USPP_pwscf.o \
        io_header.o io_Double_Grid.o \
        io_COL_CUT.o    io_DB1_selective_scan.o variables_X.o variables_DIPOLES.o variables_Overlaps.o \
-       io_out_of_date.o \
-       $(SC_objects) $(RT_objects) $(NL_objects) $(COLL_objects)  
+       io_out_of_date.o

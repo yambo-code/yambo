@@ -71,6 +71,7 @@ subroutine RT_initialize(E,k,q)
  !
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('VelGaugeNoDiam',       l_velocity_gauge_tmp)
+ call parser("SPINprojected",        l_project_spin_dipoles)
  l_velocity_gauge_diam=.not.l_velocity_gauge_tmp
  !
  call parser('DephCVonly',           RT_deph_cv_only)

@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine INIT_check_databases_ph(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
+subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
 &                               io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,&
 &                               io_ELPH_err,io_SC_E_err)
  !
@@ -23,6 +23,13 @@ subroutine INIT_check_databases_ph(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,inst
  use it_tools,       ONLY:switch_off_runlevel
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
+ use collision_ext,  ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
+ use real_time,      ONLY:RT_bands
+ use collision_ext,  ONLY:COLL_bands
+ use hamiltonian,    ONLY:H_ref_bands
+# if !defined _PAR_IO
+ use COLL_interfaces,ONLY:io_COLLISIONS
+# endif
  !
  ! Define io_COLLs_header to handle either serial or parallel I/O
  !
@@ -58,14 +65,20 @@ subroutine INIT_check_databases_ph(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,inst
  !
  logical           :: OSTNTS_Vnl_included
  !
- integer, external :: io_ELPH
+ integer           :: io_G,io_OBS
+ integer           :: io_COLLISIONS_err
+ integer, external :: io_SC_components,io_RT_components
  !
  ! BASICAL DATABASES
  !
  ! db1
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=io_ID)
- io_err=io_DB1(en,k,io_ID) 
+ io_err=io_DB1(en,k,io_ID)
+ ! 
+ if(any(COLL_bands(:)==0)) COLL_bands=(/1,E%nb/)
+ if(any(H_ref_bands(:)==0)) H_ref_bands=(/1,E%nb/)
+ if(any(RT_bands(:)==0)) RT_bands=(/1,E%nb/)
  !
 #if defined _MEM_CHECK
  call MEM_treshold_estimate( )
@@ -240,13 +253,26 @@ subroutine INIT_check_databases_ph(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,inst
  !
  ! DbGd (electrons)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=io_Double_Grid(en,k,io_ID,'electrons')
+ io_err=io_Double_Grid(en,k,io_ID,'electrons','')
  !
- ! ELPH 
+ ! RT 
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_ELPH_err(1)=io_ELPH(io_ID,'gkkp')
+ io_OBS=io_RT_components('OBSERVABLES',io_ID)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_ELPH_err(2)=io_ELPH(io_ID,'gkkp_expanded')
+ io_G=io_RT_components('G_lesser_RESTART',io_ID)
+ !
+ ! COLLISIONS 
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,COH_collisions)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,HXC_collisions)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,GW_NEQ_collisions)
+#if defined _QED
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,P_collisions)
+#endif
  !
 end subroutine

@@ -262,9 +262,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
          ! <P_spinor>
          !============
          !
-#if defined _RT
          if (STRING_match(g_space_obs,"P_spinor")) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor
-#endif
          !
          if(.not.(STRING_match(g_space_obs,"V").or.STRING_match(g_space_obs,"R"))) then
            call live_timing(steps=1)

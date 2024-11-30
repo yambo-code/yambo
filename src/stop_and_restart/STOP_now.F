@@ -19,7 +19,7 @@ logical function STOP_now(DO_IT_NOW)
 #if defined _RT || defined _QED || defined _NL
  use real_time,      ONLY:RT_bands
 #endif
-#if defined NL
+#if defined _NL
  use nl_optics,      ONLY:NL_bands
 #endif
  !

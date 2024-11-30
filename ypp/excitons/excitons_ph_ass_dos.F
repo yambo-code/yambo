@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
+! headers
+!
+#include<y_memory.h> 
+!
 subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  !
  use pars,          ONLY:SP,pi,rZERO,schlen
@@ -25,7 +29,9 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  use functions,     ONLY:Lorentzian_func,boltzman_f,bose_f
  use stderr,        ONLY:STRING_same,intc
  !
-#include<y_memory.h> 
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp) ::Xk,k,q_exc
  type(levels)  ::Xen,en

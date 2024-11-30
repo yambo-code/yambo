@@ -5,12 +5,18 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_1D_Fourier_setup(FT,RT,N)
  !
  use YPP_real_time,  ONLY:OBS_el,Use_FFT,RT_ctl
  use pars,           ONLY:SP,cZERO_DP,cZERO
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(OBS_el) :: FT
  type(RT_ctl) :: RT

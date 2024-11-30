@@ -5,12 +5,18 @@
 !
 ! Authors (see AUTHORS file for details): AM MG
 !
+! headers
+!
+#include<y_memory.h>
+!
 module SC
  !
  use descriptors,     ONLY:IO_desc
  use pars,            ONLY:SP,schlen,lchlen
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer           :: SC_bands(2)
  integer           :: SC_nbands

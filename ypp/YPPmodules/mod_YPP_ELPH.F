@@ -5,13 +5,19 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 module YPP_ELPH
  !
  use pars,                ONLY:SP,schlen,DP
  use D_lattice,           ONLY:n_atoms
  use R_lattice,           ONLY:nkbz
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  logical :: l_phonons
  logical :: l_eliashberg

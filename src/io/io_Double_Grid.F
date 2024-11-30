@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_Double_Grid(E,Xk,ID,what)
  !
  use pars,           ONLY:schlen,IP_YIO,CR_YIO
@@ -20,7 +24,9 @@ integer function io_Double_Grid(E,Xk,ID,what)
  use ELPH,           ONLY:EkplusQ_mode
 #endif
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels) :: E
  type(bz_samp):: Xk

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! POL_Gilbreth_fit based on:
 !
 ! pfit.f90: Module for polynomial least-squares fitting
@@ -117,7 +121,9 @@ module POL_FIT_m
     ! Notes:
     !   This routine uses a QR decomposition method, which should be more
     !   numerically stable than solving the normal equations.
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
     real(DP), intent(in)  :: x(:), y(:), sig(:)
     real(DP), intent(out) :: a(:)
     real(DP), allocatable :: work(:), C(:,:), Q(:,:), R(:,:), b(:)

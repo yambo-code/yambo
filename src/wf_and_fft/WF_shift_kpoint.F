@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine WF_shift_kpoint_gpu(b_to_shift,nb_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k_out)
  !
@@ -17,7 +21,9 @@ subroutine WF_shift_kpoint_gpu(b_to_shift,nb_to_shift,ikbz,i_sp_pol,wf_shift,Xk,
  use devxlib,       ONLY: devxlib_memcpy_d2d, devxlib_memset_d
  use gpu_m,         ONLY: have_gpu
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer,       intent(in) :: wf_shift(3),ikbz,i_sp_pol,b_to_shift(2),nb_to_shift
  type(bz_samp), intent(in) :: Xk

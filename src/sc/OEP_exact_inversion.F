@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MG
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  !
  !  Exact exchange/static RPA potential (voep in direct space)
@@ -31,7 +35,9 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  !
  ! I/O
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  real(SP),intent(out)    :: Voep(fft_size)
  complex(SP),intent(in)  :: W_x(nkibz,maxval(n_met_bands),fft_size)
  type(X_t)    :: X

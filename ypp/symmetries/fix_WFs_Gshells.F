@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): CA DS
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym)
  !
@@ -20,7 +24,9 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym)
 &                              wf_nc_k_new,l_wf_nc_k_red,ng_vec_new,ng_vec_save,wf_igk_new,&
 &                              wf_nc_k_new,wf_ncx_new,wf_ncx_save,wf_ng_new,wf_ng_save,wf_ng_cut
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp),intent(inout) :: k
  type(bz_samp),intent(in)    :: k_save

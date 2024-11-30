@@ -5,6 +5,14 @@
 !
 ! Authors (see AUTHORS file for details): HM DS
 !
+! headers
+!
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+!
 subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  !
  ! Here I fill the kernel (coupling not yet included) in a slepc matrix to be
@@ -20,12 +28,6 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width
  use gpu_m,         ONLY:have_cuda
  !
-#include <petsc/finclude/petscsys.h>
-#include <petsc/finclude/petscvec.h>
-#include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h>
-#include <slepc/finclude/slepcsys.h>
-#include <slepc/finclude/slepceps.h>
  !
  use petscmat
  use slepceps

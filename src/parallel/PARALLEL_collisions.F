@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_collisions( k, COLL )
  !
  ! SC
@@ -134,7 +138,9 @@ subroutine PARALLEL_collisions( k, COLL )
  use hamiltonian,   ONLY:B_mat_index
  use R_lattice,     ONLY:bz_samp,qindx_S,nqbz
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp)          :: k
  type(COLLISIONS_group) :: COLL
@@ -214,7 +220,9 @@ subroutine PARALLEL_collisions_reset(COLL)
  !
  use collision_ext, ONLY:COLLISIONS_group
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(COLLISIONS_group), intent(inout) :: COLL
  !

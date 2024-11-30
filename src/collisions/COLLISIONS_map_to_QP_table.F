@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine COLLISIONS_map_to_QP_table(what,COLL)
  !
  use collision_ext, ONLY:COLLISIONS_group,COLL_bands
@@ -12,7 +16,9 @@ subroutine COLLISIONS_map_to_QP_table(what,COLL)
  use electrons,     ONLY:n_sp_pol
  use R_lattice,     ONLY:nXkibz
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(*)                            :: what
  type(COLLISIONS_group),   intent(inout) :: COLL

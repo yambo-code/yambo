@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DV
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine c2y_db1(en,k,file_name_)
  !
  use pars,                  ONLY: DP,pi
@@ -21,7 +25,9 @@ subroutine c2y_db1(en,k,file_name_)
  use xc_functionals,        ONLY: XC_EXCHANGE_CORRELATION,XC_LDA_C_PW
  use mod_com2y,             ONLY: print_interface_dimensions,symmetries_check_and_load,&
 &                                 alat_mult_factor
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  character(*)                   :: file_name_
  type(levels),     intent(out)  :: en
  type(bz_samp),    intent(out)  :: k  

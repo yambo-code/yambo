@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AF IM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PP_vloc_augment(QP_Vloc,Vloc,ik,ib,ibp)
  !
  ! Add the USPP augmentation to the matrix element of a local potential
@@ -19,7 +23,9 @@ subroutine PP_vloc_augment(QP_Vloc,Vloc,ik,ib,ibp)
 #endif
  use qe_pseudo_m,   ONLY:qe_omega=>omega,qe_ngm=>ngm,becprod
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! vars
  !

@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode)
  !
@@ -23,7 +27,9 @@ integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode
  use IO_m,             ONLY:OP_RD_CL,NONE,DUMP
  use IO_int,           ONLY:io_control,io_connect,io_disconnect,io_elemental,io_bulk
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)      :: E
  type(bz_samp)     :: k

@@ -2,6 +2,11 @@
 ! License-Identifier: GPL
 !
 ! Authors (see AUTHORS file for details): AM [AF,IM,MB]
+!
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -17,7 +22,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
@@ -66,7 +75,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels) ::E
  type(bz_samp)::Xk,k,q

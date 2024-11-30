@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AF IM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PP_scatterBamp_init(isc)
  !
  ! init USPP workspace in isc scatterBamp argument
@@ -16,7 +20,9 @@ subroutine PP_scatterBamp_init(isc)
  use vec_operate,   ONLY:c2a
  use timing_m,      ONLY:timing
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! vars
  !

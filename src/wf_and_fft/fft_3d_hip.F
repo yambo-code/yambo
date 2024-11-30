@@ -3,6 +3,11 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
+!
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h> 
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -43,7 +48,6 @@
 !
 !=====================================================================
 !
-#include<dev_defs.h>
 !
 subroutine fft_3d_hip(c_d,n,fft_sign,hipfft_plan)
  !
@@ -53,7 +57,9 @@ subroutine fft_3d_hip(c_d,n,fft_sign,hipfft_plan)
  use devxlib_environment
  use hipfft_m
  !
-#include<y_memory.h> 
+ USE_MEMORY
+ !
+ implicit none
  !
  integer      :: fft_sign,n(3)
  type(c_ptr)  :: hipfft_plan

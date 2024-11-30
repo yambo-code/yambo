@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM MG
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
 &                             xc_functional,perturbation)
  !
@@ -17,7 +21,9 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
  use IO_int,      ONLY:io_control
  use IO_m,        ONLY:manage_action,OP_RD_CL,RD_CL_IF_END,OP_RD,RD_CL,&
 &                      DUMP,OP_RD_CL,NONE,IO_NO_DATABASE
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(*)           :: what
  type(levels), optional :: E

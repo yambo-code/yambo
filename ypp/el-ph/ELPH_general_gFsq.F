@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  !
  use pars,                ONLY:SP,schlen
@@ -30,7 +34,9 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  use parallel_int,        ONLY:PP_wait,PP_redux_wait,PARALLEL_index 
  use functions,           ONLY:Fermi_fnc_derivative
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels) ::en,Xen
  type(bz_samp)::k,Xk,q

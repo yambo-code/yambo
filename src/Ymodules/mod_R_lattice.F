@@ -5,13 +5,19 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 module R_lattice
  !
  use pars,        ONLY:SP,DP,schlen, IP
  use descriptors, ONLY:IO_desc
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer, parameter:: MAX_kpts_to_report=50
  !

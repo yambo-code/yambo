@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,FineGrid)
  !
  ! INTREPOLATION_driver_do at present interpolates both to the Coarse grid and to the Fine grid
@@ -28,7 +32,9 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,FineGrid)
 &                               l_integral_respect,OUT_k_nk
  use IO_int,               ONLY:IO_and_Messaging_switch
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(*),  intent(in)              :: operation
  integer,       intent(in)              :: ID

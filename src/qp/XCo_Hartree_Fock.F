@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
@@ -40,7 +44,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use qe_pseudo_m,   ONLY:beccopy
  use devxlib,       ONLY:devxlib_memcpy_d2d
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels) ::E       
  type(bz_samp)::k,Xk,q

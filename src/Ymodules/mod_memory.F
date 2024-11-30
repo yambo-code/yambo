@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<dev_defs.h>
+!
 module y_memory
  !
  use pars,          ONLY:SP,schlen,IP,IPL,DP,LP,SP6,N_MEM_max,N_MEM_SAVE_max,&
@@ -12,7 +16,6 @@ module y_memory
  use openmp,        ONLY:master_thread
  use iso_c_binding, ONLY:c_int
  !
-#include<dev_defs.h>
  !
  implicit none
  !

@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
  !
  use pars,          ONLY:cZERO
@@ -16,8 +21,9 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
  use gpu_m,         ONLY:have_gpu
  use devxlib,       ONLY:devxlib_memset_d
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(PAR_matrix) :: X_par
  integer          :: NG,NW

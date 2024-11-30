@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM IMA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  use pars,           ONLY:IP
@@ -28,7 +32,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use vec_operate,    ONLY:v_norm
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free,G_m_G_maxval,q0_def_norm
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q

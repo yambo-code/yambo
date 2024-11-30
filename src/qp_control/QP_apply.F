@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_section)
  !
  ! This routine manages the external qp corrections.
@@ -38,7 +42,9 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
 &                        At_least_one_band_corrected
  use global_XC,     ONLY:correct_global_XC
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer       ::bands(2)
  type(levels)  ::en

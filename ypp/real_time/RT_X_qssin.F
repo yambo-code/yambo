@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM CA MG
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_X_qssin
  !
  use YPP_real_time,  ONLY:RT_P_t,RT_conf,Use_FFT,i_t_start,i_t_end
@@ -16,7 +20,9 @@ subroutine RT_X_qssin
  use functions,      ONLY:theta_function
  use LIVE_t,         ONLY:live_timing
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! Work Space
  !

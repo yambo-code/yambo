@@ -5,13 +5,19 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 module RT_control
  !
  use pars,       ONLY:SP,lchlen,schlen,rZERO
  use units,      ONLY:AUT2FS
  use real_time,  ONLY:l_NE_dynamics,l_NE_with_fields,l_elph_scatt
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer                  :: CACHE_OBS_last_point
  real(SP)                 :: CACHE_OBS_INTERVAL_time

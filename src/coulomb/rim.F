@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine rim(mode,Xw)
  !
  use pars,          ONLY:SP,pi,DP
@@ -22,7 +26,9 @@ subroutine rim(mode,Xw)
  use timing_m,      ONLY:timing
  use frequency,     ONLY:w_samp
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(1)   :: mode
  type(w_samp)   :: Xw

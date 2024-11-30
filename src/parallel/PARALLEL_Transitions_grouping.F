@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_Transitions_grouping()
  !
  use pars,          ONLY:SP
@@ -17,7 +21,9 @@ subroutine PARALLEL_Transitions_grouping()
  use R_lattice,     ONLY:nXkibz
  use vec_operate,   ONLY:sort
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! Work Space
  !

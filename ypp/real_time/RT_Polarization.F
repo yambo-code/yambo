@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM 
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_Polarization(en,k,q)
  !
  use pars,           ONLY:cZERO,SP,schlen,rZERO
@@ -25,7 +29,9 @@ subroutine RT_Polarization(en,k,q)
  use DIPOLES,        ONLY:DIP_iR
  use functions,      ONLY:Fermi_fnc_derivative
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)  :: en
  type(bz_samp) :: k,q

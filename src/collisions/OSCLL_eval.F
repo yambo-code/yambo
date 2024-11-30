@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 !> @brief Calculate oscillators  <\psi_k | exp[i*(q+G)] |\psi_{k+q} > for few G-vectors
 !
 !! @param[out]      OSCLL_k	              Oscillators for each k-point
@@ -34,8 +39,9 @@ subroutine OSCLL_eval(q,k,en)
  use parallel_m,          ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,master_cpu,PAR_IND_G_b, &
 &                              PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_A2A,PAR_COM_G_b_INDEX
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !  
  type(bz_samp), intent(in) :: q,k
  type(levels),  intent(in) :: en

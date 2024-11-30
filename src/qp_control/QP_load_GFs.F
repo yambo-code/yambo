@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QP_load_GFs(bands,qp,E)
  !
  ! Using qp%GreenF/qp%GreenF_W I define here the Green Functions
@@ -12,7 +16,9 @@ subroutine QP_load_GFs(bands,qp,E)
  use electrons,     ONLY:n_sp_pol,spin,levels
  use QP_m,          ONLY:QP_t,GF_is_causal
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels) ::E
  type(QP_t)   ::qp

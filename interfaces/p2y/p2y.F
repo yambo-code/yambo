@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CH AF
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
  use P2Ym,                ONLY:pw_init, pw_close, dftdata_fmt
@@ -26,7 +30,9 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use stderr,              ONLY:intc
  use qexml_module
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)                 :: en
  type(bz_samp)                :: k

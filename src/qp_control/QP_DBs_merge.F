@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,FILES)
  !
  use pars,           ONLY:SP
@@ -15,7 +19,9 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,FILES)
  use vec_operate,    ONLY:v_is_zero
  use descriptors,    ONLY:IO_desc_duplicate
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer              :: n_dbs,n_GROUNDS
  type(QP_t)           :: qp2merge(n_dbs)

@@ -4,6 +4,10 @@
 !
 ! Authors (see AUTHORS file for details): MG DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_Haydock_VEC_COMMs(what)
  !
  ! Set up the mask and communicators for the Haydock part.  
@@ -11,7 +15,9 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
  use BS,          ONLY:BS_nT_grps
  use parallel_m,  ONLY:PAR_IND_T_groups,PAR_IND_T_Haydock,&
 &                      PAR_COM_T_Haydock,PAR_COM_WORLD,CREATE_the_COMM,ncpu
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(*),       intent(in) :: what     
  !

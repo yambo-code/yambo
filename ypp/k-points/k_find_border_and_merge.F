@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine k_find_border_and_merge(FineGd_E,FineGd_k,n_FineGd_DBs,FineGd_io_E,FineGd_io_k,Xk,l_skip_border_pts)
  !
  use R_lattice, ONLY:bz_samp,k_the_nearest,bz_samp_reset
@@ -12,7 +16,9 @@ subroutine k_find_border_and_merge(FineGd_E,FineGd_k,n_FineGd_DBs,FineGd_io_E,Fi
  use stderr,    ONLY:intc
  use com,       ONLY:msg
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer,       intent(in)     :: n_FineGd_DBs 
  type(levels),  intent(inout)  :: FineGd_io_E(n_FineGd_DBs)

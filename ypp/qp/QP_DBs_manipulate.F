@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QP_DBs_manipulate( E )
  !
  use pars,          ONLY:schlen,msg_len
@@ -17,7 +21,9 @@ subroutine QP_DBs_manipulate( E )
  use interfaces,    ONLY:QP_DBs_merge,DESC_write
  use electrons,     ONLY:levels,n_sp_pol
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)     ::E
  !

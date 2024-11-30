@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  !
  use pars,                ONLY:pi,rZERO
@@ -13,7 +17,9 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  use ELPH,                ONLY:elph_nb,ID_E_kpq,GKKP,FineGd_E_kpq_alloc,Efermi_DbGd
  use interpolate,         ONLY:INTERPOLATION_BZ
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp), intent(in)   :: k,q
  type(levels) , intent(in)   :: E

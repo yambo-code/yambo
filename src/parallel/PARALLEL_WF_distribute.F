@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
 &                                 QP_index,PLASMA_index,Bm_index,CLEAN_UP)
  !
@@ -22,7 +26,9 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  use R_lattice,       ONLY:nkbz
  use collision_ext,   ONLY:GW_NEQ_collisions
 #endif
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(PP_indexes), optional    :: K_index
  type(PP_indexes), optional    :: B_index

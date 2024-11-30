@@ -4,8 +4,12 @@
 ! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): DALV AF AM
-! 
+!
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+! 
 !
 subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
@@ -46,7 +50,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memcpy_d2d
  use gpu_m,         ONLY:have_gpu
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)        ::E
  type(bz_samp)       ::Xk,k,q

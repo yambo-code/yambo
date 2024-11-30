@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_global_Response_T_base(Xk)
  !
  use R_lattice,     ONLY:bz_samp,nXkbz,nXkibz
@@ -25,7 +29,9 @@ subroutine PARALLEL_global_Response_T_base(Xk)
  ! ID's
  use parallel_m,    ONLY:PAR_IND_Kk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp)        :: Xk
  !

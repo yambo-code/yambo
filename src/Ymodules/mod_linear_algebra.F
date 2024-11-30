@@ -5,12 +5,18 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 module linear_algebra
  !
  use pars,       ONLY:SP,schlen
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer, parameter :: USE_LK=1
  integer, parameter :: USE_SLK=2

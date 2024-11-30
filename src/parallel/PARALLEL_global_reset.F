@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include <y_memory.h>
+!
 subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  !
  use R_lattice,     ONLY:bz_samp
@@ -55,7 +59,9 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  use SLK_m,         ONLY:SLK_COM_INDEX,SLK_COM_A2A
 #endif
  !
-#include <y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp)        :: Xk
  character(*)         :: ENVIRONMENT

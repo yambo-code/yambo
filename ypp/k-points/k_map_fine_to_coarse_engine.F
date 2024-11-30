@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine k_map_fine_to_coarse_engine(zone,pts_fg,N_pts_fg,pts_cg,N_pts_cg,MAP)
  !
  use pars,                ONLY:SP,rZERO,zero_dfl
@@ -15,7 +19,9 @@ subroutine k_map_fine_to_coarse_engine(zone,pts_fg,N_pts_fg,pts_cg,N_pts_cg,MAP)
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:msg
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(*)      , intent(in)    :: zone
  integer           , intent(in)    :: N_pts_fg,N_pts_cg

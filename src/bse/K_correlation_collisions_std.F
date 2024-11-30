@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM DS HM
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 !************************* WARNING **************************
 !* In this subroutine there is a bug for finite q (iq/=1)   *
 !* plus spin-orbit that we were not able to solve yet.      * 
@@ -43,8 +48,9 @@ subroutine K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer,       intent(in)  :: iq,i_block,qindx_ID_frag
  type(bz_samp), intent(in)  :: Xk,q

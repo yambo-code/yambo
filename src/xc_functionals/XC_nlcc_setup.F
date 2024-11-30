@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AF
 !
+! headers
+!
+#include <y_memory.h>
+!
 subroutine XC_nlcc_setup()
  !
  ! reads the non-linear core-correction (NLCC) data
@@ -23,7 +27,9 @@ subroutine XC_nlcc_setup()
  use parser_m,      ONLY:parser
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,REP
-#include <y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! Work Space 
  !

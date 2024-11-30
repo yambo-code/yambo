@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM AC
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_ELPH(ID,what)
  !
  use pars,           ONLY:schlen
@@ -19,7 +23,9 @@ integer function io_ELPH(ID,what)
  use D_lattice,      ONLY:n_atoms
  use timing_m,       ONLY:timing
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer      ::ID
  character(*) ::what

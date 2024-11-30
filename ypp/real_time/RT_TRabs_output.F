@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_TRabs_output(what,how,ofile,N_files,W,TIME)
  !
  use pars,            ONLY:SP,schlen,pi,cI
@@ -19,7 +23,9 @@ subroutine RT_TRabs_output(what,how,ofile,N_files,W,TIME)
  use BS_solvers,      ONLY:BSS_desc
  use stderr,          ONLY:STRING_match,set_real_printed_length
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(*)      :: what,how
  character(schlen) :: ofile(20)

@@ -5,6 +5,15 @@
 !
 ! Authors (see AUTHORS file for details): HM IMA
 !
+! headers
+!
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+#include <y_memory.h>
+!
 subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  !
  ! Create a PETSC ShellMatrix and define the matrix-vector product
@@ -19,19 +28,15 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  !
  use BS_solvers,     ONLY:Slepc_v,BS_HAYVEC_alloc
  !
-#include <petsc/finclude/petscsys.h>
-#include <petsc/finclude/petscvec.h>
-#include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h>
-#include <slepc/finclude/slepcsys.h>
-#include <slepc/finclude/slepceps.h>
  !
  use petscmat
  use slepceps
  use petscmatdef
  use slepcepsdef
  !
-#include <y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer, intent(in)  :: i_BS_mat
  Mat,     intent(out) :: slepc_mat

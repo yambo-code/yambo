@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  !
  use pars,          ONLY:SP,cZERO,rZERO
@@ -23,7 +27,9 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_index
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp) :: Xk
  integer       :: BS_E_degs(BSS_n_eig)

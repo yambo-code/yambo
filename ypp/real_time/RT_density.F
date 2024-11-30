@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_density(en,kpt,qpt)
  !
  use pars,           ONLY:SP,schlen,cZERO
@@ -27,7 +31,9 @@ subroutine RT_density(en,kpt,qpt)
  use wave_func,      ONLY:WF,wf_ng
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)  :: en
  type(bz_samp) :: kpt,qpt

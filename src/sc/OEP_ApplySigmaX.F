@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MG
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine OEP_ApplySigmaX(E,k,q,U_x)
  !
  !  Apply the NL local X operator to the valence wfs:
@@ -36,7 +40,9 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  !
  ! I/O
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  complex(SP),intent(out)  :: U_x(nkibz,maxval(n_met_bands),fft_size)
  type(levels), intent(in) :: E
  type(bz_samp), intent(in):: k,q

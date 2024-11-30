@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details):
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_initialize(E,k,q)
  !
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_hartree,l_use_Hxc_collisions,&
@@ -50,7 +54,9 @@ subroutine RT_initialize(E,k,q)
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_G_k_range
  use parallel_int,   ONLY:PP_redux_wait
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels), intent(inout) :: E
  type(bz_samp),intent(in)    :: q,k

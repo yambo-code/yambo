@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_dos_time_plot(En,k,n_T_steps)
  !
  use units,          ONLY:HA2EV,AUT2FS
@@ -24,7 +28,9 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  use real_time,      ONLY:RT_carriers,RT_bands
  use interpolate,    ONLY:GRID_k,INTERPOLATION_driver_seed,INTERPOLATION_driver_do
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp) ::k
  type(levels)  ::En

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine ELPH_plot_gkkp(k,E,q)
  !
  use pars,                ONLY:SP,pi,schlen
@@ -20,7 +24,9 @@ subroutine ELPH_plot_gkkp(k,E,q)
  use stderr,              ONLY:intc
  use LIVE_t,              ONLY:live_timing
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp) ::k,q
  type(levels)  ::E

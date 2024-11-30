@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! Analogously to io_DIPOLES, we write the io files of BS with the
 ! information of the q-vector
 ! Just to use what is done:
@@ -26,7 +30,9 @@ integer function io_BS(iq,X,ID)
  use descriptors,   ONLY:IO_desc,IO_desc_reset,IO_desc_duplicate
  use timing_m,      ONLY:timing
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(X_t):: X 
  integer  :: iq,ID

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfiles,basename,int_kind,i_T)
  !
  use units,          ONLY:HA2EV
@@ -23,7 +27,9 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  use YPP_real_time,  ONLY:GreenF_T_and_W
 #endif
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp),    intent(in)  :: Xk,LOCAL_k
  type(levels),     intent(in)  :: Xen

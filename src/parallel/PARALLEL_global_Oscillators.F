@@ -3,6 +3,10 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA MG DS
+!
+! headers
+!
+#include<y_memory.h>
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -44,7 +48,9 @@ subroutine PARALLEL_global_Oscillators(E,Xk,q)
  use openmp,        ONLY:n_threads_OSCLL,OPENMP_set_threads
  use QP_m,          ONLY:QP_n_states,QP_table
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_inversion_restart(iq,W)
  !
  use pars,           ONLY:SP,cZERO
@@ -20,7 +24,9 @@ subroutine K_inversion_restart(iq,W)
  use BS_solvers,     ONLY:K_INV_PL
  use PHOTOLUM,       ONLY:PL
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer,             intent(inout) :: iq
  type(w_samp)        ,intent(inout) :: W

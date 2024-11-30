@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_WF_index(COMM)
  !
  ! Here I used states_to_load to define the WF_linear index.
@@ -16,7 +20,9 @@ subroutine PARALLEL_WF_index(COMM)
 &                          COMM_copy,PAR_COM_density
  use wave_func,       ONLY:states_to_load
  use parallel_int,    ONLY:PP_redux_wait
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(yMPI_comm), optional :: COMM
  !

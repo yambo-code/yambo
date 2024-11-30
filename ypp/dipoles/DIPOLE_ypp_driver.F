@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine DIPOLE_ypp_driver(k,E,q)
  !
  use pars,           ONLY:SP,rZERO,schlen
@@ -26,7 +30,9 @@ subroutine DIPOLE_ypp_driver(k,E,q)
  use parser_m,       ONLY:parser
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k,INTERP_obj
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp)  :: k,q
  type(levels)   :: E

@@ -4,6 +4,10 @@
 ! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
+!
+! headers
+!
+#include<y_memory.h>
 ! 
 subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
@@ -36,7 +40,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  use stderr,        ONLY:intc
  use descriptors,   ONLY:IO_desc,IO_desc_reset,IO_desc_add
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)  ::en,Xen
  type(bz_samp) ::Xk,k,q
@@ -434,7 +440,9 @@ subroutine check_qp_states(QP_table,QP_state,qp,en,Xen)
   !  
   use QP_m,          ONLY:QP_t
   use electrons,     ONLY:n_sp_pol,levels
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
   !
   !
   type(QP_t), intent(in)      :: qp

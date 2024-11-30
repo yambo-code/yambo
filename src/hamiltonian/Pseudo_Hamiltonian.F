@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  !
  use pars,          ONLY:SP,cZERO
@@ -32,7 +36,9 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  use real_time,     ONLY:Ho_plus_sigma,H_pseudo_eq
 #endif
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp) :: Xk
  type(levels)  :: Xen

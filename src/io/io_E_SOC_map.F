@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_E_SOC_map(En,kpt,ID)
  !
  use electrons,      ONLY:levels
@@ -12,7 +16,9 @@ integer function io_E_SOC_map(En,kpt,ID)
  use IO_m,           ONLY:read_is_on,write_is_on,file_is_present
  use IO_int,         ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels) :: En
  type(bz_samp):: kpt

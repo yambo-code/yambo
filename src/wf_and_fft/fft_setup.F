@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  !
@@ -30,7 +34,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use FFT_m,          ONLY:mklgpu_desc
 #endif
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer :: iG_max,iGo_max,ierr
  logical :: ONLY_SIZE

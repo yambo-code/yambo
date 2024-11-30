@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine K_screened_interaction(X,Xw,q,io_X_err)
  !
@@ -26,7 +30,9 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use devxlib,      ONLY:devxlib_memcpy_d2d,devxlib_memcpy_h2d,devxlib_memcpy_d2h
  use gpu_m,        ONLY:have_gpu
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp) ::q
  type(X_t)     ::X

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DSDV
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine p2y_atmproj(filename,k)
  !
  use pars,                  ONLY:SP,DP,schlen
@@ -17,7 +21,9 @@ subroutine p2y_atmproj(filename,k)
  use atmproj_tools_module,  ONLY:atmproj_read_ext !,nwfcx
  use qe_pseudo_m,           ONLY:nsp
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(schlen), intent(in) :: filename
  type(bz_samp),     intent(in) :: k

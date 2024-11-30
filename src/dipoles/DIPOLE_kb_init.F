@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
  !
  use pars,                ONLY:SP,pi
@@ -18,7 +22,9 @@ subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table, &
 &                              pp_factor,pp_n_l_max
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels),  intent(in)    :: Xen
  type(DIPOLE_t),intent(inout) :: Dip

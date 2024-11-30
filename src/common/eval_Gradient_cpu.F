@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM MG AF
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  !
  ! The gradient of a periodic function f(r):
@@ -23,7 +27,9 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  use R_lattice,     ONLY:g_vec,ng_vec
  use wave_func,     ONLY:wf_ng
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer,          intent(in) ::spinor_size
  complex(SP),      intent(in) ::f(fft_size,spinor_size)

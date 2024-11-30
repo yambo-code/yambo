@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine electrons_magnetization(Xk,Xen)
  !
  use pars,           ONLY:SP,lchlen
@@ -18,7 +22,9 @@ subroutine electrons_magnetization(Xk,Xen)
  use com,            ONLY:msg,of_open_close
  use xc_functionals, ONLY:magn
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp) ::Xk
  type(levels)  ::Xen

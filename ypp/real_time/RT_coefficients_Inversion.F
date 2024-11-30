@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM MG
 !
+! headers
+!
+#include<y_memory.h>
+!
 !> @brief Polarization coefficient inversion see Sec. III in PRB 88, 235113 (2013) 
 !!
 !! @param[in]       NW          order of the response functions 
@@ -22,7 +26,9 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  use fields,          ONLY:Efield
  use interfaces,      ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra,  ONLY:INV
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer,     intent(in)   :: NW,NX
  real(SP),    intent(in)   :: P(NE_steps),W(NW),T_period

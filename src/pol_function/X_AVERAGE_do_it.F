@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<dev_defs.h>
+!
 subroutine X_AVERAGE_do_it(what,X_par)
  !
  ! The procedures to copy from Host to Device, that are included here, maybe not needded.
@@ -17,7 +21,6 @@ subroutine X_AVERAGE_do_it(what,X_par)
  use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2d,devxlib_memset_d
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
  !
-#include<dev_defs.h>
  !
  implicit none
  !

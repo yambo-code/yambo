@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine ELPH_atomic_amplitude(q)
  !
  use pars,                ONLY:SP
@@ -23,7 +27,9 @@ subroutine ELPH_atomic_amplitude(q)
  use linear_algebra,      ONLY:DIAGO,USE_LK
  use stderr,              ONLY:intc
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  type(bz_samp)::q
  !
  ! Work Space 

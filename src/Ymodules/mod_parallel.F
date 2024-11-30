@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 module parallel_m
  !
  ! Collective Operations (from  http://linux.die.net/man/3/mpi_lor )
@@ -43,7 +47,9 @@ module parallel_m
 #endif
  !
 #if !defined _io_lib
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
 #endif
  !
 #if defined _MPI

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  !
  ! Notice that input/output k-points for the interpolation are in iku units
@@ -17,7 +21,9 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  use interpolate,       ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells,INTERP_FineGd
  use interpolate_tools, ONLY:get_ID
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp), intent(in)           :: k
  real(SP),      intent(in), optional :: R1D(:,:),R2D(:,:,:)

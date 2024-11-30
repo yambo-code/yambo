@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
  !
  use pars,           ONLY:SP,schlen,pi,DP
@@ -32,7 +36,9 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
 &                         XC_LDA_X,XC_CORRELATION,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)  ::Xen,En
  type(bz_samp) ::Xk,q,k

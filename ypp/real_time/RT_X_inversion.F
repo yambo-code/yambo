@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM MG
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effective)
  !
  use pars,           ONLY:SP,pi
@@ -15,7 +19,9 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
  use units,          ONLY:AUT2FS
  use com,            ONLY:msg
  use LIVE_t,         ONLY:live_timing
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  real(SP),     intent(in)    :: RT_P_probe(RT_conf%T_n_steps,N_probes,3),Harmonic_Frequency(0:X_order,N_probe_frequencies)
  complex(SP),  intent(out)   :: Susceptibility(0:X_order,N_probe_frequencies),X_effective(0:X_order,N_probe_frequencies,3)

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  !
  use pars,          ONLY:SP
@@ -14,7 +18,9 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  use electrons,     ONLY:levels,spin
  use R_lattice,     ONLY:qindx_S,bz_samp
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  type(levels) ::E
  type(bz_samp)::q,k
  type(w_samp) ::X_life_W

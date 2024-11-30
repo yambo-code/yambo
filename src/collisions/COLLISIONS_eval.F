@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<collisions.h>
+!
 subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! The EOM looks like:
@@ -232,7 +236,6 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
    subroutine CHECK_and_ALLOC(COLL)
      !
-#include<collisions.h>
      !
      ! Define io_COLLs_header to handle either serial or parallel I/O
      !

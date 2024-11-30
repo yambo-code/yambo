@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  !Procedure for non-perturbative solution of Dyson equation.
@@ -48,7 +52,9 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use IO_m,          ONLY:NONE,RD,RD_CL,OP_RD,OP_RD_CL,io_SCREEN
  use stderr,        ONLY:intc
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  type(levels)::en,Xen
  type(bz_samp)::Xk,k,q
  type(X_t):: X

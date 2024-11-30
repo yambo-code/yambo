@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QP_DBs_initialize()
  !
  ! QPDB_states -> input file
@@ -18,7 +22,9 @@ subroutine QP_DBs_initialize()
  use YPPm,      ONLY:l_QP_DBs_create_and_modify,n_QP_dbs,&
 &                    QP_user_corrections,QP_db_input_control,l_QP_DBs_manipulate
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  ! 
  ! Work Space
  !

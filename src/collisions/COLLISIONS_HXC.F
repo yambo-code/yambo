@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  ! HXC collisions 
@@ -39,7 +43,9 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use hamiltonian,   ONLY:B_mat_index
  use fft_m,         ONLY:fft_size
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)             ::E
  type(bz_samp)            ::k,q,Xk

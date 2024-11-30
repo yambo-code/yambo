@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  !
  use pars,                ONLY:SP
@@ -19,7 +23,9 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,alat,mag_syms,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer, intent(out)   :: old_nsym
  real(SP),intent(out)   :: old_dl_sop(3,3,nsym)

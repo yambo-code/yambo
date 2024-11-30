@@ -5,11 +5,17 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 module PHOTOLUM
  !
  use BS,         ONLY:l_BS_photolum
  use pars,       ONLY:SP
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  real(SP)                 :: PL_prefactor
  !

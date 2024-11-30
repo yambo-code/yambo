@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM MG DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 module real_time
  !
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt,l_phel_scatt
@@ -16,7 +20,9 @@ module real_time
  use RT_occupations, ONLY:RT_obj_occupation,RT_obj_occupation_alloc,RT_obj_occupation_free
  use electrons,      ONLY:E_fine_grid
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! CORE LOGICALS
  !

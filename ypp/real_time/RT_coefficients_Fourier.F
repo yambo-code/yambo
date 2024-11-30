@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_coefficients_Fourier(nt,P,nw,W,X,X_err,deltaW)
  !
  ! Here I calculate the coefficients of a given Fourier series
@@ -13,7 +17,9 @@ subroutine RT_coefficients_Fourier(nt,P,nw,W,X,X_err,deltaW)
  use YPP_real_time,  ONLY:i_t_start,RT_conf
  use fields,         ONLY:EtoT
  use real_time,      ONLY:RT_step
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer,     intent(in)   :: nw,nt
  real(SP),    intent(in)   :: P(nt),W(nw),deltaW

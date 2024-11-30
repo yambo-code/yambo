@@ -4,6 +4,11 @@
 !
 ! Authors (see AUTHORS file for details): AF
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
 ! modify it under the terms of the GNU General Public
@@ -44,7 +49,6 @@
 !
 !=====================================================================
 !
-#include<dev_defs.h>
 include "mkl_dfti_omp_offload.f90"
 !
 module mklfft_gpu
@@ -59,7 +63,9 @@ use mkl_dfti_omp_offload
 contains
 subroutine fft_3d_mklgpu(c_d,n,fft_sign,mklgpu_desc)
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer                :: fft_sign,n(3)
  type(dfti_descriptor), pointer :: mklgpu_desc

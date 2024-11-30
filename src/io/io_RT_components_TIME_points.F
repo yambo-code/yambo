@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_RESTART_info,UNLIMITED_time,TYP)
  !
  use pars,           ONLY:IP,SP,schlen,IP_YIO
@@ -18,7 +22,9 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_RESTART_info,UNLIMITED_ti
  use IO_m,           ONLY:write_is_on,read_is_on
  use IO_int,         ONLY:def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer,       intent(in)    :: ID,VAR_SZ
  logical,       intent(in)    :: load_RESTART_info,UNLIMITED_time

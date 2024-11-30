@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MB, AF
 !
+! headers
+!
+#include <y_memory.h>
+!
 subroutine MPA_ALLOC_parallel(MPA_E_par,MPA_R_par,NG,NW,mode)
   !
   use pars,          ONLY:SP,DP,cZERO,cONE,cI
@@ -12,7 +16,9 @@ subroutine MPA_ALLOC_parallel(MPA_E_par,MPA_R_par,NG,NW,mode)
   use parallel_int,  ONLY:PARALLEL_live_message
   use gpu_m,         ONLY:have_gpu
   !
-#include <y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
   !
   type(PAR_matrix) :: MPA_E_par,MPA_R_par
   integer          :: NG,NW

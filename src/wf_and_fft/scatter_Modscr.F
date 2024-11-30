@@ -5,7 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MGDV
 !
+! headers
+!
 #include<dev_defs.h>
+!
 !
 subroutine scatter_ModScr(isc,mu)
  !

@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AMDSAFFA
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 !> @callgraph
 !> @callergraph
 subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
@@ -55,8 +60,9 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_memcpy_d2h,devxlib_memcpy_h2d
  use timing_m,      ONLY:timing
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(PAR_matrix), target :: X_par
  type(levels)         :: Xen

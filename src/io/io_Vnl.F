@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_Vnl(Dip,Xen,ID)
  !
  use pars,          ONLY:SP,schlen
@@ -17,7 +21,9 @@ integer function io_Vnl(Dip,Xen,ID)
  use IO_m,          ONLY:io_sec,io_status,read_is_on,write_is_on,io_extension,frag_WF
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(DIPOLE_t)::Dip
  type(levels)::Xen

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PROJECTION_plot( what, N, Ns, bands, W, TIME, OBS_K, OBS_B)
  !
  use pars,           ONLY:SP,schlen
@@ -20,7 +24,9 @@ subroutine PROJECTION_plot( what, N, Ns, bands, W, TIME, OBS_K, OBS_B)
  use interpolate,    ONLY:GRID_k
  use stderr,         ONLY:intc,real2ch,STRING_remove
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(*)       :: what
  integer            :: N,Ns,bands(2)

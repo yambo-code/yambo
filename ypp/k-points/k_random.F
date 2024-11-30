@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine k_random(Xk,No_Weight)
  !
  use pars,                ONLY:SP,DP,lchlen
@@ -18,7 +22,9 @@ subroutine k_random(Xk,No_Weight)
  use parallel_int,        ONLY:PP_wait,PP_redux_wait,PARALLEL_index 
  use parser_m,            ONLY:parser 
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp), intent(in) :: Xk
  logical, intent(in)       :: No_Weight

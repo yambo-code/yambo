@@ -5,10 +5,16 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 module plasma
  !
  use pars, ONLY :SP
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! NOTE: Plasma_tab is on bg (big grid), plasma_tab_m1 points to cg (coarse_grid).
  !       Plasma_grid connects the two

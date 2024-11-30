@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MG AC
 !
+! headers
+!
+#include<y_memory.h>
+!
 module nl_optics
  !
  use descriptors,     ONLY:IO_desc
@@ -12,7 +16,9 @@ module nl_optics
  use electrons,       ONLY:levels
  use real_time,       ONLY:NE_steps
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! Long range correction field
  !

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  !
  use pars,          ONLY:SP
@@ -23,7 +27,9 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  use parallel_int,  ONLY:PP_wait
  use parallel_m,    ONLY:master_cpu,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp) :: Xk
  type(levels)  :: Xen

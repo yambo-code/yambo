@@ -3,6 +3,10 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
+!
+! headers
+!
+#include<y_memory.h>
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -31,7 +35,9 @@ subroutine Build_LSEX_collisions(k,q,i_qp,COLL)
  use QP_m,           ONLY:QP_table,QP_nk,QP_n_states
  use R_lattice,      ONLY:bz_samp,qindx_S
  ! 
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(bz_samp), intent(in)  :: k,q
  integer,       intent(in)  :: i_qp

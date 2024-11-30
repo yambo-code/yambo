@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_ELPH_initialize(E,k,q)
  ! 
  use parser_m,       ONLY:parser
@@ -14,7 +18,9 @@ subroutine RT_ELPH_initialize(E,k,q)
  use R_lattice,      ONLY:bz_samp
  use ELPH,           ONLY:PH_freqs_sq,PH_W_debye,GKKP_ep_sq,GKKP_pe_sq,l_GKKP_expanded_DB_exists,elph_nQ
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)             :: E
  type(bz_samp),intent(in) :: k,q

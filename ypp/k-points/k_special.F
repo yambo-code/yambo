@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine k_special(LIST_only)
  !
  ! Special k-points. Output in IKU.
@@ -27,7 +31,9 @@ subroutine k_special(LIST_only)
  use YPPm,                ONLY:K_transform,SPECIAL_k,n_SPECIAL_k_MAX,SPECIAL_k_label,coo_out
  use LIVE_t,              ONLY:live_timing_is_on
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! Input 
  !

@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 subroutine WF_alloc(WF,k_extrema_only)
  !
  use pars,          ONLY:cZERO
@@ -15,8 +20,9 @@ subroutine WF_alloc(WF,k_extrema_only)
  use gpu_m,         ONLY:have_gpu
  use devxlib,       ONLY:devxlib_memset_d
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(WAVEs)           :: WF
  logical, intent(in)   :: k_extrema_only

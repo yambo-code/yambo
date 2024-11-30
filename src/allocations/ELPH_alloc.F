@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
  !
  use pars,          ONLY:rZERO,cZERO,schlen
@@ -19,7 +23,9 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
  use parallel_m,    ONLY:PAR_nQ_bz
  use stderr,        ONLY:STRING_split
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  character(*)            ::what
  type(GKKP_me), optional ::GKKP

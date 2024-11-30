@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV, COMM, COMM_name)
  !
  ! General, multi-purpose M <-> M transfer
@@ -17,7 +21,9 @@ subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  use D_lattice,      ONLY:i_space_inv
  use matrix,         ONLY:PAR_matrix,I_do_SND,I_do_RCV,TRANSFER_world,PAR_to_PAR_comm_NAME
  use timing_m,       ONLY:timing
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(PAR_matrix), optional :: M_in
  type(PAR_matrix), optional :: M_out

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MG
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine eval_GradOperator()
  !
  ! On the fft grid the gradient of a periodic function f(r) acts as
@@ -23,7 +27,9 @@ subroutine eval_GradOperator()
  use FFT_m,     ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
  use D_lattice, ONLY:R_m_R,Grad_R
  use R_lattice, ONLY:ng_vec,g_vec
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  ! Work space
  !

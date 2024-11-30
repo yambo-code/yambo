@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AMAFDS
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 integer function eval_G_minus_G(iG,iGo,COMM)
  !
@@ -24,7 +28,9 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  use gpu_m,        ONLY:have_gpu
  use timing_m,     ONLY:timing
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  integer :: iG,iGo
  type(yMPI_comm), optional :: COMM

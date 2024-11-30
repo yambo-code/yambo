@@ -5,8 +5,15 @@
 !
 ! Authors (see AUTHORS file for details): BM
 !
-module shellmat_module
+! headers
+!
 #include <petsc/finclude/petscmat.h>
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+!
+module shellmat_module
   use petscmat
   Mat::R,C
 end module shellmat_module
@@ -37,12 +44,6 @@ subroutine K_stored_in_a_nest_matrix(i_BS_mat,slepc_mat)
 ! | R     C  |
 ! |-C^*  -R^T|
 !
-#include <petsc/finclude/petscsys.h>
-#include <petsc/finclude/petscvec.h>
-#include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h>
-#include <slepc/finclude/slepcsys.h>
-#include <slepc/finclude/slepceps.h>
 !
   use pars,           ONLY:cI,cONE
   use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks

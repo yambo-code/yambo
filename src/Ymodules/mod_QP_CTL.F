@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 module QP_CTL_m
  !
  use pars,      ONLY:SP,schlen,lchlen,n_QP_actions_MAX
@@ -180,7 +184,9 @@ module QP_CTL_m
    end subroutine
    !
    subroutine QP_actions_reset
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
      integer :: i_a
      n_QP_actions=0
      do i_a=1,n_QP_actions_MAX

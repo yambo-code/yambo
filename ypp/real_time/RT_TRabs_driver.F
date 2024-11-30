@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_transient_absorption(Xen,Xk,Xq)
  !
  use drivers,         ONLY:l_rt_carriers_in_use
@@ -29,7 +33,9 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  use com,             ONLY:msg
  use interpolate,     ONLY:INTERPOLATE_is_quiet
  !
-#include<y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type(levels)      :: Xen
  type(bz_samp)     :: Xk,Xq

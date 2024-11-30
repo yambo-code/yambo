@@ -5,14 +5,20 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include <dev_defs.h>
+#include <y_memory.h>
+!
 module wave_func
  !
  use pars,           ONLY:SP
  use devxlib,        ONLY:devxlib_mapped
  use gpu_m,          ONLY:have_gpu
  !
-#include <dev_defs.h>
-#include <y_memory.h>
+ USE_MEMORY
+ !
+ implicit none
  !
  type WAVEs 
    integer              :: b(2)      ! band range 

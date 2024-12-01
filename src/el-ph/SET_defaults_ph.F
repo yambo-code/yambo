@@ -19,6 +19,8 @@ subroutine SET_defaults_ph(INSTR,IND,OD,COM_DIR)
  !
  include 'branch.inc'
  !
+ call SET_defaults(INSTR,IND,OD,COM_DIR)
+ !
  ! ELPH
  !
  ph_modes=0

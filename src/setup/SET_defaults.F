@@ -49,7 +49,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH,BSS_desc
  use descriptors,ONLY:IO_desc_reset
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC
  use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_maxit,&
  &                    BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_mpd
 #endif
@@ -65,46 +65,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
  use BS,         ONLY:l_BS_anomalous_Hall
  use PHOTOLUM,   ONLY:PL_weights
-#if defined _SC 
- use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
-&                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
-&                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
-&                     l_SC_nl_mix,SC_kind,SC_perturbation,SC_desc,SC_neq_kind,SC_last_coh_it
-#endif
-#if defined _SC || defined _RT || defined _QED || defined _NL
- use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff,COLLISIONS_CV_only, &
-&                         COLLISIONS_load_SP,COLLISIONS_compr
- use hamiltonian,    ONLY:H_potential
-#endif
-#if defined _RT || defined _YPP_RT
- use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_o_file_is_open,&
-&                     RT_headings,YPP_append,Gr_desc,TIME_STEP_desc,RT_desc
- use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,Gless_RESTART_RT_IO_t,SAVE_G_history,RT_ctl_db,&
-&                     CACHE_OBS_last_point,CACHE_OBS_INTERVAL_time,CACHE_OBS_INTERVAL_time_INPUT,   &
-&                     CACHE_OBS_steps,CACHE_OBS_steps_now,RT_NAN_found
- use RT_lifetimes,ONLY:RT_life_extrap_times
- use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_deph_range,&
-&                     Gr_kind,two_alpha,RAD_LifeTime,Phase_LifeTime,&
-&                     NE_tot_time,NE_MEM_treshold,RT_eh_en,l_update_SOC,&
-&                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,&
-&                     i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps,RT_step_manual_prefactor,&
-&                     RT_deph_deg_thresh,RT_deph_cv_only,NE_time_step_update_manual,&
-&                     NE_time_step_update_last_point,NE_time_step_update_jump,NE_time_step_update_jump_INPUT, &
-&                     NE_initial_time_step_update,NE_step_update_treshold
- use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
-&                     A_tot,A_ind,A_ext
- use plasma,     ONLY:PLASMA_redux_percent
-#endif
-#if defined _NL
- use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,NL_initial_versor,     &
-&                     NL_verb_name,NL_bands,NL_desc,n_angles,NL_rot_axis
- use fields,     ONLY:Efield,Efield_reset
-#endif
-#if defined _SC
- use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
-&                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
- use electric,    ONLY:l_P_periodic,l_force_SndOrd
-#endif
 #if defined _YAML_OUTPUT
  use com,         ONLY:depth_yaml
 #endif
@@ -403,14 +363,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
    enddo
  enddo
  !
-#if defined _RT
- !
- ! RT control
- !
- RT_ctl_db="none"
- !
-#endif
- !
  ! BS/BSS
  !
  BS_n_g_W=-1
@@ -459,7 +411,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  call IO_desc_reset(BSS_desc)
  !
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC
  BSS_slepc_matrix_format='shell'
  BSS_slepc_approach='none'
  BSS_slepc_precondition='none'
@@ -497,206 +449,5 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  l_BS_anomalous_Hall=.false.
  PL_weights=(/1._SP,1._SP,1._SP/)
- !
-#if defined _SC || defined _RT || defined _QED || defined _NL
- !
- call COLLISIONS_naming( 0 , "all" )
- !
- ! COLLISIONS I/O
- !
-# if defined _PAR_IO
- COLLISIONS_cutoff=0.0000_SP
-# else
- COLLISIONS_cutoff=0.0005_SP
-# endif
- !
-#if defined _NL
- COLLISIONS_cutoff=0.0005_SP
-#endif
- !
- COLLISIONS_CV_only=.FALSE.
- COLLISIONS_load_SP=.FALSE.
- COLLISIONS_compr  =.FALSE.
- !
- H_potential="NONE"
- !
-#endif
- !
-#if defined _SC
- ! SC
- !
- SC_fft_size=0
- SC_iterations=100
- SC_cycle_mixing=0.5_SP
- SC_rho_threshold=1.E-5_SP
- SC_up_W_iters=0
- SC_potential='NONE'
- SC_kind=0
- SC_perturbation=EXT_NONE
- OEP_approx='n'
- compatible_SC_DB=.FALSE.
- found_SC_DB=.FALSE.
- l_Mean_Potential=.FALSE.
- l_SC_diagonal=.FALSE.
- l_SC_nl_mix =.FALSE.
- l_NSC_shot  =.FALSE.
- !
- SC_neq_kind   ='none'
- SC_last_coh_it=50
- !
- call IO_desc_reset(SC_desc)
- !
- l_P_periodic   =.FALSE.
- l_force_SndOrd =.FALSE.
- !
-#endif
- !
-#if defined _RT
- !
- ! Real Time
- !
- n_ext_fields=0
- do i1=1,n_ext_fields_max
-   call Efield_reset(Efield(i1))
-   Efield(i1)%t_initial=RT_step
- enddo
- !
- call A_vecpot_reset(A_tot)
- call A_vecpot_reset(A_ext)
- call A_vecpot_reset(A_ind)
- !
- ! RT dynamics 
- !
- l_update_SOC=.FALSE.
- !
- ! RT current 
- !
- RT_step_manual_prefactor=0._SP
- RT_step=0.010*FS2AUT
- NE_steps=1
- NE_time=0._SP
- NE_tot_time= 1000._SP*FS2AUT
- !
- NE_time_step_update_last_point = 1
- NE_time_step_update_jump       = 0._SP
- NE_time_step_update_jump_INPUT  = 0._SP
- NE_initial_time_step_update    = 0._SP
- NE_step_update_treshold        = 0.1_SP
- NE_time_step_update_manual     =-1.0_SP
- !
- CACHE_OBS_steps      = 0
- CACHE_OBS_steps_now  = 0
- CACHE_OBS_last_point = 0
- CACHE_OBS_INTERVAL_time       = 0._SP
- CACHE_OBS_INTERVAL_time_INPUT  = 0._SP
- !
- G_MEM_steps = 2
- i_MEM_old   = 0
- i_MEM_prev  = 0
- i_MEM_now   = 1
- !
- integrator_step=1
- Integrator_name='RK2'
- !
- RAD_LifeTime = 0._SP
-#if defined _NL
- RAD_LifeTime = -1._SP*FS2AUT  ! Automatic set equal to the dephasing
-#endif
- Phase_LifeTime = 0._SP
- RT_deph_deg_thresh = 1.E-5_SP
- RT_deph_cv_only =.FALSE.
- RT_deph_range=-1._SP
- !
- NE_MEM_treshold=0._SP
- RT_nk=0
- RT_eh_en=0._SP
- RT_scatt_tresh=-1._SP/HA2EV
- PLASMA_redux_percent=100._SP
- DbGd_EE_percent=0._SP
- !
- ! Scattering
- !
- RT_life_extrap_times(1)=-1._SP*FS2AUT
- RT_life_extrap_times(2)=-1._SP*FS2AUT
- !
- ! G_retarded
- !
- Gr_kind="HS"
- two_alpha=1
- !
- ! RT_ctl
- !
- OBS_RT_IO_t%INTERVAL_time_INPUT              =2._SP*FS2AUT
- CARR_RT_IO_t%INTERVAL_time_INPUT             =2._SP*FS2AUT
- OUTPUT_RT_IO_t%INTERVAL_time_INPUT           =5._SP*FS2AUT
- Gless_RESTART_RT_IO_t%INTERVAL_time_INPUT    =1._SP*FS2AUT
- SAVE_G_history=.FALSE.
- RT_NAN_found  =.FALSE.
- !
- ! RT_output
- !
- n_RT_headings=0
- N_RT_o_files=0
- RT_o_file_is_open=.FALSE.
- RT_o_file_long= " "
- RT_o_file_short= " "
- RT_headings= " "
- YPP_append=" "
- !
- call IO_desc_reset(RT_desc)
- call IO_desc_reset(Gr_desc)
- call IO_desc_reset(TIME_STEP_desc)
- !
-#endif
- !
-#if defined _NL
- !
- NE_tot_time   =  -1._SP*FS2AUT 
- Integrator_name='INVINT'
- NL_bands      =(/0,0/)
- NL_correlation="IPA"
- NL_er         =(/-1._SP,-1._SP/)/HA2EV
- n_frequencies =0
- n_angles      =0
- NL_rot_axis   =(/0._SP,0._SP,0._SP/)
- NL_initial_versor=(/0._SP,0._SP,0._SP/)
- NL_damping    =0.2_SP/HA2EV
- NL_LRC_alpha  =0._SP
- !
- do i1=1,n_ext_fields_max
-   call Efield_reset(Efield(i1))
-   Efield(i1)%t_initial=RT_step
-   Efield(i1)%frequency=0.1_SP/HA2EV
-   Efield(i1)%intensity=0.0_SP
-   Efield(i1)%FWHM=2._SP*FS2AUT
-   Efield(i1)%ef_name="none"
-   Efield(i1)%versor =(/0._SP,0._SP,0._SP/)
-   Efield(i1)%ef_pol ="linear"
- enddo
- !
- Efield(1)%versor =(/0._SP,0._SP,0._SP/)
- Efield(1)%intensity=1000._SP*kWCMm22AU
- Efield(1)%ef_name="SOFTSIN"
- NL_verb_name='high'
- !
- call IO_desc_reset(NL_desc)
- !
-#endif
- !
-#if defined _SC
- !
- ! Magnetic
- !
- MAG_B=0._SP
- MAG_radius=0._SP
- MAG_hamiltonian_type=' '
- MAG_pauli=.FALSE.
- MAG_landau=.FALSE.
- MAG_gauge='SYMM'
- MAG_psi=0._SP
- MAG_theta=0._SP
- phase_trick=.FALSE.
- !
-#endif
  !
 end subroutine

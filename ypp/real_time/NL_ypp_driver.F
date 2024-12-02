@@ -378,7 +378,7 @@ subroutine NL_ypp_driver(en,k)
      ! ... ordering and frequency step (defines the P(t) periodicity)
      !
      use pars,           ONLY:SP,lchlen,schlen
-     use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1
+     use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1,AU2nAmpere
      use YPP_real_time,  ONLY:max_n_of_paths
      use RT_control,     ONLY:RT_output
      use com,            ONLY:msg,of_open_close
@@ -434,13 +434,13 @@ subroutine NL_ypp_driver(en,k)
      if(l_sigma) then
        headings(2:7,0)=(/'S/Im(x)','S/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
        headings(2:7,1)=(/'S/Im(x)','S/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
-       if(X_order>=2)  headings(2:7,2)=(/'X/Im[cm/stV](x)','X/Re[cm/stV](x)','X/Im[cm/stV](y)',   &
-&                                        'X/Re[cm/stV](y)','X/Im[cm/stV](z)','X/Re[cm/stV](z)'/)
+       if(X_order>=2)  headings(2:7,2)=(/'X/Im[nA/V](x)','X/Re[nA/V](x)','X/Im[nA/V](y)',   &
+&                                        'X/Re[nA/V](y)','X/Im[nA/V](z)','X/Re[nA/V](z)'/)
        do i_order=3,X_order,1
          oexp=trim(intc(i_order-1))
-         headings(2:7,i_order)=(/'S/Im[cm/stV]^'//oexp//'(x)','S/Re[cm/stV]^'//oexp//'(x)',&
-&                              'S/Im[cm/stV]^'//oexp//'(y)','S/Re[cm/stV]^'//oexp//'(y)',&
-&                              'S/Im[cm/stV]^'//oexp//'(z)','S/Re[cm/stV]^'//oexp//'(z)'/)
+         headings(2:7,i_order)=(/'S/Im[nA/V]^'//oexp//'(x)','S/Re[nA/V]^'//oexp//'(x)',&
+&                              'S/Im[nA/V]^'//oexp//'(y)','S/Re[nA/V]^'//oexp//'(y)',&
+&                              'S/Im[nA/V]^'//oexp//'(z)','S/Re[nA/V]^'//oexp//'(z)'/)
        enddo
      endif
 
@@ -465,8 +465,14 @@ subroutine NL_ypp_driver(en,k)
          !
          Unit_of_Measure = 1._SP
          !
-         if (i_order==0) Unit_of_Measure =  SVCMm12VMm1/AU2VMm1
-         if (i_order> 1) Unit_of_Measure = (SVCMm12VMm1/AU2VMm1)**(i_order-1)  
+	 if(l_xhi) then
+           if (i_order==0) Unit_of_Measure =  SVCMm12VMm1/AU2VMm1
+           if (i_order> 1) Unit_of_Measure = (SVCMm12VMm1/AU2VMm1)**(i_order-1)  
+	 else
+	   ! Not sure of these units to be fixed 
+           if (i_order==0) Unit_of_Measure =  AU2nAmpere/AU2VMm1
+           if (i_order> 1) Unit_of_Measure = (AU2nAmpere/AU2VMm1)**(i_order-1)  
+	 endif
          !
          VALUEs(1)  =Probe_Frequency(i_f)*HA2EV
 	 if(l_xhi) then

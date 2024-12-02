@@ -285,7 +285,7 @@ subroutine NL_ypp_driver(en,k)
  !
  contains
    !
-   subroutine plot_X_angle()
+   subroutine plot_X_angle(what)
        !
      ! ... ordering and frequency step (defines the P(t) periodicity)
      !
@@ -405,6 +405,14 @@ subroutine NL_ypp_driver(en,k)
      ! X^1 is adimensional
      ! X^0 I don't know :-)
      ! X^n n>2 [cm/stV]^{n-1}
+     !
+     if (index(what,"XHI")>0) then
+       l_xhi=.true.
+     elif(index(what,"SIGMA")>0)
+       l_sigma=.true.
+     else
+       call error("Wrong call to the subroutine plot_X_effective"
+     endif
      !
      headings(2:7,0)=(/'X/Im(x)','X/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
      headings(2:7,1)=(/'X/Im(x)','X/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)

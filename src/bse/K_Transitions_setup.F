@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS IMA
 !
-subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
+subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands,l_neq_carriers_in_use)
  !
  ! Filling of Transition groups
  !
@@ -33,11 +33,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
  use BS,           ONLY:l_BS_magnons,l_BS_photolum
-#if defined _RT
- use electrons,    ONLY:n_full_bands,n_met_bands
- use drivers,      ONLY:l_rt_carriers_in_use
- use RT_control,   ONLY:EQ_Transitions,EQ_NoOcc
-#endif
  !
 #include<y_memory.h>
  !
@@ -46,6 +41,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
  type(DIPOLE_t),  intent(in) :: Dip
  integer,         intent(in) :: iq
  integer,         intent(in) :: V_bands(2),C_bands(2)
+ logical,         intent(in) :: l_neq_carriers_in_use
  !
  ! Work Space
  !
@@ -129,7 +125,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
                if (i_res_ares==2) then; ib1=ic; ib2=iv; endif
                !
                if (.not.K_Transition_check(Ken,Dip,iq,ik,ikp,ib1,ib2,i_sp_c,i_res_ares,&
-&                                          E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
+&                       E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL,l_neq_carriers_in_use)) cycle
                !
                i_T_now=i_T_now+1
                i_T_group_now=T_group(i_T_now)
@@ -240,11 +236,6 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
  use BS,           ONLY:l_BS_magnons
-#if defined _RT
- use electrons,    ONLY:n_full_bands,n_met_bands
- use drivers,      ONLY:l_rt_carriers_in_use
- use RT_control,   ONLY:EQ_Transitions,EQ_NoOcc
-#endif
  !
 #include<y_memory.h>
  !
@@ -252,7 +243,7 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  type(bz_samp),   intent(in) :: Xk
  type(DIPOLE_t),  intent(in) :: Dip
  integer,         intent(in) :: iq
- integer,         intent(out):: V_bands(2),C_bands(2)
+ integer,         intent(in) :: V_bands(2),C_bands(2)
  !
  ! Work Space
  !
@@ -269,20 +260,6 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  !  
  BS_K_dim=0
  BS_nT_at_k_tmp=0
- !
- V_bands=(/BS_bands(1),maxval(Ken%nbm)/)
- C_bands=(/minval(Ken%nbf)+1,BS_bands(2)/)
-#if defined _RT
- ! Bands range. In the _RT case %nbf and %nbm turn metallic when carriers are used.
- if (l_rt_carriers_in_use.and.EQ_Transitions) then
-   V_bands=(/BS_bands(1),maxval(n_met_bands)/)
-   C_bands=(/minval(n_full_bands)+1,BS_bands(2)/)
- endif
- if (EQ_NoOcc) then
-   V_bands=BS_bands
-   C_bands=BS_bands
- endif
-#endif
  !
  do i_res_ares=1,BS_n_eh_spaces
    !
@@ -337,3 +314,19 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  endif
  !
 end subroutine K_Transitions_dimensions
+!
+!
+subroutine K_set_bands_ranges(Ken,V_bands,C_bands)
+ !
+ use electrons,   ONLY:levels
+ use BS,          ONLY:BS_bands
+ !
+ implicit none
+ !
+ type(levels), intent(in) :: Ken
+ integer,     intent(out) :: V_bands(2),C_bands(2)
+ !
+ V_bands=(/BS_bands(1),maxval(Ken%nbm)/)
+ C_bands=(/minval(Ken%nbf)+1,BS_bands(2)/)
+ !
+end subroutine

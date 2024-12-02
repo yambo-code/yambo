@@ -136,6 +136,13 @@ module BS
  real(SP):: BS_eh_en(2)
  real(SP):: BS_eh_win(2)
  !
+ ! NEQ transitions control
+ !========================
+ logical :: NEQ_Kernel=.FALSE.
+ logical :: NEQ_Residuals=.FALSE.
+ logical :: EQ_Transitions=.TRUE.
+ logical :: EQ_NoOcc=.FALSE.
+ !
  ! PW components ...
  !==================
  integer :: O_ng

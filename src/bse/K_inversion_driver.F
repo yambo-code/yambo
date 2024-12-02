@@ -28,9 +28,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use interfaces,     ONLY:MATRIX_transfer,MATRIX_duplicate
  use parallel_m,     ONLY:linear_algebra_is_parallel
 #endif
-#if defined _RT
- use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel
-#endif
+ use BS,             ONLY:NEQ_Residuals,NEQ_Kernel
  use stderr,         ONLY:intc
  use descriptors,    ONLY:IO_desc_add
  use PHOTOLUM,       ONLY:BSS_PL_free,PL
@@ -100,11 +98,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  FULL         = index(BSS_inversion_mode,'f')/=0
  PERTURBATIVE = index(BSS_inversion_mode,'p')/=0
  !
-#if defined _RT
  if (NEQ_Residuals.neqv.NEQ_Kernel) then
    call warning("[INV] Different occupation configurations for Kernel and Residuals not supported")
  endif
-#endif
  !
 #if defined _SCALAPACK
  ! 

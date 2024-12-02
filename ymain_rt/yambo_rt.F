@@ -18,7 +18,6 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
 &                        l_optics,l_chi,l_em1s,l_ppa,l_mpa,l_bss,l_bse,l_em1d,l_X,&
 &                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_gpu_test,&
 &                        l_slk_test
- use drivers,       ONLY:l_elph_Hamiltonian
  use gpu_m,         ONLY:GPU_test_dim
  use X_m,           ONLY:X_t,i_X_kind_existing_DB
  use DIPOLES,       ONLY:DIPOLE_t
@@ -30,7 +29,6 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  use electrons,     ONLY:levels,E_reset
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
- use ELPH,          ONLY:elph_use_q_grid
  !
  implicit none
  !
@@ -60,14 +58,14 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  ! Externals
  !
- integer, external ::X_dielectric_matrix,INIT_rt
+ integer, external ::X_dielectric_matrix,INIT
  !
  ! Presets
  !
  ncpu    = np
  myid    = pid
  infile  = inf
- yambo_rt= 0
+ yambo   = 0
  iinf    = 0 
  !
  ! ... Internal Defaults
@@ -94,12 +92,12 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  ! INPUT FILE PARSING
  !====================
  !
- iinf=INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,.false.,.false.)
+ iinf=INIT(en,q,k,X,Xw,Dip,instr,lnstr,.false.,.false.)
  !
  ! iinf=0 => No error message from driver.c 
  !
  if (iinf/=0) then
-   yambo_rt=iinf
+   yambo=iinf
    return
  endif
  !
@@ -118,12 +116,12 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  ! Update the default variables
  !
- if(launch_me) i_err=INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,.true.,.false.)
+ if(launch_me) i_err=INIT(en,q,k,X,Xw,Dip,instr,lnstr,.true.,.false.)
  !
  ! BZ sampling
  !==============
  !
- if(launch_me) call bz_samp_indexes(en,k,Xk,q,elph_use_q_grid) 
+ if(launch_me) call bz_samp_indexes(en,k,Xk,q,.false.) 
  !
  ! COLOUMB DRIVER
  !================
@@ -202,11 +200,17 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  if (launch_me) call XCo_driver(en,k,Xk,q)
  if (launch_me) call mem_manager_report
  !
+ ! EXTENDED COLLISIONS 
+ !=====================
+ !
+ if (l_eval_collisions) call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2),Dip)
+ if (l_eval_collisions) call mem_manager_report
+ !
  ! SELF-ENERGIES
  !===============
  !
  launch_me=l_gw0.or.l_life
- if (launch_me) call QP_driver_rt(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
+ if (launch_me) call QP_driver(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
  if (launch_me) call mem_manager_report
  !
  ! BETHE-SALPETER
@@ -214,21 +218,25 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  launch_me=(l_optics.and.l_bse).or.l_bss
  !
- if (launch_me) call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip)
- if (launch_me) call mem_manager_report
+ if (launch_me) then
+   call K_set_bands_ranges_rt(Ken,VB,CB)
+   call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,VB,CB,RT_BSE_Occ_Mode,l_rt_carriers_in_use)
+   call mem_manager_report
+ endif
  !
- ! Electron-Phonon Hamiltonian
- !=============================
+ ! RT
+ !====
  !
- if (l_elph_Hamiltonian) call ELPH_Hamiltonian(en,k,q)
- if (l_elph_Hamiltonian) call mem_manager_report
+ if (l_real_time) call RT_driver(en,X(:2),k,q,Dip)
+ if (l_real_time) call mem_manager_report
+ !
  !
  ! CLOSING
  !=========
  !
  call CLOSE_the_run(.TRUE.,.TRUE.,.FALSE.)
  !
- i_err=INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,.false.,.true.)
+ i_err=INIT(en,q,k,X,Xw,Dip,instr,lnstr,.false.,.true.)
  !
  call it_reset(-1)
  !

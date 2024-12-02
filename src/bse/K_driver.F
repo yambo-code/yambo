@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM IMA
 !
-subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
+subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip,VB,CB,BSE_occ_mode,l_neq_carriers_in_use)
  !
  use pars,           ONLY:IP
  use com,            ONLY:msg
@@ -36,10 +36,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  type(DIPOLE_t)::Dip
  type(w_samp)  ::Xw
  !
+ character, intent(in) :: BSE_occ_mode 
+ integer,   intent(in) :: VB(2),CB(2)
+ logical,   intent(in) :: l_neq_carriers_in_use
+ !
  ! Work Space
  !
  type(X_t)         :: X_tddft,X_oscillators
- integer           :: iq,Max_G_m_G,iG_BSE,iGo_BSE,VB(2),CB(2)
+ integer           :: iq,Max_G_m_G,iG_BSE,iGo_BSE
  type(w_samp)      :: W_bss 
  !
  ! I/O
@@ -57,7 +61,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  ! Logicals initialization
  !=========================
- call K_driver_init("init",1,Ken,Xk)
+ call K_driver_init("init",1,Ken,Xk,BSE_occ_mode,l_neq_carriers_in_use)
  !
  ! q0 renormalization and field direction
  !
@@ -178,7 +182,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call PARALLEL_global_Response_T_transitions(Xk)
    !
    ! ... EH space (with parallelization) and Transition groups build-up
-   call K_Transitions_setup(iq,Ken,Xk,Dip,VB,CB)
+   call K_Transitions_setup(iq,Ken,Xk,Dip,VB,CB,l_neq_carriers_in_use)
    !
    !... Blocks build-up
    if (.not.l_rpa_IP) call K_blocks()

@@ -22,6 +22,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use X_m,           ONLY:X_t,i_X_kind_existing_DB
  use DIPOLES,       ONLY:DIPOLE_t
  use parallel_m,    ONLY:myid,ncpu
+ use IO_m,          ONLY:OP_RD_CL,REP
+ use IO_int,        ONLY:io_control
  use it_tools,      ONLY:it_reset
  use it_m,          ONLY:infile
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
@@ -53,12 +55,13 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! Local Variables
  !
- integer           ::i_err,i_X_kind
+ integer           ::i_err,i_X_kind,ID
  logical           ::launch_me
  !
  ! Externals
  !
  integer, external ::X_dielectric_matrix,INIT
+ integer, external :: io_DB1
  !
  ! Presets
  !
@@ -105,6 +108,12 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !=======================
  !
  call PARALLEL_and_IO_Setup(en,k)
+ !
+ ! For some reason the I/O of DB1 is called after PARALLEL_and_IO_Setup
+ ! This was always done with the exception of the ypp_rt case
+ !
+ call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=REP,ID=ID)
+ i_err=io_DB1(en,k,ID)
  !
  ! SETUPS ...
  !============
@@ -220,8 +229,11 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  launch_me=(l_optics.and.l_bse).or.l_bss
  !
- if (launch_me) call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip)
- if (launch_me) call mem_manager_report
+ if (launch_me) then
+   call K_set_bands_ranges(Ken,VB,CB)
+   call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,VB,CB,"none",.false.)
+   call mem_manager_report
+ endif
  !
  ! ACFDT
  !=======

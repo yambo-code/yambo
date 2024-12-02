@@ -73,10 +73,6 @@ module RT_control
  !
  ! TD-ABS and RT-BSE [yambo]
  !
- logical                 :: NEQ_Kernel=.FALSE.
- logical                 :: NEQ_Residuals=.FALSE.
- logical                 :: EQ_Transitions=.TRUE.
- logical                 :: EQ_NoOcc=.FALSE.
  integer,      parameter :: N_RT_ctl_controls=3
  character(schlen)       :: RT_BSE_Occ_Mode="K"
  character(schlen)       :: RT_ctl_db(N_RT_ctl_controls)

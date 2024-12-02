@@ -12,8 +12,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use com,            ONLY:core_io_path,more_io_path,repfile,jobstr,msg,com_path,&
 &                         alt_jobstr,n_alt_jobstr,jobdir,alt_jobdir,fat_log
  use it_m,           ONLY:infile
- use IO_int,         ONLY:io_control
- use IO_m,           ONLY:OP_RD_CL,REP,frag_WF
+ use IO_m,           ONLY:frag_WF
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use parallel_m,     ONLY:n_nodes,ncpu,PARALLEL_message,n_CPU_str_max,PAR_COM_WORLD,&
@@ -37,9 +36,8 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! 
  ! Work Space
  !
- integer           :: ID,i_err,i_s,n_max_threads,i_cpu,i_dev,ierr
+ integer           :: i_s,n_max_threads,i_cpu,i_dev,ierr
  character(lchlen) :: dumb_ch
- integer, external :: io_DB1
  !
  !
  call section('*','MPI/OPENMP structure, Files & I/O Directories') 
@@ -157,15 +155,5 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  if(SP==DP) call msg('nr', 'Precision           ','DOUBLE')
  !
  call msg('r','')
- !
- ! DB1 I/O
- !===============
- !
-#if !defined _YPP_RT
- !
- call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=REP,ID=ID)
- i_err=io_DB1(en,k,ID)
- !
-#endif
  !
 end subroutine

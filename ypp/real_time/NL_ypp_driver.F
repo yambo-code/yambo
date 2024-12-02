@@ -249,8 +249,8 @@ subroutine NL_ypp_driver(en,k)
      ! Plot
      !
      if(loop_on_frequencies) then
-        call plot_X_effective()
-        if(l_eval_CURRENT) call plot_X_effective() 
+        call plot_X_effective('XHI')
+        if(l_eval_CURRENT) call plot_X_effective('SIGMA') 
      endif
      if(loop_on_angles)      call plot_X_angle()
      YAMBO_FREE(X_effective)
@@ -285,7 +285,7 @@ subroutine NL_ypp_driver(en,k)
  !
  contains
    !
-   subroutine plot_X_angle(what)
+   subroutine plot_X_angle()
        !
      ! ... ordering and frequency step (defines the P(t) periodicity)
      !
@@ -373,7 +373,7 @@ subroutine NL_ypp_driver(en,k)
 
    end
      !  
-   subroutine plot_X_effective()
+   subroutine plot_X_effective(what)
      !
      ! ... ordering and frequency step (defines the P(t) periodicity)
      !
@@ -387,13 +387,16 @@ subroutine NL_ypp_driver(en,k)
      use nl_optics,      ONLY:NL_desc
      use stderr,         ONLY:intc
      !
+     character(*), intent(in) :: what
+     !  
      ! Working Space
      !
      character(schlen) :: X_file_name
      integer           :: i_fp,i_dsc
      real(SP)          :: Unit_of_Measure,VALUEs(11)
      integer           :: f_indx(max_n_of_paths),n_headings
-     character(schlen) :: headings(11,0:X_order),oexp
+     character(schlen) :: headings(11,0:X_order),oexp,xname
+     logical           :: l_sigma,l_xhi
      !
      Harmonic_Frequency(1,:)=Probe_Frequency(:)
      call sort(Harmonic_Frequency(1,:),indx=f_indx(:n_frequencies))
@@ -408,26 +411,43 @@ subroutine NL_ypp_driver(en,k)
      !
      if (index(what,"XHI")>0) then
        l_xhi=.true.
-     elif(index(what,"SIGMA")>0)
+       xname='X'
+     else if (index(what,"SIGMA")>0) then
        l_sigma=.true.
+       xname='S'
      else
-       call error("Wrong call to the subroutine plot_X_effective"
+       call error("Wrong call to the subroutine plot_X_effective")
      endif
      !
-     headings(2:7,0)=(/'X/Im(x)','X/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
-     headings(2:7,1)=(/'X/Im(x)','X/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
-     if(X_order>=2)  headings(2:7,2)=(/'X/Im[cm/stV](x)','X/Re[cm/stV](x)','X/Im[cm/stV](y)',   &
-&                                      'X/Re[cm/stV](y)','X/Im[cm/stV](z)','X/Re[cm/stV](z)'/)
-     do i_order=3,X_order,1
-       oexp=trim(intc(i_order-1))
-       headings(2:7,i_order)=(/'X/Im[cm/stV]^'//oexp//'(x)','X/Re[cm/stV]^'//oexp//'(x)',&
+     if(l_xhi) then
+       headings(2:7,0)=(/'X/Im(x)','X/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
+       headings(2:7,1)=(/'X/Im(x)','X/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
+       if(X_order>=2)  headings(2:7,2)=(/'X/Im[cm/stV](x)','X/Re[cm/stV](x)','X/Im[cm/stV](y)',   &
+&                                        'X/Re[cm/stV](y)','X/Im[cm/stV](z)','X/Re[cm/stV](z)'/)
+       do i_order=3,X_order,1
+         oexp=trim(intc(i_order-1))
+         headings(2:7,i_order)=(/'X/Im[cm/stV]^'//oexp//'(x)','X/Re[cm/stV]^'//oexp//'(x)',&
 &                              'X/Im[cm/stV]^'//oexp//'(y)','X/Re[cm/stV]^'//oexp//'(y)',&
 &                              'X/Im[cm/stV]^'//oexp//'(z)','X/Re[cm/stV]^'//oexp//'(z)'/)
-     enddo
+       enddo
+     endif
+     if(l_sigma) then
+       headings(2:7,0)=(/'S/Im(x)','S/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
+       headings(2:7,1)=(/'S/Im(x)','S/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
+       if(X_order>=2)  headings(2:7,2)=(/'X/Im[cm/stV](x)','X/Re[cm/stV](x)','X/Im[cm/stV](y)',   &
+&                                        'X/Re[cm/stV](y)','X/Im[cm/stV](z)','X/Re[cm/stV](z)'/)
+       do i_order=3,X_order,1
+         oexp=trim(intc(i_order-1))
+         headings(2:7,i_order)=(/'S/Im[cm/stV]^'//oexp//'(x)','S/Re[cm/stV]^'//oexp//'(x)',&
+&                              'S/Im[cm/stV]^'//oexp//'(y)','S/Re[cm/stV]^'//oexp//'(y)',&
+&                              'S/Im[cm/stV]^'//oexp//'(z)','S/Re[cm/stV]^'//oexp//'(z)'/)
+       enddo
+     endif
+
      !
      do i_order=0,X_order,1
        !
-       X_file_name="YPP-X_probe_order_"//trim(intc(i_order))
+       X_file_name="YPP-"//xname//"_probe_order_"//trim(intc(i_order))
        !
        call of_open_close(trim(X_file_name),'ot')
        !
@@ -449,12 +469,22 @@ subroutine NL_ypp_driver(en,k)
          if (i_order> 1) Unit_of_Measure = (SVCMm12VMm1/AU2VMm1)**(i_order-1)  
          !
          VALUEs(1)  =Probe_Frequency(i_f)*HA2EV
-         VALUEs(2:7)=(/aimag(Susceptibility(i_order,i_f,1)*Unit_of_Measure),&
-&                       real(Susceptibility(i_order,i_f,1)*Unit_of_Measure),&
-                       aimag(Susceptibility(i_order,i_f,2)*Unit_of_Measure),&
-&                       real(Susceptibility(i_order,i_f,2)*Unit_of_Measure),&
-&                      aimag(Susceptibility(i_order,i_f,3)*Unit_of_Measure),&
-&                       real(Susceptibility(i_order,i_f,3)*Unit_of_Measure)/)
+	 if(l_xhi) then
+           VALUEs(2:7)=(/aimag(Susceptibility(i_order,i_f,1)*Unit_of_Measure),&
+&                         real(Susceptibility(i_order,i_f,1)*Unit_of_Measure),&
+                         aimag(Susceptibility(i_order,i_f,2)*Unit_of_Measure),&
+&                         real(Susceptibility(i_order,i_f,2)*Unit_of_Measure),&
+&                        aimag(Susceptibility(i_order,i_f,3)*Unit_of_Measure),&
+&                         real(Susceptibility(i_order,i_f,3)*Unit_of_Measure)/)
+         else
+           VALUEs(2:7)=(/aimag(Conducibility(i_order,i_f,1)*Unit_of_Measure),&
+&                         real(Conducibility(i_order,i_f,1)*Unit_of_Measure),&
+                         aimag(Conducibility(i_order,i_f,2)*Unit_of_Measure),&
+&                         real(Conducibility(i_order,i_f,2)*Unit_of_Measure),&
+&                        aimag(Conducibility(i_order,i_f,3)*Unit_of_Measure),&
+&                         real(Conducibility(i_order,i_f,3)*Unit_of_Measure)/)
+
+	 endif
          !
          call msg('o probe','',VALUEs(1:n_headings),USE_TABS=.TRUE.)
          !

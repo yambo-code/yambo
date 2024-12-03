@@ -14,7 +14,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
  use wrapper_omp,    ONLY:V_plus_alpha_V_omp
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
- use BS_solvers,     ONLY:BSS_desc,Haydock_threshold,io_BSS_Haydock,&
+ use BS_solvers,     ONLY:BSS_desc,Haydock_threshold,io_BSS_Haydock,BSS_kernel_IO_on_the_fly,&
 &                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod, &
 &                         Haydock_iterIO,Haydock_iterMAX,HAYVEC_size,BSS_uses_DbGd,FG_factor
  use BS,             ONLY:BS_K_Coupling,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps,BS_K_dim,&
@@ -74,7 +74,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
  Haydock_n_converged=0
  Haydock_required_converged=2
  !
- call BS_Blocks_symmetrize_K()
+ if(.not. BSS_kernel_IO_on_the_fly) call BS_blks_symmetrize_K()
  !
  ! Use terminator?
  if (.not.Haydock_terminator) call parser('BSHayTer',Haydock_terminator)
@@ -260,7 +260,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
 #endif
  enddo
  !
- if(velocity_correction) call K_multiply_by_V(V_tmp,V0,1)
+ if(velocity_correction) call K_multiply_by_V(V_tmp,V0,1,iq,"all")
  !
  if(use_left_and_right) then
    !
@@ -282,7 +282,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
 #endif
    enddo
    !
-   if(velocity_correction) call K_multiply_by_V(V_tmp,W0,1)
+   if(velocity_correction) call K_multiply_by_V(V_tmp,W0,1,iq,"all")
    !
  endif
  !
@@ -302,7 +302,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
      !
      Cf= cZERO
      !
-     call K_multiply_by_V(V0,Vnp1,-1)
+     call K_multiply_by_V(V0,Vnp1,-1,iq,"all")
      call K_dot_product(v0_mod_,V0,Vnp1,1)
      !
      ! For the coupling case if A = -R* (l_BS_ares_from_res=.FALSE.), V0 = (u0, -iu0*)
@@ -363,7 +363,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
      !
      !|Vn+1> = H |Vn>
      !
-     call  K_multiply_by_V(Vn,Vnp1,1)
+     call  K_multiply_by_V(Vn,Vnp1,1,iq,"all")
      !
      ! A(n) = <Vn|Vn+1>
      !
@@ -454,7 +454,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
      !
      !|Vn+1> = H |Vn>
      !
-     call K_multiply_by_V(Vn,Vnp1,ItParity)
+     call K_multiply_by_V(Vn,Vnp1,ItParity,iq,"all")
      !
      ! B(n+1)= <Vn|F|Vn+1>^(1/2) (that is <Vn|FH|Vn>^(1/2))
      !

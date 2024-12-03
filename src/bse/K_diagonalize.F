@@ -65,7 +65,7 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   ! Local variables
   type(c_ptr)                        :: mpicxt, diago_mat, evecs
   integer                            :: nProcs, my_rank
-  integer(YDIAGO_INT)                :: SL_H_dim, ProcX, ProcY, elpa_nthreads
+  integer(YDIAGO_INT)                :: SL_H_dim, ProcX, ProcY, elpa_nthreads, mpi_comm
   integer(ERROR_INT)                 :: error_diago ! diagonalization error code
   integer                            :: ierr !! mpi error code 
   integer(YDIAGO_INT)                :: neig_found, i_c, i_r, blacs_blk_size 
@@ -80,6 +80,9 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   logical                            :: run_gpu = .false.
   complex(YDIAGO_CMPLX), target, allocatable :: eig_vals(:)
   !
+  integer(YDIAGO_INT), target        :: neigs_range_y(2)
+  real(YDIAGO_FLOAT), target         :: eigvals_range_y(2)
+  !
   ! Gpu support via ELPA.
   type(c_ptr)                             :: gpu_str = c_null_ptr
   character(kind=c_char, len=20), target  :: gpu_device_elpa
@@ -88,8 +91,18 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   integer                            :: evec_fac = 1
   ! evec_fac = 2 if bse_solver function was used to diagonalize else 1
 
-  if(present(neigs_range)) neigs_range_tmp = c_loc(neigs_range)
-  if(present(eigvals_range)) eigvals_range_tmp = c_loc(eigvals_range)
+  if(present(neigs_range)) then
+    neigs_range_y(1) = neigs_range(1) 
+    neigs_range_y(2) = neigs_range(2) 
+    neigs_range_tmp = c_loc(neigs_range_y)
+  end if
+  !!
+  if(present(eigvals_range)) then
+    eigvals_range_y(1) = eigvals_range(1) 
+    eigvals_range_y(2) = eigvals_range(2) 
+    eigvals_range_tmp = c_loc(eigvals_range_y)
+  end if
+  !!
   if(present(BS_VL)) compute_left_eigs = .true.
   if(present(solver_type)) solver_type_aux = solver_type
   if(present(elpasolver)) elpa_solver_aux = elpasolver
@@ -157,7 +170,9 @@ endif
   
   call msg("s","BLACS grid",(/ProcX,ProcY/))
 
-  mpicxt = BLACScxtInit_Fortran('R', MPI_COMM_WORLD, ProcX, ProcY)
+  mpi_comm = MPI_COMM_WORLD
+
+  mpicxt = BLACScxtInit_Fortran('R', mpi_comm, ProcX, ProcY)
   if (.not. c_associated(mpicxt)) then
     call error("Failed to initiate BLACS context")
   end if

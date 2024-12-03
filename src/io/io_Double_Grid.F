@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-integer function io_Double_Grid(E,Xk,ID,what,EkplusQ_mode)
+integer function io_Double_Grid(E,Xk,ID,what,EkplusQ_mode_in)
  !
  use pars,           ONLY:schlen,IP_YIO,CR_YIO
  use electrons,      ONLY:levels,FineGd_E_components_alloc
@@ -23,18 +23,20 @@ integer function io_Double_Grid(E,Xk,ID,what,EkplusQ_mode)
  type(bz_samp):: Xk
  integer      :: ID,ID_frag=0
  character(*) ::what 
- character(schlen)  ::EkplusQ_mode
+ character(*)  ::EkplusQ_mode_in
  !
  ! Work Space
  !
  logical :: l_R_LATT
  integer :: VAR_SZ,MENU
  logical :: l_PH_DG=.FALSE.
- character(schlen)  ::db_name 
+ character(schlen)  ::db_name,EkplusQ_mode
  !
  call timing('io_Double_Grid',OPR='start')
  !
  call IO_desc_reset(FineGd_desc)
+ !
+ EkplusQ_mode=EkplusQ_mode_in
  !
  if (index(what,'electrons')>0) then
    db_name='Double_Grid'

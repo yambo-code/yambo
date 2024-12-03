@@ -52,7 +52,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,WHAT)
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q
- character(10)        :: WHAT
+ character(*)         :: WHAT
  !
  ! Work space
  !

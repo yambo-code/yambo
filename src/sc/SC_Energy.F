@@ -44,8 +44,8 @@ subroutine SC_Energy(E_total,E_eigen,E_zero,E_Hartree,E_xc_,E_Fermi,E,k,rho)
  if (.not.l_sc_is_libDFT .and. .not.l_sc_hartree .and. .not.l_sc_V_is_local) return
  !
  call V_Hartree(rho,V_hartree_sc)                           ! V_Hartree
- call XC_potential_driver(E,k,SC_kind,SC_xc_functional,1)   ! V_xc
- call XC_potential_driver(E,k,SC_kind,SC_xc_functional,0)   ! E_xc
+ call XC_potential_driver(E,k,SC_kind,SC_xc_functional,1,.true.)   ! V_xc
+ call XC_potential_driver(E,k,SC_kind,SC_xc_functional,0,.true.)   ! E_xc
  !
  ! Bands energy
  !

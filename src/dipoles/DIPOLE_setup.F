@@ -117,7 +117,7 @@ subroutine DIPOLE_setup(Dip)
  ! ... P_spinor
  if (n_spinor==2) then
    if (l_real_time) g_space_obs=trim(g_space_obs)//" P_spinor"
-   if ((STRING_match(Dip%computed,"spin").or.l_BS_magnons).and..not.STRING_match(g_space_obs,"P2"))
+   if ((STRING_match(Dip%computed,"spin").or.l_BS_magnons).and..not.STRING_match(g_space_obs,"P2")) &
    & g_space_obs=trim(g_space_obs)//" P_spinor"
  endif
  ! ...M_spin, M_orb, M_iti, M_orb_CD

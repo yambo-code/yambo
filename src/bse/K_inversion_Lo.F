@@ -51,7 +51,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  ! DbGd setup
  !
- call X_Double_Grid_setup(iq,k,k%FGbz,BSS_uses_DbGd)
+ call X_Double_Grid_setup(iq,k,k%FGbz,Use_DbGd=BSS_uses_DbGd)
  !
  ! Look for the W(iw_ref) closest 0
  !==================================

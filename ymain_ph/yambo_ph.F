@@ -55,7 +55,7 @@ integer function yambo_ph(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  ! Local Variables
  !
- integer           ::i_err,i_X_kind
+ integer           ::i_err,i_X_kind,VB(2),CB(2)
  logical           ::launch_me
  !
  ! Externals
@@ -214,8 +214,11 @@ integer function yambo_ph(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  launch_me=(l_optics.and.l_bse).or.l_bss
  !
- if (launch_me) call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip)
- if (launch_me) call mem_manager_report
+ if (launch_me) then
+   call K_set_bands_ranges(Ken,VB,CB)
+   call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,VB,CB,"none",.false.)
+   call mem_manager_report
+ endif
  !
  ! Electron-Phonon Hamiltonian
  !=============================

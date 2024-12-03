@@ -107,7 +107,7 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
      !
      ! Exc Energy from dE_xc[rho_n] energy density ... to be fixed, E_xc_ref is wrong
      !
-     call XC_potential_driver(en,k,WF_kind,WF_xc_functional,0)
+     call XC_potential_driver(en,k,WF_kind,WF_xc_functional,0,.true.)
      !
      allocate(E_xc_rt(fft_size,n_spin))
      E_xc_rt(:,1)=E_xc

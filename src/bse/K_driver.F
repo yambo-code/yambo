@@ -138,7 +138,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip,VB,CB,BSE_occ_mode,l_neq_car
    if (iq==1) BSqpts(:,iq) = BSS_q0
    if (iq/=1) BSqpts(:,iq) = q%pt(iq,:)
    !
-   call K_driver_init("loop-init",iq,Ken,Xk)
+   call K_driver_init("loop-init",iq,Ken,Xk,BSE_occ_mode,l_neq_carriers_in_use)
    !
    if (iq==BS_q(1)) call section('+','Bethe Salpeter Equation @q'//trim(intc(iq)))
    if (iq> BS_q(1)) then
@@ -176,7 +176,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip,VB,CB,BSE_occ_mode,l_neq_car
    call DIPOLE_dimensions(Ken,Dip,BS_bands,BSS_q0)
    !
    ! ... EH space (no parallelization)
-   call K_Transitions_dimensions(iq,Ken,Xk,Dip,VB,CB)
+   call K_Transitions_dimensions(iq,Ken,Xk,Dip,VB,CB,l_neq_carriers_in_use)
    !
    !... Parallel distribution
    call PARALLEL_global_Response_T_transitions(Xk)

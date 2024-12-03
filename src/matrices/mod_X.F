@@ -188,14 +188,14 @@ module X_m
      integer,      optional:: indexes(:)
    end subroutine
    !
-   subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius,DO_it)
+   subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius,Use_DbGd)
      use R_lattice,     ONLY:bz_samp,bz_fine_grid
      use pars,          ONLY:SP
      integer                       :: iq
      type(bz_samp)                 :: k
      type(bz_fine_grid),intent(in) :: k_FGbz
-     logical,           intent(in) ::
      real(SP),            optional :: nTrans_percent,Radius
+     logical, optional, intent(in) :: Use_DbGd
    end subroutine
    !
    subroutine X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols,compute_on_gpu,iq)

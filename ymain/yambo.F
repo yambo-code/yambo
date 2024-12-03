@@ -55,7 +55,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! Local Variables
  !
- integer           ::i_err,i_X_kind,ID
+ integer           ::i_err,i_X_kind,ID,VB(2),CB(2)
  logical           ::launch_me
  !
  ! Externals

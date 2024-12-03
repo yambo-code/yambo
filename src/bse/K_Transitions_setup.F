@@ -218,7 +218,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands,l_neq_carriers_in_u
 end subroutine K_Transitions_setup
 !
 !
-subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
+subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands,l_neq_carriers_in_use)
  !
  ! Out: 
  !
@@ -244,6 +244,7 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  type(DIPOLE_t),  intent(in) :: Dip
  integer,         intent(in) :: iq
  integer,         intent(in) :: V_bands(2),C_bands(2)
+ logical,         intent(in) :: l_neq_carriers_in_use
  !
  ! Work Space
  !
@@ -286,7 +287,7 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
              if (i_res_ares==2) then; ib1=ic; ib2=iv; endif
              !
              if (.not.K_Transition_check(Ken,Dip,iq,ik,ikp,ib1,ib2,i_sp_c,i_res_ares,&
-             &                            E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
+             &        E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL,l_neq_carriers_in_use)) cycle
              !
              BS_K_dim(i_res_ares)=BS_K_dim(i_res_ares)+1
              BS_nT_at_k_tmp(ik+(i_res_ares-1)*Xk%nibz)=BS_nT_at_k_tmp(ik+(i_res_ares-1)*Xk%nibz)+1

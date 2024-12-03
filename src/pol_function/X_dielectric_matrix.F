@@ -239,7 +239,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
    !
    ! DbGd setup
    !
-   call X_Double_Grid_setup(1,Xk,Xk%FGbz,use_X_DbGd)
+   call X_Double_Grid_setup(1,Xk,Xk%FGbz,Use_DbGd=use_X_DbGd)
    !
    ! ALDA (only once) 
    !
@@ -275,7 +275,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
      !
      ! DbGd setup
      !
-     call X_Double_Grid_setup(iq,Xk,Xk%FGbz)
+     call X_Double_Grid_setup(iq,Xk,Xk%FGbz,Use_DbGd=use_X_DbGd)
      !
      ! ALDA (only once) 
      !

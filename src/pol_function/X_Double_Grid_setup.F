@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
-subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius,DO_it)
+subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius,Use_DbGd)
  !
  ! Define which kpts I will use in a consistent way between q=0 and q/=0
  ! For q/=0 this change makes the code much faster as it avoids the use of all
@@ -31,14 +31,17 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius,DO_it)
  integer                       :: iq
  type(bz_samp)                 :: k
  type(bz_fine_grid),intent(in) :: k_FGbz
- logical,           intent(in) :: DO_it
  real(SP),            optional :: nTrans_percent,Radius
+ logical, optional, intent(in) :: Use_DbGd
  ! 
  ! Work Space
  !
  integer   :: ikbz,ikpbz,ikbz_mem,ikbz_FineGd,ikpbz_FineGd,N_all_pairs,ikibz
  real(SP)  :: central_q(3),running_q(3),k_pt_loc(3),kp_pt_loc(3),q_radius,PERC(1)
- logical   :: FILL_it
+ logical   :: FILL_it,DO_it
+ !
+ DO_it=.TRUE.
+ if (present(Use_DbGd)) DO_it=Use_DbGd
  !
 #if defined _PHEL
  if (l_phel_corr) then

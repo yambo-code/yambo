@@ -17,9 +17,9 @@ INT_LIBS      = qe_pseudo slatec math77 local
 # Yambo folders 
 #===============
 #
-BASIC_LIBS   = driver tools parser memory matrices allocations linear_algebra parallel communicate output common timing Yio io $(IO_MODE) \
+BASIC_LIBS   = driver tools modules parser memory matrices allocations linear_algebra parallel communicate output common timing Yio io $(IO_MODE) \
                xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
-BASIC_LIBS_LD= driver tools memory allocations communicate matrices linear_algebra bz_ops parallel parser output common timing Yio io $(IO_MODE) \
+BASIC_LIBS_LD= driver tools memory allocations communicate modules matrices linear_algebra bz_ops parallel parser output common timing Yio io $(IO_MODE) \
                xc_functionals interface stop_and_restart wf_and_fft coulomb
 
 MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse

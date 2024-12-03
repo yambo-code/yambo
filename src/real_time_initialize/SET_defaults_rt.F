@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
+subroutine SET_defaults_rt(INSTR,IND,OD,COM_DIR)
  !
  use pars,       ONLY:SP,cZERO
  use C_driver,   ONLY:code_branch

@@ -1,2 +1,1 @@
-objs = mod_vec_operate.o mod_PHOTOLUM.o \
-       X_ALLOC_parallel.o X_ALLOC_global.o X_ALLOC_elemental.o MPA_ALLOC_parallel.o DIPOLE_ALLOC_elemental.o DIPOLE_ALLOC_global.o
+objs = X_ALLOC_parallel.o X_ALLOC_global.o X_ALLOC_elemental.o MPA_ALLOC_parallel.o DIPOLE_ALLOC_elemental.o DIPOLE_ALLOC_global.o

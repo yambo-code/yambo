@@ -1,6 +1,6 @@
 #
 #        Copyright (C) 2000-2021 the YAMBO team
-#              http://www.yambo-code.org
+#              http://www.yambo-code.eu
 #
 # Authors (see AUTHORS file for details): AF
 #

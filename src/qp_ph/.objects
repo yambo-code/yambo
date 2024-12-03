@@ -1,0 +1,2 @@
+objs = QP_driver_ph.o QP_newton_ph.o QP_logicals_ph.o \
+       QP_descriptions_ph.o QP_report_and_write_ph.o

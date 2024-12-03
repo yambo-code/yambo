@@ -18,6 +18,7 @@ subroutine XCo_driver(E,k,Xk,q)
 &                        QP_Vxc,QP_Vnl_xc,QP_Vnl_sex,QP_XCo_alloc,QP_XCo_free
  use interfaces,    ONLY:WF_free
  use wave_func,     ONLY:WF
+ use parallel_m,    ONLY:PAR_IND_WF_linear
  use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening,EXT_NONE,WF_kind,&
 &                        global_XC_string,WF_perturbation,WF_xc_functional
 #if defined _SC
@@ -154,7 +155,7 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  if (l_Vxc) then
    !
-   call XCo_local(E,Xk)
+   call XCo_local(E,Xk,PAR_IND_WF_linear,.false.,.not.l_sc_run)
    !
    if (.not.l_screen_hyb) then
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_xc !Hybridize...

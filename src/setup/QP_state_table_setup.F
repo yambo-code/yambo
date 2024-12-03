@@ -152,9 +152,9 @@ subroutine QP_state_table_setup(en)
  !
  if (Mixing) then
    !
-#if !defined _ELPH
-   if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) SC_band_mixing=0._SP
-#endif
+   !#if !defined (here was elph flag). To check impact
+   !if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) SC_band_mixing=0._SP
+   !#endif
    !
    if (SC_band_mixing<0._SP.or.SC_band_mixing>100._SP) SC_band_mixing=0._SP
    if (SC_band_mixing>0._SP) SC_bands_mixed=nint(QP_nb*SC_band_mixing/100._SP)

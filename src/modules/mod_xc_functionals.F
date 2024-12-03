@@ -58,7 +58,7 @@ module xc_functionals
  !
  interface
    !
-   subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
+   subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING,l_msg_off)
      use pars,          ONLY:SP,DP,RZERO
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
@@ -69,6 +69,7 @@ module xc_functionals
      integer,       intent(inout)    :: KIND,FUNCTIONAL
      integer,       intent(in)       :: ORDER
      real(SP),      intent(inout),optional :: EXX_FRACTION,EXX_SCREENING
+     logical,       intent(in),   optional :: l_msg_off
    end subroutine XC_potential_driver
    !
    subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)

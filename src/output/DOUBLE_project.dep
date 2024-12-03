@@ -6,4 +6,6 @@
  OUTPUT_unit_conversion.o
  X_OUTPUT_driver.o
  X_OUTPUT_messages.o
+ mod_global_XC.o
+ mod_xc_functionals.o
 

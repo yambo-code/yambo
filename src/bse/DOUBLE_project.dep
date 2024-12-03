@@ -51,4 +51,6 @@
  K_stored_in_a_slepc_matrix.o
  PL_diago_residual.o
  PL_via_perturbative_inversion.o
+ mod_DICHROISM.o
+ mod_MAGNONS.o
 

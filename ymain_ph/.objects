@@ -1,0 +1,4 @@
+objs = ph_driver.o yambo_ph.o 
+#if defined _ypp_ph
+objs = ph_driver.o ypp_ph.o 
+#endif

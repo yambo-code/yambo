@@ -20,9 +20,6 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
-#if defined _ELPH
- use drivers,       ONLY:l_elph_corr
-#endif
 #if defined _QED
  use drivers,       ONLY:l_elphoton_corr
 #endif
@@ -83,12 +80,6 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  else
    QP_Sc=cZERO
  endif
- !
-# if defined _ELPH 
- !
- if (l_elph_corr)     call ELPH_Sigma_c(en,k,q,qp)
- !
-#endif
  !
 # if defined _QED 
  !

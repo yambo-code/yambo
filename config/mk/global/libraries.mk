@@ -13,14 +13,11 @@ endif
 include lib/archive/package.list
 #
 INT_LIBS      = qe_pseudo slatec math77 local
-YAMBO_INT_LIBS= Yio 
-YLIBIO        = modules Yio
-YLIBIO_LD     = $(YLIBIO)
 #
 # Yambo folders 
 #===============
 #
-BASIC_LIBS   = driver tools modules memory allocations matrices linear_algebra parallel parser communicate output common timing Yio io $(IO_MODE) \
+BASIC_LIBS   = driver tools modules parser memory matrices allocations linear_algebra parallel communicate output common timing Yio io $(IO_MODE) \
                xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
 BASIC_LIBS_LD= driver tools memory allocations communicate modules matrices linear_algebra bz_ops parallel parser output common timing Yio io $(IO_MODE) \
                xc_functionals interface stop_and_restart wf_and_fft coulomb
@@ -28,36 +25,32 @@ BASIC_LIBS_LD= driver tools memory allocations communicate modules matrices line
 MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse
 MAIN_LIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse
 
-PJ_PHLIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function el-ph qp acfdt bse
-PJ_PHLIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_function el-ph qp acfdt bse
+PJ_PHLIBS    = driver_ph el-ph interface_ph qp_ph
+PJ_PHLIBS_LD = $(MAIN_LIBS_LD) driver_ph interface_ph el-ph qp_ph
 
-PJ_SCLIBS    = $(MAIN_LIBS) collisions hamiltonian sc
-PJ_SCLIBS_LD = $(MAIN_LIBS_LD) hamiltonian collisions sc
+COMM_LIBS    = collisions hamiltonian
+COMM_LIBS_LD = collisions hamiltonian
 
-PJ_RTLIBS   = $(BASIC_LIBS) interpolate qp_control setup \
-                   tddft dipoles pol_function qp acfdt bse collisions hamiltonian \
-                   real_time_control real_time_hamiltonian real_time_propagation \
-                   real_time_initialize real_time_drivers
+PJ_SCLIBS    = driver_sc sc
+PJ_SCLIBS_LD = $(MAIN_LIBS_LD) driver_sc $(COMM_LIBS_LD) sc
+
+PJ_RTLIBS   = driver_rt \
+              real_time_control real_time_hamiltonian real_time_propagation \
+              real_time_initialize real_time_drivers
 PJ_RTLIBS_LD= $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
-                   tddft dipoles pol_function qp acfdt bse hamiltonian collisions \
+                   tddft dipoles pol_function qp acfdt bse driver_rt $(COMM_LIBS) \
                    real_time_hamiltonian real_time_propagation \
                    real_time_initialize real_time_drivers
 
-PJ_NLLIBS    = $(BASIC_LIBS) interpolate qp_control setup \
-               tddft dipoles pol_function qp acfdt bse collisions hamiltonian \
-               real_time_control real_time_hamiltonian real_time_propagation \
-               real_time_initialize real_time_drivers nloptics
-PJ_NLLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
-               tddft dipoles pol_function qp acfdt bse hamiltonian collisions \
-               real_time_hamiltonian real_time_propagation \
-               real_time_initialize real_time_drivers nloptics
+PJ_NLLIBS    = driver_nl nloptics
+PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) driver_nl nloptics
 #
 # Yambo folders needed by Interfaces
 #=====================================
 #
-2Y_LIBS       = driver tools modules memory allocations matrices linear_algebra parallel parser communicate output common timing Yio io $(IO_MODE) \
+2Y_LIBS       = driver tools memory allocations matrices linear_algebra parallel parser communicate output common timing Yio io $(IO_MODE) \
                 setup interface stop_and_restart bz_ops 
-2Y_LIBS_LD    = driver tools memory allocations communicate modules matrices linear_algebra parallel parser output common timing Yio io $(IO_MODE) \
+2Y_LIBS_LD    = driver tools memory allocations communicate matrices linear_algebra parallel parser output common timing Yio io $(IO_MODE) \
                 setup interface stop_and_restart bz_ops 
 #
 # YPP folders 

@@ -16,17 +16,9 @@ subroutine INIT_activate()
 &                         l_real_time,l_ppa,l_mpa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr,l_nl_p_and_p,l_X
-#if defined _SC || defined _RT
- use hamiltonian,    ONLY:H_potential
-#endif
 #if defined _SC
+ use hamiltonian,    ONLY:H_potential
  use magnetic,       ONLY:MAG_landau
-#endif
-#if defined _RT
- use fields,         ONLY:n_ext_fields
-#endif
-#if defined  _ELPH 
- use ELPH,           ONLY:elph_use_q_grid
 #endif
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
@@ -35,9 +27,6 @@ subroutine INIT_activate()
  !
  implicit none
  !
-#if defined _RT
- integer          :: i1
-#endif
  character(2)     :: X_kind
  !
  !Common
@@ -99,13 +88,6 @@ subroutine INIT_activate()
  endif
 #endif
  !
-#if defined _RT 
- if (l_eval_collisions .or. l_real_time) then
-   call CPU_activate("RT")
-   call initactivate(1,'RT_Threads')
- endif
-#endif
- !
 #if defined _NL
  if (l_nl_optics) then
    call CPU_activate("NL")
@@ -121,18 +103,9 @@ subroutine INIT_activate()
    call initactivate(1,'X_Threads DIP_Threads K_Threads')
  endif
  !
-#if defined  _ELPH 
- if ((l_life.or.l_gw0).and.l_phel_corr) then
-   call CPU_activate("PH_SE")
- endif
-#endif
- !
  !Setup
  !
  if (l_setup) call initactivate(1,'MaxGvecs Gthresh K_grids IkSigLim IkXLim NoDiagSC EvalMagn')
-#if defined  _ELPH 
- if (l_setup) call initactivate(1,'BSEscatt')
-#endif
  !
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse)/)))  call initactivate(1,'NonPDirs MolPos')
@@ -197,9 +170,6 @@ subroutine INIT_activate()
    !
    call INIT_QP_ctl_switch('X')
    !
-#if defined _RT
-   call INIT_RT_ctl_switch('X')
-#endif
    call initactivate(1,'Qdirection QShiftOrder')
    !
  endif
@@ -246,11 +216,6 @@ subroutine INIT_activate()
    !
    call INIT_QP_ctl_switch('K')
    !
-#if defined _RT
-   call INIT_RT_ctl_switch('K')
-   call INIT_RT_ctl_switch('R')
-#endif
-   !
    call initactivate(1,'NoCondSumRule MetDamp')
    !
 #if defined _NL || defined _SC
@@ -262,10 +227,6 @@ subroutine INIT_activate()
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
    call initactivate(1,'BSEQptR BSEBands BSKCut BSKIOmode BSEEhEny BSehWind NoDiagSC')
-   !
-#if defined _RT
-   call initactivate(1,'RTOccMode ForceEqTrans')
-#endif
    !
  endif                    
  !
@@ -294,19 +255,12 @@ subroutine INIT_activate()
    ! Special project dependent variables
    !
    if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSPLInvTrs')
-#if defined _ELPH 
-   if (l_elph_corr.and..not.elph_use_q_grid) call initactivate(1,'ElPhRndNq')
-#endif
  endif
  !
  ! Static screen 
  !
  if (l_em1s) then
    call INIT_QP_ctl_switch('X')
-   !
-#if defined _RT
-   call INIT_RT_ctl_switch('X')
-#endif
    !
    call initactivate(1,'ShiftedPaths')
    call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','GrFnTp','DmRnge','CGrdSp','EhEngy','LongDr','DrudeW'/))
@@ -319,10 +273,6 @@ subroutine INIT_activate()
  if ( (l_em1d.and.l_ppa) .or. (l_em1d.and.l_mpa) .or. (l_em1s.and.l_cohsex)) then
    call INIT_QP_ctl_switch('X')
    call initactivate(1,'RIM_W RIM_W_diag RIM_W_graph')
-   !
-#if defined _RT
-   call INIT_RT_ctl_switch('X')
-#endif
    !
    call initactivate(1,'ShiftedPaths')
    if (l_ppa) then
@@ -346,10 +296,6 @@ subroutine INIT_activate()
  !
  if (l_acfdt) then
    call INIT_QP_ctl_switch('X')
-   !
-#if defined _RT
-   call INIT_RT_ctl_switch('X')
-#endif
    !
    call initactivate(1,'ShiftedPaths')
    call initactivate(1,'EXXRLvcs VXCRKvcs AC_n_LAM AC_n_FR AC_E_Rng')
@@ -383,11 +329,6 @@ subroutine INIT_activate()
      call INIT_QP_ctl_switch('X')
      call INIT_QP_ctl_switch('G')
      !
-#if defined _RT
-     call INIT_RT_ctl_switch('X')
-     call INIT_RT_ctl_switch('G')
-#endif
-     !
      call initactivate(1,'BoseCut ShiftedPaths')
      !
      if (l_gw0) then
@@ -419,47 +360,12 @@ subroutine INIT_activate()
      endif
    endif
    !
-#if defined  _PHEL 
-   !
-   if (l_phel_corr) then
-     call initactivate(1,'ElecTemp BoseTemp PH_SE_mode GphBRnge GDamping PHELQpts ElPhModes PHDbGdsize DbGdQsize GDamping')
-     call initactivate(1,'ExtendOut OnMassShell')
-     if (      l_gw0) call initactivate(1,'DysSolver GEnSteps GEnRnge PHEL_QPH_En')
-     if (.not. l_gw0) call initactivate(1,'GDamping PHELTrans') 
-   endif
-   !
-#endif
-#if defined  _ELPH 
-   !
-   if (l_elph_corr) then
-     call INIT_QP_ctl_switch('G')
-     call initactivate(1,'DysSolver')
-     call initactivate(1,'GphBRnge FANdEtresh DWdEtresh ElPhModes GDamping dScStep ExtendOut ElPhRndNq RandQpts')
-     call initactivate(1,'GkkpDB WRgFsq NewtDchk OnMassShell')
-   endif
-   if (trim(QP_solver)=="g".and.l_elph_corr) then
-     call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
-     call initactivate(-1,'WRgFsq NewtDchk GDamping ExtendOut OnMassShell')
-   endif
-   !
-#endif
-   !
  endif
  !
  if(l_alda_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_mpa,l_cohsex,l_gw0/)) ) call initactivate(1,'FxcGRLc')
  if( l_lrc_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_mpa,l_cohsex,l_gw0/)) ) call initactivate(1,'LRC_alpha LRC_beta')
  !
- ! El-Ph: Frohlich Hamiltonian
- !
-#if defined _ELPH 
- !
- if (l_elph_Hamiltonian) then
-   call initactivate(1,'ElPhHBRnge ElPhModes ElPhHKpt GDamping REStresh')
- endif
- !
-#endif
- !
-#if defined _SC || defined _RT
+#if defined _SC
  !
  ! Collisions
  !
@@ -516,45 +422,6 @@ subroutine INIT_activate()
  !
 #endif
  !
-#if defined _RT
- !
- ! AM March 2024: the following line has been added in order to perform
- ! e-p calculations on top of RT carriers distribution.
- !
- if (l_elph_corr) call INIT_RT_ctl_switch('G')
- !
- if (l_real_time) then
-   !
-   call INIT_QP_ctl_switch('G')
-   !
-   call INIT_RT_ctl_switch('G')
-   !
-   call initactivate(1,'RTskipImposeN RTeeImposeE InducedField')
-   call initactivate(1,'Gauge VelGaugeCorr VelGaugeDiam PfromJ RTUpdateSOC RTUpdateE SaveGhistory')
-   call initactivate(1,'RTEqScatt RTImpForMet RTzeroTempRef RTskipPHabs RTEvalEnergy RTEvalEntropy')
-   call initactivate(1,'dTupdateTime dTupdateTimeSet dTupdateJump dTupdateTresh dT_MAX dT_SET')
-   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) then
-     call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp RelaxTimeApprox RTAtemp RTAchem LifeFitTemp')
-   endif
-   if (l_elph_scatt) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
-   if (l_elel_scatt) call initactivate( 1,'EERimPerc')
-   !
-   call initactivate(1,'RTBands Integrator GrKind TwoAlph RTehEny ScattTresh')
-   call initactivate(1,'RADLifeTime RADmagnific PhLifeTime DephCVonly DephEThresh DephTRange')
-   call initactivate(1,'RTstep NEsteps NETime DipoleEtresh SPINprojected')
-   call initactivate(1,'IOtime IOCachetime')
-   !
-   ! n_ext_fields is by default 0.  It is set to the input number of fields when a command line option is provided (below in init.F)
-   ! or parsed from the input file in INIT_load.F
-   !
-   do i1=1,n_ext_fields
-     call Afield_activate(i1)
-   enddo
-   !
- endif
- !
-#endif
- !
 #if defined _NL
  if (l_nl_optics) then
    call initactivate(1,'FFTGvecs NLBands NLverbosity NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
@@ -590,7 +457,7 @@ subroutine INIT_activate()
  !
  contains
    !
-#if defined _RT || defined _NL
+#if defined _NL
    !
    subroutine Afield_activate(i1)
      integer     ::i1

@@ -1,3 +1,4 @@
  QP_state_table_setup.o
+ SET_defaults.o
  setup.o
 

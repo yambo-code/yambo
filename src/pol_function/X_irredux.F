@@ -171,13 +171,9 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !DALV: ### the call to X_drude should be moved here, after redefining the frequency grid
  if (iq==1) call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF)
  !
-#if defined _ELPH
- !
  ! Green Functions must be all mapped to the Xw range so to be easily convoluted
  !
  if (allocated(Xen%GreenF).and.current_iq==0) call X_GreenF_remap(X%ib,Xen,Xw)
- !
-#endif
  !
  ! Time-Rev is Spatial Inv => only half X is eval
  !                            ===================
@@ -306,15 +302,9 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
    ! 2) Then the frequency dependent term
    !=======================================
    !
-#if defined _ELPH
    if(     allocated(Xen%GreenF)) call X_GreenF_convoluted(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering)
    if(.not.allocated(Xen%GreenF)) & 
 &       call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.,l_X_terminator)
-#else
-   !
-   call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.,l_X_terminator)
-   !
-#endif
    !
    ! 3) Finally multiply residual and frequency dependent term
    !===========================================================

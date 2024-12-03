@@ -9,7 +9,9 @@ subroutine PARALLEL_MATRIX_distribute(COMM,PAR_IND,nb,PAR_index,PAR_ID,PAR_n_ele
  !
  use parallel_m,    ONLY:yMPI_comm,PP_indexes
  use parallel_int,  ONLY:PARALLEL_index
+#if defined _SC || defined _RT || defined _NL
  use hamiltonian,   ONLY:B_mat_index
+#endif
  !
  implicit none
  !
@@ -31,6 +33,7 @@ subroutine PARALLEL_MATRIX_distribute(COMM,PAR_IND,nb,PAR_index,PAR_ID,PAR_n_ele
    PAR_ID=COMM%CPU_id
  endif
  !
+#if defined _SC || defined _RT || defined _NL
  if (present(PAR_index)) then
    Nel=PAR_IND%n_of_elements(COMM%CPU_id+1)
    PAR_index=0
@@ -44,6 +47,7 @@ subroutine PARALLEL_MATRIX_distribute(COMM,PAR_IND,nb,PAR_index,PAR_ID,PAR_n_ele
      enddo
    enddo
  endif
+#endif
  !
  if (present(PAR_n_elements)) then
    PAR_n_elements=PAR_IND%n_of_elements(COMM%CPU_id+1)

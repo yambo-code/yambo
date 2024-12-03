@@ -1,31 +1,17 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2020 the YAMBO team
 !
 ! Authors (see AUTHORS file for details): CA MG DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine PARALLEL_global_Oscillators(E,Xk,q)
  !
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
+#if defined _SC || defined _RT || defined _NL
  use collision_ext, ONLY:COLL_bands
+#endif
  use IO_int,        ONLY:IO_and_Messaging_switch
  use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use parallel_m,    ONLY:ncpu,COMM_copy,PAR_build_index,PAR_INDEX_copy
@@ -80,6 +66,7 @@ if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) then
  !
  ! Bands
  !
+#if defined _SC || defined _RT || defined _NL
  nb_mat=(COLL_bands(2)-COLL_bands(1)+1)**2
  !
  n_WF_bands_to_load=PAR_n_bands(2)
@@ -93,6 +80,7 @@ if (PAR_COM_Xk_ibz_INDEX%n_CPU==1) then
  call PARALLEL_live_message("OSCL bands",ENVIRONMENT="Oscillators",&
 &                             LOADED=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1),&
 &                             TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
+#endif
  !
  ! Copy to WF
  !

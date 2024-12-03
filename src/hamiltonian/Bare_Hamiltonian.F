@@ -13,6 +13,8 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use hamiltonian,    ONLY:Hzero,E_reference,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
 &                         H_ref_bands,WF_G_max,WF_Go_indx
  use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_WF_linear
+ use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k 
+ use matrix_operate, ONLY:UP_matrix_index,matrix_index
  use parallel_int,   ONLY:PP_redux_wait
  use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp,nkibz
@@ -37,7 +39,8 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  ! Work space
  !
- integer     :: ik,ib,i_sp_pol,WFbands(2)
+ integer          :: ik,ib,i_sp_pol,WFbands(2)
+ type(PP_indexes) :: PAR_IND
  !
  Hzero=cZERO
  !
@@ -104,7 +107,43 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  YAMBO_ALLOC(QP_Vxc,(QP_n_states))
  QP_Vxc=cZERO
  !
- call XCo_local(E,k)
+ if (mod(WF_kind,1000)< 300) then
+   !
+   call error(" part to be fixed ")
+   if (l_real_time) then
+     !
+     ! DS comment. Here I need different parallel indexes
+     if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+     if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 )) cycle
+   else
+     if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+   endif
+   !
+   call XCo_local(E,k,PAR_IND,l_real_time,.false.)
+   !
+ else
+   !
+   ! Here I need to check which other actions from XCo_local are needed
+   call error(" part to be fixed ")
+   !
+   ! In case a non-DFT potential is required
+   !
+   ! ...SC EXX and EXX+LDA_C
+   !
+   YAMBO_ALLOC(V_xc_sc,(fft_size,n_spin))
+   YAMBO_ALLOC(V_hartree_sc,(fft_size,n_spin))
+   SC_fft_size=fft_size
+   !
+   call load_SC_components('V',COM_=REP,MODE_=VERIFY)
+   !
+   if (.not.compatible_SC_DB) call error('Incompatible potential database')
+   !
+   V_xc=V_xc_sc
+   !
+   YAMBO_FREE(V_xc_sc)
+   YAMBO_FREE(V_hartree_sc)
+   !
+ endif
  !
  V_xc_sc=V_xc
  !

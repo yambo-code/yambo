@@ -100,20 +100,6 @@ void options_projects(struct options_struct options[],int *i_opt)
  i_desc=i_desc+1;
  strcpy(options[*i_opt].long_desc[i_desc],"<string>=(eh):electron-photon interaction");
 #endif
-#if defined _ELPH 
- i_desc=i_desc+1;
- strcpy(options[*i_opt].long_desc[i_desc],"<string>=(ep):electron-phonon interaction");
-#endif
-#if defined _ELPH 
- i_desc=i_desc+1;
- strcpy(options[*i_opt].long_desc[i_desc],"<string>=(pe):phonon-electron interaction");
-#endif
-#if defined _PHEL || defined _PHEL
- i_desc=i_desc+1;
- strcpy(options[*i_opt].long_desc[i_desc]," ");
- i_desc=i_desc+1;
- strcpy(options[*i_opt].long_desc[i_desc],"Use -scattering ee+ep/ee+pe to activate more than one kind simultaneously");
-#endif
  options[*i_opt].long_opt="scattering";
  options[*i_opt].short_opt='s';
  options[*i_opt].bin="yambo_rt";
@@ -127,14 +113,6 @@ void options_projects(struct options_struct options[],int *i_opt)
 #if defined _QED 
  i_desc=i_desc+1;
  strcpy(options[*i_opt].long_desc[i_desc],"<string>=(eh):electron-photon interaction");
-#endif
-#if defined _ELPH 
- i_desc=i_desc+1;
- strcpy(options[*i_opt].long_desc[i_desc],"<string>=(ep):electron-phonon interaction");
-#endif
-#if defined _ELPH 
- i_desc=i_desc+1;
- strcpy(options[*i_opt].long_desc[i_desc],"<string>=(pe):phonon-electron interaction");
 #endif
  options[*i_opt].long_opt="correlation";
  options[*i_opt].short_opt='c';

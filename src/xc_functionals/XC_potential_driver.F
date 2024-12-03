@@ -19,7 +19,7 @@
 !! @param[out]      V_xc                exchange correlation potential (if ORDER=1)
 !! @param[out]      F_xc                exchange correlation kernel    (if ORDER=2)
 !
-subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
+subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING,l_msg_off)
  !
  ! Wrapper for calculation of the XC potential. If available libxc,
  ! will be used instead of internal routines
@@ -32,15 +32,6 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
  use xc_functionals, ONLY:XC_EXCHANGE_CORRELATION,xc_string,XC_libxc_driver,&
 &                         XC_NOT_AVAILABLE,XC_FACTOR,current_xc_string,LIBXC_message_done,XC_HYB_GGA_XC_GAUPBE
  use IO_int,         ONLY:IO_and_Messaging_switch
-#if defined _SC
- use drivers,        ONLY:l_sc_run
-#endif
-#if defined _RT
- use drivers,        ONLY:l_real_time
-#endif
-#if defined _NL
- use drivers,        ONLY:l_nl_optics
-#endif
  use timing_m,       ONLY:timing
  !
  implicit none
@@ -50,22 +41,18 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
  integer,       intent(inout)    :: KIND,FUNCTIONAL
  integer,       intent(in)       :: ORDER
  real(SP),      intent(inout),optional :: EXX_FRACTION, EXX_SCREENING
+ logical,       intent(in),   optional :: l_msg_off
  !
  ! Work space
  !
  real(SP)          :: local_exx_fraction, local_exx_screening
+ logical           :: l_msg_off_
  !
  call timing('XC_potential_driver',OPR='start')
  !
-#if defined _RT
- if (l_real_time) call IO_and_Messaging_switch("SAVE MUTE")
-#endif
-#if defined _SC
- if (l_sc_run)    call IO_and_Messaging_switch("SAVE MUTE")
-#endif
-#if defined _NL
- if (l_nl_optics) call IO_and_Messaging_switch("SAVE MUTE")
-#endif
+ l_msg_off_=.false.
+ if(present(l_msg_off)) l_msg_off_=l_msg_off
+ if (l_msg_off_) call IO_and_Messaging_switch("SAVE MUTE")
  !
  local_exx_fraction = rZERO
  local_exx_screening= rZERO
@@ -112,15 +99,7 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
    call msg('rsn','[xc] Hybrid functional. EXX screening ',EXX_SCREENING)
  endif
  !
-#if defined _RT
- if (l_real_time) call IO_and_Messaging_switch("RESTORE")
-#endif
-#if defined _SC
- if (l_sc_run)    call IO_and_Messaging_switch("RESTORE")
-#endif
-#if defined _NL
- if (l_nl_optics) call IO_and_Messaging_switch("RESTORE")
-#endif
+ if (l_msg_off_) call IO_and_Messaging_switch("RESTORE")
  !
  call timing('XC_potential_driver',OPR='stop')
  !

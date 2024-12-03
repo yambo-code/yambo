@@ -6,17 +6,14 @@
 ! Authors (see AUTHORS file for details): AM DS
 !
 logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
-&                                   E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)
+&               E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL,l_neq_carriers_in_use)
  !
  use pars,         ONLY:SP 
  use X_m,          ONLY:global_gauge
  use DIPOLES,      ONLY:DIPOLE_t
  use electrons,    ONLY:levels,n_sp_pol,filled_tresh,spin_occ
  use BS,           ONLY:BS_not_const_eh_f,BS_perturbative_SOC,BS_eh_en,l_BS_magnons,l_BS_photolum
-#if defined _RT
- use drivers,      ONLY:l_rt_carriers_in_use
- use RT_control,   ONLY:NEQ_Residuals,NEQ_Kernel,EQ_Transitions,EQ_NoOcc
-#endif
+ use BS,           ONLY:NEQ_Residuals,NEQ_Kernel,EQ_Transitions,EQ_NoOcc
  !
  implicit none
  !
@@ -24,6 +21,7 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  type(DIPOLE_t), intent(in) :: Dip
  integer,        intent(in) :: iq,ik,ikp,iv,ic,i_sp_c,i_res_ares
  real(SP),       intent(out):: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
+ logical,        intent(in) :: l_neq_carriers_in_use
  !
  ! Work Space
  !
@@ -69,8 +67,7 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  ! f_eh  enter the excitonic Hamiltonian
  ! f_eh_RES enter the residual of the dielectric constant
  !
-#if defined _RT
- if (l_rt_carriers_in_use.and.allocated(Ken%fo)) then
+ if (l_neq_carriers_in_use.and.allocated(Ken%fo)) then
    !
    f_eh_EQ=(Ken%fo(iv,ikp,i_sp_v)-Ken%fo(ic,ik ,i_sp_c))/spin_occ
    !
@@ -79,7 +76,6 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
    if (.not.NEQ_Residuals ) f_eh_RES=f_eh_EQ
    !
  endif
-#endif
  !
  if(i_res_ares==1) then
    f_e = (         Ken%f(iv,ikp,i_sp_v))/spin_occ
@@ -92,7 +88,6 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  if ( E_eh>=0._SP ) f_eh_PL =  Ken%f(ic,ikp,i_sp_c)*(spin_occ-Ken%f(iv,ik ,i_sp_v))/spin_occ/spin_occ
  if ( E_eh< 0._SP ) f_eh_PL = -Ken%f(iv,ik ,i_sp_v)*(spin_occ-Ken%f(ic,ikp,i_sp_c))/spin_occ/spin_occ
  !
-#if defined _RT
  if(EQ_NoOcc) then
    f_eh_REF=1._SP
    f_eh    =1._SP
@@ -101,7 +96,6 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
    f_e     =1._SP
    f_h     =1._SP
  endif
-#endif
  !
  ! A 0.001 % fractional occupation swiches on the particular treatment of finite temp. BSE 
  if ( abs(abs(f_eh_REF)-1._SP)> filled_tresh ) BS_not_const_eh_f=.TRUE.
@@ -117,28 +111,20 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  !   f_eh_RES=0 transitions give issue in PL. Removed in this case
  if (l_BS_photolum .and. f_eh_RES==0._SP) K_Transition_check=.FALSE.
  !
-#if defined _RT
- !
  ! In case of population inversion, it may be problematic if f_eh>0. and f_eh_RES<0.
  if ( f_eh_REF*f_eh<0._SP .or. f_eh_REF*f_eh_RES<0._SP ) then
     call error(' I cannot split the R and K BSE contribution.'//&
 &              ' ACTION: Use the same occupations in K and R.')
  endif
  !
-#endif
- !
-#if defined _RT
- if (.not.l_rt_carriers_in_use) then
-#endif
+ if (.not.l_neq_carriers_in_use) then
    !
    ! If I've included in valence states that are almost empty
    ! or in conduction states that are almost full, those are neglected
    !
    if ( (f_e<=filled_tresh) .or. (f_h<=filled_tresh) ) K_Transition_check=.FALSE.
    !
-#if defined _RT
  endif
-#endif
  !
  if (any((/abs(E_eh)<BS_eh_en(1).and.BS_eh_en(1)>0._SP,&
 &          abs(E_eh)>BS_eh_en(2).and.BS_eh_en(2)>0._SP/))) K_Transition_check=.FALSE.

@@ -19,4 +19,6 @@
  NL_test_collisions.o
  RK_basestep.o
  el_density_vbands.o
+ mod_NL_interfaces.o
+ mod_nl_optics.o
 

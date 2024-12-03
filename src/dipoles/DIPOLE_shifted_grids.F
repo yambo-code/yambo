@@ -34,9 +34,6 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
 #if defined _SC           
  use SC,                  ONLY:SC_bands
 #endif
-#if defined _RT
- use real_time,           ONLY:RT_bands
-#endif
  !
  implicit none
  !
@@ -52,9 +49,6 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  integer                      :: wf_ng_eff, wf_ng_shifted
 #if defined _SC
  integer                      :: SC_bands_save(2)
-#endif
-#if defined _RT
- integer                      :: RT_bands_save(2)
 #endif
  !
  ! Work Space
@@ -326,9 +320,6 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
 #if defined _SC       
        SC_bands_save     = SC_bands
 #endif 
-#if defined _RT
-       RT_bands_save     = RT_bands
-#endif 
      else if( grid.eq.'shifted'.and. command.eq.' define') then
        nkibz_shifted  = nkibz
        wf_ncx_shifted = wf_ncx
@@ -338,9 +329,6 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
        wf_ng        = wf_ng_save
 #if defined _SC       
        SC_bands = SC_bands_save
-#endif
-#if defined _RT
-       RT_bands = RT_bands_save
 #endif
      endif
      return

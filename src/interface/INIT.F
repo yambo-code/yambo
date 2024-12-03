@@ -41,19 +41,12 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use BS,             ONLY:BS_bands,BS_n_g_W,BS_eh_en,BSE_mode,BSK_mode,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_cpl_K_corr,BS_cpl_K_exchange
  use BS_solvers,     ONLY:BSS_mode,BSS_q0
-#if defined  _PHEL
- use PHEL,           ONLY:PH_Q
- use ELPH,           ONLY:PH_W_debye
-#endif
-#if defined  _ELPH
- use ELPH,           ONLY:elph_nQ,elph_nQ_used
-#endif
 #if defined _SC
  use QP_m,           ONLY:QP_ng_Sx
  use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size
 #endif
 #if defined _OPENMP
- use openmp,         ONLY:n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K,n_threads_NL
+ use openmp,         ONLY:n_threads_X,n_threads_DIP,n_threads_SE,n_threads_K,n_threads_NL
 #endif
 #if defined _YAML_OUTPUT
  use pars,           ONLY:logfile_index,repfile_index
@@ -83,7 +76,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(QP_t)       ::qp
  type(w_samp)     ::Xxcw
  type(levels)     ::en_sc
- integer          ::io_X_err(5),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2),io_SC_E_err,i_r
+ integer          ::io_X_err(5),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_SC_E_err,i_r
  !
  logical, external:: file_exists
  !
@@ -94,7 +87,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  io_BS_err    =-1
  io_BS_Fxc_err=-1
  io_QINDX_err =-1
- io_ELPH_err  =-1
  io_SC_E_err  =-1
  !
  if (.not.FINALIZE.and..not.CLOSE_Gs) then
@@ -182,7 +174,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  endif
  !
  call INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
-&                          io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err)
+&                          io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_SC_E_err)
  !
  if (list_dbs) then
    call msg('s','')
@@ -227,11 +219,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call INIT_activate()
  !
-#if defined _RT
- if (check_verbosity("real_time").and.l_real_time) call INIT_DephMatrix()
-#endif
- !
- ! Q-points (from input/DB)
+ ! Q-points (from input)
  !
  if (l_setup.and.io_QINDX_err/=0) call INIT_q_points( )
  !
@@ -327,30 +315,19 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_slk_test =runlevel_is_on('slktest')
 #endif
        l_gpu_test =runlevel_is_on('gputest')
-#if defined _RT
-       l_real_time=runlevel_is_on('negf')
-       l_elel_scatt =runlevel_is_on('el_el_scatt')
-       l_elph_scatt=runlevel_is_on('el_ph_scatt')
-       l_elphoton_scatt=runlevel_is_on('el_photon_scatt')
-#endif
 #if defined _SC && defined _MODELS
        l_sc_run=runlevel_is_on('scrun')
 #endif
-#if defined _SC && !defined _RT
+#if defined _SC
        l_sc_run=runlevel_is_on('scrun')
        l_sc_magnetic=runlevel_is_on('magnetic')
        l_sc_electric=runlevel_is_on('electric')
 #endif
-#if defined _SC || defined _RT
+#if defined _SC
        l_eval_collisions=runlevel_is_on('collisions')
 #endif
 #if defined _NL
        l_nl_optics=runlevel_is_on('nloptics')
-#endif
-#if defined _ELPH || defined _PHEL
-       l_elph_Hamiltonian=runlevel_is_on('ElPhHam')
-       l_elph_corr=runlevel_is_on('el_ph_corr')
-       l_phel_corr=runlevel_is_on('ph_el_corr')
 #endif
 #if defined  _QED
        l_elphoton_corr=runlevel_is_on('el_photon_corr')
@@ -408,13 +385,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        call W_duplicate(Xxcw,Xw(3))
        call initactivate(2,'XfnQP_E')
      endif
-#if defined _ELPH
-     elph_nQ_used=elph_nQ
-#endif
-#if defined _PHEL
-     PH_Q=(/1,elph_nQ/)
-     QP_G_er=(/0._SP,PH_W_debye/)
-#endif
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
      !
      if (any((/l_em1s,l_em1d,l_X,l_optics,l_ppa,l_mpa/)))   call initactivate(1,'dipoles')
@@ -468,14 +438,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
      if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run&
 &                               .or.l_ppa.or.l_mpa)       n_threads_SE=0
-     if (l_real_time)                                     n_threads_RT=0
      if (l_nl_optics)                                     n_threads_NL=0
 #endif
-#if defined _OPENMP && defined _SC && !defined _RT && !defined _NL
+#if defined _OPENMP && defined _SC && !defined _NL
      if (l_eval_collisions)    n_threads_SE=0
-#endif
-#if defined _OPENMP && defined _SC && defined _RT
-     if (l_eval_collisions)    n_threads_RT=0
 #endif
 #if defined _OPENMP && defined _SC && defined _NL
      if (l_eval_collisions)    n_threads_NL=0
@@ -532,12 +498,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    subroutine LOCAL_scatt_and_correlation_logicals( )
      !
      if (l_cohsex) call initactivate(1,'el_el_corr')
-#if !defined _ELPH
      if (l_life) call initactivate(1,'el_el_corr')
-#endif
-     !
-     if (io_ELPH_err(1)<0.and.io_ELPH_err(2)<0) call switch_off_runlevel('el_ph_corr ph_el_corr',except=' ')
-     if (io_ELPH_err(2)<0                     ) call switch_off_runlevel('el_ph_scatt ph_el_scatt',except=' ')
      !
    end subroutine LOCAL_scatt_and_correlation_logicals
    !

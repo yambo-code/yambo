@@ -23,4 +23,7 @@
  PLASMA_tables_and_dimensions.o
  SCATTERING_GW_kinematics.o
  SCATTERING_QED_transverse_matrix.o
+ mod_COLL_interfaces.o
+ mod_collision_ext.o
+ mod_plasma.o
 

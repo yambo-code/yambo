@@ -28,6 +28,7 @@ subroutine RT_driver(E,X,k,q,Dip)
 &                         H_potential,H_kind,H_xc_functional,H_perturbation
  use RT_control,     ONLY:RT_control_alloc,RT_control_free,&
 &                         NE_i_start_time,RT_carriers_object,RT_apply
+ use RT_control,     ONLY:l_project_spin_dipoles
  use real_time,      ONLY:RT_potential,RT_kind,RT_xc_functional,RT_perturbation,&
 &                         NE_steps,RT_step,G_lesser,RT_bands,&
 &                         NE_i_time,eval_energy,rho_reference,magn_reference,RT_nk, &

@@ -39,4 +39,6 @@
  PARALLEL_structure.o
  SLK_communicators.o
  check_for_a_redundant_IO.o
+ mod_IO.o
+ mod_IO_interfaces.o
 

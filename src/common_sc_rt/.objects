@@ -1,0 +1,8 @@
+#if defined _PAR_IO
+COLL_objects = io_COLLISIONS_header.o io_COLLISIONS.o COLLISIONS_dbname.o
+#else
+COLL_objects = io_COLLISIONS_serial.o
+#endif
+
+objs = INIT_read_command_line_potentials.o \
+$(COLL_objects)

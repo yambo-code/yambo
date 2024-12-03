@@ -30,18 +30,13 @@ integer function io_DB1(E,k,ID)
  use global_XC,        ONLY:setup_global_XC,EXT_NONE
  use gpu_m,            ONLY:have_gpu
  use devxlib,          ONLY:devxlib_memcpy_h2d
-#if defined _SC || defined _RT
+#if defined _SC
  use collision_ext,    ONLY:COLL_bands
  use hamiltonian,      ONLY:H_ref_bands
-#endif
-#if defined _SC
  use SC,               ONLY:SC_bands
 #endif
 #if defined _NL
  use nl_optics,        ONLY:NL_bands
-#endif
-#if defined _RT
- use real_time,        ONLY:RT_bands
 #endif
  !
 #include<y_memory.h>
@@ -225,15 +220,10 @@ integer function io_DB1(E,k,ID)
      QP_n_G_bands=(/1,E%nb/)
      !
      if(any(BS_bands(:)==0)) BS_bands=(/1,E%nb/)
-#if defined _SC || defined _RT
+#if defined _SC
      if(any(COLL_bands(:)==0)) COLL_bands=(/1,E%nb/)
      if(any(H_ref_bands(:)==0)) H_ref_bands=(/1,E%nb/)
-#endif
-#if defined _SC
      if(any(SC_bands(:)==0)) SC_bands=(/1,E%nb/)
-#endif
-#if defined _RT
-     if(any(RT_bands(:)==0)) RT_bands=(/1,E%nb/)
 #endif
 #if defined _NL
      if(any(NL_bands(:)==0)) NL_bands=(/1,E%nb/)

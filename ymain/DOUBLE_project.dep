@@ -1,0 +1,4 @@
+ yambo.o
+ ypp.o
+ yambo_driver.o
+

@@ -1,0 +1,5 @@
+objs = INIT_activate_rt.o \
+INIT_check_databases_rt.o \
+INIT_load_rt.o \
+INIT_read_command_line_rt.o \
+INIT_rt.o

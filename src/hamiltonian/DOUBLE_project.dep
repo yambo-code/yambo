@@ -19,4 +19,8 @@
  WF_and_dipole_dimensions.o
  XC_additional_SC_potentials.o
  XC_potentials.o
+ mod_H_interfaces.o
+ mod_electric.o
+ mod_fields.o
+ mod_hamiltonian.o
 

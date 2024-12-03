@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine K_driver_init(what,iq,Ken,Xk)
+subroutine K_driver_init(what,iq,Ken,Xk,BSE_occ_mode,l_neq_carriers_in_use)
  !
  use R_lattice,    ONLY:bz_samp
  use electrons,    ONLY:levels,n_sp_pol,n_spin
@@ -22,20 +22,19 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use TDDFT,        ONLY:FXC_is_retarded,FXC_n_g_corr,l_Fxc_from_Vxc
  use drivers,      ONLY:l_col_cut,l_rpa_IP,l_alda_fxc,l_bs_fxc
  use D_lattice,    ONLY:i_time_rev,i_space_inv,l_3D
-#if defined _RT
- use drivers,      ONLY:l_rt_carriers_in_use
- use RT_control,   ONLY:NEQ_Kernel,EQ_Transitions,EQ_NoOcc,NEQ_Residuals,RT_BSE_Occ_Mode
-#endif
+ use BS,           ONLY:NEQ_Kernel,EQ_Transitions,EQ_NoOcc,NEQ_Residuals
 #if defined _CUDA
  use TDDFT,        ONLY:FXC_mode
 #endif
  !
  implicit none
  !
- character(*)  ::what
- integer       ::iq
- type(levels)  ::Ken
- type(bz_samp) ::Xk
+ character(*)  :: what
+ integer       :: iq
+ type(levels)  :: Ken
+ type(bz_samp) :: Xk
+ character     :: BSE_occ_mode
+ logical       :: l_neq_carriers_in_use
  !
  ! Work Space
  !
@@ -132,9 +131,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  ! Do I need the anti-res part?
  if (BS_K_coupling) BS_K_anti_resonant=.TRUE.
  if (STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded')) BS_K_anti_resonant=.TRUE.
-#if defined _RT 
- if (l_rt_carriers_in_use) BS_K_anti_resonant=.TRUE.
-#endif
+ if (l_neq_carriers_in_use) BS_K_anti_resonant=.TRUE.
  !
  ! Is ARES derivable from RES?
  !-----------------------------
@@ -196,9 +193,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  ! Carriers and bs-fxc non compatible!
  !-------------------------------------
-#if defined _RT 
- if(l_rt_carriers_in_use .and. STRING_match(BSS_mode,'t')) call error('RT occupations and BSE via f_xc not compatible')
-#endif
+ if(l_neq_carriers_in_use .and. STRING_match(BSS_mode,'t')) call error('NEQ occupations and BSE via f_xc not compatible')
  !
  ! If the em1s DB has been calculated in the same run
  ! of a BS-Fxc kernel construction that l_bs_fxc is set .FALSE.
@@ -229,14 +224,14 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !===============
  if (l_rpa_IP.and.STRING_match(BSE_mode,'coupling')) BSE_mode='retarded'
  !
+ !
  ! TR-ABS logicals
  !-----------------
-#if defined _RT
- NEQ_Kernel   =STRING_match(RT_BSE_Occ_Mode,"k").and.allocated(Ken%fo)
- NEQ_Residuals=STRING_match(RT_BSE_Occ_Mode,"r").and.allocated(Ken%fo)
+ NEQ_Kernel   =STRING_match(BSE_Occ_Mode,"k").and.allocated(Ken%fo)
+ NEQ_Residuals=STRING_match(BSE_Occ_Mode,"r").and.allocated(Ken%fo)
+ !
  call parser('ForceEqTrans',EQ_Transitions)
  call parser('ForceEqNoOcc',EQ_NoOcc)
-#endif
  !
  ! SLEPC
  !=======

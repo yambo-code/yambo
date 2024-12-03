@@ -14,7 +14,8 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use stderr,       ONLY:STRING_match
  use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix_format,BSS_uses_DbGd,&
 &                       BSS_slepc_double_grp,run_Slepc,BSS_mode,BSS_first_eig,       &
-&                       l_abs_prop_chi_bse,l_eels_can_be_computed,l_eels_from_inversion
+&                       l_abs_prop_chi_bse,l_eels_can_be_computed,l_eels_from_inversion,  &
+&                       BSS_ydiago_solver
  use BS,           ONLY:BSE_L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
 &                       BS_perturbative_SOC,l_BS_magnons,l_BS_photolum,&
 &                       BS_cpl_K_exchange,BS_n_g_exch,BS_res_K_exchange,BS_K_coupling,BS_res_ares_n_mat,&

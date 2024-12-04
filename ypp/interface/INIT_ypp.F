@@ -711,7 +711,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  ! Check for existing QP control fields to be proposed in the new input files
  !
- call QP_state_table_setup(E)
+ call QP_state_table_setup(E,1)
  !
  if (infile_editing) then
    inpfile_unit=12

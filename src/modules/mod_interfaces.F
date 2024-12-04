@@ -111,7 +111,7 @@ module interfaces
      !
    end subroutine
    !
-   subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
+   subroutine el_density_and_current(E,k,rho,drho,J,occ_mode,bands,force_spatial_inversion)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
@@ -121,11 +121,12 @@ module interfaces
      real(SP), optional             ::rho(fft_size)
      real(SP), optional             ::drho(fft_size,3)
      real(SP), optional             ::J(fft_size,3)
+     character(*), optional, intent(in) ::occ_mode
      integer,  optional, intent(in) ::bands(2)
      logical,  optional, intent(in) ::force_spatial_inversion
    end subroutine el_density_and_current
    !
-   subroutine el_magnetization(en,Xk,magn,bands)
+   subroutine el_magnetization(en,Xk,magn,occ_mode,bands)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
@@ -134,6 +135,7 @@ module interfaces
      type(levels), intent(in ) ::en
      type(bz_samp),intent(in ) ::Xk
      real(SP),     intent(out) ::magn(fft_size,3)
+     character(*), optional, intent(in) ::occ_mode
      integer,  optional, intent(in) ::bands(2)
    end subroutine el_magnetization
    !

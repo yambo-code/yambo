@@ -158,7 +158,7 @@ subroutine QP_driver_ph(X,Xen,Xk,en,k,q,Xw,Dip)
  ! Basic defs
  !============
  !
- call QP_state_table_setup(en)
+ call QP_state_table_setup(en,1)
  !
  ! Here I copy several informations to the qp_t type.
  ! This is because I want the qp to be completely independent of the run

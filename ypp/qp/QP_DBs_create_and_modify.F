@@ -58,7 +58,7 @@ subroutine QP_DBs_create_and_modify(en,k)
  !
  ! ... now turn QP_state into QP_table
  !
- call QP_state_table_setup(en)
+ call QP_state_table_setup(en,1)
  !
  QP_nk=nk_lim(2)-nk_lim(1)+1
  QP_nb=nb_lim(2)-nb_lim(1)+1

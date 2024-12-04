@@ -62,12 +62,15 @@ module hamiltonian
    end function
    !
    subroutine H_QP_table_setup(E)
-     use drivers,        ONLY:l_use_collisions
+     use drivers,        ONLY:l_sc_run,l_real_time,l_eval_collisions,l_nl_optics
      use R_lattice,      ONLY:nkibz
      use electrons,      ONLY:levels
      use QP_m,           ONLY:QP_nk,QP_state,QP_nb
      !
      type(levels) :: E
+     !
+     logical :: Mixing
+     integer :: bands_mixing
      !
      ! Build-up QP table
      !
@@ -82,7 +85,15 @@ module hamiltonian
        !
        YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))
        QP_state=.TRUE.
-       call QP_state_table_setup(E)
+       !
+       ! DS comment: this is a temporary solution
+       Mixing=.FALSE.
+       Mixing=l_sc_run.or.l_real_time.or.l_eval_collisions.or.l_nl_optics
+       if (l_eval_collisions) Mixing=l_elel_scatt.or.(index(H_potential,"FOCK")>0.and.index(H_potential,"HARTREE")>0)&
+       &                                          .or.trim(H_potential)=="COHSEX"
+       !
+       call define_bands_mixing(Mixing,bands_mixing)
+       call QP_state_table_setup(E,bands_mixing)
        !
      endif
      !
@@ -153,5 +164,47 @@ module hamiltonian
      YAMBO_FREE(V_hartree_sc)
      !
    end subroutine
+   !
+   !
+   subroutine define_bands_mixing(mixing,bands_mixed)
+    !
+    ! Band Mixing
+    !=============
+    !
+    ! Note: only upper triangle of the table is filled. 
+    !       This corresponds to assume symmetric/hermitian 
+    !       matrixes
+    !
+    ! Note (2) : a non zero mixing is allowed only in a SC/RT calculation
+    !
+    use pars,          ONLY:SP
+    use QP_m,          ONLY:QP_nb,SC_bands_mixed,SC_band_mixing 
+    !
+    implicit none
+    !
+    logical, intent(in) :: mixing
+    integer, intent(out):: bands_mixed
+    !
+    bands_mixed   =1
+    SC_bands_mixed=1
+    !
+    if (Mixing) then
+      !
+      !#if !defined (here was elph flag). To check impact
+      !if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) SC_band_mixing=0._SP
+      !#endif
+      !
+      if (SC_band_mixing<0._SP.or.SC_band_mixing>100._SP) SC_band_mixing=0._SP
+      if (SC_band_mixing>0._SP) SC_bands_mixed=nint(QP_nb*SC_band_mixing/100._SP)
+      if (SC_bands_mixed==0) SC_bands_mixed=1
+      !
+      ! Recalculated SC/RT band mixing
+      !
+      SC_band_mixing=float(SC_bands_mixed)*100._SP/float(QP_nb)
+      bands_mixed=SC_bands_mixed
+      !
+    endif
+    !
+   end subroutine define_bands_mixing
    !
 end module

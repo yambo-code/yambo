@@ -19,14 +19,15 @@
 !! @param[out]      V_xc                exchange correlation potential (if ORDER=1)
 !! @param[out]      F_xc                exchange correlation kernel    (if ORDER=2)
 !
-subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING,l_msg_off)
+subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING,l_msg_off,rho,magn)
  !
  ! Wrapper for calculation of the XC potential. If available libxc,
  ! will be used instead of internal routines
  !
  use pars,           ONLY:SP,rZERO
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,n_spin
+ use FFT_m,          ONLY:fft_size
  use com,            ONLY:msg
  use xc_f03_lib_m,   ONLY:XC_LDA_X, XC_LDA_C_PW
  use xc_functionals, ONLY:XC_EXCHANGE_CORRELATION,xc_string,XC_libxc_driver,&
@@ -42,6 +43,8 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
  integer,       intent(in)       :: ORDER
  real(SP),      intent(inout),optional :: EXX_FRACTION, EXX_SCREENING
  logical,       intent(in),   optional :: l_msg_off
+ real(SP),      intent(in),   optional ::rho(fft_size)
+ real(SP),      intent(in),   optional ::magn(fft_size,3)
  !
  ! Work space
  !
@@ -80,8 +83,15 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
    LIBXC_message_done=.TRUE.
  endif
  !
- call XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION=local_exx_fraction,&
-&                     EXX_SCREENING=local_exx_screening)
+ if (.not.present(rho)) then
+   call XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,&
+   &                   EXX_FRACTION=local_exx_fraction,EXX_SCREENING=local_exx_screening)
+ else 
+   if (n_spin==1) call XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,&
+   & rho=rho,          EXX_FRACTION=local_exx_fraction,EXX_SCREENING=local_exx_screening)
+   if (n_spin==2) call XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,&
+   & rho=rho,magn=magn,EXX_FRACTION=local_exx_fraction,EXX_SCREENING=local_exx_screening)
+ endif
  !
  if (local_exx_fraction.gt.rZERO) then
    if (present(EXX_FRACTION)) EXX_FRACTION = local_exx_fraction 

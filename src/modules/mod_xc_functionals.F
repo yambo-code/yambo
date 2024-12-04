@@ -58,11 +58,12 @@ module xc_functionals
  !
  interface
    !
-   subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING,l_msg_off)
+   subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING,l_msg_off,rho,magn)
      use pars,          ONLY:SP,DP,RZERO
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
      use com,           ONLY:msg
+     use FFT_m,         ONLY:fft_size
      implicit none
      type(levels),  intent(in)       :: en
      type(bz_samp), intent(in)       :: Xk
@@ -70,17 +71,22 @@ module xc_functionals
      integer,       intent(in)       :: ORDER
      real(SP),      intent(inout),optional :: EXX_FRACTION,EXX_SCREENING
      logical,       intent(in),   optional :: l_msg_off
+     real(SP),      intent(in),   optional :: rho(fft_size)
+     real(SP),      intent(in),   optional :: magn(fft_size,3)
    end subroutine XC_potential_driver
    !
-   subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
+   subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING,rho,magn)
      use pars,          ONLY:SP
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
+     use FFT_m,         ONLY:fft_size
      implicit none
      type(levels) ::en
      type(bz_samp)::Xk
      integer      ::FUNCTIONAL,ORDER
      real(SP), optional :: EXX_FRACTION,EXX_SCREENING
+     real(SP),      intent(in),   optional :: rho(fft_size)
+     real(SP),      intent(in),   optional :: magn(fft_size,3)
    end subroutine XC_libxc_driver
    !
  end interface

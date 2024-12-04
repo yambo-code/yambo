@@ -9,9 +9,7 @@ integer function io_DIPOLES(Dip,ID)
  !
  use pars,          ONLY:schlen
  use DIPOLES,       ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_v,DIP_spin,DIP_orbital,P_square
-#if defined _RT
  use DIPOLES,       ONLY:DIP_P_spinor
-#endif
  use electrons,     ONLY:n_spin,n_spinor
  use R_lattice,     ONLY:nXkibz
  use IO_m,          ONLY:io_sec,frag_DIP,io_DIP,read_is_on,io_extension,IO_NOT_ALLOWED,frag_DIP
@@ -29,9 +27,7 @@ integer function io_DIPOLES(Dip,ID)
  !
  integer :: ik,ik_mem,i_fragment,i_sp_pol,DIP_size(4),DIP_ipos(4),ID_frag,&
 &           P2_size(3),P2_ipos(3)
-#if defined _RT
  integer :: Pspinor_size(6),Pspinor_ipos(6)
-#endif
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
  !
@@ -76,13 +72,11 @@ integer function io_DIPOLES(Dip,ID)
  DIP_size=(/2,3,Dip%db_ib(2)-Dip%db_ib_lim(2)+1,Dip%db_ib_lim(1)-Dip%db_ib(1)+1/)
  DIP_ipos=(/1,1,Dip%ib_lim(2)-Dip%db_ib_lim(2)+1,Dip%ib(1)-Dip%db_ib(1)+1/)
  !
-#if defined _RT
  Pspinor_size(1:4)=(/2,3,n_spinor,n_spinor/)
  Pspinor_ipos(1:4)=(/1,1,1,1/)
  !
  Pspinor_size(5:6)=DIP_size(3:4)
  Pspinor_ipos(5:6)=DIP_ipos(3:4)
-#endif
  !
  P2_size(1)=2
  P2_ipos(1)=1
@@ -144,7 +138,6 @@ integer function io_DIPOLES(Dip,ID)
    !
  endif
  !
-#if defined _RT
  if (STRING_match(Dip%computed,"P_spinor")) then
    !
    ! P_Spinor
@@ -155,7 +148,6 @@ integer function io_DIPOLES(Dip,ID)
    !
    !
  endif
-#endif
  !
  if (STRING_match(Dip%computed,"P2")) then
    !

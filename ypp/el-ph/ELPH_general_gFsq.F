@@ -78,7 +78,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
    YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))
    QP_state=.FALSE.
    forall( i1=BS_bands(1):BS_bands(2) ) QP_state(i1,:)=.TRUE.
-   call QP_state_table_setup(Xen)
+   call QP_state_table_setup(Xen,1)
    QP_n_states_DB=QP_n_states
    !
  else
@@ -86,7 +86,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
    !
    ! Input file QP states
    !
-   call QP_state_table_setup(en)
+   call QP_state_table_setup(en,1)
    QP_n_states_DB=QP_n_states
    !
  endif

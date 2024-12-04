@@ -23,7 +23,7 @@ subroutine RT_density(en,kpt,qpt)
  use YPPm,           ONLY:v2plot,output_fname,plot_dim,plot_title,&
 &                         use_xcrysden,use_gnuplot,use_cube,nr,nr_tot,l_norm_to_one
  use YPP_real_time,  ONLY:RT_time,RT_conf,gimme_a_G_Time_Point
- use interfaces,     ONLY:WF_load,WF_free,el_density_and_current
+ use interfaces,     ONLY:WF_load,WF_free,el_density_and_current,el_magnetization
  use wave_func,      ONLY:WF,wf_ng
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  !
@@ -98,7 +98,7 @@ subroutine RT_density(en,kpt,qpt)
  YAMBO_ALLOC(drho,(fft_size))
  drho=0._SP
  !
- if(n_spin>1.and.load_G_history) then
+ if(n_spin>1) then
    call build_spin_sop()
    YAMBO_ALLOC(delta_magn,(fft_size,3))
  endif
@@ -157,8 +157,7 @@ subroutine RT_density(en,kpt,qpt)
      !
      call el_density_and_current(en,kpt,rho=drho,bands=RT_bands)
      !
-     ! To be coded
-     !if(n_spin>1) call el_magnetization(en,kpt,delta_magn,bands=RT_bands)
+     if(n_spin>1) call el_magnetization(en,kpt,delta_magn,bands=RT_bands)
      !
      en%f=en%fo
      deallocate(en%fo)
@@ -228,8 +227,8 @@ subroutine RT_density(en,kpt,qpt)
  endif
  YAMBO_FREE(drho)
  !
- if(n_spin>1.and.load_G_history) then
-   YAMBO_ALLOC(delta_magn,(fft_size,3))
+ if(n_spin>1) then
+   YAMBO_FREE(delta_magn)
  endif
  !
  call WF_free(WF)

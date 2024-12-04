@@ -138,7 +138,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    ! Built-in
    !----------
    ! QP corrections
-   if (i_T==1) call QP_state_table_setup(RT_E)
+   if (i_T==1) call QP_state_table_setup(RT_E,1)
    call QP_apply(RT_bands,RT_E,RT_k,'G',msg_fmt='rs')
    !
    if(.not.l_skip_occ) then

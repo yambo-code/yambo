@@ -57,7 +57,6 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  !
  YAMBO_ALLOC_GPU(v_int,(n))
  YAMBO_ALLOC_GPU(vp_int,(1))
-
  !
  ! init
  if (.not.gpu_linalg_init) call gpu_linalg_setup()
@@ -100,6 +99,10 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  !DEV_ACC end host_data
  !DEV_ACC_DEBUG end data
 #endif
+ !
+ YAMBO_FREE_GPU(v_int)
+ YAMBO_FREE_GPU(vp_int)
+ YAMBO_FREE_GPU(v_cmplx)
  !
  if(.not.(l_nl_optics.or.l_real_time)) call timing(trim(subname),OPR='stop')
  !

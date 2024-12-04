@@ -19,7 +19,7 @@ subroutine RT_density(en,kpt,qpt)
  use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,LOG,manage_action
  use RT_control,     ONLY:TIME_string,RT_apply,Gless_RT_IO_t,CARR_RT_IO_t
  use RT_occupations, ONLY:RT_el_occ,RT_occupation_alloc,RT_occupation_free
- use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,dG_lesser,G_lesser_reference,RT_step
+ use real_time,      ONLY:RT_ibz,RT_nk,RT_bands,NE_i_time,dG_lesser,G_lesser_reference,RT_step
  use YPPm,           ONLY:v2plot,output_fname,plot_dim,plot_title,&
 &                         use_xcrysden,use_gnuplot,use_cube,nr,nr_tot,l_norm_to_one
  use YPP_real_time,  ONLY:RT_time,RT_conf,gimme_a_G_Time_Point
@@ -49,6 +49,8 @@ subroutine RT_density(en,kpt,qpt)
  call parser('IncludeEQocc',include_eq_occ)
  !
  call section('*','Time dependent density plot')
+ !
+ if (n_sp_pol==2) call error("RT_density not coded for n_sp_pol=2")
  !
  call RT_k_grid(en,kpt,qpt)
  !
@@ -139,10 +141,27 @@ subroutine RT_density(en,kpt,qpt)
      !
      call RT_apply(RT_bands,en,kpt,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
      !
+     ! Transfer the occupations from RT_occ to f, and save previous occupations to fo
+     allocate(en%fo)
+     en%fo=en%f
+     !do i_sp_pol=1,n_sp_pol
+     do ik=1,kpt%nibz
+       en%f(:,ik,1)=0._SP
+       do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
+         do ib=RT_bands(1),RT_bands(2)
+           en%f(ib,ik,1)=en%f(ib,ik,1)+RT_el_occ%dN(ib,ik_RT)*RTibz%weights(ik_RT)
+         enddo
+       enddo
+     enddo
+     !enddo
+     !
      call el_density_and_current(en,kpt,rho=drho,bands=RT_bands)
      !
      ! To be coded
      !if(n_spin>1) call el_magnetization(en,kpt,delta_magn,bands=RT_bands)
+     !
+     en%f=en%fo
+     deallocate(en%fo)
      !
    endif
    !

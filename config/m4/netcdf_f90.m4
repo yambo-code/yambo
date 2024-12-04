@@ -156,7 +156,8 @@ if test x"$enable_hdf5" = "xno"; then
     LIBS="$save_libs" ;
     #
   fi
-  if test "x$netcdf" = "xno"; then
+  if test "x$netcdf" = "xno" ; then
+   if test "x$activate_extlibs_compilation" = "xyes" ; then
     #
     # internal netcdf
     #
@@ -189,7 +190,7 @@ if test x"$enable_hdf5" = "xno"; then
         AC_MSG_RESULT([already compiled]) ;
       else 
         compile_netcdf="yes" ;
-        AC_MSG_RESULT([to be compiled]) ;
+        AC_MSG_RESULT([to be compiled and installed in path $extlibs_path.]) ;
       fi
     else
       if test -e "${NETCDF_HDF5_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PATH}/lib/libnetcdff.a"; then
@@ -197,10 +198,13 @@ if test x"$enable_hdf5" = "xno"; then
         AC_MSG_RESULT([already compiled]) ;
       else 
         compile_netcdf="yes" ;
-        AC_MSG_RESULT([to be compiled]) ;
+        AC_MSG_RESULT([to be compiled and installed in path $extlibs_path.]) ;
       fi
     fi
     #
+   else
+     AC_MSG_ERROR([netcf library not found])
+   fi
   fi
   #
 fi
@@ -238,6 +242,7 @@ if test x"$enable_hdf5" = "xyes"; then
   LIBS="$save_libs" ;
   #
   if test "x$netcdf" = "xno"; then
+   if test "x$activate_extlibs_compilation" = "xyes" ; then
     if test -d "$with_netcdf_libdir" || test -d "$with_netcdf_path" || test -d "$with_netcdff_libdir" || test -d "$with_netcdff_path" ; then AC_MSG_RESULT([no]) ; fi
     #
     AC_MSG_CHECKING([for internal NETCDF library]);
@@ -282,10 +287,13 @@ if test x"$enable_hdf5" = "xyes"; then
       if test "$IO_LIB_VER" = "serial";   then HDF5_OPT="--disable-parallel" ; fi
       if test "$IO_LIB_VER" = "parallel"; then HDF5_OPT="--enable-parallel"  ; fi
       #
-      AC_MSG_RESULT([to be compiled]) ;
+      AC_MSG_RESULT([to be compiled and installed in path $extlibs_path.]) ;
       #
     fi
     #
+   else
+     AC_MSG_ERROR([netcf library not found])
+   fi
   fi
 fi
 #

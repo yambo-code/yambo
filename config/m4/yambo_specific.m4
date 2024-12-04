@@ -10,10 +10,19 @@
 # PATH FOR EXT LIBS
 AC_ARG_WITH(extlibs_path,
             AS_HELP_STRING([--with-extlibs-path=<path>],[Path to the external libs],[]),
-            [extlibs_path="$with_extlibs_path"],[extlibs_path="${PWD}/lib/external"])
-if test x"$extlibs_path" = "xyes"; then extlibs_path="${PWD}/lib/external"; fi
-if test x"$extlibs_path" = "x"; then extlibs_path="${PWD}/lib/external"; fi
+            [extlibs_path="$with_extlibs_path"],[extlibs_path="none"])
+if test "$extlibs_path" = "none" ; then 
+  activate_extlibs_compilation="no";
+  AC_MSG_WARN([Automatic compilation of external libraries deactivated])
+else
+  if ! test -d $extlibs_path; then
+    AC_MSG_ERROR([$extlibs_path does not exist. Please specify a valid path])
+  fi
+  activate_extlibs_compilation="yes";
+  AC_MSG_WARN([Automatic compilation of external libraries activated. Libs to be installed in path $extlibs_path.])
+fi
 AC_SUBST(extlibs_path)
+AC_SUBST(activate_extlibs_compilation)
 #
 # ============================================================================
 # DEBUG

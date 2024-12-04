@@ -71,6 +71,10 @@ hdf5="no"
 #
 if test x"$enable_hdf5" = "xyes"; then
  #
+ if test "x$activate_extlibs_compilation" = "xno" && test "$with_hdf5_libs" = "internal"; then
+   AC_MSG_WARN([internal hdf5 library requested, but --with-extlibs-path="$PATH" not provided])
+   with_hdf5_libs="";
+ fi 
  if ! test "$with_hdf5_libs" = "internal" ; then
   #
   AC_MSG_CHECKING([for HDF5]) ;
@@ -136,11 +140,11 @@ if test x"$enable_hdf5" = "xyes"; then
     #
     # Check for the existence of the pre-compiled library corresponding to what needed by yambo
     #
-    if test -e $h5pfc && test $IO_LIB_VER = "parallel"; then
+    if test -e $h5pfc && test "$h5pfc" != "none"  && test $IO_LIB_VER = "parallel"; then
        try_HDF5_LIBS=`$h5pfc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
        try_hdf5_incdir=`$h5pfc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
        IO_LIB_VER="parallel";
-    elif test -e $h5fc && test $IO_LIB_VER = "serial"; then 
+    elif test -e $h5fc && test "$h5fc" != "none"  && test $IO_LIB_VER = "serial"; then 
        try_HDF5_LIBS=`$h5fc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
        try_hdf5_incdir=`$h5fc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
        IO_LIB_VER="serial";
@@ -229,10 +233,11 @@ if test x"$enable_hdf5" = "xyes"; then
     IO_LIB_VER="unknown"
   fi
   #
-  if test "x$hdf5" = xno; then
+  if test "x$hdf5" = xno ; then
     if ! test "$with_hdf5_libs" = "internal" ; then
       AC_MSG_RESULT([no]) ;
     fi
+   if test "x$activate_extlibs_compilation" = "xyes" ; then
     #
     AC_MSG_CHECKING([for internal HDF5 library]);
     internal_hdf5="yes" ;
@@ -282,6 +287,11 @@ if test x"$enable_hdf5" = "xyes"; then
     if test "$use_libdl"   = "yes"; then HDF5_LIBS="$HDF5_LIBS -ldl"  ; fi
     if test "$use_libcurl" = "yes"; then HDF5_LIBS="$HDF5_LIBS -lcurl"; fi
     #
+   else
+     AC_MSG_WARN([hdf5 library not found. switching to netcdf 3 format])
+     NETCDF_VER="v3";
+     enable_netcdf_classic="yes"
+   fi
   fi
 fi
 #

@@ -12,7 +12,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match
- use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix_format,BSS_uses_DbGd,&
+ use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix_format,BSS_uses_DbGd,BSS_ydiago_solver,&
 &                       BSS_slepc_double_grp,run_Slepc,BSS_mode,BSS_first_eig,       &
 &                       l_abs_prop_chi_bse,l_eels_can_be_computed,l_eels_from_inversion,  &
 &                       BSS_ydiago_solver

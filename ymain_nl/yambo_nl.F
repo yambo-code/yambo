@@ -123,7 +123,8 @@ integer function yambo_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  ! BZ sampling
  !==============
  !
- if(launch_me) call bz_samp_indexes(en,k,Xk,q,elph_use_q_grid) 
+ ! The second true is needed for lsex collisions
+ if(launch_me) call bz_samp_indexes(en,k,Xk,q,elph_use_q_grid,.false.,.true.) 
  !
  ! COLOUMB DRIVER
  !================

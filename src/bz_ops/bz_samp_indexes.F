@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine bz_samp_indexes(en,k,Xk,q,use_q_grid)
+subroutine bz_samp_indexes(en,k,Xk,q,use_q_grid,compute_X_scattering,compute_sigma_scattering)
  !
  ! ikbz=(ik,is) --<--:--<-- okbz=(ok,os) = (IK-Q)
  !                   :
@@ -54,6 +54,7 @@ subroutine bz_samp_indexes(en,k,Xk,q,use_q_grid)
  type(levels) ::en
  type(bz_samp)::k,Xk,q
  logical      ::use_q_grid
+ logical, intent(in) :: compute_X_scattering,compute_sigma_scattering
  !
  ! Work Space
  !
@@ -72,25 +73,14 @@ subroutine bz_samp_indexes(en,k,Xk,q,use_q_grid)
  call section('*','Transferred momenta grid and indexing')
  !========================================================
  ! .... defaults
- X_scattering    =.true.
- sigma_scattering=.true.
+ X_scattering    =compute_X_scattering
+ sigma_scattering=compute_sigma_scattering
  bse_scattering  =l_bse .and. (BS_res_K_corr.or.BS_cpl_K_corr)
  coll_scattering =l_elel_scatt
  !
  ! ... User defined
  call parser('BSEscatt',bse_setup_scatt)
  if (.not.bse_scattering ) bse_scattering =use_q_grid.or.bse_setup_scatt.or.trim(q_source)=="Electron-Phonon databases"
- !
-#if defined _NL
- !
- ! In the non-linear spectroscoy I don't load qindx_X and qindx_S
- !
- if(l_nl_optics) then
-   X_scattering    =.FALSE.
- !   sigma_scattering=.FALSE. ! I need them for the LSEX
- endif
- !
-#endif
  !
  call parser('K_grids', user_grids)
  if (user_grids) then

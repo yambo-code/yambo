@@ -236,7 +236,7 @@ subroutine K_driver_init(what,iq,Ken,Xk,BSE_occ_mode,l_neq_carriers_in_use)
  ! SLEPC
  !=======
  !
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC
  !
  ! Special case, slepc with distributed matrix need to explicitly compute the anti-resonant block
  l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (BSS_slepc_matrix_format=="shell")

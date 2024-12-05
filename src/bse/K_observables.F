@@ -7,7 +7,7 @@
 !
 subroutine K_observables( W )
  !
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC
  use BS_solvers,   ONLY:run_Slepc
 #endif
  use drivers,      ONLY:l_rpa_IP
@@ -101,7 +101,7 @@ subroutine K_observables( W )
  run_Diago     = STRING_match(BSS_mode,'d')
  run_Haydock   = STRING_match(BSS_mode,'h')
  run_inversion = STRING_match(BSS_mode,'i')
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC
  run_Slepc     = STRING_match(BSS_mode,'s')
 #endif
  if (l_BS_photolum.and.run_Haydock) then

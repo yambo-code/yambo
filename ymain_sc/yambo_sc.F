@@ -123,7 +123,7 @@ integer function yambo_sc(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  ! BZ sampling
  !==============
  !
- if(launch_me) call bz_samp_indexes(en,k,Xk,q,elph_use_q_grid) 
+ if(launch_me) call bz_samp_indexes(en,k,Xk,q,elph_use_q_grid,.true.,.true.) 
  !
  ! COLOUMB DRIVER
  !================

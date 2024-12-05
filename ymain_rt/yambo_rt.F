@@ -121,7 +121,7 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  ! BZ sampling
  !==============
  !
- if(launch_me) call bz_samp_indexes(en,k,Xk,q,.false.) 
+ if(launch_me) call bz_samp_indexes(en,k,Xk,q,.false.,.true.,.true.) 
  !
  ! COLOUMB DRIVER
  !================

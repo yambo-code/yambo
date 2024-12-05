@@ -55,7 +55,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  if ( any((/l_sp_wf,l_angular_momentum,l_position,l_mean_potential/)) ) then
    !
-   call QP_state_table_setup(Xen,1)
+   call QP_state_table_setup(Xen,1,1,.true.)
    !
    NB =(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)
    NK =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)

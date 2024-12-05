@@ -47,7 +47,7 @@ subroutine RT_occupations_driver(k,q,en)
  !
  ! Additional QP corrections
  !===========================
- call QP_state_table_setup(en,1)
+ call QP_state_table_setup(en,1,1,.true.)
  !
  call QP_apply(RT_bands,en,k,'G',msg_fmt='rs')
  !

@@ -132,8 +132,7 @@ module parallel_int
      real(SP),    optional :: LOADED_r,TOTAL_r
    end subroutine
    !
-   subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
-&                                    QP_index,PLASMA_index,Bm_index,CLEAN_UP)
+   subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,QP_index,CLEAN_UP)
      !
      use parallel_m,      ONLY:PP_indexes
      !
@@ -144,8 +143,6 @@ module parallel_int
      type(PP_indexes),    optional :: Bp_index
      type(PP_indexes),    optional :: B_and_K_index
      type(PP_indexes),    optional :: QP_index
-     type(PP_indexes),    optional :: PLASMA_index
-     type(PP_indexes),    optional :: Bm_index
      logical, intent(in), optional :: CLEAN_UP
      !
    end subroutine 

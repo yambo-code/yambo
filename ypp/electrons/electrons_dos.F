@@ -51,7 +51,7 @@ subroutine electrons_dos(Xk,Xen)
  !
  if (l_DbGd) DOS_bands(2)=min(DOS_bands(2),Xen%FG%nb)
  !
- call QP_state_table_setup(Xen,1)
+ call QP_state_table_setup(Xen,1,1,.true.)
  call QP_apply(DOS_bands,Xen,Xk,'G',msg_fmt='rs')
  !
  ! Setup

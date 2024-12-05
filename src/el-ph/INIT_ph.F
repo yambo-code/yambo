@@ -129,7 +129,7 @@ integer function INIT_ph(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    ! QP_state from DB ?
    !
-   if (allocated(QP_state)) call QP_state_table_setup(en)
+   if (allocated(QP_state)) call QP_state_table_setup(en,1,1,.true.)
    !
    call INIT_QP("[GW] QP")
    !

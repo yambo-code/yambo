@@ -107,7 +107,7 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  ! QP states setup
  !
- call QP_state_table_setup(E,1)
+ call QP_state_table_setup(E,1,1,.true.)
  !
  ! Allocation
  !

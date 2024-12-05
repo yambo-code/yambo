@@ -65,12 +65,13 @@ module hamiltonian
      use drivers,        ONLY:l_sc_run,l_real_time,l_eval_collisions,l_nl_optics
      use R_lattice,      ONLY:nkibz
      use electrons,      ONLY:levels
+     use SC_m,           ONLY:SC_diagonal
      use QP_m,           ONLY:QP_nk,QP_state,QP_nb
      !
      type(levels) :: E
      !
      logical :: Mixing
-     integer :: bands_mixing
+     integer :: bands_mixed
      !
      ! Build-up QP table
      !
@@ -92,8 +93,8 @@ module hamiltonian
        if (l_eval_collisions) Mixing=l_elel_scatt.or.(index(H_potential,"FOCK")>0.and.index(H_potential,"HARTREE")>0)&
        &                                          .or.trim(H_potential)=="COHSEX"
        !
-       call define_bands_mixing(Mixing,bands_mixing)
-       call QP_state_table_setup(E,bands_mixing)
+       call define_bands_mixing(Mixing,bands_mixed)
+       call QP_state_table_setup(E,H_ref_bands(1),bands_mixing,l_SC_diagonal)
        !
      endif
      !

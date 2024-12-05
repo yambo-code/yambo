@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine QP_state_table_setup(en,bands_mixed)
+subroutine QP_state_table_setup(en,first_band,bands_mixed,l_diagonal)
  !
  ! There are 2 objects that command the QP corrections
  ! indexes: QP_state & QP_table.
@@ -29,7 +29,8 @@ subroutine QP_state_table_setup(en,bands_mixed)
 #include<y_memory.h>
  !
  type(levels)::en
- integer, intent(in) :: bands_mixed
+ integer, intent(in) :: first_band,bands_mixed
+ logical, intent(in) :: l_diagonal
  !
  ! Work Space
  !
@@ -147,12 +148,9 @@ subroutine QP_state_table_setup(en,bands_mixed)
          !
          if (i2+i3>QP_nb.or.i2+i3<1) cycle
          !
-#if defined _SC || defined _RT
-         if ((l_sc_run.or.l_real_time) .and. (i2<H_ref_bands(1)) ) cycle
-#endif
-#if defined _SC
-         if (l_sc_run .and. (l_SC_diagonal.and.i3/=0) ) cycle
-#endif
+         if (i2<first_band) cycle
+         !
+         if (l_diagonal.and.i3/=0 ) cycle
          !
          QP_n_states=QP_n_states+1
          QP_table(QP_n_states,1)=i2

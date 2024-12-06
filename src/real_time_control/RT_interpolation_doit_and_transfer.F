@@ -12,7 +12,7 @@ subroutine RT_interpolation_doit_and_transfer(OBJ,K,E,nb,l_B,N_carriers,df_Max,d
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use real_time,      ONLY:RT_carriers
  use RT_control,     ONLY:RT_carriers_to_RT_k
- use interpolate,    ONLY:INTERP_obj,INTERPOLATION_driver_seed,INTERPOLATION_driver_do
+ use interpolate,    ONLY:INTERP_obj,INTERPOLATION_driver_seed_rt,INTERPOLATION_driver_do
  !
  implicit none
  !
@@ -38,7 +38,7 @@ subroutine RT_interpolation_doit_and_transfer(OBJ,K,E,nb,l_B,N_carriers,df_Max,d
  call bz_samp_reset(RT_k)
  call RT_carriers_to_RT_k(RT_k)
  !
- call INTERPOLATION_driver_seed(OBJ//"_from_DB",ID,nb,RT_k,SEED_RT=RT_carriers,NEAREST=.not.l_B)
+ call INTERPOLATION_driver_seed_rt(OBJ//"_from_DB",ID,nb,RT_k,SEED_RT=RT_carriers,NEAREST=.not.l_B)
  !
  call INTERPOLATION_driver_do(OBJ//"_from_DB",ID,K)
  !

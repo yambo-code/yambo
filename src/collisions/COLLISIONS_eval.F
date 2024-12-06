@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
+subroutine COLLISIONS_eval(E,X,k,xk,q,Xw,mode)
  !
  ! The EOM looks like:
  !
@@ -48,6 +48,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  type(w_samp)  :: Xw(2) 
  type(bz_samp) :: k,Xk,q
  type(X_t)     :: X(4)
+ character(*), intent(in) :: mode
  !
  ! WorkSpace
  !
@@ -90,14 +91,15 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !================
  if (l_use_Hxc_collisions.or.l_use_COH_collisions.or.l_elphoton_scatt) then
    !
-   COLLISIONS_parallel_SC_structure=.TRUE.
-   PAR_ch="Self_Energy"
-#if defined _RT
-   if (.not.l_elphoton_scatt) then
+   if (trim(mode)=="self-consisten") then
+     COLLISIONS_parallel_SC_structure=.TRUE.
+     PAR_ch="Self_Energy"
+   else if (trim(mode)=="real-time") then
      COLLISIONS_parallel_SC_structure=.FALSE.
      PAR_ch="Real_Time"
+   else 
+     call error(" COLLISIONS_eval: mode not recognized")
    endif
-#endif
    !
    ! PARALLEL indexes ...
    call PARALLEL_global_indexes(E,k,q,trim(PAR_ch))

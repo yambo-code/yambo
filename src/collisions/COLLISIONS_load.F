@@ -97,7 +97,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    !
  endif
  !
-#if defined _RT
+#if defined _RT_SCATT
  if (l_elel_scatt) then
    call COLLISIONS_basic_operations( "alloc", GW_NEQ_collisions )
    call io_control(ACTION=OP_RD_CL,COM=COM_,MODE=VERIFY,SEC=(/1/),ID=ID)
@@ -150,7 +150,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  if (l_use_Hxc_collisions)                 call local_IO( HXC_collisions )
  !
-#if defined _RT
+#if defined _RT_SCATT
  if (l_elel_scatt)                         call local_IO( GW_NEQ_collisions )
 #endif
  !
@@ -178,7 +178,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 #if defined _QED
      l_QED=(COLL%kind==QP_SE_GW_QED)
 #endif
-#if defined _RT
+#if defined _RT_SCATT
      l_NGW=(COLL%kind==QP_SE_GW_NEQ)
 #endif
      !
@@ -198,7 +198,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      endif
 #endif
      !
-#if defined _RT
+#if defined _RT_SCATT
      if (l_NGW) then
        call COLLISIONS_alloc_and_free("GW_NEQ","collision","alloc",0)
        call COLLISIONS_alloc_and_free("GW_NEQ","v3","alloc distribute",0)
@@ -249,7 +249,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        !
        if (l_COH) io_err(1)=io_COLLISIONS(ID,COLL,COH_COLL_element(i_coll_mem))
        if (l_HXC) io_err(1)=io_COLLISIONS(ID,COLL,HXC_COLL_element(i_coll_mem))
-#if defined _RT
+#if defined _RT_SCATT
        if (l_NGW_init) io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1),i_coll=i_coll)
 #endif
 #if defined _QED
@@ -271,7 +271,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        !
        if (l_COH) io_err(1)=io_COLLISIONS(ID,COLL,COH_COLL_element(i_coll_mem))
        if (l_HXC) io_err(1)=io_COLLISIONS(ID,COLL,HXC_COLL_element(i_coll_mem))
-#if defined _RT
+#if defined _RT_SCATT
        if (l_NGW) io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1),i_coll=i_coll)
 #endif
 #if defined _QED
@@ -280,7 +280,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        !
        ! Now the transfer %v_r => %v3_r
        !
-#if defined _RT || defined _QED
+#if defined _RT_SCATT || defined _QED
        if (COLL%kind==QP_SE_GW_NEQ.or.COLL%kind==QP_SE_GW_QED) then
          !
          ic=0
@@ -336,7 +336,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      ! CLEAN
      !
-#if defined _RT
+#if defined _RT_SCATT
      if (COLL%kind==QP_SE_GW_NEQ) call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","clean",1)
 #endif
 #if defined _QED

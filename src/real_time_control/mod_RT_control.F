@@ -116,6 +116,21 @@ module RT_control
      character(*),  intent(in), optional :: WHAT
    end subroutine RT_carriers_object
    !
+   subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_RT,NEAREST,QUIET,SERIAL)
+         use pars,        ONLY:SP
+         use R_lattice,   ONLY:bz_samp
+         use real_time,   ONLY:RT_t
+         implicit none
+         character(*),  intent(in)              :: operation
+         integer,       intent(out)             :: ID
+         integer,       intent(in)              :: dims(2)
+         type(bz_samp), intent(in)              :: SEED_k
+         type(RT_t),    intent(in),    optional :: SEED_RT
+         logical,       intent(in),    optional :: NEAREST
+         logical,       intent(in),    optional :: QUIET
+         logical,       intent(in),    optional :: SERIAL
+   end subroutine INTERPOLATION_driver_seed
+   !
  end interface
  !
  contains

@@ -57,6 +57,7 @@ integer function yambo_sc(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  integer           ::i_err,i_X_kind
  logical           ::launch_me
+ character(len=20) ::tmp_char
  !
  ! Externals
  !
@@ -202,6 +203,15 @@ integer function yambo_sc(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  if (launch_me) call XCo_driver(en,k,Xk,q)
  if (launch_me) call mem_manager_report
  !
+ ! EXTENDED COLLISIONS 
+ !=====================
+ !
+ if (l_eval_collisions) then
+  tmp_char="self-consistent"
+  call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2),Dip,tmp_char)
+  call mem_manager_report
+endif
+!
  ! SELF-ENERGIES
  !===============
  !
@@ -214,14 +224,17 @@ integer function yambo_sc(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  launch_me=(l_optics.and.l_bse).or.l_bss
  !
- if (launch_me) call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip)
- if (launch_me) call mem_manager_report
+ if (launch_me) then
+  call K_set_bands_ranges(Ken,VB,CB)
+  call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,VB,CB,"none",.false.)
+  call mem_manager_report
+endif
+!
+ ! SC
+ !====
  !
- ! Electron-Phonon Hamiltonian
- !=============================
- !
- if (l_elph_Hamiltonian) call ELPH_Hamiltonian(en,k,q)
- if (l_elph_Hamiltonian) call mem_manager_report
+ if (l_sc_run) call SC_driver(X(:2),Xw(:2),Xk,en,k,q,Dip)
+ if (l_sc_run) call mem_manager_report
  !
  ! CLOSING
  !=========

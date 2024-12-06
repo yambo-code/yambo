@@ -153,14 +153,8 @@ module interpolate
      type(levels),  intent(out), optional  :: CIRCUIT_dE
    end subroutine electrons_bands_interpolate
    !
-#if defined _RT
-   subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
+   subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_QP,SEED_R3,&
 &                                       NEAREST,QUIET,SERIAL)
-     use real_time,   ONLY:RT_t
-#else
-   subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,        SEED_QP,SEED_R3,&
-&                                       NEAREST,QUIET,SERIAL)
-#endif
      use pars,        ONLY:SP
      use R_lattice,   ONLY:bz_samp
      use electrons,   ONLY:levels
@@ -171,9 +165,6 @@ module interpolate
      integer,       intent(in)              :: dims(2)
      type(bz_samp), intent(in)              :: SEED_k
      real(SP),      intent(in),    optional :: SEED_R3(:,:,:)
-#if defined _RT
-     type(RT_t),    intent(in),    optional :: SEED_RT
-#endif
      type(QP_t),    intent(in),    optional :: SEED_QP
      type(levels),  intent(in),    optional :: SEED_E
      logical,       intent(in),    optional :: NEAREST

@@ -55,6 +55,7 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  integer           ::i_err,i_X_kind
  logical           ::launch_me
+ character(len=20) ::tmp_char
  !
  ! Externals
  !
@@ -203,8 +204,12 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  ! EXTENDED COLLISIONS 
  !=====================
  !
- if (l_eval_collisions) call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2),Dip)
- if (l_eval_collisions) call mem_manager_report
+ if (l_eval_collisions) then
+   tmp_char="real-time"
+   if (l_elphoton_scatt) tmp_char="self-consistent"
+   call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2),Dip,tmp_char)
+   call mem_manager_report
+ endif
  !
  ! SELF-ENERGIES
  !===============

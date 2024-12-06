@@ -241,25 +241,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (l_acfdt) call acfdt_tot_energy(Xen,Xk,En,k,q,X(1),Dip)
  if (l_acfdt) call mem_manager_report
  !
-#if defined _SC
- !
- ! SC
- !====
- !
- if (l_sc_run) call SC_driver(X(:2),Xw(:2),Xk,en,k,q,Dip)
- if (l_sc_run) call mem_manager_report
- !
-#endif
- !
-#if defined _RT
- !
- ! RT
- !====
- !
- if (l_real_time) call RT_driver(en,X(:2),k,q,Dip)
- if (l_real_time) call mem_manager_report
- !
-#endif
  !
 #if defined _NL
  !

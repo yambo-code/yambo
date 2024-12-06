@@ -20,7 +20,7 @@ subroutine RT_occ_bands_interpolation(en,k,q,n_T_steps)
  use stderr,         ONLY:real2ch,intc,STRING_remove,STRING_same
  use RT_control,     ONLY:RT_apply,RT_carriers_object,RT_carriers_to_RT_k,RT_carriers_to_RT_E
  use real_time,      ONLY:RT_carriers,RT_bands
- use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,electrons_bands_interpolate,&
+ use interpolate,    ONLY:INTERPOLATION_driver_seed_rt,INTERPOLATION_driver_do,electrons_bands_interpolate,&
 &                         INTERP_obj,INTERP_mode,GRID_k
  use LIVE_t,         ONLY:live_timing
  !
@@ -169,11 +169,11 @@ subroutine RT_occ_bands_interpolation(en,k,q,n_T_steps)
    !
    if (is_INTERPOLATED) then
      if (is_PROJECTED) then
-       call INTERPOLATION_driver_seed(trim(operation),ID_grid,RT_bands,RT_k,SEED_RT=RT_carriers,QUIET=QUIET_interp)
+       call INTERPOLATION_driver_seed_rt(trim(operation),ID_grid,RT_bands,RT_k,SEED_RT=RT_carriers,QUIET=QUIET_interp)
        call INTERPOLATION_driver_do(trim(operation),ID_grid,GRID_k)
        if (l_RT_occupations) call EVAL_integrated_occupations(ID_grid)
      else
-       call INTERPOLATION_driver_seed(trim(operation),ID_circuit,RT_bands,RT_k,SEED_RT=RT_carriers,QUIET=QUIET_interp)
+       call INTERPOLATION_driver_seed_rt(trim(operation),ID_circuit,RT_bands,RT_k,SEED_RT=RT_carriers,QUIET=QUIET_interp)
        call INTERPOLATION_driver_do(trim(operation),ID_circuit,CIRCUIT_k)
        if (l_RT_occupations) call EVAL_integrated_occupations(ID_circuit)
      endif

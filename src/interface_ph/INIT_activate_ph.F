@@ -234,11 +234,6 @@ subroutine INIT_activate_ph()
  !
  if (l_em1s) then
    call INIT_QP_ctl_switch('X')
-   !
-#if defined _RT
-   call INIT_RT_ctl_switch('X')
-#endif
-   !
    call initactivate(1,'ShiftedPaths')
    call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','GrFnTp','DmRnge','CGrdSp','EhEngy','LongDr','DrudeW'/))
    call initactivate(1,'XTermKind')
@@ -250,10 +245,6 @@ subroutine INIT_activate_ph()
  if ( (l_em1d.and.l_ppa) .or. (l_em1d.and.l_mpa) .or. (l_em1s.and.l_cohsex)) then
    call INIT_QP_ctl_switch('X')
    call initactivate(1,'RIM_W RIM_W_diag RIM_W_graph')
-   !
-#if defined _RT
-   call INIT_RT_ctl_switch('X')
-#endif
    !
    call initactivate(1,'ShiftedPaths')
    if (l_ppa) then
@@ -277,10 +268,6 @@ subroutine INIT_activate_ph()
  !
  if (l_acfdt) then
    call INIT_QP_ctl_switch('X')
-   !
-#if defined _RT
-   call INIT_RT_ctl_switch('X')
-#endif
    !
    call initactivate(1,'ShiftedPaths')
    call initactivate(1,'EXXRLvcs VXCRKvcs AC_n_LAM AC_n_FR AC_E_Rng')

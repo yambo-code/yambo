@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine LEVELS_respect_degenerations(E,Dip,X)
+subroutine LEVELS_respect_degenerations_rt(E,Dip,X)
  !
  use electrons,     ONLY:levels
  use stderr,        ONLY:intc
@@ -15,6 +15,8 @@ subroutine LEVELS_respect_degenerations(E,Dip,X)
  use DIPOLES,       ONLY:DIPOLE_t
  use QP_m,          ONLY:QP_n_G_bands
  use parser_m,      ONLY:parser
+ use real_time,     ONLY:RT_bands
+ use collision_ext, ONLY:COLL_bands
  !
  implicit none
  !
@@ -56,10 +58,24 @@ subroutine LEVELS_respect_degenerations(E,Dip,X)
      call levels_check(E,Dip%ib)
      call fix_and_message("Dipoles",.not.SKIP_it,Dip%ib)
    endif
+   if (i_f==8) then
+     call levels_check(E,RT_bands)
+     call fix_and_message("Real-Time",.not.SKIP_it,RT_bands)
+   endif
    if (i_f==7) then
      call levels_check(E,BS_bands)
      call fix_and_message("BS",.not.SKIP_it,BS_bands)
    endif
+   if (i_f==11) then
+     call levels_check(E,COLL_bands)
+     call fix_and_message("COLLISIONS",.not.SKIP_it,COLL_bands)
+   endif
+#if defined _QED
+   if (i_f==12) then
+     call levels_check(E,QP_n_G_bands)
+     call fix_and_message("QED",.not.SKIP_it,QP_n_G_bands)
+   endif
+#endif
    !
  enddo
  !

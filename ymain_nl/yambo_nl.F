@@ -55,7 +55,7 @@ integer function yambo_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  ! Local Variables
  !
- integer           ::i_err,i_X_kind
+ integer           ::i_err,i_X_kind,ID,VB(2),CB(2)
  logical           ::launch_me
  !
  ! Externals
@@ -107,6 +107,12 @@ integer function yambo_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !=======================
  !
  call PARALLEL_and_IO_Setup(en,k)
+ !
+ ! For some reason the I/O of DB1 is called after PARALLEL_and_IO_Setup
+ ! This was always done with the exception of the ypp_rt case
+ !
+ call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=REP,ID=ID)
+ i_err=io_DB1(en,k,ID)
  !
  ! SETUPS ...
  !============
@@ -203,6 +209,12 @@ integer function yambo_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  if (launch_me) call XCo_driver(en,k,Xk,q)
  if (launch_me) call mem_manager_report
  !
+ ! EXTENDED COLLISIONS 
+ !=====================
+ !
+ if (l_eval_collisions) call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2),Dip)
+ if (l_eval_collisions) call mem_manager_report
+ !
  ! SELF-ENERGIES
  !===============
  !
@@ -215,14 +227,17 @@ integer function yambo_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  launch_me=(l_optics.and.l_bse).or.l_bss
  !
- if (launch_me) call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip)
- if (launch_me) call mem_manager_report
+ if (launch_me) then
+   call K_set_bands_ranges(Ken,VB,CB)
+   call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,VB,CB,"none",.false.)
+   call mem_manager_report
+ endif
  !
- ! Electron-Phonon Hamiltonian
- !=============================
+ ! NL
+ !====
  !
- if (l_elph_Hamiltonian) call ELPH_Hamiltonian(en,k,q)
- if (l_elph_Hamiltonian) call mem_manager_report
+ if (l_nl_optics) call NL_driver(en,X(:2),Xw(:2),k,q,Dip)
+ if (l_nl_optics) call mem_manager_report
  !
  ! CLOSING
  !=========

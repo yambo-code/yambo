@@ -30,7 +30,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use stderr,          ONLY:real2ch
  use pars,            ONLY:SP,rZERO
  use com,             ONLY:msg
-#if defined _QED || defined _RT
+#if defined _QED || defined _RT_SCATT
  use global_XC,       ONLY:QP_SE_GW_QED
  use collision_ext,   ONLY:P_COLL_element,COLL_bands,P_collisions,GW_NEQ_collisions,&
 &                          GW_NEQ_COLL_element

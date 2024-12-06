@@ -209,14 +209,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (launch_me) call XCo_driver(en,k,Xk,q)
  if (launch_me) call mem_manager_report
  !
- ! EXTENDED COLLISIONS 
- !=====================
- !
-#if defined _SC || defined _RT
- if (l_eval_collisions) call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2),Dip)
- if (l_eval_collisions) call mem_manager_report
-#endif
- !
  ! SELF-ENERGIES
  !===============
  !
@@ -240,17 +232,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (l_acfdt) call acfdt_tot_energy(Xen,Xk,En,k,q,X(1),Dip)
  if (l_acfdt) call mem_manager_report
- !
- !
-#if defined _NL
- !
- ! NL
- !====
- !
- if (l_nl_optics) call NL_driver(en,X(:2),Xw(:2),k,q,Dip)
- if (l_nl_optics) call mem_manager_report
- !
-#endif
  !
 #if defined _SCALAPACK 
  !

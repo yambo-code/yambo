@@ -127,7 +127,6 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    endif
  endif
  !
-#if defined _RT
  ! nf90_sync is performed up to LAST_COLL_sync and at steps of 5% of bse kernel
  file_sync= i_coll<=LAST_COLL_sync .and. mod(i_coll,max(1,PAR_COLL_min/20))==0 .and. index(trim(db_name),"HXC")/=0
  !
@@ -135,7 +134,6 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    stat = nf90_sync(io_unit(ID))
    call netcdf_call(stat,ID)
  endif
-#endif
  !
 1 call io_disconnect(ID=ID)
  !

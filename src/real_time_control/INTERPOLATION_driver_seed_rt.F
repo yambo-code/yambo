@@ -27,7 +27,7 @@ subroutine INTERPOLATION_driver_seed_rt(operation,ID,dims,SEED_k,SEED_RT,NEAREST
  use R_lattice,            ONLY:bz_samp
  use electrons,            ONLY:levels,n_sp_pol
  use real_time,            ONLY:RT_t
- use interpolate_tools,    ONLY:FILL_SEED_RT
+ use RT_control,           ONLY:FILL_SEED_RT
  use interpolate_tools,    ONLY:init_ID,FILL_SEED_E,FILL_SEED_QP
  use interpolate,          ONLY:INTERP_obj,INTERPOLATION_coefficients,max_interpls,&
 &                               l_INTERP_f,l_INTERP_E,l_INTERP_dE,l_INTERP_W,INTERPOLATE_is_serial,&

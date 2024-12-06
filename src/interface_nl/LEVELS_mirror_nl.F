@@ -15,6 +15,19 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
  use BS,            ONLY:BS_q,BS_bands
  use stderr,        ONLY:STRING_same
  use QP_m,          ONLY:QP_n_G_bands
+#if defined _SC 
+ use SC,            ONLY:SC_bands
+#endif
+#if defined _RT || defined _QED || defined _NL
+ use real_time,     ONLY:RT_bands
+#endif
+#if defined _SC || defined _RT || defined _QED || defined _NL
+ use collision_ext, ONLY:COLL_bands
+ use hamiltonian,   ONLY:H_ref_bands
+#endif
+#if defined _NL
+ use nl_optics,      ONLY:NL_bands
+#endif
  !
  implicit none
  !
@@ -71,6 +84,30 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
    do i1=8,12
      if(.not.(l_USER_field(i1))) cycle
      !
+#if defined _RT || defined _QED || defined _NL
+     if(i1==8) SCATT_bands=RT_bands
+#endif
+#if defined _SC
+     if(i1==9) SCATT_bands=SC_bands
+#endif
+#if defined _NL
+     if(i1==10) SCATT_bands=NL_bands
+#endif
+#if defined _SC 
+     if(i1==11) then
+       SC_bands   =COLL_bands
+       SCATT_bands=COLL_bands
+     endif
+#endif
+#if defined _RT || defined _QED || defined _NL
+     if(i1==11) then
+       RT_bands   =COLL_bands
+       SCATT_bands=COLL_bands
+     endif
+#endif
+#if defined _QED
+     if(i1==12) SCATT_bands=QP_n_G_bands
+#endif
    enddo
    !
    ! Bands (Dipoles)
@@ -84,6 +121,12 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
    if (all((/DIP_bands<0/))) then
      if(     l_USER_field(7) ) DIP_bands=BS_bands
      if(.not.l_USER_field(7) ) DIP_bands=SCATT_bands
+#if defined _RT || defined _QED || defined _NL
+     if(     l_USER_field(8) ) DIP_bands=RT_bands
+#endif
+#if defined _NL
+     if(     l_USER_field(10)) DIP_bands=NL_bands
+#endif
    endif
    !
    ! Any negative bands?
@@ -93,6 +136,10 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
    !
    ! Now MIRROR in related bands ranges!
    !------------------------------------
+#if defined _SC || defined _RT || defined _QED || defined _NL
+   COLL_bands =SCATT_bands
+   H_ref_bands=SCATT_bands     
+#endif
    Dip%ib=DIP_bands
    !
  endif

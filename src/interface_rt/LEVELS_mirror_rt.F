@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
+subroutine LEVELS_mirror_rt(what,E,X,Dip,l_USER_field)
  !
  use electrons,     ONLY:levels
  use parser_m,      ONLY:parser
@@ -15,6 +15,9 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
  use BS,            ONLY:BS_q,BS_bands
  use stderr,        ONLY:STRING_same
  use QP_m,          ONLY:QP_n_G_bands
+ use real_time,     ONLY:RT_bands
+ use collision_ext, ONLY:COLL_bands
+ use hamiltonian,   ONLY:H_ref_bands
  !
  implicit none
  !
@@ -71,6 +74,14 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
    do i1=8,12
      if(.not.(l_USER_field(i1))) cycle
      !
+     if(i1==8) SCATT_bands=RT_bands
+     if(i1==11) then
+       RT_bands   =COLL_bands
+       SCATT_bands=COLL_bands
+     endif
+#if defined _QED
+     if(i1==12) SCATT_bands=QP_n_G_bands
+#endif
    enddo
    !
    ! Bands (Dipoles)
@@ -84,6 +95,7 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
    if (all((/DIP_bands<0/))) then
      if(     l_USER_field(7) ) DIP_bands=BS_bands
      if(.not.l_USER_field(7) ) DIP_bands=SCATT_bands
+     if(     l_USER_field(8) ) DIP_bands=RT_bands
    endif
    !
    ! Any negative bands?
@@ -93,6 +105,8 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
    !
    ! Now MIRROR in related bands ranges!
    !------------------------------------
+   COLL_bands =SCATT_bands
+   H_ref_bands=SCATT_bands     
    Dip%ib=DIP_bands
    !
  endif

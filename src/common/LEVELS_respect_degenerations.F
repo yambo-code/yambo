@@ -43,7 +43,7 @@ subroutine LEVELS_respect_degenerations(E,Dip,X)
  ! By defaulft I assume that the degeneration is lifted
  ! but if the flag SkipDegFix is activated this operation is not done
  !
- call parser('CheckDegFix',DegFix)
+ call parser('DegFix',DegFix)
  !
  ! Check for USER definitions 
  !---------------------------

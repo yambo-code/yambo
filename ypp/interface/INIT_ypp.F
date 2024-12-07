@@ -17,7 +17,6 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,FineGd_DB1_paths,l_angular_momentum,l_position,&
 &                         l_QP_DB_expand,l_average_eh,l_interp,l_regular_grid,DIPs
  use pars,           ONLY:pi,schlen
- use D_lattice,      ONLY:i_time_rev
  use it_tools,       ONLY:ofiles_append,infile_dump,runlevel_is_on
  use it_m,           ONLY:initdefs,initmode,infile,nrnlvls,rnlvls,infile_verbosity,&
                           V_general,V_qp,V_all,V_real_time,V_nl_optics

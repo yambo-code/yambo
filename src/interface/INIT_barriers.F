@@ -44,7 +44,7 @@ subroutine INIT_barriers()
  bse_sex  =trim(BSK_mode)=='SEX'
  bse_bsfxc=trim(BSK_mode)=='BSfxc'
  !
- bss_diago=l_bss.and.index(BSS_mode,'d')/=0
+ bss_diago=l_bss.and.(index(BSS_mode,'d')/=0.or.index(BSS_mode,'o')/=0)
  bss_inv=l_bss.and.index(BSS_mode,'i')/=0
  bss_haydock=l_bss.and.index(BSS_mode,'h')/=0
  bss_tddft=l_bss.and.index(BSS_mode,'t')/=0

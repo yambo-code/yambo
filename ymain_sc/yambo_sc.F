@@ -148,7 +148,7 @@ integer function yambo_sc(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  ! Check USER band selection degeneracy breaking
  !===============================================
  !
- call LEVELS_respect_degenerations(en,Dip,X)
+ call LEVELS_respect_degenerations_sc(en,Dip,X)
  !
  ! QP and RT CORRECTIONS
  !=======================

@@ -55,7 +55,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
    !
    ! If exist the non local part of the pseudo then construct kbv
    !
-   call Pseudo_KB_G_to_R_space(k,E)
+   call Pseudo_KB_G_to_R_space(k,E,.false.)
    allocate(H_pseudo(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),k%nibz,n_sp_pol))
    call Pseudo_Hamiltonian(Xk,E,H_pseudo,.true.)
    Hzero=Hzero-H_pseudo

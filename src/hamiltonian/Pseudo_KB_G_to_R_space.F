@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
-subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
+subroutine Pseudo_KB_G_to_R_space(Xk,Xen,add_kfac)
  !
  use pars,          ONLY:SP
  use drivers,       ONLY:l_sc_magnetic
@@ -15,7 +15,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  use FFT_m,         ONLY:fft_size
  use pseudo,        ONLY:pp_kbv_dim_yambo,pp_kbv_dim_atom
  use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:n_atomic_species,n_atoms_species
+ use D_lattice,     ONLY:n_atomic_species,n_atoms_species,x_cc,n_atoms
  use LIVE_t,        ONLY:live_timing
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:manage_action,OP_WR_CL,OP_RD,OP_IF_START_APP_CL_IF_END,RD_CL_IF_END
@@ -27,6 +27,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  !
  type(bz_samp) :: Xk
  type(levels)  :: Xen
+ logical, intent(in) :: add_kfac
  !
  ! Work Space
  !
@@ -70,6 +71,10 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  endif
  !
  if(fft_size==0) call fft_setup(0,1,.not.l_sc_magnetic)
+ !
+ if (add_kfac) then
+  YAMBO_ALLOC(x_cc,(fft_size,3,n_atoms))
+ endif
  !
  YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_kbv_dim_atom))
  YAMBO_ALLOC(kbv_real_space,(fft_size,n_spinor,pp_kbv_dim_yambo))
@@ -125,7 +130,8 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
            !
            pp_range(2)=pp_range(1)+npp-1
            !
-           call Pseudo_KB_FFT(kbv(:,:,:,:npp),kbv_real_space(:,:,pp_range(1):pp_range(2)),Xk%pt(ik,:),pp_range,npp,i_atom,is,ia,ik)
+           call Pseudo_KB_FFT(kbv(:,:,:,:npp),kbv_real_space(:,:,pp_range(1):pp_range(2)),Xk%pt(ik,:),&
+           &                                                     add_kfac,pp_range,npp,i_atom,is,ia,ik)
            !
          enddo
        enddo

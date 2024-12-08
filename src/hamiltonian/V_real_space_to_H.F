@@ -16,14 +16,10 @@ subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
  use matrix_operate, ONLY:UP_matrix_index
  use hamiltonian,    ONLY:H_ref_bands
  use timing_m,       ONLY:timing
-#if defined _SC
  use drivers,        ONLY:l_sc_run
  use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
-#endif
-#if defined _RT
  use drivers,        ONLY:l_real_time
  use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k
-#endif
  !
  implicit none
  !
@@ -41,9 +37,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
  complex(SP) :: V_mat(fft_size,n_spin,n_spin)
  logical     :: PAR_IND_local(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  !
-#if defined _RT
  if (l_real_time.and.(.not.PAR_IND_WF_k%element_1D(ik))) return
-#endif
  !
  if(index(V_kind,"xc") >0 .and. .not.present(Vxc)) call error(' V_real_space_to_H called with xc kind but without Vxc')
  if(index(V_kind,"def")>0 .and. .not.present(V)  ) call error(' V_real_space_to_H called with def kind but without V')
@@ -59,7 +53,6 @@ subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
  !
  PAR_IND_local=.true.
  !
-#if defined _SC
  if (l_sc_run) then
    !
    PAR_IND_local=.false.
@@ -79,9 +72,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
    enddo 
    !
  endif
-#endif
  !
-#if defined _RT
  if (l_real_time) then
    !
    PAR_IND_local=.false.
@@ -93,7 +84,6 @@ subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
    enddo
    !
  endif
-#endif
  !
  ! Fill ...
  !

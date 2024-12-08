@@ -25,7 +25,6 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use timing_m,       ONLY:timing
  use drivers,        ONLY:l_sc_run
  use drivers,        ONLY:l_real_time
- use drivers,        ONLY:l_sc_magnetic
  !
 #include<y_memory.h>
  !
@@ -38,32 +37,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  complex(SP), allocatable  :: H_pseudo(:,:,:,:)
  type(PP_indexes) :: PAR_IND
  !
- Hzero=cZERO
- !
  call timing('Bare_Hamiltonian',OPR='start')
- !
- if (l_sc_magnetic) then
-   !
-   ! MAG_Hamiltonian
-   !=================
-   ! - call WF_derivative which computes the derivative in space G
-   ! - load the wf in real space
-   ! - compute the magnetic part of the hamiltonian, 
-   !   allocate and initialise Hzero, write H_magnetic in Hzero 
-   !
-   call MAG_Hamiltonian()
-   !
-   ! If exist the non local part of the pseudo then construct kbv
-   !
-   call Pseudo_KB_G_to_R_space(k,E,.false.)
-   allocate(H_pseudo(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),k%nibz,n_sp_pol))
-   call Pseudo_Hamiltonian(Xk,E,H_pseudo,.true.)
-   Hzero=Hzero-H_pseudo
-   call Pseudo_Hamiltonian(Xk,E,H_pseudo,.false.)
-   Hzero=Hzero+H_pseudo
-   deallocate(H_pseudo)
-   !
- endif
  !
  ! WF Loading, density and magnetization
  !=======================================

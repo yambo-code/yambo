@@ -1,5 +1,17 @@
 objs = INIT_activate_rt.o \
 INIT_check_databases_rt.o \
 INIT_load_rt.o \
+INIT_activate_rt.o \
 INIT_read_command_line_rt.o \
-INIT_rt.o
+INIT_rt.o \
+INIT_DephMatrix.o \
+INIT_RT_ctl_load.o \
+INIT_RT_ctl_switch.o \
+INIT_read_command_line_potentials.o \
+LEVELS_respect_degenerations_rt.o \
+LEVELS_mirror_rt.o \
+PARALLEL_global_dimensions_rt.o \
+PARALLEL_global_indexes_rt.o \
+PARALLEL_global_Real_Time.o \
+PARALLEL_WF_distribute_rt.o \
+WF_and_dipole_dimensions_rt.o

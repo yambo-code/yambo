@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
+subroutine INIT_check_databases_rt(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
 &                               io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,&
 &                               io_ELPH_err,io_SC_E_err)
  !

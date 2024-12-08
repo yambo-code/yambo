@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine INIT_read_command_line(rstr,init_)
+subroutine INIT_read_command_line_rt(rstr,init_)
  !
  use pars,           ONLY:schlen
  use drivers,        ONLY:infile_editing,l_bse,l_alda_fxc,l_chi,l_elel_corr,l_nl_p_and_p,&

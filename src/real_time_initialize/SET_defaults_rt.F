@@ -9,6 +9,7 @@ subroutine SET_defaults_rt(INSTR,IND,OD,COM_DIR)
  !
  use pars,       ONLY:SP,cZERO
  use C_driver,   ONLY:code_branch
+ use units,      ONLY:FS2AUT,HA2EV
  use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_o_file_is_open,&
 &                     RT_headings,YPP_append,Gr_desc,TIME_STEP_desc,RT_desc
  use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,Gless_RESTART_RT_IO_t,SAVE_G_history,RT_ctl_db,&
@@ -26,6 +27,7 @@ subroutine SET_defaults_rt(INSTR,IND,OD,COM_DIR)
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
 &                     A_tot,A_ind,A_ext
  use plasma,     ONLY:PLASMA_redux_percent
+ use descriptors,ONLY:IO_desc_reset
  !
  implicit none
  !

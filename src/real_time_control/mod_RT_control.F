@@ -131,6 +131,24 @@ module RT_control
          logical,       intent(in),    optional :: SERIAL
    end subroutine INTERPOLATION_driver_seed_rt
    !
+   integer function Fermi_fnc_fit(RT_occ_in,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit_out,RT_E_fit_out)
+     !
+     use pars, ONLY: SP
+     !
+     ! This function makes a fit of RT_occ_in to the Fermi-Dirac function using two
+     ! temperature and two fermi level, one for the valence and one for the conduction
+     !
+     integer,  intent(in)  :: nstates
+     real(SP), intent(in)  :: RT_occ_in(nstates)
+     !
+     real(SP), intent(out) :: T_fit(2)
+     real(SP), intent(out) :: Ef_fit(2)
+     real(SP), intent(out) :: err_fit(4)
+     real(SP), intent(out), optional :: RT_occ_fit_out(1000,2)
+     real(SP), intent(out), optional :: RT_E_fit_out(1000,2)
+     !
+   end function Fermi_fnc_fit
+   !
  end interface
  !
  contains

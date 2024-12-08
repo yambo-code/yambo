@@ -7,6 +7,10 @@
 !
 subroutine MAG_Hamiltonian()
  !
+ ! - call WF_derivative which computes the derivative in space G
+ ! - load the wf in real space
+ ! - compute the magnetic part of the hamiltonian, 
+ !
  ! WARNING: you need to put you system at the corner of the supercell <---
  !
  ! This subroutine evaluate the magnetic Hamiltonian in the space of 
@@ -44,7 +48,7 @@ subroutine MAG_Hamiltonian()
  use D_lattice,      ONLY:sigma_x,sigma_y,sigma_z
  use R_lattice,      ONLY:nkibz
  use magnetic,       ONLY:MAG_B,MAG_landau,MAG_pauli,ir_table, &
-&                         A_magn_x,A_magn_y,A_magn_z,Bx,By,Bz
+&                         A_magn_x,A_magn_y,A_magn_z,Bx,By,Bz,Hmagn
  use electrons,      ONLY:n_sp_pol,n_spinor,n_spin,spin
  use hamiltonian,    ONLY:H_ref_bands
  use SC,             ONLY:SC_bands
@@ -62,6 +66,7 @@ subroutine MAG_Hamiltonian()
  integer    :: ir,i_sp_pol,i_wf,ip_wf,ik,ib,ibp,i_qp,i_spinor,j_spinor,n_par_el
  logical    :: do_derivatives(3),H_magn_x_on,H_magn_y_on,H_magn_z_on
  logical    :: PAR_IND_local(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
+ complex(SP):: Hmagn,(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),nkibz,n_sp_pol))
  !
  ! Allocs
  !
@@ -149,6 +154,8 @@ subroutine MAG_Hamiltonian()
  n_par_el=n_sp_pol*nkibz*count(PAR_IND_local)
  if(n_par_el>0) call live_timing('MAG-Hamiltonian',n_par_el)
  !
+ Hmagn(:,:,:,:)=cZERO
+ !
  do i_sp_pol=1,n_sp_pol   
    !
    do ik=1,nkibz   
@@ -202,14 +209,14 @@ subroutine MAG_Hamiltonian()
              if (MAG_pauli) H_tmp(:,i_spinor,j_spinor)= H_tmp(:,i_spinor,j_spinor) &
              &                                          +H_pauli(:,i_spinor,j_spinor,i_sp_pol)*WF%c(:,j_spinor,ip_wf)
              !
-             Hzero(ib,ibp,ik,i_sp_pol)= Hzero(ib,ibp,ik,i_sp_pol)+&
+             Hmagn(ib,ibp,ik,i_sp_pol)= Hmagn(ib,ibp,ik,i_sp_pol)+&
 &              Vstar_dot_V(fft_size,WF%c(:,i_spinor,i_wf),H_tmp(:,i_spinor,j_spinor))
              !
            enddo
            !
          enddo
          !
-         if(ib/=ibp) Hzero(ibp,ib,ik,i_sp_pol)=conjg(Hzero(ib,ibp,ik,i_sp_pol))
+         if(ib/=ibp) Hmagn(ibp,ib,ik,i_sp_pol)=conjg(Hmagn(ib,ibp,ik,i_sp_pol))
          !
        enddo
        !
@@ -226,6 +233,20 @@ subroutine MAG_Hamiltonian()
  !
  if(n_par_el>0) call live_timing()
  !
+ ! If exist the non local part of the pseudo then construct kbv
+ !
+ call Pseudo_KB_G_to_R_space(k,E,.false.)
+ allocate(H_pseudo(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),k%nibz,n_sp_pol))
+ call Pseudo_Hamiltonian(Xk,E,H_pseudo,.true.)
+ Hmagn=Hmagn-H_pseudo
+ call Pseudo_Hamiltonian(Xk,E,H_pseudo,.false.)
+ Hmagn=Hmagn+H_pseudo
+ deallocate(H_pseudo)
+ !
+ call PP_redux_wait(Hmagn)
+ !
+ Hzero=Hzero+Hmagn
+ !
  ! Clean Up
  !
  call local_free(2)
@@ -236,7 +257,7 @@ subroutine MAG_Hamiltonian()
      integer :: level
      select case(level)
        case(0)
-         YAMBO_ALLOC(r_cell_cc,(fft_size,3))
+        YAMBO_ALLOC(r_cell_cc,(fft_size,3))
          if (MAG_landau) then
            if(H_magn_x_on) then
              YAMBO_ALLOC(H_paramagn_x,(fft_size))

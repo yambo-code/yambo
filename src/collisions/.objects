@@ -1,10 +1,17 @@
 #if defined _QED
 QED_objs= SCATTERING_QED_transverse_matrix.o COLLISIONS_momentum.o
 #endif
-objs= mod_COLL_interfaces.o \
+
+#if defined _PAR_IO
+COLL_objects = io_COLLISIONS_header.o io_COLLISIONS.o COLLISIONS_dbname.o
+#else
+COLL_objects = io_COLLISIONS_serial.o
+#endif
+
+objs= mod_COLL_interfaces.o mod_plasma.o \
       PLASMA_parallel_setup.o COLLISIONS_basic_operations.o \
       PLASMA_build_up.o PLASMA_tables_and_dimensions.o \
       COLLISIONS_alloc_and_free.o COLLISIONS_eval.o COLLISIONS_load.o \
       COLLISIONS_linearize_and_IO.o COLLISIONS_map_to_QP_table.o \
       COLLISIONS_NEQ_GW_static.o COLLISIONS_HXC.o SCATTERING_GW_kinematics.o \
-      $(QED_objs)
+      $(COLL_objects) $(QED_objs)

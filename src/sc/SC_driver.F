@@ -184,6 +184,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
  call msg('r','')
  !
+ Hzero=cZERO
+ !
+ ! MAG_Hamiltonian
+ !=================
+ if (l_sc_magnetic) call MAG_Hamiltonian()
+ !
  !  Hzero (kinetic + potential)
  !=============================
  call Bare_Hamiltonian(E,Xk,k)

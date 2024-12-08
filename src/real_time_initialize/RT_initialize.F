@@ -24,7 +24,7 @@ subroutine RT_initialize(E,k,q)
  use electrons,      ONLY:levels
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,Gless_RESTART_RT_IO_t,OUTPUT_RT_IO_t,         &
-&                         TIME_adjust,SAVE_G_history,CACHE_OBS_INTERVAL_time
+&                         TIME_adjust,SAVE_G_history,CACHE_OBS_INTERVAL_time,l_project_spin_dipoles
  use RT_occupations, ONLY:l_RT_relax_time_approx
  use RT_lifetimes,   ONLY:RT_life_extrap_times,RT_life_extrap_times_INPUT,l_RT_lifetimes_extrapolation,&
 &                         Life_MEM_steps,l_RT_lifetimes_Tfit,l_RT_skip_ph_abs_lifetimes,l_RT_iterative_ELPH_lifetimes

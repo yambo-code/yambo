@@ -7,9 +7,11 @@
 !
 subroutine PARALLEL_WF_distribute_plasma(PLASMA_index,CLEAN_distr,CLEAN_UP)
  !
- use parallel_m,      ONLY:PAR_IND_Q_bz,PAR_Q_bz_index
+ use parallel_m,      ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PP_indexes
+ use wave_func,       ONLY:states_to_load
+ use electrons,       ONLY:n_bands
  use plasma,          ONLY:EH_gas
- use R_lattice,       ONLY:nkbz
+ use R_lattice,       ONLY:nkbz,nkibz
  use collision_ext,   ONLY:GW_NEQ_collisions
  !
 #include<y_memory.h>
@@ -21,6 +23,7 @@ subroutine PARALLEL_WF_distribute_plasma(PLASMA_index,CLEAN_distr,CLEAN_UP)
  ! Work Space
  !
  integer :: i_J,i_J_bg,iqbz,i_q_mem,i_coll
+ integer :: i_k,i_b,i_bp,NB,NK,NBp
  logical :: condition
  !
  NBp=n_bands

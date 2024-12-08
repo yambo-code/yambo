@@ -36,7 +36,7 @@ subroutine RT_start_and_restart(E,k,q)
 &                         Gr_kind,l_RT_is_WFfree,RT_TIME_status,RTibz,&
 &                         RT_nk,G_lesser,RT_eh_en,G_MEM_steps,RT_bands,&
 &                         NE_time_step_update_jump,l_velocity_gauge_corr,&
-&                         RT_P_prev,RT_ind_J_prev
+&                         RT_P_prev,RT_ind_J_prev,H_pseudo_eq
  use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc
  use RT_lifetimes,   ONLY:RT_life_extrap_times,l_RT_iterative_ELPH_lifetimes
  use fields,         ONLY:A_tot

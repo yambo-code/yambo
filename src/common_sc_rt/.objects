@@ -1,10 +1,7 @@
-#if defined _PAR_IO
-COLL_objects = io_COLLISIONS_header.o io_COLLISIONS.o COLLISIONS_dbname.o
-#else
-COLL_objects = io_COLLISIONS_serial.o
-#endif
-
-objs = INIT_read_command_line_potentials.o \
+objs = mod_common_sc_rt.o \
 PARALLEL_MATRIX_distribute.o  \
 $(COLL_objects) \
-io_KB_real_space.o
+io_KB_real_space.o \
+SET_defaults_comm.o \
+WF_derivative.o \
+PARALLEL_WF_distribute_ham.o

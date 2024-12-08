@@ -105,7 +105,7 @@ module SC
      !
      call H_alloc(E,.true.,.true.)
      !
-     call H_QP_table_setup(E)
+     call H_QP_table_setup(E,l_SC_diagonal)
      !
      SC_nbands=SC_bands(2)-SC_bands(1)+1
      !

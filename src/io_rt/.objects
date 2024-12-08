@@ -5,5 +5,4 @@ io_RT_components_OBS.o \
 io_RT_components_Reference.o \
 io_RT_components_TIME_points.o \
 variables_RT_static.o \
-variables_RT_dynamic.o \
-io_KB_real_space.o
+variables_RT_dynamic.o

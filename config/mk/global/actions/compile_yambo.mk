@@ -30,7 +30,7 @@ endif
 #
 # Compilation
 #
-yambo yambo_ph yambo_sc yambo_rt yambo_nl:
+yambo yambo_ph:
 	@rm -f ${compdir}/log/"compile_"$@".log"
 	@rm -f ${compdir}/config/stamps_and_lists/compilation_stop_$@.stamp
 	@touch ${compdir}/config/stamps_and_lists/compiling_$@.stamp
@@ -40,3 +40,18 @@ yambo yambo_ph yambo_sc yambo_rt yambo_nl:
 	@+LIBS="$(SRC_LIBS)";LAB="_Y_";BASE="src";ADF="-D_yambo";$(todo_lib);$(mk_lib)
 	@+X2DO="$@";BASE="$(PIL_LIB)";XLIBS="$(EXE_LIBS)";ADF="";$(todo_driver)
 	@+X2DO="$@";BASE="$(PIL_LIB)";XLIBS="$(EXE_LIBS)";ADF="";$(mk_exe)
+
+yambo_sc yambo_rt yambo_nl:
+	@rm -f ${compdir}/log/"compile_"$@".log"
+	@rm -f ${compdir}/config/stamps_and_lists/compilation_stop_$@.stamp
+	@touch ${compdir}/config/stamps_and_lists/compiling_$@.stamp
+	@$(MAKE) $(MAKEFLAGS) dependencies
+	@$(MAKE) $(MAKEFLAGS) ext-libs
+	@$(MAKE) $(MAKEFLAGS) int-libs
+	@$(MAKE) $(MAKEFLAGS) ham-libs
+	@+LIBS="$(SRC_LIBS)";LAB="_Y_";BASE="src";ADF="-D_yambo";$(todo_lib);$(mk_lib)
+	@+X2DO="$@";BASE="$(PIL_LIB)";XLIBS="$(EXE_LIBS)";ADF="";$(todo_driver)
+	@+X2DO="$@";BASE="$(PIL_LIB)";XLIBS="$(EXE_LIBS)";ADF="";$(mk_exe)
+
+ham-libs:
+	@+LIBS="$(HAM_LIBS)";LAB="_Y_";BASE="src";ADF="-D_yambo";$(todo_lib);$(mk_lib)

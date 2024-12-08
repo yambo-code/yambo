@@ -76,9 +76,9 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=io_ID)
  io_err=io_DB1(en,k,io_ID)
  ! 
- if(any(COLL_bands(:)==0)) COLL_bands=(/1,E%nb/)
- if(any(H_ref_bands(:)==0)) H_ref_bands=(/1,E%nb/)
- if(any(RT_bands(:)==0)) RT_bands=(/1,E%nb/)
+ if(any(COLL_bands(:)==0))  COLL_bands=(/1,en%nb/)
+ if(any(H_ref_bands(:)==0)) H_ref_bands=(/1,en%nb/)
+ if(any(RT_bands(:)==0))    RT_bands=(/1,en%nb/)
  !
 #if defined _MEM_CHECK
  call MEM_treshold_estimate( )

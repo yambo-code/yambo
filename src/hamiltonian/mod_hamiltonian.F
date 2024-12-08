@@ -61,14 +61,14 @@ module hamiltonian
      !
    end function
    !
-   subroutine H_QP_table_setup(E)
-     use drivers,        ONLY:l_sc_run,l_real_time,l_eval_collisions,l_nl_optics
+   subroutine H_QP_table_setup(E,l_SC_diagonal)
+     use drivers,        ONLY:l_use_collisions,l_sc_run,l_real_time,l_eval_collisions,l_nl_optics,l_elel_scatt
      use R_lattice,      ONLY:nkibz
      use electrons,      ONLY:levels
-     use SC_m,           ONLY:SC_diagonal
      use QP_m,           ONLY:QP_nk,QP_state,QP_nb
      !
      type(levels) :: E
+     logical      :: l_SC_diagonal
      !
      logical :: Mixing
      integer :: bands_mixed
@@ -94,7 +94,7 @@ module hamiltonian
        &                                          .or.trim(H_potential)=="COHSEX"
        !
        call define_bands_mixing(Mixing,bands_mixed)
-       call QP_state_table_setup(E,H_ref_bands(1),bands_mixing,l_SC_diagonal)
+       call QP_state_table_setup(E,H_ref_bands(1),bands_mixed,l_SC_diagonal)
        !
      endif
      !

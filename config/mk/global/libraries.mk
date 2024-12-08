@@ -28,22 +28,22 @@ MAIN_LIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_f
 PJ_PHLIBS    = driver_ph el-ph interface_ph qp_ph
 PJ_PHLIBS_LD = $(MAIN_LIBS_LD) driver_ph interface_ph el-ph qp_ph
 
-COMM_LIBS    = collisions hamiltonian
-COMM_LIBS_LD = collisions hamiltonian
+HAM_LIBS    = hamiltonian collisions common_sc_rt
+HAM_LIBS_LD = collisions hamiltonian common_sc_rt
 
-PJ_SCLIBS    = driver_sc sc
-PJ_SCLIBS_LD = $(MAIN_LIBS_LD) driver_sc $(COMM_LIBS_LD) sc
+PJ_SCLIBS    = driver_sc sc  interface_sc
+PJ_SCLIBS_LD = $(MAIN_LIBS_LD) driver_sc  interface_sc $(HAM_LIBS_LD) sc
 
 PJ_RTLIBS   = driver_rt \
               real_time_control real_time_hamiltonian real_time_propagation \
-              real_time_initialize real_time_drivers
-PJ_RTLIBS_LD= $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
-                   tddft dipoles pol_function qp acfdt bse driver_rt $(COMM_LIBS) \
+              real_time_initialize interface_rt io_rt real_time_drivers
+PJ_RTLIBS_LD= $(MAIN_LIBS_LD) real_time_control interface_rt io_rt  \
+                   driver_rt $(HAM_LIBS) \
                    real_time_hamiltonian real_time_propagation \
                    real_time_initialize real_time_drivers
 
-PJ_NLLIBS    = driver_nl nloptics
-PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) driver_nl nloptics
+PJ_NLLIBS    = driver_nl nloptics interface_nl
+PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) driver_nl interface_nl nloptics
 #
 # Yambo folders needed by Interfaces
 #=====================================

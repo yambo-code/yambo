@@ -38,7 +38,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw,mode)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,OP_RD,RD_CL_IF_END,VERIFY,REP,io_COLLs,manage_action
  use parallel_m,     ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
- use parallel_int,   ONLY:PP_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use parallel_int,   ONLY:PP_wait,PARALLEL_global_indexes,PARALLEL_WF_index
  use interfaces,     ONLY:WF_free
  use timing_m,       ONLY:timing
  !
@@ -106,7 +106,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw,mode)
    !
    ! PARALLEL WF distribution ...
    ! ... k-q + final band index...
-   call PARALLEL_WF_distribute(K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_distribute_ham(PAR_IND_G_k,PAR_IND_Bp_mat,.FALSE.,.TRUE.)
    ! ... COLLISION initial state...
    if (l_use_COH_collisions) then
      call COLLISIONS_basic_operations( "WF_distribute",    COH_collisions )
@@ -163,6 +163,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw,mode)
  !
 #endif
  !
+#if defined _RT_SCATT
+ !
  if (l_elel_scatt) then
    !
    if (     l_use_Hxc_collisions) call section('=','NEQ GW (e-e scattering)')
@@ -192,6 +194,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw,mode)
    endif
    !
  endif
+ !
+#endif
  !
  ! CLEAN
  !=======

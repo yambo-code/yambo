@@ -19,7 +19,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
 &                         l_SC_cycle,SC_cycle_mixing,SC_alloc,SC_free,l_SC_nl_mix,    &
 &                         l_SC_RESTART,l_Mean_Potential,it_to_start,l_froze_density,  &
 &                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters,         &
-&                         SC_neq_kind,SC_mu
+&                         SC_neq_kind,SC_mu,l_SC_diagonal
  use hamiltonian,    ONLY:rho_n,magn_n,l_sc_V_is_local,H_nl_sc,WF_G_max,WF_Go_indx,   &
 &                         V_hartree_sc,Hzero,V_xc_sc,E_reference,l_sc_XC_is_local,            &
 &                         H_QP_table_setup,H_rotation,H_rotation_ref
@@ -104,7 +104,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  max_overlap  =rZERO
  b_of_max_proj=rZERO
  !
- call H_QP_table_setup(E)
+ call H_QP_table_setup(E,l_SC_diagonal)
  !
  ! Parallel Setup
  !================

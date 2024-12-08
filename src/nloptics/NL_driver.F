@@ -88,7 +88,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  !
  ! QP dimensions
  !================
- call H_QP_table_setup(E)
+ call H_QP_table_setup(E,.false.)
  !
  ! Non_Linear parallization
  ! ===================================

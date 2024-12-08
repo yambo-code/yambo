@@ -1,1 +1,1 @@
-objs = io_BS.o io_DIPOLES.o variables_BS.o io_Overlaps.o $(COLL_objects)
+objs = io_BS.o io_DIPOLES.o variables_BS.o io_Overlaps.o

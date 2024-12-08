@@ -6,4 +6,5 @@ COLL_objects = io_COLLISIONS_serial.o
 
 objs = INIT_read_command_line_potentials.o \
 PARALLEL_MATRIX_distribute.o  \
-$(COLL_objects)
+$(COLL_objects) \
+io_KB_real_space.o

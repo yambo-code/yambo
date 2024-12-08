@@ -7,11 +7,12 @@
 !
 subroutine Bare_Hamiltonian(E,Xk,k)
  !
- use pars,           ONLY:cZERO
+ use pars,           ONLY:SP,cZERO
  use electrons,      ONLY:levels,n_sp_pol,spin,n_spin
- use QP_m,           ONLY:QP_nk,QP_Vxc,QP_n_states
+ use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states,QP_table
  use hamiltonian,    ONLY:Hzero,E_reference,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
 &                         H_ref_bands,WF_G_max,WF_Go_indx
+ use parallel_m,     ONLY:PP_indexes
  use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_WF_linear
  use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k 
  use matrix_operate, ONLY:UP_matrix_index,matrix_index
@@ -24,7 +25,6 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use timing_m,       ONLY:timing
  use drivers,        ONLY:l_sc_run
  use drivers,        ONLY:l_real_time
- use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc,rho_reference,magn_reference
  use drivers,        ONLY:l_sc_magnetic
  !
 #include<y_memory.h>
@@ -34,9 +34,9 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  ! Work space
  !
- integer          :: ik,ib,i_sp_pol,WFbands(2)
- type(PP_indexes) :: PAR_IND
+ integer          :: i1,ik,ib,ibp,i_sp_pol,WFbands(2)
  complex(SP), allocatable  :: H_pseudo(:,:,:,:)
+ type(PP_indexes) :: PAR_IND
  !
  Hzero=cZERO
  !
@@ -70,11 +70,6 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  WFbands=(/H_ref_bands(1),max(H_ref_bands(2),maxval(E%nbm))/)
  call WF_load(WF,WF_G_max,WF_Go_indx,WFbands,(/1,nkibz/),title='-SC')
  !
- if(l_real_time) then
-   rho_n=rho_reference
-   if(n_spin>1) magn_n=magn_reference
- endif
- !
  if(l_sc_run) then
    call el_density_and_current(E,Xk,rho=rho_n,bands=H_ref_bands)
    if(n_spin>1) call el_magnetization(E,Xk,magn_n,bands=H_ref_bands)
@@ -99,43 +94,47 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  YAMBO_ALLOC(QP_Vxc,(QP_n_states))
  QP_Vxc=cZERO
  !
- if (mod(WF_kind,1000)< 300) then
-   !
-   call error(" part to be fixed ")
-   if (l_real_time) then
-     !
-     ! DS comment. Here I need different parallel indexes
-     if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-     if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 )) cycle
-   else
-     if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
-   endif
-   !
-   call XCo_local(E,k,PAR_IND,l_real_time,.false.)
-   !
+ !! In case a non-DFT potential is required
+ !!
+ !! ...SC EXX and EXX+LDA_C
+ !! 
+ !if (mod(WF_kind,1000)>=300) then
+ !  !
+ !  ! Here I need to check which other actions from XCo_local are needed
+ !  call error(" part to be fixed ")
+ !  !
+ !  !AMBO_ALLOC(V_xc_sc,(fft_size,n_spin))
+ !  !AMBO_ALLOC(V_hartree_sc,(fft_size,n_spin))
+ !  SC_fft_size=fft_size
+ !  !
+ !  call load_SC_components('V',COM_=REP,MODE_=VERIFY)
+ !  !
+ !  if (.not.compatible_SC_DB) call error('Incompatible potential database')
+ !  !
+ !  V_xc=V_xc_sc
+ !  !
+ !  !AMBO_FREE(V_xc_sc)
+ !  !AMBO_FREE(V_hartree_sc)
+ !  !
+ !endif
+ !
+ allocate(PAR_IND%element_2D(QP_nb,QP_nk))
+ !
+ ! TMP PAR_IND
+ !
+ if (l_real_time) then
+   do i1=1,QP_n_states
+     ib =QP_table(i1,1)
+     ibp=QP_table(i1,2)
+     ik =QP_table(i1,3)
+     PAR_IND%element_2D(ib,ik)=PAR_IND_WF_k%element_1D(ik) .and. &
+     &  PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 ) 
+   enddo
  else
-   !
-   ! Here I need to check which other actions from XCo_local are needed
-   call error(" part to be fixed ")
-   !
-   ! In case a non-DFT potential is required
-   !
-   ! ...SC EXX and EXX+LDA_C
-   !
-   YAMBO_ALLOC(V_xc_sc,(fft_size,n_spin))
-   YAMBO_ALLOC(V_hartree_sc,(fft_size,n_spin))
-   SC_fft_size=fft_size
-   !
-   call load_SC_components('V',COM_=REP,MODE_=VERIFY)
-   !
-   if (.not.compatible_SC_DB) call error('Incompatible potential database')
-   !
-   V_xc=V_xc_sc
-   !
-   YAMBO_FREE(V_xc_sc)
-   YAMBO_FREE(V_hartree_sc)
-   !
+   PAR_IND%element_2D=PAR_IND_WF_linear%element_2D
  endif
+ !
+ call XCo_local(E,k,PAR_IND,l_real_time,.false.)
  !
  V_xc_sc=V_xc
  !
@@ -168,14 +167,6 @@ subroutine Bare_Hamiltonian(E,Xk,k)
    enddo
    !
  enddo
- !
- ! Save the reference xc and Hartree potentials 
- !==============================================
- !
- if (l_real_time) then
-   REF_V_xc_sc=V_xc
-   REF_V_hartree_sc=V_hartree_sc
- endif
  !
  YAMBO_FREE(QP_Vxc)
  !

@@ -119,7 +119,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    ! The Vxc term
    !--------------
    if (eval_DFT) then
-     call XC_potential_driver(E,k,WF_kind,WF_xc_functional,1,.true.)
+     call XC_potential_driver(E,k,WF_kind,WF_xc_functional,1,l_msg_off=.true.)
      V_xc_sc=V_xc-REF_V_xc_sc
    endif
    !

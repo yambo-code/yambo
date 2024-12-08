@@ -44,9 +44,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen,add_kfac)
  integer, external       :: io_KB_abinit,io_KB_pwscf,io_KB_real_space
  !
  !
-#if defined _RT
  call timing('Pseudo kbv FFT',OPR='start')
-#endif
  !
  call DIPOLE_kb_init(Xen,X,io_err,ID)
  !
@@ -156,9 +154,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen,add_kfac)
  YAMBO_FREE(kbv_real_space)
  YAMBO_FREE(kbv)
  !
-#if defined _RT
  call timing('Pseudo kbv FFT',OPR='stop')
-#endif
  !
  contains
    !

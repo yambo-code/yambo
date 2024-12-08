@@ -1,0 +1,3 @@
+objs = COLLISIONS_compose_nl.o COLLISIONS_compress.o \
+       Build_LSEX_collisions.o LSEX_potential.o OSCLL_eval.o OSCLL_load.o \
+       OSCLL_compose_collision.o OSCLL_compose_nl.o OSCLL_compose_vbands.o 

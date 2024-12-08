@@ -1,1 +1,1 @@
-objs = launcher_ph.o options_maker_ph.o options_ypp_ph.o
+objs = launcher_rt.o options_maker_rt.o options_ypp_rt.o

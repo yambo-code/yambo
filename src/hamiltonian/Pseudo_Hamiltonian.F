@@ -122,7 +122,10 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,H_pseudo,l_equilibrium)
        call timing('Pseudo correction',OPR='start')
      endif
      !
-     if(.not.l_equilibrium) call Pseudo_KB_gauge_factor(gauge_factor)
+     if(.not.l_equilibrium) then 
+       if (l_real_time)   call Pseudo_KB_gauge_factor_rt(gauge_factor)
+       if (l_sc_magnetic) call Pseudo_KB_gauge_factor_sc(gauge_factor)
+     endif
      !
      do i1=1,pp_kbv_dim_yambo
        !

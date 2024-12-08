@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
+integer function INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! INIT =-2  : Unsupported Runlevel(s) combination
  ! INIT =-1  : Missing CORE DBs
@@ -75,7 +75,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Presets
  !
- INIT = 0
+ INIT_rt = 0
  io_X_err     =-1
  io_BS_err    =-1
  io_BS_Fxc_err=-1
@@ -138,13 +138,13 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Command line reading
  !
- call INIT_read_command_line(instr,INIT)
+ call INIT_read_command_line_rt(instr,INIT_rt)
  !
  ! DB props listing mode ?
  !
  if (index(instr,'dbpr')>0) then
    list_dbs=.true.
-   INIT = 2
+   INIT_rt = 2
    if (log_as_a_file) write (logfile,'(2a)') trim(com_path),'/l_dbs'
    live_timing_is_on=.false.
    write_to_report=.false.
@@ -163,7 +163,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    infile='(none)'
  endif
  !
- call INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
+ call INIT_check_databases_rt(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT_rt,&
 &                          io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_SC_E_err)
  !
  if (list_dbs) then
@@ -207,7 +207,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  call LOCAL_after_input_IO()
  call LOCAL_from_runlevels_to_logicals()
  !
- call INIT_activate()
+ call INIT_activate_rt()
  !
  if (check_verbosity("real_time").and.l_real_time) call INIT_DephMatrix()
  !
@@ -274,7 +274,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (mode=='Close_G_vectors') initmode=2
      if (mode=='Game_Over') initmode=3
      if (mode=='parser_input_file') initmode=4
-     call INIT_load(defs,en,q,k,X,Xw,Dip)
+     call INIT_load_rt(defs,en,q,k,X,Xw,Dip)
    end subroutine
    !
    subroutine LOCAL_from_runlevels_to_logicals()

@@ -26,8 +26,6 @@ module COLL_interfaces
      real(SP),      OPTIONAL   ::Ek,Ekmq,E_diff
    end subroutine
    !
-#if defined _SC || _RT || _QED
-   !
    integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll,COMM)
      use collision_ext,  ONLY:COLLISIONS_element,COLLISIONS_group
      integer, intent(inout)             ::ID
@@ -35,8 +33,6 @@ module COLL_interfaces
      type(COLLISIONS_element), optional ::COLL_element
      integer, intent(in)     , optional ::i_coll,COMM
    end function
-   !
-#endif
    !
  end interface
  !

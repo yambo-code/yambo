@@ -16,8 +16,8 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_mpa,l_bss,l_bse,l_em1d,l_X,&
-&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_gpu_test,&
-&                        l_slk_test
+&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,&
+&                        l_rt_carriers_in_use,l_elphoton_scatt
  use gpu_m,         ONLY:GPU_test_dim
  use X_m,           ONLY:X_t,i_X_kind_existing_DB
  use DIPOLES,       ONLY:DIPOLE_t
@@ -29,6 +29,7 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  use electrons,     ONLY:levels,E_reset
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
+ use RT_control,    ONLY:RT_BSE_Occ_Mode
  !
  implicit none
  !
@@ -53,25 +54,27 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  ! Local Variables
  !
- integer           ::i_err,i_X_kind
+ integer           ::i_err,i_X_kind,ID,VB(2),CB(2)
  logical           ::launch_me
  character(len=20) ::tmp_char
  !
  ! Externals
  !
- integer, external ::X_dielectric_matrix,INIT
+ integer, external ::X_dielectric_matrix,INIT_rt
  !
  ! Presets
  !
  ncpu    = np
  myid    = pid
  infile  = inf
- yambo   = 0
+ yambo_rt= 0
  iinf    = 0 
  !
  ! ... Internal Defaults
  !
  call SET_defaults(instr,ind,od,com_dir)
+ call SET_defaults_comm(instr,ind,od,com_dir)
+ call SET_defaults_rt(instr,ind,od,com_dir)
  !
  ! ... C_driver -> YPP information transfer
  !
@@ -93,12 +96,12 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  ! INPUT FILE PARSING
  !====================
  !
- iinf=INIT(en,q,k,X,Xw,Dip,instr,lnstr,.false.,.false.)
+ iinf=INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,.false.,.false.)
  !
  ! iinf=0 => No error message from driver.c 
  !
  if (iinf/=0) then
-   yambo=iinf
+   yambo_rt=iinf
    return
  endif
  !
@@ -112,31 +115,28 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  ! Basical 
  !
- launch_me= .not.(l_slk_test.or.l_gpu_test)
- if(launch_me) call setup(en,Xen,Ken,k,Xk)
+ call setup(en,Xen,Ken,k,Xk)
  !
  ! Update the default variables
  !
- if(launch_me) i_err=INIT(en,q,k,X,Xw,Dip,instr,lnstr,.true.,.false.)
+ i_err=INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,.true.,.false.)
  !
  ! BZ sampling
  !==============
  !
- if(launch_me) call bz_samp_indexes(en,k,Xk,q,.false.,.true.,.true.) 
+ call bz_samp_indexes(en,k,Xk,q,.false.,.true.,.true.) 
  !
  ! COLOUMB DRIVER
  !================
  ! In non-linear optics we do not need bare_qpg
  ! it will be loaded only if required
  !
- launch_me= .not.(l_slk_test.or.l_gpu_test.or.l_nl_optics)
- if(launch_me) call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
+ call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
  !
  ! MAGN and DEN
  !=============
  !
- !launch_me= .not.(l_slk_test.or.l_gpu_test)
- !if(launch_me) call eval_Mtot(en,k,q)
+ !call eval_Mtot(en,k,q)
  !
  ! reset the section numbering
  !=============================
@@ -151,8 +151,7 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  ! QP and RT CORRECTIONS
  !=======================
  !
- launch_me= .not.(l_slk_test.or.l_gpu_test)
- if(launch_me) call External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
+ call External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  !
  ! DIPOLES
  !=========
@@ -241,7 +240,7 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  call CLOSE_the_run(.TRUE.,.TRUE.,.FALSE.)
  !
- i_err=INIT(en,q,k,X,Xw,Dip,instr,lnstr,.false.,.true.)
+ i_err=INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,.false.,.true.)
  !
  call it_reset(-1)
  !

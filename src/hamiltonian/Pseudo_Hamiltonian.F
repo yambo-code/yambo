@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
-subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
+subroutine Pseudo_Hamiltonian(Xk,Xen,H_pseudo,l_equilibrium)
  !
  use pars,          ONLY:SP,cZERO
  use drivers,       ONLY:l_sc_magnetic,l_real_time
@@ -23,26 +23,20 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,OP_IF_START_RD_CL_IF_END,manage_action
  use timing_m,      ONLY:timing
-#if defined _SC
  use parallel_m,    ONLY:PAR_IND_QP,HEAD_QP_cpu
  use QP_m,          ONLY:QP_table,QP_n_states
-#endif
-#if defined _RT
- use parallel_m,    ONLY:PAR_G_k_range
- use real_time,     ONLY:Ho_plus_sigma,H_pseudo_eq
-#endif
  !
 #include<y_memory.h>
  !
  type(bz_samp) :: Xk
  type(levels)  :: Xen
  logical       :: l_equilibrium
+ complex(SP), intent(out)  :: H_pseudo(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),Xk%nibz,n_sp_pol)
  !
  ! Work Space
  !
  complex(SP),allocatable :: kbv_real_space(:,:,:),kbv_ks_space(:),kbv_gauged(:,:),gauge_factor(:,:)
- complex(SP)             :: H_pseudo_ik(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2)), &
-&                           H_pseudo(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),Xk%nibz,n_sp_pol)
+ complex(SP)             :: H_pseudo_ik(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  integer                 :: kbv_real_space_table(pp_kbv_dim_yambo),n_par_el
  !
  ! Dummies
@@ -53,9 +47,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  integer                 :: ID,io_KB_real_space_err,ACT
  integer, external       :: io_KB_real_space
  !
-#if defined _SC
  if(l_sc_magnetic) call fft_setup(0,1,.true.)  ! fft_size
-#endif
  !
  YAMBO_ALLOC(kbv_real_space,(fft_size,n_spinor,pp_kbv_dim_yambo))
  !
@@ -77,7 +69,6 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  !
  H_pseudo=cZERO
  !
-#if defined _SC
  if(l_sc_magnetic) then
    !
    PAR_IND_local=.false.
@@ -92,7 +83,6 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
    if (n_par_el>0) call live_timing('MAG-pseudo',n_par_el)
    !      
  endif
-#endif
  !
  PAR_IND_local=.true.
  !
@@ -102,15 +92,12 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
      !
      ifrag=ik+(i_sp_pol-1)*Xk%nibz
      !
-#if defined _RT
      if(l_real_time) call timing('Pseudo kbv I/O',OPR='start')
-#endif
      !
      ACT=manage_action(OP_IF_START_RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
      call io_control(ACTION=ACT,SEC=(/ifrag+1/),ID=ID)
      io_KB_real_space_err=io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
      !
-#if defined _SC
      if(l_sc_magnetic) then
        !
        PAR_IND_local=.false.
@@ -129,14 +116,11 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
        &  title='-Pseudo',impose_free_and_alloc=.TRUE.,keep_states_to_load=.true.)
        !
      endif
-#endif
      !
-#if defined _RT
      if(l_real_time) then
        call timing('Pseudo kbv I/O',OPR='stop')
        call timing('Pseudo correction',OPR='start')
      endif
-#endif
      !
      if(.not.l_equilibrium) call Pseudo_KB_gauge_factor(gauge_factor)
      !
@@ -175,39 +159,16 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
        !
      enddo   ! i1
      !
-#if defined _RT
      if(l_real_time) call timing('Pseudo correction',OPR='stop')
-#endif
      !
-#if defined _SC
    if(l_sc_magnetic) then
      call live_timing(steps=1)
      call WF_free(WF)
    endif
-#endif
      !
    enddo   ! ik
    !
  enddo  ! i_sp_pol
- !
-#if defined _SC
- if(l_sc_magnetic) then
-   if (n_par_el>0) call live_timing()
-   if (.not.l_equilibrium) Hzero=Hzero+H_pseudo
-   if (     l_equilibrium) Hzero=Hzero-H_pseudo
- endif
-#endif
- !
-#if defined _RT
- if(l_real_time) then
-   if (l_equilibrium) then
-     H_pseudo_eq  =H_pseudo
-   else
-     Ho_plus_sigma=Ho_plus_sigma+(H_pseudo(:,:,PAR_G_k_range(1):PAR_G_k_range(2),1:1)-&
-&                                 H_pseudo_eq(:,:,PAR_G_k_range(1):PAR_G_k_range(2),1:1))
-   endif
- endif
-#endif
  !
  ! Free mem
  YAMBO_FREE(kbv_ks_space)

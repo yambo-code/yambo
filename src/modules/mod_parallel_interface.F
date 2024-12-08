@@ -50,16 +50,6 @@ module parallel_int
  !
  interface 
    !
-   subroutine PARALLEL_scheme_initialize(WHAT,ENVIRONMENT,PARs,N,TABLE,MATRIX)
-     use parallel_m,   ONLY:PAR_scheme
-     character(*)               :: WHAT
-     character(*)               :: ENVIRONMENT
-     type(PAR_scheme)           :: PARs
-     integer                    :: N(:)
-     logical, optional          :: TABLE
-     logical, optional          :: MATRIX
-   end subroutine
-   !
    subroutine PARALLEL_assign_chains_and_COMMs(n_elements,COMM_index_1,COMM_index_2,COMM_index_3,&
 &                                              COMM_index_4,COMM_index_5,COMM_A2A_1,COMM_A2A_2,&
 &                                              COMM_A2A_3,COMM_A2A_4,COMM_index_global_2)
@@ -87,16 +77,6 @@ module parallel_int
      logical,       optional::ORDERED
      logical,       optional::NO_EMPTIES
      logical,       optional::MASK(:)
-   end subroutine
-   !
-   subroutine PARALLEL_MATRIX_distribute(COMM,PAR_IND,nb,PAR_index,PAR_ID,PAR_n_elements)
-     use parallel_m,    ONLY:yMPI_comm,PP_indexes
-     type(yMPI_comm)   :: COMM
-     type(PP_indexes) :: PAR_IND
-     integer          :: nb(2)
-     integer, optional:: PAR_index(:,:)
-     integer, optional:: PAR_ID
-     integer, optional:: PAR_n_elements
    end subroutine
    !
    subroutine PARALLEL_WF_index(COMM)

@@ -14,18 +14,6 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run,l_nl_optics
  use BS,            ONLY:BS_bands,BS_nT_at_k,BS_n_eh_spaces
  use X_m,           ONLY:X_ng
-#if defined _SC
- use SC,            ONLY:SC_bands
-#endif
-#if defined _NL
- use nl_optics,     ONLY:n_runs
-#endif
-#if defined _RT
- use real_time,     ONLY:RT_bands
-#endif
-#if defined _SC || defined _RT
- use collision_ext, ONLY:COLL_bands,COH_collisions,P_collisions,HXC_collisions
-#endif
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
  use QP_m,          ONLY:QP_n_states,QP_nb,QP_n_G_bands
@@ -49,8 +37,6 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  if (ENVIRONMENT=="DIPOLES"                  ) PAR_K_range=Xk%nibz
  if (index(ENVIRONMENT, "Response_G_space")>0) PAR_K_range=Xk%nbz
  if (ENVIRONMENT=="Response_T_space"         ) PAR_K_range=Xk%nibz
- if (ENVIRONMENT=="Real_Time"                ) PAR_K_range=Xk%nibz
- if (ENVIRONMENT=="Non_Linear"               ) PAR_K_range=Xk%nibz
  !
  ! COND bands
  !------------
@@ -80,18 +66,9 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  PAR_Q_ibz_range=(/1,nqibz/)
  PAR_Q_bz_range=(/1,nqbz/)
  if (ENVIRONMENT=="Response_G_space"  )        PAR_Q_ibz_range=(/PAR_X_iq(1),PAR_X_iq(2)/)
- if (ENVIRONMENT=="Real_Time"         )        PAR_Q_bz_range=(/1,nqbz/)
  !
  if (ENVIRONMENT=="Self_Energy"       ) then
    PAR_n_G_vectors= X_ng
-#if defined _SC
-   if (l_sc_run.and.&
-&      any( (/P_collisions%N,COH_collisions%N,HXC_collisions%N/)> 0))  &
-&                                               PAR_Q_bz_range=(/1,nqbz/)
-#endif
-#if defined _SC || defined _RT
-   if (l_eval_collisions)                       PAR_Q_bz_range=(/1,nqbz/)
-#endif
  endif
  !
  !
@@ -114,31 +91,10 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
    if (l_HF_and_locXC)                               PAR_n_bands=(/1,maxval((/E%nbm(:),QP_nb/))/)
    if ((l_gw0.or.l_life).and..not.computing_Fock)    PAR_n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
    if (.not.computing_Fock)                          PAR_n_bands(1)=QP_n_G_bands(1)
-#if defined _SC || defined _RT
-   if (l_eval_collisions)  PAR_n_bands=COLL_bands
-#endif
-#if defined _SC
-   if (l_sc_run)           PAR_n_bands=SC_bands
-#endif
  endif
-#if defined _RT
- if (ENVIRONMENT=="Real_Time"                       ) then
-   PAR_n_bands=(/1,(RT_bands(2)-RT_bands(1)+1)**2/)
-   PAR_QP_range=(RT_bands(2)-RT_bands(1)+1)**2
- endif
-#endif
  !
  ! QP states
  !-----------
  if (ENVIRONMENT=="Self_Energy"                     ) PAR_QP_range=QP_n_states
- !
- ! Oscillators
-#if defined _NL || defined _RT
- if (ENVIRONMENT=="Oscillators"                     ) PAR_n_bands =COLL_bands
-#endif
- !
-#if defined _NL
- if (ENVIRONMENT=="Non_Linear"                      ) PAR_n_freqs =n_runs
-#endif
  !
 end subroutine PARALLEL_global_dimensions

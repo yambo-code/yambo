@@ -220,7 +220,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      call io_control(ACTION=OP_RD,SEC=(/1/),ID=ID)
      if (l_COH) io_err(1)=io_COLLISIONS(ID,COLL,COH_COLL_element(1))
      if (l_HXC) io_err(1)=io_COLLISIONS(ID,COLL,HXC_COLL_element(1))
-# if defined _RT
+# if defined _RT_SCATT
      if (l_NGW) io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1))
 # endif
 # if defined _QED

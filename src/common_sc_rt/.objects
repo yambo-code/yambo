@@ -5,4 +5,5 @@ COLL_objects = io_COLLISIONS_serial.o
 #endif
 
 objs = INIT_read_command_line_potentials.o \
+PARALLEL_MATRIX_distribute.o  \
 $(COLL_objects)

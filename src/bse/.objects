@@ -1,4 +1,4 @@
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC
 SLEPC_objects = K_stored_in_a_slepc_matrix.o K_shell_matrix.o K_stored_in_a_nest_matrix.o \
                 K_multiply_by_V_slepc.o K_multiply_by_V_transpose_slepc.o
 #endif

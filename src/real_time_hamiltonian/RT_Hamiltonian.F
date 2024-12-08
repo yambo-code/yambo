@@ -36,7 +36,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  use pars,           ONLY:SP,cONE,cZERO
  use wrapper_omp,    ONLY:M_plus_alpha_M_omp
- use electrons,      ONLY:levels,n_spinor,n_spin
+ use electrons,      ONLY:levels,n_spinor,n_spin,n_sp_pol
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_use_Hxc_collisions
  use R_lattice,      ONLY:bz_samp,nXkibz
@@ -55,6 +55,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use timing_m,       ONLY:timing
  use H_interfaces,   ONLY:V_real_space_to_H
+ use real_time,      ONLY:Ho_plus_sigma,H_pseudo_eq
  !
  implicit none
  !
@@ -69,6 +70,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  logical                  :: l_H_contains_Hartree
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
  complex(SP), allocatable :: V_scf(:),V_scf_grad(:,:),V_xc_mat(:,:,:)
+ complex(SP), allocatable :: H_pseudo(:,:,:,:)
  !
  call timing('RT Hamiltonian',OPR='start')
  !
@@ -210,7 +212,13 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! Pseudo potential terms needed for velocity gauge
  !==================================================
- if (l_velocity_gauge_corr) call Pseudo_Hamiltonian(k,E,.false.)
+ if (l_velocity_gauge_corr) then
+   allocate(H_pseudo(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),k%nibz,n_sp_pol))
+   call Pseudo_Hamiltonian(k,E,H_pseudo,.false.)
+   Ho_plus_sigma=Ho_plus_sigma+(H_pseudo(:,:,PAR_G_k_range(1):PAR_G_k_range(2),1:1)-&
+   &                                 H_pseudo_eq(:,:,PAR_G_k_range(1):PAR_G_k_range(2),1:1))
+   deallocate(H_pseudo)
+ endif
  !
  call timing('RT Hamiltonian',OPR='stop')
  !

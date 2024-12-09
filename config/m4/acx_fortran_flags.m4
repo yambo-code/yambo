@@ -78,7 +78,7 @@ i?86*linux*)
     NETCDFFLAGS="-DgFortran"
     DEBUG_FLAGS="-Og -g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
-  *ifort*)
+  *ifort* | *ifx* )
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
     CPU_FLAG=""
@@ -88,7 +88,7 @@ i?86*linux*)
        CPU_FLAG="-xHost"
        #CPU_FLAG=" "
        ;;
-      *2021* )
+      *2021* | *2022* | *2023* | *2024* | *2025* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp -parallel"
        FCMFLAG="-nofor-main"
@@ -329,7 +329,7 @@ aarch*linux* | arm*linux* )
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
     ;;
-  *ifort*)
+  *ifort* | *ifx* )
     OMPFLAGS="-openmp"
     CPU_FLAG=""
     FCMFLAG="-nofor_main"
@@ -338,7 +338,7 @@ aarch*linux* | arm*linux* )
        #CPU_FLAG="-xHost"
        CPU_FLAG=" "
        ;;
-      *2020* | *2021* )
+      *2020* | *2021* | *2022* | *2023* | *2024* | *2025* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp -parallel"
        FCMFLAG="-nofor-main"

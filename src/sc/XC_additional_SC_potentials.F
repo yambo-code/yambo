@@ -9,12 +9,10 @@ subroutine XC_additional_SC_potentials()
  !
  use drivers,        ONLY:l_oep_kli,l_oep_exact,l_oep_ceda,l_oep_slater,l_sc_exx
  use hamiltonian,    ONLY:H_kind,H_perturbation
-#if defined _SC
  use SC,             ONLY:OEP_approx,l_oep_EWeight,l_oep_iterative
  use drivers,        ONLY:l_sc_magnetic
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
  use magnetic,       ONLY:MAG_landau,MAG_pauli
-#endif
  use global_XC,      ONLY:EXT_NONE
  use stderr,         ONLY:STRING_same
  !
@@ -23,8 +21,6 @@ subroutine XC_additional_SC_potentials()
  ! Work
  !
  integer, parameter :: KLI_APPRX = 10, SLT_APPRX = 20, CED_APPRX = 30, LEVY_APPRX = 40
- !
-#if defined _SC
  !
  ! OEP approximation
  !===================
@@ -61,19 +57,16 @@ subroutine XC_additional_SC_potentials()
    endif
    !
  end if
-#endif
  !
  ! PERTURBATION
  !==============
  !
  H_perturbation=EXT_NONE
  !
-#if defined _SC
  if (l_sc_magnetic) then
    if (MAG_pauli)  H_perturbation=EXT_B_PAULI
    if (MAG_landau) H_perturbation=EXT_B_LANDAU
    if (MAG_landau.and.MAG_pauli) H_perturbation=EXT_B_MAGNETISM
  endif
-#endif
  !
 end subroutine XC_additional_SC_potentials

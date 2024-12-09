@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine INIT_read_command_line_ph(rstr,init_)
+subroutine INIT_read_command_line_nl(rstr,init_)
  !
  use pars,           ONLY:schlen
  use drivers,        ONLY:infile_editing,l_bse,l_alda_fxc,l_chi,l_elel_corr,l_nl_p_and_p,&
@@ -220,6 +220,11 @@ subroutine INIT_read_command_line_ph(rstr,init_)
        if (.not.any((/STRING_match(QP_solver,'n'),STRING_match(QP_solver,'s'),&
 &                     STRING_match(QP_solver,'g')/)))  QP_solver='n'
        !
+       ! removed
+       !#if !defined  (elph_def) && !defined (qe_def)
+       !l_elel_corr=.true.
+       !#endif
+       !
        if ( i_cycle == 2 .and. trim(Chi_mode)==' ') Chi_mode='HARTREE'
        !
      endif
@@ -227,10 +232,8 @@ subroutine INIT_read_command_line_ph(rstr,init_)
      ! Lifetimes
      !
      if ( i_cycle==2 .and. trim(rstr_piece(i1)) == 'life' )  then
-       if ( (.not.l_elph_corr.and..not.l_elphoton_corr.and..not.l_phel_corr) .or. l_elel_corr) then
-         call initactivate(1,'em1d')
-         call initactivate(1,'el_el_corr')
-       endif
+       call initactivate(1,'em1d')
+       l_elel_corr=.true.
      endif
      !
      ! GW approximation
@@ -257,18 +260,6 @@ subroutine INIT_read_command_line_ph(rstr,init_)
          infile_editing=.true.
          if (i_cycle==1) QP_solver="s"
          call initactivate(1,'em1d el_el_corr')
-       else if (trim(rstr_piece(i1+1))=='fan') then
-         infile_editing=.true.
-         if (i_cycle==1) QP_solver="n"
-         call initactivate(1,'el_ph_corr')
-         l_elph_corr=.TRUE.
-#if defined _PHEL
-       else if (trim(rstr_piece(i1+1))=='X') then
-         infile_editing=.true.
-         if (i_cycle==1) QP_solver="n"
-         call initactivate(1,'ph_el_corr')
-         l_phel_corr=.TRUE.
-#endif
        endif
        !
      endif
@@ -278,6 +269,20 @@ subroutine INIT_read_command_line_ph(rstr,init_)
      !
      ! Scattering(s)
      call INIT_read_command_line_corr_scatt("scattp",rstr_piece,i1,l_elel_scatt,l_elph_scatt,l_phel_scatt,l_elphoton_scatt)
+     !
+     ! NL
+     !
+     if ( trim(rstr_piece(i1)) == 'nloptics' ) then
+       !
+       if ( trim(rstr_piece(i1+1)) == 'n'   ) n_ext_fields=3
+       if ( trim(rstr_piece(i1+1)) == 'p'   ) then
+          n_ext_fields=3
+          l_nl_p_and_p=.TRUE.
+       endif
+       !
+       if( n_ext_fields==0) n_ext_fields=1
+       !
+     endif
      !
    enddo INPUT_strings_loop
    !

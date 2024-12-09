@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-integer function INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
+integer function INIT_sc(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! INIT =-2  : Unsupported Runlevel(s) combination
  ! INIT =-1  : Missing CORE DBs
@@ -18,7 +18,6 @@ integer function INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_mpa,l_phel_corr,l_X,l_screen
- use drivers,        ONLY:l_gpu_test
  use pars,           ONLY:SP
  use parser_m,       ONLY:parser
  use global_XC,      ONLY:WF_exx_fraction,WF_exx_screening
@@ -38,8 +37,10 @@ integer function INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use BS,             ONLY:BS_bands,BS_n_g_W,BS_eh_en,BSE_mode,BSK_mode,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_cpl_K_corr,BS_cpl_K_exchange
  use BS_solvers,     ONLY:BSS_mode,BSS_q0
+ use QP_m,           ONLY:QP_ng_Sx
+ use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size
 #if defined _OPENMP
- use openmp,         ONLY:n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K,n_threads_NL
+ use openmp,         ONLY:n_threads_X,n_threads_DIP,n_threads_SE,n_threads_K,n_threads_NL
 #endif
 #if defined _YAML_OUTPUT
  use pars,           ONLY:logfile_index,repfile_index
@@ -75,7 +76,7 @@ integer function INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Presets
  !
- INIT_rt = 0
+ INIT_sc = 0
  io_X_err     =-1
  io_BS_err    =-1
  io_BS_Fxc_err=-1
@@ -89,6 +90,9 @@ integer function INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    call SET_logicals()
    !
    call E_reset(en)
+#if defined _SC
+   call E_reset(en_sc)
+#endif
    call bz_samp_reset(k)
    call bz_samp_reset(q)
    call W_reset(Xw(1),damping=0.001_SP)
@@ -138,13 +142,13 @@ integer function INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Command line reading
  !
- call INIT_read_command_line_rt(instr,INIT_rt)
+ call INIT_read_command_line_sc(instr,INIT_sc)
  !
  ! DB props listing mode ?
  !
  if (index(instr,'dbpr')>0) then
    list_dbs=.true.
-   INIT_rt = 2
+   INIT_sc = 2
    if (log_as_a_file) write (logfile,'(2a)') trim(com_path),'/l_dbs'
    live_timing_is_on=.false.
    write_to_report=.false.
@@ -163,7 +167,7 @@ integer function INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    infile='(none)'
  endif
  !
- call INIT_check_databases_rt(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT_rt,&
+ call INIT_check_databases_sc(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT_sc,&
 &                          io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_SC_E_err)
  !
  if (list_dbs) then
@@ -207,9 +211,7 @@ integer function INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  call LOCAL_after_input_IO()
  call LOCAL_from_runlevels_to_logicals()
  !
- call INIT_activate_rt()
- !
- if (check_verbosity("real_time").and.l_real_time) call INIT_DephMatrix()
+ call INIT_activate_sc()
  !
  ! Q-points (from input)
  !
@@ -274,7 +276,7 @@ integer function INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (mode=='Close_G_vectors') initmode=2
      if (mode=='Game_Over') initmode=3
      if (mode=='parser_input_file') initmode=4
-     call INIT_load_rt(defs,en,q,k,X,Xw,Dip)
+     call INIT_load_sc(defs,en,q,k,X,Xw,Dip)
    end subroutine
    !
    subroutine LOCAL_from_runlevels_to_logicals()
@@ -303,16 +305,11 @@ integer function INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_rim_w=runlevel_is_on('rim_w')
        l_col_cut=l_rim.or.l_rim_w
        l_acfdt=runlevel_is_on('acfdt')
-       l_gpu_test =runlevel_is_on('gputest')
-       l_real_time=runlevel_is_on('negf')
-       l_elel_scatt =runlevel_is_on('el_el_scatt')
-       l_elph_scatt=runlevel_is_on('el_ph_scatt')
-       l_elphoton_scatt=runlevel_is_on('el_photon_scatt')
+       l_sc_run=runlevel_is_on('scrun')
+       l_sc_magnetic=runlevel_is_on('magnetic')
+       l_sc_electric=runlevel_is_on('electric')
        l_eval_collisions=runlevel_is_on('collisions')
        l_elel_corr    =runlevel_is_on('el_el_corr')
-#if defined  _QED
-       l_elphoton_corr=runlevel_is_on('el_photon_corr')
-#endif
        !
        ! Check if this runlevel is allowed in the
        ! present configuration
@@ -345,9 +342,6 @@ integer function INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      Dip%bands_ordered=.not.all_bands
      l_local=l_sc_run.or.l_real_time.or.l_nl_optics 
      if (l_local)         Dip%bands_ordered=.false.
-#if defined _QED
-     if (l_elphoton_corr) Dip%bands_ordered=.false.
-#endif
      !
    end subroutine LOCAL_dipole_bands_ordering
    !
@@ -396,6 +390,13 @@ integer function INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_gw0.and.l_cohsex) call parser('UseEbands',COHSEX_use_empties)
      !
+     if (l_sc_magnetic) call initactivate(1,'potential')
+     if (l_sc_run.and.io_SC_E_err==0) then
+       QP_ng_Sx=SC_ng_Sx
+       X(2)%ib=SC_X_bands
+       X(2)%ng=SC_X_size
+     endif
+     if (l_sc_electric) call initactivate(1,'dipoles')
 #if defined _OPENMP
      if (l_dipoles) then
        n_threads_DIP=0
@@ -407,11 +408,9 @@ integer function INIT_rt(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
      if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run&
 &                               .or.l_ppa.or.l_mpa)       n_threads_SE=0
-     if (l_real_time)                                     n_threads_RT=0
      if (l_nl_optics)                                     n_threads_NL=0
-#endif
-#if defined _OPENMP
-     if (l_eval_collisions)    n_threads_RT=0
+     !
+     if (l_eval_collisions)    n_threads_SE=0
 #endif
      !
    end subroutine LOCAL_setup_before_input_IO

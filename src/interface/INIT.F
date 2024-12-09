@@ -41,10 +41,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use BS,             ONLY:BS_bands,BS_n_g_W,BS_eh_en,BSE_mode,BSK_mode,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_cpl_K_corr,BS_cpl_K_exchange
  use BS_solvers,     ONLY:BSS_mode,BSS_q0
-#if defined _SC
- use QP_m,           ONLY:QP_ng_Sx
- use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size
-#endif
 #if defined _OPENMP
  use openmp,         ONLY:n_threads_X,n_threads_DIP,n_threads_SE,n_threads_K,n_threads_NL
 #endif
@@ -96,9 +92,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    call SET_logicals()
    !
    call E_reset(en)
-#if defined _SC
-   call E_reset(en_sc)
-#endif
    call bz_samp_reset(k)
    call bz_samp_reset(q)
    call W_reset(Xw(1),damping=0.001_SP)
@@ -315,22 +308,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_slk_test =runlevel_is_on('slktest')
 #endif
        l_gpu_test =runlevel_is_on('gputest')
-#if defined _SC && defined _MODELS
-       l_sc_run=runlevel_is_on('scrun')
-#endif
-#if defined _SC
-       l_sc_run=runlevel_is_on('scrun')
-       l_sc_magnetic=runlevel_is_on('magnetic')
-       l_sc_electric=runlevel_is_on('electric')
-#endif
-#if defined _SC
-       l_eval_collisions=runlevel_is_on('collisions')
-#endif
 #if defined _NL
        l_nl_optics=runlevel_is_on('nloptics')
-#endif
-#if defined  _QED
-       l_elphoton_corr=runlevel_is_on('el_photon_corr')
 #endif
        l_elel_corr    =runlevel_is_on('el_el_corr')
        !
@@ -365,9 +344,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      Dip%bands_ordered=.not.all_bands
      l_local=l_sc_run.or.l_real_time.or.l_nl_optics 
      if (l_local)         Dip%bands_ordered=.false.
-#if defined _QED
-     if (l_elphoton_corr) Dip%bands_ordered=.false.
-#endif
      !
    end subroutine LOCAL_dipole_bands_ordering
    !
@@ -416,17 +392,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_gw0.and.l_cohsex) call parser('UseEbands',COHSEX_use_empties)
      !
-#if defined _SC
-     if (l_sc_magnetic) call initactivate(1,'potential')
-     if (l_sc_run.and.io_SC_E_err==0) then
-       QP_ng_Sx=SC_ng_Sx
-       X(2)%ib=SC_X_bands
-       X(2)%ng=SC_X_size
-     endif
-#endif
-#if defined _ELECTRIC
-     if (l_sc_electric) call initactivate(1,'dipoles')
-#endif
 #if defined _OPENMP
      if (l_dipoles) then
        n_threads_DIP=0
@@ -440,10 +405,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                               .or.l_ppa.or.l_mpa)       n_threads_SE=0
      if (l_nl_optics)                                     n_threads_NL=0
 #endif
-#if defined _OPENMP && defined _SC && !defined _NL
-     if (l_eval_collisions)    n_threads_SE=0
-#endif
-#if defined _OPENMP && defined _SC && defined _NL
+#if defined _OPENMP && defined _NL
      if (l_eval_collisions)    n_threads_NL=0
 #endif
      !

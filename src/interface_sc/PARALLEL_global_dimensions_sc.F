@@ -12,12 +12,14 @@ subroutine PARALLEL_global_dimensions_sc(E,Xk,q,ENVIRONMENT)
 &                        PAR_EH_range,PAR_Dip_ib,PAR_Dip_ib_lim,PAR_X_ib,PAR_X_iq,PAR_n_G_vectors,&
 &                        PAR_n_freqs,PAR_K_range,PAR_n_bands
  use drivers,       ONLY:l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run,l_nl_optics
+ use collision_ext, ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
  use BS,            ONLY:BS_bands,BS_nT_at_k,BS_n_eh_spaces
  use X_m,           ONLY:X_ng
  use SC,            ONLY:SC_bands
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
  use QP_m,          ONLY:QP_n_states,QP_nb,QP_n_G_bands
+ !
 #include<y_memory.h>
  !
  type(levels)         :: E

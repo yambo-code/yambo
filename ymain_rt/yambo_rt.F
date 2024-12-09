@@ -72,8 +72,6 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  ! ... Internal Defaults
  !
- call SET_defaults(instr,ind,od,com_dir)
- call SET_defaults_comm(instr,ind,od,com_dir)
  call SET_defaults_rt(instr,ind,od,com_dir)
  !
  ! ... C_driver -> YPP information transfer

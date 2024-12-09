@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
+subroutine INIT_load_sc(defs,en,q,k,X,Xw,Dip)
  !
  use drivers,       ONLY:infile_editing
  use pars,          ONLY:schlen,SP
@@ -47,18 +47,26 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use functions,     ONLY:bose_E_cut
  use parallel_m,    ONLY:n_log_CPUs
  use IO_m,          ONLY:DBs_IO_control_string,DBs_FRAG_control_string
+ use hamiltonian,   ONLY:H_potential
+ use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands
  use QP_m,          ONLY:SC_E_threshold
+ use QP_m,          ONLY:SC_band_mixing
+ use SC,            ONLY:SC_iterations,SC_up_W_iters,&
+&                        SC_rho_threshold,SC_cycle_mixing,&
+&                        SC_bands,SC_preconditioning,OEP_approx,&
+&                        SC_neq_kind,SC_mu,SC_last_coh_it
+ use fields,        ONLY:Efield
+ use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
 #if defined _OPENMP
  use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads_NL, &
 &                        n_threads_OSCLL
 #endif
-#if defined _SCALAPACK
- use SLK_m,         ONLY:SLK_test_H_dim
-#endif
- use gpu_m,         ONLY:GPU_test_dim
  use PHOTOLUM,      ONLY:PL_weights
 #if defined _MEM_CHECK
  use y_memory,      ONLY:MEM_treshold
+#endif
+#if defined _PHEL
+ use PHEL,          ONLY:PH_Self_Energy_mode,PH_DbGd_points,PH_Q,PHEL_broad_factor,PHEL_fit_Energies
 #endif
  !
  implicit none
@@ -164,8 +172,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'UseNLCC',  '[XC] If present, add NLCC contributions to the charge density ',verb_level=V_qp)
  call it(defs,'VXCRLvcs', '[XC] XCpotential RL components',QP_ng_Vxc,G_unit)
  call it(defs,'CORRLvcs', '[GW] Correlation RL components',QP_ng_Sc,G_unit)
- call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands)
- call it('f',defs,'UseEbands', '[GW] Force COHSEX to use empty bands',verb_level=V_qp)
+ call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands,verb_level=V_sc)
+ call it('f',defs,'UseEbands', '[GW] Force COHSEX to use empty bands',verb_level=V_sc)
+ call it('f',defs,'ALLGexx', '[XX] Force the use use all RL vectors for the exchange part',verb_level=V_sc)
+ call it('f',defs,'ALLGHAR', '[HA] Force the use use all RL vectors for the Hartree potential',verb_level=V_sc)
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit,verb_level=V_qp)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
  call it(defs,'dScStep',  '[GW] Energy step to evaluate Z factors',QP_dSc_delta,E_unit,verb_level=V_qp)
@@ -249,7 +259,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSSSlepcMatrixFormat','[SLEPC] Matrix type (shell|explicit|explicit-debug)',&
  &                                                BSS_slepc_matrix_format,verb_level=V_resp)
 #endif
- call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)
  call it('f',defs,'BSHayTer','[BSS] Terminate Haydock continuos fraction',verb_level=V_resp)
  call it('f',defs,'Reflectivity', '[BSS] Compute reflectivity at normal incidence',verb_level=V_resp)
  call it('f',defs,'BSSPertWidth', '[BSS] Include QPs lifetime in a perturbative way',verb_level=V_resp)
@@ -308,16 +317,19 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)
  call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
  !
-#if defined _SCALAPACK
+ call it(defs,'ExtF_Dir',             '[NL ExtF] Versor',Efield(1)%versor)
+ call it(defs,'ExtF_Int',             '[NL ExtF] Intensity',Efield(1)%intensity,unit=I_unit)
+ call it(defs,'ExtF2_Dir',             '[NL ExtF] Versor',Efield(2)%versor,verb_level=V_nl_optics)
+ call it(defs,'ExtF2_Int',             '[NL ExtF] Intensity',Efield(2)%intensity,unit=I_unit,verb_level=V_nl_optics)
+ call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_sc)
  !
- ! SLK test
- !
- call it(defs,'SLKdim',  '[SLK] Matrix Dimension',SLK_test_H_dim)
-#endif
- !
- ! GPU test
- !
- call it(defs,'GPUdim',  '[GPU] Matrix Dimension',GPU_test_dim)
+ call it(defs,'Hamiltonian',   '[MAG] Hamiltonian kind [pauli,landau,all]',MAG_hamiltonian_type,protect=.FALSE.)
+ call it(defs,'B_Field',       '[MAG] Magnetic field modulus',MAG_B,unit=Bfield_unit)
+ call it(defs,'B_psi',         '[MAG] Magnetic field psi angle',MAG_psi,unit=Angle_unit(1),verb_level=V_sc)
+ call it(defs,'B_theta',       '[MAG] Magnetic field theta angle',MAG_theta,unit=Angle_unit(1),verb_level=V_sc)
+ call it(defs,'B_Gauge',       '[MAG] Gauge ("SYMM"etric, "X_ASYMM", "Y_ASYMM" or "Z_ASYMM"etric)',MAG_gauge,verb_level=V_sc)
+ call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization',verb_level=V_sc)
+ call it(defs,'B_radius',      '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
  !
 #if defined _MEM_CHECK
  !
@@ -369,8 +381,46 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'ShiftedPaths',   '[DIP] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
  call it('f',defs,'DipPDirect', '[DIP] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
  call it('f',defs,'DipBandsALL','[DIP] Compute all bands range, not only valence and conduction',verb_level=V_resp)
+#if defined _ELECTRIC
+ call it('f',defs,'EvPolarization','[DIP] Evaluate Polarization (require DipApproach=Covariant)',verb_level=V_resp)
+ call it('f',defs,'FrPolPerdic','[DIP] Force periodicity of polarization respect to the external field')
+#endif
  !
+ ! SC
+ !
+ call it(defs,'SCBands',   '[SC] Bands',SC_bands)
+ !
+ call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
+ call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
+ call it(defs,'SC_precondition','[SC] Kind of preconditionin: thomas-fermi, simple, none',SC_preconditioning,verb_level=V_sc)
+ call it(defs,'SCUpWIter', "[SC] Update W(q,G,G') every SCUpWIter iteractions",SC_up_W_iters,verb_level=V_qp) 
+ call it('f',defs,'Mean_Potential','[SC] Real-space Mean Potential',verb_level=V_sc)
+ call it('f',defs,'SCnlMix','[SC] Use SC non-local mixing',verb_level=V_sc)
+ call it('f',defs,'FrozeDensity','[NL] Do not update density (for testing purposes)',verb_level=V_sc)
+ !
+ ! SC [NEQ]
+ !
+ call it(defs,'SCneqKIND',  '[SC] Options are [contrained-occ/constrained-mu/matsubara]',SC_neq_kind,verb_level=V_sc)
+ call it(defs,'SCmu',       '[SC] Reference / holes / electrons chem potential',SC_mu,unit=E_unit,verb_level=V_sc)
+ call it(defs,'SCcohIt',    '[SC] Impose off-diagonal rho in the initial basis set for N iterations',SC_last_coh_it,verb_level=V_sc)
+ ! 
+ ! SC [common with RT]
+ !
+ call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
+ call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
+ call it('f',defs,'SCdiag','[SC] Diagonal approximation for the self-energy(WF unchaged)',verb_level=V_sc)
+ ! 
  call it(defs,'SCEtresh',  '[SC] Energy convergence threshold for SC-GW',SC_E_threshold,unit=E_unit,verb_level=V_qp)
+ !
+ ! SC and RT common
+ !
+ call it(defs,'COLLBands',   '[COLL] Bands for the collisions',COLL_bands)
+ !
+ call it(defs,'HXC_Potential', '[SC] SC HXC Potential',H_potential,protect=.FALSE.,case="A")
+ call it(defs,'COLLCut',    '[SC,RT] Cutoff on the collisions, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
+ !
+ call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
+ call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
  !
  if (initmode==4) then
    call LEVELS_mirror("MIRROR_q",en,X,Dip,l_USER_fields)

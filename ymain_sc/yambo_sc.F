@@ -30,7 +30,6 @@ integer function yambo_sc(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  use electrons,     ONLY:levels,E_reset
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
- use ELPH,          ONLY:elph_use_q_grid
  !
  implicit none
  !
@@ -55,7 +54,7 @@ integer function yambo_sc(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  ! Local Variables
  !
- integer           ::i_err,i_X_kind
+ integer           ::i_err,i_X_kind,ID,VB(2),CB(2)
  logical           ::launch_me
  character(len=20) ::tmp_char
  !
@@ -73,7 +72,7 @@ integer function yambo_sc(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  ! ... Internal Defaults
  !
- call SET_defaults(instr,ind,od,com_dir)
+ call SET_defaults_sc(instr,ind,od,com_dir)
  !
  ! ... C_driver -> YPP information transfer
  !
@@ -124,7 +123,7 @@ integer function yambo_sc(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  ! BZ sampling
  !==============
  !
- if(launch_me) call bz_samp_indexes(en,k,Xk,q,elph_use_q_grid,.true.,.true.) 
+ if(launch_me) call bz_samp_indexes(en,k,Xk,q,.false.,.true.,.true.) 
  !
  ! COLOUMB DRIVER
  !================
@@ -216,7 +215,7 @@ endif
  !===============
  !
  launch_me=l_gw0.or.l_life
- if (launch_me) call QP_driver_sc(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
+ if (launch_me) call QP_driver(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
  if (launch_me) call mem_manager_report
  !
  ! BETHE-SALPETER

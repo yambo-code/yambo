@@ -1,7 +1,12 @@
+
+Berry_objects = Berry_polarization_EQ.o Ionic_polarization.o POLARIZATION_output.o 
+
 objs = mod_common_sc_rt.o \
 PARALLEL_MATRIX_distribute.o  \
 $(COLL_objects) \
 io_KB_real_space.o \
 SET_defaults_comm.o \
 WF_derivative.o \
-PARALLEL_WF_distribute_ham.o
+PARALLEL_WF_distribute_ham.o \
+INIT_read_command_line_potentials.o \
+$(Berry_objects)

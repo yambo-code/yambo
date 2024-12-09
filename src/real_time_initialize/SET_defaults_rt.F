@@ -37,9 +37,8 @@ subroutine SET_defaults_rt(INSTR,IND,OD,COM_DIR)
  !
  integer           :: i1,i2
  !
- ! Printed reals format lengths 
- !
- include 'branch.inc'
+ call SET_defaults(instr,ind,od,com_dir)
+ call SET_defaults_comm(instr,ind,od,com_dir)
  !
  ! RT control
  !

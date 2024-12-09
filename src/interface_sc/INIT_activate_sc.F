@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine INIT_activate()
+subroutine INIT_activate_sc()
  !
  use BS_solvers,     ONLY:BSS_mode
  use QP_m,           ONLY:QP_solver,COHSEX_use_empties
@@ -16,10 +16,8 @@ subroutine INIT_activate()
 &                         l_real_time,l_ppa,l_mpa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr,l_nl_p_and_p,l_X
-#if defined _SCALAPACK
- use drivers,        ONLY:l_slk_test
-#endif
- use drivers,        ONLY:l_gpu_test
+ use hamiltonian,    ONLY:H_potential
+ use magnetic,       ONLY:MAG_landau
  !
  implicit none
  !
@@ -65,26 +63,10 @@ subroutine INIT_activate()
    call initactivate(1,'SE_Threads')
  endif
  !
-#if defined _SCALAPACK
- if (l_slk_test) then
-   call initactivate(1,"SLKdim")
-   call CPU_activate("SLK")
+ if (l_eval_collisions .or. l_sc_run) then
+   call CPU_activate("SE")
+   call initactivate(1,'SE_Threads')
  endif
-#endif
- !
- if (l_gpu_test) then
-   call initactivate(1,"GPUdim")
-   !call CPU_activate("SLK")
- endif
- !
-#if defined _NL
- if (l_nl_optics) then
-   call CPU_activate("NL")
-   call CPU_activate("DIP")
-   call CPU_activate("OSCLL")
-   call initactivate(1,'DIP_Threads NL_Threads OSCLL_Threads')
- endif
-#endif
  !
  if (l_bse) then
    call CPU_activate("BS")
@@ -125,9 +107,7 @@ subroutine INIT_activate()
  if (l_dipoles) then
    call initactivate(1,'DipQpt DipBands DipBandsALL')
    call initactivate(1,'DipBandsALL DipApproach DipComputed DipPDirect ShiftedPaths DipoleEtresh')
-#if defined _NL
    call initactivate(1,'EvPolarization')
-#endif
  endif
  !
  if (l_optics.and.l_chi) then
@@ -207,9 +187,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'NoCondSumRule MetDamp')
    !
-#if defined _NL
    call initactivate(1,'EvPolarization FrSndOrd')
-#endif
    !
    call initactivate(1,'PL_weights')
    !
@@ -297,22 +275,6 @@ subroutine INIT_activate()
    !
    if (l_gw0.and..not.trim(QP_solver)=="g".and.(l_elel_corr.or.l_elph_corr)) call initactivate(1,'QPsymmtrz')
    !
-#if defined _QED
-   if (l_elphoton_corr) then
-     if (l_gw0) then
-       call initactivate(1,'FFTGvecs RandQpts QEDRLvcs GbndRnge GDamping dScStep DysSolver') 
-       if (trim(QP_solver)=="g") then
-         call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
-       else
-         call initactivate(1,'SCEtresh')
-         if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
-       endif
-     else if (l_life) then
-       call initactivate(1,'GbndRnge') 
-     endif
-   endif
-#endif
-   !
    if (l_elel_corr) then
      !
      call INIT_QP_ctl_switch('X')
@@ -354,44 +316,69 @@ subroutine INIT_activate()
  if(l_alda_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_mpa,l_cohsex,l_gw0/)) ) call initactivate(1,'FxcGRLc')
  if( l_lrc_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_mpa,l_cohsex,l_gw0/)) ) call initactivate(1,'LRC_alpha LRC_beta')
  !
-#if defined _NL
- if (l_nl_optics) then
-   call initactivate(1,'FFTGvecs NLBands NLverbosity NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
-   call initactivate(1,'TestOSCLL')
-   if(.not.l_nl_p_and_p) call initactivate(1,'NLEnRange NLEnSteps NLrotaxis NLAngSteps')
-   call initactivate(1,'NLDamping RADLifeTime UseDipoles FrSndOrd NoComprCOLL EvalCurrent InducedField FrPolPerdic') 
-   call initactivate(1,'TestOSCLL Gauge RADLifeTime HARRLvcs EXXRLvcs CORRLvcs') 
-   call init_QP_ctl_switch('G')
+ ! Collisions
+ !
+ if (l_eval_collisions) call initactivate( 0,'COLLBands')
+ !
+ if ( (l_eval_collisions.or.l_real_time).and.l_elel_scatt ) call initactivate(1,'PlasmaPerc')
+ !
+ if (l_eval_collisions.or.l_real_time.or.l_sc_run) then
+   !
+   if ( .not. STRING_match(trim(H_potential),"NONE") ) call initactivate(1,'HXC_Potential')
+   !
+   call initactivate( 1,'FFTGvecs')
+   !
+   call initactivate( 1,'COLLCut')
+   !
+   call initactivate(-1,'QpntsRXs')
+   !
+   if( index(H_potential,"IP")>0 )  call initactivate(1,'HARRLvcs ALLGHAR')
+   if( index(H_potential,"HARTREE")>0 .or. index(H_potential,"DEFAULT")>0 )  call initactivate(1,'HARRLvcs ALLGHAR')
+   if( index(H_potential,"GS_XC")>0   .or. index(H_potential,"DEFAULT")>0 ) call initactivate(1,'VXCRLvcs UseNLCC FxcLibxc')
+   !
+   if (l_eval_collisions) then
+     if( STRING_match(trim(H_potential),"SEX").or.&
+&        STRING_match(trim(H_potential),"FOCK") ) call initactivate(1,'EXXRLvcs ALLGexx')
+     if( STRING_match(trim(H_potential),"SEX").or.&
+&        STRING_match(trim(H_potential),"COH") ) call initactivate(1,'CORRLvcs ALLGexx')
+   endif
+   !
  endif
  !
- do i1=1,n_ext_fields
-   call Afield_activate(i1)
- enddo
+ ! Self-Consistency
  !
-#endif
+ if (l_sc_run) then
+   !
+   call initactivate( 1,'SCBands')
+   !
+   if( STRING_match(trim(H_potential),"SEX").or.&
+&      STRING_match(trim(H_potential),"COH")  ) call initactivate(1,'UseEbands SCUpWIter')
+   !
+   if( STRING_match(trim(H_potential),"EXX").or.&
+&      STRING_match(trim(H_potential),"SRPA") ) call initactivate(1,'OEPapprox OEPItSolver') 
+   !
+   call initactivate(1,'SCIter SCEtresh SCRhoTresh SC_precondition')
+   call initactivate(1,'SCmixing SClwBand SCnlMix BandMix')
+   call initactivate(1,'SCdiag Mean_Potential')
+   !
+   call initactivate(1,'SCneqKIND SCmu SCocc SCcohIt')
+   !
+ endif
+ !
+ ! Magnetic
+ !
+ if (l_sc_magnetic) then
+   call initactivate(1,'Hamiltonian B_Field B_psi B_theta B_Gauge PhaseTrick')
+   if (MAG_landau) call initactivate(1,'B_radius')
+ endif
+ !
+ ! Electric
+ !
+ if (l_sc_electric) then
+   call initactivate(1,'EvPolarization ExtF_Dir ExtF_Int FrSndOrd')
+ endif
  !
  contains
-   !
-#if defined _NL
-   !
-   subroutine Afield_activate(i1)
-     integer     ::i1
-     character(6)::field
-     field='Field'//trim(intc(i1))
-     call initactivate(1,field//'_Freq')
-     call initactivate(1,field//'_NFreqs')
-     call initactivate(1,field//'_DFreq')
-     call initactivate(1,field//'_Int')
-     call initactivate(1,field//'_Width')
-     call initactivate(1,field//'_FWHM')
-     call initactivate(1,field//'_kind')
-     call initactivate(1,field//'_pol')
-     call initactivate(1,field//'_Dir')
-     call initactivate(1,field//'_Dir_circ')
-     call initactivate(1,field//'_Tstart')
-   end subroutine
-   !
-#endif
    !
    subroutine CPU_activate(what)
      character(*) :: what 

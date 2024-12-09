@@ -48,6 +48,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use parallel_m,    ONLY:n_log_CPUs
  use IO_m,          ONLY:DBs_IO_control_string,DBs_FRAG_control_string
  use QP_m,          ONLY:SC_E_threshold
+ use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha, &
+&                        NL_verb_name,n_angles,NL_rot_axis 
+ use fields,        ONLY:Efield
 #if defined _OPENMP
  use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads_NL, &
 &                        n_threads_OSCLL
@@ -308,6 +311,34 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)
  call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
  !
+ ! Non-linear Optics
+ !
+ call it(defs,'NLBands',      '[NL] Bands range',NL_bands)
+ call it(defs,'NLverbosity',  '[NL] Verbosity level (low | high)',NL_verb_name) 
+ call it(defs,'NLstep',       '[NL] Time step length',RT_step,unit=Time_unit(1),Verb_level=V_nl_optics)
+ call it(defs,'NLtime',       '[NL] Simulation Time',NE_tot_time,unit=Time_unit(1))
+ call it(defs,'NLintegrator', '[NL] Integrator ("EULEREXP/RK2/RK4/RK2EXP/HEUN/INVINT/CRANKNIC")',Integrator_name)
+ call it(defs,'NLCorrelation','[NL] Correlation ("IPA/HARTREE/TDDFT/LRC/LRW/JGM/SEX/LSEX/LHF") ',NL_correlation)
+ call it(defs,'NLLrcAlpha',   '[NL] Long Range Correction',NL_LRC_alpha)
+ call it(defs,'NLDamping',    '[NL] Damping (or dephasing)',NL_damping,unit=E_unit)
+ call it(defs,'NLEnRange',    '[NL] Energy range (for loop on frequencies NLEnSteps/=0',NL_er,E_unit)
+ call it(defs,'NLAngSteps',   '[NL] Angular steps (if NLAngSteps/=0 field versor will be ignored)',n_angles)
+ call it(defs,'NLrotaxis',    '[NL] Rotation axis (for the loop on angles NLAngSteps/=0)',NL_rot_axis)
+ call it(defs,'NLEnSteps',    '[NL] Energy steps for the loop on frequencies',n_frequencies)
+ call it('f',defs,'UseDipoles','[NL] Use Covariant Dipoles (just for test purpose)',verb_level=V_nl_optics)
+ call it('f',defs,'TestOSCLL','[NL] Test Oscillators vs Full Collisions [for testing purposes]',verb_level=V_nl_optics)
+ call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_nl_optics)
+ call it('f',defs,'NoComprCOLL','[NL] Load collisions in double-precision and do not remove small elements (default false)',&
+&  verb_level=V_nl_optics)
+ call it('f',defs,'EvalCurrent','[NL] Evaluate the current')
+ !
+ ! External fields
+ !
+ if (initmode==4.and..not.infile_editing) n_ext_fields=0
+ do i_field=1,n_ext_fields_max
+   call Afield(i_field)
+ enddo
+ !
 #if defined _SCALAPACK
  !
  ! SLK test
@@ -369,6 +400,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'ShiftedPaths',   '[DIP] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
  call it('f',defs,'DipPDirect', '[DIP] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
  call it('f',defs,'DipBandsALL','[DIP] Compute all bands range, not only valence and conduction',verb_level=V_resp)
+ call it('f',defs,'EvPolarization','[DIP] Evaluate Polarization (require DipApproach=Covariant)',verb_level=V_resp)
+ call it('f',defs,'FrPolPerdic','[DIP] Force periodicity of polarization respect to the external field')
  !
  call it(defs,'SCEtresh',  '[SC] Energy convergence threshold for SC-GW',SC_E_threshold,unit=E_unit,verb_level=V_qp)
  !
@@ -378,6 +411,50 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  endif
  ! 
  contains 
+   !
+   subroutine Afield(i_field)
+     use units,    ONLY  :AU2KWCMm2
+     use parser_m, ONLY  : parser
+     character(10)      :: name
+     integer            :: i_field
+     logical            :: is_def
+     !
+     name='Field'//trim(intc(i_field))
+     !
+     call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
+&            Efield(i_field)%frequency,unit=E_unit)
+     call it(defs,trim(name)//'_NFreqs',            '[RT '//trim(name)//'] Frequency',&
+&            Efield(i_field)%n_frequencies)
+     call it(defs,trim(name)//'_DFreq',           '[RT '//trim(name)//'] Frequency step',&
+&            Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
+     call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
+&            Efield(i_field)%intensity,unit=I_unit)
+     call it(defs,trim(name)//'_Width',           '[RT '//trim(name)//'] Width',&
+&            Efield(i_field)%width,unit=Time_unit(1))
+     call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (overwrite width if set)',&
+&            Efield(i_field)%FWHM,unit=Time_unit(1),verb_level=V_real_time)
+     call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|SOFTSIN| see more on src/modules/mod_fields.F)',&
+&            Efield(i_field)%ef_name)
+     call it(defs,trim(name)//'_pol',             '[RT '//trim(name)//'] Pol(linear|circular)',&
+&            Efield(i_field)%ef_pol)
+     call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Versor',&
+&            Efield(i_field)%versor)
+     call it(defs,trim(name)//'_Dir_circ',        '[RT '//trim(name)//'] Versor_circ',&
+&            Efield(i_field)%versor_circ,verb_level=V_real_time)
+     call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
+&            Efield(i_field)%t_initial,unit=Time_unit(1))
+     !
+     if (initmode==4.and..not.infile_editing) then
+       !
+       call parser(trim(name)//'_FWHM',is_def)
+       if (     is_def) Efield(i_field)%width=Efield(i_field)%FWHM/(2._SP*sqrt(2._SP*log(2._SP)))
+       if (.not.is_def) Efield(i_field)%FWHM=Efield(i_field)%width*(2._SP*sqrt(2._SP*log(2._SP)))
+       !
+       if (trim(Efield(i_field)%ef_name)/='none') n_ext_fields=n_ext_fields+1
+       !
+     endif
+     !
+   end subroutine
    !
 #if defined _MPI 
    !

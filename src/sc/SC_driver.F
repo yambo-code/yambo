@@ -10,7 +10,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use pars,           ONLY:SP,schlen,cZERO,rZERO
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_coh,l_sc_sex,l_sc_is_libDFT,l_eval_collisions,l_sc_hartree,&
-&                         l_sc_exx,l_sc_electric,l_sc_fock,l_use_collisions
+&                         l_sc_exx,l_sc_electric,l_sc_fock,l_use_collisions,l_sc_magnetic
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin,n_spinor
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
@@ -188,7 +188,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
  ! MAG_Hamiltonian
  !=================
- if (l_sc_magnetic) call MAG_Hamiltonian()
+ if (l_sc_magnetic) call MAG_Hamiltonian(Xk,E)
  !
  !  Hzero (kinetic + potential)
  !=============================

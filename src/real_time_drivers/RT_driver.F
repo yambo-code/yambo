@@ -25,11 +25,11 @@ subroutine RT_driver(E,X,k,q,Dip)
  use IO_int,         ONLY:io_control,IO_and_Messaging_switch
  use IO_m,           ONLY:OP_WR_CL,NONE,io_COLLs
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,rho_n,magn_n,&
-&                         H_potential,H_kind,H_xc_functional,H_perturbation
+&                         H_potential,H_kind,H_xc_functional
  use RT_control,     ONLY:RT_control_alloc,RT_control_free,&
 &                         NE_i_start_time,RT_carriers_object,RT_apply
  use RT_control,     ONLY:l_project_spin_dipoles
- use real_time,      ONLY:RT_potential,RT_kind,RT_xc_functional,RT_perturbation,&
+ use real_time,      ONLY:RT_potential,RT_kind,RT_xc_functional,&
 &                         NE_steps,RT_step,G_lesser,RT_bands,&
 &                         NE_i_time,eval_energy,rho_reference,magn_reference,RT_nk, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_RT_is_WFfree,&
@@ -84,12 +84,10 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  ! Potential
  !===========
  call XC_potentials(H_potential)
- call XC_additional_SC_potentials()
  !
  RT_potential    =H_potential
  RT_kind         =H_kind
  RT_xc_functional=H_xc_functional
- RT_perturbation =H_perturbation
  !
  call section('*',trim(RT_potential)//' Real-Time Dynamics '//trim(sec_title))
  !############################################################################

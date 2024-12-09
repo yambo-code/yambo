@@ -34,7 +34,6 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  ! Work space
  !
  integer          :: i1,ik,ib,ibp,i_sp_pol,WFbands(2)
- complex(SP), allocatable  :: H_pseudo(:,:,:,:)
  type(PP_indexes) :: PAR_IND
  !
  call timing('Bare_Hamiltonian',OPR='start')

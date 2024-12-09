@@ -31,14 +31,14 @@ PJ_PHLIBS_LD = $(MAIN_LIBS_LD) driver_ph interface_ph el-ph qp_ph
 HAM_LIBS    = hamiltonian collisions common_sc_rt
 HAM_LIBS_LD = common_sc_rt collisions hamiltonian
 
-PJ_SCLIBS    = driver_sc sc  interface_sc
-PJ_SCLIBS_LD = $(MAIN_LIBS_LD) driver_sc  interface_sc $(HAM_LIBS_LD) sc
+PJ_SCLIBS    = driver_sc sc interface_sc
+PJ_SCLIBS_LD = $(MAIN_LIBS_LD) driver_sc $(HAM_LIBS_LD) interface_sc sc
 
 PJ_RTLIBS   = driver_rt \
               real_time_control real_time_hamiltonian real_time_propagation \
               real_time_initialize interface_rt io_rt real_time_drivers
-PJ_RTLIBS_LD= $(MAIN_LIBS_LD) real_time_control interface_rt io_rt  \
-                   driver_rt $(HAM_LIBS_LD) \
+PJ_RTLIBS_LD= $(MAIN_LIBS_LD) real_time_control $(HAM_LIBS_LD) \
+                   interface_rt io_rt driver_rt \
                    real_time_hamiltonian real_time_propagation \
                    real_time_initialize real_time_drivers
 

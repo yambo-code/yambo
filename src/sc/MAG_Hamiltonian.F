@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
-subroutine MAG_Hamiltonian()
+subroutine MAG_Hamiltonian(Xk,en)
  !
  ! - call WF_derivative which computes the derivative in space G
  ! - load the wf in real space
@@ -46,10 +46,10 @@ subroutine MAG_Hamiltonian()
  use hamiltonian,    ONLY:Hzero
  use FFT_m,          ONLY:fft_size
  use D_lattice,      ONLY:sigma_x,sigma_y,sigma_z
- use R_lattice,      ONLY:nkibz
+ use R_lattice,      ONLY:bz_samp,nkibz
  use magnetic,       ONLY:MAG_B,MAG_landau,MAG_pauli,ir_table, &
-&                         A_magn_x,A_magn_y,A_magn_z,Bx,By,Bz,Hmagn
- use electrons,      ONLY:n_sp_pol,n_spinor,n_spin,spin
+&                         A_magn_x,A_magn_y,A_magn_z,Bx,By,Bz
+ use electrons,      ONLY:levels,n_sp_pol,n_spinor,n_spin,spin
  use hamiltonian,    ONLY:H_ref_bands
  use SC,             ONLY:SC_bands
  use wave_func,      ONLY:WF,wf_x,wf_y,wf_z,WF_derivative_free
@@ -58,19 +58,24 @@ subroutine MAG_Hamiltonian()
  use wrapper,        ONLY:Vstar_dot_V
  use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
  use QP_m,           ONLY:QP_table,QP_n_states
+ use parallel_int,   ONLY:PP_redux_wait
  !
 #include<y_memory.h>
+ !
+ type(levels)             :: en
+ type(bz_samp)            :: Xk
  !
  ! Dummies
  !
  integer    :: ir,i_sp_pol,i_wf,ip_wf,ik,ib,ibp,i_qp,i_spinor,j_spinor,n_par_el
  logical    :: do_derivatives(3),H_magn_x_on,H_magn_y_on,H_magn_z_on
  logical    :: PAR_IND_local(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
- complex(SP):: Hmagn,(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),nkibz,n_sp_pol))
+ complex(SP):: Hmagn(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),nkibz,n_sp_pol)
  !
  ! Allocs
  !
  real(SP),    allocatable :: r_cell_cc(:,:)
+ complex(SP), allocatable :: H_pseudo(:,:,:,:)
  complex(SP), allocatable :: H_tmp(:,:,:),H_pauli(:,:,:,:)
  real(SP),    allocatable :: H_paramagn_x(:),H_paramagn_y(:),H_paramagn_z(:),&
 &                            H_diamagn(:)
@@ -235,11 +240,11 @@ subroutine MAG_Hamiltonian()
  !
  ! If exist the non local part of the pseudo then construct kbv
  !
- call Pseudo_KB_G_to_R_space(k,E,.false.)
- allocate(H_pseudo(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),k%nibz,n_sp_pol))
- call Pseudo_Hamiltonian(Xk,E,H_pseudo,.true.)
+ call Pseudo_KB_G_to_R_space(Xk,en,.false.)
+ allocate(H_pseudo(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),Xk%nibz,n_sp_pol))
+ call Pseudo_Hamiltonian(Xk,en,H_pseudo,.true.)
  Hmagn=Hmagn-H_pseudo
- call Pseudo_Hamiltonian(Xk,E,H_pseudo,.false.)
+ call Pseudo_Hamiltonian(Xk,en,H_pseudo,.false.)
  Hmagn=Hmagn+H_pseudo
  deallocate(H_pseudo)
  !

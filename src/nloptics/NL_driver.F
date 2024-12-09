@@ -79,7 +79,6 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  ! Switch 
  !========
  call XC_potentials(H_potential)
- call XC_additional_SC_potentials()
  !
  ! Dipoles & WF dimensions
  !=========================

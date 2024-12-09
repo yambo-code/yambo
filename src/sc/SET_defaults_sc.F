@@ -7,6 +7,8 @@
 !
 subroutine SET_defaults_sc(INSTR,IND,OD,COM_DIR)
  !
+ use pars,       ONLY:SP
+ use global_XC,  ONLY:EXT_NONE
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
@@ -14,11 +16,14 @@ subroutine SET_defaults_sc(INSTR,IND,OD,COM_DIR)
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
 &                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
  use electric,    ONLY:l_P_periodic,l_force_SndOrd
+ use descriptors, ONLY:IO_desc_reset
  !
  implicit none
  !
  character(*) :: INSTR,IND,OD,COM_DIR
  !
+ call SET_defaults(instr,ind,od,com_dir)
+ call SET_defaults_comm(instr,ind,od,com_dir)
  !
  ! SC
  !

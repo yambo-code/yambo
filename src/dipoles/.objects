@@ -1,11 +1,5 @@
 MAGN_objects = DIPOLE_orb_magn_forCD.o DIPOLE_orbital_magnetization.o
-#if defined _SC
-SC_objects = DIPOLE_SC_rotate.o
-#endif
-#if defined _NL | defined _SC
-NL_objects = Berry_polarization_EQ.o Ionic_polarization.o POLARIZATION_output.o 
-#endif
-objs = Build_Overlaps_Det_EQ.o $(SC_objects) $(MAGN_objects) $(NL_objects) \
+objs = Build_Overlaps_Det_EQ.o $(MAGN_objects) $(NL_objects) \
        DIPOLE_setup.o \
        DIPOLE_IO.o DIPOLE_driver.o DIPOLE_covariant.o DIPOLE_x_real_space.o DIPOLE_spin_magnetization.o \
        DIPOLE_kb_abinit_def_dim.o DIPOLE_kb_abinit_comp.o DIPOLE_kb_sum.o DIPOLE_kb_Ylm.o DIPOLE_dimensions.o \

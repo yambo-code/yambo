@@ -104,7 +104,7 @@ i?86*linux*)
        CPU_FLAG=" "
        ;;
     esac
-    SYSFLAGS="-assume bscc -O3 -g $CPU_FLAG"
+    SYSFLAGS="-assume bscc -O2 -g $CPU_FLAG"
     FUFLAGS="-assume bscc -O0 $CPU_FLAG"
     DEBUG_FLAGS="-check all -CB -traceback -check bound"
   ;;
@@ -361,7 +361,7 @@ aarch*linux* | arm*linux* )
        CPU_FLAG=" "
        ;;
     esac
-    SYSFLAGS="-assume bscc -O3 -g ${CPU_FLAG}"
+    SYSFLAGS="-assume bscc -O2 -g ${CPU_FLAG}"
     FUFLAGS="-assume bscc -O0 -g ${CPU_FLAG}"
     NETCDFFLAGS="-DpgiFortran"
     DEBUG_FLAGS="-CB -traceback -debug full"

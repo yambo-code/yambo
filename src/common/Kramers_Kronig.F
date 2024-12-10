@@ -17,7 +17,7 @@ subroutine Kramers_Kronig(fi,wi,ni,fo,wo,no,y0)
  !
  ! fo is not INITIALIZED to 0. !
  !
- use pars,    ONLY:SP
+ use pars,    ONLY:SP,cZERO
  !
  implicit none
  !
@@ -30,6 +30,8 @@ subroutine Kramers_Kronig(fi,wi,ni,fo,wo,no,y0)
  !
  integer      :: i1,i2
  complex(SP)  :: m(ni-1),q(ni-1)
+ m=cZERO
+ q=cZERO
  !
  do i1=1,ni-1
    m(i1)=(fi(i1)-fi(i1+1))/(wi(i1)-wi(i1+1))
@@ -41,7 +43,7 @@ subroutine Kramers_Kronig(fi,wi,ni,fo,wo,no,y0)
    do i2=1,ni-1
      fo(i1)=fo(i1)+m(i2)*(wi(i2)-wi(i2+1))+&
 &           (q(i2)+m(i2)*(wo(i1)-y0))*&
-&           log((wi(i2)-wo(i1)+y0)/(wi(i2+1)-wo(i1)+y0))
+&           (log(wi(i2)-wo(i1)+y0)-log(wi(i2+1)-wo(i1)+y0))
    enddo
  enddo
  !

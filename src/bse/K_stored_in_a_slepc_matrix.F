@@ -59,9 +59,13 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,iq,slepc_mat)
  call MatSetSizes(slepc_mat,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim,SL_H_dim,ierr)
  call MatSetType(slepc_mat, MATDENSE,ierr)
 
+ if (have_cuda) then
 #if defined(PETSC_HAVE_CUDA)
- if (have_cuda) call MatSetType(slepc_mat,MATDENSECUDA,ierr)
+   call MatSetType(slepc_mat,MATDENSECUDA,ierr)
+#else
+   call warning("Yambo has cuda support. Petsc doesn't. Look for a petsc with gpu support")
 #endif
+ endif
 
  call MatSetUp(slepc_mat,ierr)
  ! 

@@ -84,7 +84,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  DIP_S=cZERO
 !$OMP END WORKSHARE
  !
- call live_timing("Overlaps:",PAR_IND_DIPk_bz%n_of_elements(PAR_IND_DIPk_bz_ID+1)*n_sp_pol)
+ call live_timing("Overlaps",PAR_IND_DIPk_bz%n_of_elements(PAR_IND_DIPk_bz_ID+1)*n_sp_pol)
  !
  do i_sp_pol=1,n_sp_pol
    !
@@ -132,7 +132,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
          idx_kp=k_periodic_idx(idx_kp,k_map)  ! Bring it back by periodicity
          ikbzp=k_map%k_map_dir(idx_kp(1),idx_kp(2),idx_kp(3))  ! Find the corresponding index in the BZ
          !
-         ! ! Find the index in the IBZ and the symmetry
+         ! Find the index in the IBZ and the symmetry
          ikp = Xk%sstar(ikbzp,1)
          isp = Xk%sstar(ikbzp,2)
          !

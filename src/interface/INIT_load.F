@@ -207,7 +207,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
  call it('f',defs,'WFbuffIO','[IO] Wave-functions buffered I/O',verb_level=V_io) 
  call it('f',defs,'NoDiagSC','New setup for non-diagonal supercells',verb_level=V_general) 
- call it('f',defs,'SkipDegFix','Do not force the code to impose the energy levels to respect their degeneracy',verb_level=V_general) 
+ call it('f',defs,'DegFix','Force the code to impose the energy levels to respect their degeneracy') 
  !
  ! Parallel Setup
  !

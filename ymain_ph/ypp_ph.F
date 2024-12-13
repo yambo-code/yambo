@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
+integer function ypp_ph(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
  use drivers,             ONLY:infile_editing
  use stderr,              ONLY:write_to_log,STRING_same
@@ -25,6 +25,8 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,&
 &                              alat_used_for_output,l_QP_DB_expand,coo_out,coo_in,l_dipoles,&
 &                              DIPs_kind,l_sp_wf,l_mean_potential
+ use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq, &
+&                              l_gkkp_dg,l_gkkp_plot,l_gkkp_db
  !
  implicit none
  !
@@ -147,7 +149,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call section('*','K-point grid')
 
  X_scattering    =.TRUE.
- if(l_sp_wf.or.l_mean_potential) then  
+ if(l_gkkp_db.or.l_sp_wf.or.l_mean_potential) then    ! I need qindx_S to expand gkkp and load WF
    sigma_scattering=.TRUE.
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3,4/),MODE=DUMP,ID=ID)
  else
@@ -205,11 +207,23 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  if (l_fix_syms) call symmetries_driver(en,k)
  !
+ !
  l_flag=l_excitons.or.(l_dipoles.and.trim(DIPs_kind)=="EXCITONIC")
  if (l_flag)    call excitons_driver(k,Xk,en,Xen,q)
  !
- l_flag=l_electrons
+ l_flag=l_electrons.and.(.not.l_eliashberg)
  if (l_flag)    call electrons_driver(Xk,Xen,q)
+ !
+ if ((l_gkkp.and..not.l_excitons).or.l_phonons) then
+   ! =====     ========
+   if (l_gkkp)                call ELPH_databases(k,en,q)
+   if (l_eliashberg.or.l_dos) call ELPH_eliashberg_dos(k,en,q)
+   if (l_atomic_amplitude)    call ELPH_atomic_amplitude(q)
+   if (l_gkkp_dg)             call ELPH_double_grid(k,en,q)
+   if (l_gkkp_plot)           call ELPH_plot_gkkp(k,en,q)
+ endif
+ !
+ if (l_electrons.and.l_eliashberg) call ELPH_general_gFsq(k,en,Xk,Xen,q)
  !
  ! CLOSING
  !=========
@@ -233,4 +247,4 @@ contains
     if (.not.infile_editing) call INIT_ypp(en,instr,.TRUE.)
   end subroutine
   !
-end function ypp
+end function ypp_ph

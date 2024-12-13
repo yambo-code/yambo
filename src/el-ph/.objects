@@ -1,9 +1,6 @@
 #if defined _PHEL
 PHEL_obj = io_PH.o
 #endif
-#if defined _MODULAR_INIT
-INIT_objs = INIT_load_ph.o INIT_barriers_ph.o INIT_ph.o
-#endif
 objs = mod_ELPH.o FREQUENCIES_Green_Function_spectral.o mod_ELPH_intfcs.o \
        variables_ELPH.o io_ELPH.o io_gFsq.o $(PHEL_obj) io_QP_and_GF_ph.o \
        SET_defaults_ph.o $(INIT_objs)  \

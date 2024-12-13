@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
+integer function INIT_nl(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! INIT =-2  : Unsupported Runlevel(s) combination
  ! INIT =-1  : Missing CORE DBs
@@ -169,6 +169,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  call INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
 &                          io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_SC_E_err)
  !
+ if(any(NL_bands(:)==0)) NL_bands=(/1,E%nb/)
+ !
  if (list_dbs) then
    call msg('s','')
    return
@@ -304,10 +306,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_rim_w=runlevel_is_on('rim_w')
        l_col_cut=l_rim.or.l_rim_w
        l_acfdt=runlevel_is_on('acfdt')
-#if defined _SCALAPACK
-       l_slk_test =runlevel_is_on('slktest')
-#endif
        l_gpu_test =runlevel_is_on('gputest')
+       l_nl_optics=runlevel_is_on('nloptics')
        l_elel_corr    =runlevel_is_on('el_el_corr')
        !
        ! Check if this runlevel is allowed in the
@@ -400,6 +400,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
      if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run&
 &                               .or.l_ppa.or.l_mpa)       n_threads_SE=0
+     if (l_nl_optics)                                     n_threads_NL=0
+     if (l_eval_collisions)    n_threads_NL=0
 #endif
      !
    end subroutine LOCAL_setup_before_input_IO

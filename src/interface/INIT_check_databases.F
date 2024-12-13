@@ -65,6 +65,8 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=io_ID)
  io_err=io_DB1(en,k,io_ID) 
  !
+ call init_variables()
+ !
 #if defined _MEM_CHECK
  call MEM_treshold_estimate( )
 #endif
@@ -241,3 +243,30 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  io_err=io_Double_Grid(en,k,io_ID,'electrons','')
  !
 end subroutine
+!
+!
+subroutine init_variables()
+ !
+ nkibz =k%nibz
+ nXkibz=k%nibz
+ QP_nk =k%nibz
+ E%nk =k%nibz
+ QP_states_k=(/1,k%nibz/)
+ !
+ n_bands=E%nb
+ wf_nb_io=E%nb
+ QP_nb=E%nb
+ QP_n_G_bands=(/1,E%nb/)
+ !
+ if(any(BS_bands(:)==0)) BS_bands=(/1,E%nb/)
+ !
+ Tel=input_GS_Tel
+ nel=default_nel
+ !
+ ng_closed=ng_vec
+ if (.not.ver_is_gt_or_eq(ID,(/3,0,3/))) wf_ng=wf_ncx
+ !
+ call setup_global_XC('preset',GS_xc_KIND,xc_functional=GS_xc_functional,perturbation=EXT_NONE,&
+                       exx_fraction=GS_exx_FRACTION,exx_screening=GS_exx_SCREENING)
+  !
+end subroutine init_variables

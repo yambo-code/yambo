@@ -19,7 +19,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
 &                         l_SC_cycle,SC_cycle_mixing,SC_alloc,SC_free,l_SC_nl_mix,    &
 &                         l_SC_RESTART,l_Mean_Potential,it_to_start,l_froze_density,  &
 &                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters,         &
-&                         SC_neq_kind,SC_mu,l_SC_diagonal
+&                         SC_neq_kind,SC_mu,SC_occ,l_SC_diagonal
  use hamiltonian,    ONLY:rho_n,magn_n,l_sc_V_is_local,H_nl_sc,WF_G_max,WF_Go_indx,   &
 &                         V_hartree_sc,Hzero,V_xc_sc,E_reference,l_sc_XC_is_local,            &
 &                         H_QP_table_setup,H_rotation,H_rotation_ref
@@ -476,7 +476,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    !
    DELTA_NEW(:)=sqrt(DELTA_NEW(:))*HA2EV 
    !
-   if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS") 
+   if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS",SC_mu,SC_occ,SC_neq_kind) 
    !
    if (l_SC_cycle) then
      !
@@ -495,7 +495,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        !
      endif
      !
-     call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS") 
+     call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS",SC_mu,SC_occ,SC_neq_kind) 
      !
      ! New density 
      !=============
@@ -874,7 +874,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      ! Final occupations 
      !====================
-     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,"E")
+     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,"E",SC_mu,SC_occ,SC_neq_kind)
      !
      dE(:,:,:)=E%E(1:SC_bands(2),:,:)-E_reference%E(1:SC_bands(2),:,:)
      !

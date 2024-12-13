@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
+integer function ypp_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
  use drivers,             ONLY:infile_editing
  use stderr,              ONLY:write_to_log,STRING_same
@@ -25,6 +25,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,&
 &                              alat_used_for_output,l_QP_DB_expand,coo_out,coo_in,l_dipoles,&
 &                              DIPs_kind,l_sp_wf,l_mean_potential
+ use YPP_real_time,       ONLY:l_RealTime,l_RT_DBs,l_NL_X,l_NL_exc,l_RT_abs
  !
  implicit none
  !
@@ -205,7 +206,11 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  if (l_fix_syms) call symmetries_driver(en,k)
  !
- l_flag=l_excitons.or.(l_dipoles.and.trim(DIPs_kind)=="EXCITONIC")
+ if (l_RT_DBs)   call RT_DBs_carriers_setup(en,k,q)
+ !
+ if (l_RealTime) call RT_ypp_driver(en,k,q)
+ !
+ l_flag=l_excitons.or.(l_dipoles.and.trim(DIPs_kind)=="EXCITONIC").or.l_RT_abs
  if (l_flag)    call excitons_driver(k,Xk,en,Xen,q)
  !
  l_flag=l_electrons
@@ -233,4 +238,4 @@ contains
     if (.not.infile_editing) call INIT_ypp(en,instr,.TRUE.)
   end subroutine
   !
-end function ypp
+end function ypp_rt

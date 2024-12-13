@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
+integer function ypp_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
  use drivers,             ONLY:infile_editing
  use stderr,              ONLY:write_to_log,STRING_same
@@ -205,6 +205,9 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  if (l_fix_syms) call symmetries_driver(en,k)
  !
+ if (l_NL_X  ) call NL_ypp_driver(en,k)
+ if (l_NL_exc) call NL_exc_driver(en,k)
+ !
  l_flag=l_excitons.or.(l_dipoles.and.trim(DIPs_kind)=="EXCITONIC")
  if (l_flag)    call excitons_driver(k,Xk,en,Xen,q)
  !
@@ -233,4 +236,4 @@ contains
     if (.not.infile_editing) call INIT_ypp(en,instr,.TRUE.)
   end subroutine
   !
-end function ypp
+end function ypp_nl

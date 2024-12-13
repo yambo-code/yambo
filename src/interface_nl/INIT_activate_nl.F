@@ -77,6 +77,13 @@ subroutine INIT_activate()
    !call CPU_activate("SLK")
  endif
  !
+ if (l_nl_optics) then
+   call CPU_activate("NL")
+   call CPU_activate("DIP")
+   call CPU_activate("OSCLL")
+   call initactivate(1,'DIP_Threads NL_Threads OSCLL_Threads')
+ endif
+ !
  if (l_bse) then
    call CPU_activate("BS")
    call CPU_activate("DIP")
@@ -116,6 +123,7 @@ subroutine INIT_activate()
  if (l_dipoles) then
    call initactivate(1,'DipQpt DipBands DipBandsALL')
    call initactivate(1,'DipBandsALL DipApproach DipComputed DipPDirect ShiftedPaths DipoleEtresh')
+   call initactivate(1,'EvPolarization')
  endif
  !
  if (l_optics.and.l_chi) then
@@ -194,6 +202,7 @@ subroutine INIT_activate()
    call INIT_QP_ctl_switch('K')
    !
    call initactivate(1,'NoCondSumRule MetDamp')
+   call initactivate(1,'EvPolarization FrSndOrd')
    call initactivate(1,'PL_weights')
    !
    call initactivate(1,'DrudeWBS Reflectivity')
@@ -337,7 +346,37 @@ subroutine INIT_activate()
  if(l_alda_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_mpa,l_cohsex,l_gw0/)) ) call initactivate(1,'FxcGRLc')
  if( l_lrc_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_mpa,l_cohsex,l_gw0/)) ) call initactivate(1,'LRC_alpha LRC_beta')
  !
+ if (l_nl_optics) then
+   call initactivate(1,'FFTGvecs NLBands NLverbosity NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
+   call initactivate(1,'TestOSCLL')
+   if(.not.l_nl_p_and_p) call initactivate(1,'NLEnRange NLEnSteps NLrotaxis NLAngSteps')
+   call initactivate(1,'NLDamping RADLifeTime UseDipoles FrSndOrd NoComprCOLL EvalCurrent InducedField FrPolPerdic') 
+   call initactivate(1,'TestOSCLL Gauge RADLifeTime HARRLvcs EXXRLvcs CORRLvcs') 
+   call init_QP_ctl_switch('G')
+ endif
+ !
+ do i1=1,n_ext_fields
+   call Afield_activate(i1)
+ enddo
+ !
  contains
+   !
+   subroutine Afield_activate(i1)
+     integer     ::i1
+     character(6)::field
+     field='Field'//trim(intc(i1))
+     call initactivate(1,field//'_Freq')
+     call initactivate(1,field//'_NFreqs')
+     call initactivate(1,field//'_DFreq')
+     call initactivate(1,field//'_Int')
+     call initactivate(1,field//'_Width')
+     call initactivate(1,field//'_FWHM')
+     call initactivate(1,field//'_kind')
+     call initactivate(1,field//'_pol')
+     call initactivate(1,field//'_Dir')
+     call initactivate(1,field//'_Dir_circ')
+     call initactivate(1,field//'_Tstart')
+   end subroutine
    !
    subroutine CPU_activate(what)
      character(*) :: what 

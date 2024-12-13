@@ -40,7 +40,7 @@ module interfaces
      character(*), optional, intent(in) :: skip_patt
    end subroutine
    !
-   subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
+   subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance,neq_mu,neq_occ,neq_mode)
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
      type(levels)  ::E
@@ -49,6 +49,9 @@ module interfaces
      character(*), OPTIONAL ::mode
      integer,      OPTIONAL ::n_bands
      logical,      OPTIONAL ::impose_balance
+     real(SP),     OPTIONAL ::neq_mu(3)
+     real(SP),     OPTIONAL ::neq_occ(:,:,:)
+     character(*), OPTIONAL ::neq_mode
    end subroutine
    !
    subroutine MATRIX_duplicate( operation, M_in, INDEX_in, M_out )

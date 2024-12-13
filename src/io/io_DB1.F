@@ -30,14 +30,6 @@ integer function io_DB1(E,k,ID)
  use global_XC,        ONLY:setup_global_XC,EXT_NONE
  use gpu_m,            ONLY:have_gpu
  use devxlib,          ONLY:devxlib_memcpy_h2d
-#if defined _SC
- use collision_ext,    ONLY:COLL_bands
- use hamiltonian,      ONLY:H_ref_bands
- use SC,               ONLY:SC_bands
-#endif
-#if defined _NL
- use nl_optics,        ONLY:NL_bands
-#endif
  !
 #include<y_memory.h>
  !
@@ -203,42 +195,6 @@ integer function io_DB1(E,k,ID)
    endif
    !
    call io_elemental(ID, VAR="",VAR_SZ=0,MENU=1)
-   !
-   ! Exporting E%nb/k%nibz when in DUMP
-   !
-   if (io_mode(ID)==DUMP.or.write_is_on(ID)) then
-     !
-     nkibz =k%nibz
-     nXkibz=k%nibz
-     QP_nk =k%nibz
-     E%nk =k%nibz
-     QP_states_k=(/1,k%nibz/)
-     !
-     n_bands=E%nb
-     wf_nb_io=E%nb
-     QP_nb=E%nb
-     QP_n_G_bands=(/1,E%nb/)
-     !
-     if(any(BS_bands(:)==0)) BS_bands=(/1,E%nb/)
-#if defined _SC
-     if(any(COLL_bands(:)==0)) COLL_bands=(/1,E%nb/)
-     if(any(H_ref_bands(:)==0)) H_ref_bands=(/1,E%nb/)
-     if(any(SC_bands(:)==0)) SC_bands=(/1,E%nb/)
-#endif
-#if defined _NL
-     if(any(NL_bands(:)==0)) NL_bands=(/1,E%nb/)
-#endif
-     !
-     Tel=input_GS_Tel
-     nel=default_nel
-     !
-     ng_closed=ng_vec
-     if (.not.ver_is_gt_or_eq(ID,(/3,0,3/))) wf_ng=wf_ncx
-     !
-     call setup_global_XC('preset',GS_xc_KIND,xc_functional=GS_xc_functional,perturbation=EXT_NONE,&
-                          exx_fraction=GS_exx_FRACTION,exx_screening=GS_exx_SCREENING)
-     !
-   endif
    !
    io_DB1=io_status(ID)
    if (io_DB1/=0) goto 1

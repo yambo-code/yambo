@@ -21,9 +21,6 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,derivative_sppol,do_der
  use R_lattice,      ONLY:k_pt
  use D_lattice,      ONLY:alat
  !use parallel_m,     ONLY:PAR_IND_WF_linear
-#if defined _SC
- use SC,             ONLY:SC_bands,found_SC_DB
-#endif
  !
 #include<y_memory.h>
  ! Input variables
@@ -51,13 +48,6 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,derivative_sppol,do_der
  ! Need to call fft_setup to know the size of the FFT mesh
  ! 
  call fft_setup(0,1,.false.)
- !
-#if defined _SC
- if (found_SC_DB.and.any ( bands_to_load/=(/1,SC_bands(2)/) )) then
-   bands_to_load=(/1,SC_bands(2)/)
-   call warning(' [WF-DERIV] Forced '//trim(intc(SC_bands(2)))//' bands to be derived')
- endif
-#endif
  !
  call WF_derivative_alloc(do_derivative)
  !

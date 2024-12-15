@@ -43,6 +43,7 @@ module interfaces
    subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance,neq_mu,neq_occ,neq_mode)
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
+     use pars,           ONLY:SP
      type(levels)  ::E
      type(bz_samp) ::K
      character(*)           ::OBJ

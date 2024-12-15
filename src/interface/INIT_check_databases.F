@@ -65,7 +65,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=io_ID)
  io_err=io_DB1(en,k,io_ID) 
  !
- call init_variables()
+ call init_variables(k,en)
  !
 #if defined _MEM_CHECK
  call MEM_treshold_estimate( )
@@ -245,7 +245,21 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
 end subroutine
 !
 !
-subroutine init_variables()
+subroutine init_variables(k,E)
+ !
+ use electrons,      ONLY:levels,n_bands,nel,default_nel
+ use D_lattice,      ONLY:Tel,input_GS_Tel
+ use R_lattice,      ONLY:bz_samp,ng_closed,QP_states_k,ng_closed,ng_vec,nkibz,nXkibz
+ use global_XC,      ONLY:setup_global_XC,EXT_NONE
+ use BS,             ONLY:BS_bands
+ use QP_m,           ONLY:QP_n_G_bands,QP_nb,QP_nk
+ use xc_functionals, ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,GS_exx_FRACTION,GS_exx_SCREENING
+ use wave_func,      ONLY:wf_nb_io
+ !
+ implicit none
+ !
+ type(levels)     :: E
+ type(bz_samp)    :: k
  !
  nkibz =k%nibz
  nXkibz=k%nibz
@@ -264,7 +278,6 @@ subroutine init_variables()
  nel=default_nel
  !
  ng_closed=ng_vec
- if (.not.ver_is_gt_or_eq(ID,(/3,0,3/))) wf_ng=wf_ncx
  !
  call setup_global_XC('preset',GS_xc_KIND,xc_functional=GS_xc_functional,perturbation=EXT_NONE,&
                        exx_fraction=GS_exx_FRACTION,exx_screening=GS_exx_SCREENING)

@@ -24,6 +24,9 @@ subroutine INIT_check_databases_sc(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,inst
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
  use collision_ext,  ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
+ use hamiltonian,    ONLY:H_ref_bands
+ use SC,             ONLY:SC_bands
+ use collision_ext,  ONLY:COLL_bands  
 #if !defined _PAR_IO
  use COLL_interfaces,ONLY:io_COLLISIONS
 #endif
@@ -74,9 +77,9 @@ subroutine INIT_check_databases_sc(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,inst
  io_err=io_DB1(en,k,io_ID)
  !
  call init_variables()
- if(any(COLL_bands(:)==0)) COLL_bands=(/1,E%nb/)
- if(any(H_ref_bands(:)==0)) H_ref_bands=(/1,E%nb/)
- if(any(SC_bands(:)==0)) SC_bands=(/1,E%nb/)
+ if(any(COLL_bands(:)==0)) COLL_bands=(/1,en%nb/)
+ if(any(H_ref_bands(:)==0)) H_ref_bands=(/1,en%nb/)
+ if(any(SC_bands(:)==0)) SC_bands=(/1,en%nb/)
  !
 #if defined _MEM_CHECK
  call MEM_treshold_estimate( )

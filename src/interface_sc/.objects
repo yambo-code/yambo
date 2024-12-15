@@ -6,4 +6,5 @@ INIT_activate_sc.o \
 INIT_load_sc.o \
 INIT_sc.o \
 INIT_read_command_line_sc.o \
-INIT_check_databases_sc.o
+INIT_check_databases_sc.o \
+setup_sc.o

@@ -21,10 +21,12 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE,DELTA)
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
  use xc_functionals, ONLY:V_xc,XC_potential_driver
+ use global_XC,      ONLY:H_SE_COH,H_SE_FOCK,H_SE_HARTREE,H_SE_SEX,WF_kind
  use hamiltonian,    ONLY:l_sc_V_is_local,l_sc_XC_is_local,V_xc_sc,H_rotation,&
 &                         H_rotation_ref,E_reference
  use SC,             ONLY:SC_kind,SC_xc_functional,SC_cycle_mixing,SC_nbands,       &
-&                         SC_bands,l_oep_iterative,SC_neq_kind,SC_last_coh_it,SC_mu
+&                         SC_bands,l_oep_iterative,SC_neq_kind,SC_last_coh_it,SC_mu,&
+&                         it_now,it_to_start
  use FFT_m,          ONLY:fft_size
  use IO_int,         ONLY:IO_and_Messaging_switch
  !
@@ -44,7 +46,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE,DELTA)
  complex(SP)  :: G_sex(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),E%nk)
  complex(SP)  :: G_coh(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),E%nk)
  complex(SP)  :: G_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- logical      :: l_Vxc
+ logical      :: l_Vxc,l_Vnl_xc,l_load_SC_V
  integer      :: WF_kind_no_H
  !
  ! tests for excitons
@@ -146,7 +148,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE,DELTA)
      !
      if (WF_kind_no_H==H_SE_FOCK)      l_Vnl_xc   =.FALSE.
      !
-     if (l_sc_sex.or.l_sc_fock) call XCo_driver(E,k,k,q,WF_kind_no_H,l_Vxc,.TRUE.)
+     if (l_sc_sex.or.l_sc_fock) call XCo_driver(E,k,k,q,l_Vxc,l_Vnl_xc,.TRUE.,it_now)
      !
      ! Non-local part of SC xc must be subtracted from V_nlxc
      !========================================================

@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine XCo_driver(E,k,Xk,q,WF_kind_no,l_Vxc,l_sc_mode)
+subroutine XCo_driver(E,k,Xk,q,l_Vxc,l_Vnl_xc,l_sc_mode,it_now)
  !
  use zeros,         ONLY:zero_dfl
  use drivers,       ONLY:l_acfdt
@@ -26,23 +26,20 @@ subroutine XCo_driver(E,k,Xk,q,WF_kind_no,l_Vxc,l_sc_mode)
  !
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
- logical, intent(in)  :: l_Vxc,l_sc_mode
+ logical, intent(in)  :: l_Vxc,l_Vnl_xc,l_sc_mode
+ integer, intent(in)  :: it_now
  !
  ! Reporting
  !
  character(schlen) ::sec_mode_and_message(2),ch
  logical           ::l_section
- logical           ::l_Vxc,l_Vnl_xc,l_screen_hyb
+ logical           ::l_screen_hyb
  type(QP_t)        ::qp
  !
  ! IO
  !
  integer           :: ID,io_err
  integer, external :: io_HF_and_locXC
- !
- ! Logicals setup
- !
- l_Vnl_xc=.TRUE.
  !
  ! AM, 22/4/2021: a tiny WF_exx_screening causes NaN in the call to scatter_ModScr
  l_screen_hyb=(WF_exx_screening > zero_dfl) 
@@ -96,14 +93,14 @@ subroutine XCo_driver(E,k,Xk,q,WF_kind_no,l_Vxc,l_sc_mode)
    !
    if (l_screen_hyb) then                           
      ! For screened hybrids calculate the  model nonlocal screened exchange part
-     call XCo_Hartree_Fock(E,k,xk,q,mode='hyb')
+     call XCo_Hartree_Fock(E,k,xk,q,it_now,mode='hyb')
      QP_Vnl_sex=QP_Vnl_xc                        
      QP_Vnl_xc=cZERO                                
    end if
    !
    ! ... pure HF
    !
-   call XCo_Hartree_Fock(E,k,xk,q)
+   call XCo_Hartree_Fock(E,k,xk,q,it_now)
    !
  endif
  !

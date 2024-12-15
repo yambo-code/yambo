@@ -476,7 +476,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    !
    DELTA_NEW(:)=sqrt(DELTA_NEW(:))*HA2EV 
    !
-   if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS",SC_mu,SC_occ,SC_neq_kind) 
+   if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS",neq_mu=SC_mu,neq_occ=SC_occ,neq_mode=SC_neq_kind) 
    !
    if (l_SC_cycle) then
      !
@@ -495,7 +495,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        !
      endif
      !
-     call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS",SC_mu,SC_occ,SC_neq_kind) 
+     call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS",neq_mu=SC_mu,neq_occ=SC_occ,neq_mode=SC_neq_kind) 
      !
      ! New density 
      !=============
@@ -874,7 +874,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      ! Final occupations 
      !====================
-     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,"E",SC_mu,SC_occ,SC_neq_kind)
+     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) &
+     &  call OCCUPATIONS_Fermi(E,k,"E",neq_mu=SC_mu,neq_occ=SC_occ,neq_mode=SC_neq_kind)
      !
      dE(:,:,:)=E%E(1:SC_bands(2),:,:)-E_reference%E(1:SC_bands(2),:,:)
      !

@@ -114,7 +114,7 @@ integer function yambo_sc(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  ! Basical 
  !
  launch_me= .not.(l_slk_test.or.l_gpu_test)
- if(launch_me) call setup(en,Xen,Ken,k,Xk)
+ if(launch_me) call setup_sc(en,Xen,Ken,k,Xk)
  !
  ! Update the default variables
  !
@@ -199,7 +199,7 @@ integer function yambo_sc(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  launch_me=l_HF_and_locXC.and..not.any((/l_sc_run,l_eval_collisions,l_real_time/))
  !
- if (launch_me) call XCo_driver(en,k,Xk,q,.true.,.false.)
+ if (launch_me) call XCo_driver(en,k,Xk,q,.true.,.true.,.false.,-1)
  if (launch_me) call mem_manager_report
  !
  ! EXTENDED COLLISIONS 

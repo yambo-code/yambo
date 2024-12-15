@@ -18,7 +18,7 @@ integer function io_DB1(E,k,ID)
 &                           Tel, n_atoms_species_max,n_atomic_species,n_atoms_species,atom_pos, &
 &                           Z_species, n_atoms, mag_syms, atom_mass, atoms_map
  use R_lattice,        ONLY:ng_vec,g_vec,bz_samp,nkibz,QP_states_k,nXkibz,ng_closed
- use wave_func,        ONLY:wf_ncx,wf_nc_k,wf_igk,wf_igk_d,wf_ng,wf_nb_io
+ use wave_func,        ONLY:wf_ncx,wf_nc_k,wf_igk,wf_igk_d,wf_ng
  use LIVE_t,           ONLY:live_timing_is_on
  use IO_int,           ONLY:io_connect,io_disconnect,io_elemental,io_bulk,ver_is_gt_or_eq
  use IO_m,             ONLY:io_sec,variable_exist,io_status,read_is_on,&
@@ -27,7 +27,6 @@ integer function io_DB1(E,k,ID)
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_G_bands
  use BS,               ONLY:BS_bands
  use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,GS_exx_FRACTION,GS_exx_SCREENING
- use global_XC,        ONLY:setup_global_XC,EXT_NONE
  use gpu_m,            ONLY:have_gpu
  use devxlib,          ONLY:devxlib_memcpy_h2d
  !

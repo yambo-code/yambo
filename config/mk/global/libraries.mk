@@ -48,8 +48,7 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) driver_nl interface_nl nloptics
 # Yambo folders needed by Interfaces
 #=====================================
 #
-2Y_LIBS       = driver tools memory allocations matrices linear_algebra parallel parser communicate output common timing Yio io $(IO_MODE) \
-                setup interface stop_and_restart bz_ops 
+2Y_LIBS       = interface stop_and_restart bz_ops 
 2Y_LIBS_LD    = driver tools memory allocations communicate matrices linear_algebra parallel parser output common timing Yio io $(IO_MODE) \
                 setup interface stop_and_restart bz_ops 
 #

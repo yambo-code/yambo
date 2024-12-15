@@ -525,7 +525,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
          !
          current_iq=0
          call IO_and_Messaging_switch("-report")
-         io_X_err=X_dielectric_matrix(E,Xk,q,X(2),Xw(2),Dip,.TRUE.,.TRUE.)
+         io_X_err=X_dielectric_matrix(E,Xk,q,X(2),Xw(2),Dip,.TRUE.,.TRUE.,it_now)
          call IO_and_Messaging_switch("+report")
          !
          ! Reload and rotate wave-functions if W is updated

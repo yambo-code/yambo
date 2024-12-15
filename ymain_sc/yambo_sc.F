@@ -199,7 +199,7 @@ integer function yambo_sc(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  launch_me=l_HF_and_locXC.and..not.any((/l_sc_run,l_eval_collisions,l_real_time/))
  !
- if (launch_me) call XCo_driver(en,k,Xk,q)
+ if (launch_me) call XCo_driver(en,k,Xk,q,.true.,.false.)
  if (launch_me) call mem_manager_report
  !
  ! EXTENDED COLLISIONS 

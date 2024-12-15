@@ -66,9 +66,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  ! They can be not necessary in lifetimes calculations or for SC calculations.
  !
  !======================================================================================
-#if !defined _SC
+ ! DS warning: this was skipped in _SC. To check why
  if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_elel_corr.and..not.l_life) return
-#endif
  !
  if (.not.any((/l_elel_corr,l_elphoton_corr/))) then
    call warning('e-p, e-e and e-photon correlation switched off')
@@ -295,7 +294,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
      !
      ! GF for ppa and mpa
      !
-     if ( l_ppa ) call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,0)
+     if ( l_ppa ) call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,0,-1,-1)
      if ( l_mpa ) call QP_mpa(X,Xk,en,k,q,qp,Xw,0)
      !
    endif

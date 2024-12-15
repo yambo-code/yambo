@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
+integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD,it_now)
  ! 
  ! Calculates and stores on file the dielectric matrix.
  !
@@ -41,6 +41,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  type(DIPOLE_t)::Dip
  type(w_samp)  ::Xw
  logical       ::SILENT_MODE,CHILD
+ integer, intent(in) :: it_now
  !
  ! External
  !
@@ -306,7 +307,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
      if (n_OPTICAL_dir_to_eval>1) call X_AVERAGE_setup("DIR-LOOP",iq_dir,X%q0)
      if (n_OPTICAL_dir_to_eval>1) X_what="("//trim(intc(iq_dir))//" of "//trim(intc(n_OPTICAL_dir_to_eval))//")"
      !
-     call X_irredux(iq,"Xo"//trim(X_what),X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
+     call X_irredux(iq,"Xo"//trim(X_what),X_par(iq_mem),Xen,Xk,Xw,X,Dip,it_now)  
      !
      if (l_write_disk_Xo.and.n_OPTICAL_dir_to_eval==1) then
        call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)

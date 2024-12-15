@@ -31,9 +31,6 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  use timing_m,            ONLY:timing
  use wrapper,             ONLY:Vstar_dot_V_gpu
  use wave_func,           ONLY:wf_ng,wf_igk,WF,wf_ncx,WAVEs
-#if defined _SC           
- use SC,                  ONLY:SC_bands
-#endif
  !
  implicit none
  !
@@ -47,9 +44,6 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  character(lchlen)            :: core_io_path_save
  integer                      :: nkibz_save, wf_ncx_save, wf_ncx_shifted, nkibz_shifted
  integer                      :: wf_ng_eff, wf_ng_shifted
-#if defined _SC
- integer                      :: SC_bands_save(2)
-#endif
  !
  ! Work Space
  !
@@ -317,9 +311,6 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
        wf_ncx_save  = wf_ncx
        wf_ng_save   = wf_ng
        core_io_path_save = core_io_path
-#if defined _SC       
-       SC_bands_save     = SC_bands
-#endif 
      else if( grid.eq.'shifted'.and. command.eq.' define') then
        nkibz_shifted  = nkibz
        wf_ncx_shifted = wf_ncx
@@ -327,9 +318,6 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
      else if( grid.eq.'  local'.and. command.eq.'  reset') then
        core_io_path = core_io_path_save
        wf_ng        = wf_ng_save
-#if defined _SC       
-       SC_bands = SC_bands_save
-#endif
      endif
      return
    end subroutine set_parms

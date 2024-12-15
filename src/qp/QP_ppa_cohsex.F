@@ -19,7 +19,7 @@
 !
 #include<dev_defs.h>
 !
-subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
+subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter,it_now,it_to_start)
  !
  ! Plasmon Pole & COHSEX Correlation Self-Energy
  !
@@ -56,9 +56,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
  use timing_m,      ONLY:timing
  use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_QP_A2A,PAR_COM_G_b_INDEX
-#if defined _SC
- use SC,            ONLY:it_now,it_to_start
-#endif
  use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,&
 &                        devxlib_memcpy_d2d,devxlib_memset_d,devxlib_conjg_d
  use gpu_m,         ONLY:have_gpu
@@ -75,6 +72,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  type(QP_t)   ::qp
  type(w_samp) ::Xw
  integer      ::GW_iter
+ integer, intent(in) :: it_now,it_to_start
  !
  ! Work Space
  !
@@ -158,27 +156,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Section
  !
- SECTION_name=''
-#if defined _SC
- if (l_sc_coh) SECTION_name=trim(SECTION_name)//'COH'
- if (l_sc_sex) SECTION_name=trim(SECTION_name)//'SEX'
-#endif
- if (.not.l_sc_run) then
-   SECTION_name='G'//trim(intc(GW_iter))
-   W_name      ='W0'
-   if (                    l_cohsex) SECTION_name=trim(SECTION_name)//trim(W_name)//' (COHSEX)'
-   if (     l_ppa                  ) SECTION_name=trim(SECTION_name)//trim(W_name)//' (W PPA)'
-   if (.not.l_ppa.and..not.l_cohsex) SECTION_name=trim(SECTION_name)//trim(W_name)//' (W real-axis)'
- endif
+ SECTION_name='ppa-cohsex'
  !
- if (GW_iter==0) then
-   if(l_rim_w) then
-     call section('-',trim(SECTION_name))
-   else
-     call section('+',trim(SECTION_name))
-   end if
- end if
- if (GW_iter > 0) call section('=',trim(SECTION_name))
+ if (GW_iter==0.and.     l_rim_w) call section('-',trim(SECTION_name))
+ if (GW_iter==0.and..not.l_rim_w) call section('-',trim(SECTION_name))
+ if (GW_iter > 0)                 call section('=',trim(SECTION_name))
  !
  if (GW_iter==0) then
    call msg('r', '[  GW  ] Bands range     ',QP_n_G_bands)
@@ -186,7 +168,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      call msg('r', '[GW/PPA] G damping       ',QP_G_damp*HA2EV,"[eV]")
      call msg('r','')
    endif
-   ch=trim(SECTION_name)
    !
    call QP_state_print( )
    !
@@ -214,11 +195,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    call PARALLEL_WF_index( )
  endif
  !
- ch='-GW'
-#if defined _SC
- if(l_sc_run) ch='-SC'
-#endif
- !
  ! wf and collisions dimension
  !-----------------------------
  isc%ngrho=X%ng
@@ -227,7 +203,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (((l_sc_srpa.or.l_cohsex.or.l_sc_coh).and..not.COHSEX_use_empties).or.&
 &      l_GW_terminator) isc%ngrho=G_m_G_maxval
  !
- call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,n_WF_bands_to_load/),(/1,k%nibz/),title=trim(ch))
+ call WF_load(WF,isc%ngrho,maxval(qindx_S(:,:,2)),(/1,n_WF_bands_to_load/),(/1,k%nibz/),title=trim(SECTION_name))
  !
  call timing('GW(ppa)',OPR='start')
  !
@@ -280,9 +256,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &             count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
  !
  ch=trim(SECTION_name)
-#if defined _SC
- if (l_sc_run) ch=trim(SECTION_name)//'@it'//trim(intc(it_now))
-#endif
+ if (it_now>=0) ch=trim(SECTION_name)//'@it'//trim(intc(it_now))
  call live_timing(trim(ch),timing_steps)
  !
  if (io_RESPONSE) then
@@ -329,9 +303,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! Because of qpg can be imaginary, also are some component of X_mat, I am not sure
      ! that the definition here below of X_mat(ig1,ig2,:) is correct.
      !
-#if defined _SC
      if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
-#endif
        !
        PPcond_rate=0
        TO_rate=0
@@ -399,9 +371,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        call msg('r',' :: Time ordering fails/rest    ',real(TO_rate,SP)/(X%ng**2-PPcond_rate))
        call msg('r',' :: Mean rel dev of PP cond     ',PP_err/X%ng**2)
        !
-#if defined _SC
      endif
-#endif
      !
      X_is_TR_rotated=.false.
      !
@@ -620,16 +590,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          ! AF: for the time being, the SC case is treated as if g-parallelism is
          ! disabled
          !
-#if defined _SC
          if (l_sc_run) then
            if (PAR_COM_QP_A2A%CPU_id==0)    QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
          else
-#endif
 !          if (HEAD_QP_cpu)                 QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
            if (PAR_COM_G_b_INDEX%CPU_id==0) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
-#if defined _SC
          endif
-#endif
          !
          dc=cZERO
          !
@@ -874,9 +840,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  YAMBO_FREE(conjg_iscp_rhotw)
  !
  l_X_ALLOC_elemental=.true.
-#if defined _SC
- l_X_ALLOC_elemental=l_sc_run.and.io_RESPONSE
-#endif
+ if (l_sc_run) l_X_ALLOC_elemental=io_RESPONSE
  if(l_X_ALLOC_elemental) then
    do iq_mem = 1,size(X_par)
      call MATRIX_reset(X_par(iq_mem))

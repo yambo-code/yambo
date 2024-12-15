@@ -112,9 +112,6 @@ subroutine INIT_activate_ph()
  if (l_dipoles) then
    call initactivate(1,'DipQpt DipBands DipBandsALL')
    call initactivate(1,'DipBandsALL DipApproach DipComputed DipPDirect ShiftedPaths DipoleEtresh')
-#if defined _NL || defined _SC
-   call initactivate(1,'EvPolarization')
-#endif
  endif
  !
  if (l_optics.and.l_chi) then

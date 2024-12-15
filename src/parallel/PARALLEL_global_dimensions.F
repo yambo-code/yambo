@@ -49,12 +49,6 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !-----------
  if (ENVIRONMENT=="DIPOLES")                          PAR_n_v_bands= (/PAR_Dip_ib(1),PAR_Dip_ib_lim(1)/)
  if (index(ENVIRONMENT, "Response_G_space")>0       ) PAR_n_v_bands= (/PAR_X_ib(1),maxval(E%nbm)/)
-#if defined _NL || defined _SC
- if (l_sc_run .or. l_nl_optics) then
-   ! DS 2023/07/24 : to check if this is really needed or not
-   if (index(ENVIRONMENT, "Response_G_space")>0     ) PAR_n_v_bands= (/1,PAR_X_ib(2)/)
- endif
-#endif
  if (ENVIRONMENT=="Response_T_space"                ) PAR_n_v_bands= (/BS_bands(1),maxval(E%nbm)/)
  !
  ! # G vectors

@@ -90,9 +90,7 @@ integer function INIT_sc(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    call SET_logicals()
    !
    call E_reset(en)
-#if defined _SC
    call E_reset(en_sc)
-#endif
    call bz_samp_reset(k)
    call bz_samp_reset(q)
    call W_reset(Xw(1),damping=0.001_SP)

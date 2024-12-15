@@ -112,7 +112,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    if (iq> 1) call PP_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
    ! Irredux (Xo) 
-   call X_irredux(iq,"Xo",X_par(1),Xen,Xk,wv,X,Dip)
+   call X_irredux(iq,"Xo",X_par(1),Xen,Xk,wv,X,Dip,-1)
    !
    ! Without LF. I start defining spectra=eps-1
    spectra=cZERO

@@ -61,7 +61,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    if (l_ppa) then
      !
      if (l_rim_w) call QP_interpolate_W(X,Xw,q,'PPA')
-     call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
+     call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter,-1,-1)
      !
    else if (l_mpa) then
      !
@@ -70,7 +70,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
      !
    else if (l_cohsex) then
      !
-     call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
+     call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter,-1,-1)
      !
    else 
      !

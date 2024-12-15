@@ -27,13 +27,10 @@ subroutine LEVELS_respect_degenerations_sc(E,Dip,X)
  ! Work Space
  !
  integer      :: B_user(2),B_fixed(2),i_f
- logical      :: l_USER_fields(16),SKIP_it
+ logical      :: l_USER_fields(16),DegFix
  character(2) :: X_str
  !
- ! By defaulft I assume that the degeneration is lifted
- ! but if the flag SkipDegFix is activated this operation is not done
- !
- call parser('SkipDegFix',SKIP_it)
+ call parser('DegFix',DegFix)
  !
  ! Check for USER definitions 
  !---------------------------
@@ -52,23 +49,23 @@ subroutine LEVELS_respect_degenerations_sc(E,Dip,X)
      if (i_f==3) X_str="Xd"
      if (i_f==4) X_str="Xp"
      if (i_f==5) X_str="Xm"
-     call fix_and_message(X_str,.not.SKIP_it,X(i_f)%ib)
+     call fix_and_message(X_str,DegFix,X(i_f)%ib)
    endif
    if (i_f==6) then
      call levels_check(E,Dip%ib)
-     call fix_and_message("Dipoles",.not.SKIP_it,Dip%ib)
+     call fix_and_message("Dipoles",DegFix,Dip%ib)
    endif
    if (i_f==7) then
      call levels_check(E,BS_bands)
-     call fix_and_message("BS",.not.SKIP_it,BS_bands)
+     call fix_and_message("BS",DegFix,BS_bands)
    endif
    if (i_f==7) then
      call levels_check(E,SC_bands)
-     call fix_and_message("SC",.not.SKIP_it,SC_bands)
+     call fix_and_message("SC",DegFix,SC_bands)
    endif
    if (i_f==11) then
      call levels_check(E,COLL_bands)
-     call fix_and_message("COLLISIONS",.not.SKIP_it,COLL_bands)
+     call fix_and_message("COLLISIONS",DegFix,COLL_bands)
    endif
    !
  enddo

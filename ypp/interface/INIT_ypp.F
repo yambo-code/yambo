@@ -767,14 +767,6 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 &                    N=n_FineGd_DBs,M=1,CH_v=FineGd_DB1_paths(:n_FineGd_DBs,:))
  endif
  !
- ! LOG/REP files
- !
- live_timing_is_on =master_cpu.and..not.infile_editing
- write_to_report   =master_cpu.and..not.infile_editing
- write_to_log      =master_cpu.and..not.infile_editing
- !
- call INIT_report_and_log_files()
- !
  ! Input file
  !
  if (infile_editing) then
@@ -782,7 +774,16 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    call initinfio(defs,inpfile_unit)
    close(inpfile_unit)
    call PP_wait()
+   return
  endif
+ !
+ ! LOG/REP files
+ !
+ live_timing_is_on =master_cpu.and..not.infile_editing
+ write_to_report   =master_cpu.and..not.infile_editing
+ write_to_log      =master_cpu.and..not.infile_editing
+ !
+ call INIT_report_and_log_files()
  !
  contains
    !

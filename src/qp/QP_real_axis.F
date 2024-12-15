@@ -497,6 +497,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    enddo qp_loop
    !
    call MATRIX_reset(X_par(1))
+   deallocate(X_par)
    !
    if (.not.l_life) then
      !

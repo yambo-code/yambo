@@ -20,9 +20,9 @@ use devxlib,       ONLY:devxlib_xGEMM_gpu
  implicit none
  !
  integer,                      intent(in)  :: pp_range(2),ib_range(2),ib,i_wf,wf_ncx,nbndx,npp,pp_dim_yambo
- complex(SP) DEV_ATTR, target, intent(in)  :: WF(wf_ncx,n_spinor,nbndx)
+ complex(SP) DEV_ATTR, target, intent(in)  :: WF(wf_ncx,n_spinor)
  complex(SP) DEV_ATTR, target, intent(in)  :: kbv(wf_ncx,n_spinor,4,npp)
- complex(SP) DEV_ATTR, target, intent(out) :: XX(n_spinor,n_spinor,4,pp_dim_yambo,ib_range(1):ib_range(2))
+ complex(SP) DEV_ATTR, target, intent(out) :: XX(n_spinor,n_spinor,4,npp)
  ! 
  ! Work Space
  !
@@ -33,7 +33,7 @@ use devxlib,       ONLY:devxlib_xGEMM_gpu
 ! XXX
 !integer :: ierr
  
- WF_p => WF(:,:,i_wf)
+ WF_p => WF
  dim_flat=n_spinor*4*npp
  !
  ! GPU treatment
@@ -41,19 +41,19 @@ use devxlib,       ONLY:devxlib_xGEMM_gpu
 #if defined _CUDAF
  !
  call c_f_pointer(c_devloc(kbv), kbv_p, (/wf_ncx,dim_flat/) )
- call c_f_pointer(c_devloc(XX(:,:,:,pp_range(1):pp_range(2),ib)),  XX_p,  (/n_spinor,dim_flat/) )
+ call c_f_pointer(c_devloc(XX),  XX_p,  (/n_spinor,dim_flat/) )
  !
 #elif defined _OPENACC || defined _OPENMP_GPU
  !
  call c_f_pointer(c_loc(kbv), kbv_p, (/wf_ncx,dim_flat/) )
- call c_f_pointer(c_loc(XX(:,:,:,pp_range(1):pp_range(2),ib)),  XX_p, (/n_spinor,dim_flat/) )
+ call c_f_pointer(c_loc(XX),  XX_p, (/n_spinor,dim_flat/) )
  !
 #else
  !
  ! CPU-only
  !
  call c_f_pointer(c_loc(kbv), kbv_p, (/wf_ncx,dim_flat/) )
- call c_f_pointer(c_loc(XX(:,:,:,pp_range(1):pp_range(2),ib)),  XX_p,  (/n_spinor,dim_flat/) )
+ call c_f_pointer(c_loc(XX),  XX_p,  (/n_spinor,dim_flat/) )
  ! 
 #endif
  !

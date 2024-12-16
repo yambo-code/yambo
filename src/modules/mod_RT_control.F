@@ -11,7 +11,7 @@ module RT_control
  use units,      ONLY:AUT2FS
  use real_time,  ONLY:l_NE_dynamics,l_NE_with_fields,l_elph_scatt
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer                  :: CACHE_OBS_last_point
  real(SP)                 :: CACHE_OBS_INTERVAL_time

@@ -10,7 +10,7 @@ module QP_m
  use descriptors,    ONLY:IO_desc,IO_desc_duplicate,IO_desc_reset
  use pars,           ONLY:SP,schlen,cZERO
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Mixing for non perturbative calculations
  integer           :: SC_bands_mixed

@@ -45,7 +45,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  use units,           ONLY:FS2AUT
  use RT_lifetimes,    ONLY:l_initial_equilibrium
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Notice that E is never changed!
  !
@@ -95,9 +95,6 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  call section('+','Pre-Initialization')
  !######################################
- !
- ! Check if RT_bands respect levels degeneracy...
- call LEVELS_respect_degenerations(RT_bands,E,.FALSE.)
  !
  ! Parallel reset...
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))

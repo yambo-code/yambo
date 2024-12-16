@@ -35,7 +35,8 @@ subroutine RT_start_and_restart(E,k,q)
 &                         RT_P,RT_step,dG_lesser,NE_i_time,RT_dyn_step,&
 &                         Gr_kind,l_RT_is_WFfree,RT_TIME_status,RTibz,&
 &                         RT_nk,G_lesser,RT_eh_en,G_MEM_steps,RT_bands,&
-&                         NE_time_step_update_jump,l_velocity_gauge_corr
+&                         NE_time_step_update_jump,l_velocity_gauge_corr,&
+&                         RT_P_prev,RT_ind_J_prev
  use RT_lifetimes,   ONLY:RT_life_extrap_times,l_RT_iterative_ELPH_lifetimes
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc,E_reference
@@ -50,7 +51,7 @@ subroutine RT_start_and_restart(E,k,q)
  use parallel_int,   ONLY:PP_wait,PP_redux_wait
  use RT_output_m,    ONLY:RT_desc,TIME_STEP_desc,Gr_desc
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)      :: E
  type(bz_samp)     :: k,q
@@ -168,7 +169,7 @@ subroutine RT_start_and_restart(E,k,q)
    call RT_control_free("all")
    call RT_control_alloc("all")
    !
-   YAMBO_FREE(RT_TIME_status)
+   !AMBO_FREE(RT_TIME_status)
    !
    ! I use G_lesser(:,:,:) to reconstruct everything
    ! Note that the databases must be loaded at the RESTART time (NE_time)
@@ -321,6 +322,8 @@ subroutine RT_start_and_restart(E,k,q)
      !
      RT_P              =cZERO
      RT_ind_J          =cZERO
+     RT_P_prev         =cZERO
+     RT_ind_J_prev     =cZERO
      !
    end subroutine
    !

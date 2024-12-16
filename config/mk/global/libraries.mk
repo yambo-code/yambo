@@ -14,8 +14,6 @@ include lib/archive/package.list
 #
 INT_LIBS      = qe_pseudo slatec math77 local
 YAMBO_INT_LIBS= Yio 
-YLIBDRIVER    = interface main options 
-YLIBDRIVER_LD = _Ydriver_options _Ydriver_interface _Ydriver_main 
 YLIBIO        = modules Yio
 YLIBIO_LD     = $(YLIBIO)
 #
@@ -24,7 +22,7 @@ YLIBIO_LD     = $(YLIBIO)
 #
 BASIC_LIBS   = driver tools modules memory allocations matrices linear_algebra parallel parser communicate output common timing Yio io $(IO_MODE) \
                xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
-BASIC_LIBS_LD= tools memory allocations communicate modules matrices linear_algebra bz_ops parallel parser output common timing Yio io $(IO_MODE) \
+BASIC_LIBS_LD= driver tools memory allocations communicate modules matrices linear_algebra bz_ops parallel parser output common timing Yio io $(IO_MODE) \
                xc_functionals interface stop_and_restart wf_and_fft coulomb
 
 MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse
@@ -59,14 +57,14 @@ PJ_NLLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
 #
 2Y_LIBS       = driver tools modules memory allocations matrices linear_algebra parallel parser communicate output common timing Yio io $(IO_MODE) \
                 setup interface stop_and_restart bz_ops 
-2Y_LIBS_LD    = tools memory allocations communicate modules matrices linear_algebra parallel parser output common timing Yio io $(IO_MODE) \
+2Y_LIBS_LD    = driver tools memory allocations communicate modules matrices linear_algebra parallel parser output common timing Yio io $(IO_MODE) \
                 setup interface stop_and_restart bz_ops 
 #
 # YPP folders 
 #===============
 #
-YPP_BASIC_LIBS     = modules interface qp plotting k-points symmetries bits electrons dipoles
-YPP_BASIC_LIBS_LD  = modules interface qp plotting k-points symmetries bits electrons dipoles 
+YPP_BASIC_LIBS     = YPPmodules interface qp plotting k-points symmetries bits electrons dipoles
+YPP_BASIC_LIBS_LD  = YPPmodules interface qp plotting k-points symmetries bits electrons dipoles 
 YPP_LIBS           = $(YPP_BASIC_LIBS) excitons
 YPP_LIBS_LD        = $(YPP_BASIC_LIBS_LD) excitons
 YPPSC_LIBS         = $(YPP_LIBS)

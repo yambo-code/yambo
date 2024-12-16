@@ -17,7 +17,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  !
  ! Fourier
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,     intent(in)   :: nt,nh
  real(SP),    intent(inout):: P(nt,3),W(nh)

@@ -19,7 +19,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,alat,mag_syms,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer, intent(out)   :: old_nsym
  real(SP),intent(out)   :: old_dl_sop(3,3,nsym)
@@ -39,10 +39,9 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  ! Dummies
  !
  integer                :: i1,i2
- integer                :: is,n_syms_to_check
- logical                :: reject_symmetry,found_symm
+ integer                :: is
+ logical                :: reject_symmetry
  real(SP)               :: v1(3),v2(3)
- real(SP)               :: symm_to_check(3,3,2)
  !
  use_E_field=.FALSE.
  use_B_field=.FALSE.

@@ -5,8 +5,17 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+!#ifdef _MKLGPU
+!include "mkl_dfti_omp_offload.f90"
+!#endif
+
 module FFT_m
- use pars,         ONLY: SP
+ use pars,          ONLY: SP
+ use iso_c_binding, ONLY: c_ptr
+#ifdef _MKLGPU
+ use mklfft_gpu
+#endif
+ !
 #include<dev_defs.h>
  !
  implicit none
@@ -32,6 +41,11 @@ module FFT_m
  !
  integer     :: cufft_plan !(FW) +1 sign: G-space to R-space & oscillators
                            !(BW) -1 sign: R-space to G-space
+ !
+ ! hipFFT support (AMD GPUs)
+ !
+ type(c_ptr) :: hipfft_plan
+                           !(BW) -1 sign: R-space to G-space
 
  contains
    !
@@ -40,8 +54,8 @@ module FFT_m
      !  Calculate a function similar to MOD:
      !  modx(i,j) = mod (i,j) i>=0
      !            = mod ( mod(i,j)+j , j) i<0
-     !  Thus 
-     !   modx(3,2)=1 
+     !  Thus
+     !   modx(3,2)=1
      !   modx(-1,2)=1.
      !  This is different from MOD for i negative.
      !

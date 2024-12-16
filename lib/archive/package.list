@@ -1,11 +1,10 @@
 #
 # Libs list
 #
-EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff etsf_io libxc lapack blacs scalapack petsc slepc fftw fftqe Ydriver
+EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff etsf_io libxc lapack blacs scalapack petsc slepc fftw fftqe devxlib
 #
 # storing options
 #
-keep_Ydriver=yes
 keep_iotk=yes
 keep_netcdf=no
 keep_netcdff=no
@@ -20,11 +19,11 @@ keep_fftw=no
 keep_fftqe=no
 keep_yaml=no
 keep_futile=no
+keep_devxlib=no
 keep_hdf5=no
 #
 # package versions
 #
-version_Ydriver=1.4.2
 version_iotk=y1.2.2
 version_netcdf=4.9.0
 version_netcdff=4.6.0
@@ -34,16 +33,16 @@ version_libxc=5.2.3
 version_lapack=3.12.0
 version_blacs=missing
 version_scalapack=2.2.1
-version_slepc=3.21.0
-version_petsc=3.21.0
+version_slepc=3.22.2
+version_petsc=3.22.2
 version_fftw=3.3.10
 version_fftqe=missing
 version_yaml=0.2.2
 version_futile=missing
+version_devxlib=0.8.5
 #
 # package names
 #
-pkgname_Ydriver=Ydriver-$(version_Ydriver)
 pkgname_iotk=iotk-$(version_iotk)
 pkgname_netcdf=netcdf-c-$(version_netcdf)
 pkgname_netcdff=netcdf-fortran-$(version_netcdff)
@@ -59,10 +58,10 @@ pkgname_fftw=fftw-$(version_fftw)
 pkgname_fftqe=fftqe
 pkgname_yaml=yaml-$(version_yaml)
 pkgname_futile=futile-yambo
+pkgname_devxlib=devicexlib-$(version_devxlib)
 #
 # tarball names
 #
-tarball_Ydriver=$(version_Ydriver).tar.gz
 tarball_iotk=$(pkgname_iotk).tar.gz
 tarball_netcdf=v$(version_netcdf).tar.gz
 tarball_netcdff=v$(version_netcdff).tar.gz
@@ -78,10 +77,10 @@ tarball_fftw=$(pkgname_fftw).tar.gz
 tarball_fftqe=$(pkgname_fftqe).tar.gz
 tarball_yaml=$(pkgname_yaml).tar.gz
 tarball_futile=$(pkgname_futile).tar.gz
+tarball_devxlib=$(pkgname_devxlib).tar.gz
 #
 # External URL's on Github
 #
-url_Ydriver=https://github.com/yambo-code/Ydriver/archive/refs/tags/$(tarball_Ydriver)
 url_lapack=https://github.com/Reference-LAPACK/lapack/archive/refs/tags/$(tarball_lapack)
 url_scalapack=https://github.com/Reference-ScaLAPACK/scalapack/archive/refs/tags/$(tarball_scalapack)
 url_hdf5=https://github.com/HDFGroup/hdf5/archive/refs/tags/$(tarball_hdf5)
@@ -92,7 +91,10 @@ url_netcdff=https://github.com/Unidata/netcdf-fortran/archive/refs/tags/$(tarbal
 #
 url_slepc=https://gitlab.com/slepc/slepc/-/archive/v$(version_slepc)/$(tarball_slepc)
 url_petsc=https://gitlab.com/petsc/petsc/-/archive/v$(version_petsc)/$(tarball_petsc)
-url_libxc=https://gitlab.com/libxc/libxc/-/archive/$(version_libxc)/$(tarball_libxc)  # this requires to run "autoreconf -i" (coded)
+url_devxlib=https://gitlab.com/max-centre/components/devicexlib/-/archive/$(version_devxlib)/$(tarball_devxlib)
+#
+#...this requires to run "autoreconf -i" (coded)
+url_libxc=https://gitlab.com/libxc/libxc/-/archive/$(version_libxc)/$(tarball_libxc)
 #
 # External URL's More
 #
@@ -111,12 +113,12 @@ url_futile=$(url_base)/$(tarball_futile)
 #
 # git repositories
 #
-git_Ydriver=git@github.com:yambo-code/yambo-libraries.git
+git_devxlib=git@gitlab.com:max-centre/components/devicexlib.git
 git_slepc=git@gitlab.com:slepc/slepc.git
 git_petsc=git@gitlab.com:petsc/petsc.git
 #
 # git default branches
 #
-branch_Ydriver=none
+branch_devxlib=none
 branch_slepc=none
 branch_petsc=none

@@ -16,7 +16,7 @@ module real_time
  use RT_occupations, ONLY:RT_obj_occupation,RT_obj_occupation_alloc,RT_obj_occupation_free
  use electrons,      ONLY:E_fine_grid
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! CORE LOGICALS
  !

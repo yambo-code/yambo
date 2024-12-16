@@ -25,7 +25,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  use functions,     ONLY:Lorentzian_func,boltzman_f,bose_f
  use stderr,        ONLY:STRING_same,intc
  !
-#include<memory.h> 
+#include<y_memory.h> 
  !
  type(bz_samp) ::Xk,k,q_exc
  type(levels)  ::Xen,en

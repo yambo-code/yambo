@@ -9,7 +9,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  use pars,         ONLY:SP,schlen
  use R_lattice,    ONLY:bz_samp
- use electrons,    ONLY:levels,n_sp_pol,n_spinor,n_spin
+ use electrons,    ONLY:levels,n_sp_pol,n_spin
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match,STRING_split
@@ -53,7 +53,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  ! default mode
  if(STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-bar"
  !
- if (l_col_cut) then
+ if (l_col_cut.and.what=="init") then
    ! We are here in 0D, 1D or 2D
    ! The G=0 term included in L-full is representative
    ! of the portion of the line (2D) / plane (1D) / volume (0D)  around G=0
@@ -64,7 +64,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
      ! It is useless to compute the non analytical Lfull and better to
      ! directly remove the G=0 term
      call warning('Coulomb cutoff at q=0. Default/Suggested Lkind= bar')
-     if(STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-bar"
+     if (STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-bar"
    endif
    if (iq/=1) then
      ! We are here in 1D or 2D.
@@ -73,7 +73,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
      ! The above mentioned G=0 term is part of this effect.
      ! Here we assume it would be better to include it, to be double checked
      call warning('Coulomb cutoff at q>0. Default/Suggested Lkind= full')
-     if(STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-full"
+     if (STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-full"
      ! N.B.: One could compute the calculation without L-T slitting,
      ! by removing such full line (2D) / plane (1D). Not coded at the moment.
      ! I would define it as L="transverse"
@@ -254,14 +254,8 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. BSS_slepc_matrix_format=="shell" & 
  &                 .and. index(BSS_slepc_approach,"NonHerm")>0
  !
- ! The doubling is activated unless explicily imposed by input since slepc
- ! with shells requires the extended K_multiply_by_V for the non hermitian algorithm
- ! Slepc are not (yet) able to deal with a pseudo-hermitian algorithm in some cases 
- ! or if imposed with "debug" input value of slepc matrix
- !
- call parser('ImposeSymm',l_flag)
- if (l_slepc_special.and..not.l_flag) l_BS_ares_from_res=.FALSE.
  BSS_slepc_double_grp=l_BS_ares_from_res.and.l_slepc_special
+ if (l_slepc_special) l_BS_ares_from_res=.FALSE.
  !
  BSS_slepc_pseudo_herm=BS_K_coupling .and. l_BS_ares_from_res .and. &
  &                     (.not.BSS_slepc_double_grp) .and. index(BSS_slepc_approach,"NonHerm")==0

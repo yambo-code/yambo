@@ -12,6 +12,7 @@ module QP_CTL_m
  use QP_m,      ONLY:QP_t
  use electrons, ONLY:n_sp_pol
  use global_XC, ONLY:QP_SE_NONE
+ use devxlib
  !
  implicit none
  !
@@ -179,7 +180,7 @@ module QP_CTL_m
    end subroutine
    !
    subroutine QP_actions_reset
-#include<memory.h>
+#include<y_memory.h>
      integer :: i_a
      n_QP_actions=0
      do i_a=1,n_QP_actions_MAX

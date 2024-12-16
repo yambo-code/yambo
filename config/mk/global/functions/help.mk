@@ -6,7 +6,7 @@
 # Authors (see AUTHORS file for details): AM
 #
 define yambo_help
-  $(ECHO) "\n This is $(y_version)";
+  $(ECHO) "\n This is $(y_version)\n";
   if [ "$(1)" = "header" ] || [ -z "$(1)" ] ; then \
     $(ECHO) "\n Use the following commands to get specific help:\n" ;\
     $(ECHO) "  to get general info on the Yambo projects included in this source use:\n   >make help what=intro" ;\
@@ -31,13 +31,14 @@ define yambo_help
    $(ECHO) "\n *** Utils ***";\
    $(ECHO) -n " [utils]         "; for target in $(UTILS); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO)  "\n *** Files & Packages ***" ;\
-   $(ECHO)  " make check-packages      =  check the packages required (and optional) for Yambo to compile correctly";\
-   $(ECHO)  " make check-files         =  list all git untracked files and empty directories.";\
+   $(ECHO)  " make check-packages            =  check the packages required (and optional) for Yambo to compile correctly";\
+   $(ECHO)  " make check-files               =  list all git untracked files and empty directories.";\
+   $(ECHO)  " make dependencies what=update  =  clean and update the .mod dependencies files.";\
    $(ECHO)  "\n *** Cleaning ***" ;\
-   $(ECHO)  " The cleaning procedure of yambo is divided in several modules: bin int-libs driver Ydriver src ypp interfaces conf dep";\
+   $(ECHO)  " The cleaning procedure of yambo is divided in several modules: bin int-libs driver src ypp interfaces conf dep";\
    $(ECHO)  " Each of these module can be called by using";\
    $(ECHO)  " make clean what=<MODULE> \n";\
-   $(ECHO)  " make clean               =  remove all modules except int-libs, ext-libs, Ydriver, dependencies and configure files.";\
+   $(ECHO)  " make clean               =  remove all modules except int-libs, ext-libs, dependencies and configure files.";\
    $(ECHO)  " make clean_all           =  remove all modules. Complete cleaning.";\
    $(ECHO)  " make reset               =  clean + int-libs.";\
    $(ECHO)  " make gitclean            =  clean all git untracked files.";\

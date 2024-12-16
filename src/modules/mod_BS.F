@@ -7,10 +7,12 @@
 !
 module BS
  !
- use pars,          ONLY:IP,IPL,SP,schlen,lchlen
- use collision_el,  ONLY:elemental_collision
+ use pars,          ONLY: IP,IPL,SP,schlen,lchlen
+ use collision_el,  ONLY: elemental_collision
+ use gpu_m,         ONLY: have_gpu
  !
-#include<memory.h>
+#include<dev_defs.h>
+#include<y_memory.h>
  !
  ! Modes and logicals
  !====================
@@ -190,18 +192,14 @@ module BS
    ! Exchange Oscillators
    !
    complex(SP), allocatable      :: O_x(:,:)
-#ifdef _CUDA
-   complex(SP), allocatable, device :: O_x_d(:,:)
-#endif
+   complex(SP), allocatable DEV_ATTR :: O_x_d(:,:)
    !
    ! TDDFT Oscillators
    !
    complex(SP), allocatable :: O_tddft_L(:,:,:,:)
    complex(SP), allocatable :: O_tddft_R(:,:,:,:)
-#ifdef _CUDA
-   complex(SP), allocatable, device :: O_tddft_L_d(:,:,:,:)
-   complex(SP), allocatable, device :: O_tddft_R_d(:,:,:,:)
-#endif
+   complex(SP), allocatable DEV_ATTR :: O_tddft_L_d(:,:,:,:)
+   complex(SP), allocatable DEV_ATTR :: O_tddft_R_d(:,:,:,:)
    !
  end type BS_T_group
  !
@@ -245,9 +243,7 @@ module BS
    ! O_table Version used by the dir algorithm   -->  symk,symp,nkmq,npmq,n,n',spin @ k = iOnn
    integer,     allocatable      :: O_table(:,:,:,:,:,:,:)
    complex(SP), allocatable      :: O_c(:,:)
-#ifdef _CUDA
-   complex(SP), allocatable, device :: O_c_d(:,:)
-#endif
+   complex(SP), allocatable DEV_ATTR :: O_c_d(:,:)
    !
  end type BS_block
  !
@@ -261,10 +257,7 @@ module BS
  !
  ! Screened interaction
  !======================
- complex(SP),allocatable ::BS_W(:,:,:)
-#ifdef _CUDA
- attributes(device)      ::BS_W
-#endif
+ complex(SP),allocatable DEV_ATTR :: BS_W(:,:,:)
  !
  contains
    !
@@ -410,3 +403,4 @@ module BS
    end subroutine BS_Blocks_symmetrize_K
    !
 end module BS
+

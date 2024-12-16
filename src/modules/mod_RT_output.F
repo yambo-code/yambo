@@ -13,7 +13,7 @@ module RT_output_m
  use global_XC,  ONLY:QP_SE_NONE
  use descriptors,ONLY:IO_desc
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer, parameter       :: N_MAX_RT_o_files=150
  integer, parameter       :: N_MAX_RT_X_order=9

@@ -10,7 +10,7 @@ module hamiltonian
  use pars,       ONLY:SP,schlen
  use electrons,  ONLY:levels
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer           :: H_ref_bands(2)
  integer           :: H_ref_nbands
@@ -136,7 +136,7 @@ module hamiltonian
    !
    subroutine H_free()
      use xc_functionals, ONLY:magn,V_xc
-     use X_m,            ONLY:X_ALLOC_elemental
+     use ALLOC,          ONLY:X_ALLOC_elemental
      !
      implicit none
      !

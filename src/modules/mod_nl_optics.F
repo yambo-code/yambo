@@ -12,7 +12,7 @@ module nl_optics
  use electrons,       ONLY:levels
  use real_time,       ONLY:NE_steps
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Long range correction field
  !

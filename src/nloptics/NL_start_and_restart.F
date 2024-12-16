@@ -17,7 +17,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  ! [4] Initialize the bare Hartree and XC
  ! [5] Initialize the fields
  !
- use pars,           ONLY:cZERO,rZERO,cONE,lchlen
+ use pars,           ONLY:cZERO,rZERO,cONE
  use com,            ONLY:msg
  use electrons,      ONLY:levels,n_sp_pol
  use real_time,      ONLY:rho_reference,eval_HARTREE,eval_DFT
@@ -33,14 +33,14 @@ subroutine NL_start_and_restart(E,k,Dip)
  use parallel_m,     ONLY:master_cpu
  use nl_optics,      ONLY:Correlation,IPA,E_full,full_rho,V_bands,TDDFT,n_runs_todo,NL_LRC_alpha,NL_bands, &
 &                         V_xc_0,NL_initial_P,l_use_DIPOLES,n_runs,runs_done,JGM,E_xc_0,I_relax,l_use_DIPOLES,&
-&                         VAL_BANDS,l_eval_CURRENT,NL_initial_J,NL_P,l_pump_and_probe
+&                         VAL_BANDS,l_eval_CURRENT,NL_initial_J,NL_P
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,NONE,file_is_present,VERIFY
  use parallel_int,   ONLY:PP_redux_wait
  use stderr,         ONLY:intc
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)      :: E
  type(bz_samp)     :: k

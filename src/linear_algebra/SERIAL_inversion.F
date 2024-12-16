@@ -7,12 +7,12 @@
 !
 subroutine SERIAL_inversion(n,M,det,eval_det)
  !
- use pars,          ONLY:SP,cONE
- use drivers,       ONLY:l_nl_optics,l_real_time
- use linear_algebra,ONLY:LINEAR_ALGEBRA_error,LU_factorization,LU_inversion,&
-&                        LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
- use timing_m,       ONLY:timing
-#include<memory.h>
+ use pars,           ONLY: SP,cONE
+ use drivers,        ONLY: l_nl_optics,l_real_time
+ use linear_algebra, ONLY: LINEAR_ALGEBRA_error,LU_factorization,LU_inversion,&
+&                          LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
+ use timing_m,       ONLY: timing
+#include<y_memory.h>
  !
  integer           :: n
  complex(SP)       :: M(n,n),det
@@ -31,7 +31,7 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  !
  call LU_factorization(n,M,WS%v_int,WS%i_fail)
  !
- if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('GETRF (SI)','WS%v_cmplxspace failed')
+ if(WS%i_fail/=0) call LINEAR_ALGEBRA_error('GETRF (SI)','WS%v_cmplxspace failed')
  !
  ! Evaluate determinant if required
  !
@@ -60,7 +60,7 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  endif
  call LU_inversion(n,M,WS%v_int,WS%v_cmplx,WS%dim,WS%i_fail)
  !
- if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('GETRI (SI)','failed')
+ if(WS%i_fail/=0) call LINEAR_ALGEBRA_error('GETRI (SI)','failed')
  !
  call LINEAR_ALGEBRA_WS_reset(WS)
  !

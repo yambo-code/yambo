@@ -43,7 +43,7 @@ module parallel_m
 #endif
  !
 #if !defined _io_lib
-#include<memory.h>
+#include<y_memory.h>
 #endif
  !
 #if defined _MPI
@@ -58,7 +58,7 @@ module parallel_m
 #endif
  !
  integer            :: myid
- integer            :: mycuda_dev = 0
+ integer            :: mygpu_dev   = 0
  integer            :: ncpu
  integer            :: n_nodes(1)  = 1
  integer            :: n_IO_nodes  = 1
@@ -179,17 +179,6 @@ module parallel_m
    logical             :: consecutive
    integer,allocatable :: table(:)
  end type
- !
- ! ... GENERAL 
- !-------------
- !type(PAR_scheme),SAVE :: PARs_K_ibz
- !type(PAR_scheme),SAVE :: PARs_G_b
- !type(PAR_scheme),SAVE :: PARs_Q_bz
- !
- ! ... DIPOLES 
- !-------------
- !type(PAR_scheme),SAVE :: PARs_DIP_K_ibz
- !type(PAR_scheme),SAVE :: PARs_DIP_K_bz
  !
  ! ... PH Self Energy
  !--------------------
@@ -440,6 +429,10 @@ module parallel_m
  type(yMPI_comm),SAVE :: PAR_COM_freqs
  type(yMPI_comm),SAVE :: PAR_COM_freqs_A2A
  type(yMPI_comm),SAVE :: PAR_COM_freqs_INDEX
+ !
+ ! ... SE
+ type(yMPI_comm),SAVE :: PAR_COM_SE_WORLD_RL_resolved
+ type(yMPI_comm),SAVE :: PAR_COM_SE_WORLD
  !
  ! ... and dimensions (used for automatic cpu distribution)
  !=========================================================

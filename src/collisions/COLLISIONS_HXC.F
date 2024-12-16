@@ -32,14 +32,15 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx,QP_ng_Sc
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:OP_RD_CL,REP,VERIFY,NONE,io_COLLs
- use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t
+ use ALLOC,         ONLY:X_ALLOC_elemental
+ use X_m,           ONLY:X_mat,X_t
  use interfaces,    ONLY:WF_load,TDDFT_ALDA_eh_space_R_kernel
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use R_lattice,     ONLY:qindx_S,bz_samp,g_rot,minus_G
  use hamiltonian,   ONLY:B_mat_index
  use fft_m,         ONLY:fft_size
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)             ::E
  type(bz_samp)            ::k,q,Xk
@@ -143,7 +144,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    isc_H%iqref =0
    isc_H%ngrho =N_g_vecs_H
    !
-   call elemental_collision_alloc(isc_H ,NG=N_g_vecs_H,NG_GAMP=(/N_g_vecs_H,    1   /),TITLE='HARTREE')
+   call elemental_collision_alloc(isc_H ,NG=N_g_vecs_H,GAMP_NG=(/N_g_vecs_H,    1   /),TITLE='HARTREE')
    call elemental_collision_alloc(iscp_H,NG=N_g_vecs_H,                                TITLE='HARTREE')
    !
    YAMBO_ALLOC(rhotw_tmp,(N_g_vecs_H))
@@ -158,7 +159,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  isc_XC%iqref =0
  isc_XC%ngrho =NG_XC
  !
- call elemental_collision_alloc(iscp_XC,NG=NG_XC,NG_GAMP=(/N_g_vecs_X,  1  /),TITLE=trim(H_potential))
+ call elemental_collision_alloc(iscp_XC,NG=NG_XC,GAMP_NG=(/N_g_vecs_X,  1  /),TITLE=trim(H_potential))
  !
  if (l_compute_screening) then
    !
@@ -171,7 +172,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    call X_ALLOC_elemental('X',(/X%ng,X%ng,1/))
    YAMBO_ALLOC(EM1s,(N_g_vecs_C,N_g_vecs_C))
    !
-   call elemental_collision_alloc(isc_XC, NG=NG_XC,NG_GAMP=(/N_g_vecs_C,N_g_vecs_C/),TITLE=trim(H_potential))
+   call elemental_collision_alloc(isc_XC, NG=NG_XC,GAMP_NG=(/N_g_vecs_C,N_g_vecs_C/),TITLE=trim(H_potential))
    !
  else
    !

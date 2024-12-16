@@ -13,14 +13,14 @@ integer function variables_ELPH(ID,what)
  use ELPH,           ONLY:ph_modes,elph_nb,elph_nk_bz,ELPH_desc,elph_grids_are_expanded, &
 &                         QP_PH_n_G_bands,PH_W_debye,elph_nQ,PH_kpt_bz,l_GKKP_hosts_bare_dV,&
 &                         elph_use_q_grid,PH_qpt,elph_nQ_used,elph_Ham_bands,elph_branches
- use ELPH_intfcs,    ONLY:ELPH_alloc
+ use ALLOC,          ONLY:ELPH_alloc
  use R_lattice,      ONLY:nkbz,nqibz,q_pt
  use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk
  use vec_operate,    ONLY:rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
  use descriptors,    ONLY:IO_desc_reset
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer, intent(in) ::ID
  character(*) ::what

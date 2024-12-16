@@ -117,7 +117,7 @@ module POL_FIT_m
     ! Notes:
     !   This routine uses a QR decomposition method, which should be more
     !   numerically stable than solving the normal equations.
-#include<memory.h>
+#include<y_memory.h>
     real(DP), intent(in)  :: x(:), y(:), sig(:)
     real(DP), intent(out) :: a(:)
     real(DP), allocatable :: work(:), C(:,:), Q(:,:), R(:,:), b(:)

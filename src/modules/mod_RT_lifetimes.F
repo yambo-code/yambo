@@ -10,7 +10,7 @@ module RT_lifetimes
  use pars,           ONLY:SP,rZERO,schlen
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt,l_phel_scatt
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type RT_lifetime
    logical                  :: active=.FALSE.

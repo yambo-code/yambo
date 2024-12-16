@@ -21,7 +21,7 @@ subroutine OCCUPATIONS_Extend(Xe,E,k)
  use R_lattice,  ONLY:bz_samp
  use interfaces, ONLY:OCCUPATIONS_Gaps
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)    ::Xe,E
  type(bz_samp)   ::k

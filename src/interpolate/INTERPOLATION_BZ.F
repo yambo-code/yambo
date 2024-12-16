@@ -12,7 +12,7 @@ subroutine INTERPOLATION_BZ(K,NK,ID,R1D,R2D,C1D,C2D,E)
  use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D
  use timing_m,    ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(in)              :: K
  integer,       intent(in)              :: ID,NK

@@ -8,7 +8,7 @@
 integer function io_Overlaps(Dip,ID)
  !
  use pars,          ONLY:schlen,SP
- use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_S
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_S
  use R_lattice,     ONLY:nXkbz
  use electrons,     ONLY:n_sp_pol
  use IO_m,          ONLY:io_sec,frag_DIP,read_is_on,io_extension,&
@@ -16,6 +16,7 @@ integer function io_Overlaps(Dip,ID)
  use IO_int,        ONLY:io_connect,io_disconnect,def_variable_bulk,&
 &                        io_variable_bulk,io_header
  use timing_m,      ONLY:timing
+ use ALLOC,         ONLY:DIPOLE_ALLOC_elemental
  !
  implicit none
  type(DIPOLE_t) :: Dip
@@ -66,9 +67,7 @@ integer function io_Overlaps(Dip,ID)
  if (i_fragment==0)               goto 1
  if (i_fragment> n_sp_pol*nXkbz)  goto 1
  !
- ! if (i_fragment>=1) ik_mem=PAR_K_scheme%ibz_index(ik_bz)
- !
- if (read_is_on(ID)) call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,nXkbz/))
+ if (read_is_on(ID)) call DIPOLE_ALLOC_elemental('DIP_S',(/Dip%ib(2),Dip%ib(2),6,nXkbz/))
  !
  ! Reading size and position
  !

@@ -11,7 +11,7 @@ module R_lattice
  use descriptors, ONLY:IO_desc
  !
 #include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  integer, parameter:: MAX_kpts_to_report=50
  !
@@ -129,7 +129,7 @@ module R_lattice
  real(SP),allocatable :: g_vec(:,:)
  real(SP),allocatable :: E_of_shell(:)  ! Energy associated at each shell
  ! GPUs
- real(SP),allocatable DEV_ATTR :: g_vec_d(:,:)
+ real(SP),allocatable, target DEV_ATTR :: g_vec_d(:,:)
  integer ,allocatable DEV_ATTR :: g_rot_d(:,:)
  integer ,allocatable DEV_ATTR :: G_m_G_d(:,:)
  integer ,allocatable DEV_ATTR :: minus_G_d(:)
@@ -151,11 +151,11 @@ module R_lattice
  integer :: RIM_W_ng
  integer :: RIM_W_n_rand_pts
  logical :: RIM_W_is_diagonal
- real(SP),   allocatable          :: RIM_W_E(:,:)
- complex(SP),allocatable          :: RIM_W  (:,:,:,:)
- complex(SP),allocatable DEV_ATTR :: RIM_W_d(:,:,:,:)
+ real(SP),   allocatable, target          :: RIM_W_E(:,:)
+ complex(SP),allocatable, target          :: RIM_W  (:,:,:,:)
+ complex(SP),allocatable, target DEV_ATTR :: RIM_W_d(:,:,:,:)
  complex(DP),allocatable :: f_coeff(:,:,:,:,:)
- character(schlen)       :: rimw_type
+ character(schlen)       :: RIMW_type
  !
  ! Coulomb (including Cutoff)
  !

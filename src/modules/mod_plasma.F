@@ -8,7 +8,7 @@
 module plasma
  !
  use pars, ONLY :SP
-#include<memory.h>
+#include<y_memory.h>
  !
  ! NOTE: Plasma_tab is on bg (big grid), plasma_tab_m1 points to cg (coarse_grid).
  !       Plasma_grid connects the two

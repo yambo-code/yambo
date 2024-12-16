@@ -8,7 +8,7 @@
 module Overlaps_m
  !
  use pars,  ONLY:SP
-#include<memory.h>
+#include<y_memory.h>
  !
  complex(SP), allocatable :: S_det(:,:)        
  complex(SP), allocatable :: Sm1_plus(:,:,:,:)

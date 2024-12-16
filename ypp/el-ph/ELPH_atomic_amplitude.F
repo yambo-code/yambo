@@ -19,11 +19,11 @@ subroutine ELPH_atomic_amplitude(q)
  use stderr,              ONLY:intc
  use functions,           ONLY:bose_f
  use interfaces,          ONLY:LINEAR_ALGEBRA_driver
- use ELPH_intfcs,         ONLY:ELPH_alloc
+ use ALLOC,               ONLY:ELPH_alloc
  use linear_algebra,      ONLY:DIAGO,USE_LK
  use stderr,              ONLY:intc
  !
-#include<memory.h>
+#include<y_memory.h>
  type(bz_samp)::q
  !
  ! Work Space 

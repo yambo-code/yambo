@@ -5,18 +5,20 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+#include<dev_defs.h>
+!
 integer function io_GROT(io_db)
  !
  use D_lattice,      ONLY:nsym,inv_index
  use R_lattice,      ONLY:n_g_shells,ng_closed,ng_in_shell,E_of_shell,g_rot,minus_G
-#ifdef _CUDA
- use R_lattice,      ONLY:minus_G_d
-#endif
+ use R_lattice,      ONLY:DEV_VAR(g_rot),DEV_VAR(minus_G)
  use IO_m,           ONLY:io_status,io_sec,read_is_on
  use IO_int,         ONLY:io_connect,io_disconnect,io_elemental,&
 &                         io_bulk,io_header,ver_is_gt_or_eq
  use timing_m,       ONLY:timing
-#include<memory.h>
+ !
+#include<y_memory.h>
+ !
  integer :: io_db,nsym_db
  !
  call timing('io_GROT',OPR='start')
@@ -64,10 +66,13 @@ integer function io_GROT(io_db)
    call io_bulk(io_db,VAR="minusG",VAR_SZ=(/ng_closed/))
    call io_bulk(io_db,I1=minus_G(:ng_closed))
  endif
-#ifdef _CUDA
- if (read_is_on(io_db).and.inv_index<0) then
-   YAMBO_FREE(minus_G_d)
-   allocate(minus_G_d,source=minus_G)
+ !
+#ifdef _GPU
+ if (read_is_on(io_db)) then
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_rot),g_rot)
+   if (inv_index<0) then
+     YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(minus_G),minus_G)
+   endif
  endif
 #endif
  !

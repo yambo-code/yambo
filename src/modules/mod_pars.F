@@ -8,7 +8,7 @@
 module pars
  !
  use netcdf
- use iso_fortran_env, ONLY:int32,int64
+ use iso_fortran_env, ONLY:int32,int64,real32,real64
  !
  implicit none
  !
@@ -59,12 +59,15 @@ module pars
  ! KINDS
  !=======
  integer, parameter  :: DP = selected_real_kind(14,200)
+ !integer, parameter :: DP = real64
 #if defined _DOUBLE
- integer, parameter  :: SP  = selected_real_kind(14,200)
+ integer, parameter  :: SP = selected_real_kind(14,200)
  integer, parameter  :: SP6 = selected_real_kind(6,30)
+ !integer, parameter :: SP = real64
 #else
  integer, parameter  :: SP = selected_real_kind(6,30)
  integer, parameter  :: SP6 = selected_real_kind(6,30)
+ !integer, parameter :: SP = real32
 #endif
  !
  integer, parameter  :: IP  = int32      ! 4 bytes integer, == selected_int_kind(8)

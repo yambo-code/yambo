@@ -25,8 +25,9 @@ subroutine K_diago_driver(iq,W,X_static)
  use stderr,         ONLY:intc
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
 &                         BS_res_ares_n_mat,l_BS_optics,l_BS_dichroism !,BS_Blocks_symmetrize_K,&
- use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,BSS_slepc_double_grp,&
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E,BSS_slepc_pseudo_herm
+ use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,&
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E,BSS_slepc_pseudo_herm,&
+&                         BSS_slepc_target_E,BSS_slepc_precondition
  use X_m,            ONLY:X_t,X_OUTPUT_driver
  use electrons,      ONLY:n_sp_pol,n_spinor
  use frequency,      ONLY:w_samp
@@ -44,7 +45,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use BS_solvers,     ONLY:BSS_slepc_approach,BSS_slepc_matrix_format,&
 &                         Slepc_v,BS_HAYVEC_free
 #endif
- use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_photolum,l_BS_ares_from_res
+ use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_photolum
  use MAGNONS,        ONLY:BSS_MAGN_free
  use PHOTOLUM,       ONLY:BSS_PL_free
  !
@@ -54,7 +55,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use petscmatdef,    ONLY:tMat
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  ! 
  type(w_samp)  :: W
  integer       :: iq
@@ -62,7 +63,7 @@ subroutine K_diago_driver(iq,W,X_static)
  ! Work Space
  !
  integer       :: i_BS_mat,Input_n_eig
- logical       :: K_is_not_hermitian,l_diago,l_slepc,l_target_energy,l_dip_more
+ logical       :: K_is_not_hermitian,l_diago,l_slepc,l_dip_more
  character(1)  :: sec
  character(5)  :: Solver
  !
@@ -191,10 +192,12 @@ subroutine K_diago_driver(iq,W,X_static)
        if (index(BSS_slepc_matrix_format,"shell")>0) then
          ! 1. Here we will define a PetscShell matrix and define the matrix-vector multiplication
          ! using the K_multiply_by_V function used in the Haydock method
+         ! control of hermitian / pseudo-hermitian / non hermitian is inside K_shell_matrix
          call K_shell_matrix(i_BS_mat,slepc_mat)
        else if (index(BSS_slepc_matrix_format,"explicit")>0) then
          ! 2. Here we create a distributed PETSC matrix from the BS_blks
          !    There are 2 cases
+         ! control of hermitian / pseudo-hermitian / non hermitian is in part explicit here
          if (BSS_slepc_pseudo_herm) then
            ! 2.1. Nest matrix uses pseudo-hermitian structure of BSE, only for the coupling case
            call K_stored_in_a_nest_matrix(i_BS_mat,iq,slepc_mat)
@@ -202,7 +205,6 @@ subroutine K_diago_driver(iq,W,X_static)
            ! 2.2. Single PETSc matrix, for resonant case or non-hermitian coupling
            call K_stored_in_a_slepc_matrix(i_BS_mat,iq,slepc_mat)
          endif
-         !
        endif        
      endif
 #endif
@@ -223,7 +225,7 @@ subroutine K_diago_driver(iq,W,X_static)
        !
        if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
 #if defined _SLEPC && !defined _NL
-       if(l_slepc) call MATRIX_slepc(slepc_mat,l_target_energy,BSS_n_eig,BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
+       if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
 #endif
        !
        if (BSS_write_eig_2_db) BS_mat=BS_V_right
@@ -232,7 +234,7 @@ subroutine K_diago_driver(iq,W,X_static)
        !
        if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
 #if defined _SLEPC && !defined _NL
-       if(l_slepc) call MATRIX_slepc(slepc_mat,l_target_energy,BSS_n_eig,BS_mat,E_real=BS_E_real)
+       if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,BS_mat,E_real=BS_E_real)
 #endif
        !
        BS_E=cmplx(BS_E_real,0._SP,kind=SP)
@@ -486,12 +488,20 @@ subroutine K_diago_driver(iq,W,X_static)
      use com,           ONLY:msg
      call msg( 'sr', '[SLEPC] BSS_slepc_matrix_format                          ',BSS_slepc_matrix_format)
      !
-     call parser('BSSEnTarget',l_target_energy)
+     if (BSS_slepc_target_E/=0._SP .and. BSS_slepc_pseudo_herm) then 
+       BSS_slepc_pseudo_herm = .false. 
+       call warning('Target energy not supported in pseudo-hermitian case. Switching to non-hermitian diagonalization')
+     endif
+     if (BSS_slepc_precondition/="none" .and. BSS_slepc_pseudo_herm) then 
+       BSS_slepc_pseudo_herm = .false. 
+       call warning('Preconditioning not supported in pseudo-hermitian case. Switching to non-hermitian diagonalization')
+     endif
+
      !
      if (index(BSS_slepc_matrix_format,'explicit')>0) &
-     & call msg( 's', '[SLEPC] Faster algorithm but BSE matrix re-distributed from internal to slepc parallel scheme')
+     & call msg( 's', '[SLEPC] Faster algorithm, BSE matrix re-distributed from internal to slepc parallel scheme')
      if (BSS_slepc_matrix_format=='shell')            &
-     & call msg( 's', '[SLEPC] Slower algorithm but BSE matrix used with yambo parallel distribution scheme')
+     & call msg( 's', '[SLEPC] Slower algorithm, BSE matrix used with yambo parallel distribution scheme')
      !
      ! Number of states for partial diagonalization
      !================================================

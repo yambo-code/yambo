@@ -5,14 +5,15 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
+integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  ! 
  ! Calculates and stores on file the dielectric matrix.
  !
  use pars,          ONLY:SP,schlen
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life,l_rpa_IP 
- use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
- use X_m,           ONLY:X_t,X_ALLOC_elemental,self_detect_E_range,X_poles,l_recalculate_X,l_write_disk_Xo,&
+ use DIPOLES,       ONLY:DIPOLE_t
+ use ALLOC,         ONLY:X_ALLOC_elemental,DIPOLE_ALLOC_global
+ use X_m,           ONLY:X_t,self_detect_E_range,X_poles,l_recalculate_X,l_write_disk_Xo,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup,&
 &                        n_OPTICAL_dir_to_eval,X_par_average
@@ -27,20 +28,19 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:OP_RD_CL,OP_APP_CL,VERIFY,REP,io_RESPONSE
- use com,           ONLY:depth
  use TDDFT,         ONLY:F_xc_gspace
  use interfaces,    ONLY:WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset,MATRIX_copy
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::Xen 
  type(bz_samp) ::Xk,q
  type(X_t)     ::X
  type(DIPOLE_t)::Dip
  type(w_samp)  ::Xw
- logical       ::SILENT_MODE
+ logical       ::SILENT_MODE,CHILD
  !
  ! External
  !
@@ -76,7 +76,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! Sectioning
  !
  sec_mode='*'
- if (depth>0) sec_mode='='
+ if (CHILD) sec_mode='='
  !
  X_dielectric_matrix=-1
  Xw%grid_type="ra"
@@ -205,9 +205,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  if (.not.io_RESPONSE) X_MEM_n_tot_freqs=X_MEM_n_freqs*PAR_nQ_ibz
  if (.not.allocated(X_par)) then
    if (     io_RESPONSE) allocate(X_par(1))
-#if !defined _PAR_IO
-   if (     io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_tot_freqs/))
-#endif
+!#if !defined _PAR_IO
+!   if (     io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_tot_freqs/))
+!#endif
    if (.not.io_RESPONSE) allocate(X_par(PAR_nQ_ibz))
    if (.not.io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_tot_freqs/))
  endif
@@ -325,11 +325,32 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      call X_AVERAGE_setup("CLOSE",iq,X%q0)
    endif
    !
+   ! DS MERGE <
+   ! The following lines were after the call to X_redux and before the call to io_X before the merge
+   ! I moved them here after the merge
+   !
+   ! allocation of X_mat
+   if (io_RESPONSE.and..not.allocated(X_mat)) then
+#if ! defined _PAR_IO
+     call X_ALLOC_elemental('X',(/X%ng,X%ng,Xw%n_freqs/))
+#endif
+   endif
+   !
+   ! DS MERGE >
+   !
    ! X_par => X_mat
    !
    call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
    !
    call elemental_IO( iq , .FALSE. )
+   !
+   ! X_mat (and other few quantities) deallocate
+   !
+   if (io_RESPONSE.and.allocated(X_mat)) then
+#if ! defined _PAR_IO
+     call X_ALLOC_elemental('X')
+#endif
+   endif
    !
    ! CLEAN (1)
    ! Frequencies must not be cleaned in the case of lifetimes calculations when the EM1d
@@ -366,9 +387,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  if (allocated(F_xc_gspace)) then
    YAMBO_FREE(F_xc_gspace)
  endif
- call DIP_alloc('DIP_iR')
- call DIP_alloc('DIP_P')
- call DIP_alloc('DIP_v')
+ call DIPOLE_ALLOC_global()
  if (.not.SILENT_MODE.or.X%iq(2)==q%nibz) call WF_free(WF)
  !
  contains

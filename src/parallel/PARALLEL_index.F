@@ -14,7 +14,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  use stderr,      ONLY:intc
  use vec_operate, ONLY:sort
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(PP_indexes)        ::px
  integer                 ::uplim(:)

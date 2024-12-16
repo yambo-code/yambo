@@ -11,7 +11,7 @@ module ELPH
  use electrons,      ONLY:levels,E_reset
  use descriptors,    ONLY:IO_desc
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Dumensions
  integer   :: ph_modes=0

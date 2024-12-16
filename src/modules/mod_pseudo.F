@@ -13,7 +13,7 @@ module pseudo
  use D_lattice,   ONLY:n_atomic_species,n_atoms_species
  use qe_pseudo_m, ONLY:qe_pseudo_deallocate, qe_pseudo_allocate,&
 &                      bec_type, deallocate_bec_type
-#include <memory.h>
+#include <y_memory.h>
  !
  ! *** Non-Local pseudo. The [r,Vnl] commutator ***
  !
@@ -119,7 +119,7 @@ module pseudo
      use R_lattice,  ONLY:ng_vec
      implicit none
      YAMBO_ALLOC(pp_rhog_nlcc,(ng_vec))
-     YAMBO_ALLOC(pp_has_nlcc_atom,(n_atomic_species))
+     allocate(pp_has_nlcc_atom(n_atomic_species))
      pp_rhog_nlcc =0.
      pp_has_nlcc_atom =0
    end subroutine 
@@ -127,7 +127,7 @@ module pseudo
    subroutine PP_nlcc_free()
      YAMBO_FREE(pp_rhog_nlcc)
      YAMBO_FREE(pp_rho_nlcc)
-     YAMBO_FREE(pp_has_nlcc_atom)
+     if (allocated(pp_has_nlcc_atom)) deallocate(pp_has_nlcc_atom)
      pp_has_nlcc=.FALSE.
    end subroutine
    !

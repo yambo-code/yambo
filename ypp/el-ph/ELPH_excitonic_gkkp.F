@@ -11,7 +11,7 @@ subroutine ELPH_excitonic_gkkp(Xk)
  use units,               ONLY:HA2EV,HA2FSm1
  use BS_solvers,          ONLY:BS_mat,BSS_eh_table
  use BS,                  ONLY:BS_K_dim,BS_nT_at_k
- use ELPH_intfcs,         ONLY:ELPH_alloc
+ use ALLOC,               ONLY:ELPH_alloc
  use R_lattice,           ONLY:bz_samp
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:manage_action,OP_RD,DUMP,RD_CL_IF_END
@@ -24,7 +24,7 @@ subroutine ELPH_excitonic_gkkp(Xk)
  use stderr,              ONLY:intc
  use YPPm,                ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) :: Xk
  !

@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2018 The Yambo Team
 !
-! Authors (see AUTHORS file for details): DSDV
+! Authors (see AUTHORS file for details): DS DV
 !
 subroutine p2y_atmproj(filename,k)
  !
@@ -17,7 +17,7 @@ subroutine p2y_atmproj(filename,k)
  use atmproj_tools_module,  ONLY:atmproj_read_ext !,nwfcx
  use qe_pseudo_m,           ONLY:nsp
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(schlen), intent(in) :: filename
  type(bz_samp),     intent(in) :: k
@@ -127,7 +127,7 @@ subroutine p2y_atmproj(filename,k)
      enddo
      !
      !DEBUG <
-     !write(*,*) indx
+     !write(*,*) "nproj= ",indx
      !DEBUG >
      !
    end subroutine fill_atomic_table

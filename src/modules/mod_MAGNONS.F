@@ -10,7 +10,7 @@ module MAGNONS
  use pars,       ONLY:SP
  use BS,         ONLY:l_BS_magnons
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  complex(SP), allocatable :: BSS_dipoles_magn(:,:)
  !

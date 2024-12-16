@@ -17,7 +17,6 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,FineGd_DB1_paths,l_angular_momentum,l_position,&
 &                         l_QP_DB_expand,l_average_eh,l_interp,l_regular_grid,DIPs
  use pars,           ONLY:pi,schlen
- use D_lattice,      ONLY:i_time_rev
  use it_tools,       ONLY:ofiles_append,infile_dump,runlevel_is_on
  use it_m,           ONLY:initdefs,initmode,infile,nrnlvls,rnlvls,infile_verbosity,&
                           V_general,V_qp,V_all,V_real_time,V_nl_optics
@@ -51,7 +50,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use pars,           ONLY:SP
 #endif
 #if defined _YPP_ELPH
- use YPP_ELPH
+ use YPP_ELPH,       ONLY:l_phonons,l_atomic_amplitude,l_eliashberg,l_gkkp,l_gkkp_db,l_gkkp_dg,l_gkkp_plot,&
+&                         l_ph_ass_dos,l_phonons
 #endif
 #if defined _YAML_OUTPUT
  use pars,           ONLY:logfile_index,repfile_index
@@ -59,7 +59,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use yaml_output,    ONLY:yaml_close_stream
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)     ::E
  character(*)     ::instr

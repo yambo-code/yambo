@@ -55,8 +55,15 @@ module interfaces
      use matrix,         ONLY:PAR_matrix
      character(*)               :: operation
      type(PAR_matrix), optional :: M_in
-     type(PAR_matrix)           :: M_out
      integer         , optional :: INDEX_in
+     type(PAR_matrix)           :: M_out
+   end subroutine
+   !
+   subroutine MATRIX_transpose( operation, M_in, M_out )
+     use matrix,         ONLY:PAR_matrix,MATRIX_reset
+     character(*)               :: operation
+     type(PAR_matrix), optional :: M_in
+     type(PAR_matrix)           :: M_out
    end subroutine
    !
    subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV, COMM, COMM_name)
@@ -147,14 +154,13 @@ module interfaces
    end subroutine el_density_of_states
    !
 #if defined _SLEPC && !defined _NL
-   subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cmpl)
+   subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
      !
      use pars,           ONLY:SP,schlen
      use petscmatdef,    ONLY:tmat
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscmat.h>
      Mat                         :: M_slepc      ! matrix to diagonalize of stype from slepc
-     logical                     :: l_target_energy
      integer                     :: n_eig        ! number of eigenvalues to compute
      complex(SP)                 :: V_right(:,:) ! right eigenvalues
      complex(SP),  optional      :: V_left(:,:)  ! left eigenvalues
@@ -167,15 +173,15 @@ module interfaces
    integer function eval_G_minus_G(iG,iGo,force_recompute,COMM)
      use parallel_m,      ONLY:yMPI_comm
      integer :: iG,iGo
-     logical,        optional :: force_recompute
+     logical,         optional :: force_recompute
      type(yMPI_comm), optional :: COMM
    end function
    !
-   subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,sp_pol_to_load,&
+   subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load,&
 &                     k_extrema_only,space,title,impose_free_and_alloc,&
 &                     force_WFo,keep_states_to_load,quiet)
      use wave_func,       ONLY:WAVEs
-     integer :: iG_max,iGo_max,bands_to_load(2),kpts_to_load(2)
+     integer :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
      type(WAVEs)           :: WF
      integer,     optional :: sp_pol_to_load(2)
      character(*),optional :: space
@@ -292,37 +298,27 @@ module interfaces
      type(tddft_wf_t), target, intent(inout) :: tddft_wf
    end function TDDFT_ALDA_eh_space_R_kernel
    !
- end interface
- !
- interface WF_shift_kpoint
-   !
-   subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k_out)
+   subroutine WF_shift_kpoint_gpu(b_to_shift,nb_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k_out)
      use pars,          ONLY:SP
      use electrons,     ONLY:n_spinor
      use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
      use R_lattice,     ONLY:bz_samp
-     integer,       intent(in) :: wf_shift(3),ikbz,i_sp_pol,b_to_shift(2)
+     integer,       intent(in) :: wf_shift(3),ikbz,i_sp_pol,b_to_shift(2),nb_to_shift
      type(bz_samp), intent(in) :: Xk
-     complex(SP), intent(in)  DEV_ATTR :: &
-&         WF_k_in (wf_ng_1st_BZ,  n_spinor,b_to_shift(1):b_to_shift(2))
-     complex(SP), intent(out) DEV_ATTR :: &
-&         WF_k_out(wf_ng_overlaps,n_spinor,b_to_shift(1):b_to_shift(2))
-   end subroutine
- end interface 
- !
- interface WF_symm_kpoint
+     complex(SP),   intent(in)  DEV_ATTR :: WF_k_in (wf_ng_1st_BZ,n_spinor,nb_to_shift)
+     complex(SP),   intent(out) DEV_ATTR :: WF_k_out(wf_ng_overlaps,n_spinor,nb_to_shift)
+   end subroutine WF_shift_kpoint_gpu
    !
-   subroutine WF_symm_kpoint_cpu(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
+   subroutine WF_symm_kpoint(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
      use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
      use wave_func,     ONLY:wf_ng_1st_BZ
      use electrons,     ONLY:n_spinor
      integer,       intent(in)  :: ikbz,i_sp_pol,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
-     complex(SP),   intent(out) :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2))
-   end subroutine WF_symm_kpoint_cpu
+     complex(SP),   intent(out) :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(2)-b_to_load(1)+1)
+   end subroutine WF_symm_kpoint
    !
-#ifdef _CUDA
    subroutine WF_symm_kpoint_gpu(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
      use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
@@ -330,31 +326,25 @@ module interfaces
      use electrons,     ONLY:n_spinor
      integer,       intent(in)  :: ikbz,i_sp_pol,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
-     complex(SP),   intent(out) DEV_ATTR :: &
-&       WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2))
+     complex(SP),   intent(out) DEV_ATTR :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(2)-b_to_load(1)+1)
    end subroutine WF_symm_kpoint_gpu
-#endif
- end interface
- !
- interface WF_apply_symm
    !
-   subroutine WF_apply_symm_cpu(isc,WF_symm)
+   subroutine WF_apply_symm(isc,WF_symm)
      use pars,          ONLY:SP
      use FFT_m,         ONLY:fft_size
      use electrons,     ONLY:n_spinor
      integer,     intent(in)  :: isc(4)
      complex(SP), intent(out) :: WF_symm(fft_size,n_spinor)
-   end subroutine WF_apply_symm_cpu
+   end subroutine WF_apply_symm
    !
-#ifdef _CUDA
-   subroutine WF_apply_symm_gpu(isc,WF_symm_d)
+   subroutine WF_apply_symm_gpu(isc,WF_symm)
      use pars,          ONLY:SP
      use FFT_m,         ONLY:fft_size
      use electrons,     ONLY:n_spinor
      integer,     intent(in)  :: isc(4)
-     complex(SP), intent(out) DEV_ATTR :: WF_symm_d(fft_size,n_spinor)
+     complex(SP), intent(out) DEV_ATTR :: WF_symm(fft_size,n_spinor)
    end subroutine WF_apply_symm_gpu
-#endif
+   !
  end interface
  !
 end module interfaces

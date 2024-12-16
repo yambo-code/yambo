@@ -12,7 +12,7 @@ module BS_solvers
  use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_dim,BS_H_dim,BS_block,n_BS_blks,BS_blk
  use matrix,         ONLY:PAR_matrix
  !
-#include <memory.h>
+#include <y_memory.h>
  !
  ! Epsilon factor
  !==================

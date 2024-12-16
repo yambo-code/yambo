@@ -1,6 +1,7 @@
  SET_defaults.o
  SET_logicals.o
  mod_ACFDT.o
+ mod_ALLOC.o
  mod_BS.o
  mod_BS_solvers.o
  mod_COLL_interfaces.o
@@ -8,7 +9,6 @@
  mod_DIPOLES.o
  mod_D_lattice.o
  mod_ELPH.o
- mod_ELPH_intfcs.o
  mod_FFT.o
  mod_H_interfaces.o
  mod_IO.o
@@ -39,7 +39,8 @@
  mod_collision_ext.o
  mod_com.o
  mod_com_interfcs.o
- mod_cuda.o
+ mod_cudafor.o
+ mod_cufft.o
  mod_cusolverdn_y.o
  mod_cutoff_ws.o
  mod_debug.o
@@ -51,7 +52,10 @@
  mod_frequency.o
  mod_functions.o
  mod_global_XC.o
+ mod_gpu.o
  mod_hamiltonian.o
+ mod_hip.o
+ mod_hipfft.o
  mod_interfaces.o
  mod_interpolate.o
  mod_interpolate_tools.o
@@ -62,6 +66,7 @@
  mod_matrix.o
  mod_matrix_operate.o
  mod_memory.o
+ mod_mklfft_gpu.o
  mod_nl_optics.o
  mod_openmp.o
  mod_parallel.o

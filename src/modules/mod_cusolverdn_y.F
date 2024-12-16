@@ -20,11 +20,13 @@
 ! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ! DEALINGS IN THE SOFTWARE.
 !
+#include<dev_defs.h>
+!
 module cusolverdn_y
   !
-  use iso_c_binding
+#if defined _GPU && defined _CUDA
   !
-#ifdef _CUDA
+  use iso_c_binding
   ! enums
   enum, bind(C) ! cusolverStatus_t
      enumerator :: CUSOLVER_STATUS_SUCCESS=0
@@ -53,8 +55,10 @@ module cusolverdn_y
   end enum
 
   ! types
-
-  type cusolverDnHandle
+  ! DEBUG <
+  !type :: cusolverDnHandle
+  ! DEBUG >
+  type, bind(c) :: cusolverDnHandle
      type(c_ptr) :: handle
   end type cusolverDnHandle
 
@@ -65,6 +69,7 @@ module cusolverdn_y
   interface
      integer(c_int) function cusolverDnCreate(handle) &
           bind(C,name='cusolverDnCreate')
+       use iso_c_binding
        import cusolverDnHandle
        type(cusolverDnHandle) :: handle
      end function cusolverDnCreate
@@ -73,6 +78,7 @@ module cusolverdn_y
   interface
      integer(c_int) function cusolverDnDestroy(handle) &
           bind(C,name='cusolverDnDestroy')
+       use iso_c_binding
        import cusolverDnHandle
        type(cusolverDnHandle), value :: handle
      end function cusolverDnDestroy
@@ -81,7 +87,12 @@ module cusolverdn_y
   interface
      integer(c_int) function cusolverDnSetStream(handle, stream) &
           bind(C,name='cusolverDnSetStream')
+#ifdef _CUDAF
        use cudafor
+#else
+       use cudafor_m_y
+#endif
+       use iso_c_binding
        import cusolverDnHandle
        type(cusolverDnHandle), value :: handle
        integer(cuda_stream_kind), value :: stream
@@ -97,7 +108,7 @@ module cusolverdn_y
        type(cusolverDnHandle), value :: handle 
        integer(c_int), value :: uplo 
        integer(c_int), value :: n 
-       complex(8), device :: A(*) 
+       complex(8) DEV_ATTR :: A(*) 
        integer(c_int), value :: lda 
        integer(c_int) :: Lwork
      end function cusolverDnZpotrf_bufferSize
@@ -112,7 +123,7 @@ module cusolverdn_y
        type(cusolverDnHandle), value :: handle 
        integer(c_int), value :: uplo 
        integer(c_int), value :: n 
-       real(8), device :: A(*) 
+       real(8) DEV_ATTR :: A(*) 
        integer(c_int), value :: lda 
        integer(c_int) :: Lwork
      end function cusolverDnDpotrf_bufferSize
@@ -127,12 +138,12 @@ module cusolverdn_y
        type(cusolverDnHandle), value :: handle 
        integer(c_int), value :: uplo 
        integer(c_int), value :: n 
-       complex(8), device :: A(*) 
+       complex(8) DEV_ATTR :: A(*) 
        integer(c_int), value :: lda 
        !pgi$ ignore_tkr (r) Workspace
-       complex(8), device :: Workspace(*)
+       complex(8) DEV_ATTR :: Workspace(*)
        integer(c_int), value :: Lwork
-       integer(c_int), device :: devInfo
+       integer(c_int) DEV_ATTR :: devInfo
      end function cusolverDnZpotrf
   end interface
 
@@ -145,12 +156,12 @@ module cusolverdn_y
        type(cusolverDnHandle), value :: handle 
        integer(c_int), value :: uplo 
        integer(c_int), value :: n 
-       real(8), device :: A(*) 
+       real(8) DEV_ATTR :: A(*) 
        integer(c_int), value :: lda 
        !pgi$ ignore_tkr (r) Workspace
-       real(8), device :: Workspace(*)
+       real(8) DEV_ATTR :: Workspace(*)
        integer(c_int), value :: Lwork
-       integer(c_int), device :: devInfo
+       integer(c_int) DEV_ATTR :: devInfo
      end function cusolverDnDpotrf
   end interface
 
@@ -165,11 +176,11 @@ module cusolverdn_y
        integer(c_int), value :: jobz
        integer(c_int), value :: uplo
        integer(c_int), value :: n
-       complex(8), device :: A(*)
+       complex(8) DEV_ATTR :: A(*)
        integer(c_int), value :: lda
-       complex(8), device :: B(*)
+       complex(8) DEV_ATTR :: B(*)
        integer(c_int), value :: ldb
-       real(8), device :: W(*)
+       real(8) DEV_ATTR :: W(*)
        integer(c_int) :: Lwork
      end function cusolverDnZhegvd_bufferSize
   end interface
@@ -185,11 +196,11 @@ module cusolverdn_y
        integer(c_int), value :: jobz
        integer(c_int), value :: uplo
        integer(c_int), value :: n
-       real(8), device :: A(*)
+       real(8) DEV_ATTR :: A(*)
        integer(c_int), value :: lda
-       real(8), device :: B(*)
+       real(8) DEV_ATTR :: B(*)
        integer(c_int), value :: ldb
-       real(8), device :: W(*)
+       real(8) DEV_ATTR :: W(*)
        integer(c_int) :: Lwork
      end function cusolverDnDsygvd_bufferSize
   end interface
@@ -205,15 +216,15 @@ module cusolverdn_y
        integer(c_int), value :: jobz
        integer(c_int), value :: uplo
        integer(c_int), value :: n
-       complex(8), device :: A(*)
+       complex(8) DEV_ATTR :: A(*)
        integer(c_int), value :: lda
-       complex(8), device :: B(*)
+       complex(8) DEV_ATTR :: B(*)
        integer(c_int), value :: ldb
-       real(8), device :: W(*)
+       real(8) DEV_ATTR :: W(*)
        !pgi$ ignore_tkr (r) Workspace
-       complex(8), device :: Workspace(*)
+       complex(8) DEV_ATTR :: Workspace(*)
        integer(c_int), value :: Lwork
-       integer(c_int), device :: devInfo
+       integer(c_int) DEV_ATTR :: devInfo
      end function cusolverDnZhegvd
   end interface
 
@@ -228,15 +239,15 @@ module cusolverdn_y
        integer(c_int), value :: jobz
        integer(c_int), value :: uplo
        integer(c_int), value :: n
-       real(8), device :: A(*)
+       real(8) DEV_ATTR :: A(*)
        integer(c_int), value :: lda
-       real(8), device :: B(*)
+       real(8) DEV_ATTR :: B(*)
        integer(c_int), value :: ldb
-       real(8), device :: W(*)
+       real(8) DEV_ATTR :: W(*)
        !pgi$ ignore_tkr (r) Workspace
-       real(8), device :: Workspace(*)
+       real(8) DEV_ATTR :: Workspace(*)
        integer(c_int), value :: Lwork
-       integer(c_int), device :: devInfo
+       integer(c_int) DEV_ATTR :: devInfo
      end function cusolverDnDsygvd
   end interface
 
@@ -250,9 +261,9 @@ module cusolverdn_y
        integer(c_int), value :: jobz
        integer(c_int), value :: uplo
        integer(c_int), value :: n
-       complex(8), device :: A(*)
+       complex(8) DEV_ATTR :: A(*)
        integer(c_int), value :: lda
-       real(8), device :: W(*)
+       real(8) DEV_ATTR :: W(*)
        integer(c_int) :: Lwork
      end function cusolverDnZheevd_bufferSize
   end interface
@@ -267,13 +278,13 @@ module cusolverdn_y
        integer(c_int), value :: jobz
        integer(c_int), value :: uplo
        integer(c_int), value :: n
-       complex(8), device :: A(*)
+       complex(8) DEV_ATTR :: A(*)
        integer(c_int), value :: lda
-       real(8), device :: W(*)
+       real(8) DEV_ATTR :: W(*)
        !pgi$ ignore_tkr (r) Workspace
-       complex(8), device :: Workspace(*)
+       complex(8) DEV_ATTR :: Workspace(*)
        integer(c_int), value :: Lwork
-       integer(c_int), device :: devInfo
+       integer(c_int) DEV_ATTR :: devInfo
      end function cusolverDnZheevd
   end interface
 
@@ -286,7 +297,7 @@ module cusolverdn_y
        type(cusolverDnHandle), value :: handle 
        integer(c_int), value :: m
        integer(c_int), value :: n
-       complex(4), device :: A(lda,*) 
+       complex(4) DEV_ATTR :: A(lda,*) 
        integer(c_int), value :: lda 
        integer(c_int) :: Lwork
      end function cusolverDnCgetrf_bufferSize
@@ -301,12 +312,12 @@ module cusolverdn_y
        type(cusolverDnHandle), value :: handle
        integer(c_int), value :: m
        integer(c_int), value :: n
-       complex(4), device :: A(lda,*)
+       complex(4) DEV_ATTR :: A(lda,*)
        integer(c_int), value :: lda
        !pgi$ ignore_tkr (r) Workspace
-       complex(4), device :: Workspace(*)
-       integer(c_int), device :: devIpiv(*)
-       integer(c_int), device :: devInfo(*)
+       complex(4) DEV_ATTR :: Workspace(*)
+       integer(c_int) DEV_ATTR :: devIpiv(*)
+       integer(c_int) DEV_ATTR :: devInfo(*)
      end function cusolverDnCgetrf
   end interface
 
@@ -320,12 +331,12 @@ module cusolverdn_y
        integer(c_int), value :: trans
        integer(c_int), value :: n
        integer(c_int), value :: nrhs
-       complex(4), device :: A(lda,*)
+       complex(4) DEV_ATTR :: A(lda,*)
        integer(c_int), value :: lda
-       integer(c_int), device :: devIpiv(*)
-       complex(4), device :: B(ldb,*)
+       integer(c_int) DEV_ATTR :: devIpiv(*)
+       complex(4) DEV_ATTR :: B(ldb,*)
        integer(c_int), value :: ldb
-       integer(c_int), device :: devInfo(*)
+       integer(c_int) DEV_ATTR :: devInfo(*)
      end function cusolverDnCgetrs
   end interface
 
@@ -338,7 +349,7 @@ module cusolverdn_y
        type(cusolverDnHandle), value :: handle 
        integer(c_int), value :: m
        integer(c_int), value :: n
-       complex(8), device :: A(lda,*) 
+       complex(8) DEV_ATTR :: A(lda,*) 
        integer(c_int), value :: lda 
        integer(c_int) :: Lwork
      end function cusolverDnZgetrf_bufferSize
@@ -353,12 +364,12 @@ module cusolverdn_y
        type(cusolverDnHandle), value :: handle
        integer(c_int), value :: m
        integer(c_int), value :: n
-       complex(8), device :: A(lda,*)
+       complex(8) DEV_ATTR :: A(lda,*)
        integer(c_int), value :: lda
        !pgi$ ignore_tkr (r) Workspace
-       complex(8), device :: Workspace(*)
-       integer(c_int), device :: devIpiv(*)
-       integer(c_int), device :: devInfo(*)
+       complex(8) DEV_ATTR :: Workspace(*)
+       integer(c_int) DEV_ATTR :: devIpiv(*)
+       integer(c_int) DEV_ATTR :: devInfo(*)
      end function cusolverDnZgetrf
   end interface
 
@@ -372,15 +383,25 @@ module cusolverdn_y
        integer(c_int), value :: trans
        integer(c_int), value :: n
        integer(c_int), value :: nrhs
-       complex(8), device :: A(lda,*)
+       complex(8) DEV_ATTR :: A(lda,*)
        integer(c_int), value :: lda
-       integer(c_int), device :: devIpiv(*)
-       complex(8), device :: B(ldb,*)
+       integer(c_int) DEV_ATTR :: devIpiv(*)
+       complex(8) DEV_ATTR :: B(ldb,*)
        integer(c_int), value :: ldb
-       integer(c_int), device :: devInfo(*)
+       integer(c_int) DEV_ATTR :: devInfo(*)
      end function cusolverDnZgetrs
   end interface
 
 #endif
 
+contains
+
+  !
+  ! dummy subroutine to avoid having an empty module
+  subroutine cusolverdn_y_dummy__(i)
+     integer :: i
+     i=0
+  end subroutine
+
 end module cusolverdn_y
+

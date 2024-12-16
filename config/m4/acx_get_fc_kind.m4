@@ -35,7 +35,7 @@ case "${FC}" in
       FCKIND="intel"
       FCVERSION=`$FC -v 2>&1`
       ;;
-    *ifort*)
+    *ifort* | *ifx* )
       FCKIND="intel"
       FCVERSION=`$FC -v 2>&1`
       $FC -v >& ver_
@@ -52,6 +52,10 @@ case "${FC}" in
       VER_18=`grep 18. ver_ | wc -l`
       VER_19=`grep 19. ver_ | wc -l`
       VER_2021=`grep 2021. ver_ | wc -l`
+      VER_2022=`grep 2022. ver_ | wc -l`
+      VER_2023=`grep 2023. ver_ | wc -l`
+      VER_2024=`grep 2024. ver_ | wc -l`
+      VER_2025=`grep 2025. ver_ | wc -l`
       if ! test "$VER_8" = "0";  then INTELVERSION="8"  ; fi
       if ! test "$VER_9" = "0";  then INTELVERSION="9"  ; fi
       if ! test "$VER_10" = "0"; then INTELVERSION="10" ; fi
@@ -65,6 +69,10 @@ case "${FC}" in
       if ! test "$VER_18" = "0"; then INTELVERSION="18" ; fi
       if ! test "$VER_19" = "0"; then INTELVERSION="19" ; fi
       if ! test "$VER_2021" = "0"; then INTELVERSION="2021" ; fi
+      if ! test "$VER_2022" = "0"; then INTELVERSION="2022" ; fi
+      if ! test "$VER_2023" = "0"; then INTELVERSION="2023" ; fi
+      if ! test "$VER_2024" = "0"; then INTELVERSION="2024" ; fi
+      if ! test "$VER_2025" = "0"; then INTELVERSION="2025" ; fi
       rm -f ver_
       ;;
     *)

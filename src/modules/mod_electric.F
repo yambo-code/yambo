@@ -10,7 +10,7 @@ module electric
  use pars,       ONLY:SP,schlen,lchlen
  use electrons,  ONLY:levels
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  complex(SP)            :: NL_initial_P(3) ! in principle it can be different from zero
  !

@@ -8,9 +8,11 @@
 module wave_func
  !
  use pars,           ONLY:SP
+ use devxlib,        ONLY:devxlib_mapped
+ use gpu_m,          ONLY:have_gpu
  !
 #include <dev_defs.h>
-#include <memory.h>
+#include <y_memory.h>
  !
  type WAVEs 
    integer              :: b(2)      ! band range 
@@ -79,17 +81,10 @@ module wave_func
  !
  interface
    !
-   integer function io_WF_old(ID,wf_old)
-     use pars,       ONLY: SP
-     integer            :: ID
-     real(SP), optional :: wf_old(:,:,:,:)
-   end function
-   !
-   integer function io_WF(ID,wf,wf_d)
+   integer function io_WF(ID,wf)
      use pars,       ONLY: SP
      integer            :: ID
      complex(SP), optional :: wf(:,:,:)
-     complex(SP), optional DEV_ATTR :: wf_d(:,:,:)
    end function
    !
    function WF_symm(ifft,isc)
@@ -99,7 +94,7 @@ module wave_func
      complex(SP),dimension(n_spinor) :: WF_symm
    end function
    !
-#if defined _CUDA
+#if defined _GPU
    function WF_symm_gpu(ifft,isc)
      use pars,        ONLY: SP
      use electrons,   ONLY: n_spinor
@@ -115,8 +110,11 @@ module wave_func
    subroutine WF_copy(WF_in,WF_out)
      use electrons,  ONLY: n_spinor
      type(WAVEs):: WF_in,WF_out
-     YAMBO_ALLOC(WF_out%c,(size(WF_in%c(:,1,1)),n_spinor,WF_in%N))
+     logical :: lpres
+     !
+     YAMBO_ALLOC_MOLD(WF_out%c,WF_in%c)
      YAMBO_ALLOC(WF_out%index,(WF_in%b(1):WF_in%b(2),WF_in%k(1):WF_in%k(2),WF_in%sp_pol(1):WF_in%sp_pol(2)))
+     !
      WF_out%b      = WF_in%b
      WF_out%k      = WF_in%k
      WF_out%sp_pol = WF_in%sp_pol
@@ -126,9 +124,12 @@ module wave_func
      WF_out%c      = WF_in%c
      WF_out%index  = WF_in%index
      !
-     if (allocated(WF_in%c_d)) then
-       YAMBO_ALLOC_SOURCE(WF_out%c_d,WF_in%c)
+     lpres=have_gpu.and.devxlib_mapped(DEV_VAR(WF_in%c))
+#ifdef _GPU
+     if (lpres) then
+       YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(WF_out%c),WF_in%c)
      endif
+#endif
    end subroutine
    !
    subroutine WF_derivative_alloc(cart_direction)

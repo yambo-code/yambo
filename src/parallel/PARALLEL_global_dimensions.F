@@ -35,7 +35,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
  use QP_m,          ONLY:QP_n_states,QP_nb,QP_n_G_bands
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q
@@ -90,7 +90,9 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
 #if defined _PHEL
  if (ENVIRONMENT=="Phonon_Self_Energy")        PAR_Q_ibz_range=PH_Q
 #endif
+ !
  if (ENVIRONMENT=="Self_Energy"       ) then
+   PAR_n_G_vectors= X_ng
 #if defined _SC
    if (l_sc_run.and.&
 &      any( (/P_collisions%N,COH_collisions%N,HXC_collisions%N/)> 0))  &

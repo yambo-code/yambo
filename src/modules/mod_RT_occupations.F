@@ -11,7 +11,7 @@ module RT_occupations
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt,&
 &                         l_phel_scatt,l_phel_corr
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type RT_occupation
    character(schlen)        :: KIND

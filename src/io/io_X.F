@@ -10,7 +10,8 @@ integer function io_X(X,Xw,ID)
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:g_vec
- use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_desc,X_ALLOC_elemental
+ use ALLOC,         ONLY:X_ALLOC_elemental
+ use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_desc,X_par
  use frequency,     ONLY:w_samp
  use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header,&
 &                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental,&
@@ -20,11 +21,8 @@ integer function io_X(X,Xw,ID)
 &                        IO_OUTDATED_DB,frag_RESPONSE,IO_NO_DATABASE,io_mode,DUMP
  use stderr,        ONLY:intc,STRING_same
  use timing_m,      ONLY:timing
-#if defined _PAR_IO
- use X_m,           ONLY:X_par
-#endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(X_t)   :: X
  type(w_samp):: Xw
@@ -32,7 +30,7 @@ integer function io_X(X,Xw,ID)
  !
  !Work Space
  !
- integer             ::sec_size,i1,iq,i_err,io_com_save,io_err,ID_frag
+ integer             ::sec_size,i1,ig1,ig2,iq,i_err,io_com_save,io_err,ID_frag
  logical             ::different_db_RL_order,EM1S_NOSOC
  character (schlen)  ::ch,db_desc
  character (2)       ::local_XC_KIND
@@ -190,29 +188,75 @@ integer function io_X(X,Xw,ID)
    !
    ch="X_Q_"//trim(intc(iq))
    !
-#if defined _PAR_IO
+   ! on write:
+   !   -   serial IO => use X_mat
+   !   - parallel IO => use X_par
+   !
+   ! on read: (independently of _PAR_IO)
+   !   -  if  allocated X_mat =>  use X_mat
+   !   -  if  allocated X_par =>  use X_par
+   !   -  if nothing allocated use X_mat (backward compatibility)
+   !   -  if both are allocated, but are filled
+   !
+   ! Note that only X_par(1) is used since io_X is called
+   ! only when io_RESPONSE=.true., implying one q-point
+   ! at a time is dealt with.
+   !
    if(write_is_on(ID)) then
      !
+#if defined _PAR_IO
      call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP,par_io_kind='collective')
      call  io_variable_bulk(ID_frag,1,C3=X_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,X_par(1)%rows(1),X_par(1)%cols(1),1/))
-     !
-   else if(read_is_on(ID)) then
-#endif
-     !
-     if (.not.allocated(X_mat).and.read_is_on(ID)) call X_ALLOC_elemental('X',(/X%ng,X%ng,Xw%n_freqs/))
+#else
      call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
      call  io_variable_bulk(ID_frag,1,C3=X_mat(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
-     !
-#if defined _PAR_IO
-   endif
 #endif
+     !
+   else if(read_is_on(ID)) then
+     !
+     if (.not.allocated(X_par)) then
+       if (.not.allocated(X_mat)) call X_ALLOC_elemental('X',(/X%ng,X%ng,Xw%n_freqs/))
+     endif
+     !
+     if (allocated(X_mat)) then
+       call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
+       call  io_variable_bulk(ID_frag,1,C3=X_mat(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
+     endif
+     !
+     if (allocated(X_par)) then
+       call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
+       call  io_variable_bulk(ID_frag,1,C3=X_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,X_par(1)%rows(1),X_par(1)%cols(1),1/))
+     endif
+     !
+   endif
+   !
+   ! handle different RL_ordering
    !
    if (read_is_on(ID) .and. different_db_RL_order) then 
-     YAMBO_ALLOC(X_on_disk,(X%ng,X%ng))
-     do i1=1,Xw%n_freqs
-       X_on_disk=X_mat(:,:,i1)
-       X_mat(X_RLcomp_ig(:),X_RLcomp_ig(:),i1)=X_on_disk
-     enddo
+     !
+     if (allocated(X_mat)) then
+       YAMBO_ALLOC(X_on_disk,(X%ng,X%ng))
+       do i1=1,Xw%n_freqs
+         X_on_disk=X_mat(:,:,i1)
+         X_mat(X_RLcomp_ig(:),X_RLcomp_ig(:),i1)=X_on_disk
+       enddo
+     endif
+     !
+     if (allocated(X_par)) then
+       YAMBO_ALLOC(X_on_disk,(X_par(1)%rows(1):X_par(1)%rows(2),X_par(1)%cols(1):X_par(1)%cols(2)))
+       do i1=1,Xw%n_freqs
+         !
+         X_on_disk=X_par(1)%blc(:,:,i1)
+         !
+         do ig2=X_par(1)%cols(1),X_par(1)%cols(2)
+         do ig1=X_par(1)%rows(1),X_par(1)%rows(2)
+           X_par(1)%blc(X_RLcomp_ig(ig1),X_RLcomp_ig(ig2),i1)=X_on_disk(ig1,ig2)
+         enddo
+         enddo
+         !
+       enddo
+     endif
+     !
      YAMBO_FREE(X_on_disk)
    endif
    !

@@ -10,7 +10,7 @@ module linear_algebra
  use pars,       ONLY:SP,schlen
  !
 #include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  integer, parameter :: USE_LK=1
  integer, parameter :: USE_SLK=2
@@ -63,7 +63,17 @@ module linear_algebra
    subroutine LINEAR_ALGEBRA_WS_reset(WS)
      use drivers,   ONLY:l_nl_optics,l_real_time
      type(LALGEBRA_WS) :: WS
+     !
      if(.not.(l_nl_optics.or.l_real_time)) then
+       YAMBO_FREE_GPU(DEV_VAR(WS%v_real))
+       YAMBO_FREE_GPU(DEV_VAR(WS%vp_real))
+       YAMBO_FREE_GPU(DEV_VAR(WS%v_cmplx))
+       YAMBO_FREE_GPU(DEV_VAR(WS%vp_cmplx))
+       YAMBO_FREE_GPU(DEV_VAR(WS%m1_cmplx))
+       YAMBO_FREE_GPU(DEV_VAR(WS%m2_cmplx))
+       YAMBO_FREE_GPU(DEV_VAR(WS%v_int))
+       YAMBO_FREE_GPU(DEV_VAR(WS%vp_int))
+       !
        YAMBO_FREE(WS%v_real)
        YAMBO_FREE(WS%vp_real)
        YAMBO_FREE(WS%v_cmplx)
@@ -72,15 +82,6 @@ module linear_algebra
        YAMBO_FREE(WS%m2_cmplx)
        YAMBO_FREE(WS%vp_int)
        YAMBO_FREE(WS%v_int)
-       !
-       YAMBO_FREE(WS%v_real_d)
-       YAMBO_FREE(WS%vp_real_d)
-       YAMBO_FREE(WS%v_cmplx_d)
-       YAMBO_FREE(WS%vp_cmplx_d)
-       YAMBO_FREE(WS%m1_cmplx_d)
-       YAMBO_FREE(WS%m2_cmplx_d)
-       YAMBO_FREE(WS%v_int_d)
-       YAMBO_FREE(WS%vp_int_d)
      else
        if(allocated(WS%v_real))   deallocate(WS%v_real)
        if(allocated(WS%vp_real))  deallocate(WS%vp_real)
@@ -91,6 +92,7 @@ module linear_algebra
        if(allocated(WS%vp_int))   deallocate(WS%vp_int)
        if(allocated(WS%v_int))    deallocate(WS%v_int)
        !
+#ifdef _CUDAF
        if(allocated(WS%v_real_d))   deallocate(WS%v_real_d)
        if(allocated(WS%vp_real_d))  deallocate(WS%vp_real_d)
        if(allocated(WS%v_cmplx_d))  deallocate(WS%v_cmplx_d)
@@ -99,6 +101,13 @@ module linear_algebra
        if(allocated(WS%m2_cmplx_d)) deallocate(WS%m2_cmplx_d)
        if(allocated(WS%vp_int_d))   deallocate(WS%vp_int_d)
        if(allocated(WS%v_int_d))    deallocate(WS%v_int_d)
+#endif
+#ifdef _OPENACC
+       ! AF: This is only for NL or RT runs
+       !     commented here for simplicity
+       !
+       !call error("[GPU] openacc FREE not implemented in LinAlg_WS_reset")
+#endif
      endif
      !
    end subroutine
@@ -106,7 +115,7 @@ module linear_algebra
    subroutine LINEAR_ALGEBRA_error(calling_subr,message_)
      use stderr,  ONLY:STRING_pack
      character(*) calling_subr,message_
-     call error( trim( STRING_pack('LINEAR ALGEBRA driver [',trim(calling_subr),']',trim(message_)) ))
+     call error( trim( STRING_pack('LINEAR ALGEBRA driver [',trim(calling_subr),'] ',trim(message_)) ))
    end subroutine
    !
    !============================

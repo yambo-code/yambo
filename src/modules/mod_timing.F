@@ -293,9 +293,6 @@ MODULE timing_m
    !
    SUBROUTINE clock_start(obj)
      use LIVE_t, ONLY:cti
-#ifdef _NVTX
-     use nvtx
-#endif
      IMPLICIT NONE
      TYPE(clock), INTENT(inout) :: obj    
      !
@@ -303,16 +300,10 @@ MODULE timing_m
      call cti(obj%start)
      obj%running = .TRUE.
      obj%call_number = obj%call_number + 1
-#ifdef _NVTX
-     call nvtxStartRange(obj%name,obj%indx)
-#endif
    END SUBROUTINE clock_start
    !
    SUBROUTINE clock_stop(obj)
      use LIVE_t, ONLY:cti
-#ifdef _NVTX
-     use nvtx
-#endif
      IMPLICIT NONE
      TYPE(clock), INTENT(inout) :: obj    
      !
@@ -322,9 +313,6 @@ MODULE timing_m
      call cti(obj%stop)
      obj%total_time = obj%total_time + real(obj%stop-obj%start,DP)
      obj%running = .FALSE.
-#ifdef _NVTX
-     call nvtxEndRange()
-#endif
    END SUBROUTINE clock_stop
    !
    SUBROUTINE clock_update(obj)

@@ -15,7 +15,7 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  use vec_operate,    ONLY:c2a,k2bz
  use R_lattice,      ONLY:rl_sop,bz_samp
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp)::k
  character(1) ::units

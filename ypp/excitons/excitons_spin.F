@@ -23,7 +23,7 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_index
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) :: Xk
  integer       :: BS_E_degs(BSS_n_eig)

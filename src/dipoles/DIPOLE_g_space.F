@@ -208,7 +208,8 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
              i_wf=WF%index(ib,ik,i_sp_pol)
              !
              call DIPOLE_kb_project(pp_range,Dip%ib,ib,i_wf,wf_ncx,size(WF%c,3),npp,pp_dim_yambo,&
-&                                   DEV_VAR(WF%c),DEV_VAR(kbv)(:,:,:,:npp),XX)
+&                                   DEV_VAR(WF%c)(:,:,i_wf),DEV_VAR(kbv)(:,:,:,:npp),XX(:,:,:,pp_range(1):pp_range(2),ib))
+!&                                   DEV_VAR(WF%c),DEV_VAR(kbv)(:,:,:,:npp),XX)
              !
            enddo
            !

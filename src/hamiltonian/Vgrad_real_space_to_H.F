@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2017 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): DS
 !
 subroutine Vgrad_real_space_to_H(ik,H,WF,V_grad)
  !
@@ -19,9 +19,8 @@ subroutine Vgrad_real_space_to_H(ik,H,WF,V_grad)
  use matrix_operate, ONLY:UP_matrix_index
  use hamiltonian,    ONLY:H_ref_bands
  use timing_m,       ONLY:timing
-#if defined _RT || defined _SC
  use parallel_m,     ONLY:PAR_IND_B_mat_ordered
-#endif
+ !
  implicit none
  !
  integer,     intent(in)    :: ik

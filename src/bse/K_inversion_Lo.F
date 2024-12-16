@@ -22,10 +22,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  use parallel_m,     ONLY:PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
-#if defined _ELPH
  use BS_solvers,     ONLY:BSS_uses_GreenF
  use BS,             ONLY:BS_bands
-#endif
  use BS,             ONLY:l_BS_photolum
  use PHOTOLUM,       ONLY:BSS_PL_f,BSS_dipoles_PL,PL,PL_prefactor
  !
@@ -48,18 +46,17 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  ! Zeroing
  !=======
+ SF=cZERO
  if (X_do_obs("pl"))  PL(:,3) = rZERO
  if (X_do_obs("eps")) Resp_ii(:,3:4) = cZERO
  !
  ! DbGd setup
  !
- call X_Double_Grid_setup(iq,k,k%FGbz)
+ call X_Double_Grid_setup(iq,k,k%FGbz,Use_DbGd=BSS_uses_DbGd)
  !
  ! Look for the W(iw_ref) closest 0
  !==================================
  call FREQUENCIES_set_reference_point(W%p,W%n_freqs,iw_ref)
- !
-#if defined _ELPH
  !
  ! Green Functions must be all mapped to the Xw range
  ! to be easily convoluted
@@ -68,8 +65,6 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    call X_GreenF_remap(BS_bands,E,W)
    BSS_uses_GreenF=.TRUE.
  endif
- !
-#endif
  !
  if (     K_diago_in_BS_mat) n_loop=1
  if (.not.K_diago_in_BS_mat) n_loop=2

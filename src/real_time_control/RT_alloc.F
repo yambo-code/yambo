@@ -40,7 +40,7 @@ subroutine RT_alloc(en,what)
  !
  call H_alloc(en,.not.l_RT_is_WFfree,l_RT_rotate_DM)
  !
- call H_QP_table_setup(en)
+ call H_QP_table_setup(en,.false.)
  !
  if (RT_is_dynamically_dephased) then
    call RT_EL_lifetimes_alloc(RT_bands,RT_nk)

@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine bz_samp_indexes(en,k,Xk,q)
+subroutine bz_samp_indexes(en,k,Xk,q,use_q_grid,compute_X_scattering,compute_sigma_scattering)
  !
  ! ikbz=(ik,is) --<--:--<-- okbz=(ok,os) = (IK-Q)
  !                   :
@@ -48,14 +48,13 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
  use openmp,         ONLY:n_threads,master_thread,OPENMP_update
-#if defined _ELPH
- use ELPH,           ONLY:elph_use_q_grid
-#endif
  !
 #include<y_memory.h>
  !
  type(levels) ::en
  type(bz_samp)::k,Xk,q
+ logical      ::use_q_grid
+ logical, intent(in) :: compute_X_scattering,compute_sigma_scattering
  !
  ! Work Space
  !
@@ -64,9 +63,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  real(SP):: v1(3),k_b_m1(3,3),local_zero(3),q_step(3)
  real(SP):: E_empty(1,q%nibz,n_sp_pol)
  logical :: connected_grids,user_defined_qpts,user_grids,do_qindx_B,do_qindx_X,do_qindx_X_ik
-#if defined _ELPH
  logical :: bse_setup_scatt
-#endif
  integer, external    :: G_index
  character(lchlen)    :: string(2)
  integer, allocatable :: q_map(:,:,:),q_iptbz(:,:)
@@ -76,27 +73,14 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  call section('*','Transferred momenta grid and indexing')
  !========================================================
  ! .... defaults
- X_scattering    =.true.
- sigma_scattering=.true.
+ X_scattering    =compute_X_scattering
+ sigma_scattering=compute_sigma_scattering
  bse_scattering  =l_bse .and. (BS_res_K_corr.or.BS_cpl_K_corr)
  coll_scattering =l_elel_scatt
  !
  ! ... User defined
-#if defined _ELPH
  call parser('BSEscatt',bse_setup_scatt)
- if (.not.bse_scattering ) bse_scattering =elph_use_q_grid.or.bse_setup_scatt.or.trim(q_source)=="Electron-Phonon databases"
-#endif
- !
-#if defined _NL
- !
- ! In the non-linear spectroscoy I don't load qindx_X and qindx_S
- !
- if(l_nl_optics) then
-   X_scattering    =.FALSE.
- !   sigma_scattering=.FALSE. ! I need them for the LSEX
- endif
- !
-#endif
+ if (.not.bse_scattering ) bse_scattering =use_q_grid.or.bse_setup_scatt.or.trim(q_source)=="Electron-Phonon databases"
  !
  call parser('K_grids', user_grids)
  if (user_grids) then

@@ -89,7 +89,6 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
    !
  elseif(present(E)) then
    !
-#if defined _RT
    if (allocated(E%FG%E).and.trim(INTERP_FineGd)=="BARE") then
      do i1=1,inpdim(2)
        do ik=1,k%nibz
@@ -99,13 +98,11 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
        enddo
      enddo 
    else
-#endif
      do i1=1,inpdim(2)
        RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),1:Nk_local) = E%E(1:inpdim(1),1:Nk_local,i1)
      enddo
-#if defined _RT
    endif
-#endif
+   !
  elseif(present(R2D)) then
    !
    do i1=1,inpdim(2)

@@ -120,7 +120,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
    do i_qp=1,qp%n_states
      call W_reset(Sc_W(i_qp))
      Sc_W(i_qp)%n_freqs=QP_Sc_steps
-     call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),E%E,.FALSE.)
+     call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),E%E)
      !
      if(Sc_W(i_qp)%grid_type=="ra") then
        Sc_W(i_qp)%p=real(Sc_W(i_qp)%p,SP)
@@ -563,9 +563,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  YAMBO_FREE(W_)
  !
  l_X_ALLOC_elemental=.true.
-#if defined _SC
- l_X_ALLOC_elemental=l_sc_run.and.io_RESPONSE
-#endif
+ if (l_sc_run) l_X_ALLOC_elemental=io_RESPONSE
  if(l_X_ALLOC_elemental) then
    do iq_mem = 1,size(X_par)
      call MATRIX_reset(X_par(iq_mem))

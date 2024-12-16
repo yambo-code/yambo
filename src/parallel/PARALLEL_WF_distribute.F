@@ -5,23 +5,14 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
-&                                 QP_index,PLASMA_index,Bm_index,CLEAN_UP)
+subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,QP_index,CLEAN_UP)
  !
  use parallel_m,      ONLY:PP_indexes,ncpu
  use wave_func,       ONLY:states_to_load
  use electrons,       ONLY:n_spin,n_bands
  use R_lattice,       ONLY:nkibz
  use QP_m,            ONLY:QP_n_states,QP_table
-#if defined _SC || defined _RT
- use hamiltonian,     ONLY:B_mat_index,H_ref_bands
-#endif
-#if defined _RT
- use parallel_m,      ONLY:PAR_IND_Q_bz,PAR_Q_bz_index
- use plasma,          ONLY:EH_gas
- use R_lattice,       ONLY:nkbz
- use collision_ext,   ONLY:GW_NEQ_collisions
-#endif
+ !
 #include<y_memory.h>
  !
  type(PP_indexes), optional    :: K_index
@@ -29,20 +20,12 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  type(PP_indexes), optional    :: B_and_K_index
  type(PP_indexes), optional    :: Bp_index
  type(PP_indexes), optional    :: QP_index
- type(PP_indexes), optional    :: PLASMA_index
- type(PP_indexes), optional    :: Bm_index
  logical, intent(in), optional :: CLEAN_UP
  !
  ! Work Space
  !
-#if defined _RT
- integer :: i_J,i_J_bg,iqbz,i_q_mem,i_coll
-#endif
  integer :: i_k,i_b,i_bp,i_qp,NB,NK,NBp
  logical :: condition
-#if defined _SC || defined _RT
- logical :: Vl(H_ref_bands(2))
-#endif
  !
  NB =n_bands
  NBp=n_bands
@@ -61,15 +44,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
    NK=size(B_and_K_index%element_2D,2)
  endif
  !
- if (present(CLEAN_UP)) then
-   !
-   YAMBO_FREE(states_to_load)
-   YAMBO_ALLOC(states_to_load,(NB,NK,n_spin))
-   !
-   states_to_load=CLEAN_UP
-   if (ncpu==1) states_to_load=.TRUE.
-   !
- endif
+ if (present(CLEAN_UP)) call PARALLEL_WF_clean_distr(NB,NK,CLEAN_UP)
  !
  if (ncpu==1) return
  !
@@ -109,34 +84,6 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
    enddo
  endif
  !
-#if defined _SC || defined _RT
- if (present(K_index).and.present(Bm_index)) then
-   do i_k=1,NK
-     !
-     if (K_index%element_1D(i_k)) then
-       !
-       Vl=.FALSE. 
-       !
-       do i_b=H_ref_bands(1),H_ref_bands(2)
-         do i_bp=H_ref_bands(1),H_ref_bands(2)
-           if (Bm_index%element_1D( B_mat_index(i_b,i_bp,H_ref_bands) ) ) then
-             Vl(i_b )=.TRUE.
-             Vl(i_bp)=.TRUE.
-           endif
-         enddo
-       enddo
-       do i_b=H_ref_bands(1),H_ref_bands(2)
-         if (.not.Vl(i_b)) states_to_load(i_b,i_k,:)=.FALSE.
-       enddo
-     else
-       states_to_load(:,i_k,:)=.FALSE.
-     endif
-     !
-   enddo
-   !
- endif
-#endif
- !
  if (present(QP_index)) then
    !
    do i_qp=1,QP_n_states
@@ -154,38 +101,24 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
    !
  endif
  !
-#if defined _RT
+end subroutine
+!
+!
+subroutine PARALLEL_WF_clean_distr(NB,NK,CLEAN_UP)
  !
- if (present(PLASMA_index)) then
-   ! 
-   do iqbz=1,nkbz
-     !
-     if (.not.PAR_IND_Q_bz%element_1D(iqbz)) cycle
-     i_q_mem=PAR_Q_bz_index(iqbz)
-     !
-     do i_J=1,EH_gas%N_poles(iqbz)
-       !
-       if (.not.PLASMA_index%element_1D(i_J)) cycle
-       !
-       do i_J_bg=EH_gas%grid(i_J,i_q_mem,1),EH_gas%grid(i_J,i_q_mem,2)
-         !
-         i_coll=EH_gas%tab(i_J_bg,i_q_mem,1)
-         !
-         i_b  = GW_NEQ_collisions%state(i_coll,1)
-         i_bp = GW_NEQ_collisions%state(i_coll,2)
-         i_k  = GW_NEQ_collisions%state(i_coll,3)
-         !
-         states_to_load(i_b ,i_k,:)=.TRUE.
-         states_to_load(i_bp,i_k,:)=.TRUE.
-         !
-       enddo
-       !
-     enddo
-     !
-   enddo
-   !
- endif
+ use parallel_m,      ONLY:ncpu
+ use wave_func,       ONLY:states_to_load
+ use electrons,       ONLY:n_spin
  !
-#endif
+#include<y_memory.h>
+ !
+ integer, intent(in) :: NB,NK
+ logical, intent(in) :: CLEAN_UP
+ !
+ YAMBO_FREE(states_to_load)
+ YAMBO_ALLOC(states_to_load,(NB,NK,n_spin))
+ !
+ states_to_load=CLEAN_UP
+ if (ncpu==1) states_to_load=.TRUE.
  !
 end subroutine

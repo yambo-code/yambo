@@ -19,7 +19,7 @@ if test "$prefix" = "NONE" ;      then prefix="$PWD" ; fi
 if test "$exec_prefix" = "NONE" ; then exec_prefix="$prefix" ; fi
 #
 AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_SRCDIR([driver/yambo.F])
+AC_CONFIG_SRCDIR([ymain/yambo.F])
 #
 # YAMBO SPECIFIC
 #

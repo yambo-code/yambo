@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine QP_state_table_setup(en)
+subroutine QP_state_table_setup(en,first_band,bands_mixed,l_diagonal)
  !
  ! There are 2 objects that command the QP corrections
  ! indexes: QP_state & QP_table.
@@ -22,25 +22,20 @@ subroutine QP_state_table_setup(en)
  use pars,          ONLY:SP
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_sc_run,l_real_time,l_eval_collisions,l_nl_optics
- use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table,SC_bands_mixed,SC_band_mixing 
+ use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table 
  use electrons,     ONLY:levels,n_sp_pol
  use parser_m,      ONLY:PARSER_array
-#if defined _SC || defined _RT
- use hamiltonian,   ONLY:H_ref_bands,H_potential
- use drivers,       ONLY:l_elel_scatt
-#endif
-#if defined _SC
- use SC,            ONLY:l_SC_diagonal
-#endif
  !
 #include<y_memory.h>
+ !
  type(levels)::en
+ integer, intent(in) :: first_band,bands_mixed
+ logical, intent(in) :: l_diagonal
  !
  ! Work Space
  !
  integer :: e_rng_lines,k_rng_lines,ik,ib,i1,i2,i3,&
-&           QP_k_nk,QP_e_nk,QP_k_nb,QP_e_nb,i_sp,bands_mixed,v(2)
- logical :: Mixing
+&           QP_k_nk,QP_e_nk,QP_k_nb,QP_e_nb,i_sp,v(2)
  integer,    allocatable:: QP_i_limits(:,:)
  real(SP)   ,allocatable:: QP_r_limits(:,:)
  !
@@ -131,42 +126,6 @@ subroutine QP_state_table_setup(en)
    !
  endif
  !
- ! Band Mixing
- !=============
- !
- ! Note: only upper triangle of the table is filled. 
- !       This corresponds to assume symmetric/hermitian 
- !       matrixes
- !
- ! Note (2) : a non zero mixing is allowed only in a SC/RT calculation
- !
- bands_mixed   =1
- SC_bands_mixed=1
- !
- Mixing=.FALSE.
-#if defined _SC || defined _RT
- Mixing=l_sc_run.or.l_real_time.or.l_eval_collisions.or.l_nl_optics
- if (l_eval_collisions) Mixing=l_elel_scatt.or.(index(H_potential,"FOCK")>0.and.index(H_potential,"HARTREE")>0)&
-&                                          .or.trim(H_potential)=="COHSEX"
-#endif
- !
- if (Mixing) then
-   !
-#if !defined _ELPH
-   if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) SC_band_mixing=0._SP
-#endif
-   !
-   if (SC_band_mixing<0._SP.or.SC_band_mixing>100._SP) SC_band_mixing=0._SP
-   if (SC_band_mixing>0._SP) SC_bands_mixed=nint(QP_nb*SC_band_mixing/100._SP)
-   if (SC_bands_mixed==0) SC_bands_mixed=1
-   !
-   ! Recalculated SC/RT band mixing
-   !
-   SC_band_mixing=float(SC_bands_mixed)*100._SP/float(QP_nb)
-   bands_mixed=SC_bands_mixed
-   !
- endif
- !
  ! QP_table allocation
  !
  QP_n_states=product(shape(pack(QP_state,QP_state)))*(2*bands_mixed-1)
@@ -189,12 +148,9 @@ subroutine QP_state_table_setup(en)
          !
          if (i2+i3>QP_nb.or.i2+i3<1) cycle
          !
-#if defined _SC || defined _RT
-         if ((l_sc_run.or.l_real_time) .and. (i2<H_ref_bands(1)) ) cycle
-#endif
-#if defined _SC
-         if (l_sc_run .and. (l_SC_diagonal.and.i3/=0) ) cycle
-#endif
+         if (i2<first_band) cycle
+         !
+         if (l_diagonal.and.i3/=0 ) cycle
          !
          QP_n_states=QP_n_states+1
          QP_table(QP_n_states,1)=i2

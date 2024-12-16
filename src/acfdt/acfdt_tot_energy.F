@@ -76,6 +76,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
  real(SP):: sdot
 #endif
  !
+ call error("The present subroutine was not maintained and it is very likely broken")
+ !
  call section('*','ACFDT Total Energy')
  !
  call elemental_collision_free(isc)

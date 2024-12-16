@@ -13,7 +13,7 @@ subroutine RT_occupations_FIT(T_fit,Ef_fit,Occ_bk)
  !
  use pars,           ONLY:SP
  use real_time,      ONLY:RT_carriers
- use functions,      ONLY:Fermi_fnc_fit
+ use RT_control,     ONLY:Fermi_fnc_fit
  use timing_m,       ONLY:timing
  !
  implicit none

@@ -143,7 +143,7 @@ subroutine SC_start_and_restart(X,E,Xk,Dip)
  !
  ! Quasi-Particle setup
  ! ====================
- call H_QP_table_setup(E)
+ call H_QP_table_setup(E,l_SC_diagonal)
  !
  if (.not.l_SC_RESTART.and..not.l_NSC_shot) l_SC_cycle=SC_iterations>0
  !

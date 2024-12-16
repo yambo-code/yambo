@@ -16,5 +16,8 @@
  SLK_setup.o
  SLK_test.o
  SLK_tools.o
+ mod_linear_algebra.o
+ mod_wrapper.o
+ mod_wrapper_omp.o
  sample_pchegvx_call.o
 

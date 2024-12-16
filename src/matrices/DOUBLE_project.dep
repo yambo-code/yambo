@@ -6,4 +6,20 @@
  MATRIX_transfer_side_crop.o
  MATRIX_transpose.o
  SLK_matrix_init.o
+ mod_BS.o
+ mod_BS_solvers.o
+ mod_DIPOLES.o
+ mod_D_lattice.o
+ mod_QP.o
+ mod_SLK.o
+ mod_TDDFT.o
+ mod_X.o
+ mod_collision_el.o
+ mod_frequency.o
+ mod_functions.o
+ mod_interfaces.o
+ mod_matrix.o
+ mod_matrix_operate.o
+ mod_parallel_interface.o
+ mod_timing.o
 

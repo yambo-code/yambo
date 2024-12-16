@@ -22,11 +22,6 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  use interfaces,    ONLY:QP_state_print
  use frequency,     ONLY:w_samp
  use IO_int,        ONLY:ver_is_gt_or_eq
-#if defined _ELPH
- use drivers,       ONLY:l_elph_corr 
- use ELPH,          ONLY:QP_PH_n_G_bands,elph_branches,elph_nQ_used,&
-&                        FAN_deltaE_treshold,DW_deltaE_treshold
-#endif
 #if defined _QED
  use QP_m,          ONLY:QP_QED_ng
  use drivers,       ONLY:l_elphoton_corr
@@ -147,49 +142,6 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    !
    if (.not.l_life) then
      call IO_desc_add(qp%desc,str='QED RL components',kind='i',I=(/QP_QED_ng/))
-   endif
-   !
- endif
- !
-#endif
- !
-#if defined _ELPH 
- !
- ! El-Ph
- !
- if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
-   !
-   if (l_elph_corr) then
-     !
-     if (.not.l_elel_corr) qp%desc%n=n_descs_save
-     !
-     if (trim(QP_solver)/='g') then
-       call IO_desc_add(qp%desc,str='[ph] dS/dw steps',kind='i',I=(/QP_dSc_steps/))
-       !
-       call IO_desc_add(qp%desc,str='[ph] dS/dw step',term='ev',kind='r',R=(/QP_dSc_delta*HA2EV/))
-       !
-       call IO_desc_add(qp%desc,str='[ph] Sc/G damping',term='ev',kind='r',R=(/QP_G_damp*HA2EV/))
-       !
-     endif
-     !
-     call IO_desc_add(qp%desc,str='El-Ph correlation',kind='l',L=l_elph_corr)
-     !
-     call IO_desc_add(qp%desc,str='El-Ph Sc. G bands',SZ=2,kind='i',I=(/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/))
-     !
-     if (ver_is_gt_or_eq(-1,(/3,2,2/))) then
-       call IO_desc_add(qp%desc,str='El-Ph phonon branches',SZ=2,kind='i',I=elph_branches)
-     endif
-     !
-     if (ver_is_gt_or_eq(-1,(/4,0,0/))) then
-       call IO_desc_add(qp%desc,str='El-Ph momenta used',kind='i',I=(/elph_nQ_used/))
-     endif
-     !
-     if (ver_is_gt_or_eq(-1,revision=4400)) then
-       call IO_desc_add(qp%desc,str='Energy treshold',term='FAN',kind='r',R=(/FAN_deltaE_treshold*HA2EV/))
-       !
-       call IO_desc_add(qp%desc,str='Energy treshold',term='DW',kind='r',R=(/DW_deltaE_treshold*HA2EV/))
-     endif
-     !
    endif
    !
  endif

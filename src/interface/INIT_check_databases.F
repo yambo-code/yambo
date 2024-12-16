@@ -23,12 +23,6 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  use it_tools,       ONLY:switch_off_runlevel
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
-#if defined _SC || defined _RT
- use collision_ext,  ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
-# if !defined _PAR_IO
- use COLL_interfaces,ONLY:io_COLLISIONS
-# endif
-#endif
  !
  ! Define io_COLLs_header to handle either serial or parallel I/O
  !
@@ -64,28 +58,14 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  logical           :: OSTNTS_Vnl_included
  !
-#if defined _SC
- integer           :: io_SC_V_err
-#endif
-#if defined _RT
- integer           :: io_G,io_OBS
-#endif
-#if defined _SC || defined _RT
- integer           :: io_COLLISIONS_err
-#endif
-#if defined _SC || defined _RT
- integer, external :: io_SC_components,io_RT_components
-#endif
-#if defined _ELPH 
- integer, external :: io_ELPH
-#endif 
- !
  ! BASICAL DATABASES
  !
  ! db1
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=io_ID)
  io_err=io_DB1(en,k,io_ID) 
+ !
+ call init_variables(k,en)
  !
 #if defined _MEM_CHECK
  call MEM_treshold_estimate( )
@@ -260,51 +240,46 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  ! DbGd (electrons)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=io_Double_Grid(en,k,io_ID,'electrons')
- !
- ! ELPH 
- !
-#if defined _ELPH 
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_ELPH_err(1)=io_ELPH(io_ID,'gkkp')
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_ELPH_err(2)=io_ELPH(io_ID,'gkkp_expanded')
-#endif
- !
- ! RT 
- !
-#if defined _RT
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_OBS=io_RT_components('OBSERVABLES',io_ID)
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_G=io_RT_components('G_lesser_RESTART',io_ID)
-#endif
- !
- ! SC 
- !
-#if defined _SC
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_SC_V_err=io_SC_components('V',en_sc,io_ID)
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_SC_E_err=io_SC_components('E',en_sc,io_ID)
- if (io_SC_E_err==0.and.io_SC_V_err/=0) io_SC_E_err=-1
-#endif
- !
- ! COLLISIONS 
- !
-#if defined _SC || defined _RT
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLs_header(io_ID,COH_collisions)
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLs_header(io_ID,HXC_collisions)
-#endif
-#if defined _RT
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLs_header(io_ID,GW_NEQ_collisions)
-#endif
-#if defined _QED && defined _RT
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLs_header(io_ID,P_collisions)
-#endif
+ io_err=io_Double_Grid(en,k,io_ID,'electrons','')
  !
 end subroutine
+!
+!
+subroutine init_variables(k,E)
+ !
+ use electrons,      ONLY:levels,n_bands,nel,default_nel
+ use D_lattice,      ONLY:Tel,input_GS_Tel
+ use R_lattice,      ONLY:bz_samp,ng_closed,QP_states_k,ng_closed,ng_vec,nkibz,nXkibz
+ use global_XC,      ONLY:setup_global_XC,EXT_NONE
+ use BS,             ONLY:BS_bands
+ use QP_m,           ONLY:QP_n_G_bands,QP_nb,QP_nk
+ use xc_functionals, ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,GS_exx_FRACTION,GS_exx_SCREENING
+ use wave_func,      ONLY:wf_nb_io
+ !
+ implicit none
+ !
+ type(levels)     :: E
+ type(bz_samp)    :: k
+ !
+ nkibz =k%nibz
+ nXkibz=k%nibz
+ QP_nk =k%nibz
+ E%nk =k%nibz
+ QP_states_k=(/1,k%nibz/)
+ !
+ n_bands=E%nb
+ wf_nb_io=E%nb
+ QP_nb=E%nb
+ QP_n_G_bands=(/1,E%nb/)
+ !
+ if(any(BS_bands(:)==0)) BS_bands=(/1,E%nb/)
+ !
+ Tel=input_GS_Tel
+ nel=default_nel
+ !
+ ng_closed=ng_vec
+ !
+ call setup_global_XC('preset',GS_xc_KIND,xc_functional=GS_xc_functional,perturbation=EXT_NONE,&
+                       exx_fraction=GS_exx_FRACTION,exx_screening=GS_exx_SCREENING)
+  !
+end subroutine init_variables

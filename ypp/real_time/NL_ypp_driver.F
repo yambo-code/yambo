@@ -471,7 +471,8 @@ subroutine NL_ypp_driver(en,k)
 	 else
 	   ! Not sure of these units to be fixed 
            if (i_order==0) Unit_of_Measure =  AU2nAmpere/AU2VMm1
-           if (i_order> 1) Unit_of_Measure = (AU2nAmpere/AU2VMm1)**(i_order-1)  
+	   ! 4pi should come from Gaussian to SI units (but we still miss a factor 4)
+           if (i_order> 1) Unit_of_Measure = (AU2nAmpere/AU2VMm1)**(i_order-1)*(1.0/4.0/pi)**(i_order)  
 	 endif
          !
          VALUEs(1)  =Probe_Frequency(i_f)*HA2EV

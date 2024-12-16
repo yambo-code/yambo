@@ -218,9 +218,9 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
    ! Pass pckind to slepc
    call PCSetType(pc,pckind,ierr)
    !
-   call STSetType(st,stkind,ierr)
-   call KSPSetType(ksp,kspkind,ierr)
-   if (l_precondition) call PCSetType(pc,pckind,ierr)
+   !call STSetType(st,stkind,ierr)
+   !call KSPSetType(ksp,kspkind,ierr)
+   !if (l_precondition) call PCSetType(pc,pckind,ierr)
  endif
  !
  BSS_slepc_precondition=trim(stkind)//"+"//trim(kspkind)//"+"//trim(pckind)

@@ -447,7 +447,7 @@ subroutine NL_ypp_driver(en,k)
      !
      do i_order=0,X_order,1
        !
-       X_file_name="YPP-"//xname//"_probe_order_"//trim(intc(i_order))
+       X_file_name="YPP-"//trim(xname)//"_probe_order_"//trim(intc(i_order))
        !
        call of_open_close(trim(X_file_name),'ot')
        !

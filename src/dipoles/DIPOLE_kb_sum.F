@@ -7,7 +7,8 @@
 !
 #include<dev_defs.h>
 !
-subroutine DIPOLE_kb_project(pp_range,ib_range,ib,i_wf,wf_ncx,nbndx,npp,pp_dim_yambo,WF,kbv,XX)
+subroutine DIPOLE_kb_project(pp_range,ib_range,ib,i_wf,wf_ncx,nbndx,npp,&
+&                                     pp_dim_atom,pp_dim_yambo,WF,kbv,XX)
  !
  use iso_c_binding, ONLY:c_f_pointer,c_loc
  use pars,          ONLY:SP,cONE,cZERO
@@ -15,14 +16,15 @@ subroutine DIPOLE_kb_project(pp_range,ib_range,ib,i_wf,wf_ncx,nbndx,npp,pp_dim_y
 #if defined _CUDAF
  use cudafor,       ONLY:c_devloc
 #endif
-use devxlib,       ONLY:devxlib_xGEMM_gpu
+ use devxlib,       ONLY:devxlib_xGEMM_gpu
  !
  implicit none
  !
- integer,                      intent(in)  :: pp_range(2),ib_range(2),ib,i_wf,wf_ncx,nbndx,npp,pp_dim_yambo
- complex(SP) DEV_ATTR, target, intent(in)  :: WF(wf_ncx,n_spinor)
- complex(SP) DEV_ATTR, target, intent(in)  :: kbv(wf_ncx,n_spinor,4,npp)
- complex(SP) DEV_ATTR, target, intent(out) :: XX(n_spinor,n_spinor,4,npp)
+ integer,                      intent(in)  :: pp_range(2),ib_range(2),ib,i_wf,wf_ncx,nbndx
+ integer,                      intent(in)  :: npp,pp_dim_atom,pp_dim_yambo
+ complex(SP) DEV_ATTR, target, intent(in)    :: WF(wf_ncx,n_spinor,nbndx)
+ complex(SP) DEV_ATTR, target, intent(in)    :: kbv(wf_ncx,n_spinor,4,pp_dim_atom)
+ complex(SP) DEV_ATTR, target, intent(inout) :: XX(n_spinor,n_spinor,4,pp_dim_yambo,ib_range(1):ib_range(2))
  ! 
  ! Work Space
  !
@@ -30,30 +32,27 @@ use devxlib,       ONLY:devxlib_xGEMM_gpu
  complex(SP) DEV_ATTR, pointer :: kbv_p(:,:),XX_p(:,:)
  complex(SP) DEV_ATTR, pointer :: WF_p(:,:)
 
-! XXX
-!integer :: ierr
- 
- WF_p => WF
+ WF_p => WF(:,:,i_wf)
  dim_flat=n_spinor*4*npp
  !
  ! GPU treatment
  !
 #if defined _CUDAF
  !
- call c_f_pointer(c_devloc(kbv), kbv_p, (/wf_ncx,dim_flat/) )
- call c_f_pointer(c_devloc(XX),  XX_p,  (/n_spinor,dim_flat/) )
+ call c_f_pointer(c_devloc(kbv(1,1,1,1)), kbv_p, (/wf_ncx,dim_flat/) )
+ call c_f_pointer(c_devloc(XX(1,1,1,pp_range(1),ib)),  XX_p,  (/n_spinor,dim_flat/) )
  !
 #elif defined _OPENACC || defined _OPENMP_GPU
  !
- call c_f_pointer(c_loc(kbv), kbv_p, (/wf_ncx,dim_flat/) )
- call c_f_pointer(c_loc(XX),  XX_p, (/n_spinor,dim_flat/) )
+ call c_f_pointer(c_loc(kbv(1,1,1,1)), kbv_p, (/wf_ncx,dim_flat/) )
+ call c_f_pointer(c_loc(XX(1,1,1,pp_range(1),ib)),  XX_p,  (/n_spinor,dim_flat/) )
  !
 #else
  !
  ! CPU-only
  !
- call c_f_pointer(c_loc(kbv), kbv_p, (/wf_ncx,dim_flat/) )
- call c_f_pointer(c_loc(XX),  XX_p,  (/n_spinor,dim_flat/) )
+ call c_f_pointer(c_loc(kbv(1,1,1,1)), kbv_p, (/wf_ncx,dim_flat/) )
+ call c_f_pointer(c_loc(XX(1,1,1,pp_range(1),ib)),  XX_p,  (/n_spinor,dim_flat/) )
  ! 
 #endif
  !

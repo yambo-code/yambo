@@ -409,6 +409,8 @@ subroutine NL_ypp_driver(en,k)
      ! X^0 I don't know :-)
      ! X^n n>2 [cm/stV]^{n-1}
      !
+     l_xhi=.false.
+     l_sigma=.false.
      if (index(what,"XHI")>0) then
        l_xhi=.true.
        xname='X'
@@ -427,20 +429,18 @@ subroutine NL_ypp_driver(en,k)
        do i_order=3,X_order,1
          oexp=trim(intc(i_order-1))
          headings(2:7,i_order)=(/'X/Im[cm/stV]^'//oexp//'(x)','X/Re[cm/stV]^'//oexp//'(x)',&
-&                              'X/Im[cm/stV]^'//oexp//'(y)','X/Re[cm/stV]^'//oexp//'(y)',&
-&                              'X/Im[cm/stV]^'//oexp//'(z)','X/Re[cm/stV]^'//oexp//'(z)'/)
+&                                'X/Im[cm/stV]^'//oexp//'(y)','X/Re[cm/stV]^'//oexp//'(y)',&
+&                                'X/Im[cm/stV]^'//oexp//'(z)','X/Re[cm/stV]^'//oexp//'(z)'/)
        enddo
      endif
      if(l_sigma) then
-       headings(2:7,0)=(/'S/Im(x)','S/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
-       headings(2:7,1)=(/'S/Im(x)','S/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
-       if(X_order>=2)  headings(2:7,2)=(/'X/Im[nA/V](x)','X/Re[nA/V](x)','X/Im[nA/V](y)',   &
-&                                        'X/Re[nA/V](y)','X/Im[nA/V](z)','X/Re[nA/V](z)'/)
-       do i_order=3,X_order,1
-         oexp=trim(intc(i_order-1))
-         headings(2:7,i_order)=(/'S/Im[nA/V]^'//oexp//'(x)','S/Re[nA/V]^'//oexp//'(x)',&
-&                              'S/Im[nA/V]^'//oexp//'(y)','S/Re[nA/V]^'//oexp//'(y)',&
-&                              'S/Im[nA/V]^'//oexp//'(z)','S/Re[nA/V]^'//oexp//'(z)'/)
+       if(X_order==0)  headings(2:7,0)=(/'X/Im[nA/V^2](x)','X/Re[nA/V^2](x)','X/Im[nA/V^2](y)',   &
+&                                        'X/Re[nA/V^2](y)','X/Im[nA/V^2](z)','X/Re[nA/V^2](z)'/)
+       do i_order=1,X_order,1
+         oexp=trim(intc(i_order))
+         headings(2:7,i_order)=(/'S/Im[nA/V'//oexp//'](x)','S/Re[nA/V'//oexp//'](x)',&
+&                              'S/Im[nA/V'//oexp//'](y)','S/Re[nA/V'//oexp//'](y)',&
+&                              'S/Im[nA/V'//oexp//'](z)','S/Re[nA/V'//oexp//'](z)'/)
        enddo
      endif
 
@@ -470,9 +470,10 @@ subroutine NL_ypp_driver(en,k)
            if (i_order> 1) Unit_of_Measure = (SVCMm12VMm1/AU2VMm1)**(i_order-1)  
 	 else
 	   ! Not sure of these units to be fixed 
-           if (i_order==0) Unit_of_Measure =  AU2nAmpere/AU2VMm1
+       ! I consider the 0 order a second order process w_out =w_in - w_in =0
+           if (i_order==0) Unit_of_Measure = AU2nAmpere*(1.0/4.0/pi)**2.0
 	   ! 4pi should come from Gaussian to SI units (but we still miss a factor 4)
-           if (i_order> 1) Unit_of_Measure = (AU2nAmpere/AU2VMm1)**(i_order-1)*(1.0/4.0/pi)**(i_order)  
+           if (i_order> 1) Unit_of_Measure = (AU2nAmpere/AU2VMm1)**(i_order-1)
 	 endif
          !
          VALUEs(1)  =Probe_Frequency(i_f)*HA2EV

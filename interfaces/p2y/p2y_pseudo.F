@@ -27,9 +27,9 @@ subroutine p2y_pseudo(k)
  !
  type(bz_samp),    intent(in)  :: k      ! K/Q points
  !
- type(pw_struct), target :: struct
- type(pw_basis), target  :: basis_con    ! Needs to be target for wfc%basis later
- type(pw_atoms)          :: atoms
+ type(pw_struct),target :: struct
+ type(pw_basis), target :: basis_con    ! Needs to be target for wfc%basis later
+ type(pw_atoms)         :: atoms
  !
  ! Work space
  !

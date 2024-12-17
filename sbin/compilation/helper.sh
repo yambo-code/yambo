@@ -91,7 +91,7 @@ fi
 #
 # CHECK
 if [ ! -f $cdir/$ofile ]; then 
- source ./sbin/compilation/verbosity.sh "WARNING helper.sh: $cdir/$ofile is not there. Exiting"
+ source ./sbin/compilation/verbosity.sh "WARNING helper.sh: $cdir/$ofile is not a file. Exiting"
  exit 0 
 fi
 #
@@ -164,7 +164,7 @@ cp config/mk/local/makefile $cdir/Makefile
 # (i) to be saved, and (ii) to be re-compiled
 # If later the same project is re-compiled, the module is loaded, and all the files.o dependent on it are not tagged
 # (i) not to be saved, and (ii) not to be recompiled neither.
-# They will be left in a version, which might be the one of another projects (e.g. linked to another versione of the module) 
+# They will be left in a version, which might be the one of another projects (e.g. linked to another version of the module) 
 #
 if [ "$mode" == "x" ] ; then
  files_to_remove=`find $compdir -type f,l -name "*_to_save"`

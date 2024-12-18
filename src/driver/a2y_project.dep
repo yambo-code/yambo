@@ -1,5 +1,0 @@
- launcher.o
- options_control.o
- options_maker.o
- tool_init.o
-

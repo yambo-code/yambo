@@ -18,10 +18,6 @@ integer function INIT_nl(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_mpa,l_phel_corr,l_X,l_screen
-#if defined _SCALAPACK
- use drivers,        ONLY:l_slk_test
-#endif
- use drivers,        ONLY:l_gpu_test
  use pars,           ONLY:SP
  use parser_m,       ONLY:parser
  use global_XC,      ONLY:WF_exx_fraction,WF_exx_screening
@@ -41,6 +37,7 @@ integer function INIT_nl(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use BS,             ONLY:BS_bands,BS_n_g_W,BS_eh_en,BSE_mode,BSK_mode,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_cpl_K_corr,BS_cpl_K_exchange
  use BS_solvers,     ONLY:BSS_mode,BSS_q0
+ use nl_optics,      ONLY:NL_bands
 #if defined _OPENMP
  use openmp,         ONLY:n_threads_X,n_threads_DIP,n_threads_SE,n_threads_K,n_threads_NL
 #endif
@@ -78,7 +75,7 @@ integer function INIT_nl(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Presets
  !
- INIT = 0
+ INIT_nl = 0
  io_X_err     =-1
  io_BS_err    =-1
  io_BS_Fxc_err=-1
@@ -153,13 +150,13 @@ integer function INIT_nl(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Command line reading
  !
- call INIT_read_command_line(instr,INIT)
+ call INIT_read_command_line_nl(instr,INIT_nl)
  !
  ! DB props listing mode ?
  !
  if (index(instr,'dbpr')>0) then
    list_dbs=.true.
-   INIT = 2
+   INIT_nl = 2
    if (log_as_a_file) write (logfile,'(2a)') trim(com_path),'/l_dbs'
    live_timing_is_on=.false.
    write_to_report=.false.
@@ -178,10 +175,10 @@ integer function INIT_nl(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    infile='(none)'
  endif
  !
- call INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
+ call INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT_nl,&
 &                          io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_SC_E_err)
  !
- if(any(NL_bands(:)==0)) NL_bands=(/1,E%nb/)
+ if(any(NL_bands(:)==0)) NL_bands=(/1,en%nb/)
  !
  if (list_dbs) then
    call msg('s','')
@@ -224,7 +221,7 @@ integer function INIT_nl(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  call LOCAL_after_input_IO()
  call LOCAL_from_runlevels_to_logicals()
  !
- call INIT_activate()
+ call INIT_activate_nl()
  !
  ! Q-points (from input)
  !
@@ -289,7 +286,7 @@ integer function INIT_nl(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (mode=='Close_G_vectors') initmode=2
      if (mode=='Game_Over') initmode=3
      if (mode=='parser_input_file') initmode=4
-     call INIT_load(defs,en,q,k,X,Xw,Dip)
+     call INIT_load_nl(defs,en,q,k,X,Xw,Dip)
    end subroutine
    !
    subroutine LOCAL_from_runlevels_to_logicals()
@@ -318,7 +315,6 @@ integer function INIT_nl(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_rim_w=runlevel_is_on('rim_w')
        l_col_cut=l_rim.or.l_rim_w
        l_acfdt=runlevel_is_on('acfdt')
-       l_gpu_test =runlevel_is_on('gputest')
        l_nl_optics=runlevel_is_on('nloptics')
        l_elel_corr    =runlevel_is_on('el_el_corr')
        !

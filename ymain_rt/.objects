@@ -1,4 +1,4 @@
 objs = rt_driver.o yambo_rt.o 
-#if defined _ypp_rt
+#if defined _ypp
 objs = rt_driver.o ypp_rt.o 
 #endif

@@ -1,4 +1,4 @@
 objs = sc_driver.o yambo_sc.o 
-#if defined _ypp_sc
+#if defined _ypp
 objs = sc_driver.o ypp_sc.o 
 #endif

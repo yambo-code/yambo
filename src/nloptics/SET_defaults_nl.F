@@ -7,14 +7,20 @@
 !
 subroutine SET_defaults_nl(INSTR,IND,OD,COM_DIR)
  !
+ use pars,           ONLY:SP
+ use units,          ONLY:FS2AUT,HA2EV,kWCMm22AU
  use nl_optics,      ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,NL_initial_versor,     &
 &                         NL_verb_name,NL_bands,NL_desc,n_angles,NL_rot_axis
- use fields,         ONLY:Efield,Efield_reset
+ use fields,         ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields
+ use real_time,      ONLY:Integrator_name,NE_tot_time,RAD_LifeTime,RT_step
  use collision_ext,  ONLY:COLLISIONS_cutoff
+ use descriptors,    ONLY:IO_desc_reset
  !
  implicit none
  !
  character(*) :: INSTR,IND,OD,COM_DIR
+ !
+ integer :: i1
  !
  call SET_defaults_rt(instr,ind,od,com_dir)
  !

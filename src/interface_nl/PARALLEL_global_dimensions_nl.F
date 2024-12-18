@@ -14,6 +14,7 @@ subroutine PARALLEL_global_dimensions_nl(E,Xk,q,ENVIRONMENT)
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run,l_nl_optics
  use BS,            ONLY:BS_bands,BS_nT_at_k,BS_n_eh_spaces
  use X_m,           ONLY:X_ng
+ use collision_ext, ONLY:COLL_bands
  use nl_optics,     ONLY:n_runs
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
@@ -44,4 +45,4 @@ subroutine PARALLEL_global_dimensions_nl(E,Xk,q,ENVIRONMENT)
  !
  if (ENVIRONMENT=="Non_Linear" ) PAR_n_freqs =n_runs
  !
-end subroutine PARALLEL_global_dimensions
+end subroutine PARALLEL_global_dimensions_nl

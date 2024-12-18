@@ -42,8 +42,8 @@ PJ_RTLIBS_LD= $(MAIN_LIBS_LD) real_time_control $(HAM_LIBS_LD) \
                    real_time_hamiltonian real_time_propagation \
                    real_time_initialize real_time_drivers
 
-PJ_NLLIBS    = driver_nl nloptics interface_nl
-PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) driver_nl interface_nl nloptics
+PJ_NLLIBS    = driver_nl nloptics interface_nl collisions_nl
+PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) driver_nl collisions_nl nloptics interface_nl
 #
 # Yambo folders needed by Interfaces
 #=====================================

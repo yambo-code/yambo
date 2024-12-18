@@ -1,0 +1,10 @@
+objs = LEVELS_mirror_nl.o \
+LEVELS_respect_degenerations_nl.o  \
+PARALLEL_global_dimensions_nl.o  \
+PARALLEL_global_indexes_nl.o  \
+PARALLEL_global_Non_Linear.o \
+PARALLEL_global_Oscillators.o \
+INIT_activate_nl.o \
+INIT_load_nl.o \
+INIT_nl.o \
+INIT_read_command_line_nl.o

@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
+subroutine INIT_load_nl(defs,en,q,k,X,Xw,Dip)
  !
  use drivers,       ONLY:infile_editing
  use pars,          ONLY:schlen,SP
@@ -21,7 +21,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        X_terminator_Kind,X_terminator_E,X_DbGd_percentual
  use DIPOLES,       ONLY:DIPOLE_t
  use com,           ONLY:grid_paths
- use stderr,        ONLY:slash
+ use stderr,        ONLY:slash,intc
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_ng_Vxc,GW_terminator_E,GW_terminator_Kind,&
 &                        QP_G_er,QP_G_ir,QP_G_dr,QP_Sc_steps,QP_G_solver,&
@@ -48,9 +48,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use parallel_m,    ONLY:n_log_CPUs
  use IO_m,          ONLY:DBs_IO_control_string,DBs_FRAG_control_string
  use QP_m,          ONLY:SC_E_threshold
+ use real_time,     ONLY:RT_step, Integrator_name, NE_tot_time
  use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha, &
 &                        NL_verb_name,n_angles,NL_rot_axis 
- use fields,        ONLY:Efield
+ use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
 #if defined _OPENMP
  use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads_NL, &
 &                        n_threads_OSCLL
@@ -75,6 +76,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! Work Space
  !
+ integer  :: i_field
  real(SP) :: IO_times(3)
  logical  :: l_USER_fields(16)
  !

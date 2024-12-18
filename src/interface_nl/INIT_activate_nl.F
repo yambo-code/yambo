@@ -5,24 +5,22 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine INIT_activate()
+subroutine INIT_activate_nl()
  !
  use BS_solvers,     ONLY:BSS_mode
  use QP_m,           ONLY:QP_solver,COHSEX_use_empties
  use stderr,         ONLY:intc,STRING_match
  use global_XC,      ONLY:WF_exx_fraction,WF_exx_screening
+ use fields,         ONLY:n_ext_fields
  use drivers,        ONLY:l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bss,&
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,l_rim_w,&
 &                         l_real_time,l_ppa,l_mpa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr,l_nl_p_and_p,l_X
-#if defined _SCALAPACK
- use drivers,        ONLY:l_slk_test
-#endif
- use drivers,        ONLY:l_gpu_test
  !
  implicit none
  !
+ integer          :: i1
  character(2)     :: X_kind
  !
  !Common
@@ -63,18 +61,6 @@ subroutine INIT_activate()
  if ( (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) .and. .not.(l_sc_run.or.l_eval_collisions.or.l_phel_corr) ) then
    call CPU_activate("SE")
    call initactivate(1,'SE_Threads')
- endif
- !
-#if defined _SCALAPACK
- if (l_slk_test) then
-   call initactivate(1,"SLKdim")
-   call CPU_activate("SLK")
- endif
-#endif
- !
- if (l_gpu_test) then
-   call initactivate(1,"GPUdim")
-   !call CPU_activate("SLK")
  endif
  !
  if (l_nl_optics) then

@@ -23,6 +23,8 @@ integer function yambo_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  use X_m,           ONLY:X_t,i_X_kind_existing_DB
  use DIPOLES,       ONLY:DIPOLE_t
  use parallel_m,    ONLY:myid,ncpu
+ use IO_m,          ONLY:OP_RD_CL,REP
+ use IO_int,        ONLY:io_control
  use parser_m,      ONLY:parser
  use it_tools,      ONLY:it_reset
  use it_m,          ONLY:infile
@@ -31,7 +33,6 @@ integer function yambo_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  use electrons,     ONLY:levels,E_reset
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
- use ELPH,          ONLY:elph_use_q_grid
  !
  implicit none
  !
@@ -63,6 +64,7 @@ integer function yambo_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  ! Externals
  !
  integer, external ::X_dielectric_matrix,INIT_nl
+ integer, external :: io_DB1
  !
  ! Presets
  !
@@ -132,7 +134,7 @@ integer function yambo_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !==============
  !
  ! The second true is needed for lsex collisions
- if(launch_me) call bz_samp_indexes(en,k,Xk,q,elph_use_q_grid,.false.,.true.) 
+ if(launch_me) call bz_samp_indexes(en,k,Xk,q,.false.,.false.,.true.) 
  !
  ! COLOUMB DRIVER
  !================
@@ -225,7 +227,7 @@ integer function yambo_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !===============
  !
  launch_me=l_gw0.or.l_life
- if (launch_me) call QP_driver_nl(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
+ if (launch_me) call QP_driver(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
  if (launch_me) call mem_manager_report
  !
  ! BETHE-SALPETER

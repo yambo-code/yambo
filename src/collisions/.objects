@@ -3,7 +3,7 @@ QED_objs= SCATTERING_QED_transverse_matrix.o COLLISIONS_momentum.o
 #endif
 
 #if defined _PAR_IO
-COLL_objects = io_COLLISIONS_header.o io_COLLISIONS.o COLLISIONS_dbname.o
+COLL_objects = io_COLLISIONS_header.o io_COLLISIONS.o COLLISIONS_dbname.o COLLISIONS_compress.o
 #else
 COLL_objects = io_COLLISIONS_serial.o
 #endif

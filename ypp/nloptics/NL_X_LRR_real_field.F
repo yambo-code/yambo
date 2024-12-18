@@ -36,6 +36,9 @@ subroutine RT_X_LRR_real_field(en)
  complex(SP)  :: OBS_proj,OBS_vec(3),E_w_SP(3),Field,E_of_t(2),A_of_t(2),theta,delta,Field_freq
  complex(SP), allocatable :: EELS(:,:),EPS(:,:)
  !
+ character(schlen)        :: headings(7)
+ real(SP)                 :: data_to_dump(7)
+ !
  call section("=",'Optics')
  !=========================
  call parser('RmAsymLim',l_rm_asympt_limit)
@@ -232,18 +235,22 @@ subroutine RT_X_LRR_real_field(en)
    if(Efield(i_Probe)%ef_pol=="circular") E_w_SP=Efield(i_Probe)%versor*cmplx(ElField%F_w(i_w,1),kind=SP) &
 &                                               +Efield(i_Probe)%versor_circ*cmplx(ElField%F_w(i_w,2),kind=SP)
    !
+   data_to_dump(1)=W_reached
+   !
    outdata(1:3)=(/ real(E_w_SP(1) ),real(E_w_SP(2) ),real(E_w_SP(3) ) /)
    outdata(4:6)=(/ aimag(E_w_SP(1)),aimag(E_w_SP(2)),aimag(E_w_SP(3)) /)
    call RT_output('E_frequency',VALUEs=outdata,E=W_reached)
-   outdata(1:3)=(/ aimag(EPS(i_w,1) ),aimag(EPS(i_w,2) ),aimag(EPS(i_w,3) ) /)
-   outdata(4:6)=(/ real( EPS(i_w,1) ),real( EPS(i_w,2) ),real( EPS(i_w,3) ) /)
-   call RT_output('eps_along_E' ,VALUEs=outdata ,E=W_reached)
-   outdata(1:3)=(/ aimag(EELS(i_w,1) ),aimag(EELS(i_w,2) ),aimag(EELS(i_w,3) ) /)
-   outdata(4:6)=(/ real( EELS(i_w,1) ),real( EELS(i_w,2) ),real( EELS(i_w,3) ) /)
-   call RT_output('eels_along_E',VALUEs=outdata ,E=W_reached)
+   data_to_dump(2:4)=(/ aimag(EPS(i_w,1) ),aimag(EPS(i_w,2) ),aimag(EPS(i_w,3) ) /)
+   data_to_dump(5:7)=(/ real( EPS(i_w,1) ),real( EPS(i_w,2) ),real( EPS(i_w,3) ) /)
+   call msg('o eps','',data_to_dump,USE_TABS=.TRUE.)
+   data_to_dump(2:4)=(/ aimag(EELS(i_w,1) ),aimag(EELS(i_w,2) ),aimag(EELS(i_w,3) ) /)
+   data_to_dump(5:7)=(/ real( EELS(i_w,1) ),real( EELS(i_w,2) ),real( EELS(i_w,3) ) /)
+   call msg('o eels','',data_to_dump,USE_TABS=.TRUE.)
    !
  enddo
- call RT_output(what="close E_frequency eps_along_E eels_along_E")
+ call of_open_close("YPP-E_frequency")
+ call of_open_close("YPP-eps_along_E")
+ call of_open_close("YPP-eels_along_E")
  !
  ! Clean up
  !==========

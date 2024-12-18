@@ -24,10 +24,6 @@ subroutine SET_defaults_comm()
  COLLISIONS_cutoff=0.0005_SP
 #endif
  !
-#if defined _NL
- COLLISIONS_cutoff=0.0005_SP
-#endif
- !
  COLLISIONS_CV_only=.FALSE.
  COLLISIONS_load_SP=.FALSE.
  COLLISIONS_compr  =.FALSE.

@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details):
 !
-subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
+subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band,par_scheme)
  !
  ! Electronic magnetization for electronic Spinors
  !
@@ -36,6 +36,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  integer,       intent(in)  :: lowest_band
  type(levels),  intent(in)  :: en       
  real(SP),      intent(out) :: magn(fft_size,3)
+ character(*),  intent(in)  :: par_scheme
  !
  ! Work Space
  !
@@ -107,21 +108,21 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  !
  do ik=1,Xk%nibz
    !
-#if !defined _YPP_RT
-   if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-#endif
+   if (par_scheme=='RT') then
+     if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+   end if
    !      
    do ib1=RT_bands(1),RT_bands(2)
      !
-#if defined _YPP_RT
-     if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
-#endif
+     if (par_scheme=='YPP_RT') then
+       if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
+     endif
      !
      do ib2=ib1,RT_bands(2)
        !
-#if !defined _YPP_RT
-       if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1)-1 )) cycle
-#endif
+       if (par_scheme=='RT') then
+         if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1)-1 )) cycle
+       endif
        !
        f_occ=cZERO
        do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)

@@ -159,6 +159,15 @@ module YPP_real_time
      integer , optional, intent(in)    :: imposed_COM
    end subroutine RT_IO_carriers
    !
+   subroutine  RT_OBSERVABLES_IO(what,J,P,IO_error,first_sec_only,G_lesser_only,COM_)
+     use electrons,      ONLY:levels
+     implicit none
+     character(*)           :: what
+     type(OBS_el), optional :: J,P
+     logical,      optional :: IO_error,first_sec_only,G_lesser_only
+     integer,      optional :: COM_
+   end subroutine
+   !
  end interface
  !
  contains 

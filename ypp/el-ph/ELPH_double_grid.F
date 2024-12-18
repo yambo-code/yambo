@@ -97,7 +97,7 @@ subroutine ELPH_double_grid(k,E,q)
  !
  ! Find border points and remove them if required
  ! ===============================================
- call k_map_fine_to_coarse_init(q,PH_freqs,q_fine,FineGd_is_expanded,.TRUE.)
+ call k_map_fine_to_coarse_init_ph(q,PH_freqs,q_fine,FineGd_is_expanded)
  !
  ! Expansion mode
  ! =======================

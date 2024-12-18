@@ -91,8 +91,8 @@ subroutine RT_start_and_restart(E,k,q)
  !
  if(.not.l_RT_is_WFfree) then
    !
-   call              el_density_matrix(G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2)),E,k,rho_reference,1)
-   if(n_spin>1) call el_magnetization_matrix(G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2)),E,k,magn_reference,1)
+   call              el_density_matrix(G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2)),E,k,rho_reference,1,"RT")
+   if(n_spin>1) call el_magnetization_matrix(G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2)),E,k,magn_reference,1,"RT")
    !
    rho_n=rho_reference
    if(n_spin>1) magn_n=magn_reference

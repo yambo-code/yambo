@@ -23,6 +23,7 @@ integer function yambo_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  use X_m,           ONLY:X_t,i_X_kind_existing_DB
  use DIPOLES,       ONLY:DIPOLE_t
  use parallel_m,    ONLY:myid,ncpu
+ use parser_m,      ONLY:parser
  use it_tools,      ONLY:it_reset
  use it_m,          ONLY:infile
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
@@ -57,6 +58,7 @@ integer function yambo_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  integer           ::i_err,i_X_kind,ID,VB(2),CB(2)
  logical           ::launch_me
+ logical           ::l_eval_polarization
  !
  ! Externals
  !
@@ -72,7 +74,7 @@ integer function yambo_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  ! ... Internal Defaults
  !
- call SET_defaults(instr,ind,od,com_dir)
+ call SET_defaults_NL(instr,ind,od,com_dir)
  !
  ! ... C_driver -> YPP information transfer
  !
@@ -168,8 +170,12 @@ integer function yambo_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  launch_me= any((/l_em1d,l_em1s,l_ppa,l_mpa,l_optics,l_life.and.l_elel_corr,l_dipoles,l_real_time,&
 &                    l_sc_run,l_nl_optics/)).and.Dip%iq(1)==1
  !
- if (launch_me) call DIPOLE_driver(DIPen, Xk, q, Dip)
- if (launch_me) call mem_manager_report
+ if (launch_me) then
+   call DIPOLE_driver(DIPen, Xk, q, Dip)
+   call parser('EvPolarization'  ,l_eval_polarization)
+   if (l_eval_polarization) call POLARIZATION_output(Xen,Xk,Dip)
+   call mem_manager_report
+ endif
  !
  ! OPTICS
  !========

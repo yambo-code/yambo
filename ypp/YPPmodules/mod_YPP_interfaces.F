@@ -11,20 +11,6 @@ module YPP_interfaces
  !
  interface
    !
-#if defined _YPP_RT
-   !
-   subroutine  RT_OBSERVABLES_IO(what,J,P,IO_error,first_sec_only,G_lesser_only,COM_)
-     use YPP_real_time,  ONLY:OBS_el
-     use electrons,      ONLY:levels
-     implicit none
-     character(*)           :: what
-     type(OBS_el), optional :: J,P
-     logical,      optional :: IO_error,first_sec_only,G_lesser_only
-     integer,      optional :: COM_
-   end subroutine
-   !
-#endif  
-   !
    subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,spin_fac,pdos_fac,USE_the_DbGd,QUIET,FORCE_occ)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels,n_spin
@@ -62,7 +48,7 @@ module YPP_interfaces
      logical   ,optional:: LIST_only
    end subroutine
    !
-   subroutine PROJECTION_plot( what, N , Ns, bands, W, TIME, OBS_K, OBS_B)
+   subroutine PROJECTION_plot( what, N , Ns, bands, W, TIME, OBS_K, OBS_B, integrated_Nel, integrated_Nhole)
      use pars,           ONLY:SP
      use YPPm,           ONLY:PROJECT_N_par
      use interpolate,    ONLY:GRID_k
@@ -71,6 +57,7 @@ module YPP_interfaces
      real(SP)  ,optional:: W(N),TIME(N)
      real(SP)  ,optional:: OBS_K(PROJECT_N_par,N,Ns)
      real(SP)  ,optional:: OBS_B(bands(1):bands(2),PROJECT_N_par,Ns)
+     real(SP)  ,optional:: integrated_Nel(N,2),integrated_Nhole(N,2)
    end subroutine
    !
  end interface

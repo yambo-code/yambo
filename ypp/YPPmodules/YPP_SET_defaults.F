@@ -25,25 +25,6 @@ subroutine YPP_SET_defaults()
  use stderr,         ONLY:write_to_log  
  use wave_func,      ONLY:wf_ng
  use LIVE_t,         ONLY:live_timing_is_on
-#if defined _YPP_SC
- use YPPm,           ONLY:l_mean_potential,B_field,B_psi,B_theta,l_angular_momentum,l_position
-#endif
-#if defined _YPP_RT
- use YPP_real_time,  ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_BZ_width,&
-&                         Eh_pumped_pair_deltaE,Eh_pumped_pair_energy,Eh_pumped_pair_width,l_RealTime,l_RT_dos,&
-&                         l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,l_RT_energy,l_RT_lifetimes,l_RT_occupations,&
-&                         l_RT_time,l_RT_X,Eh_pumped_pair_n_BZ_regions,Probe_Keyword ,Pump_Keyword,X_order,&
-&                         Eh_mu,Eh_temp,h_mu_autotune_thr,RT_p_format,l_RT_G_two_times,X_kind,Pump_path
- use fields,         ONLY:n_ext_fields
-#endif
-#if defined _YPP_ELPH
- use YPP_ELPH,       ONLY:elph_dbs_path, elph_Ef, elph_gamma_broad, elph_steps, l_atomic_amplitude, l_eliashberg,&
-&                         l_gkkp, l_phonons, ph_broad, ph_freqs_file, ph_modes_file
- use ELPH,           ONLY:gsqF_energy_steps,elph_branches
-#endif
-#if defined _YPP_NL
- use YPP_real_time,  ONLY:Pump_path
-#endif
  !
  implicit none
  !
@@ -79,31 +60,6 @@ subroutine YPP_SET_defaults()
  !
  wf_ng_cut=0
  !
- ! RT OCCUPATIONS
- !
-#if defined _YPP_RT
- !
- l_RealTime=.FALSE.
- l_RT_DBs  =.FALSE.
- !
- ! Absorption, occupations, lifetimes, density, G_lesser
- !
- l_RT_X           =.FALSE.
- l_RT_abs         =.FALSE.
- l_RT_occupations =.FALSE.
- l_RT_lifetimes   =.FALSE.
- l_RT_density     =.FALSE.
- l_RT_G_two_times =.FALSE.
- !
- ! PP kind
- !
- l_RT_time  =.FALSE.
- l_RT_energy=.FALSE.
- l_RT_dos   =.FALSE.
- l_RT_bands =.FALSE.
- !
-#endif
- !
  ! BANDS
  !
  BANDS_bands=(/1,n_bands/)
@@ -111,9 +67,6 @@ subroutine YPP_SET_defaults()
  l_bands=.false.
  INTERP_shell_factor=20._SP
  INTERP_grid = (/-1, -1, -1/)
-#if defined _YPP_RT
- Nel_fac=1._SP
-#endif
  !
  ! Interpolation
  !
@@ -130,9 +83,6 @@ subroutine YPP_SET_defaults()
  V_value    ='RE'
  l_mag=.false.
  l_sp_wf=.false.
-#if defined _YPP_SC
- l_mean_potential=.false.
-#endif
  l_norm_to_one=.false.
  output_fname=' '
  plot_title=' '
@@ -160,26 +110,6 @@ subroutine YPP_SET_defaults()
  BSiq=1
  AVE_exc='h'
  !
-#if defined _YPP_ELPH
- !
- ! ELPH
- !
- l_phonons=.false.
- l_gkkp=.false.
- l_eliashberg=.false.
- l_atomic_amplitude=.false.
- elph_steps=200
- ph_broad=0.01_SP/HA2EV
- elph_gamma_broad=0._SP
- elph_Ef=0._SP
- elph_dbs_path='.'
- ph_freqs_file='none'
- ph_modes_file='none'
- gsqF_energy_steps=1
- elph_branches=(/-1,-1/)
- !
-#endif
- !
  ! Wannier interface
  !
  l_wannier=.FALSE.
@@ -200,64 +130,5 @@ subroutine YPP_SET_defaults()
  SOC_bands_to_map=(/ 1, n_bands /)
  SOC_bands_buffer=1
  SOC_split=0.1_SP/HA2EV
- !
-#if defined _YPP_NL
- Pump_path     ="none"
-#endif
- !
-#if defined _YPP_RT
- !
- !REMOVE SYMMETRIES
- !
- E_field=0._SP
- !
- !ANALIZE RESPONSE
- !
- RT_conf%T_range(:)  =real((/-FS2AUT,-FS2AUT/),SP)
- RT_conf%W_n_steps   =200
- RT_conf%Carriers_W_range(:)  =(/0._SP,20./HA2EV/)
- RT_conf%X_W_range(:)  =(/0._SP,20./HA2EV/)
- Probe_Keyword ="none"
- Pump_Keyword  ="none"
- X_kind        ="rhorho"
- X_order       =1
- n_ext_fields  =1
- !
- !MANUAL PUMP
- !
- Eh_pumped_pair_n_BZ_regions=0
- Eh_pumped_pair_deltaE=-1._SP/HA2EV
- Eh_pumped_pair_energy=-1._SP/HA2EV
- Eh_pumped_pair_width=0.1_SP/HA2EV
- Eh_pumped_pair_BZ_width=0.1_SP
- Eh_pumped_Nel=1._SP
- !
- !FERMI FUNCTION PUMP
- !
- Eh_mu   =(/-0.001_SP/HA2EV,0.001_SP/HA2EV/)
- Eh_temp =(/0._SP/HA2EV,0._SP/HA2EV/)
- h_mu_autotune_thr = 0._SP
- !
- !TR abs
- !
- RT_p_format="3col" 
- !
-#endif
- !
- ! ANGULAR MOMENTUM & ELECTRON DISPLACEMENT
- !
-#if defined _YPP_SC
- !
- l_angular_momentum=.false.
- l_position=.false.
- !
- !REMOVE SYMMETRIES
- !
- E_field=0._SP
- B_field=0._SP
- B_theta=0._SP
- B_psi=0._SP
- !
-#endif
  !
 end subroutine YPP_SET_defaults

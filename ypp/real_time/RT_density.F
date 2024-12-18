@@ -133,9 +133,9 @@ subroutine RT_density(en,kpt,qpt)
      if(     include_eq_occ) G_loc=dG_lesser(:,:,:,1)+G_lesser_reference
      if(.not.include_eq_occ) G_loc=dG_lesser(:,:,:,1)
      !
-     call el_density_matrix(G_loc,en,kpt,drho,RT_bands(1))
+     call el_density_matrix(G_loc,en,kpt,drho,RT_bands(1),"YPP_RT")
      !
-     if(n_spin>1) call el_magnetization_matrix(G_loc,en,kpt,delta_magn,RT_bands(1))
+     if(n_spin>1) call el_magnetization_matrix(G_loc,en,kpt,delta_magn,RT_bands(1),"YPP_RT")
      !
    else
      !

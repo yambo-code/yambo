@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine INIT_ypp(E,instr,FINALIZE)
+subroutine INIT_ypp_rt(E,instr,FINALIZE)
  !
  use units,          ONLY:FS2AUT
  use YPPm,           ONLY:l_plot,l_SOC_map,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,BSiq,&
@@ -30,6 +30,13 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use parser_m,       ONLY:PARSER_array
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
+ use QP_m,           ONLY:QP_nb
+ use electrons,      ONLY:levels,E_reset
+ use YPP_real_time,  ONLY:l_RealTime,l_RT_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,l_RT_G_two_times,&
+&                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,l_RTpump_Fermi,&
+&                         l_RTpump_energy,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions,&
+&                         l_NL_X,l_NL_exc,RT_conf,l_RT_pol
+ use real_time,      ONLY:RT_bands
 #if defined _YAML_OUTPUT
  use pars,           ONLY:logfile_index,repfile_index
  use com,            ONLY:of_yaml_IDs
@@ -52,6 +59,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  integer, external::io_RIM,io_COL_CUT,io_ATMPROJ_pwscf,io_DIPOLES
  logical, external::file_exists 
  !
+ integer, external::io_RT_components,io_KB_pwscf,io_KB_abinit
+ integer          ::io_RT_G_err,io_RT_OBS_err,io_KB_pwscf_err,io_KB_abinit_err
+ !
  if (FINALIZE) then
    call call_INIT_load('Game_Over')
    if (master_cpu) then
@@ -70,6 +80,20 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  ! DATABASES 
  !===========
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! GF
+ io_RT_G_err=io_RT_components('G_lesser_RESTART' ,ID)
+ if (io_RT_G_err==0) QP_nb=RT_bands(2)
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
+ io_RT_OBS_err=io_RT_components('OBSERVABLES' ,ID)
+ if (io_RT_OBS_err==0) QP_nb=RT_bands(2)
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_KB_pwscf_err=io_KB_pwscf(ID)
+ ! 
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_KB_abinit_err=io_KB_abinit(ID)
  !
  ! ATOMIC PROJECTIONS pwscf
  !
@@ -199,10 +223,55 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        !
      endif
      !
+     if ( trim(rstr_piece(i1)) == 'RTDBs') then
+       l_RTpump_energy=STRING_match(rstr_piece(i1+1),'e')
+       l_RTpump_Fermi =STRING_match(rstr_piece(i1+1),'f')
+     endif
+     !
+     if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDplots') then
+       !
+       l_RT_X           =STRING_match(rstr_piece(i1+1),'X')
+       l_RT_occupations =STRING_match(rstr_piece(i1+1),'o')
+       l_RT_lifetimes   =STRING_match(rstr_piece(i1+1),'l')
+       l_RT_density     =STRING_match(rstr_piece(i1+1),'d')
+       l_RT_G_two_times =STRING_match(rstr_piece(i1+1),'g')
+       l_RT_abs         =STRING_match(rstr_piece(i1+1),'a')
+       l_RT_pol         =STRING_match(rstr_piece(i1+1),'p')
+       !
+       l_rtplot=.TRUE.
+       !
+     endif
+     !
+     if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDplotmode') then
+       !
+       l_RT_bands       =STRING_match(rstr_piece(i1+1),'b')
+       l_RT_time        =STRING_match(rstr_piece(i1+1),'t')
+       l_RT_energy      =STRING_match(rstr_piece(i1+1),'e')
+       l_RT_dos         =STRING_match(rstr_piece(i1+1),'d')
+       !
+       l_rtmode=.TRUE.
+       !
+     endif
+     !
+     if (l_rtplot.and..not.l_rtmode) l_RT_time=.TRUE.
+     if (.not.l_rtplot.and.l_rtmode) l_RT_occupations=.TRUE.
+     !
    enddo
  enddo
  !
  call call_INIT_load('load_defaults')
+ !
+ if (l_RT_X)           call initactivate(1,'RT_X')
+ if (l_RT_abs)         call initactivate(1,'RTabs')
+ if (l_RT_occupations) call initactivate(1,'RToccupations')
+ if (l_RT_lifetimes)   call initactivate(1,'RTlifetimes')
+ if (l_RT_density)     call initactivate(1,'RTdeltaRho')
+ if (l_RT_G_two_times) call initactivate(1,'RTGtwotimes')
+ if (l_RT_bands)       call initactivate(1,'RTfitbands')
+ if (l_RT_time)        call initactivate(1,'RTtime')
+ if (l_RT_energy)      call initactivate(1,'RTenergy')
+ if (l_RT_dos)         call initactivate(1,'RTdos')
+ if (l_RT_pol)         call initactivate(1,'RTpol')
  !
  if (l_amplitude)      call initactivate(1,'amplitude')
  if (l_spin)           call initactivate(1,'spin')
@@ -215,6 +284,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_sort)           infile_editing=.false.
  if (l_dos)            call initactivate(1,'dos')
  if (l_bands)          call initactivate(1,'bnds')
+ !
+ if (l_RTpump_energy) call initactivate(1,'Select_energy')
+ if (l_RTpump_Fermi ) call initactivate(1,'Select_Fermi')
  !
  l_flag=.not.l_sort
  if (l_flag) call call_INIT_load('parser_input_file')
@@ -229,11 +301,33 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_dos       =runlevel_is_on('dos')
  l_bands     =runlevel_is_on('bnds')
  l_fix_syms  =runlevel_is_on('fixsyms')
+ !
+ l_RealTime         = runlevel_is_on('RealTime').or.runlevel_is_on('TDplots').or.runlevel_is_on('TDpol')
+ l_RT_X             = runlevel_is_on('RT_X')
+ !
+ l_RT_DBs           = runlevel_is_on('RTDBs')
+ !
+ l_RTpump_energy    = runlevel_is_on('Select_energy')
+ l_RTpump_Fermi     = runlevel_is_on('Select_Fermi')
+ !
+ l_RT_pol           = runlevel_is_on('RTpol')
+ l_RT_abs           = runlevel_is_on('RTabs')
+ l_RT_occupations   = runlevel_is_on('RToccupations')
+ l_RT_lifetimes     = runlevel_is_on('RTlifetimes')
+ l_RT_density       = runlevel_is_on('RTdeltaRho')
+ l_RT_G_two_times   = runlevel_is_on('RTGtwotimes')
+ !
+ l_RT_bands         = runlevel_is_on('RTfitbands')
+ l_RT_time          = runlevel_is_on('RTtime')
+ l_RT_energy        = runlevel_is_on('RTenergy')
+ l_RT_dos           = runlevel_is_on('RTdos')
+ !
  l_dipoles =runlevel_is_on('dipoles')
  l_excitons =runlevel_is_on('excitons')
  l_electrons=runlevel_is_on('electrons')
  l_plot=any((/runlevel_is_on('wavefunction'),runlevel_is_on('magnetization'),&
 &             runlevel_is_on('density'),runlevel_is_on('current')/))
+ l_plot=l_plot .or. runlevel_is_on('RTdeltaRho')
  l_free_hole =runlevel_is_on('freehole')
  l_average_eh=runlevel_is_on('avehole')
  l_amplitude=runlevel_is_on('amplitude')
@@ -272,6 +366,11 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv GvecsCut KeepKGrid")
  !
+ if (l_RT_X) then 
+   call initactivate(1,"Xorder XKind ProbeKey PumpKey EnRngeRt ETStpsRt")
+   call initactivate(1,"TimeRange DampMode DampFactor SkipOBS_IO FrMinDamp RmAsymLim UseFFT CheckPaths")
+ endif
+ !
  ! Wannier 90 interface
  if (l_wannier) call initactivate(1,"Seed WriteAMU QPdbPath")
  !
@@ -285,16 +384,20 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    call initactivate(1,"PROJECT_mode PROJECT_path PROJECT_steps PROJECT_depth PROJECT_threshold")  
  endif
  if (l_electrons.and.l_bands)   call initactivate(1,"PROJECT_mode PROJECT_threshold")  
+ if (l_RealTime.and.l_RT_bands) call initactivate(1,"PROJECT_mode PROJECT_depth PROJECT_threshold UPDATE_E STD_style")
  !
  ! Interpolation
  l_flag=(l_dipoles.and.trim(DIPs_kind)=="IP").or.(l_electrons.and.l_dos).or.l_bands.or.(l_excitons.and.l_interp)
+ l_flag=l_flag.or.(l_RealTime.and.(l_RT_bands.or.l_RT_dos.or.l_RT_G_two_times))
  if (l_flag) call initactivate(1,"INTERP_mode INTERP_Shell_Fac INTERP_NofNN")
  !
  l_flag=l_electrons.and.l_dos
+ l_flag=l_flag.or.(l_RealTime.and.l_RT_dos)
  if (l_flag) call initactivate(1,"INTERP_Grid")
  !
  if (l_excitons.and.l_interp) call initactivate(1,"BANDS_steps cooIn cooOut")
  l_flag=l_bands
+ l_flag=l_bands.or.l_RT_bands.or.l_RT_G_two_times
  if (l_flag) then
    call initactivate(1,"OutputAlat cooIn cooOut NormN NelFac")
    if (l_bands) call initactivate(1,"BANDS_bands")
@@ -314,7 +417,6 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    else
      call INIT_QP_ctl_switch('G')
      call initactivate(1,"DIP_E_range DIP_C_bands DIP_direction")
-     call initactivate(1,"DIP_V_bands")
    endif
  endif
  !
@@ -325,6 +427,56 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands DOSUsesOcc")
      call initactivate(1,"PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
    endif
+ endif
+ if (l_RT_DBs)    then
+   call initactivate(1,'RTpumpNel RTpumpSpin RTBands RTpumpBZWd cooIn BANDS_path')
+   call PARSER_array(mode="REAL dimensions",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3)
+   if (Eh_pumped_pair_n_BZ_regions>0) then
+     YAMBO_ALLOC(Eh_pumped_pair_BZ_regions,(Eh_pumped_pair_n_BZ_regions,3))
+     call PARSER_array(mode="read",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3,R_v=Eh_pumped_pair_BZ_regions)
+     call PARSER_array(mode="write",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3,&
+&                        DESC="[RT] K-points manually excited",&
+&                        R_v=Eh_pumped_pair_BZ_regions(:Eh_pumped_pair_n_BZ_regions,:))
+   else if (infile_editing) then
+     call PARSER_array(mode="write",VAR="RTpumpBZ",N=0,M=3,&
+&                        DESC="[RT] K-points manually excited")
+   endif
+   if (l_RTpump_energy) call initactivate(1,'RTpumpEhEn RTpumpDE RTpumpEhWd')
+   if (l_RTpump_Fermi) call initactivate(1, 'RTmuEh RTtempEh RTautotuneThr')
+ endif
+ !
+ if (l_RealTime) then
+   !
+   l_flag=l_RT_occupations.or.l_RT_abs.or.l_RT_pol
+   if (l_flag)      call init_RT_ctl_switch('G')
+   l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes.or.l_RT_abs.or.l_RT_pol.or.l_RT_G_two_times
+   if (l_flag)      call initactivate(1,"TimeStep TimeRange")
+   !
+   if (l_RT_pol)    call initactivate(1,"PolMode EnRngeRt ETStpsRt DampFactor")
+   !
+   l_flag=l_RT_time.and.l_RT_occupations
+   if (l_flag)           call initactivate(1,"OCCgroup")
+   if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
+   if (l_RT_occupations.or.l_RT_lifetimes) then
+     if (l_RT_time)  call initactivate(1,"BANDS_path CarrEnRnge")
+   endif
+   if (l_RT_density)     call initactivate(1,"LoadGhistory IncludeEQocc")
+   if (l_RT_G_two_times) then
+     call initactivate(1,"LoadGhistory IncludeEQocc EnRngeRt ETStpsRt DampFactor RhoDeph")
+     call initactivate(1,"BuildSpec BuildGret BuildGadv BuildGles BuildGgrt KeepCC KeepCV KeepVC KeepVV")
+   endif
+   if (l_RT_dos)  then
+     call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc NoOcc")
+     call initactivate(1,"PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
+     call INIT_QP_ctl_switch('G')
+   endif
+   if ((l_RT_dos.or.l_RT_time).and.n_spinor==2) call initactivate(1,'WFReference')
+   !
+   if (l_RT_abs) then
+     call initactivate(1,"BSQindex EnRngeRt ETStpsRt DampFactor")
+     call initactivate(1,"TRabsOBS TRabsDIPdir TRabsDIPplane TRabsMODE TRabsEtresh")
+   endif
+   !
  endif
  !
  if (l_plot) then
@@ -368,11 +520,13 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_QP_DB_expand) call initactivate(1,"QPDB_file") 
  !
  l_init_QP=l_plot.and.l_sp_wf
+ if (.not.l_init_QP) l_init_QP=(l_RT_occupations.or.l_RT_lifetimes).and..not.l_RT_bands.and..not.l_RT_dos
  if (l_init_QP) call INIT_QP(" ")
  !
  ! Check and fill all possible vectorial USER fields
  !
  l_flag=l_bands
+ l_flag=l_flag.or.l_RT_bands.or.l_RT_G_two_times
  if (l_flag) call USER_vector_handle("BANDS_kpts",3)
  !
  if (l_bz_grids) then

@@ -107,6 +107,18 @@ integer function INIT_nl(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    Xw(2)%n_freqs=1
    Xw(4)%n_freqs=2
    call DIPOLES_reset(Dip)
+   !
+   ! Force covariant in NL
+   !-----------------------
+   !      
+   ! In NL I always force the use of covariant dipoles
+   ! because they have a coerent phase, while normal dipole don't
+   ! this can be see in a districtive interference in the polarization
+   ! perpendicular to the field direction
+   ! I expect that dipole covariant decently reproduce non-linear response
+   !
+   Dip%approach="Covariant"
+   ! 
  endif
  !
  ! Presets (local)

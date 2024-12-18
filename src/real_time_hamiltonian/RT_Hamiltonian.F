@@ -100,7 +100,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    ! Density & Magnetization (needed for VHartree and Vxc)
    !--------------------------
    allocate(delta_rho(fft_size))
-   call el_density_matrix(dG_in,E,k,delta_rho,RT_bands(1))
+   call el_density_matrix(dG_in,E,k,delta_rho,RT_bands(1),"RT")
    rho_n=rho_reference+delta_rho
    !
    ! The VHartree term
@@ -111,7 +111,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    !
    if(n_spin>1 .and. eval_DFT) then
      allocate(delta_magn(fft_size,3))
-     call el_magnetization_matrix(dG_in,E,k,delta_magn,RT_bands(1))
+     call el_magnetization_matrix(dG_in,E,k,delta_magn,RT_bands(1),"RT")
      magn_n=magn_reference+delta_magn
      deallocate(delta_magn)
    endif

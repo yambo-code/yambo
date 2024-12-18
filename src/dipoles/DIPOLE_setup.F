@@ -15,7 +15,7 @@ subroutine DIPOLE_setup(Dip)
  use electrons,      ONLY:n_spin,n_spinor
  use parser_m,       ONLY:parser
  use stderr,         ONLY:STRING_same,STRING_match
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC
  use BS_solvers,     ONLY:BSS_mode
 #endif
  !
@@ -24,10 +24,6 @@ subroutine DIPOLE_setup(Dip)
  type(DIPOLE_t),intent(inout) :: Dip
  !
  ! Work Space
- !
-#if defined _NL
- logical           :: l_dip_appr_from_user
-#endif
  !
  call section('+','Setup: observables and procedures')
  !=====================================================
@@ -49,28 +45,8 @@ subroutine DIPOLE_setup(Dip)
  ! Bands ordering
  !----------------
  if (l_BS_dichroism.or.l_BS_magnons .or. l_BS_photolum) Dip%bands_ordered=.false.
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC
  if ( index(BSS_mode,'s')/=0 )  Dip%bands_ordered=.false.
-#endif
- !
- ! Force covariant in NL
- !-----------------------
-#if defined _NL
- if (l_nl_optics) then
-   !      
-   ! In NL I always force the use of covariant dipoles
-   ! because they have a coerent phase, while normal dipole don't
-   ! this can be see in a districtive interference in the polarization
-   ! perpendicular to the field direction
-   ! I expect that dipole covariant decently reproduce non-linear response
-   !
-   l_dip_appr_from_user=.false.
-   call parser("DipApproach",l_dip_appr_from_user)
-   if (.not.l_dip_appr_from_user) then
-     Dip%approach="Covariant"
-     Dip%ib(1)   =1
-   endif
- endif
 #endif
  !
  ! Force <V> to be calculated using the G-space

@@ -7,13 +7,19 @@
 !
 subroutine SET_defaults_nl(INSTR,IND,OD,COM_DIR)
  !
- use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,NL_initial_versor,     &
-&                     NL_verb_name,NL_bands,NL_desc,n_angles,NL_rot_axis
- use fields,     ONLY:Efield,Efield_reset
+ use nl_optics,      ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,NL_initial_versor,     &
+&                         NL_verb_name,NL_bands,NL_desc,n_angles,NL_rot_axis
+ use fields,         ONLY:Efield,Efield_reset
+ use collision_ext,  ONLY:COLLISIONS_cutoff
  !
  implicit none
  !
  character(*) :: INSTR,IND,OD,COM_DIR
+ !
+ call SET_defaults_rt(instr,ind,od,com_dir)
+ !
+ COLLISIONS_cutoff=0.0005_SP
+ RAD_LifeTime = -1._SP*FS2AUT  ! Automatic set equal to the dephasing
  !
  NE_tot_time   =  -1._SP*FS2AUT 
  Integrator_name='INVINT'

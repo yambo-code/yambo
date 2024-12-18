@@ -5,16 +5,13 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine PROJECTION_plot( what, N, Ns, bands, W, TIME, OBS_K, OBS_B)
+subroutine PROJECTION_plot( what, N, Ns, bands, W, TIME, OBS_K, OBS_B,integrated_Nel,integrated_Nhole)
  !
  use pars,           ONLY:SP,schlen
  use vec_operate,    ONLY:c2a,v_norm
  use units,          ONLY:HA2EV,AUT2FS
  use com,            ONLY:msg,of_open_close
  use LIVE_t,         ONLY:live_timing
-#if defined _YPP_RT
- use YPP_real_time,  ONLY:integrated_Nel,integrated_Nhole
-#endif
  use YPPm,           ONLY:l_PROJECT_line,CIRCUIT_k_label,PROJECT_threshold,PROJECT_N_par,&
 &                         l_PROJECT_plane,PROJECT_plane_X,PROJECT_plane_Y,PROJECT_steps
  use interpolate,    ONLY:GRID_k
@@ -27,6 +24,7 @@ subroutine PROJECTION_plot( what, N, Ns, bands, W, TIME, OBS_K, OBS_B)
  real(SP)  ,optional:: W(N),TIME(N)
  real(SP)  ,optional:: OBS_K(PROJECT_N_par,N,Ns)
  real(SP)  ,optional:: OBS_B(bands(1):bands(2),PROJECT_N_par,Ns)
+ real(SP)  ,optional:: integrated_Nel(N,2),integrated_Nhole(N,2)
  !
  ! Work Space
  !
@@ -151,7 +149,6 @@ subroutine PROJECTION_plot( what, N, Ns, bands, W, TIME, OBS_K, OBS_B)
      if (l_OCC.or.l_GAMMA) then
        call msg('o '//trim(of_name),"#"," ",INDENT=0)
        call msg('o '//trim(of_name),"#",' TIME= '//trim(real2ch( TIME(i_N)*AUT2FS ))//' fs',INDENT=0)
-#if defined _YPP_RT
        if (l_OCC) then
          call msg('o '//trim(of_name),"#",' Integrated E>E_Fermi Carriers (built-in)= '//&
 &                 trim(real2ch(integrated_Nel(i_N,1))),INDENT=0)
@@ -162,7 +159,6 @@ subroutine PROJECTION_plot( what, N, Ns, bands, W, TIME, OBS_K, OBS_B)
          call msg('o '//trim(of_name),"#",'                           (interpolated)= '//&
 &                 trim(real2ch(integrated_Nhole(i_N,2))),INDENT=0)
        endif
-#endif
      endif
      call msg('o '//trim(of_name),'#')
      call msg('o '//trim(of_name),'# Plane X versor     :',PROJECT_plane_X,INDENT=0,after_msg="[c.c.]")

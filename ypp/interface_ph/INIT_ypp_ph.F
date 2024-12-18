@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine INIT_ypp(E,instr,FINALIZE)
+subroutine INIT_ypp_ph(E,instr,FINALIZE)
  !
  use units,          ONLY:FS2AUT
  use YPPm,           ONLY:l_plot,l_SOC_map,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,BSiq,&
@@ -30,6 +30,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use parser_m,       ONLY:PARSER_array
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
+ use YPP_ELPH,       ONLY:l_phonons,l_atomic_amplitude,l_eliashberg,l_gkkp,l_gkkp_db,l_gkkp_dg,l_gkkp_plot,&
+&                         l_ph_ass_dos,l_phonons
 #if defined _YAML_OUTPUT
  use pars,           ONLY:logfile_index,repfile_index
  use com,            ONLY:of_yaml_IDs
@@ -167,6 +169,13 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        if (l_QP_DB_expand)             call initactivate(1,'QPDB_expand')
      endif
      !
+     if ( trim(rstr_piece(i1)) == 'phonons') then
+       l_dos              =STRING_match(rstr_piece(i1+1),'d')
+       l_eliashberg       =STRING_match(rstr_piece(i1+1),'e')
+       l_atomic_amplitude =STRING_match(rstr_piece(i1+1),'a')
+       if (l_atomic_amplitude) infile_editing=.false.
+       if (l_eliashberg)   call initactivate(1,'eliashberg')
+     endif
      if ( trim(rstr_piece(i1)) == 'BSiq') then
        read(rstr_piece(i1+1),'(i10)') BSiq 
        BSiq_via_command_line=.TRUE.
@@ -180,9 +189,19 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        l_spin  =STRING_match(rstr_piece(i1+1),'sp').and.n_spin>1
        l_mag   =STRING_match(rstr_piece(i1+1),'m').and.n_spin>1
        !
+       l_gkkp           =STRING_match(rstr_piece(i1+1),'g')
+       l_eliashberg     =STRING_match(rstr_piece(i1+1),'e')
+       l_ph_ass_dos     =STRING_match(rstr_piece(i1+1),'p')
        l_interp          =STRING_match(rstr_piece(i1+1),'i')
        !
      endif
+     !
+     if ( trim(rstr_piece(i1)) == 'gkkp') then
+       l_gkkp_db   =STRING_match(rstr_piece(i1+1),'g')
+       l_gkkp_dg   =STRING_match(rstr_piece(i1+1),'d')
+       l_gkkp_plot =STRING_match(rstr_piece(i1+1),'p')
+     endif
+     !
      if ( trim(rstr_piece(i1)) == 'dipoles') then
        if (STRING_match(rstr_piece(i1+1),'ip') ) DIPs_kind="IP"
        if (STRING_match(rstr_piece(i1+1),'exc')) DIPs_kind="EXCITONIC"
@@ -197,6 +216,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        l_bands          =STRING_match(rstr_piece(i1+1),'b')
        l_mag            =STRING_match(rstr_piece(i1+1),'m').and.n_spin>1
        !
+       l_eliashberg       =STRING_match(rstr_piece(i1+1),'e')
+       !
      endif
      !
    enddo
@@ -210,6 +231,13 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_wavefunction)   call initactivate(1,'wavefunction')
  if (l_interp)         call initactivate(1,'interpolate')
  !
+ if (l_eliashberg)        call initactivate(1,'eliashberg')
+ if (l_gkkp.or.l_gkkp_db) call initactivate(1,'gkkp')
+ if (l_gkkp_db)           call initactivate(1,'gkkp_db')
+ if (l_gkkp_dg)           call initactivate(1,'gkkp_dg')
+ if (l_gkkp_plot)         call initactivate(1,'gkkp_plot')
+ if (l_ph_ass_dos)        call initactivate(1,'ph_ass_dos')
+ !
  if (l_current)        call initactivate(1,'current')
  if (l_density)        call initactivate(1,'density')
  if (l_sort)           infile_editing=.false.
@@ -217,6 +245,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_bands)          call initactivate(1,'bnds')
  !
  l_flag=.not.l_sort
+ l_flag=.not.l_sort.and..not.l_atomic_amplitude
  if (l_flag) call call_INIT_load('parser_input_file')
  !
  l_bz_grids  = runlevel_is_on('bzgrids')
@@ -229,6 +258,13 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_dos       =runlevel_is_on('dos')
  l_bands     =runlevel_is_on('bnds')
  l_fix_syms  =runlevel_is_on('fixsyms')
+ l_eliashberg=runlevel_is_on('eliashberg')
+ l_phonons   =runlevel_is_on('phonons')
+ l_gkkp      =runlevel_is_on('gkkp')
+ l_gkkp_db   =runlevel_is_on('gkkp_db')
+ l_gkkp_dg   =runlevel_is_on('gkkp_dg')
+ l_gkkp_plot =runlevel_is_on('gkkp_plot')
+ l_ph_ass_dos=runlevel_is_on('ph_ass_dos').and.runlevel_is_on('excitons')
  l_dipoles =runlevel_is_on('dipoles')
  l_excitons =runlevel_is_on('excitons')
  l_electrons=runlevel_is_on('electrons')
@@ -330,6 +366,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_plot) then
    call initactivate(1,"Format Direction FFTGvecs NormToOne") 
    if (l_sp_wf) call initactivate(1,"Degen_Step")  
+   if (l_sp_wf) call initactivate(1,"ResTresh")  
    if (l_mag)   call initactivate(1,"MagDir") 
    if (l_current) call initactivate(1,'CurrentDir')
  endif
@@ -344,12 +381,25 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    if (l_exc_wf.and.(l_free_hole.or.l_average_eh)) call initactivate(1,"WFMult") 
    if (l_exc_wf.and.l_average_eh) call initactivate(1,"EHdensity")
    if (l_spin) call initactivate(1,"Degen_Step")
+   if (l_eliashberg)  call initactivate(1,"Degen_Step") 
    if (l_interp) then
      call initactivate(-1,"BSQindex")
      call initactivate(1,"INTERP_mode INTERP_Grid BANDS_steps cooIn cooOut")
      call initactivate(1,"PrtDOS DOSERange DOSESteps DOS_broad")
    endif
+   if (l_ph_ass_dos) then
+     call initactivate(-1,"BSQindex")
+     call initactivate(1,"ElPhModes PHfreqF PHmodeF DOSERange DOSESteps DOS_broad")
+     call initactivate(2,"BoseTemp")
+   endif
  endif
+ !
+ if (l_gkkp_db)                call initactivate(1,"GkkpReadBare DBsPATH PHfreqF PHmodeF GkkpExpand UseQindxB")
+ if (l_gkkp_dg.or.l_gkkp_db)   call initactivate(1,"PHfreqF PHmodeF")
+ if (l_gkkp_dg)                call initactivate(1,"FineGd_mode SkipBorderPts EkplusQmode TestPHDGrid")
+ if (l_gkkp_plot)              call initactivate(1,"Degen_Step cooOut")
+ if (l_phonons.and.l_eliashberg)   call initactivate(1,"EE_Fermi EfGbroad")
+ if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
  !
  ! Check for existing QP control fields to be proposed in the new input files
  !
@@ -368,6 +418,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_QP_DB_expand) call initactivate(1,"QPDB_file") 
  !
  l_init_QP=l_plot.and.l_sp_wf
+ if (.not.l_init_QP) l_init_QP=l_electrons.and.l_eliashberg
+ if (.not.l_init_QP) l_init_QP=l_gkkp_plot
  if (l_init_QP) call INIT_QP(" ")
  !
  ! Check and fill all possible vectorial USER fields

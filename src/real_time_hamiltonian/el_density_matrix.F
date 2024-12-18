@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
+subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band,par_scheme)
  !
  ! Electronic density matrix including the off-diagonal
  ! elements of the lesser Green function
@@ -31,6 +31,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  integer,       intent(in)  :: lowest_band
  type(levels),  intent(in)  :: en       
  real(SP),      intent(out) :: rho(fft_size)
+ character(*),  intent(in)  :: par_scheme
  !
  ! Work Space 
  !
@@ -72,21 +73,21 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  do i_sp_pol=1,n_sp_pol
    do ik=1,Xk%nibz
      !
-#if !defined _YPP_RT
-     if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-#endif
+     if (trim(par_scheme)=='RT') then
+       if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+     end if
      !      
      do ib1=RT_bands(1),RT_bands(2)
        !
-#if defined _YPP_RT
-       if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
-#endif
+       if (trim(par_scheme)=='YPP_RT') then
+         if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
+       endif
        !
        do ib2=ib1,RT_bands(2)
          !
-#if !defined _YPP_RT
-         if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1)-1 )) cycle
-#endif
+         if (trim(par_scheme)=='RT') then
+           if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1)-1 )) cycle
+         endif
          !
          f_occ=cZERO
          do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)

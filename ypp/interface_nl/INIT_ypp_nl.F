@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine INIT_ypp(E,instr,FINALIZE)
+subroutine INIT_ypp_nl(E,instr,FINALIZE)
  !
  use units,          ONLY:FS2AUT
  use YPPm,           ONLY:l_plot,l_SOC_map,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,BSiq,&
@@ -30,6 +30,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use parser_m,       ONLY:PARSER_array
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
+ use nl_optics,      ONLY:NL_damping,DephMult
+ use pars,           ONLY:SP
 #if defined _YAML_OUTPUT
  use pars,           ONLY:logfile_index,repfile_index
  use com,            ONLY:of_yaml_IDs
@@ -52,6 +54,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  integer, external::io_RIM,io_COL_CUT,io_ATMPROJ_pwscf,io_DIPOLES
  logical, external::file_exists 
  !
+ integer, external::io_NL
+ integer          ::io_Nonlinear
+ !
  if (FINALIZE) then
    call call_INIT_load('Game_Over')
    if (master_cpu) then
@@ -70,6 +75,13 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  ! DATABASES 
  !===========
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_Nonlinear=io_NL("Nonlinear",ID)
+ !
+ if(io_Nonlinear==0) then
+   if(NL_damping/=0._SP) RT_conf%T_range(:)  =(/2._SP/NL_damping*DephMult,-real(FS2AUT,SP)/)
+ endif
  !
  ! ATOMIC PROJECTIONS pwscf
  !
@@ -199,6 +211,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        !
      endif
      !
+     l_NL_X   =  trim(rstr_piece(i1)) == 'nonlinear'
+     !    
    enddo
  enddo
  !
@@ -216,6 +230,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_dos)            call initactivate(1,'dos')
  if (l_bands)          call initactivate(1,'bnds')
  !
+ if (l_NL_X)         call initactivate(1,'nonlinear')
+ !
  l_flag=.not.l_sort
  if (l_flag) call call_INIT_load('parser_input_file')
  !
@@ -229,6 +245,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_dos       =runlevel_is_on('dos')
  l_bands     =runlevel_is_on('bnds')
  l_fix_syms  =runlevel_is_on('fixsyms')
+ !
+ l_NL_X   =runlevel_is_on('nonlinear')
+ !
  l_dipoles =runlevel_is_on('dipoles')
  l_excitons =runlevel_is_on('excitons')
  l_electrons=runlevel_is_on('electrons')
@@ -326,6 +345,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      call initactivate(1,"PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
    endif
  endif
+ !
+ if(l_NL_X)   call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor PrtPwrSpec PumpPATH")
+ if(l_NL_exc) call initactivate(1,"Xorder PrintExc")
  !
  if (l_plot) then
    call initactivate(1,"Format Direction FFTGvecs NormToOne") 

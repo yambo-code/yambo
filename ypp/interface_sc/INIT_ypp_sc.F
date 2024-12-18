@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine INIT_ypp(E,instr,FINALIZE)
+subroutine INIT_ypp_sc(E,instr,FINALIZE)
  !
  use units,          ONLY:FS2AUT
  use YPPm,           ONLY:l_plot,l_SOC_map,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,BSiq,&
@@ -30,6 +30,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use parser_m,       ONLY:PARSER_array
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
+ use YPPm,           ONLY:l_mean_potential
+ use SC,             ONLY:SC_bands
+ use QP_m,           ONLY:QP_nb
+ use electrons,      ONLY:levels,E_reset
 #if defined _YAML_OUTPUT
  use pars,           ONLY:logfile_index,repfile_index
  use com,            ONLY:of_yaml_IDs
@@ -52,6 +56,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  integer, external::io_RIM,io_COL_CUT,io_ATMPROJ_pwscf,io_DIPOLES
  logical, external::file_exists 
  !
+ type(levels)     ::E_dummy
+ integer, external::io_SC_components
+ integer          ::io_SC_err
+ !
  if (FINALIZE) then
    call call_INIT_load('Game_Over')
    if (master_cpu) then
@@ -70,6 +78,12 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  ! DATABASES 
  !===========
+ ! 
+ call E_reset(E_dummy) 
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
+ io_SC_err=io_SC_components('WF' ,E_dummy,ID)
+ if (io_SC_err==0) QP_nb=SC_bands(2)
  !
  ! ATOMIC PROJECTIONS pwscf
  !
@@ -197,6 +211,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        l_bands          =STRING_match(rstr_piece(i1+1),'b')
        l_mag            =STRING_match(rstr_piece(i1+1),'m').and.n_spin>1
        !
+       !
+       l_angular_momentum =STRING_match(rstr_piece(i1+1),'l')
+       l_position         =STRING_match(rstr_piece(i1+1),'p')
+       !
      endif
      !
    enddo
@@ -210,6 +228,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_wavefunction)   call initactivate(1,'wavefunction')
  if (l_interp)         call initactivate(1,'interpolate')
  !
+ if (l_angular_momentum) call initactivate(1,'angular_m')
+ if (l_position)         call initactivate(1,'position')
+ !
  if (l_current)        call initactivate(1,'current')
  if (l_density)        call initactivate(1,'density')
  if (l_sort)           infile_editing=.false.
@@ -217,6 +238,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_bands)          call initactivate(1,'bnds')
  !
  l_flag=.not.l_sort
+ l_flag=.not.l_sort.and..not.l_atomic_amplitude
  if (l_flag) call call_INIT_load('parser_input_file')
  !
  l_bz_grids  = runlevel_is_on('bzgrids')
@@ -229,11 +251,19 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_dos       =runlevel_is_on('dos')
  l_bands     =runlevel_is_on('bnds')
  l_fix_syms  =runlevel_is_on('fixsyms')
+ l_mean_potential=runlevel_is_on('MeanPot')
+ if (l_mean_potential) then
+   call initactivate(1,'plot')
+   call initactivate(1,'electrons')
+ endif
+ l_angular_momentum = runlevel_is_on('angular_m').and.runlevel_is_on('electrons')
+ l_position         = runlevel_is_on('position').and.runlevel_is_on('electrons')
  l_dipoles =runlevel_is_on('dipoles')
  l_excitons =runlevel_is_on('excitons')
  l_electrons=runlevel_is_on('electrons')
  l_plot=any((/runlevel_is_on('wavefunction'),runlevel_is_on('magnetization'),&
 &             runlevel_is_on('density'),runlevel_is_on('current')/))
+ l_plot=l_plot .or. runlevel_is_on('MeanPot')
  l_free_hole =runlevel_is_on('freehole')
  l_average_eh=runlevel_is_on('avehole')
  l_amplitude=runlevel_is_on('amplitude')
@@ -269,6 +299,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_QP_DBs_create_and_modify = runlevel_is_on('QPDB_edit')
  l_QP_DBs_manipulate = runlevel_is_on('QPDB_merge')
  l_QP_DB_expand = runlevel_is_on('QPDB_expand')
+ !
+ if (l_mean_potential) call initactivate(1,"PotValue")
  !
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv GvecsCut KeepKGrid")
  !
@@ -327,6 +359,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    endif
  endif
  !
+ if (l_angular_momentum.or.l_position) call initactivate(1,"FFTGvecs")
+ if (l_current) call initactivate(1,'PhaseTrick')
+ !
  if (l_plot) then
    call initactivate(1,"Format Direction FFTGvecs NormToOne") 
    if (l_sp_wf) call initactivate(1,"Degen_Step")  
@@ -368,11 +403,13 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_QP_DB_expand) call initactivate(1,"QPDB_file") 
  !
  l_init_QP=l_plot.and.l_sp_wf
+ if (.not.l_init_QP) l_init_QP=(l_electrons.and.l_mean_potential).or.l_angular_momentum.or.l_position
  if (l_init_QP) call INIT_QP(" ")
  !
  ! Check and fill all possible vectorial USER fields
  !
  l_flag=l_bands
+ !
  if (l_flag) call USER_vector_handle("BANDS_kpts",3)
  !
  if (l_bz_grids) then

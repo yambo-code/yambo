@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
+subroutine LEVELS_mirror_nl(what,E,X,Dip,l_USER_field)
  !
  use electrons,     ONLY:levels
  use parser_m,      ONLY:parser

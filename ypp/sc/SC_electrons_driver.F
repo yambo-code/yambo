@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine electrons_driver(Xk,Xen,Xq)
+subroutine SC_electrons_driver(Xk,Xen,Xq)
  !
  Use stderr,         ONLY:intc,STRING_same
  use wave_func,      ONLY:WF,wf_ng
@@ -34,41 +34,11 @@ subroutine electrons_driver(Xk,Xen,Xq)
  ! Doing something?
  !==================
  !
- if ( .not. any((/l_density,l_mag,l_sp_wf,l_dos,l_bands,l_current,&
-&                 l_mean_potential,l_angular_momentum,l_position/)) ) return
- !
- INTERP_input_mode=INTERP_mode
- !
- ! Projection
- !============
- call PROJECTION_setup("setup")
- !
- ! Plotting setup
- !================
- call plot_check_and_launch(.true.)
- !
- ! States selector
- !=================
- !
- NB=(/1,maxval(Xen%nbm)/)
- NK=(/1,Xk%nibz/)
- !
- if ( any((/l_sp_wf,l_angular_momentum,l_position,l_mean_potential/)) ) then
-   !
-   call QP_state_table_setup(Xen,1,1,.true.)
-   !
-   NB =(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)
-   NK =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)
-   !
- else if (l_dos) then
-   !
-   NB=DOS_bands
-   !
- endif
+ if ( .not. any((/l_bands,l_mean_potential,l_angular_momentum,l_position/)) ) return
  !
  ! WFs
  !=====
- if( any((/l_mag,l_density,l_sp_wf,l_current/)) ) then
+ if( any((/l_bands,l_mean_potential,l_angular_momentum,l_position/)) ) then
    !
    call PARALLEL_global_indexes(Xen,Xk,Xq," ",RESET=.TRUE.)
    call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
@@ -80,29 +50,21 @@ subroutine electrons_driver(Xk,Xen,Xq)
    !
  endif
  !
- ! DOS 
- !=====
- if (l_dos)     call electrons_dos(Xk,Xen)
- !
- ! DENSITY
- !=========
- if (l_density) call electrons_density(Xk,Xen)
- !
  ! BANDS interpolation
  !======================
  if (l_bands) call electrons_bands(Xk,Xen)
  !
  ! WAVEFUNCTIONS 
  !===============
- if (l_sp_wf) call electrons_WFs(Xen)
+ if (l_mean_potential) call SC_mean_potential(Xen)
  !
- ! MAGNETIZATION 
- !===============
- if (l_mag) call electrons_magnetization(Xk,Xen)
+ ! Angular momentum 
+ !==================
+ if (l_angular_momentum) call electrons_angular_momentum(NK,NB)
  !
- ! CURRENT
- !=========
- if (l_current) call electrons_current(Xk,Xen)
+ ! <Mean> position
+ !=================
+ if (l_position)         call electrons_position(NK,NB,1.,'cylindrical','2d')
  !
  ! Clean-up
  !==========

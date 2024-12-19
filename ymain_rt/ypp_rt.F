@@ -210,8 +210,7 @@ integer function ypp_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_
  !
  if (l_RealTime) call RT_ypp_driver(en,k,q)
  !
- l_flag=l_excitons.or.(l_dipoles.and.trim(DIPs_kind)=="EXCITONIC").or.l_RT_abs
- if (l_flag)    call excitons_driver(k,Xk,en,Xen,q)
+ if (l_RT_abs)   call RT_transient_absorption_driver(k,Xk,en,Xen,q)
  !
  l_flag=l_electrons
  if (l_flag)    call electrons_driver(Xk,Xen,q)

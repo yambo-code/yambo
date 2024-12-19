@@ -1,5 +1,4 @@
 #if defined _YPP_SC
-sc_objects = electrons_angular_momentum.o electrons_position.o electrons_WFs_proj_interpolate.o
 #endif
 objs = electrons_driver.o electrons_spin_factors.o electrons_pdos_factors.o electrons_magn_factors.o \
        electrons_dos.o electrons_dos_elemental.o electrons_dos_setup.o \

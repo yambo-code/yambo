@@ -207,12 +207,11 @@ integer function ypp_ph(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_
  !
  if (l_fix_syms) call symmetries_driver(en,k)
  !
- !
  l_flag=l_excitons.or.(l_dipoles.and.trim(DIPs_kind)=="EXCITONIC")
- if (l_flag)    call excitons_driver(k,Xk,en,Xen,q)
+ if (l_flag)    call excitons_driver_ph(k,Xk,en,Xen,q)
  !
  l_flag=l_electrons.and.(.not.l_eliashberg)
- if (l_flag)    call electrons_driver(Xk,Xen,q)
+ if (l_flag)    call electrons_driver_ph(Xk,Xen,q)
  !
  if ((l_gkkp.and..not.l_excitons).or.l_phonons) then
    ! =====     ========

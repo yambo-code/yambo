@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine electrons_driver(Xk,Xen,Xq)
+subroutine electrons_driver_ph(Xk,Xen,Xq)
  !
  Use stderr,         ONLY:intc,STRING_same
  use wave_func,      ONLY:WF,wf_ng
@@ -34,8 +34,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  ! Doing something?
  !==================
  !
- if ( .not. any((/l_density,l_mag,l_sp_wf,l_dos,l_bands,l_current,&
-&                 l_mean_potential,l_angular_momentum,l_position/)) ) return
+ if ( .not. l_sp_wf ) return
  !
  INTERP_input_mode=INTERP_mode
  !
@@ -68,7 +67,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  ! WFs
  !=====
- if( any((/l_mag,l_density,l_sp_wf,l_current/)) ) then
+ if( l_sp_wf ) then
    !
    call PARALLEL_global_indexes(Xen,Xk,Xq," ",RESET=.TRUE.)
    call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
@@ -80,29 +79,10 @@ subroutine electrons_driver(Xk,Xen,Xq)
    !
  endif
  !
- ! DOS 
- !=====
- if (l_dos)     call electrons_dos(Xk,Xen)
- !
- ! DENSITY
- !=========
- if (l_density) call electrons_density(Xk,Xen)
- !
- ! BANDS interpolation
- !======================
- if (l_bands) call electrons_bands(Xk,Xen)
  !
  ! WAVEFUNCTIONS 
  !===============
- if (l_sp_wf) call electrons_WFs(Xen)
- !
- ! MAGNETIZATION 
- !===============
- if (l_mag) call electrons_magnetization(Xk,Xen)
- !
- ! CURRENT
- !=========
- if (l_current) call electrons_current(Xk,Xen)
+ if (l_sp_wf) call polaronic_WFs(Xen)
  !
  ! Clean-up
  !==========

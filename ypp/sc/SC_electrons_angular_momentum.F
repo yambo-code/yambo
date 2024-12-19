@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
+subroutine SC_electrons_angular_momentum(nkpt_angular,nband_angular)
  !
  ! Important:
  ! We are in presence of a potential vector field, so

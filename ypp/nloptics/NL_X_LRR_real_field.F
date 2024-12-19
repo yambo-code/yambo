@@ -9,7 +9,7 @@
 !
 ! Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch
 !
-subroutine RT_X_LRR_real_field(en)
+subroutine NL_X_LRR_real_field(en)
  !
  use YPP_real_time,  ONLY:RT_conf,Use_FFT,l_force_min_damp,RT_time,Pol,Curr,ElField,&
 &                         OBS_el_free,X_kind,N_pumps

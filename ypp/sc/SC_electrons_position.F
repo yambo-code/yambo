@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
+subroutine SC_electrons_position(nkpt_pos,nband_pos,power,what,format)
  !
  use pars,           ONLY:SP,schlen,pi
  use stderr,         ONLY:intc

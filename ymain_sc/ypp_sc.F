@@ -211,7 +211,7 @@ integer function ypp_sc(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_
  if (l_flag)    call excitons_driver(k,Xk,en,Xen,q)
  !
  l_flag=l_electrons
- if (l_flag)    call electrons_driver(Xk,Xen,q)
+ if (l_flag)    call SC_electrons_driver(Xk,Xen,q)
  !
  ! CLOSING
  !=========

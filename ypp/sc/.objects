@@ -1,0 +1,3 @@
+
+objs = SC_electrons_bands.o SC_electrons_angular_momentum.o SC_electrons_position.o SC_electrons_WFs_proj_interpolate.o \
+       fix_SC_DBs.o SC_electrons_driver.o SC_mean_potential.o SC_write_rotated_WFs.o

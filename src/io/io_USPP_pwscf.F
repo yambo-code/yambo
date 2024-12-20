@@ -3,11 +3,11 @@
 !
 ! Copyright (C) 2018 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AF
+! Authors (see AUTHORS file for details): AF, DS
 !
-integer function io_USPP_pwscf(ID)
+integer function io_VPRJ_pwscf(ID)
  !
- use pars,             ONLY: SP,LP
+ use pars,             ONLY: LP
  use stderr,           ONLY: intc
  use IO_m,             ONLY: io_sec,read_is_on,write_is_on
  use IO_int,           ONLY: io_connect,io_disconnect, &
@@ -15,7 +15,7 @@ integer function io_USPP_pwscf(ID)
  use D_lattice,        ONLY: n_atoms,n_atomic_species
  use electrons,        ONLY: l_spin_orbit,n_spinor,n_sp_pol
  !
- use pseudo,           ONLY: pp_is_uspp,PP_uspp_alloc,PP_uspp_free,qe_pseudo_alloc
+ use pseudo,           ONLY: PP_uspp_alloc,PP_uspp_free,qe_pseudo_alloc
  use qe_pseudo_m,      ONLY: nspin, nspin_mag, noncolin, npol, nat, nsp, ityp, tau, zv, omega, &
 &                            npwx, gcutw, gcutm, ecutwfc, ecutrho, lspinorb, tpiba, alat
  use us,               ONLY: nqxq, nqx, tab, qrad
@@ -30,15 +30,16 @@ integer function io_USPP_pwscf(ID)
  ! 
  ! Work Space
  !
- integer :: i,is
+ integer :: is
  integer(LP) :: lvar
  logical :: ltmp
  !
- io_USPP_pwscf=io_connect(desc="uspp_pp_pwscf",type=0,ID=ID)
- if (io_USPP_pwscf/=0) goto 1
+ !io_VPRJ_pwscf=io_connect(desc="vproj_pp_pwscf",type=0,ID=ID)
+ io_VPRJ_pwscf=io_connect(desc="uspp_pp_pwscf",type=0,ID=ID)
+ if (io_VPRJ_pwscf/=0) goto 1
  !
- io_USPP_pwscf=io_header(ID,IMPOSE_SN=.true.)
- if (io_USPP_pwscf/=0) goto 1
+ io_VPRJ_pwscf=io_header(ID,IMPOSE_SN=.true.)
+ if (io_VPRJ_pwscf/=0) goto 1
  !
  ! Dimensions
  !
@@ -53,8 +54,6 @@ integer function io_USPP_pwscf(ID)
    call io_elemental(ID,I0=n_atoms,DB_I0=nat,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=n_atomic_species,DB_I0=nsp,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0)
-   !
- endif
  !
  ! system and lattice
  call io_bulk(ID,VAR="nspin",VAR_SZ=(/1/))
@@ -103,13 +102,11 @@ integer function io_USPP_pwscf(ID)
  call io_bulk(ID,I0=nqxq)
  call io_bulk(ID,VAR="nqx",VAR_SZ=(/1/))
  call io_bulk(ID,I0=nqx)
- !
- if (read_is_on(ID)) then
-   if (qe_pseudo_alloc) call PP_uspp_free()
-   call PP_uspp_alloc()
-   pp_is_uspp=.true.
- endif
-
+   !
+endif
+!
+if (.not. any((/io_sec(ID,:)==2/))) goto 1
+!
  !
  ! qe_pseudo_m
  call io_bulk(ID,VAR="ityp",VAR_SZ=shape(ityp))
@@ -210,4 +207,4 @@ integer function io_USPP_pwscf(ID)
  !
 1 call io_disconnect(ID=ID)
  !
-end function io_USPP_pwscf
+end function io_VPRJ_pwscf

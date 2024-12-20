@@ -159,7 +159,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ! Rim energies and kpts
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
- i_err_DbGd=io_Double_Grid(en,k,ID,'electrons')
+ i_err_DbGd=io_Double_Grid(en,k,ID,'electrons','')
  ! 
  ! Allocate and fill the k_pt/q_pt array for the DBs header
  !

@@ -29,6 +29,7 @@ subroutine electrons_bands(Xk,Xen)
  use interpolate,    ONLY:electrons_bands_interpolate,GRID_k,INTERP_mode,INTERP_shell_factor
  use QP_CTL_m,       ONLY:QP_apply
  use interfaces,     ONLY:OCCUPATIONS_Fermi
+ use YPP_interfaces, ONLY:plot_interpolated_values
  !
 #include<y_memory.h>
  !
@@ -149,13 +150,13 @@ subroutine electrons_bands(Xk,Xen)
  endif
  !
  if (BANDS_built_in.and.USER_k%nbz>0     )  call plot_interpolated_values &
-&   (Xk,Xen,dEf,USER_k,   IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"built_in",    "bands",0)
+&   (Xk,Xen,dEf,USER_k,   IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"built_in",    "bands")
  !
  if (BANDS_interpolated.and.BANDS_from_db)  call plot_interpolated_values &
-&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:1),   BANDS_bands,1,   nfiles(1:1),   "from_DB",     "bands",0)
+&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:1),   BANDS_bands,1,   nfiles(1:1),   "from_DB",     "bands")
  !
  if(BANDS_interpolated                   )  call plot_interpolated_values &
-&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"interpolated","bands",0)
+&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"interpolated","bands")
  !
  if (l_PROJECT_plane) call PROJECTION_plot( "BANDS", 1, n_spin, BANDS_bands, OBS_B=GRID_E%E ) 
  !

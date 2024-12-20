@@ -40,9 +40,7 @@ subroutine k_map_fine_to_coarse_init_ph(Xk,Xen,FineGd_k,FineGd_is_expanded)
  real(SP), allocatable :: rand_E(:,:,:)
  character(1)          :: K_or_Q
  !
-#if defined _YPP_ELPH
  integer            :: i_q,ph_modes
-#endif
  !
  ! BZ DB1 I/O
  !

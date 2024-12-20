@@ -17,7 +17,7 @@ subroutine electrons_bands(Xk,Xen)
  !
  use pars,           ONLY:SP,rZERO,schlen
  use units,          ONLY:HA2EV
- use YPP_interfaces, ONLY:PROJECTION_plot,PROJECTION_setup,k_special
+ use YPP_interfaces, ONLY:PROJECTION_plot,PROJECTION_setup,k_special,plot_interpolated_values
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
 &                         BANDS_path,BANDS_from_db,l_PROJECT_line,l_PROJECT_plane
@@ -166,13 +166,13 @@ subroutine electrons_bands(Xk,Xen)
  endif
  !
  if (BANDS_built_in.and.USER_k%nbz>0     )  call plot_interpolated_values &
-&   (Xk,Xen,dEf,USER_k,   IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"built_in",    "bands",0)
+&   (Xk,Xen,dEf,USER_k,   IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"built_in",    "bands",proj_wfc=proj_wfc)
  !
  if (BANDS_interpolated.and.BANDS_from_db)  call plot_interpolated_values &
-&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:1),   BANDS_bands,1,   nfiles(1:1),   "from_DB",     "bands",0)
+&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:1),   BANDS_bands,1,   nfiles(1:1),   "from_DB",     "bands",proj_wfc=proj_wfc)
  !
  if(BANDS_interpolated                   )  call plot_interpolated_values &
-&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"interpolated","bands",0)
+&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"interpolated","bands",proj_wfc=proj_wfc)
  !
  if (l_PROJECT_plane) call PROJECTION_plot( "BANDS", 1, n_spin, BANDS_bands, OBS_B=GRID_E%E ) 
  !

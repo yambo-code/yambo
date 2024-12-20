@@ -1,5 +1,6 @@
 
 objs = mod_SC.o SC_driver.o SC_start_and_restart.o SC_Energy.o SET_defaults_sc.o \
+       SC_symmetries_driver.o \
        MAG_initial_check.o MAG_Hamiltonian.o MAG_common_build_A.o MAG_A_phase.o \
        OEP_exact_inversion.o V_Mean_Potential.o DIPOLE_SC_rotate.o \
        QP_load_SC_xc.o SC_add_XC.o XC_additional_SC_potentials.o SC_precondition.o \

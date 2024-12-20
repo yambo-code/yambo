@@ -240,7 +240,7 @@ subroutine RT_occ_bands_interpolation(en,k,q,n_T_steps)
        endif
        !
        basename="interpolated_"//STRING_remove(real2ch( RT_time(i_T)*AUT2FS )," ","")
-       call plot_interpolated_values(k,en,0._SP,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),basename,"bands",i_T)
+       call plot_interpolated_values(k,en,0._SP,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),basename,"bands",i_T=i_T)
      endif
      !
    endif

@@ -13,6 +13,7 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  use RT_control,     ONLY:RTibz_to_RT_k
  use real_time,      ONLY:RT_nk
  use YPP_real_time,  ONLY:RT_conf,GreenF_T_and_W,l_RT_G_two_times
+ use YPP_interfaces, ONLY:plot_interpolated_values
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
@@ -61,9 +62,9 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  !============================================================================= 
  !
  if(CIRCUIT_k%nbz>0) call plot_interpolated_values(RT_k,en,0._SP,CIRCUIT_k,&
- &                                                  (/ID_RT/),(/1,RT_conf%W_n_steps/),1,(/2/),"interpolated","G_k_w",0)
+ &                   (/ID_RT/),(/1,RT_conf%W_n_steps/),1,(/2/),"interpolated","G_k_w",W=real(GreenF_T_and_W%W,SP))
  if(   USER_k%nbz>0) call plot_interpolated_values(RT_k,en,0._SP,USER_k,   &
- &                                                  (/ID_RT/),(/1,RT_conf%W_n_steps/),1,(/2/),"built_in",    "G_k_w",0)
+ &                   (/ID_RT/),(/1,RT_conf%W_n_steps/),1,(/2/),"built_in",    "G_k_w",W=real(GreenF_T_and_W%W,SP))
  !
  call INTERPOLATION_driver_end(0)
  !

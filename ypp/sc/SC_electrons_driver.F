@@ -60,11 +60,11 @@ subroutine SC_electrons_driver(Xk,Xen,Xq)
  !
  ! Angular momentum 
  !==================
- if (l_angular_momentum) call electrons_angular_momentum(NK,NB)
+ if (l_angular_momentum) call SC_electrons_angular_momentum(NK,NB)
  !
  ! <Mean> position
  !=================
- if (l_position)         call electrons_position(NK,NB,1.,'cylindrical','2d')
+ if (l_position)         call SC_electrons_position(NK,NB,1.,'cylindrical','2d')
  !
  ! Clean-up
  !==========

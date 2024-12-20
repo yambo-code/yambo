@@ -60,6 +60,20 @@ module YPP_interfaces
      real(SP)  ,optional:: integrated_Nel(N,2),integrated_Nhole(N,2)
    end subroutine
    !
+   subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfiles,basename,int_kind,i_T,proj_wfc,W)
+    use pars,           ONLY:SP
+    use electrons,      ONLY:levels
+    use R_lattice,      ONLY:bz_samp
+    type(bz_samp),    intent(in)  :: Xk,LOCAL_k
+    type(levels),     intent(in)  :: Xen
+    real(SP),         intent(in)  :: Ef
+    integer,          intent(in)  :: IDs(nquantities),dims(2),nquantities,nfiles(nquantities)
+    character(*),     intent(in)  :: basename,int_kind
+    real(SP), intent(in), optional  :: W(dims(1):dims(2))
+    integer,  intent(in), optional  :: i_T
+    logical,  intent(in), optional  :: proj_wfc
+   end subroutine
+   !
  end interface
  !
 end module YPP_interfaces

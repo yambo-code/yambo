@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): CA DS AM
 !
-subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfiles,basename,int_kind,i_T)
+subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfiles,basename,int_kind,i_T,proj_wfc,W)
  !
  use units,          ONLY:HA2EV
  use pars,           ONLY:SP,schlen
@@ -16,20 +16,17 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  use stderr,         ONLY:intc
  use YPPm,           ONLY:coo_out,K_transform,CIRCUIT_E_db,CIRCUIT_k_label
  use interpolate,    ONLY:INTERP_obj
-#if defined _YPP_SC
- use SC,             ONLY:SC_neq_kind
-#endif
-#if defined _YPP_RT
- use YPP_real_time,  ONLY:GreenF_T_and_W
-#endif
  !
 #include<y_memory.h>
  !
  type(bz_samp),    intent(in)  :: Xk,LOCAL_k
  type(levels),     intent(in)  :: Xen
  real(SP),         intent(in)  :: Ef
- integer,          intent(in)  :: IDs(nquantities),dims(2),nquantities,nfiles(nquantities),i_T
- character(*),     intent(in)  :: basename,int_kind 
+ integer,          intent(in)  :: IDs(nquantities),dims(2),nquantities,nfiles(nquantities)
+ character(*),     intent(in)  :: basename,int_kind
+ real(SP), intent(in), optional  :: W(dims(1):dims(2))
+ integer,  intent(in), optional  :: i_T
+ logical,  intent(in), optional  :: proj_wfc
  !
  ! Local variables
  !
@@ -40,9 +37,6 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
 &                         file_name(sum(nfiles)),k_file_name,k_name
  real(SP)              :: value_k(4),     values(dims(2)-dims(1)+1+4), &
 &                         tmp_var(dims(1):dims(2),maxval(nfiles),nquantities),tmp_dist(3)
-#if defined _YPP_SC
- logical               :: proj_wfc
-#endif
  !
  ! Allocs
  !
@@ -62,10 +56,6 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  ndims=dims(2)-dims(1)+1
  n_points=1
  n_points_max=1
- !
-#if defined _YPP_SC
- proj_wfc=(trim(SC_neq_kind)=="matsubara")
-#endif
  !
  ! Define a map between k-points in grid and nearest k-point in circuit
  !
@@ -157,14 +147,12 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    ifile=ifile+5
  endif
  !
-#if defined _YPP_SC
  if(PLOT_interpolated.and.PLOT_BANDS.and.proj_wfc) then
    ifile=ifile+5
    file_name(ifile+1)="proj_val_"//trim(basename)
    file_name(ifile+2)="proj_con_"//trim(basename)
    ifile=ifile+2
  endif
-#endif
  !
  if(ifile /= sum(nfiles)) call error(" something went wrong")
  !
@@ -186,9 +174,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  !
  do i_dim=dims(1),dims(2)
    if(PLOT_BANDS) headings(1+i_dim-dims(1)+1)=' b'//intc(i_dim)
-#if defined _YPP_RT
-   if(PLOT_G2   ) values(1+i_dim-dims(1)+1)=real(GreenF_T_and_W%W(i_dim),SP)*HA2EV
-#endif
+   if(PLOT_G2   ) values(1+i_dim-dims(1)+1)=W(i_dim)*HA2EV
  enddo
  !
  ! Open files and print headers

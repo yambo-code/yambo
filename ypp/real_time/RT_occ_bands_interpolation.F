@@ -16,7 +16,7 @@ subroutine RT_occ_bands_interpolation(en,k,q,n_T_steps)
 &                         CIRCUIT_made_of_SPECIAL_k,BANDS_bands,l_dipoles,&
 &                         l_PROJECT_line,l_PROJECT_plane,PROJECT_N_par,DIPs_mask
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time,integrated_Nel,integrated_Nhole
- use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_plot,k_special
+ use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_plot,k_special,plot_interpolated_values
  use stderr,         ONLY:real2ch,intc,STRING_remove,STRING_same
  use RT_control,     ONLY:RT_apply,RT_carriers_object,RT_carriers_to_RT_k,RT_carriers_to_RT_E
  use real_time,      ONLY:RT_carriers,RT_bands

@@ -8,11 +8,11 @@
 int load_environments(char *file_name);
 void options_control(struct options_struct options[],int *i_opt);
 void options_interfaces(struct options_struct options[],int *i_opt);
-/* P2Y */
+/* A2Y */
  #if defined _FORTRAN_US
-  int p2y_
+  int a2y_
  #else
-  int p2y
+  int a2y
  #endif
  (int *, int *,int *,int *,int *,int *,int *,int *,
   char *string, char *in_file, char *in_dir, char *out_dir, char *com_dir, char *job,

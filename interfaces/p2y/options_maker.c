@@ -8,9 +8,7 @@
 */
 #include <stdio.h>
 #include <kind.h>
-#if defined _yambo || defined _ypp || defined _a2y || defined _p2y || defined _c2y || defined _e2y 
- #include <yambo_driver.h>
-#endif
+#include <p2y_driver.h>
 #include <string.h>
 #include <driver.h>
 #include <stdlib.h>
@@ -43,34 +41,12 @@ void options_maker(struct options_struct options[], int n_options)
  /* 
   Control(s)
  */
-#if defined _yambo || defined _ypp || defined _a2y || defined _p2y || defined _c2y || defined _e2y 
  options_control(options,&i_opt);
-#endif
 
-#if defined _yambo 
- /* 
-  Yambo
- */
- options_yambo(options,&i_opt);
- /* 
-  Projects
- */
- options_projects(options,&i_opt);
-#endif
-
-#if defined _ypp 
- /* 
-  Ypp
- */
- options_ypp(options,&i_opt);
-#endif
-
-#if defined _a2y || defined _p2y || defined _c2y || defined _e2y 
  /* 
   Interfaces
  */
  options_interfaces(options,&i_opt);
-#endif
  /* 
   Find all short_opt alphanumerical variables not used
  */

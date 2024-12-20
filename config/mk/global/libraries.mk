@@ -47,7 +47,6 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) collisions_nl nloptics interface_nl
 # Yambo folders needed by Interfaces
 #=====================================
 #
-2Y_LIBS       = interface stop_and_restart bz_ops 
 2Y_LIBS_LD    = $(MAIN_LIBS_LD) interface stop_and_restart bz_ops
 #
 # YPP folders 

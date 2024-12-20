@@ -3,28 +3,11 @@
  
   Copyright (C) 2019 The Yambo Team
  
-  Authors (see AUTHORS file for details): DS
+  Authors (see AUTHORS file for details): AM
 */
-/* 
- Tool drivers 
-*/
-/* YAMBO 
-*/
-#if defined _yambo 
- #if defined _FORTRAN_US
-  int yambo_
- #else
-  int yambo
- #endif
-#endif
-/* YPP */
-#if defined _ypp
- #if defined _FORTRAN_US
-  int ypp_
- #else
-  int ypp
- #endif
-#endif
+int load_environments(char *file_name);
+void options_control(struct options_struct options[],int *i_opt);
+void options_interfaces(struct options_struct options[],int *i_opt);
 /* A2Y */
 #if defined _a2y
  #if defined _FORTRAN_US
@@ -60,3 +43,4 @@
  (int *, int *,int *,int *,int *,int *,int *,int *,
   char *string, char *in_file, char *in_dir, char *out_dir, char *com_dir, char *job,
   int string_N, int in_file_N, int in_dir_N, int out_dir_N, int com_dir_N, int job_N);
+

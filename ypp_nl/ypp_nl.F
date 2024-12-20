@@ -25,6 +25,7 @@ integer function ypp_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,&
 &                              alat_used_for_output,l_QP_DB_expand,coo_out,coo_in,l_dipoles,&
 &                              DIPs_kind,l_sp_wf,l_mean_potential
+ use YPP_real_time,        ONLY:l_NL_exc,l_NL_X
  !
  implicit none
  !
@@ -49,7 +50,7 @@ integer function ypp_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_
  ! Presets
  !
  iinf   =0
- ypp    =0
+ ypp_nl =0
  ncpu   =np
  myid   =pid
  infile =inf

@@ -1,1 +1,0 @@
-objs = launcher_nl.o options_maker_nl.o options_ypp_nl.o

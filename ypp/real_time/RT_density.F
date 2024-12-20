@@ -11,7 +11,7 @@ subroutine RT_density(en,kpt,qpt)
  use units,          ONLY:FS2AUT
  use R_lattice,      ONLY:bz_samp
  use FFT_m,          ONLY:fft_size,fft_dim
- use electrons,      ONLY:levels,n_spin
+ use electrons,      ONLY:levels,n_spin,n_sp_pol
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc,real2ch
  use com,            ONLY:msg,of_open_close
@@ -19,7 +19,7 @@ subroutine RT_density(en,kpt,qpt)
  use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,LOG,manage_action
  use RT_control,     ONLY:TIME_string,RT_apply,Gless_RT_IO_t,CARR_RT_IO_t
  use RT_occupations, ONLY:RT_el_occ,RT_occupation_alloc,RT_occupation_free
- use real_time,      ONLY:RT_ibz,RT_nk,RT_bands,NE_i_time,dG_lesser,G_lesser_reference,RT_step
+ use real_time,      ONLY:RTibz,RT_nk,RT_bands,NE_i_time,dG_lesser,G_lesser_reference,RT_step
  use YPPm,           ONLY:v2plot,output_fname,plot_dim,plot_title,&
 &                         use_xcrysden,use_gnuplot,use_cube,nr,nr_tot,l_norm_to_one
  use YPP_real_time,  ONLY:RT_time,RT_conf,gimme_a_G_Time_Point
@@ -34,7 +34,7 @@ subroutine RT_density(en,kpt,qpt)
  !
  ! Workspace
  !
- integer               :: ID,ik,io_err,i_t,i_dir,IO_ACT
+ integer               :: ID,ik,ik_RT,ib,io_err,i_t,i_dir,IO_ACT
  character(schlen)     :: ch_ws(3)
  logical               :: load_G_history,include_eq_occ
  !
@@ -142,7 +142,7 @@ subroutine RT_density(en,kpt,qpt)
      call RT_apply(RT_bands,en,kpt,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
      !
      ! Transfer the occupations from RT_occ to f, and save previous occupations to fo
-     allocate(en%fo)
+     allocate(en%fo(RT_bands(2),kpt%nibz,n_sp_pol))
      en%fo=en%f
      !do i_sp_pol=1,n_sp_pol
      do ik=1,kpt%nibz

@@ -123,8 +123,6 @@ subroutine k_map_fine_to_coarse_init_ph(Xk,Xen,FineGd_k,FineGd_is_expanded)
            &    call error("The first point of the PH double-grid should be Gamma")
    !
    l_skip_check=.TRUE.
-   !
- endif
  !
  ! Now that I have the finer grid of Kpts I redefine the zeros for the kpts
  !

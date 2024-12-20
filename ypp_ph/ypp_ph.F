@@ -51,7 +51,7 @@ integer function ypp_ph(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_
  ! Presets
  !
  iinf   =0
- ypp    =0
+ ypp_ph =0
  ncpu   =np
  myid   =pid
  infile =inf

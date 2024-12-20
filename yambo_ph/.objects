@@ -1,4 +1,1 @@
-objs = ph_driver.o yambo_ph.o 
-#if defined _ypp
-objs = ph_driver.o ypp_ph.o 
-#endif
+objs = yambo_ph_driver.o yambo_ph_launcher.o yambo_ph_options_maker.o options_yambo_ph.o yambo_ph.o 

@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine polarionic_WFs(Xen)
+subroutine polaronic_WFs(Xen)
  !
  use pars,           ONLY:SP,lchlen
  Use stderr,         ONLY:intc

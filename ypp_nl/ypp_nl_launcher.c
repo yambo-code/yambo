@@ -9,21 +9,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <wrapper.h>
-#include <fortran_driver.h>
 #include <kind.h>
 #include <driver.h>
-#include <yambo_driver.h>
+#include <ypp_driver.h>
 #if defined _MPI 
  #include <mpi.h>
 #endif
 
-void launcher_ph(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y,int *use_editor, int *use_mpi)
+void ypp_nl_launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y,int *use_editor, int *use_mpi)
 {
  int yambo_err;
  /* 
    Par Environments? Yes? => Return
  */
-#if defined _yambo
  if (y.parenv_file !=NULL) 
  {
   int env_editor=load_environments(y.parenv_file);
@@ -33,7 +31,6 @@ void launcher_ph(int argc, char *argv[],int np, int pid, struct yambo_seed_struc
    return;
   };
  };
-#endif
  /* 
    MPI
  */
@@ -44,70 +41,13 @@ void launcher_ph(int argc, char *argv[],int np, int pid, struct yambo_seed_struc
    MPI_Comm_size(MPI_COMM_WORLD, &np);  /* get number of processes */
  };
 #endif
-#if defined _yambo
- /* 
-   Running the Fortran YAMBO driver 
- ===========================================================================
- */
- yambo_err=F90_FUNC(yambo_ph)(
-#include <fortran_arguments.h>
- );
- if(yambo_err==2) exit(0); /* DB listing mode */
-#endif
-#if defined _ypp
  /* 
    Running the Fortran YPP driver
  ===========================================================================
  */
- F90_FUNC(ypp_ph)(
+ F90_FUNC(ypp_nl)(
 #include <fortran_arguments.h>
  );
-#endif
-#if defined _c2y
- /* 
-   Running the Fortran c2y driver
- ===========================================================================
- */
- F90_FUNC(c2y)(
-#include <fortran_arguments.h>
- );
-#endif
-#if defined _a2y
- /* 
-   Running the Fortran a2y driver
- ===========================================================================
- */
- F90_FUNC(a2y)(
-#include <fortran_arguments.h>
- );
-#endif
-#if defined _p2y
- /* 
-   Running the Fortran p2y driver 
- ===========================================================================
- */
- F90_FUNC(p2y)(
-#include <fortran_arguments.h>
- );
-#endif
-#if defined _e2y
- /* 
-   Running the Fortran p2y driver 
- ===========================================================================
- */
- F90_FUNC(e2y)(
-#include <fortran_arguments.h>
- );
-#endif
-#if defined _eph2y
- /* 
-   Running the Fortran eph2y driver 
- ===========================================================================
- */
- F90_FUNC(eph2y)(
-#include <fortran_arguments.h>
- );
-#endif
  /* 
    Input file edit ?
  ===========================================================================

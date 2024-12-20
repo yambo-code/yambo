@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
  /*
   Launcher
  */
- launcher_ph(argc,argv,np,pid,y,&use_editor,&use_mpi);
+ ypp_nl_launcher(argc,argv,np,pid,y,&use_editor,&use_mpi);
  /* 
    Input File
  */

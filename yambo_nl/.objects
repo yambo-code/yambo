@@ -1,4 +1,1 @@
-objs = nl_driver.o yambo_nl.o 
-#if defined _ypp
-objs = nl_driver.o ypp_nl.o 
-#endif
+objs = yambo_nl_driver.o yambo_nl_launcher.o yambo_nl_options_maker.o options_yambo_nl.o yambo_nl.o 

@@ -1,4 +1,1 @@
-objs = rt_driver.o yambo_rt.o 
-#if defined _ypp
-objs = rt_driver.o ypp_rt.o 
-#endif
+objs = yambo_rt_driver.o yambo_rt_launcher.o yambo_rt_options_maker.o options_yambo_rt.o yambo_rt.o 

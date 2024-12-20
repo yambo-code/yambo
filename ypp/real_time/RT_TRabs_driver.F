@@ -11,6 +11,7 @@ subroutine RT_transient_absorption_driver(k,Xk,en,Xen,q)
  use R_lattice,     ONLY:bz_samp
  use stderr,        ONLY:intc
  use electrons,     ONLY:levels
+ use YPPm,          ONLY:BSiq
  !
 #include<y_memory.h>
  !

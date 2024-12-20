@@ -572,7 +572,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    !
    subroutine FIT_me(TYP)
      !
-     use functions,  ONLY:Fermi_fnc_fit
+     use RT_control,  ONLY:Fermi_fnc_fit
      type(Load_and_Fit) :: TYP
      integer            :: i_err
      !

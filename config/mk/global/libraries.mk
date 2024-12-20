@@ -48,8 +48,7 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) collisions_nl nloptics interface_nl
 #=====================================
 #
 2Y_LIBS       = interface stop_and_restart bz_ops 
-2Y_LIBS_LD    = driver tools memory allocations communicate matrices linear_algebra parallel parser output common timing Yio io $(IO_MODE) \
-                setup interface stop_and_restart bz_ops 
+2Y_LIBS_LD    = $(MAIN_LIBS_LD) interface stop_and_restart bz_ops
 #
 # YPP folders 
 #===============
@@ -61,11 +60,11 @@ YPP_LIBS_LD        = $(YPP_BASIC_LIBS_LD) excitons
 YPPSC_LIBS         = sc
 YPPSC_LIBS_LD      = $(YPP_LIBS_LD) sc
 YPPPH_LIBS         = el-ph
-YPPPH_LIBS_LD      = $(YPP_BASIC_LIBS_LD) el-ph excitons
+YPPPH_LIBS_LD      = $(YPP_LIBS_LD) el-ph
 YPPRT_LIBS         = real_time
-YPPRT_LIBS_LD      = $(YPP_BASIC_LIBS_LD) real_time excitons
-YPPNL_LIBS         = nl
-YPPNL_LIBS_LD      = $(YPPRT_LIBS_LD) nl
+YPPRT_LIBS_LD      = $(YPP_LIBS_LD) real_time
+YPPNL_LIBS         = nloptics
+YPPNL_LIBS_LD      = $(YPPRT_LIBS_LD) nloptics
 #
 # YAMBO sources needed by YPP
 #

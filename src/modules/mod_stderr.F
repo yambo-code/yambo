@@ -466,4 +466,25 @@ module stderr
     !
   end function STRING_match
   !
+  logical function STRING_contains(substring,string)
+    !
+    character(*)           :: substring
+    character(*)           :: string
+    !
+    ! Work Space
+    !
+    character(schlen):: subs(20)
+    integer          :: is
+    !
+    call STRING_split(substring,subs)
+    !
+    STRING_contains=.TRUE.
+    !
+    do is=1,20
+      if (len_trim(subs(is))==0) cycle
+      if (.not.STRING_match(string,subs(is))) STRING_contains=.FALSE.
+    enddo
+    !
+  end function
+  !
 end module stderr

@@ -1,1 +1,1 @@
-objs = yambo_ph_driver.o yambo_ph_launcher.o yambo_ph_options_maker.o options_yambo_ph.o yambo_ph.o 
+objs = yambo_ph_driver.o yambo_ph_launcher.o yambo_ph_options_maker.o options_yambo_ph.o yambo_ph_init.o yambo_ph.o 

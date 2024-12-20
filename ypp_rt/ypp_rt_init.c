@@ -12,17 +12,11 @@
 #include <string.h>
 #include <stdio.h>
 #include <wrapper.h>
-#include <tool.h>
 #include <driver.h>
 #include <editor.h>
 
-/*
- AM 29/7/2021
-
- This source is project dependent via tool.h. In order to properly compile it, then,
- I need to add fictiuous pre-compiler options
-
-*/
+char *tool="ypp_rt";
+char *tool_desc="Y(ambo) P(ost)/(re) P(rocessor)";
 
 struct tool_struct tool_init( )
 {

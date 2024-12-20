@@ -1,1 +1,1 @@
-objs = yambo_rt_driver.o yambo_rt_launcher.o yambo_rt_options_maker.o options_yambo_rt.o yambo_rt.o 
+objs = yambo_rt_driver.o yambo_rt_launcher.o yambo_rt_options_maker.o options_yambo_rt.o yambo_rt_init.o yambo_rt.o 

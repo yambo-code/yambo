@@ -3,5 +3,5 @@ objs = command_line.o \
        mod_C_driver.o C_driver_transfer.o \
        input_file.o load_environments.o \
        options_control.o options_help.o \
-       title.o tool_init.o \
+       title.o \
        usage.o use_me.o winsize.o

@@ -1,2 +1,2 @@
 objs = netcdf_data.o a2y.o a2y_db1.o a2y_wf.o a2y_kb_pp.o \
-       driver.o launcher.o options_interfaces.o options_maker.o
+       a2y_init.o driver.o launcher.o options_interfaces.o options_maker.o

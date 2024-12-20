@@ -1,1 +1,1 @@
-objs = ypp_rt_driver.o ypp_rt_launcher.o ypp_rt_options_maker.o options_ypp_rt.o ypp_rt.o 
+objs = ypp_rt_driver.o ypp_rt_launcher.o ypp_rt_options_maker.o options_ypp_rt.o ypp_rt_init.o ypp_rt.o 

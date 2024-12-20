@@ -1,2 +1,2 @@
 objs = etsf_data.o e2y.o e2y_db1.o e2y_wf_components.o e2y_wf.o e2y_kb_pp.o \
-       driver.o launcher.o options_interfaces.o options_maker.o
+       e2y_init.o driver.o launcher.o options_interfaces.o options_maker.o

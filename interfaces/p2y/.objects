@@ -5,4 +5,4 @@ objs = mod_pw_data.o qexml.o qexsd_p2y.o qeh5_module.o qexpt_p2y.o atmproj_tools
        pw_struct_module.o pw_basis_module.o pw_wfc_module.o \
        pw_pseudo_module.o pw_atoms_module.o pw_setqf.o qe_pseudo_init.o \
        p2y_atmproj.o p2y_pseudo.o PP_PWscf_comp.o PP_PWscf_comp_nlcc.o p2y_db1.o p2y_wf.o p2y.o \
-       driver.o launcher.o options_interfaces.o options_maker.o
+       p2y_init.o driver.o launcher.o options_interfaces.o options_maker.o

@@ -49,7 +49,7 @@ integer function ypp_sc(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_
  ! Presets
  !
  iinf   =0
- ypp    =0
+ ypp_sc =0
  ncpu   =np
  myid   =pid
  infile =inf
@@ -205,7 +205,7 @@ integer function ypp_sc(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_
  !
  if (l_fix_syms) call symmetries_driver(en,k)
  !
- if (l_sc_rotate) call write_rotated_WFs(en,k)
+ !if (l_sc_rotate) call write_rotated_WFs(en,k)
  !
  l_flag=l_excitons.or.(l_dipoles.and.trim(DIPs_kind)=="EXCITONIC")
  if (l_flag)    call excitons_driver(k,Xk,en,Xen,q)

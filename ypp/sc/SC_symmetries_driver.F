@@ -115,7 +115,7 @@ subroutine symmetries_driver(E,Xk)
  ! Energies and Wave-functions
  call fix_WFs_and_E(E,Xk,Xk_save,kpoints_map,old_nsym,S_contains_TR)
  !
- call fix_SC_DBs(k,k_save,kpoints_map)
+ call fix_SC_DBs(Xk,Xk_save,kpoints_map)
  !
  ! Rotate KB or Vnl
  call fix_PPs(E,Xk,Xk_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)

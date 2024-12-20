@@ -8,14 +8,12 @@
 */
 #include <stdio.h>
 #include <kind.h>
-#if defined _yambo || defined _ypp || defined _a2y || defined _p2y || defined _c2y || defined _e2y 
- #include <yambo_driver.h>
-#endif
+#include <yambo_driver.h>
 #include <string.h>
 #include <driver.h>
 #include <stdlib.h>
 
-void options_maker_sc(struct options_struct options[], int n_options)
+void options_maker(struct options_struct options[], int n_options)
 {
  int i_opt,i,j;
  int max_long_desc=20,non_used_short_opt[200],found;
@@ -43,11 +41,8 @@ void options_maker_sc(struct options_struct options[], int n_options)
  /* 
   Control(s)
  */
-#if defined _yambo || defined _ypp || defined _a2y || defined _p2y || defined _c2y || defined _e2y 
  options_control(options,&i_opt);
-#endif
 
-#if defined _yambo 
  /* 
   Yambo
  */
@@ -56,21 +51,7 @@ void options_maker_sc(struct options_struct options[], int n_options)
   Projects
  */
  options_projects_sc(options,&i_opt);
-#endif
 
-#if defined _ypp 
- /* 
-  Ypp
- */
- options_ypp_sc(options,&i_opt);
-#endif
-
-#if defined _a2y || defined _p2y || defined _c2y || defined _e2y 
- /* 
-  Interfaces
- */
- options_interfaces(options,&i_opt);
-#endif
  /* 
   Find all short_opt alphanumerical variables not used
  */

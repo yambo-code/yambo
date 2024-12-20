@@ -1,4 +1,1 @@
-objs = sc_driver.o yambo_sc.o 
-#if defined _ypp
-objs = sc_driver.o ypp_sc.o 
-#endif
+objs = yambo_sc_driver.o yambo_sc_launcher.o yambo_sc_options_maker.o options_yambo_sc.o yambo_sc.o 

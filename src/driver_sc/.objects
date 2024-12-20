@@ -1,1 +1,0 @@
-objs = launcher_sc.o options_maker_sc.o options_ypp_sc.o

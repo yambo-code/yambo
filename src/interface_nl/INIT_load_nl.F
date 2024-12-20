@@ -99,13 +99,13 @@ subroutine INIT_load_nl(defs,en,q,k,X,Xw,Dip)
    !
    subroutine CPU_structure_load()
      use parallel_m, ONLY:n_CPU_str_max,CPU_structure,PARALLEL_default_mode
-     integer           :: i_s
+     integer           :: i1,i_s
      character(schlen) :: name,possible_fields
      !
-     call it(defs,"PAR_def_mode",'[PARALLEL] Default distribution mode ("balanced"/"memory"/"workload"/"KQmemory")',&
-&            PARALLEL_default_mode,verb_level=V_parallel)
-     !
-     do i_s=1,n_CPU_str_max 
+     do i1=1,2
+       !
+       if (i1==1) i_s=8
+       if (i1==2) i_s=11
        !
        if (i_s==8) possible_fields='(w,k) '      ! NL
        if (i_s==11)possible_fields='(k,b) '      ! OSCLL

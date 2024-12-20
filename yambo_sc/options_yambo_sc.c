@@ -208,7 +208,7 @@ void options_projects_sc(struct options_struct options[],int *i_opt)
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Electron-Phonon Hamiltonian";
  options[*i_opt].long_opt="epham";
- options[*i_opt].bin="yambo_sc";
+ options[*i_opt].bin="yambo_ph";
  options[*i_opt].yambo_string="ElPhHam";
  options[*i_opt].section=desc;
 

@@ -278,22 +278,17 @@ subroutine INIT_load_rt(defs,en,q,k,X,Xw,Dip)
      integer           :: i_s
      character(schlen) :: name,possible_fields
      !
-     call it(defs,"PAR_def_mode",'[PARALLEL] Default distribution mode ("balanced"/"memory"/"workload"/"KQmemory")',&
-&            PARALLEL_default_mode,verb_level=V_parallel)
+     i_s=6
      !
-     do i_s=1,n_CPU_str_max 
-       !
-       if (i_s==6) possible_fields='(k,b,q,qp)'  ! RT
-       !
-       if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
-       name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"
-       call it(defs,trim(name),'[PARALLEL] CPUs for each role',&
-&              CPU_structure(i_s)%CPU_string,verb_level=V_parallel)
-       name=trim(CPU_structure(i_s)%Short_Description)//"_ROLEs"
-       call it(defs,trim(name),'[PARALLEL] CPUs roles '//trim(possible_fields),&
-&              CPU_structure(i_s)%ROLE_string,verb_level=V_parallel)
-       !
-     enddo
+     possible_fields='(k,b,q,qp)'  ! RT
+     !
+     if (len_trim(CPU_structure(i_s)%Short_Description)==0) return
+     name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"
+     call it(defs,trim(name),'[PARALLEL] CPUs for each role',&
+     &       CPU_structure(i_s)%CPU_string,verb_level=V_parallel)
+     name=trim(CPU_structure(i_s)%Short_Description)//"_ROLEs"
+     call it(defs,trim(name),'[PARALLEL] CPUs roles '//trim(possible_fields),&
+     &       CPU_structure(i_s)%ROLE_string,verb_level=V_parallel)
      !
    end subroutine
    !

@@ -15,7 +15,7 @@
 #include <driver.h>
 #include <editor.h>
 
-char *tool="ypp_ph";
+char *tool="ypp";
 char *tool_desc="Y(ambo) P(ost)/(re) P(rocessor)";
 
 struct tool_struct tool_init( )
@@ -25,16 +25,17 @@ struct tool_struct tool_init( )
  t.editor=editor;
  t.tool=tool;
  t.desc=tool_desc;
- /*
-   Projects for naming the tool removed for now. Part to be fixed
- */ 
+
  char *pj=NULL;
 
- t.bin = malloc(strlen(tool) + 1);
+ pj="ph";
+
+ t.bin = malloc(strlen(tool) + strlen(pj) + 2);
  strcpy(t.bin,t.tool);
- pj="";
  t.pj=pj;
- 
+ strcat(t.bin,"_");
+ strcat(t.bin,t.pj);
+
  sprintf(t.version_string,"%i.%i.%i Revision %i Hash %s",t.version,t.subversion,t.patchlevel,t.revision,t.hash);
  return(t);
 };

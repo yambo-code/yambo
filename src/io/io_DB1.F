@@ -195,6 +195,8 @@ integer function io_DB1(E,k,ID)
    !
    call io_elemental(ID, VAR="",VAR_SZ=0,MENU=1)
    !
+   if (io_mode(ID)==DUMP.or.write_is_on(ID)) call init_variables(k,E)
+   !
    io_DB1=io_status(ID)
    if (io_DB1/=0) goto 1
    !
@@ -314,3 +316,43 @@ integer function io_DB1(E,k,ID)
    end subroutine
    !
 end function io_DB1
+!
+!
+subroutine init_variables(k,E)
+ !
+ use electrons,      ONLY:levels,n_bands,nel,default_nel
+ use D_lattice,      ONLY:Tel,input_GS_Tel
+ use R_lattice,      ONLY:bz_samp,ng_closed,QP_states_k,ng_closed,ng_vec,nkibz,nXkibz
+ use global_XC,      ONLY:setup_global_XC,EXT_NONE
+ use BS,             ONLY:BS_bands
+ use QP_m,           ONLY:QP_n_G_bands,QP_nb,QP_nk
+ use xc_functionals, ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,GS_exx_FRACTION,GS_exx_SCREENING
+ use wave_func,      ONLY:wf_nb_io
+ !
+ implicit none
+ !
+ type(levels)     :: E
+ type(bz_samp)    :: k
+ !
+ nkibz =k%nibz
+ nXkibz=k%nibz
+ QP_nk =k%nibz
+ E%nk =k%nibz
+ QP_states_k=(/1,k%nibz/)
+ !
+ n_bands=E%nb
+ wf_nb_io=E%nb
+ QP_nb=E%nb
+ QP_n_G_bands=(/1,E%nb/)
+ !
+ if(any(BS_bands(:)==0)) BS_bands=(/1,E%nb/)
+ !
+ Tel=input_GS_Tel
+ nel=default_nel
+ !
+ ng_closed=ng_vec
+ !
+ call setup_global_XC('preset',GS_xc_KIND,xc_functional=GS_xc_functional,perturbation=EXT_NONE,&
+                       exx_fraction=GS_exx_FRACTION,exx_screening=GS_exx_SCREENING)
+  !
+end subroutine init_variables

@@ -156,10 +156,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter,it_now,it_to_start)
  !
  ! Section
  !
- SECTION_name='ppa-cohsex'
+ SECTION_name='QP-ppa-cohsex'
  !
  if (GW_iter==0.and.     l_rim_w) call section('-',trim(SECTION_name))
- if (GW_iter==0.and..not.l_rim_w) call section('-',trim(SECTION_name))
+ if (GW_iter==0.and..not.l_rim_w) call section('+',trim(SECTION_name))
  if (GW_iter > 0)                 call section('=',trim(SECTION_name))
  !
  if (GW_iter==0) then

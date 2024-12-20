@@ -67,8 +67,6 @@ subroutine INIT_check_databases_ph(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,inst
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=io_ID)
  io_err=io_DB1(en,k,io_ID) 
  !
- call init_variables()
- !
 #if defined _MEM_CHECK
  call MEM_treshold_estimate( )
 #endif

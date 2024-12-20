@@ -18,9 +18,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     q_plus_G_direction,Q_Shift_Order,&
 &                     l_X_terminator,X_terminator_E,global_gauge,&
 &                     Chi_linalg_mode,X_use_lin_sys,X_use_gpu,X_DbGd_percentual
- use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,&
-&                     Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
-&                     compute_P2_dipoles,compute_Spin_dipoles,compute_Orb_dipoles
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
@@ -36,8 +33,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim,l_use_p2_Vloc_becp
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
-&                     RIM_anisotropy,RIM_ng,RIM_W_ng,rimw_type,RIM_n_rand_pts,nqibz,q0_def_norm,&
-&                     cutoff_presets,k_map,qindx_S_max_Go
+&                     RIM_anisotropy,RIM_ng,RIM_W_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
+&                     cutoff_presets,k_map,qindx_S_max_Go,RIMW_type
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn
  use parallel_m, ONLY:ncpu,CPU_str_reset,CREATE_hosts_COMM
  use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
@@ -353,13 +350,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.
  X_FILL_UP_matrix_only=.FALSE.
- use_shifted_grids_approach = .FALSE.
- use_covariant_approach     = .FALSE.
- use_real_space_approach    = .FALSE.
- use_g_space_approach       = .TRUE.
- compute_P2_dipoles         = .FALSE.
- compute_Spin_dipoles       = .FALSE.
- compute_Orb_dipoles        = .FALSE.
  use_X_DbGd=.FALSE.
  X_DbGd_percentual=-1.
  eps_2_alpha=1._SP
@@ -367,7 +357,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  global_gauge='length'
  grid_paths=' '
  skip_cond_sum_rule=.FALSE.
- Vnl_commutator_warning=.FALSE.
  q_plus_G_direction=0._SP
  Q_Shift_Order=1
  l_X_terminator=.FALSE.

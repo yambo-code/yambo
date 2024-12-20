@@ -32,7 +32,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  !
  integer             ::var_size
  logical             ::res_corr_disk,res_exch_disk,cpl_disk,&
-&                      cpl_corr_disk,cpl_exch_disk,td_hf_disk,local_long_gauge
+&                      cpl_corr_disk,cpl_exch_disk,td_hf_disk
  !
  ! PARS1
  !
@@ -110,15 +110,6 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
 &         VAR="[W] RL vectors in the sum",I0=X%ngostnts,WARN=.true.,OP=(/"<="/),DESCRIPTOR=desc)
      call io_variable_elemental(ID,&
 &         VAR="[W] [r,Vnl] included",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/),DESCRIPTOR=desc)
-     !
-     if (ver_is_gt_or_eq(ID,(/3,0,9/)).and..not.ver_is_gt_or_eq(ID,revision=626)) then
-       !
-       ! v 3.0.8: Inclusion of %long_gauge 
-       !
-       call io_variable_elemental(ID,&
-&           VAR="[W] Longitudinal Gauge",L0=local_long_gauge,DESCRIPTOR=desc)
-       !
-     endif
      !
      call io_variable_elemental(ID,VAR="[W] Field direction",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/),DESCRIPTOR=desc)
      call def_variable_elemental(ID,"",0,0,0)

@@ -1,4 +1,0 @@
-objs = core_driver.o yambo.o 
-#if defined _ypp
-objs = core_driver.o ypp.o 
-#endif

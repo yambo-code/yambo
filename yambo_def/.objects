@@ -1,0 +1,1 @@
+objs = yambo_driver.o yambo_launcher.o yambo_options_maker.o options_yambo.o yambo.o 

@@ -25,20 +25,35 @@ define clean_driver
  fi; \
  if [ "$(1)" = "stamps"    ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then $(clean_stamps); fi; \
  if [ "$(1)" = "projects-stamp" ] ; then $(clean_projects_stamp); fi; \
- if [ "$(1)" = "ymain"     ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
-  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="ymain";$(clean_dir_driver);\
+ if [ "$(1)" = "yambo_def" ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
+  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="yambo_def";$(clean_dir_driver);\
  fi
- if [ "$(1)" = "ymain_ph"  ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
-  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="ymain_ph";$(clean_dir_driver);\
+ if [ "$(1)" = "yambo_ph"  ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
+  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="yambo_ph";$(clean_dir_driver);\
  fi
- if [ "$(1)" = "ymain_sc"  ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
-  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="ymain_sc";$(clean_dir_driver);\
+ if [ "$(1)" = "yambo_sc"  ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
+  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="yambo_sc";$(clean_dir_driver);\
  fi
- if [ "$(1)" = "ymain_rt"  ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
-  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="ymain_rt";$(clean_dir_driver);\
+ if [ "$(1)" = "yambo_rt"  ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
+  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="yambo_rt";$(clean_dir_driver);\
  fi
- if [ "$(1)" = "ymain_nl"  ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
-  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="ymain_nl";$(clean_dir_driver);\
+ if [ "$(1)" = "yambo_nl"  ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
+  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="yambo_nl";$(clean_dir_driver);\
+ fi
+ if [ "$(1)" = "ypp_def" ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
+  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="ypp_def";$(clean_dir_driver);\
+ fi
+ if [ "$(1)" = "ypp_ph"  ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
+  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="ypp_ph";$(clean_dir_driver);\
+ fi
+ if [ "$(1)" = "ypp_sc"  ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
+  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="ypp_sc";$(clean_dir_driver);\
+ fi
+ if [ "$(1)" = "ypp_rt"  ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
+  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="ypp_rt";$(clean_dir_driver);\
+ fi
+ if [ "$(1)" = "ypp_nl"  ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
+  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="ypp_nl";$(clean_dir_driver);\
  fi
  if                             [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
    $(clean_libs_using_stamps_driver); \

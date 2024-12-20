@@ -5,14 +5,14 @@
  
   Authors (see AUTHORS file for details): DS
 */
-/* YAMBO  */
+/* P2Y */
 int load_environments(char *file_name);
 void options_control(struct options_struct options[],int *i_opt);
-void options_yambo(struct options_struct options[],int *i_opt);
+void options_interfaces(struct options_struct options[],int *i_opt);
 #if defined _FORTRAN_US
- int yambo_
+  int p2y_
 #else
- int yambo
+  int p2y
 #endif
  (int *, int *,int *,int *,int *,int *,int *,int *,
   char *string, char *in_file, char *in_dir, char *out_dir, char *com_dir, char *job,

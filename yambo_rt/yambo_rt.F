@@ -204,7 +204,7 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  if (l_eval_collisions) then
    tmp_char="real-time"
    if (l_elphoton_scatt) tmp_char="self-consistent"
-   call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2),Dip,tmp_char)
+   call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2),tmp_char)
    call mem_manager_report
  endif
  !

@@ -47,9 +47,10 @@ subroutine PARALLEL_global_dimensions_ham(E,Xk,q,ENVIRONMENT)
    if ((l_gw0.or.l_life).and..not.computing_Fock)    PAR_n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
    if (.not.computing_Fock)                          PAR_n_bands(1)=QP_n_G_bands(1)
    if (l_eval_collisions)  PAR_n_bands=COLL_bands
+ endif
  !
  ! QP states
  !-----------
  if (ENVIRONMENT=="Self_Energy"                     ) PAR_QP_range=QP_n_states
  !
-end subroutine PARALLEL_global_dimensions
+end subroutine PARALLEL_global_dimensions_ham

@@ -274,7 +274,7 @@ subroutine PARALLEL_global_Self_Energy_ham(E,Xk,q,WHAT)
  !
  ! I/O privileges
  !
- if (l_eval_collisions.and.io_COLLs.and.ncou>1) then
+ if (l_eval_collisions.and.io_COLLs.and.ncpu>1) then
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_INDEX%CPU_id==0)
  else 
    call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)

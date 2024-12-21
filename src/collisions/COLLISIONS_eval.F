@@ -39,6 +39,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw,mode)
  use IO_m,           ONLY:OP_RD_CL,OP_RD,RD_CL_IF_END,VERIFY,REP,io_COLLs,manage_action
  use parallel_m,     ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
  use parallel_int,   ONLY:PP_wait,PARALLEL_global_indexes,PARALLEL_WF_index
+ use common_sc_rt,   ONLY:PARALLEL_global_indexes_ham
  use interfaces,     ONLY:WF_free
  use timing_m,       ONLY:timing
  !
@@ -101,8 +102,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw,mode)
      call error(" COLLISIONS_eval: mode not recognized")
    endif
    !
+   write(*,*) "call to PARALLEL_global_indexes_ham"
    ! PARALLEL indexes ...
-   call PARALLEL_global_indexes(E,k,q,trim(PAR_ch))
+   call PARALLEL_global_indexes_ham(E,k,q,trim(PAR_ch))
+   write(*,*) "call to PARALLEL_global_indexes_ham done"
    !
    ! PARALLEL WF distribution ...
    ! ... k-q + final band index...

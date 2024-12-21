@@ -8,5 +8,11 @@ io_KB_real_space.o \
 SET_defaults_comm.o \
 WF_derivative.o \
 PARALLEL_WF_distribute_ham.o \
+PARALLEL_global_indexes_ham.o \
+PARALLEL_global_dimensions_rt.o \
+PARALLEL_global_dimensions_ham.o \
+PARALLEL_global_Self_Energy_ham.o \
+PARALLEL_global_Real_Time.o \
+PARALLEL_collisions.o \
 INIT_read_command_line_potentials.o \
 $(Berry_objects)

@@ -28,7 +28,7 @@ MAIN_LIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_f
 PJ_PHLIBS    = el-ph interface_ph qp_ph
 PJ_PHLIBS_LD = $(MAIN_LIBS_LD) interface_ph el-ph qp_ph
 
-HAM_LIBS    = hamiltonian collisions common_sc_rt
+HAM_LIBS    = hamiltonian common_sc_rt collisions
 HAM_LIBS_LD = common_sc_rt collisions hamiltonian
 
 PJ_SCLIBS    = sc interface_sc

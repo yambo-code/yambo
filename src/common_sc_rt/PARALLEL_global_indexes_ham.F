@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine PARALLEL_global_indexes_rt(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre_defined)
+subroutine PARALLEL_global_indexes_ham(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre_defined)
  !
  ! LOGICALS
  use parallel_m,    ONLY:l_par_X_T,l_par_RT,l_par_SE,l_par_X_G,l_par_X_G_finite_q,&
@@ -115,7 +115,8 @@ subroutine PARALLEL_global_indexes_rt(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_
    if (trim(Dip%approach)=="Shifted grids") MORE="_SHIFTED"
  endif
  !
- call PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
+ call PARALLEL_global_dimensions_ham(E,Xk,q,ENVIRONMENT)
+ call PARALLEL_global_dimensions_rt(E,Xk,q,ENVIRONMENT)
  !
  !==========
  ! DEFAULTS

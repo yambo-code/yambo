@@ -10,7 +10,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use pars,           ONLY:SP,schlen,cZERO,rZERO
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_coh,l_sc_sex,l_sc_is_libDFT,l_eval_collisions,l_sc_hartree,&
-&                         l_sc_exx,l_sc_electric,l_sc_fock,l_use_collisions
+&                         l_sc_exx,l_sc_electric,l_sc_fock,l_use_collisions,l_sc_magnetic
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin,n_spinor
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
@@ -19,7 +19,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
 &                         l_SC_cycle,SC_cycle_mixing,SC_alloc,SC_free,l_SC_nl_mix,    &
 &                         l_SC_RESTART,l_Mean_Potential,it_to_start,l_froze_density,  &
 &                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters,         &
-&                         SC_neq_kind,SC_mu
+&                         SC_neq_kind,SC_mu,SC_occ,l_SC_diagonal
  use hamiltonian,    ONLY:rho_n,magn_n,l_sc_V_is_local,H_nl_sc,WF_G_max,WF_Go_indx,   &
 &                         V_hartree_sc,Hzero,V_xc_sc,E_reference,l_sc_XC_is_local,            &
 &                         H_QP_table_setup,H_rotation,H_rotation_ref
@@ -104,7 +104,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  max_overlap  =rZERO
  b_of_max_proj=rZERO
  !
- call H_QP_table_setup(E)
+ call H_QP_table_setup(E,l_SC_diagonal)
  !
  ! Parallel Setup
  !================
@@ -183,6 +183,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  endif
  !
  call msg('r','')
+ !
+ Hzero=cZERO
+ !
+ ! MAG_Hamiltonian
+ !=================
+ if (l_sc_magnetic) call MAG_Hamiltonian(Xk,E)
  !
  !  Hzero (kinetic + potential)
  !=============================
@@ -470,7 +476,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    !
    DELTA_NEW(:)=sqrt(DELTA_NEW(:))*HA2EV 
    !
-   if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS") 
+   if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS",neq_mu=SC_mu,neq_occ=SC_occ,neq_mode=SC_neq_kind) 
    !
    if (l_SC_cycle) then
      !
@@ -489,7 +495,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        !
      endif
      !
-     call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS") 
+     call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS",neq_mu=SC_mu,neq_occ=SC_occ,neq_mode=SC_neq_kind) 
      !
      ! New density 
      !=============
@@ -519,7 +525,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
          !
          current_iq=0
          call IO_and_Messaging_switch("-report")
-         io_X_err=X_dielectric_matrix(E,Xk,q,X(2),Xw(2),Dip,.TRUE.,.TRUE.)
+         io_X_err=X_dielectric_matrix(E,Xk,q,X(2),Xw(2),Dip,.TRUE.,.TRUE.,it_now)
          call IO_and_Messaging_switch("+report")
          !
          ! Reload and rotate wave-functions if W is updated
@@ -868,7 +874,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      ! Final occupations 
      !====================
-     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,"E")
+     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) &
+     &  call OCCUPATIONS_Fermi(E,k,"E",neq_mu=SC_mu,neq_occ=SC_occ,neq_mode=SC_neq_kind)
      !
      dE(:,:,:)=E%E(1:SC_bands(2),:,:)-E_reference%E(1:SC_bands(2),:,:)
      !

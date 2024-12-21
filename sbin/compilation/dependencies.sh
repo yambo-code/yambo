@@ -22,25 +22,6 @@ done
 Nd=`echo $directories | wc -w`
 Nd=$((Nd-1))
 #
-proj_dep_stamp=config/stamps_and_lists/project_dependencies.stamp
-if [ ! -f $proj_dep_stamp ] ; then
-idir=0
-for CDIR in $directories
-do
- echo -en "\t[SETUP] Projects dependencies [ "
- for ((i = 0 ; i <= $idir; i++)); do echo -n "#"; done
- for ((j = i ; j <= $Nd  ; j++)); do echo -n " "; done
- echo -n " ] $idir/$Nd " $'\r'
- ((i=i%N)); ((i++==0)) && wait
- idir=$((idir+1))
- source ./sbin/compilation/dependencies_project.sh  &
- #
-done
-touch $proj_dep_stamp
-wait
-echo
-fi
-#
 idir=0
 for CDIR in $directories
 do

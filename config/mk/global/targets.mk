@@ -11,7 +11,7 @@ endif
 ifeq ($(do_e2y),yes)
   e2y   = e2y
 endif
-INTERFCS = a2y c2y $(p2y) $(e2y)
+INTERFCS = a2y $(p2y) $(e2y)
 CORE     = yambo ypp $(INTERFCS)
 UTILS    = help changelog dependencies
 CLEANS   = clean distclean clean_all gitclean

@@ -36,7 +36,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  use pars,           ONLY:SP,cONE,cZERO
  use wrapper_omp,    ONLY:M_plus_alpha_M_omp
- use electrons,      ONLY:levels,n_spinor,n_spin
+ use electrons,      ONLY:levels,n_spinor,n_spin,n_sp_pol
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_use_Hxc_collisions
  use R_lattice,      ONLY:bz_samp,nXkibz
@@ -55,6 +55,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use timing_m,       ONLY:timing
  use H_interfaces,   ONLY:V_real_space_to_H
+ use real_time,      ONLY:Ho_plus_sigma,H_pseudo_eq
  !
  implicit none
  !
@@ -69,6 +70,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  logical                  :: l_H_contains_Hartree
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
  complex(SP), allocatable :: V_scf(:),V_scf_grad(:,:),V_xc_mat(:,:,:)
+ complex(SP), allocatable :: H_pseudo(:,:,:,:)
  !
  call timing('RT Hamiltonian',OPR='start')
  !
@@ -98,7 +100,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    ! Density & Magnetization (needed for VHartree and Vxc)
    !--------------------------
    allocate(delta_rho(fft_size))
-   call el_density_matrix(dG_in,E,k,delta_rho,RT_bands(1))
+   call el_density_matrix(dG_in,E,k,delta_rho,RT_bands(1),"RT")
    rho_n=rho_reference+delta_rho
    !
    ! The VHartree term
@@ -109,7 +111,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    !
    if(n_spin>1 .and. eval_DFT) then
      allocate(delta_magn(fft_size,3))
-     call el_magnetization_matrix(dG_in,E,k,delta_magn,RT_bands(1))
+     call el_magnetization_matrix(dG_in,E,k,delta_magn,RT_bands(1),"RT")
      magn_n=magn_reference+delta_magn
      deallocate(delta_magn)
    endif
@@ -117,7 +119,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    ! The Vxc term
    !--------------
    if (eval_DFT) then
-     call XC_potential_driver(E,k,WF_kind,WF_xc_functional,1)
+     call XC_potential_driver(E,k,WF_kind,WF_xc_functional,1,l_msg_off=.true.)
      V_xc_sc=V_xc-REF_V_xc_sc
    endif
    !
@@ -210,7 +212,13 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! Pseudo potential terms needed for velocity gauge
  !==================================================
- if (l_velocity_gauge_corr) call Pseudo_Hamiltonian(k,E,.false.)
+ if (l_velocity_gauge_corr) then
+   allocate(H_pseudo(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),k%nibz,n_sp_pol))
+   call Pseudo_Hamiltonian(k,E,H_pseudo,.false.)
+   Ho_plus_sigma=Ho_plus_sigma+(H_pseudo(:,:,PAR_G_k_range(1):PAR_G_k_range(2),1:1)-&
+   &                                 H_pseudo_eq(:,:,PAR_G_k_range(1):PAR_G_k_range(2),1:1))
+   deallocate(H_pseudo)
+ endif
  !
  call timing('RT Hamiltonian',OPR='stop')
  !

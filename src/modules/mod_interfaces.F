@@ -7,7 +7,7 @@
 !
 ! headers
 !
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
@@ -40,15 +40,19 @@ module interfaces
      character(*), optional, intent(in) :: skip_patt
    end subroutine
    !
-   subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
+   subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance,neq_mu,neq_occ,neq_mode)
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
+     use pars,           ONLY:SP
      type(levels)  ::E
      type(bz_samp) ::K
      character(*)           ::OBJ
      character(*), OPTIONAL ::mode
      integer,      OPTIONAL ::n_bands
      logical,      OPTIONAL ::impose_balance
+     real(SP),     OPTIONAL ::neq_mu(3)
+     real(SP),     OPTIONAL ::neq_occ(:,:,:)
+     character(*), OPTIONAL ::neq_mode
    end subroutine
    !
    subroutine MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
@@ -111,7 +115,7 @@ module interfaces
      !
    end subroutine
    !
-   subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
+   subroutine el_density_and_current(E,k,rho,drho,J,occ_mode,bands,force_spatial_inversion)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
@@ -121,11 +125,12 @@ module interfaces
      real(SP), optional             ::rho(fft_size)
      real(SP), optional             ::drho(fft_size,3)
      real(SP), optional             ::J(fft_size,3)
+     character(*), optional, intent(in) ::occ_mode
      integer,  optional, intent(in) ::bands(2)
      logical,  optional, intent(in) ::force_spatial_inversion
    end subroutine el_density_and_current
    !
-   subroutine el_magnetization(en,Xk,magn,bands)
+   subroutine el_magnetization(en,Xk,magn,occ_mode,bands)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
@@ -134,6 +139,7 @@ module interfaces
      type(levels), intent(in ) ::en
      type(bz_samp),intent(in ) ::Xk
      real(SP),     intent(out) ::magn(fft_size,3)
+     character(*), optional, intent(in) ::occ_mode
      integer,  optional, intent(in) ::bands(2)
    end subroutine el_magnetization
    !
@@ -153,7 +159,7 @@ module interfaces
      real(SP), pointer, optional, intent(in) :: PDOS_fac(:,:,:)
    end subroutine el_density_of_states
    !
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC
    subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cmpl)
      !
      use pars,           ONLY:SP,schlen

@@ -35,7 +35,7 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
  !
  ! Work Space
  !
- logical     ::l_eval_polarization,l_force_SndOrd
+ logical     ::l_force_SndOrd
  integer     ::ik,iv,ic,ic_min,iv_max,i_sp_pol,ikm1,id_red,idir,idx(3),ikbz,ik_mem,istep,max_step
  real(SP)    ::Ev_m_Ec_KS
  complex(SP), allocatable :: Sm1_plus (:,:,:),Sm1_minus(:,:,:)
@@ -48,7 +48,6 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
  !
  if (any(Xen%nbf/=Xen%nbm)) call error(' Covariant dipoles not implemented for metals')
  !
- call parser('EvPolarization'  ,l_eval_polarization)
  call parser('FrSndOrd'        ,l_force_SndOrd)
  !
  if(.not.allocated(k_map%k_map_dir)) call k_map_nearest_by_dir(Xk,k_map)
@@ -193,10 +192,6 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
  enddo ! i_sp_pol
  !
  call live_timing()
- !
-#if defined _NL
- if (l_eval_polarization) call POLARIZATION_output(Xen,Xk,Dip)
-#endif
  !
  if (any(direction_is_todo)) then
    do ic=1,3

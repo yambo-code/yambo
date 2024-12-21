@@ -10,7 +10,7 @@ subroutine RT_X_response(en,k,q)
  use YPP_real_time,  ONLY:Use_FFT,Pol,Curr,N_probe_frequencies,&
 &                         N_probes,N_pumps,X_order,l_RT_pol,OBS_el_free,&
 &                         l_RT_X_inversion,Probe_path,Pump_path,N_probes,RT_conf,l_skip_OBS_IO
- use YPP_interfaces, ONLY:RT_OBSERVABLES_IO
+ use YPP_RT_intfcs,  ONLY:RT_OBSERVABLES_IO
  use RT_control,     ONLY:OBS_RT_IO_t
  use pars,           ONLY:schlen
  use stderr,         ONLY:STRING_split,STRING_same

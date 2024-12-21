@@ -37,9 +37,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_A2A,&
 &                         PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
-#if defined _RT
  use DIPOLES,        ONLY:DIP_P_spinor
-#endif
  use stderr,         ONLY:STRING_match
  use timing_m,       ONLY:timing
  !
@@ -113,11 +111,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    !
    call DIPOLES_ppredux_and_symmetrize()
    !
-#if defined _RT
    if (STRING_match(Dip%computed,"M_orb"))         call DIPOLE_orbital_magnetization(Xen,Xk,Dip)
-#else
+   !
    if (STRING_match(Dip%computed,"M_CD_orb"))      call DIPOLE_orb_magn_forCD(Xen,Xk,Dip)
-#endif
    !
    call DIPOLES_ppredux_and_symmetrize_orbt()
    !
@@ -193,11 +189,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
             call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol_tmp,1),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
           enddo
         endif
-#if defined _RT
         if (STRING_match(Dip%computed,"P_spinor")) then
           call PP_redux_wait(DIP_P_spinor(:,:,:,:,:,ik_mem),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         endif
-#endif
         if (STRING_match(Dip%computed,"P2")) then
           call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         endif
@@ -216,11 +210,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
             if (STRING_match(Dip%computed,"M_spin").and.(.not.n_sp_pol==2)) then
               DIP_spin(:,iv,iv,ik_mem,i_sp_pol,1)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol,1)),0. ,SP)
             endif
-#if defined _RT
             if (STRING_match(Dip%computed,"P_spinor")) then
               DIP_P_spinor(:,:,:,iv,iv,ik_mem)=cmplx( real(DIP_P_spinor(:,:,:,iv,iv,ik_mem)),0. ,SP)
             endif
-#endif
             if (STRING_match(Dip%computed,"P2")) then
               P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
             endif
@@ -237,11 +229,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
                 DIP_spin(2,iv,ic,ik_mem,i_sp_pol_inv,1)= conjg(DIP_spin(2,ic,iv,ik_mem,i_sp_pol,1))
                 DIP_spin(3,iv,ic,ik_mem,i_sp_pol,1)    = conjg(DIP_spin(3,ic,iv,ik_mem,i_sp_pol,1))
               endif
-#if defined _RT
               if (STRING_match(Dip%computed,"P_spinor")) then
                 DIP_P_spinor(:,:,:,iv,ic,ik_mem)= conjg(DIP_P_spinor(:,:,:,ic,iv,ik_mem))
               endif
-#endif
               if (STRING_match(Dip%computed,"P2")) then
                 P_square(iv,ic,ik_mem,i_sp_pol) =  conjg(P_square(ic,iv,ik_mem,i_sp_pol))
               endif

@@ -20,9 +20,6 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
 &                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
  use parallel_int,ONLY:PP_wait
  use parallel_m,  ONLY:master_cpu,PAR_K_scheme,PP_indexes,PP_indexes_reset
-#if defined _RT
- use RT_control,  ONLY:l_project_spin_dipoles
-#endif
  !
  implicit none
  !
@@ -36,7 +33,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  ! Work space
  !
  logical           :: write_header,     read_header,     check,reading,writing,&
-&                     write_header_ovlp,read_header_ovlp,l_project_dipoles,IO_do_it
+&                     write_header_ovlp,read_header_ovlp,&
+&                     l_project_dipoles,IO_do_it,l_project_spin_dipoles
  integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,IO_MODE,ik_mem,ik,i_sp_pol,i_fragment,iv,ic,max_count,i_count
  integer, external :: io_DIPOLES
  integer, external :: io_Overlaps
@@ -52,10 +50,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  if(.not.any((/check,reading,writing/))) call error("Wrong call to DIPOLES_IO")
  !
-#if defined _RT
  call parser("SPINprojected",l_project_spin_dipoles)
  call parser("DIPprojected", l_project_dipoles)
-#endif
  !
  call PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
  !
@@ -227,10 +223,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  call PP_indexes_reset(IO_par_index)
 #endif
  !
-#if defined _RT
  if(reading.and.l_project_spin_dipoles) call project_spin_dipoles(Dip)
  if(reading.and.l_project_dipoles)      call project_dipoles(Dip)
-#endif
  !
  contains
    !
@@ -301,7 +295,6 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      !
    end subroutine
    !
-#if defined _RT
    subroutine project_spin_dipoles(Dip)
      use DIPOLES,   ONLY:DIP_spin
      type(DIPOLE_t),  intent(in) :: Dip
@@ -350,6 +343,5 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
        enddo
      enddo
    end subroutine project_dipoles
-#endif
    !
 end subroutine DIPOLE_IO

@@ -7,7 +7,7 @@
 !
 !> @callgraph
 !> @callergraph
-subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
+subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip,it_now)
  !
  ! Non interacting Xo
  !
@@ -48,10 +48,6 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,X_lower_triangle_matrix_in_use,&
 &                        self_detect_E_range,X_FILL_UP_matrix_only,use_X_DbGd,&
 &                        l_X_terminator,X_terminator_E,X_term_E,X_par_lower_triangle,drude_n_states
-#if defined _SC 
- use drivers,       ONLY:l_sc_run,l_eval_collisions
- use SC,            ONLY:it_now
-#endif
  use gpu_m,         ONLY:have_gpu
  use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_memcpy_d2h,devxlib_memcpy_h2d
  use timing_m,      ONLY:timing
@@ -67,6 +63,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  type(w_samp)         :: Xw
  integer              :: iq
  character(*)         :: what
+ integer, intent(in)  :: it_now
  !
  ! Work Space
  !
@@ -171,13 +168,9 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !DALV: ### the call to X_drude should be moved here, after redefining the frequency grid
  if (iq==1) call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF)
  !
-#if defined _ELPH
- !
  ! Green Functions must be all mapped to the Xw range so to be easily convoluted
  !
  if (allocated(Xen%GreenF).and.current_iq==0) call X_GreenF_remap(X%ib,Xen,Xw)
- !
-#endif
  !
  ! Time-Rev is Spatial Inv => only half X is eval
  !                            ===================
@@ -208,9 +201,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !========
  live_t_string=what//'@q['//trim(intc(iq))//'] '
  !
-#if defined _SC 
- if (l_sc_run.and..not.l_eval_collisions) live_t_string=what//'@it['//trim(intc(it_now))//'] '
-#endif
+ if (it_now>=0) live_t_string=what//'@it['//trim(intc(it_now))//'] '
  !
  if (coarse_grid_N>=n_out_threads) call live_timing(trim(live_t_string),coarse_grid_N/n_out_threads)
  !
@@ -306,15 +297,9 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
    ! 2) Then the frequency dependent term
    !=======================================
    !
-#if defined _ELPH
    if(     allocated(Xen%GreenF)) call X_GreenF_convoluted(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering)
    if(.not.allocated(Xen%GreenF)) & 
 &       call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.,l_X_terminator)
-#else
-   !
-   call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.,l_X_terminator)
-   !
-#endif
    !
    ! 3) Finally multiply residual and frequency dependent term
    !===========================================================

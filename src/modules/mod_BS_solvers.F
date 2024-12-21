@@ -28,7 +28,7 @@ module BS_solvers
    complex(SP), allocatable :: fragment(:,:) ! (/ i_Tr; maxval(Xk%FGbz%N_mapped('kpts_in_T_gr')) /)
  end type Haydock_vector
  !
-#if defined _SLEPC && !defined _NL
+#if defined _SLEPC
  !
  ! Slepc
  !==========

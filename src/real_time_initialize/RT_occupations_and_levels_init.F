@@ -103,9 +103,7 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
          RT_RTA_H_occ_infty(ib,ik_FG)= Fermi_fnc(-(Energy(1)-E%E_VBM(1)-RT_RTA_chem(2)),RT_RTA_temp(2))*spin_occ
        endif
        !
-#if defined _RT
        if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
-#endif
        !
        RT_el_occ%dN(ib,ik_RT)   = f_occ(1)-f_occ_ref(1)
        RT_el_occ%N(ib,ik_RT)    = f_occ(1)
@@ -139,7 +137,6 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
  endif
 #endif
  !
-#if defined _RT
  call PP_redux_wait(RT_el_occ%N,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  call PP_redux_wait(RT_ho_occ%N,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  call PP_redux_wait(RT_el_occ%dN,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
@@ -147,6 +144,5 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
  if (.not.RT_is_dynamically_dephased) return
  !
  call PP_redux_wait(RT_life_occ%dN,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-#endif
  !
 end subroutine RT_occupations_and_levels_init

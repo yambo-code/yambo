@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
+subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
  !
  use pars,           ONLY:SP,cZERO
  use parallel_m,     ONLY:PP_indexes
@@ -20,12 +20,12 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
  !
 #include<y_memory.h>
  !
- character(3)     :: what
- integer          :: iw_2start,iw_2do,iq,Lo_dim,Lo_n_loop
+ type(w_samp),intent(in)  :: W
+ complex(SP), intent(in)  :: Lo(BS_H_dim,W%n_freqs,Lo_dim)
+ logical,     intent(in)  :: do_it_full
+ integer,     intent(in)  :: Lo_dim,iw_2start,iw_2do,Lo_n_loop
+ character(3),intent(in)  :: what
  type(PP_indexes) :: px
- type(w_samp)     :: W
- complex(SP)      :: Lo(BS_H_dim,W%n_freqs,Lo_dim)
- logical          :: do_it_full
  !
  ! Work Space
  !

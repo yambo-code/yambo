@@ -7,7 +7,7 @@
 !
 subroutine RT_OBSERVABLES_IO_paths(what,en)
  !
- use YPP_interfaces, ONLY:RT_OBSERVABLES_IO
+ use YPP_RT_intfcs,  ONLY:RT_OBSERVABLES_IO
  use YPP_real_time,  ONLY:Probe_Keyword,Pump_Keyword,max_n_of_paths,Pump_path,Probe_path,&
 &                         N_pumps,N_probes,N_probe_frequencies
  use RT_output_m,    ONLY:RT_desc

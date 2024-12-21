@@ -51,7 +51,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
    ! Frequency range
    !
    if (GFdb_read_err<0) then
-     call FREQUENCIES_Green_Function(iqp,W,E%E,.FALSE.)
+     call FREQUENCIES_Green_Function(iqp,W,E%E)
      qp%GreenF_W(iqp,:)=W%p(:)
    endif
    !
@@ -112,7 +112,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
      if (W_step<new_min_max_step(1)) new_min_max_step(1)=W_step
      if (W_step>new_min_max_step(2)) new_min_max_step(2)=W_step
      !
-     call FREQUENCIES_Green_Function(iqp,W,E%E,.FALSE.)
+     call FREQUENCIES_Green_Function(iqp,W,E%E)
      qp%GreenF_W(iqp,:)=W%p(:)
      !
    endif

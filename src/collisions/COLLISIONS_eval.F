@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
+subroutine COLLISIONS_eval(E,X,k,xk,q,Xw,mode)
  !
  ! The EOM looks like:
  !
@@ -38,7 +38,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,OP_RD,RD_CL_IF_END,VERIFY,REP,io_COLLs,manage_action
  use parallel_m,     ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
- use parallel_int,   ONLY:PP_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use parallel_int,   ONLY:PP_wait,PARALLEL_global_indexes,PARALLEL_WF_index
  use interfaces,     ONLY:WF_free
  use timing_m,       ONLY:timing
  !
@@ -48,6 +48,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  type(w_samp)  :: Xw(2) 
  type(bz_samp) :: k,Xk,q
  type(X_t)     :: X(4)
+ character(*), intent(in) :: mode
  !
  ! WorkSpace
  !
@@ -90,21 +91,22 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !================
  if (l_use_Hxc_collisions.or.l_use_COH_collisions.or.l_elphoton_scatt) then
    !
-   COLLISIONS_parallel_SC_structure=.TRUE.
-   PAR_ch="Self_Energy"
-#if defined _RT
-   if (.not.l_elphoton_scatt) then
+   if (trim(mode)=="self-consisten") then
+     COLLISIONS_parallel_SC_structure=.TRUE.
+     PAR_ch="Self_Energy"
+   else if (trim(mode)=="real-time") then
      COLLISIONS_parallel_SC_structure=.FALSE.
      PAR_ch="Real_Time"
+   else 
+     call error(" COLLISIONS_eval: mode not recognized")
    endif
-#endif
    !
    ! PARALLEL indexes ...
    call PARALLEL_global_indexes(E,k,q,trim(PAR_ch))
    !
    ! PARALLEL WF distribution ...
    ! ... k-q + final band index...
-   call PARALLEL_WF_distribute(K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_distribute_ham(PAR_IND_G_k,PAR_IND_Bp_mat,.FALSE.,.TRUE.)
    ! ... COLLISION initial state...
    if (l_use_COH_collisions) then
      call COLLISIONS_basic_operations( "WF_distribute",    COH_collisions )
@@ -161,6 +163,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
 #endif
  !
+#if defined _RT_SCATT
+ !
  if (l_elel_scatt) then
    !
    if (     l_use_Hxc_collisions) call section('=','NEQ GW (e-e scattering)')
@@ -190,6 +194,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    endif
    !
  endif
+ !
+#endif
  !
  ! CLEAN
  !=======

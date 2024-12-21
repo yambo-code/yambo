@@ -55,10 +55,6 @@ if [ "$new" == "yes" ]  && [[ -f $compdir/config/stamps_and_lists/active_directo
    DIR_saved=""
    DIR_restored=""
    DIR_is_to_recompile=0
-   if [ ! "$mode" == "fast" ] ; then
-    source ./sbin/compilation/verbosity.sh "helper.sh: call check_update_locks.sh"
-    source ./sbin/compilation/check_updated_locks.sh
-   fi
    source ./sbin/compilation/verbosity.sh "helper.sh: call check_update_sources.sh"
    source ./sbin/compilation/check_updated_sources.sh
    if [ "$DIR_is_to_recompile" == 1 ] ; then

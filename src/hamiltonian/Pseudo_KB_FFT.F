@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
-subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt,pp_range,npp,i_atom,is,ia,ik)
+subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt,add_kfac,pp_range,npp,i_atom,is,ia,ik)
  !
  use drivers,       ONLY:l_real_time,l_sc_magnetic
  use pars,          ONLY:SP,DP,cONE
@@ -17,6 +17,7 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt,pp_range,npp,i_atom,is,ia,ik)
 #include<y_memory.h>
  !
  integer,     intent(in)  :: npp,pp_range(2),i_atom,is,ia,ik
+ logical,     intent(in)  :: add_kfac
  complex(SP), intent(in)  :: kbv(wf_ncx,n_spinor,4,npp)
  complex(SP), intent(out) :: kbv_real_space(fft_size,n_spinor,pp_range(1):pp_range(2))
  real(SP),    intent(in)  :: kpt(3)
@@ -33,23 +34,13 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt,pp_range,npp,i_atom,is,ia,ik)
  !
  if (n_spinor>1) call warning('new kb implementation to be tested for the case n_spinor>1')
  !
-#if defined _RT
- if(l_real_time) then
-   YAMBO_ALLOC(x_cc,(fft_size,3,n_atoms))
- endif
-#endif
- !
-#if defined _SC
- if(l_sc_magnetic)  kpt_factor=cONE
-#endif
- !
-#if defined _RT
- if(l_real_time) then
+ if(add_kfac) then
    call load_cc(.false.,atom_pos(:,ia,is),i_atom)
    k_dot_x(:)=(kpt(1)*x_cc(:,1,i_atom)+kpt(2)*x_cc(:,2,i_atom)+kpt(3)*x_cc(:,3,i_atom))
    kpt_factor(:)  =cmplx( cos(k_dot_x(:)),sin(k_dot_x(:)) )
+ else
+   kpt_factor=cONE
  endif
-#endif
  !
  do i_pp = pp_range(1),pp_range(2)
    i_kbv=i_pp-pp_range(1)+1

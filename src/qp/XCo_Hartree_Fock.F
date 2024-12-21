@@ -7,7 +7,7 @@
 !
 #include<dev_defs.h>
 !
-subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
+subroutine XCo_Hartree_Fock(E,k,Xk,q,it_now,mode)
  !
  ! Hartree-Fock
  !
@@ -26,10 +26,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_ng_Vxc,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
-#if defined _SC
  use drivers,       ONLY:l_sc_exx
- use SC,            ONLY:it_now
-#endif
  use timing_m,      ONLY:timing
  use openmp,        ONLY:OPENMP_update,master_thread,n_threads_SE
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
@@ -44,6 +41,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
+ integer, intent(in)   ::it_now
  character(*),optional ::mode
  !
  !Work Space
@@ -113,9 +111,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  call timing('HF',OPR='start')
  !
  ch='EXS'
-#if defined _SC
- if (l_sc_run)          ch='HF@it'//trim(intc(it_now))
-#endif
+ if (it_now>=0)          ch='HF@it'//trim(intc(it_now))
  !
 ! if (l_sc_exx) then
 !   call live_timing(trim(ch),px%n_of_elements(myid+1)*E%nbf*&
@@ -137,13 +133,10 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    ik =QP_table(i_qp,3)
    i_sp_pol=spin(QP_table(i_qp,:))
    !
-#if defined _SC  
-   !
    ! In Exact-Exchange only vc matrix elements so ... no cc' no vv' 
    ! (cv is not permitted by the order in QP_table)
    !                   (c)         (v)
    if (l_sc_exx.and.(ib>E%nbf(i_sp_pol).or.ibp<=E%nbf(i_sp_pol))) cycle
-#endif
    !    
    !==============
    !

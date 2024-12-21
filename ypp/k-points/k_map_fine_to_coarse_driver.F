@@ -43,7 +43,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  ! Initial checks
  !================
  call section('+','Double Grid initialization')
- call k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,.FALSE.)
+ call k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  !
  l_mix     =STRING_same(BZ_FineGd_mode,"mixed")
  l_expand  =STRING_same(BZ_FineGd_mode,"expanded")
@@ -129,7 +129,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  nkibz=Xk%nibz
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),COM=REP,ID=ID)
- i_err=io_Double_Grid(Xen,Xk,ID,'electrons')
+ i_err=io_Double_Grid(Xen,Xk,ID,'electrons','')
  !
  ! CLEAN
  !========

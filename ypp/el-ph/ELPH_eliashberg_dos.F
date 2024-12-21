@@ -17,10 +17,10 @@ subroutine ELPH_eliashberg_dos(k,en,q)
 &                              ph_broad,l_eliashberg
  use ELPH,                ONLY:ph_modes,elph_nb,GKKP,PH_freqs_sq,PH_freqs,&
 &                              PH_W_debye,elph_nQ,elph_use_q_grid,&
-&                              GKKP,setup_k_plus_q_levels,use_PH_DbGd
+&                              GKKP,setup_k_plus_q_levels,use_PH_DbGd,EkplusQ_mode
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL,REP
- use ALLOC,               ONLY:ELPH_alloc
+ use ELPH_intfcs,         ONLY:ELPH_alloc
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:PP_indexes,myid
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 
@@ -122,7 +122,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  ! Load double-grid if present
  !
  call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID_DG)
- io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
+ io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons',EkplusQ_mode)
  !
  if(io_err==0) then
    if(elph_use_q_grid.and..not.l_eliashberg) then

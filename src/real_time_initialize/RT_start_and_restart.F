@@ -36,10 +36,11 @@ subroutine RT_start_and_restart(E,k,q)
 &                         Gr_kind,l_RT_is_WFfree,RT_TIME_status,RTibz,&
 &                         RT_nk,G_lesser,RT_eh_en,G_MEM_steps,RT_bands,&
 &                         NE_time_step_update_jump,l_velocity_gauge_corr,&
-&                         RT_P_prev,RT_ind_J_prev
+&                         RT_P_prev,RT_ind_J_prev,H_pseudo_eq
+ use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc
  use RT_lifetimes,   ONLY:RT_life_extrap_times,l_RT_iterative_ELPH_lifetimes
  use fields,         ONLY:A_tot
- use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc,E_reference
+ use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc,E_reference,rho_n,magn_n
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,&
 &                         manage_action,REP,VERIFY,NONE,DUMP
@@ -90,10 +91,16 @@ subroutine RT_start_and_restart(E,k,q)
  !
  if(.not.l_RT_is_WFfree) then
    !
-   call              el_density_matrix(G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2)),E,k,rho_reference,1)
-   if(n_spin>1) call el_magnetization_matrix(G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2)),E,k,magn_reference,1)
+   call              el_density_matrix(G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2)),E,k,rho_reference,1,"RT")
+   if(n_spin>1) call el_magnetization_matrix(G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2)),E,k,magn_reference,1,"RT")
+   !
+   rho_n=rho_reference
+   if(n_spin>1) magn_n=magn_reference
    !
    call Bare_Hamiltonian(E,k,k)
+   !
+   REF_V_xc_sc=V_xc
+   REF_V_hartree_sc=V_hartree_sc
    !
    ! Reference Hartree and XC
    !==========================
@@ -255,8 +262,8 @@ subroutine RT_start_and_restart(E,k,q)
  ! Pseudo potential terms needed for velocity gauge
  !==================================================
  if (l_velocity_gauge_corr) then
-   call Pseudo_KB_G_to_R_space(k,E)
-   call Pseudo_Hamiltonian(k,E,.true.)
+   call Pseudo_KB_G_to_R_space(k,E,.true.)
+   call Pseudo_Hamiltonian(k,E,H_pseudo_eq,.true.)
  endif
  !
  call msg('r','')

@@ -30,7 +30,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use stderr,          ONLY:real2ch
  use pars,            ONLY:SP,rZERO
  use com,             ONLY:msg
-#if defined _QED || defined _RT
+#if defined _QED || defined _RT_SCATT
  use global_XC,       ONLY:QP_SE_GW_QED
  use collision_ext,   ONLY:P_COLL_element,COLL_bands,P_collisions,GW_NEQ_collisions,&
 &                          GW_NEQ_COLL_element
@@ -50,9 +50,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
 #if defined _PAR_IO
  integer, external :: io_COLLs_header
-#if defined _NL
  real(SP)  :: COLL_full,COLL_compr
-#endif
 #endif
  !
  io_err      =0
@@ -97,7 +95,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    !
  endif
  !
-#if defined _RT
+#if defined _RT_SCATT
  if (l_elel_scatt) then
    call COLLISIONS_basic_operations( "alloc", GW_NEQ_collisions )
    call io_control(ACTION=OP_RD_CL,COM=COM_,MODE=VERIFY,SEC=(/1/),ID=ID)
@@ -150,7 +148,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  if (l_use_Hxc_collisions)                 call local_IO( HXC_collisions )
  !
-#if defined _RT
+#if defined _RT_SCATT
  if (l_elel_scatt)                         call local_IO( GW_NEQ_collisions )
 #endif
  !
@@ -178,7 +176,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 #if defined _QED
      l_QED=(COLL%kind==QP_SE_GW_QED)
 #endif
-#if defined _RT
+#if defined _RT_SCATT
      l_NGW=(COLL%kind==QP_SE_GW_NEQ)
 #endif
      !
@@ -198,7 +196,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      endif
 #endif
      !
-#if defined _RT
+#if defined _RT_SCATT
      if (l_NGW) then
        call COLLISIONS_alloc_and_free("GW_NEQ","collision","alloc",0)
        call COLLISIONS_alloc_and_free("GW_NEQ","v3","alloc distribute",0)
@@ -220,7 +218,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      call io_control(ACTION=OP_RD,SEC=(/1/),ID=ID)
      if (l_COH) io_err(1)=io_COLLISIONS(ID,COLL,COH_COLL_element(1))
      if (l_HXC) io_err(1)=io_COLLISIONS(ID,COLL,HXC_COLL_element(1))
-# if defined _RT
+# if defined _RT_SCATT
      if (l_NGW) io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1))
 # endif
 # if defined _QED
@@ -230,10 +228,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 #endif
      !
 #if defined _PAR_IO
-#if defined _NL
     COLL_full =rZERO
     cOLL_compr=rZERO
-#endif
 #endif
      do i_coll=1,COLL%N
        !
@@ -249,7 +245,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        !
        if (l_COH) io_err(1)=io_COLLISIONS(ID,COLL,COH_COLL_element(i_coll_mem))
        if (l_HXC) io_err(1)=io_COLLISIONS(ID,COLL,HXC_COLL_element(i_coll_mem))
-#if defined _RT
+#if defined _RT_SCATT
        if (l_NGW_init) io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1),i_coll=i_coll)
 #endif
 #if defined _QED
@@ -271,7 +267,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        !
        if (l_COH) io_err(1)=io_COLLISIONS(ID,COLL,COH_COLL_element(i_coll_mem))
        if (l_HXC) io_err(1)=io_COLLISIONS(ID,COLL,HXC_COLL_element(i_coll_mem))
-#if defined _RT
+#if defined _RT_SCATT
        if (l_NGW) io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1),i_coll=i_coll)
 #endif
 #if defined _QED
@@ -280,7 +276,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        !
        ! Now the transfer %v_r => %v3_r
        !
-#if defined _RT || defined _QED
+#if defined _RT_SCATT || defined _QED
        if (COLL%kind==QP_SE_GW_NEQ.or.COLL%kind==QP_SE_GW_QED) then
          !
          ic=0
@@ -317,13 +313,11 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        call live_timing(steps=1)
        !
 #if defined _PAR_IO
-#if defined _NL
        if(COLLISIONS_compr) then
          COLL_full=COLL_full+HXC_COLL_element(i_coll_mem)%N
          call COLLISIONS_compress(HXC_COLL_element(i_coll_mem))
          COLL_compr=COLL_compr+HXC_COLL_element(i_coll_mem)%N
        endif
-#endif
 #endif
        !
      end do
@@ -336,7 +330,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      ! CLEAN
      !
-#if defined _RT
+#if defined _RT_SCATT
      if (COLL%kind==QP_SE_GW_NEQ) call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","clean",1)
 #endif
 #if defined _QED
@@ -346,14 +340,12 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      call live_timing()
      !
 #if defined _PAR_IO
-#if defined _NL
      if(COLLISIONS_compr) then
        if(COLLISIONS_load_SP)      call msg('sl','Collisions compression: ' &
  &              //trim(real2ch(100.0-COLL_compr/COLL_full*50.0))//' %')
        if(.not.COLLISIONS_load_SP) call msg('sl','Collisions compression: ' &
 &               //trim(real2ch(100.0-COLL_compr/COLL_full*100.0))//' %')
      endif
-#endif
 #endif
      !
    end subroutine

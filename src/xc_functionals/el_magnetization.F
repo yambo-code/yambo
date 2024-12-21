@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details):
 !
-subroutine el_magnetization(en,Xk,magn,bands)
+subroutine el_magnetization(en,Xk,magn,occ_mode,bands)
  !
  ! Electronic magnetization for electronic Spinors
  !
@@ -14,7 +14,7 @@ subroutine el_magnetization(en,Xk,magn,bands)
  !  PSI^I = spinor
  !  Sigma_Pauli=the 3 Pauli matrices
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,schlen
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
  use D_lattice,      ONLY:nsym,dl_sop,i_time_rev
@@ -24,26 +24,23 @@ subroutine el_magnetization(en,Xk,magn,bands)
  use matrix_operate, ONLY:m3det
  use parallel_m,     ONLY:PAR_IND_WF_linear,PAR_COM_density
  use parallel_int,   ONLY:PP_redux_wait
-#if defined _RT
- use drivers,       ONLY:l_real_time
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
  type(levels), intent(in ) ::en
  type(bz_samp),intent(in ) ::Xk
  real(SP),     intent(out) ::magn(fft_size,3)
- integer,  optional, intent(in) ::bands(2)
+ character(*), optional, intent(in) ::occ_mode
+ integer,      optional, intent(in) ::bands(2)
  !
  ! Work Space
  !
+ character(schlen) :: occ_mode_
  integer :: isym,ifft,ib,ik,i_sp_pol,i_wf,bands_range(2)
  real(SP):: cv(fft_size,3),tmp_sop(3,3),f_occ
  !
-#if defined _RT
  call timing('el_magnetization',OPR='start')
-#endif
  !
  magn=0._SP
  cv=0._SP
@@ -52,6 +49,11 @@ subroutine el_magnetization(en,Xk,magn,bands)
  !
  if (n_spin==1) return
  !
+ occ_mode_="def"
+ if (present(occ_mode)) occ_mode_=occ_mode
+ !
+ if (trim(occ_mode_)=="fo".and..not.allocated(en%fo)) &
+ & call error("el_density: occ mode fo, but fo occupations not allocated")
  !
  do i_sp_pol=1,n_sp_pol
    bands_range=(/1,en%nbm(i_sp_pol)/)
@@ -71,10 +73,8 @@ subroutine el_magnetization(en,Xk,magn,bands)
        !
        if (i_wf==0) cycle
        !
-       f_occ=en%f(ib,ik,i_sp_pol)
-#if defined _RT
-       if(l_real_time.and.allocated(en%fo)) f_occ=en%fo(ib,ik,i_sp_pol)
-#endif
+       if(occ_mode_=="def") f_occ=en%f(ib,ik,i_sp_pol)
+       if(occ_mode_=="fo")  f_occ=en%fo(ib,ik,i_sp_pol)
        !
        if (n_sp_pol==2) then
          !
@@ -133,8 +133,6 @@ subroutine el_magnetization(en,Xk,magn,bands)
    Spin_magn(:)=Spin_magn(:)+magn(ifft,:)
  enddo
  !
-#if defined _RT
  call timing('el_magnetization',OPR='stop')
-#endif
  !
 end subroutine

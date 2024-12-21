@@ -1,0 +1,199 @@
+!
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
+!
+! Authors (see AUTHORS file for details): AM DS CA
+!
+subroutine k_map_fine_to_coarse_init_ph(Xk,Xen,FineGd_k,FineGd_is_expanded)
+ !
+ use pars,                ONLY:SP,pi
+ use units,               ONLY:HA2EV
+ use stderr,              ONLY:intc
+ use parser_m,            ONLY:parser
+ use interfaces,          ONLY:io_DB1_selective_scan
+ use zeros,               ONLY:k_iku_zero,k_rlu_zero,define_zeros
+ use R_lattice,           ONLY:bz_samp,nkibz,bz_samp_reset,BZ_FineGd_mode
+ use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev,n_atoms
+ use com,                 ONLY:msg
+ use YPPm,                ONLY:BZ_FineGd_nkpts_to_use,FineGd_DB1_paths,MAX_FineGd_DBs,&
+&                              n_FineGd_DBs
+ use electrons,           ONLY:levels,default_nel,n_bands,n_sp_pol,E_reset,FineGd_E_components_alloc
+ use IO_m,                ONLY:REP
+ use YPP_ELPH,            ONLY:ph_modes_file,ph_freqs_file,ELPH_databases_IO_freqs,ELPH_databases_IO_modes
+ use stderr,              ONLY:STRING_same
+ use vec_operate,         ONLY:c2a,v_is_zero
+ !
+#include<y_memory.h>
+ !
+ type(bz_samp), intent(in)     :: Xk
+ type(levels),  intent(inout)  :: Xen
+ type(bz_samp), intent(out)    :: FineGd_k
+ logical,       intent(out)    :: FineGd_is_expanded
+ !
+ ! Work Space
+ !
+ real(SP)     ::rand_k(BZ_FineGd_nkpts_to_use+1,3),a_save(3,3),alat_save(3),gap(2),tmp_zero(3)
+ integer      ::i1,ik_ref,ib,ik
+ logical      ::l_skip_check,l_skip_DbGd_border_points
+ type(levels)          :: FineGd_E
+ real(SP), allocatable :: rand_E(:,:,:)
+ character(1)          :: K_or_Q
+ !
+ integer            :: i_q,ph_modes
+ !
+ ! BZ DB1 I/O
+ !
+ type(levels)              :: FineGd_io_E(MAX_FineGd_DBs)
+ type(bz_samp)             :: FineGd_io_k(MAX_FineGd_DBs)
+ integer                   :: i_err(MAX_FineGd_DBs),nsym_save,i_time_rev_save,i_db
+ real(SP)                  :: dl_sop_save(3,3,48)
+ complex(SP), allocatable  :: ph_pol(:,:,:,:)
+ !
+ ! Functions
+ !
+ integer, external :: k_FineGd_grid_consistency_check
+ logical, external :: k_map_fine_to_coarse_reduce
+ !
+ call parser('SkipBorderPts',l_skip_DbGd_border_points)
+ !
+ a_save=a
+ alat_save=alat
+ nsym_save=nsym
+ dl_sop_save(:,:,:nsym)=dl_sop
+ i_time_rev_save=i_time_rev
+ FineGd_is_expanded=.FALSE.
+ !
+   !
+   K_or_Q='Q'
+   !
+   ph_modes=3*n_atoms
+   n_FineGd_DBs=1
+   !
+   if(.not.STRING_same(ph_freqs_file,'none')) then
+     !
+     call msg('s',":: Phonon frequencies read from: "//trim(ph_freqs_file))
+     call ELPH_databases_IO_freqs(ph_file=ph_freqs_file,n_q=FineGd_io_k(1)%nibz)
+     !
+   elseif(.not.STRING_same(ph_modes_file,'none')) then
+     !      
+     call msg('s',":: Phonon frequencies read from: "//trim(ph_modes_file))
+     call ELPH_databases_IO_modes(ph_file=ph_modes_file,n_q=FineGd_io_k(1)%nibz)
+     !
+   endif
+   !
+   if(FineGd_io_k(1)%nibz==0) call error(' Error reading phonon frequencies')
+   !   
+   call msg('s',":: Number of phonon modes: ",ph_modes)
+   call msg('s',":: Number of phonon q-points in the matdyn file: ",FineGd_io_k(1)%nibz)
+   YAMBO_ALLOC(FineGd_io_k(1)%pt,(FineGd_io_k(1)%nibz,3))
+   !
+   FineGd_io_E(1)%nb=ph_modes
+   FineGd_io_E(1)%nk=FineGd_io_k(1)%nibz
+   !
+   YAMBO_ALLOC(FineGd_io_E(1)%E,(FineGd_io_E(1)%nb,FineGd_io_E(1)%nk,1))
+   !
+   if(.not.STRING_same(ph_freqs_file,'none')) then
+     !      
+     call ELPH_databases_IO_freqs(ph_file=ph_freqs_file,n_q=FineGd_io_E(1)%nk, &
+&           q_pt=FineGd_io_k(1)%pt,ph_freqs=FineGd_io_E(1)%E(:,:,1))
+     !
+   elseif(.not.STRING_same(ph_modes_file,'none')) then
+     !       
+     YAMBO_ALLOC(ph_pol,(FineGd_io_E(1)%nk,FineGd_io_E(1)%nb,n_atoms,3))
+     !
+     call ELPH_databases_IO_modes(ph_file=ph_modes_file,n_q=FineGd_io_E(1)%nk, &
+&           q_pt=FineGd_io_k(1)%pt,ph_freqs=FineGd_io_E(1)%E(:,:,1),ph_pol=ph_pol)
+     !
+     YAMBO_FREE(ph_pol) ! Polarization vectors not used in the Double-grid
+     !
+   endif
+   !
+   ! q-points in matdyn output are alat units, convert to internal units
+   ! ==================================
+   FineGd_io_k(1)%pt=FineGd_io_k(1)%pt*(2.*pi/alat(1))    ! From QuantumEspresso Alat to CC
+   !
+   ! Converto to iku units
+   !
+   do i_q=1,FineGd_io_k(1)%nibz
+     call c2a(v_in=FineGd_io_k(1)%pt(i_q,:),mode="kc2i")
+   enddo
+   !
+   if(.not.v_is_zero(FineGd_io_k(1)%pt(1,:))) &
+           &    call error("The first point of the PH double-grid should be Gamma")
+   !
+   l_skip_check=.TRUE.
+ !
+ ! Now that I have the finer grid of Kpts I redefine the zeros for the kpts
+ !
+ do i_db=1,n_FineGd_DBs
+   call define_zeros(vector_=FineGd_io_k(i_db)%pt, zero_=tmp_zero)
+   k_iku_zero=min(k_iku_zero,tmp_zero)
+   call define_zeros(vector_=FineGd_io_k(i_db)%pt, zero_=tmp_zero,RLU=.TRUE.)
+   k_rlu_zero=min(k_rlu_zero,tmp_zero)
+ enddo
+ !
+ call msg('s',':: Electrons                 :',default_nel)
+ call msg('s',':: Temperature               :',input_GS_Tel,"[eV]")
+ call msg('s',':: Lattice factors           :',alat,"[a.u.]")
+ do i_db=1,n_FineGd_DBs
+   if (i_db==1) call msg('s',':: '//K_or_Q//' points       [DB #'//trim(intc(i_db))//']    :',FineGd_io_E(i_db)%nk)
+   if (i_db> 1) call msg('s','::                [DB #'//trim(intc(i_db))//']    :',FineGd_io_E(i_db)%nk)
+ enddo
+ !
+ ! ...reset
+ !
+ call bz_samp_reset(FineGd_k)
+ call E_reset(FineGd_E)
+ !
+ ! ...merge databases and remove border points if required
+ !
+ call k_find_border_and_merge(FineGd_E,FineGd_k,n_FineGd_DBs,FineGd_io_E,FineGd_io_k,Xk,l_skip_DbGd_border_points)
+ !
+ ! Use of less (only BZ_FineGd_nkpts, read from input) k-points
+ !
+ if (BZ_FineGd_nkpts_to_use<FineGd_E%nk.and.BZ_FineGd_nkpts_to_use>0) then
+   nkibz   =BZ_FineGd_nkpts_to_use
+   FineGd_E%nk=nkibz
+   FineGd_k%nibz=nkibz
+   allocate(rand_E(FineGd_E%nb,nkibz,n_sp_pol))
+   rand_E(:,:,:)=FineGd_E%E(:,:nkibz,:)
+   rand_k(:nkibz,:)=FineGd_k%pt(:nkibz,:)
+   deallocate(FineGd_E%E,FineGd_k%pt)
+   allocate(FineGd_E%E(FineGd_E%nb,nkibz,n_sp_pol),FineGd_k%pt(nkibz,3))
+   FineGd_E%E(:,:,:)=rand_E(:,:,:)
+   FineGd_k%pt(:,:)=rand_k(:nkibz,:)
+   deallocate(rand_E)
+ endif
+ !
+ if (BZ_FineGd_nkpts_to_use>0) call msg('s','::               [imposed]   :',BZ_FineGd_nkpts_to_use)
+ call msg('s',':: Bands                     :',n_bands)
+ call msg('s',':: Symmetries                :',nsym)
+ if (i_time_rev==1) call msg('s',':: Time reversal included ')
+ if (i_time_rev==0) call msg('s',':: Time reversal not included')
+ !
+ ! Transfer to the Energy levels
+ !
+ Xen%FG%nb=FineGd_E%nb
+ Xen%FG%nk=FineGd_E%nk
+ call FineGd_E_components_alloc(Xen)
+ do ib=1,FineGd_E%nb
+   do ik=1,FineGd_E%nk
+     if (     FineGd_is_expanded) Xen%FG%E(ib,ik,:) =FineGd_E%E(ib,FineGd_k%sstar(ik,1),:)
+     if (.not.FineGd_is_expanded) Xen%FG%E(ib,ik,:) =FineGd_E%E(ib,ik,:)
+   enddo
+ enddo
+ !
+ call E_reset(FineGd_E)
+ !
+ ! Symmetry restoring
+ !
+ if (allocated(dl_sop)) then
+   deallocate(dl_sop)
+   nsym          =nsym_save
+   i_time_rev    =i_time_rev_save
+   allocate(dl_sop(3,3,nsym))
+   dl_sop=dl_sop_SAVE(:,:,:nsym)
+ endif
+ !
+end subroutine

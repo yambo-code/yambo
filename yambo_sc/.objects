@@ -1,1 +1,1 @@
-objs = yambo_sc_driver.o yambo_sc_launcher.o yambo_sc_options_maker.o options_yambo_sc.o yambo_sc.o 
+objs = yambo_sc_driver.o yambo_sc_launcher.o yambo_sc_options_maker.o options_yambo_sc.o yambo_sc_init.o yambo_sc.o 

@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine COLLISIONS_eval(E,X,k,xk,q,Xw,mode)
+subroutine COLLISIONS_eval_rt(E,X,k,xk,q,Xw)
  !
  ! The EOM looks like:
  !
@@ -23,14 +23,14 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw,mode)
  ! In the \Sigma_s case also yambo_sc can evaluate
  !
  use drivers,        ONLY:l_elel_scatt,l_use_collisions,l_use_Hxc_collisions,&
-&                         l_use_COH_collisions,l_elphoton_scatt,l_real_time,l_sc_run
+&                         l_use_COH_collisions,l_elphoton_scatt,l_real_time
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:i_time_rev
  use wave_func,      ONLY:WF
  use hamiltonian,    ONLY:H_potential,H_kind
  use global_XC,      ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED
- use collision_ext,  ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,&
+ use collision_ext,  ONLY:COLLISIONS_group,&
 &                        COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions,COLLISIONS_naming
  use X_m,            ONLY:X_t
  use plasma,         ONLY:EH_gas
@@ -38,8 +38,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw,mode)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,OP_RD,RD_CL_IF_END,VERIFY,REP,io_COLLs,manage_action
  use parallel_m,     ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
- use parallel_int,   ONLY:PP_wait,PARALLEL_global_indexes,PARALLEL_WF_index
- use common_sc_rt,   ONLY:PARALLEL_global_indexes_ham
+ use parallel_int,   ONLY:PP_wait,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use RT_control,     ONLY:PARALLEL_global_indexes_rt
  use interfaces,     ONLY:WF_free
  use timing_m,       ONLY:timing
  !
@@ -49,7 +49,6 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw,mode)
  type(w_samp)  :: Xw(2) 
  type(bz_samp) :: k,Xk,q
  type(X_t)     :: X(4)
- character(*), intent(in) :: mode
  !
  ! WorkSpace
  !
@@ -85,27 +84,20 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw,mode)
  if (l_use_COH_collisions) call COLLISIONS_basic_operations( "alloc",    COH_collisions )
  if (l_use_Hxc_collisions) call COLLISIONS_basic_operations( "alloc",    HXC_collisions )
  !
+ !
+#if defined _QED
  if (l_elphoton_scatt)     call COLLISIONS_basic_operations( "alloc",      P_collisions )
+#endif
+#if defined _RT_SCATT
  if (l_elel_scatt)         call COLLISIONS_basic_operations( "alloc", GW_NEQ_collisions )
+#endif
  !
  ! PARALLEL Setup
  !================
  if (l_use_Hxc_collisions.or.l_use_COH_collisions.or.l_elphoton_scatt) then
    !
-   if (trim(mode)=="self-consisten") then
-     COLLISIONS_parallel_SC_structure=.TRUE.
-     PAR_ch="Self_Energy"
-   else if (trim(mode)=="real-time") then
-     COLLISIONS_parallel_SC_structure=.FALSE.
-     PAR_ch="Real_Time"
-   else 
-     call error(" COLLISIONS_eval: mode not recognized")
-   endif
-   !
-   write(*,*) "call to PARALLEL_global_indexes_ham"
    ! PARALLEL indexes ...
-   call PARALLEL_global_indexes_ham(E,k,q,trim(PAR_ch))
-   write(*,*) "call to PARALLEL_global_indexes_ham done"
+   call PARALLEL_global_indexes_rt(E,k,q,"Real_Time")
    !
    ! PARALLEL WF distribution ...
    ! ... k-q + final band index...
@@ -209,7 +201,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw,mode)
  !
  if (io_COLLs) then
    !
-   if (.not.l_real_time.and..not.l_sc_run) then
+   if (.not.l_real_time) then
      !
      ! %state and %N are needed in RT_driver and SC_driver to distribute the collisions.
      ! This distribution is done BEFORE the call to COLLLISIONS_load. Therefore %state and %N
@@ -232,8 +224,12 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw,mode)
  if (l_use_COH_collisions) call COLLISIONS_alloc_and_free("COH"      ,trim(FREE_ch),"clean",1)
  if (l_use_Hxc_collisions) call COLLISIONS_alloc_and_free("HXC"      ,trim(FREE_ch),"clean",1)
  !
+#if defined _RT_SCATT
  if (l_elel_scatt)         call COLLISIONS_alloc_and_free("GW_NEQ"   ,trim(FREE_ch),"clean",1)
+#endif
+#if defined _QED
  if (l_elphoton_scatt)     call COLLISIONS_alloc_and_free("Momentum" ,trim(FREE_ch),"clean",1)
+#endif
  !
  call timing('COLLISIONS_eval',OPR='stop')
  !

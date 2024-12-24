@@ -36,8 +36,8 @@ PJ_SCLIBS_LD = $(MAIN_LIBS_LD) $(HAM_LIBS_LD) interface_sc sc
 
 PJ_RTLIBS   = real_time_control real_time_hamiltonian real_time_propagation \
               real_time_initialize interface_rt io_rt real_time_drivers
-PJ_RTLIBS_LD= $(MAIN_LIBS_LD) real_time_control $(HAM_LIBS_LD) \
-                   interface_rt io_rt  \
+PJ_RTLIBS_LD= $(MAIN_LIBS_LD) $(HAM_LIBS_LD) interface_rt \
+                   real_time_control io_rt  \
                    real_time_hamiltonian real_time_propagation \
                    real_time_initialize real_time_drivers
 

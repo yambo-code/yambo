@@ -55,11 +55,11 @@ subroutine PARALLEL_global_indexes_rt(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_
  !========
  if (present(RESET)) then
    if (RESET) then
-     call PARALLEL_global_reset(ENVIRONMENT,X_type)
+     call PARALLEL_global_reset_ham(ENVIRONMENT,X_type)
      return
    endif
  else
-   call PARALLEL_global_reset(ENVIRONMENT,X_type)
+   call PARALLEL_global_reset_ham(ENVIRONMENT,X_type)
  endif
  !
  !========
@@ -121,7 +121,7 @@ subroutine PARALLEL_global_indexes_rt(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_
  ! DEFAULTS
  !==========
  !
- CALL PARALLEL_global_defaults(ENVIRONMENT//trim(MORE))
+ CALL PARALLEL_global_defaults(ENVIRONMENT)
  !
  if (      ENVIRONMENT=="Real_Time")           call PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !

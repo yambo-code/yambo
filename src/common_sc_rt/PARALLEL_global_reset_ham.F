@@ -30,6 +30,7 @@ subroutine PARALLEL_global_reset_ham(ENVIRONMENT,X_type)
  !
  ! Work Space
  !
+ call PARALLEL_global_reset(ENVIRONMENT,X_type)
  !
  call PP_indexes_reset(PAR_IND_Plasma)
  call PP_indexes_reset(PAR_IND_B_mat)

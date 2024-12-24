@@ -201,7 +201,7 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !=====================
  !
  if (l_eval_collisions) then
-   call COLLISIONS_eval_rt(en,X,k,Xk,q,Xw(:2))
+   call COLLISIONS_eval_rt(en,X(:4),k,Xk,q,Xw(:2))
    call mem_manager_report
  endif
  !

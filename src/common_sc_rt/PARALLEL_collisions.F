@@ -143,8 +143,6 @@ subroutine PARALLEL_collisions( k, COLL )
  !
  integer :: i_coll,i_k,ib1,ib2,NC_tot,i_q,i_p,i_p_bz
  !
- write(*,*) "allocating colls ",COLL%N
- !
  if ( COLL%N == 0 ) return
  !
  YAMBO_ALLOC(COLL%PAR_map,(COLL%N))

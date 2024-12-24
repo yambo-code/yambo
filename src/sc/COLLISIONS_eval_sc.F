@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine COLLISIONS_eval_rt(E,X,k,xk,q,Xw)
+subroutine COLLISIONS_eval_sc(E,X,k,xk,q,Xw)
  !
  ! The EOM looks like:
  !
@@ -22,8 +22,8 @@ subroutine COLLISIONS_eval_rt(E,X,k,xk,q,Xw)
  !
  ! In the \Sigma_s case also yambo_sc can evaluate
  !
- use drivers,        ONLY:l_elel_scatt,l_use_collisions,l_use_Hxc_collisions,&
-&                         l_use_COH_collisions,l_elphoton_scatt,l_real_time
+ use drivers,        ONLY:l_use_collisions,l_use_Hxc_collisions,&
+&                         l_use_COH_collisions,l_sc_run
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:i_time_rev
@@ -38,8 +38,7 @@ subroutine COLLISIONS_eval_rt(E,X,k,xk,q,Xw)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,OP_RD,RD_CL_IF_END,VERIFY,REP,io_COLLs,manage_action
  use parallel_m,     ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
- use parallel_int,   ONLY:PP_wait,PARALLEL_WF_distribute,PARALLEL_WF_index
- use RT_control,     ONLY:PARALLEL_global_indexes_rt
+ use parallel_int,   ONLY:PP_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use interfaces,     ONLY:WF_free
  use timing_m,       ONLY:timing
  !
@@ -71,7 +70,7 @@ subroutine COLLISIONS_eval_rt(E,X,k,xk,q,Xw)
  !
  ! Check for the Time Reversal Symmetry
  !
- if ( (l_use_Hxc_collisions.or.l_elel_scatt) .and. (i_time_rev==1) ) then
+ if ( l_use_Hxc_collisions .and. (i_time_rev==1) ) then
    call error(" COLLISIONS not compatible with Time Reversal Symmetry! ")
  endif
  !
@@ -84,27 +83,19 @@ subroutine COLLISIONS_eval_rt(E,X,k,xk,q,Xw)
  if (l_use_COH_collisions) call COLLISIONS_basic_operations( "alloc",    COH_collisions )
  if (l_use_Hxc_collisions) call COLLISIONS_basic_operations( "alloc",    HXC_collisions )
  !
- !
-#if defined _QED
- if (l_elphoton_scatt)     call COLLISIONS_basic_operations( "alloc",      P_collisions )
-#endif
-#if defined _RT_SCATT
- if (l_elel_scatt)         call COLLISIONS_basic_operations( "alloc", GW_NEQ_collisions )
-#endif
- !
  ! PARALLEL Setup
  !================
- if (l_use_Hxc_collisions.or.l_use_COH_collisions.or.l_elphoton_scatt) then
+ if (l_use_Hxc_collisions.or.l_use_COH_collisions) then
    !
-     COLLISIONS_parallel_SC_structure=.FALSE.
-     PAR_ch="Real_Time"
+   COLLISIONS_parallel_SC_structure=.TRUE.
+   PAR_ch="Self_Energy"
    !
    ! PARALLEL indexes ...
-   call PARALLEL_global_indexes_rt(E,k,q,PAR_ch)
+   call PARALLEL_global_indexes(E,k,q,trim(PAR_ch))
    !
    ! PARALLEL WF distribution ...
    ! ... k-q + final band index...
-   call PARALLEL_WF_distribute_ham(PAR_IND_G_k,PAR_IND_Bp_mat,.TRUE.,.TRUE.)
+   call PARALLEL_WF_distribute_ham(PAR_IND_G_k,PAR_IND_Bp_mat,.FALSE.,.TRUE.)
    ! ... COLLISION initial state...
    if (l_use_COH_collisions) then
      call COLLISIONS_basic_operations( "WF_distribute",    COH_collisions )
@@ -137,64 +128,6 @@ subroutine COLLISIONS_eval_rt(E,X,k,xk,q,Xw)
    !
  endif
  !
-#if defined _QED
- !
- if (l_elphoton_scatt) then
-   !
-   if (     l_use_Hxc_collisions) call section('=','Electron-Photon (P)') 
-   if (.not.l_use_Hxc_collisions) call section('+','Electron-Photon (P)')
-   !=====================================================================
-   !
-   call CHECK_and_ALLOC(P_collisions)
-   !
-   if (IO_err/=0) then
-     !
-     call COLLISIONS_momentum(E,k,q)
-     !
-     ! Clean
-     !-------
-     if (io_COLLs) call COLLISIONS_alloc_and_free("Momentum","v3 table","clean",1)
-     !
-   endif
-   !
- endif
- !
-#endif
- !
-#if defined _RT_SCATT
- !
- if (l_elel_scatt) then
-   !
-   if (     l_use_Hxc_collisions) call section('=','NEQ GW (e-e scattering)')
-   if (.not.l_use_Hxc_collisions) call section('+','NEQ GW (e-e scattering)')
-   !=========================================================================
-   !
-   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
-   call PARALLEL_global_indexes(E,k,q,"Real_Time")
-   !
-   call PLASMA_build_up(E,k,q)
-   call PLASMA_parallel_setup(EH_gas)
-   !
-   call PARALLEL_WF_distribute(PLASMA_index=PAR_IND_Plasma,CLEAN_UP=.TRUE.)
-   call COLLISIONS_basic_operations( "WF_distribute", GW_NEQ_collisions )
-   call PARALLEL_WF_index( )
-   !
-   call CHECK_and_ALLOC(GW_NEQ_collisions)
-   !
-   if (IO_err/=0) then 
-     !
-     call COLLISIONS_NEQ_GW_static(X(2),Xk,E,k,q,Xw(2)) 
-     !
-     ! GW_NEQ clean
-     !--------------
-     if (io_COLLs) call COLLISIONS_alloc_and_free("GW_NEQ","v3 table","clean",1)
-     !
-   endif
-   !
- endif
- !
-#endif
- !
  ! CLEAN
  !=======
  !
@@ -204,7 +137,7 @@ subroutine COLLISIONS_eval_rt(E,X,k,xk,q,Xw)
  !
  if (io_COLLs) then
    !
-   if (.not.l_real_time) then
+   if (.not.l_sc_run) then
      !
      ! %state and %N are needed in RT_driver and SC_driver to distribute the collisions.
      ! This distribution is done BEFORE the call to COLLLISIONS_load. Therefore %state and %N
@@ -214,7 +147,6 @@ subroutine COLLISIONS_eval_rt(E,X,k,xk,q,Xw)
      call COLLISIONS_basic_operations( "clean",    COH_collisions )
      !
      call COLLISIONS_basic_operations( "clean",      P_collisions )
-     call COLLISIONS_basic_operations( "clean", GW_NEQ_collisions )
      !
    endif
    !
@@ -226,13 +158,6 @@ subroutine COLLISIONS_eval_rt(E,X,k,xk,q,Xw)
  !
  if (l_use_COH_collisions) call COLLISIONS_alloc_and_free("COH"      ,trim(FREE_ch),"clean",1)
  if (l_use_Hxc_collisions) call COLLISIONS_alloc_and_free("HXC"      ,trim(FREE_ch),"clean",1)
- !
-#if defined _RT_SCATT
- if (l_elel_scatt)         call COLLISIONS_alloc_and_free("GW_NEQ"   ,trim(FREE_ch),"clean",1)
-#endif
-#if defined _QED
- if (l_elphoton_scatt)     call COLLISIONS_alloc_and_free("Momentum" ,trim(FREE_ch),"clean",1)
-#endif
  !
  call timing('COLLISIONS_eval',OPR='stop')
  !

@@ -27,8 +27,9 @@ subroutine PARALLEL_WF_distribute_ham(K_index,Bm_index,CLEAN_distr,CLEAN_UP)
  logical :: condition
  logical :: Vl(H_ref_bands(2))
  !
- NK=size(K_index%element_1D)
  NB =n_bands
+ NBp=n_bands
+ NK=size(K_index%element_1D)
  !
  if (CLEAN_distr) call PARALLEL_WF_clean_distr(NB,NK,CLEAN_UP)
  !

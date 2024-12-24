@@ -41,7 +41,9 @@ subroutine RT_driver(E,X,k,q,Dip)
  use fields,          ONLY:A_tot,Efield
  use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element,COLLISIONS_have_HARTREE
  use QP_CTL_m,        ONLY:QP_apply
- use parallel_int,    ONLY:PP_bcast,PP_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use parallel_int,    ONLY:PP_bcast,PP_wait,PARALLEL_WF_index
+ use RT_control,      ONLY:PARALLEL_global_indexes_rt
+ use common_sc_rt,    ONLY:PARALLEL_global_indexes_ham
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PAR_COM_Xk_ibz_INDEX
  use units,           ONLY:FS2AUT
  use RT_lifetimes,    ONLY:l_initial_equilibrium
@@ -96,7 +98,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !######################################
  !
  ! Parallel reset...
- call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
+ call PARALLEL_global_indexes_rt(E,k,q," ",RESET=.TRUE.,X=X(1))
  !
  ! The K-grid must be defined at the very beginning to provide PARALLEL_global_indexes with the right k-weights
  !============
@@ -104,7 +106,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  ! Parallel Setups
  !=================
- call PARALLEL_global_indexes(E,k,q,"Real_Time",RESET=.FALSE.,X=X(1))
+ call PARALLEL_global_indexes_rt(E,k,q,"Real_Time",RESET=.FALSE.,X=X(1))
  if (l_elph_scatt.or.l_elel_scatt.or.l_elphoton_scatt) then
    call PARALLEL_SND_RCV_plan( PAR_COM_Xk_ibz_INDEX,  PAR_COM_Xk_ibz_INDEX%n_CPU)
  endif
@@ -133,13 +135,13 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  ! Dipoles & WF dimensions
  !=========================
- call WF_and_dipole_dimensions(X,k)
+ call WF_and_dipole_dimensions_rt(X,k)
  !
  ! WFs loading
  !=============
  if ( .not. l_RT_is_WFfree ) then
    !
-   call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_distribute_ham(PAR_IND_WF_k,PAR_IND_WF_b,.TRUE.,.TRUE.)
    call PARALLEL_WF_index( )
    !
    if(n_spinor==2.and.l_update_SOC) call WF_derivative(RT_bands,(/1,k%nibz/),(/1,n_sp_pol/),(/.true.,.true.,.true./),.true.)

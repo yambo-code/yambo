@@ -56,7 +56,6 @@ integer function yambo_sc(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  integer           ::i_err,i_X_kind,ID,VB(2),CB(2)
  logical           ::launch_me
- character(len=20) ::tmp_char
  !
  ! Externals
  !
@@ -206,8 +205,7 @@ integer function yambo_sc(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !=====================
  !
  if (l_eval_collisions) then
-  tmp_char="self-consistent"
-  call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2),tmp_char)
+  call COLLISIONS_eval_sc(en,X,k,Xk,q,Xw(:2))
   call mem_manager_report
 endif
 !

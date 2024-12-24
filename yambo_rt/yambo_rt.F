@@ -56,7 +56,6 @@ integer function yambo_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  integer           ::i_err,i_X_kind,ID,VB(2),CB(2)
  logical           ::launch_me
- character(len=20) ::tmp_char
  !
  ! Externals
  !

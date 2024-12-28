@@ -45,7 +45,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
  logical, allocatable         :: element_1D_spin(:)
  integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,pp_dim_yambo,pp_dim_atom,&
 &                                i_sp_pol,N_elements_todo,ik_mem,ic_min,is,ia,pp_range(2),npp,npp_tab
- complex(SP), allocatable     :: kbv(:,:,:,:)
+ complex(SP), allocatable          :: kbv(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: kbv_d(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: XX(:,:,:,:,:)
  complex(SP)                  :: rho_spinor(3,n_spinor,n_spinor),rho(3),P2
@@ -207,9 +207,8 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
              !
              i_wf=WF%index(ib,ik,i_sp_pol)
              !
-             call DIPOLE_kb_project(pp_range,Dip%ib,ib,i_wf,wf_ncx,size(WF%c,3),npp,pp_dim_yambo,&
-&                                   DEV_VAR(WF%c)(:,:,i_wf),DEV_VAR(kbv)(:,:,:,:npp),XX(:,:,:,pp_range(1):pp_range(2),ib))
-!&                                   DEV_VAR(WF%c),DEV_VAR(kbv)(:,:,:,:npp),XX)
+             call DIPOLE_kb_project(pp_range,Dip%ib,ib,i_wf,wf_ncx,size(WF%c,3),npp,&
+             &                      pp_dim_atom,pp_dim_yambo,DEV_VAR(WF%c),DEV_VAR(kbv),XX)
              !
            enddo
            !

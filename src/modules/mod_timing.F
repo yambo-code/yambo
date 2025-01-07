@@ -122,12 +122,12 @@ MODULE timing_m
        !
        IF ( .NOT. PRESENT(opr) .OR. TRIM(opr_) == "start" .OR. TRIM(opr_) == "START") THEN
          opr_ = "start"
-         print *, "CLOCK LIST NAMES IS : "
+         !print *, "CLOCK LIST NAMES IS : "
 
-         DO ii = 1,listp%nclock
-           print *, listp%clock(ii)%name
-         END DO
-         print *, "----> Chosen clock is : ", listp%clock(index)%name
+         !DO ii = 1,listp%nclock
+          ! print *, listp%clock(ii)%name
+         !END DO
+         !print *, "----> Chosen clock is : ", listp%clock(index)%name
          CALL clock_allocate(TRIM(name), listp%nclock, listp%clock(index))
        ELSE 
          CALL error('timing: Clock NOT found for operation '//TRIM(opr_)//' in '&

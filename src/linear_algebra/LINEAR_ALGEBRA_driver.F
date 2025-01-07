@@ -115,7 +115,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  ! =============== PARALLEL SECTION ==========================================================
  !
- if ((lib_in_use==USE_SLK.and..not.USE_GPU).or.idriver==CHASE) then 
+ if((lib_in_use==USE_SLK.and..not.USE_GPU).or.(lib_in_use==USE_SLK.and.idriver==CHASE)) then 
    !
    if (.not.present(M_slk)) then
      !
@@ -148,6 +148,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      if(idriver==CHASE) then
         call PARALLEL_HERMITIAN_chase(M_loc, V_loc, N, E_real, neig)
      endif
+
+     !print *, E_real(:)
+     !print *, V_loc%blc(1:10,1:10,V_loc%I)
      !
      call MATRIX_transfer( M_in = V_loc , M=M )
      YAMBO_FREE(V_loc%blc)

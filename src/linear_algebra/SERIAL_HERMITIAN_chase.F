@@ -31,7 +31,8 @@ subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
  if(.not.(l_nl_optics.or.l_real_time)) then
    call timing('SERIAL_HERMITIAN_chase',OPR='start')
  endif
- allocate(Vtemp(n,n))
+ 
+allocate(Vtemp(n,n))
  Vtemp = 0.0
 !
  nev = min(neig,n)
@@ -41,13 +42,14 @@ subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
  mode = 'R'
  opt = 'S'
  qr = 'C'
- print *, M(1:3,1:3)
- print *, Vtemp(1:3,1:3)
- allocate(Etemp(nev+nex))
+
+ print *, "SERIAL ChASE, Matrix sample :"
+ print *, M(1:5,1:5)
+
+allocate(Etemp(nev+nex))
  Etemp = 0.0
- print *, Etemp(1:10)
- print *, "nev = ", nev, "+ nex = ", nex, "n = ", n
  
+call timing('ChASE_INIT',OPR='start')
 #if defined _DOUBLE
  print *, "double go!"
  call zchase_init(n, nev, nex, M, n, Vtemp, Etemp, init)
@@ -55,6 +57,8 @@ subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
  print *, "simple go!"
  call cchase_init(n, nev, nex, M, n, Vtemp, Etemp, init)
 #endif
+
+   call timing('ChASE_INIT',OPR='stop')
 
  print *, "Initialized"
 
@@ -74,10 +78,10 @@ print *, "Solved"
 
  if(flag/=0) print *, "[WARNING] ChASE did not finalize properly"
  !
- M=Vtemp
  do ii = 1,nev
         E(ii) = Etemp(ii)
  end do
+ M = Vtemp
  print *, E(:)
  deallocate(Etemp)
  if(.not.(l_nl_optics.or.l_real_time)) then

@@ -39,14 +39,15 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  call timing('PARALLEL_HERMITIAN_chase',OPR='start')
 !
  nev = min(neig,N)
- nex = max(0,min(10,N-nev))
+ nex = max(10,nev/10)
+ nex = max(0,min(nex,N-nev))
 
  deg = 20
  tol = 1e-10
  mode = 'R'
  opt = 'S'
  qr = 'C'
- grid_major = 'R' !----- Check grid major /!\.
+ grid_major = 'R' !----- Check grid major /!\. -- Checked in SLK_ORTHO_init
 
  nprow = SLK_ORTHO%grid(1)
  npcol = SLK_ORTHO%grid(2)
@@ -65,24 +66,19 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  
  call mpi_comm_rank(comm,myrank_slk_ortho_comm,ierr)
  call mpi_comm_size(comm,slk_ortho_comm_size  ,ierr)
+ 
+ call mpi_barrier(comm,ierr)
 
-! print *, "-------- Grid Info : ---------"
-! print *, "My rank is ", myrank_slk_ortho_comm, " / ",&
-!&                               slk_ortho_comm_size," in SLK_ORTHO_COMM " 
-! print *, "Mat% I = ",Mat%I, " nb = ", nb, " m = ", m
-! print *, "Rows = ", Mat%rows
-
-
+ call timing('ChASE_INIT',OPR='start')
 #if defined _DOUBLE
 ! call pzchase_init(N,nev,nex,m,nl,Mat%blc(:,:,Mat%I),m,Vtemp,Etemp,&
 !&                  nprow,npcol,grid_major,comm,init)
 
- call timing('ChASE_INIT',OPR='start')
  call pzchase_init_blockcyclic(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
-&                              nprow, npcol, grid_major, 0, 0, SLK_ORTHO%COMM, init)
+&                              nprow, npcol, grid_major, 0, 0, comm, init)
 #else
  call pcchase_init_blockcyclic(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
-&                              nprow, npcol, grid_major, 0, 0, SLK_ORTHO%COMM, init)
+&                              nprow, npcol, grid_major, 0, 0, comm, init)
 #endif
  call timing('ChASE_INIT',OPR='stop')
 
@@ -100,28 +96,24 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
 
  if(flag/=0) print *, "[WARNING] ChASE did not finalize properly"
  !
+
+ !print *, Etemp(:)
+
  do i = 1,nev
         E(i) = Etemp(i)
  end do
 
  call timing('ChASE_Reorganize',OPR='start')
- j = 0
- k = 1
- do i = 1, nev, nb
-        nr = nb
-        if(nev - i < nb) then
-                nr = nev - i  + 1
-        end if
-        if(mycol == j) then
-                V%blc(:,k:k+nr-1,V%I) = Vtemp(:,i:i+nr-1)
-                k = k + nr
-        end if
-        j = MOD(j + 1, nprow)
- end do
+
+ if (nev > nl * mycol) then
+   do i = 1,min(n,nev-n*mycol)
+     V%blc(:,i,V%I) = Vtemp(:, nl * mycol + i)
+   end do
+ endif
  
 call timing('ChASE_Reorganize',OPR='stop')
 
- call PP_redux_wait(E,COMM=SLK_POOL%INTRA_comm)
+ !call PP_redux_wait(E,COMM=SLK_POOL%INTRA_comm)
 
  deallocate(Etemp)
  call timing('PARALLEL_HERMITIAN_chase',OPR='stop')

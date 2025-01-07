@@ -33,6 +33,7 @@ subroutine PARALLEL_HERMITIAN_feweigenvalues(M, V, N, E, neig)
  real(SP)           :: abstol,orfac
  real(SP), allocatable :: Etemp(:),gap(:)
  integer, allocatable :: iwork(:),ifail(:),iclustr(:)
+ integer :: comm,ierr,myrank_slk_ortho_comm,slk_ortho_comm_size,nl
  !
  E=0.0_SP
  !
@@ -55,11 +56,16 @@ subroutine PARALLEL_HERMITIAN_feweigenvalues(M, V, N, E, neig)
  print *, "V rows x cols = ", V%rows(:), " x ", V%cols(:)
  print *, "nprow = ",nprow
  print *, "npcol = ",npcol
+        
+ !print *, M%blc(1:5,1:5,M%I)
+        
+ print *, "Mat partially printed"
  lwork =-1
  lrwork=-1
  liwork=-1
  !
 #if defined _DOUBLE
+ print *, "GO! "
  abstol = PDLAMCH(SLK_ORTHO%ortho_cntx,'U')
  call PZHEEVx&
 #else
@@ -100,8 +106,8 @@ subroutine PARALLEL_HERMITIAN_feweigenvalues(M, V, N, E, neig)
  do ii = 1,neigsl
          E(ii) = Etemp(ii)
  end do
- print *, E(:)
- print *, neig
+ !print *, E(:)
+ !print *, neig
  print *, "INFO = ", info
  !
  if(info.ne.0) call LINEAR_ALGEBRA_error(subname,'performing P(Z/C)HEEV')

@@ -56,14 +56,14 @@ YPP_BASIC_LIBS     = YPPmodules interface qp plotting k-points symmetries bits e
 YPP_BASIC_LIBS_LD  = YPPmodules interface qp plotting k-points symmetries bits electrons dipoles 
 YPP_LIBS           = $(YPP_BASIC_LIBS) excitons
 YPP_LIBS_LD        = $(YPP_BASIC_LIBS_LD) excitons
-YPPSC_LIBS         = sc
-YPPSC_LIBS_LD      = $(YPP_LIBS_LD) sc
-YPPPH_LIBS         = el-ph
-YPPPH_LIBS_LD      = $(YPP_LIBS_LD) el-ph
-YPPRT_LIBS         = real_time
-YPPRT_LIBS_LD      = $(YPP_LIBS_LD) real_time
-YPPNL_LIBS         = nloptics
-YPPNL_LIBS_LD      = $(YPPRT_LIBS_LD) nloptics
+YPPSC_LIBS         = sc interface_sc
+YPPSC_LIBS_LD      = $(YPP_LIBS_LD) sc interfaces_sc
+YPPPH_LIBS         = el-ph interface_ph
+YPPPH_LIBS_LD      = $(YPP_LIBS_LD) el-ph interface_ph
+YPPRT_LIBS         = real_time interface_rt
+YPPRT_LIBS_LD      = $(YPP_LIBS_LD) real_time interface_rt
+YPPNL_LIBS         = nloptics interface_nl
+YPPNL_LIBS_LD      = $(YPPRT_LIBS_LD) nloptics interface_nl
 #
 # YAMBO sources needed by YPP
 #

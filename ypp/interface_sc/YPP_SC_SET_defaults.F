@@ -7,7 +7,9 @@
 !
 subroutine YPP_SC_SET_defaults()
  !
- use YPPm,           ONLY:l_mean_potential,B_field,B_psi,B_theta,l_angular_momentum,l_position
+ use pars,        ONLY:SP
+ use YPPm,        ONLY:l_mean_potential,B_field,B_psi,B_theta,l_angular_momentum,l_position,&
+ &                     l_amplitude,E_field
  !
  implicit none
  !

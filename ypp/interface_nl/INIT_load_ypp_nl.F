@@ -8,8 +8,9 @@
 subroutine INIT_ypp_load(defs)
  !
  use it_tools,      ONLY:it
- use it_m,          ONLY:initdefs,E_unit,G_unit,V_general,V_RL,&
-&                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics,V_io,V_sc
+ use it_m,          ONLY:initdefs,V_nl_optics
+ use YPP_real_time, ONLY:Pump_path
+ !
  implicit none
  !
  type(initdefs) :: defs

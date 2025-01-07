@@ -7,8 +7,9 @@
 !
 subroutine INIT_ypp_load_ph(defs)
  !
+ use pars,          ONLY:SP
  use it_tools,      ONLY:it
- use it_m,          ONLY:initdefs,E_unit,G_unit,V_general,V_RL,&
+ use it_m,          ONLY:initdefs,E_unit,G_unit,V_general,V_RL
  use YPP_ELPH,      ONLY:elph_dbs_path,elph_Ef,elph_gamma_broad,elph_residual_treshold,elph_steps,&
 &                        ph_broad,ph_freqs_file,ph_modes_file
  use ELPH,          ONLY:EkplusQ_mode,elph_branches

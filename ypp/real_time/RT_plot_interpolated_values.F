@@ -20,8 +20,8 @@ subroutine RT_plot_interpolated_values(CIRCUIT_E,RT_E,CIRCUIT_dE,i_T,ID_circuit,
  use interpolate,    ONLY:INTERP_obj
  use vec_operate,    ONLY:iku_v_norm
  use interfaces,     ONLY:DESC_write
- use YPPm,           ONLY:Nel_fac,CIRCUIT_k,CIRCUIT_k_label,CIRCUIT_E_db,BANDS_bands
- use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time,integrated_Nel,integrated_Nhole
+ use YPPm,           ONLY:CIRCUIT_k,CIRCUIT_k_label,CIRCUIT_E_db,BANDS_bands
+ use YPP_real_time,  ONLY:Nel_fac,l_RT_lifetimes,l_RT_occupations,RT_time,integrated_Nel,integrated_Nhole
  !
  implicit none
  !

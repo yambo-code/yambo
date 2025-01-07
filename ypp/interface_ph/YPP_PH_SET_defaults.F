@@ -7,6 +7,8 @@
 !
 subroutine YPP_PH_SET_defaults()
  !
+ use pars,           ONLY:SP
+ use units,          ONLY:HA2EV
  use YPP_ELPH,       ONLY:elph_dbs_path, elph_Ef, elph_gamma_broad, elph_steps, l_atomic_amplitude, l_eliashberg,&
 &                         l_gkkp, l_phonons, ph_broad, ph_freqs_file, ph_modes_file
  use ELPH,           ONLY:gsqF_energy_steps,elph_branches

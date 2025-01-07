@@ -99,7 +99,6 @@ module YPPm
  character(schlen)     ::INTERP_input_mode='BOLTZ'
  type(levels)          ::CIRCUIT_E_db
  integer               ::INTERP_grid(3)  ! Interpolation Grid
- real(SP)              ::Nel_fac
  logical               ::BANDS_print_internal_energies
  logical               ::BANDS_from_db
  !

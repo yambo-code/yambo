@@ -50,6 +50,7 @@ module YPP_real_time
  ! Manual pump ...
  !
  real(SP)    :: Eh_pumped_Nel
+ real(SP)    :: Nel_fac
  !
  ! ... Energy
  !

@@ -542,6 +542,7 @@ module it_tools
              call parser(trim(name),defs%chdef(i1))
            endif
            if (initmode<=3) then
+             write(*,*) "defval= ",defval
              defs%chdef(i1)=defval
              if (present(case)) then
                if (case=="A") call STRING_to_UPPER(defs%chdef(i1))

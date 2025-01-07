@@ -238,7 +238,6 @@ subroutine INIT_ypp_sc(E,instr,FINALIZE)
  if (l_bands)          call initactivate(1,'bnds')
  !
  l_flag=.not.l_sort
- l_flag=.not.l_sort.and..not.l_atomic_amplitude
  if (l_flag) call call_INIT_load('parser_input_file')
  !
  l_bz_grids  = runlevel_is_on('bzgrids')

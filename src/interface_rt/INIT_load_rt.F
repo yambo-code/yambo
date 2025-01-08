@@ -290,10 +290,10 @@ subroutine INIT_load_rt(defs,en,q,k,X,Xw,Dip)
      call it(defs,trim(name),'[PARALLEL] CPUs roles '//trim(possible_fields),&
      &       CPU_structure(i_s)%ROLE_string,verb_level=V_parallel)
      !
-     write(*,*) 'CPU_structure_load'
-     write(*,*) "Short Description= ",trim(CPU_structure(i_s)%Short_Description)
-     write(*,*) "CPU_string= ",trim(CPU_structure(i_s)%CPU_string)
-     write(*,*) "ROLE_string= ",trim(CPU_structure(i_s)%ROLE_string)
+     !write(*,*) 'CPU_structure_load'
+     !write(*,*) "Short Description= ",trim(CPU_structure(i_s)%Short_Description)
+     !write(*,*) "CPU_string= ",trim(CPU_structure(i_s)%CPU_string)
+     !write(*,*) "ROLE_string= ",trim(CPU_structure(i_s)%ROLE_string)
      !
    end subroutine
    !

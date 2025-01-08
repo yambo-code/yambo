@@ -576,7 +576,7 @@ subroutine INIT_ypp_rt(E,instr,FINALIZE)
      if (mode=='Close_G_vectors') initmode=2
      if (mode=='Game_Over') initmode=3
      if (mode=='parser_input_file') initmode=4
-     call INIT_ypp_load(defs)
+     call INIT_ypp_load_rt(defs)
      !
    end subroutine
    !

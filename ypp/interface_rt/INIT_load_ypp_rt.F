@@ -9,8 +9,7 @@ subroutine INIT_ypp_load_rt(defs)
  !
  use it_tools,      ONLY:it
  use it_m,          ONLY:initdefs,E_unit,Time_unit,V_real_time
- use YPPm,          ONLY:Nel_fac
- use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,Rho_deph,&
+ use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,Rho_deph,Nel_fac,&
 &                        Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,X_kind,Eh_pumped_pair_energy,&
 &                        Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr,TRabsWHAT,TRabsDIP_plane,&
 &                        TRabsMODE,TRabsDIP_dir,TRabs_Eeh_treshold,Pump_path,RT_pol_mode
@@ -23,7 +22,7 @@ subroutine INIT_ypp_load_rt(defs)
  ! RunLevels...
  !==============
  !
- call INIT_load_ypp(defs)
+ call INIT_ypp_load(defs)
  !
  call it('r',defs,'RealTime',     '[R] TD Post-Processing')
  call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')

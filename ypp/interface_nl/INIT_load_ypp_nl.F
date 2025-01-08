@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine INIT_ypp_load(defs)
+subroutine INIT_ypp_load_nl(defs)
  !
  use it_tools,      ONLY:it
  use it_m,          ONLY:initdefs,V_nl_optics
@@ -18,7 +18,7 @@ subroutine INIT_ypp_load(defs)
  ! RunLevels...
  !==============
  !
- call INIT_load_ypp_rt(defs)
+ call INIT_ypp_load_rt(defs)
  !
  call it('r',defs,'NL_X',     '[R] NonLinear Optics Response Post-Processing')
  call it('r',defs,'NL_exc',   '[R] NonLinear Optics Excitation Post-Processing')

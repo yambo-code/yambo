@@ -391,11 +391,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        if (i_s==3) possible_fields='(q,g,k,c,v)' ! X
        if (i_s==4) possible_fields='(k,eh,t)'    ! BS
        if (i_s==5) possible_fields='(q,g,qp,b)'  ! SE
-       if (i_s==6) possible_fields='(k,b,q,qp)'  ! RT
        if (i_s==7) possible_fields='(p,d) '      ! SLK
        if (i_s==8) possible_fields='(w,k) '      ! NL
        if (i_s==9) possible_fields='(k) '        ! BZ
        if (i_s==11)possible_fields='(k,b) '      ! OSCLL
+       !
+       if (i_s==6) cycle                         ! RT
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
        name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"
@@ -410,6 +411,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        name=trim(CPU_structure(i_s)%Short_Description)//"_nCPU_LinAlg_DIAGO"
        call it(defs,trim(name),'[PARALLEL] CPUs for Linear Algebra (if -1 it is automatically set)',&
 &              CPU_structure(i_s)%nCPU_lin_algebra_DIAGO,verb_level=V_parallel)
+       !
      enddo
      !
    end subroutine

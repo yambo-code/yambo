@@ -55,11 +55,11 @@ subroutine PARALLEL_global_indexes_ham(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits
  !========
  if (present(RESET)) then
    if (RESET) then
-     call PARALLEL_global_reset(ENVIRONMENT,X_type)
+     call PARALLEL_global_reset_ham(ENVIRONMENT,X_type)
      return
    endif
  else
-   call PARALLEL_global_reset(ENVIRONMENT,X_type)
+   call PARALLEL_global_reset_ham(ENVIRONMENT,X_type)
  endif
  !
  !========

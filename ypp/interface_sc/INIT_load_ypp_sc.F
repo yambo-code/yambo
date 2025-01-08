@@ -20,7 +20,7 @@ subroutine INIT_ypp_load_sc(defs)
  ! RunLevels...
  !==============
  !
- call INIT_load_ypp(defs)
+ call INIT_ypp_load(defs)
  !
  call it('r',defs,'angular_m',    '[R] Canonical angular momentum')
  call it('r',defs,'position',     '[R] Average <r^n>, n given in the input')

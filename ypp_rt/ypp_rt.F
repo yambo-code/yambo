@@ -58,7 +58,7 @@ integer function ypp_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_
  ! ... Internal Defaults
  !
  call SET_defaults(instr,ind,od,com_dir)
- call YPP_SET_defaults()
+ call YPP_RT_SET_defaults()
  !
  ! ... C_driver -> YPP information transfer
  !
@@ -112,7 +112,7 @@ integer function ypp_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_
  !
  ! INPUT FILE parsing
  !
- call INIT_ypp(en,instr,.false.)
+ call INIT_ypp_rt(en,instr,.false.)
  if (infile_editing) then
    iinf=1
    call ypp_finalize(" ",instr)
@@ -220,7 +220,7 @@ integer function ypp_rt(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_
  !
  call CLOSE_the_run(.TRUE.,.TRUE.,.FALSE.)
  !
- call INIT_ypp(en,instr,.TRUE.)
+ call INIT_ypp_rt(en,instr,.TRUE.)
  !
  return
  !
@@ -234,7 +234,7 @@ contains
       if (len_trim(STRING)==0) call section('X','Game Over')
       call msg("nln"," ")
     endif
-    if (.not.infile_editing) call INIT_ypp(en,instr,.TRUE.)
+    if (.not.infile_editing) call INIT_ypp_rt(en,instr,.TRUE.)
   end subroutine
   !
 end function ypp_rt

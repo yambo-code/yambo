@@ -21,7 +21,7 @@ subroutine INIT_ypp_load_ph(defs)
  ! RunLevels...
  !==============
  !
- call INIT_load_ypp(defs)
+ call INIT_ypp_load(defs)
  !
  ! ... derived
  !=============

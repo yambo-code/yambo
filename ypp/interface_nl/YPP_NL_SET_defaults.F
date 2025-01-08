@@ -9,7 +9,7 @@ subroutine YPP_NL_SET_defaults()
  !
  use YPP_real_time,  ONLY:Pump_path
  !
- call YPP_SET_defaults_rt()
+ call YPP_RT_SET_defaults()
  !
  Pump_path     ="none"
  !

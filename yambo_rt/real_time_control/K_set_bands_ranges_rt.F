@@ -18,6 +18,8 @@ subroutine K_set_bands_ranges_rt(Ken,V_bands,C_bands)
  type(levels), intent(in) :: Ken
  integer,     intent(out) :: V_bands(2),C_bands(2)
  !
+ call K_set_bands_ranges(Ken,V_bands,C_bands)
+ !
  ! Bands range. In the _RT case %nbf and %nbm turn metallic when carriers are used.
  if (l_rt_carriers_in_use.and.EQ_Transitions) then
    V_bands=(/BS_bands(1),maxval(n_met_bands)/)

@@ -13,7 +13,7 @@ ifeq ($(do_e2y),yes)
 endif
 INTERFCS = a2y $(p2y) $(e2y)
 CORE     = yambo ypp $(INTERFCS)
-UTILS    = help changelog dependencies
+UTILS    = help changelog dependencies ham-libs
 CLEANS   = clean distclean clean_all gitclean
 PH_PROJ  = yambo_ph ypp_ph 
 SC_PROJ  = yambo_sc ypp_sc

@@ -38,7 +38,7 @@ case $target in
   ypp*)
    libs="$libs $llocal $lSL $lPLA $lIO $lextlibs -lm"
     ;;
-  lib*)
+  *lib*)
     ;;
 esac
 #

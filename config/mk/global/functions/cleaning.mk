@@ -25,8 +25,14 @@ define clean_driver
  fi; \
  if [ "$(1)" = "stamps"    ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then $(clean_stamps); fi; \
  if [ "$(1)" = "projects-stamp" ] ; then $(clean_projects_stamp); fi; \
- if [ "$(1)" = "yambo_def" ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
-  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="yambo_def";$(clean_dir_driver);\
+ if [ "$(1)" = "src" ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
+  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="src";$(clean_dir_driver);\
+ fi
+ if [ "$(1)" = "ypp" ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
+  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="ypp";$(clean_dir_driver);\
+ fi
+ if [ "$(1)" = "yambo_main" ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
+  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="yambo_main";$(clean_dir_driver);\
  fi
  if [ "$(1)" = "yambo_ph"  ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="yambo_ph";$(clean_dir_driver);\
@@ -40,8 +46,8 @@ define clean_driver
  if [ "$(1)" = "yambo_nl"  ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="yambo_nl";$(clean_dir_driver);\
  fi
- if [ "$(1)" = "ypp_def" ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
-  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="ypp_def";$(clean_dir_driver);\
+ if [ "$(1)" = "ypp_main" ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
+  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="ypp_main";$(clean_dir_driver);\
  fi
  if [ "$(1)" = "ypp_ph"  ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="ypp_ph";$(clean_dir_driver);\
@@ -57,13 +63,30 @@ define clean_driver
  fi
  if                             [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
    $(clean_libs_using_stamps_driver); \
-   $(call clean_src_driver,"src");\
-   $(call clean_src_driver,"ypp");\
+   $(call clean_src_driver,"yambo_main");\
+   $(call clean_src_driver,"ypp_main");\
+   $(call clean_src_driver,"yambo_ph");\
+   $(call clean_src_driver,"ypp_ph");\
+   $(call clean_src_driver,"yambo_sc");\
+   $(call clean_src_driver,"ypp_sc");\
+   $(call clean_src_driver,"yambo_rt");\
+   $(call clean_src_driver,"ypp_rt");\
+   $(call clean_src_driver,"yambo_nl");\
+   $(call clean_src_driver,"ypp_nl");\
    $(call clean_src_driver,"interfaces");\
  fi; \
- if [ "$(1)" = "ypp"        ] ; then $(call clean_src_driver,"ypp"); fi; \
- if [ "$(1)" = "src"        ] ; then $(call clean_src_driver,"src"); fi; \
+ if [ "$(1)" = "ypp_main"   ] ; then $(call clean_src_driver,"ypp"); fi; \
+ if [ "$(1)" = "yambo_main" ] ; then $(call clean_src_driver,"src"); fi; \
+ if [ "$(1)" = "ypp_ph"     ] ; then $(call clean_src_driver,"ypp_ph"); fi; \
+ if [ "$(1)" = "yambo_ph"   ] ; then $(call clean_src_driver,"yambo_ph"); fi; \
+ if [ "$(1)" = "ypp_sc"     ] ; then $(call clean_src_driver,"ypp_sc"); fi; \
+ if [ "$(1)" = "yambo_sc"   ] ; then $(call clean_src_driver,"yambo_sc"); fi; \
+ if [ "$(1)" = "ypp_rt"     ] ; then $(call clean_src_driver,"ypp_rt"); fi; \
+ if [ "$(1)" = "yambo_rt"   ] ; then $(call clean_src_driver,"yambo_rt"); fi; \
+ if [ "$(1)" = "ypp_nl"     ] ; then $(call clean_src_driver,"ypp_nl"); fi; \
+ if [ "$(1)" = "yambo_nl"   ] ; then $(call clean_src_driver,"yambo_nl"); fi; \
  if [ "$(1)" = "interfaces" ] ; then $(call clean_src_driver,"interfaces"); fi; \
+ if [ "$(1)" = "ham-libs"   ] ; then $(call clean_src_driver,"ham-libs"); fi; \
  if [ "$(1)" = "conf"      ] ||                  [ "$(1)" = "all" ] ; then $(clean_config); fi; \
  if [ "$(1)" = "dep"       ] ||                  [ "$(1)" = "all" ] ; then $(clean_dependencies); fi ; \
  if                                              [ "$(1)" = "all" ] ; then $(clean_log_folder); fi 
@@ -72,7 +95,13 @@ endef
 # Drivers (intermediate)
 #
 define clean_src_driver
- if [ "$(1)" = "src" ] || [ "$(1)" = "ypp" ] || [ "$(1)" = "interfaces" ] ; then \
+ if [ "$(1)" = "src" ]        || [ "$(1)" = "ypp" ]      || \
+    [ "$(1)" = "yambo_main" ] || [ "$(1)" = "ypp_main" ] || \
+    [ "$(1)" = "yambo_ph" ]   || [ "$(1)" = "ypp_ph" ]   || \
+    [ "$(1)" = "yambo_sc" ]   || [ "$(1)" = "ypp_sc" ]   || \
+    [ "$(1)" = "yambo_rt" ]   || [ "$(1)" = "ypp_rt" ]   || \
+    [ "$(1)" = "yambo_nl" ]   || [ "$(1)" = "ypp_nl" ]   || \
+    [ "$(1)" = "ham-libs" ]   || [ "$(1)" = "interfaces" ] ; then \
   if  test -f config/stamps_and_lists/active_directories.list; then \
    TARG="";MSG="$(1)";EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";\
    for FOLD in `cat config/stamps_and_lists/active_directories.list|grep $(1)`;do TARG="$$TARG $$FOLD";done;\
@@ -158,8 +187,8 @@ define clean_config
  rm -fr $(prefix)/include/version/version.h;\
  rm -fr $(prefix)/config/mk/local/static_variables.mk;\
  rm -fr $(prefix)/lib/archive/Makefile;\
- rm -fr $(prefix)/src/tools/.objects;\
- rm -fr $(prefix)/src/wf_and_fft/sgfft.F;\
+ rm -fr $(prefix)/yambo_main/tools/.objects;\
+ rm -fr $(prefix)/yambo_main/wf_and_fft/sgfft.F;\
  rm -fr $(prefix)/lib/archive/git.list;\
  rm -fr $(prefix)/sbin/compilation/helper.inc.sh
 endef
@@ -185,6 +214,8 @@ define clean_stamps
  rm -fr $(prefix)/config/stamps_and_lists/*2y.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/yambo*.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/ypp*.stamp; \
+ rm -fr $(prefix)/config/stamps_and_lists/ham-libs*.stamp; \
+ rm -fr $(prefix)/config/stamps_and_lists/interfaces*.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/compiling*.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/mods*.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/*.lock;\

@@ -220,7 +220,7 @@ integer function yambo_nl(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  ! EXTENDED COLLISIONS 
  !=====================
  !
- if (l_eval_collisions) call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2),"real-time")
+ if (l_eval_collisions) call COLLISIONS_eval_rt(en,X(:4),k,Xk,q,Xw(:2))
  if (l_eval_collisions) call mem_manager_report
  !
  ! SELF-ENERGIES

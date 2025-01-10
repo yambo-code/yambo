@@ -53,7 +53,7 @@ main:
 all:
 	@for target in $(ALL)      ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; exit 1;fi ; done
 ext-libs:
-	@for target in $(EXT_LIBS) ; do if ! test "$$target" = Ydriver; then $(MAKE) $(MAKEFLAGS) $$target; fi; done
+	@for target in $(EXT_LIBS) ; do $(MAKE) $(MAKEFLAGS) $$target; done
 int-libs:
 	@for target in $(INT_LIBS) ; do $(MAKE) $(MAKEFLAGS) $$target; \
 	if test ! -f "lib/lib$$target."*; then echo "$$target build failed"; exit 1; fi done

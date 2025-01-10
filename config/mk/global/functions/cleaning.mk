@@ -74,6 +74,7 @@ define clean_driver
    $(call clean_src_driver,"yambo_nl");\
    $(call clean_src_driver,"ypp_nl");\
    $(call clean_src_driver,"interfaces");\
+   $(call clean_src_driver,"ham-libs");\
  fi; \
  if [ "$(1)" = "ypp_main"   ] ; then $(call clean_src_driver,"ypp"); fi; \
  if [ "$(1)" = "yambo_main" ] ; then $(call clean_src_driver,"src"); fi; \

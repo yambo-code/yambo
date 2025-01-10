@@ -31,8 +31,8 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  ! Local variables
  !
  integer               :: ik_local,ik_ibz_grid,ik_bz_grid,iqnt,i_dim,ifile,i_point,i_sp_pol,ivalue,&
-&                         ndims,nval,n_points,n_points_max
- logical               :: PLOT_BANDS,PLOT_G2,PLOT_from_DB,PLOT_interpolated,PLOT_built_in,l_print_k_name
+&                         ndims,nval,n_points,n_points_max,i_T_loc
+ logical               :: PLOT_BANDS,PLOT_G2,PLOT_from_DB,PLOT_interpolated,PLOT_built_in,l_print_k_name,proj_wfc_loc
  character(schlen)     :: headings_k(4),headings(dims(2)-dims(1)+1+4), &
 &                         file_name(sum(nfiles)),k_file_name,k_name
  real(SP)              :: value_k(4),     values(dims(2)-dims(1)+1+4), &
@@ -56,6 +56,12 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  ndims=dims(2)-dims(1)+1
  n_points=1
  n_points_max=1
+ !
+ i_T_loc=-1
+ if (present(i_T)) i_T_loc=i_T
+ !
+ proj_wfc_loc=.false.
+ if (present(proj_wfc)) proj_wfc_loc=proj_wfc
  !
  ! Define a map between k-points in grid and nearest k-point in circuit
  !
@@ -129,7 +135,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    enddo
  endif
  !
- if (i_T>0 ) then
+ if (i_T_loc>0 ) then
    file_name(nfiles(1)+1:nfiles(1)+nfiles(2))="occupations_"//trim(basename)
    do i_sp_pol=1,n_sp_pol
      ifile=ifile+1
@@ -138,7 +144,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    enddo
  endif
  !
- if((PLOT_interpolated.or.PLOT_built_in).and.PLOT_BANDS.and.n_spinor==2.and.i_T<2) then
+ if((PLOT_interpolated.or.PLOT_built_in).and.PLOT_BANDS.and.n_spinor==2.and.i_T_loc<2) then
    file_name(ifile+1)="spin_factors_UP_"//trim(basename)
    file_name(ifile+2)="spin_factors_DN_"//trim(basename)
    file_name(ifile+3)="magnetization_x_"//trim(basename)
@@ -147,7 +153,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    ifile=ifile+5
  endif
  !
- if(PLOT_interpolated.and.PLOT_BANDS.and.proj_wfc) then
+ if(PLOT_interpolated.and.PLOT_BANDS.and.proj_wfc_loc) then
    ifile=ifile+5
    file_name(ifile+1)="proj_val_"//trim(basename)
    file_name(ifile+2)="proj_con_"//trim(basename)

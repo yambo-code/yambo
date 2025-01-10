@@ -14,9 +14,9 @@ yambo:
 	@$(MAKE) $(MAKEFLAGS) dependencies
 	@$(MAKE) $(MAKEFLAGS) ext-libs
 	@$(MAKE) $(MAKEFLAGS) int-libs
-	@+LIBS="$(MAIN_LIBS)";LAB="_Y_";BASE="yambo_main";ADF="-D_yambo";$(todo_lib);$(mk_lib)
-	@+X2DO="yambo";BASE=yambo_main;XLIBS="$(MAIN_LIBS_LD)";ADF="";$(todo_driver)
-	@+X2DO="yambo";BASE=yambo_main;XLIBS="$(MAIN_LIBS_LD)";ADF="";$(mk_exe)
+	@+LIBS="$(MAIN_LIBS)";LAB="_Y_";BASE="src";ADF="-D_yambo";$(todo_lib);$(mk_lib)
+	@+X2DO="yambo";BASE=src;XLIBS="$(MAIN_LIBS_LD)";ADF="";$(todo_driver)
+	@+X2DO="yambo";BASE=src;XLIBS="$(MAIN_LIBS_LD)";ADF="";$(mk_exe)
 
 yambo_ph: yambo
 	@rm -f ${compdir}/log/compile_yambo_ph.log

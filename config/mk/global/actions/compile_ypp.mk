@@ -11,9 +11,9 @@ ypp: yambo
 	@rm -f ${compdir}/log/"compile_"$@".log"
 	@rm -f ${compdir}/config/stamps_and_lists/compilation_stop_$@.stamp
 	@touch ${compdir}/config/stamps_and_lists/compiling_$@.stamp
-	@+LIBS="$(YPP_LIBS)";LAB="_YPP_";BASE="ypp_main";ADF="-D_ypp";$(todo_lib);$(mk_lib)
-	@+X2DO="$@";BASE="ypp_main";XLIBS="$(YPP_MAIN_LIBS_LD)";X_ypp_LIBS="$(YPP_LIBS_LD)";ADF="";$(todo_driver)
-	@+X2DO="$@";BASE="ypp_main";XLIBS="$(YPP_MAIN_LIBS_LD)";X_ypp_LIBS="$(YPP_LIBS_LD)";ADF="";$(mk_exe)
+	@+LIBS="$(YPP_LIBS)";LAB="_YPP_";BASE="ypp";ADF="-D_ypp";$(todo_lib);$(mk_lib)
+	@+X2DO="$@";BASE="ypp";XLIBS="$(YPP_MAIN_LIBS_LD)";X_ypp_LIBS="$(YPP_LIBS_LD)";ADF="";$(todo_driver)
+	@+X2DO="$@";BASE="ypp";XLIBS="$(YPP_MAIN_LIBS_LD)";X_ypp_LIBS="$(YPP_LIBS_LD)";ADF="";$(mk_exe)
 
 ypp_ph: ypp yambo_ph
 	@rm -f ${compdir}/log/"compile_"$@".log"

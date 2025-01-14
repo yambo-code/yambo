@@ -35,7 +35,7 @@ subroutine ELPH_load_indexes(k,E,q,qindx_ID,qindx_ID_frag)
  use IO_m,                ONLY:OP_APP_CL,REP,OP_RD_CL
  use parallel_int,        ONLY:PARALLEL_global_indexes
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) ::k,q
  type(levels)  ::E

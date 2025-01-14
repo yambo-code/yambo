@@ -17,7 +17,6 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,FineGd_DB1_paths,l_angular_momentum,l_position,&
 &                         l_QP_DB_expand,l_average_eh,l_interp,l_regular_grid,DIPs
  use pars,           ONLY:pi,schlen
- use D_lattice,      ONLY:i_time_rev
  use it_tools,       ONLY:ofiles_append,infile_dump,runlevel_is_on
  use it_m,           ONLY:initdefs,initmode,infile,nrnlvls,rnlvls,infile_verbosity,&
                           V_general,V_qp,V_all,V_real_time,V_nl_optics
@@ -777,14 +776,6 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 &                    N=n_FineGd_DBs,M=1,CH_v=FineGd_DB1_paths(:n_FineGd_DBs,:))
  endif
  !
- ! LOG/REP files
- !
- live_timing_is_on =master_cpu.and..not.infile_editing
- write_to_report   =master_cpu.and..not.infile_editing
- write_to_log      =master_cpu.and..not.infile_editing
- !
- call INIT_report_and_log_files()
- !
  ! Input file
  !
  if (infile_editing) then
@@ -792,7 +783,16 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    call initinfio(defs,inpfile_unit)
    close(inpfile_unit)
    call PP_wait()
+   return
  endif
+ !
+ ! LOG/REP files
+ !
+ live_timing_is_on =master_cpu.and..not.infile_editing
+ write_to_report   =master_cpu.and..not.infile_editing
+ write_to_log      =master_cpu.and..not.infile_editing
+ !
+ call INIT_report_and_log_files()
  !
  contains
    !

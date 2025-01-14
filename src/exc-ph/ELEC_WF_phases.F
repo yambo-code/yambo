@@ -34,7 +34,7 @@ subroutine ELEC_WF_phases(E,k,l_min_mem,ID_phases)
  use IO_m,           ONLY:RD,OP_RD,DUMP,REP
  use IO_int,         ONLY:io_control
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: k

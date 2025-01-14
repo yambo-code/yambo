@@ -41,7 +41,7 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
 &                         EXCPH_states,EXCPH_sum,k_plus_q_table,EXCPH_kthresh,&
 &                         l_const_elph,l_abs_elph,l_abs_exc,l_elec_only,l_hole_only
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) ::k,q
  integer, intent(in)    :: iq_s,iq_bz,il!,iq

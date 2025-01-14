@@ -15,7 +15,7 @@ integer function io_ELPH(ID,what)
 &                         l_GKKP_hosts_DW,PH_pol_vector,&
 &                         GKKP,elph_grids_are_expanded,GKKP,GKKP_bare
  use stderr,         ONLY:intc
- use ELPH_intfcs,    ONLY:ELPH_alloc
+ use ALLOC,          ONLY:ELPH_alloc
  use R_lattice,      ONLY:nkbz
  use D_lattice,      ONLY:n_atoms
  use timing_m,       ONLY:timing

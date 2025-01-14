@@ -53,7 +53,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use timing_m,       ONLY:timing
  use com,            ONLY:msg
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::E
  type(bz_samp) ::k,q

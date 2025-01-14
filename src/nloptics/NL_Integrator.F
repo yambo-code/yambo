@@ -28,10 +28,10 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
  use pars,           ONLY:SP,cZERO
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:RK2,EULEREXP,RK2EXP,INVINT,RK4,RK4EXP,HEUN,CRANK_NICOLSON,I_relax,&
-&                         NL_bands,NL_correlation,l_velocity_IPA 
+&                         NL_bands,l_velocity_IPA 
  use real_time,      ONLY:RT_step,Ho_plus_Sigma
  use electrons,      ONLY:levels,n_sp_pol
- use X_m,            ONLY:X_t,global_gauge
+ use X_m,            ONLY:X_t
  use R_lattice,      ONLY:bz_samp
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index
  use parallel_int,   ONLY:PP_redux_wait

@@ -39,7 +39,7 @@ subroutine EXC_dipole(Xk,E,q,X)
  use parallel_int,   ONLY:PARALLEL_global_indexes,PP_redux_wait,PARALLEL_index,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,     ONLY:PAR_IND_WF_b_and_k
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: Xk,q

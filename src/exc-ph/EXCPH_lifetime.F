@@ -46,7 +46,7 @@ subroutine EXCPH_lifetime(k,q,X)
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
  use LIVE_t,        ONLY:live_timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::E
  type(bz_samp) ::k,q

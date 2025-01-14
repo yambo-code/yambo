@@ -5,14 +5,15 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
+integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  ! 
  ! Calculates and stores on file the dielectric matrix.
  !
  use pars,          ONLY:SP,schlen
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life,l_rpa_IP 
- use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
- use X_m,           ONLY:X_t,X_ALLOC_elemental,self_detect_E_range,X_poles,l_recalculate_X,l_write_disk_Xo,&
+ use DIPOLES,       ONLY:DIPOLE_t
+ use ALLOC,         ONLY:X_ALLOC_elemental,DIPOLE_ALLOC_global
+ use X_m,           ONLY:X_t,self_detect_E_range,X_poles,l_recalculate_X,l_write_disk_Xo,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup,&
 &                        n_OPTICAL_dir_to_eval,X_par_average
@@ -27,7 +28,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:OP_RD_CL,OP_APP_CL,VERIFY,REP,io_RESPONSE
- use com,           ONLY:depth
  use TDDFT,         ONLY:F_xc_gspace
  use interfaces,    ONLY:WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
@@ -40,7 +40,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  type(X_t)     ::X
  type(DIPOLE_t)::Dip
  type(w_samp)  ::Xw
- logical       ::SILENT_MODE
+ logical       ::SILENT_MODE,CHILD
  !
  ! External
  !
@@ -80,7 +80,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! Sectioning
  !
  sec_mode='*'
- if (depth>0) sec_mode='='
+ if (CHILD) sec_mode='='
  !
  X_dielectric_matrix=-1
  Xw%grid_type="ra"
@@ -389,9 +389,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  if (allocated(F_xc_gspace)) then
    YAMBO_FREE(F_xc_gspace)
  endif
- call DIP_alloc('DIP_iR')
- call DIP_alloc('DIP_P')
- call DIP_alloc('DIP_v')
+ call DIPOLE_ALLOC_global()
  if (.not.SILENT_MODE.or.X%iq(2)==q%nibz) call WF_free(WF)
  !
  contains

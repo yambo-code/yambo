@@ -8,9 +8,9 @@
 subroutine RT_free( )
  !
  use R_lattice,      ONLY:bz_samp_FineGd_reset
- use DIPOLES,        ONLY:DIP_alloc
+ use ALLOC,          ONLY:DIPOLE_ALLOC_global
 #if defined _ELPH
- use ELPH_intfcs,    ONLY:ELPH_alloc
+ use ALLOC,          ONLY:ELPH_alloc
  use ELPH,           ONLY:Q_io_map,GKKP_ep_sq,GKKP_pe_sq
 #endif
  use hamiltonian,    ONLY:H_free
@@ -30,13 +30,7 @@ subroutine RT_free( )
  !
  call H_free()
  !
- call DIP_alloc('DIP_iR')
- call DIP_alloc('DIP_P')
- call DIP_alloc('DIP_v')
- call DIP_alloc('DIP_spin')
- call DIP_alloc('DIP_orbital')
- call DIP_alloc('P_square')
- call DIP_alloc('DIP_P_spinor')
+ call DIPOLE_ALLOC_global( )
  !
  call RT_ALL_lifetimes_free()
  call RT_ALL_occupations_free()

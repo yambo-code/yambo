@@ -18,7 +18,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  !
  use pars,          ONLY:SP,cZERO,cONE
  use wrapper,       ONLY:V_plus_alpha_V
- use DIPOLES,       ONLY:DIPOLE_t,DIP_rotated
+ use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,X_poles_tab,l_X_terminator,X_cols,X_rows,drude_n_states
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:bare_grid_N,coarse_grid_Pt
@@ -59,7 +59,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  !
  ! DIPOLES
  !
- complex(SP)  :: DIP_projected,field_dir(3)
+ complex(SP)  :: DIP_projected,field_dir(3),DIP_bare(3)
  !
  field_dir=Dip%q0/v_norm(Dip%q0)*q0_def_norm
  !
@@ -164,7 +164,8 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      endif
      !
      ! iG=1 case
-     DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ikbz,i_spin,"DIP_iR",Xk))
+     call DIPOLE_rotate(ic,iv,ikbz,i_spin,"DIP_iR",Xk,DIP_bare)
+     DIP_projected=dot_product(field_dir,DIP_bare)
      !
      ! 2022/05/11 DS & AF
      ! Note: lim (q->0) <psi_nk+q | e-^{-i*q*r} | psi_nk > = <psi_nk   | 1 | psi_nk > = 1._SP
@@ -224,7 +225,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
    !DEV_ACC_DEBUG end data
    !
 #else
-   !
    !DEV_OMP parallel do default(shared), private(ig2,ROWS)
    do ig2=X_cols(1),X_cols(2)
      ROWS=(/X_rows(1),min(ig2,X_rows(2))/)

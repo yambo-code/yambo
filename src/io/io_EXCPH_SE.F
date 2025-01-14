@@ -34,7 +34,7 @@ integer function io_EXCPH_SE(ID,what)
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:nqibz
  use timing_m,       ONLY:timing
-#include<memory.h>
+#include<y_memory.h>
  !
  integer      ::ID
  character(*) ::what

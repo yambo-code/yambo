@@ -17,7 +17,7 @@ RT_objects_iterative  = mod_RT_iterative.o
 NL_objects       = mod_fields.o mod_electric.o mod_nl_optics.o mod_NL_interfaces.o
 #endif
 #if defined _ELPH
-ELPH_objects = mod_ELPH_intfcs.o mod_ELPH.o mod_EXCPH.o
+ELPH_objects = mod_ELPH.o mod_EXCPH.o
 #endif
 #if defined _OPENACC
 DEV_objects_BASE = mod_cudafor.o mod_cufft.o

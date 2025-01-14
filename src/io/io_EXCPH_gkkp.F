@@ -36,7 +36,7 @@ integer function io_EXCPH_gkkp(ID)
  use R_lattice,      ONLY:nqbz
  use timing_m,       ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer      ::ID
  !

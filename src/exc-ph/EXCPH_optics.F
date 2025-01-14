@@ -44,7 +44,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  use frequency,      ONLY:w_samp
  use parser_m,       ONLY:parser
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::E
  type(bz_samp) ::k,q
@@ -55,7 +55,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  complex(SP), allocatable :: PL_ii(:,:),Epsilon_ii(:,:)
  integer, parameter  :: n_output=7
- real(SP)            :: output_data(n_output),E_fermi_h,E_fermi_e,v(3)
+ real(SP)            :: output_data(n_output),E_fermi_h,E_fermi_e,v_tmp(3)
  character(schlen)   :: headers(n_output)
  integer             :: iw,iq,i_alpha,max_filling,EXC_n_sum,i_beta
  integer, allocatable:: EXC_indexes(:)
@@ -169,9 +169,9 @@ subroutine EXCPH_optics(E,k,q,X,wv)
       enddo
        min_EXC_E_DbGd=minval(EXC_E_DbGd(1,:))
        min_pos_E_DbGd=minloc(EXC_E_DbGd(1,:))
-       call c2a(v_in=q_DbGd%pt(min_pos_E_DbGd,:),v_out=v,mode="ki2a")
+       call c2a(v_in=q_DbGd%pt(min_pos_E_DbGd(1),:),v_out=v_tmp,mode="ki2a")
        call msg('rs','NEW!!! Minimum excitonic energy with DbGd: ',min_EXC_E_DbGd*HA2EV,'eV')
-       write(q_point,'(3f12.6,a)') v(:),' [rlu] '
+       write(q_point,'(3f12.6,a)') v_tmp(:),' [rlu] '
        call msg('rs','NEW!!!! Minimum q-point in the DbGrid : '//q_point)
    endif
  endif

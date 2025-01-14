@@ -32,7 +32,7 @@ subroutine EXC_occupations(E_QF,k,q,iq_ibz,EXC_n_states,EXC_indexes,EXC_occ)
  use BS,             ONLY:BS_H_dim,BS_bands
  use BS_solvers,     ONLY:BSS_eh_table,BS_mat
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels), intent(in)  :: E_QF
  type(bz_samp),intent(in)  :: k,q

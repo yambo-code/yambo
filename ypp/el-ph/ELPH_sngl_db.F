@@ -41,7 +41,7 @@ subroutine ELPH_sngl_db(k,E,q)
  use IO_m,                ONLY:REP,OP_WR_CL,VERIFY,OP_APP_CL,OP_RD_CL
  use IO_int,              ONLY:io_control
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp)      :: k,q
  type(levels)       :: E

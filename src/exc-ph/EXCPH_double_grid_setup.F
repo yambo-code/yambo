@@ -39,14 +39,14 @@ subroutine EXCPH_double_grid_setup(q)
 &                         EXC_occ,ID_occ,ID_occ_obj,EXC_occ_DbGd,q_DbGd,min_pos_E_DbGd
  use com,            ONLY:msg
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(in) :: q
  !
  ! Work space
  !
  integer  :: io_err,ID_DG
- real(SP) :: v(3)
+ real(SP) :: v_tmp(3)
  character(schlen) :: q_point
  integer, external   :: io_Double_Grid
  !
@@ -91,9 +91,9 @@ subroutine EXCPH_double_grid_setup(q)
  !
  min_EXC_E_DbGd=minval(EXC_E_DbGd(1,:))
  min_pos_E_DbGd=minloc(EXC_E_DbGd(1,:))
- call c2a(v_in=q_DbGd%pt(min_pos_E_DbGd,:),v_out=v,mode="ki2a")
+ call c2a(v_in=q_DbGd%pt(min_pos_E_DbGd(1),:),v_out=v_tmp,mode="ki2a")
  call msg('rs','Minimum excitonic energy with DbGd: ',min_EXC_E_DbGd*HA2EV,'eV')
- write(q_point,'(3f12.6,a)') v(:),' [rlu] '
+ write(q_point,'(3f12.6,a)') v_tmp(:),' [rlu] '
  call msg('rs','Minimum q-point in the DbGrid : '//q_point)
  !
  if(nel_cond/=rZERO) then

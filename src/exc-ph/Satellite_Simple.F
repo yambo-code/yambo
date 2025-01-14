@@ -47,7 +47,7 @@ subroutine Satellite_Simple(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
  use units,         ONLY:HA2CMm1
  use ELPH,          ONLY:PH_freqs_sq,FAN_deltaE_treshold,Q_io_map
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,       intent(in)  :: il,iq_bz,i_alpha,i_beta
  complex(SP),   intent(in)  :: W

@@ -41,7 +41,7 @@ subroutine EXCPH_eval_renorm(iq_bz,q,R,R_PH_abs,R_PL,R_PL_PH_abs)
  use ELPH,           ONLY:elph_branches,PH_freqs_sq,FAN_deltaE_treshold,Q_io_map
  use EXCPH,          ONLY:BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,EXCPH_sum,EXCPH_states
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,       intent(in)    :: iq_bz
  type(bz_samp), intent(in)    :: q

@@ -38,7 +38,7 @@ subroutine EXCPH_load_L(iq_bse,X,what,Ltype)
  use X_m,            ONLY:X_t
  use com,            ONLY:jobstr,msg
  !
-#include<memory.h>
+#include<y_memory.h>
  ! 
  type(X_t)     ::X
  type(bz_samp) ::k,q

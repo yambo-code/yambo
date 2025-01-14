@@ -60,7 +60,7 @@ subroutine EXCPH_X_phass_from_Hpert(wv,q,PL_ii)
  use parser_m,      ONLY:parser
  use com,           ONLY:msg,of_open_close
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(in)  :: q
  type(w_samp),  intent(in)  :: wv

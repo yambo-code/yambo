@@ -32,7 +32,7 @@ subroutine EXCPH_eval_sat(iq_bz,q)
 &                         BS_all_E,BS_E_in,EXCPH_Gkkp_sq,EXCPH_sum,EXCPH_states,DB_Q_map, &
 &                         l_no_matrix_elements,EXCPH_deltaE_treshold
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,       intent(in) :: iq_bz
  type(bz_samp), intent(in) :: q

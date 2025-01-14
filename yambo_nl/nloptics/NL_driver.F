@@ -83,7 +83,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  ! Dipoles & WF dimensions
  !=========================
 
- call WF_and_dipole_dimensions(X(1),k)
+ call WF_and_dipole_dimensions_rt(X(1),k)
  !
  ! QP dimensions
  !================

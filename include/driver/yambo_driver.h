@@ -8,6 +8,11 @@
 /* YAMBO  */
 int load_environments(char *file_name);
 void options_control(struct options_struct options[],int *i_opt);
+void yambo_launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y,int *use_editor , int *use_mpi );
+void yambo_ph_launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y,int *use_editor , int *use_mpi );
+void yambo_sc_launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y,int *use_editor , int *use_mpi );
+void yambo_rt_launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y,int *use_editor , int *use_mpi );
+void yambo_nl_launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y,int *use_editor , int *use_mpi );
 void options_yambo(struct options_struct options[],int *i_opt);
 #if defined _FORTRAN_US
  int yambo_

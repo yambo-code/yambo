@@ -8,8 +8,6 @@
 struct yambo_seed_struct command_line(int argc, char *argv[],struct options_struct options[], struct tool_struct t, int *use_editor, int *use_mpi, int n_options);
 void input_file(struct yambo_seed_struct y,struct tool_struct t, int *use_editor);
 void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y,int *use_editor , int *use_mpi );
-void yambo_launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y,int *use_editor , int *use_mpi );
-void ypp_launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y,int *use_editor , int *use_mpi );
 void options_maker(struct options_struct options[], int n_options);
 struct tool_struct tool_init( );
 void usage(struct options_struct options[], struct tool_struct t, char* what, int n_options);

@@ -229,11 +229,9 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      IO_ACT=RD
 #endif
      !
-#if defined _PAR_IO
 #if defined _NL
     COLL_full =rZERO
     cOLL_compr=rZERO
-#endif
 #endif
      do i_coll=1,COLL%N
        !
@@ -349,7 +347,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 #if defined _NL
      if(COLLISIONS_compr) then
        if(COLLISIONS_load_SP)      call msg('sl','Collisions compression: ' &
- &              //trim(real2ch(100.0-COLL_compr/COLL_full*50.0))//' %')
+ &              //trim(real2ch(50.0-COLL_compr/COLL_full*50.0))//' %')
        if(.not.COLLISIONS_load_SP) call msg('sl','Collisions compression: ' &
 &               //trim(real2ch(100.0-COLL_compr/COLL_full*100.0))//' %')
      endif

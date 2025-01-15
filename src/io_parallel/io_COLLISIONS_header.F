@@ -20,7 +20,7 @@ integer function io_COLLISIONS_header(ID,COLL)
  use X_m,           ONLY:X_desc
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
  use timing_m,      ONLY:timing
-#include<y_memory.h>
+#include<memory.h>
  !
  integer, intent(inout)            ::ID
  type(COLLISIONS_group)            ::COLL
@@ -102,7 +102,7 @@ integer function io_COLLISIONS_header(ID,COLL)
 &        V_kind_disk==H_SE_HARTREE+H_SE_FOCK.or.V_kind_disk==H_SE_HARTREE+H_SE_SEX     ) SIZE_=SIZE_+1
    call io_elemental(ID,VAR="HXC_PARAMETERS",VAR_SZ=SIZE_,MENU=0)
    call io_elemental(ID,R0=COLLISIONS_cutoff,&
-&         VAR='Collisions Cutoff                 ',CHECK=.true.,OP=(/"=="/))
+&         VAR='Collisions Cutoff                 ',WARN=.true.,OP=(/"=="/))
    !
    if (V_kind_disk>=H_SE_HARTREE) then
      call io_elemental(ID,I0=QP_ng_SH,&

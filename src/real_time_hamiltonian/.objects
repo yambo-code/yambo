@@ -1,3 +1,0 @@
-#if defined _RT
-objs = RT_Hamiltonian.o RT_Hamiltonian_diagonalize.o RT_apply_field.o 
-#endif

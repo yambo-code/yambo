@@ -38,8 +38,6 @@ subroutine QP_load_DB(i_ACTION,bands,en,k)
    return
  endif
  !
-#if defined _ELPH
- !
  ! The GF are implemented only in the linear response module (real and reciprocal space) and using 
  ! exactly the same number of bands/k-points
  !
@@ -63,8 +61,6 @@ subroutine QP_load_DB(i_ACTION,bands,en,k)
    QP_action(i_ACTION)%active=.FALSE.
    return
  endif
- !
-#endif
  !
  ! Extract a description
  !=======================

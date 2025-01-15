@@ -27,8 +27,8 @@ close(GIT);
 # Strip the "src/" (add to this list if needed)
 if ($changedfiles) {
 $changedfiles =~ s/  / /g;
-$changedfiles =~ s/src\///g;
-$changedfiles =~ s/interfaces\///g;
+#$changedfiles =~ s/src\///g;
+#$changedfiles =~ s/interfaces\///g;
 print "\nMODIFIED files: $changedfiles\n\n";
 }
 #
@@ -41,8 +41,8 @@ close(GIT);
 # Strip the "src/" (add to this list if needed)
 if ($newfiles) {
 $newfiles =~ s/  / /g;
-$newfiles =~ s/src\///g;
-$newfiles =~ s/interfaces\///g;
+#$newfiles =~ s/src\///g;
+#$newfiles =~ s/interfaces\///g;
 print "NEW files: $newfiles\n\n";
 }
 #
@@ -55,8 +55,8 @@ close(GIT);
 # Strip the "src/" (add to this list if needed)
 if ($delfiles) {
 $delfiles =~ s/  / /g;
-$delfiles =~ s/src\///g;
-$delfiles =~ s/interfaces\///g;
+#$delfiles =~ s/src\///g;
+#$delfiles =~ s/interfaces\///g;
 print "DELETED files: $delfiles\n\n";
 };
 #

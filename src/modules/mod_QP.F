@@ -113,13 +113,14 @@ module QP_m
  !
  interface
    !
-   subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
+   subroutine XCo_Hartree_Fock(E,k,Xk,q,it_now,mode)
      use pars,          ONLY:SP,schlen,DP,pi
      use electrons,     ONLY:levels,spin_occ,spin
      use R_lattice,     ONLY:qindx_S,bz_samp
      implicit none
      type(levels) ::E       
      type(bz_samp)::k,Xk,q
+     integer,   intent(in) ::it_now
      character(*),optional ::mode
    end subroutine XCo_Hartree_Fock
    !

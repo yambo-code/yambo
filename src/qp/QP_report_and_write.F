@@ -16,9 +16,6 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
 &                        QP_n_states,QP_dSc_steps,use_GreenF_to_eval_QP,On_Mass_Shell_approx,&
 &                        QP_solver,report_Vnlxc,report_Sc,report_dSc,Vxc_kind,Vnlxc_kind,&
 &                        l_QP_Expand,QP_reset,Time_of,report_Vxc
-#if defined _ELPH
- use ELPH,          ONLY:QP_DW,QP_OMS_Fan
-#endif
  use electrons,     ONLY:n_sp_pol,spin,levels
  use stderr,        ONLY:gen_fmt
  use IO_int,        ONLY:io_control
@@ -166,25 +163,6 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      shadow_string(n_shadows)=' dSp='
      shadow(n_shadows)=100._SP-int(dSc_diff*100._SP)
    endif
-   !
-#if defined _ELPH
-   if (l_elph_corr) then
-     n_shadows=n_shadows+1
-     shadow_string(n_shadows)=' F ='
-     shadow(n_shadows)=QP_OMS_Fan(iqp)*HA2EV
-     n_shadows=n_shadows+1
-     shadow_string(n_shadows)=' DW='
-     shadow(n_shadows)=QP_DW(iqp)*HA2EV
-     n_shadows=n_shadows+1
-     shadow_string(n_shadows)=' Gm='
-     shadow(n_shadows)=aimag(qp%E(iqp))*HA2EV/1.E-3
-     if (shadow(n_shadows)>0.) then
-       n_shadows=n_shadows+1
-       shadow_string(n_shadows)=' Gf='
-       shadow(n_shadows)=Time_of(aimag(qp%E(iqp)),"fs")
-     endif
-   endif 
-#endif
    !
    if (l_life) then
      !

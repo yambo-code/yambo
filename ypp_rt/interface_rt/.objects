@@ -1,0 +1,1 @@
+objs = INIT_ypp_rt.o INIT_load_ypp_rt.o YPP_RT_SET_defaults.o

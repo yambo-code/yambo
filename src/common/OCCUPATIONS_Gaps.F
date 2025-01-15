@@ -75,14 +75,12 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir,E_k_dir,E_k_ind)
  !
  E%nbf=Nbf_
  E%nbm=Nbm_
-#if defined _RT
  if(all(E%nbc/=0)) then
    do i_sp_pol=1,n_sp_pol
      E%nbf(i_sp_pol)=min(E%nbc(1)-1,E%nbf(i_sp_pol))
      E%nbm(i_sp_pol)=max(E%nbc(2)  ,E%nbm(i_sp_pol))
    enddo
  endif
-#endif
  !
  if (any(E%Nbm+1 > E%nb)) call warning('No empty bands found. Include more states in the DFT run?')
  !

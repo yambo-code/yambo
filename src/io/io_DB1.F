@@ -18,7 +18,7 @@ integer function io_DB1(E,k,ID)
 &                           Tel, n_atoms_species_max,n_atomic_species,n_atoms_species,atom_pos, &
 &                           Z_species, n_atoms, mag_syms, atom_mass, atoms_map
  use R_lattice,        ONLY:ng_vec,g_vec,bz_samp,nkibz,QP_states_k,nXkibz,ng_closed
- use wave_func,        ONLY:wf_ncx,wf_nc_k,wf_igk,wf_igk_d,wf_ng,wf_nb_io
+ use wave_func,        ONLY:wf_ncx,wf_nc_k,wf_igk,wf_igk_d,wf_ng
  use LIVE_t,           ONLY:live_timing_is_on
  use IO_int,           ONLY:io_connect,io_disconnect,io_elemental,io_bulk,ver_is_gt_or_eq
  use IO_m,             ONLY:io_sec,variable_exist,io_status,read_is_on,&
@@ -27,22 +27,8 @@ integer function io_DB1(E,k,ID)
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_G_bands
  use BS,               ONLY:BS_bands
  use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,GS_exx_FRACTION,GS_exx_SCREENING
- use global_XC,        ONLY:setup_global_XC,EXT_NONE
  use gpu_m,            ONLY:have_gpu
  use devxlib,          ONLY:devxlib_memcpy_h2d
-#if defined _SC || defined _RT
- use collision_ext,    ONLY:COLL_bands
- use hamiltonian,      ONLY:H_ref_bands
-#endif
-#if defined _SC
- use SC,               ONLY:SC_bands
-#endif
-#if defined _NL
- use nl_optics,        ONLY:NL_bands
-#endif
-#if defined _RT
- use real_time,        ONLY:RT_bands
-#endif
  !
 #include<y_memory.h>
  !
@@ -209,46 +195,7 @@ integer function io_DB1(E,k,ID)
    !
    call io_elemental(ID, VAR="",VAR_SZ=0,MENU=1)
    !
-   ! Exporting E%nb/k%nibz when in DUMP
-   !
-   if (io_mode(ID)==DUMP.or.write_is_on(ID)) then
-     !
-     nkibz =k%nibz
-     nXkibz=k%nibz
-     QP_nk =k%nibz
-     E%nk =k%nibz
-     QP_states_k=(/1,k%nibz/)
-     !
-     n_bands=E%nb
-     wf_nb_io=E%nb
-     QP_nb=E%nb
-     QP_n_G_bands=(/1,E%nb/)
-     !
-     if(any(BS_bands(:)==0)) BS_bands=(/1,E%nb/)
-#if defined _SC || defined _RT
-     if(any(COLL_bands(:)==0)) COLL_bands=(/1,E%nb/)
-     if(any(H_ref_bands(:)==0)) H_ref_bands=(/1,E%nb/)
-#endif
-#if defined _SC
-     if(any(SC_bands(:)==0)) SC_bands=(/1,E%nb/)
-#endif
-#if defined _RT
-     if(any(RT_bands(:)==0)) RT_bands=(/1,E%nb/)
-#endif
-#if defined _NL
-     if(any(NL_bands(:)==0)) NL_bands=(/1,E%nb/)
-#endif
-     !
-     Tel=input_GS_Tel
-     nel=default_nel
-     !
-     ng_closed=ng_vec
-     if (.not.ver_is_gt_or_eq(ID,(/3,0,3/))) wf_ng=wf_ncx
-     !
-     call setup_global_XC('preset',GS_xc_KIND,xc_functional=GS_xc_functional,perturbation=EXT_NONE,&
-                          exx_fraction=GS_exx_FRACTION,exx_screening=GS_exx_SCREENING)
-     !
-   endif
+   if (io_mode(ID)==DUMP.or.write_is_on(ID)) call init_variables(k,E)
    !
    io_DB1=io_status(ID)
    if (io_DB1/=0) goto 1
@@ -369,3 +316,43 @@ integer function io_DB1(E,k,ID)
    end subroutine
    !
 end function io_DB1
+!
+!
+subroutine init_variables(k,E)
+ !
+ use electrons,      ONLY:levels,n_bands,nel,default_nel
+ use D_lattice,      ONLY:Tel,input_GS_Tel
+ use R_lattice,      ONLY:bz_samp,ng_closed,QP_states_k,ng_closed,ng_vec,nkibz,nXkibz
+ use global_XC,      ONLY:setup_global_XC,EXT_NONE
+ use BS,             ONLY:BS_bands
+ use QP_m,           ONLY:QP_n_G_bands,QP_nb,QP_nk
+ use xc_functionals, ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,GS_exx_FRACTION,GS_exx_SCREENING
+ use wave_func,      ONLY:wf_nb_io
+ !
+ implicit none
+ !
+ type(levels)     :: E
+ type(bz_samp)    :: k
+ !
+ nkibz =k%nibz
+ nXkibz=k%nibz
+ QP_nk =k%nibz
+ E%nk =k%nibz
+ QP_states_k=(/1,k%nibz/)
+ !
+ n_bands=E%nb
+ wf_nb_io=E%nb
+ QP_nb=E%nb
+ QP_n_G_bands=(/1,E%nb/)
+ !
+ if(any(BS_bands(:)==0)) BS_bands=(/1,E%nb/)
+ !
+ Tel=input_GS_Tel
+ nel=default_nel
+ !
+ ng_closed=ng_vec
+ !
+ call setup_global_XC('preset',GS_xc_KIND,xc_functional=GS_xc_functional,perturbation=EXT_NONE,&
+                       exx_fraction=GS_exx_FRACTION,exx_screening=GS_exx_SCREENING)
+  !
+end subroutine init_variables

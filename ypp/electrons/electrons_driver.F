@@ -55,7 +55,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  if ( any((/l_sp_wf,l_angular_momentum,l_position,l_mean_potential/)) ) then
    !
-   call QP_state_table_setup(Xen)
+   call QP_state_table_setup(Xen,1,1,.true.)
    !
    NB =(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)
    NK =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)
@@ -68,7 +68,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  ! WFs
  !=====
- if( any((/l_mag,l_density,l_sp_wf,l_current,l_mean_potential,l_angular_momentum,l_position/)) ) then
+ if( any((/l_mag,l_density,l_sp_wf,l_current/)) ) then
    !
    call PARALLEL_global_indexes(Xen,Xk,Xq," ",RESET=.TRUE.)
    call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
@@ -94,23 +94,11 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  ! WAVEFUNCTIONS 
  !===============
- if (l_sp_wf.or.l_mean_potential) call electrons_WFs(Xen)
+ if (l_sp_wf) call electrons_WFs(Xen)
  !
  ! MAGNETIZATION 
  !===============
  if (l_mag) call electrons_magnetization(Xk,Xen)
- !
-#if defined _YPP_SC
- !
- ! Angular momentum 
- !==================
- if (l_angular_momentum) call electrons_angular_momentum(NK,NB)
- !
- ! <Mean> position
- !=================
- if (l_position)         call electrons_position(NK,NB,1.,'cylindrical','2d')
- !
-#endif
  !
  ! CURRENT
  !=========

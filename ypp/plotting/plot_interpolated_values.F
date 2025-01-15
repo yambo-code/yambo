@@ -5,49 +5,42 @@
 !
 ! Authors (see AUTHORS file for details): CA DS AM
 !
-subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfiles,basename,int_kind,i_T)
+subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfiles,basename,int_kind,i_T,proj_wfc,W)
  !
  use units,          ONLY:HA2EV
  use pars,           ONLY:SP,schlen
  use com,            ONLY:msg,of_open_close
  use electrons,      ONLY:levels,n_sp_pol,n_spinor
- use vec_operate,    ONLY:v_norm,iku_v_norm
+ use vec_operate,    ONLY:iku_v_norm
  use R_lattice,      ONLY:bz_samp
  use stderr,         ONLY:intc
  use YPPm,           ONLY:coo_out,K_transform,CIRCUIT_E_db,CIRCUIT_k_label
  use interpolate,    ONLY:INTERP_obj
-#if defined _YPP_SC
- use SC,             ONLY:SC_neq_kind
-#endif
-#if defined _YPP_RT
- use YPP_real_time,  ONLY:GreenF_T_and_W
-#endif
  !
 #include<y_memory.h>
  !
  type(bz_samp),    intent(in)  :: Xk,LOCAL_k
  type(levels),     intent(in)  :: Xen
  real(SP),         intent(in)  :: Ef
- integer,          intent(in)  :: IDs(nquantities),dims(2),nquantities,nfiles(nquantities),i_T
- character(*),     intent(in)  :: basename,int_kind 
+ integer,          intent(in)  :: IDs(nquantities),dims(2),nquantities,nfiles(nquantities)
+ character(*),     intent(in)  :: basename,int_kind
+ real(SP), intent(in), optional  :: W(dims(1):dims(2))
+ integer,  intent(in), optional  :: i_T
+ logical,  intent(in), optional  :: proj_wfc
  !
  ! Local variables
  !
  integer               :: ik_local,ik_ibz_grid,ik_bz_grid,iqnt,i_dim,ifile,i_point,i_sp_pol,ivalue,&
-&                         ndims,nval,n_points,n_points_max
- logical               :: PLOT_BANDS,PLOT_G2,PLOT_from_DB,PLOT_interpolated,PLOT_built_in,l_print_k_name
+&                         ndims,nval,n_points,n_points_max,i_T_loc
+ logical               :: PLOT_BANDS,PLOT_G2,PLOT_from_DB,PLOT_interpolated,PLOT_built_in,l_print_k_name,proj_wfc_loc
  character(schlen)     :: headings_k(4),headings(dims(2)-dims(1)+1+4), &
 &                         file_name(sum(nfiles)),k_file_name,k_name
  real(SP)              :: value_k(4),     values(dims(2)-dims(1)+1+4), &
 &                         tmp_var(dims(1):dims(2),maxval(nfiles),nquantities),tmp_dist(3)
-#if defined _YPP_SC
- logical               :: proj_wfc
-#endif
  !
  ! Allocs
  !
  integer,  allocatable :: Grid_to_path_map(:,:)
- real(SP), allocatable :: circuit_versor(:,:),circuit_dist(:,:)
  real(SP), allocatable :: auxiliary_var(:,:,:,:),tmp_k(:,:),tmp_k_dist(:,:)
  !
  PLOT_interpolated = index(trim(basename),"interpolated")>0
@@ -63,48 +56,16 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  n_points=1
  n_points_max=1
  !
-#if defined _YPP_SC
- proj_wfc=(trim(SC_neq_kind)=="matsubara")
-#endif
+ i_T_loc=-1
+ if (present(i_T)) i_T_loc=i_T
  !
- ! Define a map between k-points in grid and nearest k-point in circuit
+ proj_wfc_loc=.false.
+ if (present(proj_wfc)) proj_wfc_loc=proj_wfc
  !
  if (PLOT_built_in) then
    !
-   YAMBO_ALLOC(circuit_versor,(3,LOCAL_k%nbz))
-   YAMBO_ALLOC(circuit_dist  ,(3,LOCAL_k%nbz))
-   !
    YAMBO_ALLOC(Grid_to_path_map,(LOCAL_k%nbz,Xk%nbz))
-   Grid_to_path_map =-1
-   !
-   do ik_local=1,LOCAL_k%nbz-1
-     tmp_dist=LOCAL_k%pt(ik_local+1,:)-LOCAL_k%pt(ik_local,:)
-     circuit_dist  (:,ik_local)=tmp_dist
-     circuit_versor(:,ik_local)=tmp_dist/v_norm(tmp_dist)
-   enddo
-   circuit_versor(:,ik_local)=circuit_versor(:,ik_local-1)
-   !
-   n_points_max=0
-   do ik_local=1,LOCAL_k%nbz
-     !
-     n_points=0
-     do ik_bz_grid=1,Xk%nbz
-       !
-       tmp_dist=Xk%ptbz(ik_bz_grid,:)-LOCAL_k%pt(ik_local,:)
-       !
-       if ((abs(v_norm(tmp_dist)-dot_product(tmp_dist,circuit_versor(:,ik_local)))<1.E-5_SP).and.&
-       &    iku_v_norm(tmp_dist)<=iku_v_norm(circuit_dist(:,ik_local))                            ) then
-         Grid_to_path_map(ik_local,ik_bz_grid)=ik_bz_grid
-         n_points=n_points+1
-       endif
-       n_points_max=max(n_points,n_points_max)
-       !
-     enddo
-     !
-   enddo
-   !
-   YAMBO_FREE(circuit_versor)
-   YAMBO_FREE(circuit_dist  )
+   call define_grid_map(Xk,Local_k,Grid_to_path_map,n_points_max)
    !
    if(n_points_max>1) then
      YAMBO_ALLOC(auxiliary_var,(dims(1):dims(2),maxval(nfiles),nquantities,n_points_max-1))
@@ -139,7 +100,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    enddo
  endif
  !
- if (i_T>0 ) then
+ if (i_T_loc>0 ) then
    file_name(nfiles(1)+1:nfiles(1)+nfiles(2))="occupations_"//trim(basename)
    do i_sp_pol=1,n_sp_pol
      ifile=ifile+1
@@ -148,7 +109,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    enddo
  endif
  !
- if((PLOT_interpolated.or.PLOT_built_in).and.PLOT_BANDS.and.n_spinor==2.and.i_T<2) then
+ if((PLOT_interpolated.or.PLOT_built_in).and.PLOT_BANDS.and.n_spinor==2.and.i_T_loc<2) then
    file_name(ifile+1)="spin_factors_UP_"//trim(basename)
    file_name(ifile+2)="spin_factors_DN_"//trim(basename)
    file_name(ifile+3)="magnetization_x_"//trim(basename)
@@ -157,14 +118,12 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    ifile=ifile+5
  endif
  !
-#if defined _YPP_SC
- if(PLOT_interpolated.and.PLOT_BANDS.and.proj_wfc) then
+ if(PLOT_interpolated.and.PLOT_BANDS.and.proj_wfc_loc) then
    ifile=ifile+5
    file_name(ifile+1)="proj_val_"//trim(basename)
    file_name(ifile+2)="proj_con_"//trim(basename)
    ifile=ifile+2
  endif
-#endif
  !
  if(ifile /= sum(nfiles)) call error(" something went wrong")
  !
@@ -186,9 +145,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  !
  do i_dim=dims(1),dims(2)
    if(PLOT_BANDS) headings(1+i_dim-dims(1)+1)=' b'//intc(i_dim)
-#if defined _YPP_RT
-   if(PLOT_G2   ) values(1+i_dim-dims(1)+1)=real(GreenF_T_and_W%W(i_dim),SP)*HA2EV
-#endif
+   if(PLOT_G2   ) values(1+i_dim-dims(1)+1)=W(i_dim)*HA2EV
  enddo
  !
  ! Open files and print headers
@@ -320,3 +277,61 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  endif
  !
 end subroutine plot_interpolated_values
+!
+!
+subroutine define_grid_map(Xk,Local_k,Grid_to_path_map,n_points_max)
+ !
+ use pars,           ONLY:SP
+ use R_lattice,      ONLY:bz_samp
+ use vec_operate,    ONLY:v_norm,iku_v_norm
+ !
+#include<y_memory.h>
+ !
+ type(bz_samp),  intent(in)  :: Xk,LOCAL_k
+ integer,        intent(out) :: Grid_to_path_map(LOCAL_k%nbz,Xk%nbz)
+ integer,        intent(out) :: n_points_max 
+ !
+ ! Workspace
+ !
+ integer               :: n_points,ik_local,ik_bz_grid
+ real(SP)              :: tmp_dist(3)
+ real(SP), allocatable :: circuit_versor(:,:),circuit_dist(:,:)
+ !
+ ! Define a map between k-points in grid and nearest k-point in circuit
+ !
+ YAMBO_ALLOC(circuit_versor,(3,LOCAL_k%nbz))
+ YAMBO_ALLOC(circuit_dist  ,(3,LOCAL_k%nbz))
+ !
+ Grid_to_path_map =-1
+ n_points=1
+ !
+ do ik_local=1,LOCAL_k%nbz-1
+   tmp_dist=LOCAL_k%pt(ik_local+1,:)-LOCAL_k%pt(ik_local,:)
+   circuit_dist  (:,ik_local)=tmp_dist
+   circuit_versor(:,ik_local)=tmp_dist/v_norm(tmp_dist)
+ enddo
+ circuit_versor(:,ik_local)=circuit_versor(:,ik_local-1)
+ !
+ n_points_max=0
+ do ik_local=1,LOCAL_k%nbz
+   !
+   n_points=0
+   do ik_bz_grid=1,Xk%nbz
+     !
+     tmp_dist=Xk%ptbz(ik_bz_grid,:)-LOCAL_k%pt(ik_local,:)
+     !
+     if ((abs(v_norm(tmp_dist)-dot_product(tmp_dist,circuit_versor(:,ik_local)))<1.E-5_SP).and.&
+     &    iku_v_norm(tmp_dist)<=iku_v_norm(circuit_dist(:,ik_local))                            ) then
+       Grid_to_path_map(ik_local,ik_bz_grid)=ik_bz_grid
+       n_points=n_points+1
+     endif
+     n_points_max=max(n_points,n_points_max)
+     !
+   enddo
+   !
+ enddo
+ !
+ YAMBO_FREE(circuit_versor)
+ YAMBO_FREE(circuit_dist  )
+ !
+end subroutine define_grid_map

@@ -54,9 +54,6 @@ fi
 #
 source ./sbin/compilation/verbosity.sh "locks"
 #
-# Save & Restore
-source ./sbin/compilation/object_save_and_restore.sh
-#
 if [ "$DIR_saved" == "yes" ] ; then
  source ./sbin/compilation/verbosity.sh "check_updated_locks.sh: $dir has been saved"
 fi

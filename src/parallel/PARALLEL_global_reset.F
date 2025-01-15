@@ -23,7 +23,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
 &                        PAR_COM_VAL_INDEX_OVLP,PAR_COM_CON_INDEX_OVLP,PAR_COM_Q_A2A,&
 &                        PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_ibz_A2A,PAR_COM_Q_INDEX,&
 &                        PAR_COM_Xk_bz_INDEX,PAR_COM_SLK_INDEX_global,PAR_COM_SLK,&
-&                        PAR_COM_QP_INDEX,PAR_COM_PLASMA_INDEX,PAR_COM_freqs_INDEX,PAR_COM_freqs,&
+&                        PAR_COM_QP_INDEX,PAR_COM_freqs_INDEX,PAR_COM_freqs,&
 &                        PAR_COM_QP_A2A,PAR_COM_G_b_INDEX,PAR_COM_G_b_INDEX_global,PAR_COM_G_b_A2A,&
 &                        PAR_COM_BZINDXk_ibz_A2A,PAR_COM_WF_k_A2A,PAR_COM_WF_b_INDEX,PAR_COM_WF_k_INDEX,&
 &                        PAR_COM_DIPk_bz_A2A,PAR_COM_DIPk_ibz_A2A,PAR_COM_Xk_bz_A2A,PAR_COM_density,&
@@ -31,13 +31,13 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  ! IND
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,&
 &                        PAR_IND_VAL_BANDS_X,PAR_IND_Q_ibz,PAR_IND_Q_bz,PAR_IND_SLK,&
-&                        PAR_IND_QP,PAR_IND_G_b,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_WF_k,&
-&                        PAR_IND_B_mat,PAR_IND_Plasma,PAR_IND_WF_linear,PAR_IND_T_Haydock,&
-&                        PAR_IND_Bp_mat,PAR_IND_G_k,PAR_IND_WF_b_and_k,&
+&                        PAR_IND_QP,PAR_IND_G_b,PAR_IND_WF_b,PAR_IND_WF_k,&
+&                        PAR_IND_WF_linear,PAR_IND_T_Haydock,&
+&                        PAR_IND_G_k,PAR_IND_WF_b_and_k,&
 &                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_IND_T_ordered,PAR_IND_freqs,&
 &                        PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP
  ! INDEX
- use parallel_m,    ONLY:PAR_QP_index,PAR_G_bands_index,PAR_PLASMA_index, &
+ use parallel_m,    ONLY:PAR_QP_index,PAR_G_bands_index, &
 &                        PAR_Q_ibz_index,PAR_Q_bz_index,PAR_Xk_ibz_index,PAR_Xk_bz_index,PAR_DIPk_ibz_index,   &
 &                        PAR_BS_T_grps_index,PAR_RL_index,PAR_COM_DIPk_bz_INDEX,PAR_COM_DIPk_ibz_INDEX,    &
 &                        PAR_COM_BZINDXk_bz_INDEX,PAR_COM_BZINDXk_ibz_INDEX,PAR_BZINDXk_ibz_index,         &
@@ -46,11 +46,8 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
 &                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ibz_ID,PAR_IND_Q_bz_ID,PAR_IND_CON_BANDS_DIP_ID,&
 &                        PAR_IND_VAL_BANDS_DIP_ID,PAR_IND_VAL_BANDS_OVLP_ID,PAR_IND_CON_BANDS_OVLP_ID,&
-&                        PAR_IND_QP_ID,PAR_IND_G_b_ID,PAR_IND_PLASMA_ID,&
+&                        PAR_IND_QP_ID,PAR_IND_G_b_ID,&
 &                        PAR_IND_WF_k_ID,PAR_IND_WF_b_ID,PAR_IND_G_k_ID,PAR_IND_freqs_ID
-#if defined _RT || defined _SC || defined _QED || defined _NL
- use collision_ext, ONLY:COH_collisions,HXC_collisions,GW_NEQ_collisions,P_collisions
-#endif
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_INDEX,SLK_COM_A2A
 #endif
@@ -78,10 +75,6 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  call PP_indexes_reset(PAR_IND_CON_BANDS_OVLP)
  call PP_indexes_reset(PAR_IND_VAL_BANDS_OVLP)
  call PP_indexes_reset(PAR_IND_QP)
- call PP_indexes_reset(PAR_IND_Plasma)
- call PP_indexes_reset(PAR_IND_B_mat)
- call PP_indexes_reset(PAR_IND_Bp_mat)
- call PP_indexes_reset(PAR_IND_B_mat_ordered)
  call PP_indexes_reset(PAR_IND_G_b)
  call PP_indexes_reset(PAR_IND_G_k)
  call PP_indexes_reset(PAR_IND_WF_b)
@@ -94,7 +87,6 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  !
  YAMBO_FREE(PAR_QP_index)
  YAMBO_FREE(PAR_G_bands_index)
- YAMBO_FREE(PAR_PLASMA_index)
  YAMBO_FREE(PAR_Q_ibz_index)
  YAMBO_FREE(PAR_Q_bz_index)
  YAMBO_FREE(PAR_Xk_ibz_index)
@@ -117,7 +109,6 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  PAR_IND_CON_BANDS_OVLP_ID=0
  PAR_IND_VAL_BANDS_OVLP_ID=0
  PAR_IND_QP_ID=0
- PAR_IND_PLASMA_ID=0
  PAR_IND_G_b_ID=0
  PAR_IND_G_k_ID=0
  PAR_IND_WF_b_ID=0
@@ -134,7 +125,6 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  call COMM_reset(PAR_COM_Q_A2A)
  call COMM_reset(PAR_COM_SLK_INDEX_global)
  call COMM_reset(PAR_COM_SLK)
- call COMM_reset(PAR_COM_PLASMA_INDEX)
  call COMM_reset(PAR_COM_QP_INDEX)
  call COMM_reset(PAR_COM_QP_A2A)
  call COMM_reset(PAR_COM_G_b_INDEX)
@@ -174,12 +164,6 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
 #endif
  call COMM_reset(PAR_COM_freqs_INDEX)
  call COMM_reset(PAR_COM_freqs)
-#if defined _RT || defined _SC || defined _QED || defined _NL
- call PARALLEL_collisions_reset(HXC_collisions)
- call PARALLEL_collisions_reset(COH_collisions)
- call PARALLEL_collisions_reset(GW_NEQ_collisions)
- call PARALLEL_collisions_reset(P_collisions)
-#endif
  !
  call PAR_scheme_reset(PARs_PH_Q_ibz)
  call PAR_scheme_reset(PARs_PH_K_bz)

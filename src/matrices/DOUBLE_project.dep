@@ -1,9 +1,0 @@
- MATRIX_BSE_to_PAR.o
- MATRIX_PAR_to_from_PAR.o
- MATRIX_duplicate.o
- MATRIX_init.o
- MATRIX_transfer.o
- MATRIX_transfer_side_crop.o
- MATRIX_transpose.o
- SLK_matrix_init.o
-

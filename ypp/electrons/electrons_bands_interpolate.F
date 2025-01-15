@@ -11,9 +11,6 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,CIRCUIT_k,BANDS_from_db,&
 &                         CIRCUIT_E_db,l_PROJECT_plane,l_PROJECT_line,INTERP_input_mode
  use electrons,      ONLY:levels,n_sp_pol
-#if defined _YPP_RT
- use YPP_real_time,  ONLY:l_RT_occupations,l_RT_lifetimes
-#endif
  use R_lattice,      ONLY:bz_samp
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k
  !
@@ -50,12 +47,10 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  ! 1: interpolate on the circuit      if (BANDS_steps>0)
  ! 2: interpolate on the regular grid if (interp_grid>0)
  !
- if (all(INTERP_grid>0)               ) GRID=.TRUE.
-#if defined _YPP_RT
- if (l_PROJECT_plane.or.l_PROJECT_line) GRID=.not.l_RT_occupations.and..not.l_RT_lifetimes
-#else
- if (l_PROJECT_plane.or.l_PROJECT_line) GRID=.TRUE.
-#endif
+ if (present(GRID_E)) then
+   if (all(INTERP_grid>0)               ) GRID=.TRUE.
+   if (l_PROJECT_plane.or.l_PROJECT_line) GRID=.TRUE.
+ endif
  !
  if(GRID) then
    !

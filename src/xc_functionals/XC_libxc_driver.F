@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): MG DS DV
 !
-subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
+subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING,rho_in,magn_in)
  !
  ! This routine evaluates the xc functional in yambo 
  !   - 03/05/12: LDA OK, GGA OK => EXTENSIVE TESTS NEEDED) 
@@ -19,9 +19,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol,alat
  use drivers,        ONLY:l_real_time,l_nl_optics
-#if defined _SC || defined _RT
- use hamiltonian,    ONLY:rho_n,magn_n
-#endif
  use electrons,      ONLY:levels,n_spin,n_spinor
  use FFT_m,          ONLY:fft_size
  use wrapper,        ONLY:V_dot_V
@@ -44,6 +41,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  type(bz_samp)::Xk
  integer      ::FUNCTIONAL,FUNCTIONALTMP,ORDER
  real(SP), optional :: EXX_FRACTION, EXX_SCREENING
+ real(SP), intent(in), optional ::rho_in(fft_size)
+ real(SP), intent(in), optional ::magn_in(fft_size,3)
  !
  ! Work Space
  !
@@ -107,16 +106,18 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! Electronic/spin density 
  !==========================
  !
-#if defined _SC || defined _RT
- if (l_real_time.or.l_nl_optics) then !.or.l_sc_run) then
-   rho=rho_n
-   if(n_spin> 1) magn=magn_n
- endif
-#endif
- !
- if (.not.(l_real_time.or.l_nl_optics)) then !.or.l_sc_run)) then
+ if (present(rho_in)) then !.or.l_sc_run) then
+   rho=rho_in
+ else
    call el_density_and_current(en,Xk,rho=rho)
-   if (n_spin> 1) call el_magnetization(en,Xk,magn)
+ endif
+ !
+ if(n_spin> 1) then
+   if (present(magn_in)) then
+     magn=magn_in
+   else
+     call el_magnetization(en,Xk,magn)
+   end if
  endif
  !
  ! non-linear core corrections (NLCC)

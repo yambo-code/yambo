@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM IMA
 !
-subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
+subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip,VB,CB,BSE_occ_mode,l_neq_carriers_in_use)
  !
  use pars,           ONLY:IP
  use com,            ONLY:msg
@@ -36,10 +36,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  type(DIPOLE_t)::Dip
  type(w_samp)  ::Xw
  !
+ character, intent(in) :: BSE_occ_mode 
+ integer,   intent(in) :: VB(2),CB(2)
+ logical,   intent(in) :: l_neq_carriers_in_use
+ !
  ! Work Space
  !
  type(X_t)         :: X_tddft,X_oscillators
- integer           :: iq,Max_G_m_G,iG_BSE,iGo_BSE,VB(2),CB(2)
+ integer           :: iq,Max_G_m_G,iG_BSE,iGo_BSE
  type(w_samp)      :: W_bss 
  !
  ! I/O
@@ -57,7 +61,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  ! Logicals initialization
  !=========================
- call K_driver_init("init",1,Ken,Xk)
+ call K_driver_init("init",1,Ken,Xk,BSE_occ_mode,l_neq_carriers_in_use)
  !
  ! q0 renormalization and field direction
  !
@@ -134,7 +138,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    if (iq==1) BSqpts(:,iq) = BSS_q0
    if (iq/=1) BSqpts(:,iq) = q%pt(iq,:)
    !
-   call K_driver_init("loop-init",iq,Ken,Xk)
+   call K_driver_init("loop-init",iq,Ken,Xk,BSE_occ_mode,l_neq_carriers_in_use)
    !
    if (iq==BS_q(1)) call section('+','Bethe Salpeter Equation @q'//trim(intc(iq)))
    if (iq> BS_q(1)) then
@@ -172,13 +176,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call DIPOLE_dimensions(Ken,Dip,BS_bands,BSS_q0)
    !
    ! ... EH space (no parallelization)
-   call K_Transitions_dimensions(iq,Ken,Xk,Dip,VB,CB)
+   call K_Transitions_dimensions(iq,Ken,Xk,Dip,VB,CB,l_neq_carriers_in_use)
    !
    !... Parallel distribution
    call PARALLEL_global_Response_T_transitions(Xk)
    !
    ! ... EH space (with parallelization) and Transition groups build-up
-   call K_Transitions_setup(iq,Ken,Xk,Dip,VB,CB)
+   call K_Transitions_setup(iq,Ken,Xk,Dip,VB,CB,l_neq_carriers_in_use)
    !
    !... Blocks build-up
    if (.not.l_rpa_IP) call K_blocks()

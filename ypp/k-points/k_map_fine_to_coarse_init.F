@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS CA
 !
-subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
+subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  !
  use pars,                ONLY:SP,pi
  use units,               ONLY:HA2EV
@@ -20,11 +20,6 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
 &                              n_FineGd_DBs
  use electrons,           ONLY:levels,default_nel,n_bands,n_sp_pol,E_reset,FineGd_E_components_alloc
  use IO_m,                ONLY:REP
-#if defined _YPP_ELPH
- use YPP_ELPH,            ONLY:ph_modes_file,ph_freqs_file,ELPH_databases_IO_freqs,ELPH_databases_IO_modes
- use stderr,              ONLY:STRING_same
- use vec_operate,         ONLY:c2a,v_is_zero
-#endif
  !
 #include<y_memory.h>
  !
@@ -32,7 +27,6 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
  type(levels),  intent(inout)  :: Xen
  type(bz_samp), intent(out)    :: FineGd_k
  logical,       intent(out)    :: FineGd_is_expanded
- logical,       intent(in)     :: PH_grid
  !
  ! Work Space
  !
@@ -42,10 +36,6 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
  type(levels)          :: FineGd_E
  real(SP), allocatable :: rand_E(:,:,:)
  character(1)          :: K_or_Q
- !
-#if defined _YPP_ELPH
- integer            :: i_q,ph_modes
-#endif
  !
  ! BZ DB1 I/O
  !
@@ -68,8 +58,6 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
  dl_sop_save(:,:,:nsym)=dl_sop
  i_time_rev_save=i_time_rev
  FineGd_is_expanded=.FALSE.
- !
- if(.not.PH_grid) then
    !
    ! DB1 reloading
    !
@@ -101,77 +89,11 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
    !
    call parser('SkipCheck',l_skip_check)
    !
- else ! phonon case
-   !
-#if defined _YPP_ELPH
-   !
-   K_or_Q='Q'
-   !
-   ph_modes=3*n_atoms
-   n_FineGd_DBs=1
-   !
-   if(.not.STRING_same(ph_freqs_file,'none')) then
-     !
-     call msg('s',":: Phonon frequencies read from: "//trim(ph_freqs_file))
-     call ELPH_databases_IO_freqs(ph_file=ph_freqs_file,n_q=FineGd_io_k(1)%nibz)
-     !
-   elseif(.not.STRING_same(ph_modes_file,'none')) then
-     !      
-     call msg('s',":: Phonon frequencies read from: "//trim(ph_modes_file))
-     call ELPH_databases_IO_modes(ph_file=ph_modes_file,n_q=FineGd_io_k(1)%nibz)
-     !
-   endif
-   !
-   if(FineGd_io_k(1)%nibz==0) call error(' Error reading phonon frequencies')
-   !   
-   call msg('s',":: Number of phonon modes: ",ph_modes)
-   call msg('s',":: Number of phonon q-points in the matdyn file: ",FineGd_io_k(1)%nibz)
-   YAMBO_ALLOC(FineGd_io_k(1)%pt,(FineGd_io_k(1)%nibz,3))
-   !
-   FineGd_io_E(1)%nb=ph_modes
-   FineGd_io_E(1)%nk=FineGd_io_k(1)%nibz
-   !
-   YAMBO_ALLOC(FineGd_io_E(1)%E,(FineGd_io_E(1)%nb,FineGd_io_E(1)%nk,1))
-   !
-   if(.not.STRING_same(ph_freqs_file,'none')) then
-     !      
-     call ELPH_databases_IO_freqs(ph_file=ph_freqs_file,n_q=FineGd_io_E(1)%nk, &
-&           q_pt=FineGd_io_k(1)%pt,ph_freqs=FineGd_io_E(1)%E(:,:,1))
-     !
-   elseif(.not.STRING_same(ph_modes_file,'none')) then
-     !       
-     YAMBO_ALLOC(ph_pol,(FineGd_io_E(1)%nk,FineGd_io_E(1)%nb,n_atoms,3))
-     !
-     call ELPH_databases_IO_modes(ph_file=ph_modes_file,n_q=FineGd_io_E(1)%nk, &
-&           q_pt=FineGd_io_k(1)%pt,ph_freqs=FineGd_io_E(1)%E(:,:,1),ph_pol=ph_pol)
-     !
-     YAMBO_FREE(ph_pol) ! Polarization vectors not used in the Double-grid
-     !
-   endif
-   !
-   ! q-points in matdyn output are alat units, convert to internal units
-   ! ==================================
-   FineGd_io_k(1)%pt=FineGd_io_k(1)%pt*(2.*pi/alat(1))    ! From QuantumEspresso Alat to CC
-   !
-   ! Converto to iku units
-   !
-   do i_q=1,FineGd_io_k(1)%nibz
-     call c2a(v_in=FineGd_io_k(1)%pt(i_q,:),mode="kc2i")
-   enddo
-   !
-   if(.not.v_is_zero(FineGd_io_k(1)%pt(1,:))) &
-           &    call error("The first point of the PH double-grid should be Gamma")
-   !
-#endif
-   !
-   l_skip_check=.TRUE.
-   !
- endif
  !
  ! Now that I have the finer grid of Kpts I redefine the zeros for the kpts
  !
  do i_db=1,n_FineGd_DBs
-   if(.not. trim(FineGd_DB1_paths(i_db,1))=="." .or.PH_grid) then
+   if(.not. trim(FineGd_DB1_paths(i_db,1))==".") then
      call define_zeros(vector_=FineGd_io_k(i_db)%pt, zero_=tmp_zero)
      k_iku_zero=min(k_iku_zero,tmp_zero)
      call define_zeros(vector_=FineGd_io_k(i_db)%pt, zero_=tmp_zero,RLU=.TRUE.)
@@ -212,7 +134,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
    deallocate(rand_E)
  endif
  !
- if(.not.PH_grid.and.Xen%nb>1) then
+ if(Xen%nb>1) then
    gap(1)=minval(FineGd_E%E(Xen%nbf(1)+1,:,1))-maxval(FineGd_E%E(Xen%nbf(1),:,1)) 
    gap(2)=10000._SP
    do i1=1,FineGd_E%nk
@@ -228,14 +150,13 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
  if (i_time_rev==1) call msg('s',':: Time reversal included ')
  if (i_time_rev==0) call msg('s',':: Time reversal not included')
  !
- if(.not.PH_grid.and.Xen%nb>1) then
+ if(Xen%nb>1) then
    if (all(Xen%nbf==Xen%nbm)) then
      call msg('s',':: Gap indirect              :',gap(1)*HA2EV,"[eV]")
      call msg('s','::     direct                :',gap(2)*HA2EV,"[eV]")
    endif
  endif
  !
- if(.not.PH_grid) then
    !
    ! See if there is correspondance between the random and the built-in
    ! k-points
@@ -276,7 +197,6 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
      !
    endif
    !
- endif
  !
  ! Transfer to the Energy levels
  !

@@ -235,8 +235,8 @@ if (-d $OBJ) then
  end
 endif
 if ($filter =~ "all" && $OBJ =~ ".") then
- set FILES = `find src -name '*.F' `
- set FILES = ($FILES `find ypp -name '*.F' `)
+ set FILES = `find yambo* -name '*.F' `
+ set FILES = ($FILES `find ypp* -name '*.F' `)
  set FILES = ($FILES `find interfaces -name '*.F' `)
 endif
 if ($filter =~ "all" && $OBJ !~ ".") then

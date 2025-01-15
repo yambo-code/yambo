@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
+subroutine el_density_and_current(E,k,rho,drho,J,occ_mode,bands,force_spatial_inversion)
  !
  ! Electronic density (and current).
  !
@@ -37,7 +37,7 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  !
  ! Same procedure for the current
  !
- use pars,          ONLY:SP,DP
+ use pars,          ONLY:SP,DP,schlen
  use com,           ONLY:msg
  use stderr,        ONLY:real2ch
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
@@ -53,13 +53,6 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,becp,pp_has_nlcc
  use qe_pseudo_m,   ONLY:qe_omega=>omega,qe_ngm=>ngm, becsum
  use timing_m,      ONLY:timing
-#if defined _RT
- use drivers,       ONLY:l_real_time
-#endif
-#if defined _YPP_RT
- use RT_occupations,ONLY:RT_el_occ
- use real_time,     ONLY:RTibz
-#endif
  !
 #include<y_memory.h>
  !
@@ -68,26 +61,23 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  real(SP), optional             ::rho(fft_size)
  real(SP), optional             ::drho(fft_size,3)
  real(SP), optional             ::J(fft_size,3)
+ character,optional, intent(in) ::occ_mode
  integer,  optional, intent(in) ::bands(2)
  logical,  optional, intent(in) ::force_spatial_inversion
  !
  ! Work Space 
  !
-#if defined _YPP_RT
- integer    :: ik_RT
-#endif
  integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2)
  integer    :: i_r,ig,i_dir,ifft
  real(SP)   :: f_occ,raux,kw
  logical    :: warn_done,l_si,l_rho,l_drho,l_J
  !
+ character(schlen) :: occ_mode_
  real(SP),    allocatable :: rho_no_sym(:),drho_no_sym(:,:),J_no_sym(:,:)
  complex(SP), allocatable :: WF_der(:,:,:)
  complex(DP), allocatable :: rhog_aug_DP(:,:), aux_DP(:)
  !
-#if defined _RT
  call timing('el_density',OPR='start')
-#endif
  !
  ! Basic Setups
  !
@@ -97,6 +87,11 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  l_si      =.false.
  if (present(force_spatial_inversion)) l_si=force_spatial_inversion
  !
+ occ_mode_="def"
+ if (present(occ_mode)) occ_mode_=occ_mode
+ !
+ if (trim(occ_mode_)=="fo".and..not.allocated(E%fo)) &
+ & call error("el_density: occ mode fo, but fo occupations not allocated")
  !
  if (l_rho) then
    YAMBO_ALLOC(rho_no_sym,(fft_size))
@@ -148,18 +143,8 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
        if (size(WF%index,2)<ik)        cycle
        if (size(WF%index,3)<i_sp_pol)  cycle
        !
-       f_occ=E%f(ib,ik,i_sp_pol)
-#if defined _RT
-       if(l_real_time.and.allocated(E%fo)) f_occ=E%fo(ib,ik,i_sp_pol) 
-#endif
-#if defined _YPP_RT
-       if(present(bands)) then
-         f_occ=0._SP
-         do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
-           f_occ=f_occ+RT_el_occ%dN(ib,ik_RT)*RTibz%weights(ik_RT)
-         enddo
-       endif
-#endif
+       if (trim(occ_mode_)=="def") f_occ=E%f(ib,ik,i_sp_pol)
+       if (trim(occ_mode_)=="fo")  f_occ=E%fo(ib,ik,i_sp_pol) 
        !
        i_wf=WF%index(ib,ik,i_sp_pol)
        !
@@ -316,8 +301,6 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  !
  YAMBO_FREE(rho_no_sym)
  !
-#if defined _RT
  call timing('el_density',OPR='stop')
-#endif
  ! 
 end subroutine

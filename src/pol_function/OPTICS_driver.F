@@ -70,7 +70,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    call TDDFT_do_X_W_typs(iq,X,wv)
    !
    ! DbGd setup
-   call X_Double_Grid_setup(iq,Xk,Xk%FGbz)
+   call X_Double_Grid_setup(iq,Xk,Xk%FGbz,Use_DbGd=use_X_DbGd)
    !
    ! ALDA (only once) 
    if (l_alda_fxc.and..not.allocated(F_xc_gspace)) then
@@ -112,7 +112,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    if (iq> 1) call PP_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
    ! Irredux (Xo) 
-   call X_irredux(iq,"Xo",X_par(1),Xen,Xk,wv,X,Dip)
+   call X_irredux(iq,"Xo",X_par(1),Xen,Xk,wv,X,Dip,-1)
    !
    ! Without LF. I start defining spectra=eps-1
    spectra=cZERO

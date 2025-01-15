@@ -50,7 +50,7 @@ sed 's/F:/o /
 awk '{print "s/@" tolower($3) "@/" $1 "/" }' | # create substitution line
 sort | uniq > $compdir/$CDIR/modules.rules     # remove duplicates
 
-egrep -H -i "^ *module " $sources |           # look for "MODULE name"
+grep -E -H -i "^ *module " $sources |           # look for "MODULE name"
 sed 's/F:/o /
      s/\//\\\//g' |                            # replace extension, insert
 #                                              #   space and escape slashes

@@ -15,12 +15,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use YPPm,          ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,EXCITONS_user_indexes,BSiq, &
 &                        BS_R_right,BS_E,BS_E_SOC_corr,l_interp,l_dipoles
  use BS_solvers,    ONLY:BSS_n_eig
-#if defined _YPP_ELPH
- use YPP_ELPH,      ONLY:l_eliashberg,l_gkkp,l_ph_ass_dos
-#endif
-#if defined _YPP_RT
- use YPP_real_time, ONLY:l_RT_abs
-#endif
  !
 #include<y_memory.h>
  !
@@ -35,12 +29,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  integer              :: iq,io_err
  !
  l_flag=l_sort .or. l_exc_wf .or.l_amplitude .or. l_spin .or. l_interp .or. l_dipoles
-#if defined _YPP_ELPH
- l_flag=l_flag .or. l_eliashberg .or. l_gkkp .or. l_ph_ass_dos
-#endif
-#if defined _YPP_RT
- l_flag=l_flag .or. l_RT_abs
-#endif
  !
  if(.not.l_flag) return
  !
@@ -55,9 +43,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  if (io_err/=0) then
    call warning("BSE databases not found.")
-#if defined _YPP_RT
-   if (l_RT_abs) call RT_transient_absorption(Xen,Xk,q)
-#endif
    return
  endif
  !
@@ -65,9 +50,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !===================================
  if (l_sort) call excitons_sort_and_report(iq,BS_R_right,BS_E,BS_E_SOC_corr=BS_E_SOC_corr)
  !
-#if defined _YPP_RT
- if (.not.l_RT_abs) then
-#endif
    !
    ! Sort energies to find degenerate states
    !========================================
@@ -78,9 +60,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    !=========================================
    if(.not.l_sort) call get_user_excitonic_states( )
    !
-#if defined _YPP_RT
- endif
-#endif
  !
  ! Exciton dispersion interpolation
  ! =======================================
@@ -88,16 +67,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    call excitons_bands(k,Xk,en,Xen,q)
    return
  endif
- !
- ! Phonon assisted exciton density of states
- ! =========================================
-#if defined _YPP_ELPH
- if(l_ph_ass_dos) then
-   call excitons_ph_ass_dos(k,Xk,en,Xen,q)
-   return
- endif
-#endif
- !
+ ! !
  if(.not.l_sort)   call excitons_read(k,Xk,en,Xen,BSiq,"eigenvectors",io_err)
  ! 
  ! Exciton's spin
@@ -111,24 +81,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! Exciton's WFs
  !=====================
  if (l_exc_wf)     call exciton_WFs(Xk,BS_E_degs,iq)
- !
- ! Excitonic Eliashberg function 
- !================================
-#if defined _YPP_ELPH
- !
- if (l_eliashberg) call ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
- !
- if (l_gkkp)       call ELPH_excitonic_gkkp(Xk)
- !
-#endif
- !
-#if defined _YPP_RT
- !
- ! Transient absorption 
- !======================
- if (l_RT_abs)     call RT_transient_absorption(Xen,Xk,q)
- !
-#endif
  !
  ! CLEAN
  !

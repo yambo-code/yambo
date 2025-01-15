@@ -34,32 +34,33 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  ! Work space
  !
  integer :: iq,i_c,i_l,ID_INTERP_EXC,i_E
- real(SP), allocatable    :: BS_all_E(:,:),BSE_interp_E(:,:),values(:)
+ real(SP), allocatable    :: BSE_interp_E(:,:),values(:)
  type(bz_samp)            :: GRID_q
  character(schlen)        :: file_name
  character(schlen), allocatable :: headings(:)
- logical                  :: GRID_interpolate,l_prt_dos
+ logical                  :: BANDS_built_in,GRID_interpolate,l_prt_dos
  real(SP)                 :: tmp_q(3)
  real(SP)                 :: dos_E(DOS_E_steps),exc_DOS(DOS_E_steps)
+ real(SP)                 :: BS_all_E(EXCITONS_n_user_states,q%nibz)
  type(PP_indexes)         :: px
  !
  ! Parse the different interpolations
  !
  call parser('PrtDOS',l_prt_dos)
+ call parser('BANDS_built_in',BANDS_built_in)
  GRID_interpolate    = all(INTERP_grid>0)
  !
  if(l_prt_dos.and..not.GRID_interpolate) call error("You need to specify a Q-grid for the DOS")
  !
  ! Allocate arrays for all eigenvalues/eigenvectors
  ! 
- YAMBO_ALLOC(BS_all_E,(EXCITONS_n_user_states,q%nibz))
  YAMBO_ALLOC(values,(EXCITONS_n_user_states+4))
  allocate(headings(EXCITONS_n_user_states+4))
  !
  ! Read and interpolate excitons dispersion
  !
  ID_INTERP_EXC=1
- call excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,.TRUE.)
+ call excitons_interpolate_setup(k,Xk,en,Xen,q,BS_all_E,ID_INTERP_EXC,.TRUE.)
  !
  ! Interpolate and write on disk
  !
@@ -72,7 +73,9 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
    YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,CIRCUIT_k%nibz))      
    call INTERPOLATION_BZ(K=CIRCUIT_k,NK=CIRCUIT_k%nbz,R1D=BSE_interp_E,ID=ID_INTERP_EXC)
    !
-   call print_BANDS()
+   call print_interpolated_BANDS()
+   !
+   if (BANDS_built_in) call print_built_in_BANDS()
    !
  endif
  !
@@ -150,7 +153,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
      !
    end subroutine print_DOS
    ! 
-   subroutine print_BANDS()
+   subroutine print_interpolated_BANDS()
      implicit none
      !
      headings(1)=" |q| (a.u.) "
@@ -181,7 +184,74 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
      enddo
      call of_open_close(trim(file_name))
      !
-   end subroutine print_BANDS
+   end subroutine print_interpolated_BANDS
+   ! 
+   subroutine print_built_in_BANDS()
+     implicit none
+     !
+     integer               :: i_point,n_points,n_points_max,iq_bz_grid,iq_ibz_grid
+     real(SP)              :: value_k,values(EXCITONS_n_user_states+4)
+     integer,  allocatable :: Grid_to_path_map(:,:)
+     real(SP), allocatable :: tmp_var(:,:),tmp_q(:,:),tmp_k_dist(:,:)
+     !
+     call k_ibz2bz(q,'iku',.true.)
+     !
+     YAMBO_ALLOC(Grid_to_path_map,(USER_k%nbz,q%nbz))
+     call define_grid_map(q,USER_k,Grid_to_path_map,n_points_max)
+     YAMBO_ALLOC(tmp_var,(EXCITONS_n_user_states,n_points_max))
+     !
+     YAMBO_ALLOC(     tmp_q,(3,n_points_max))
+     YAMBO_ALLOC(tmp_k_dist,(3,n_points_max))
+     !
+     headings(1)=" |q| (a.u.) "
+     do i_c=1,EXCITONS_n_user_states
+        i_l=EXCITONS_user_indexes(i_c)
+        headings(i_c+1)=' e'//intc(i_l)
+     enddo
+     headings(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=&
+&           (/"q_x ("//trim(coo_out)//")","q_y ("//trim(coo_out)//")","q_z ("//trim(coo_out)//")"/)
+     !
+     file_name="excitons_built_in"
+     call of_open_close(trim(file_name),'ot')
+     call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
+     call msg('o '//trim(file_name),"#")
+     !
+     values=0._SP
+     !
+     do iq=1,USER_k%nibz
+       !
+       if (iq>1) value_k=value_k+iku_v_norm(USER_k%pt(iq,:3)-USER_k%pt(iq-1,:3))
+       !
+       n_points=0
+       !
+       do iq_bz_grid=1,q%nbz
+         if( Grid_to_path_map(iq,iq_bz_grid)==-1 ) cycle
+         n_points=n_points+1
+         iq_ibz_grid=q%sstar(iq_bz_grid,1)
+         !
+         tmp_k_dist(:,n_points)=q%ptbz(iq_bz_grid,:)-USER_k%pt(iq,:)
+         tmp_q(:,n_points)=q%ptbz(iq_bz_grid,:)
+         !
+         tmp_var(:,n_points)=BS_all_E(:,iq_ibz_grid)
+         !
+       enddo
+       !
+       do i_point=1,n_points
+         !
+         call K_transform(tmp_q(:,i_point),'iku')
+         !
+         values(1)=value_k+iku_v_norm(tmp_k_dist(:,i_point))
+         values(2:EXCITONS_n_user_states+1)=tmp_var(:,i_point)*HA2EV
+         values(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=tmp_q(:,i_point)
+         !
+         call msg('o '//trim(file_name),' ',values,INDENT=0,USE_TABS=.true.)
+       enddo
+       !
+     enddo
+     !
+     call of_open_close(trim(file_name))
+     !
+   end subroutine print_built_in_BANDS
    !
    subroutine print_INTERP_GRID()
      implicit none

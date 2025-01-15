@@ -116,7 +116,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    !
    do i_qp=1,qp%n_states
      Sc_W(i_qp)%n_freqs =QP_Sc_steps
-     call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),en%E,.FALSE.)
+     call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),en%E)
      QP_Sc_steps=Sc_W(i_qp)%n_freqs
    enddo
  endif
@@ -218,7 +218,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    !
    do iqibz=1,q%nibz
      X%iq=iqibz
-     i_err=X_dielectric_matrix(Xen,Xk,q,X,X_life_W(iqibz),Dip,iqibz>1,.TRUE.)
+     i_err=X_dielectric_matrix(Xen,Xk,q,X,X_life_W(iqibz),Dip,iqibz>1,.TRUE.,-1)
    enddo
    call PP_wait()
    !
@@ -497,6 +497,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    enddo qp_loop
    !
    call MATRIX_reset(X_par(1))
+   deallocate(X_par)
    !
    if (.not.l_life) then
      !

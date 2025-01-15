@@ -1,6 +1,0 @@
- Fermi_fnc_fit.o
- HyperbolicSecant_FT.o
- LEVELS_mirror.o
- LEVELS_respect_degenerations.o
- OCCUPATIONS_Gaps.o
-

@@ -16,13 +16,10 @@ integer function io_QP_and_GF(what,qp,ID)
 &                         write_is_on,io_mode,DUMP,VERIFY,DB_is_OK,&
 &                         db_alat,variable_exist,IO_INCOMPATIBLE_VAR
  use global_XC,      ONLY:QP_DB_kind,QP_SE_GoWo,QP_SE_GWo,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_COHSEX,QP_SE_NONE,&
-&                         QP_SE_POLARON,QP_SE_GW_QED,G_E_xc_string,X_E_xc_string,&
+&                         QP_SE_GW_QED,G_E_xc_string,X_E_xc_string,&
 &                         G_WF_xc_string,X_WF_xc_string
  use timing_m,       ONLY:timing
  use descriptors,    ONLY:IO_desc_add,IO_desc_append
-#if _ELPH
- use ELPH,           ONLY:ELPH_desc,use_PH_DbGd
-#endif
  !
 #include<y_memory.h>
  !
@@ -111,7 +108,7 @@ integer function io_QP_and_GF(what,qp,ID)
    case(QP_SE_GoWo,QP_SE_GWo)
      io_QP_and_GF=io_header(ID,TEMP=.true.,D_LATT=.true.,XC_KIND="G Xd",CUTOFF=.true.)
      i_X=4
-   case(QP_SE_POLARON,QP_SE_GW_QED)
+   case(QP_SE_GW_QED)
      io_QP_and_GF=io_header(ID,TEMP=.true.,D_LATT=.true.,XC_KIND="G",CUTOFF=.true.)
  end select
  !
@@ -124,15 +121,6 @@ integer function io_QP_and_GF(what,qp,ID)
      call IO_desc_add(qp%desc,kind="s",str='Xs energies kind',S=trim(X_E_xc_string(i_X)))
      call IO_desc_add(qp%desc,kind="s",str='Xs WF`s kind',S=trim(X_WF_xc_string(i_X)))
    endif
-#if _ELPH
-   if (QP_DB_kind==QP_SE_POLARON) then
-     call IO_desc_add(qp%desc,kind="s",str=" ",S=" ")
-     call IO_desc_append(ELPH_desc,qp%desc)
-     if (ver_is_gt_or_eq(ID,revision=19875)) then 
-       call IO_desc_add(qp%desc,kind="l",str='[ELPH] PH double-grid',L=use_PH_DbGd)
-     endif
-   endif
-#endif
  endif
  !
  if (io_QP_and_GF/=0) then

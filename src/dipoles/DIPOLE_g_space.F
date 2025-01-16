@@ -41,12 +41,11 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
  !
  ! Work Space
  !
- character(schlen)            :: live_t_string
- logical                      :: l_eval_DIP_iR,l_eval_DIP_V,l_eval_DIP_P2,l_use_comm,l_check
+ logical                      :: l_use_comm,l_check
  logical, allocatable         :: element_1D_spin(:)
  integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,pp_dim_yambo,pp_dim_atom,&
 &                                i_sp_pol,N_elements_todo,ik_mem,ic_min,is,ia,pp_range(2),npp,npp_tab
- complex(SP), allocatable     :: kbv(:,:,:,:)
+ complex(SP), allocatable          :: kbv(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: kbv_d(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: XX(:,:,:,:,:)
  complex(SP)                  :: rho_spinor(3,n_spinor,n_spinor),rho(3),P2
@@ -78,7 +77,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
 #ifdef _GPU
  YAMBO_FREE_GPU(DEV_VAR(g_vec))
  YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
- if(l_eval_DIP_P2) call warning("P2 not coded with GPUs, CPU only algorithm for it")
+ if(STRING_match(g_space_obs,"P2")) call warning("P2 not coded with GPUs, CPU only algorithm for it")
 #endif
  !
  l_use_comm=STRING_match(g_space_obs,"V").or.STRING_match(g_space_obs,"R")
@@ -142,15 +141,10 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
    call DIPOLE_alloc_elemental("DIP_work",[pp_dim_yambo])
    !
  endif
-                                      live_t_string='Dipoles: P (T)'
- if (l_eval_DIP_V)                    live_t_string='Dipoles: P and v (T)'
- if (l_eval_DIP_V .and.l_eval_DIP_iR) live_t_string='Dipoles: P, V and iR (T)'
- if (l_eval_DIP_P2.and.l_eval_DIP_V ) live_t_string='Dipoles: P, V and P2 (T)'
- if (l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dipoles: iR, P, V and P2 (T)'
  !
  ! Main loop over k in IBZ
  !
- if (N_elements_todo>0) call live_timing(trim(live_t_string),N_elements_todo)
+ if (N_elements_todo>0) call live_timing(trim(g_space_obs)//" [g-space]",N_elements_todo)
  !
  do i_sp_pol=1,n_sp_pol
    !
@@ -213,8 +207,8 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
              !
              i_wf=WF%index(ib,ik,i_sp_pol)
              !
-             call DIPOLE_kb_project(pp_range,Dip%ib,ib,i_wf,wf_ncx,size(WF%c,3),npp,pp_dim_yambo,&
-&                                   DEV_VAR(WF%c),DEV_VAR(kbv),XX)
+             call DIPOLE_kb_project(pp_range,Dip%ib,ib,i_wf,wf_ncx,size(WF%c,3),npp,&
+             &                      pp_dim_atom,pp_dim_yambo,DEV_VAR(WF%c),DEV_VAR(kbv),XX)
              !
            enddo
            !

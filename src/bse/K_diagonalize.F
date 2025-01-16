@@ -130,7 +130,7 @@ if (run_gpu) then
   endif 
 endif
 
-#if defined _OPENMP
+#if defined _OPENMP && !defined _GPU
   elpa_nthreads = int(n_threads_K,kind=YDIAGO_INT)
 #else 
   elpa_nthreads = 1 

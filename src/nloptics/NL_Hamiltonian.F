@@ -234,7 +234,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    ! Store the Hamiltonian
    ! =====================
 !$omp parallel do default(shared), private(i1)
- do i1=NL_bands(1),NL_bands(2)
+   do i1=NL_bands(1),NL_bands(2)
      Ho_plus_Sigma(NL_bands(1):NL_bands(2),i1,ik_mem,i_sp_pol)=H_nl_sc(NL_bands(1):NL_bands(2),i1)
    enddo
 !$omp end parallel do

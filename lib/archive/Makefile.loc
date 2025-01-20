@@ -14,6 +14,8 @@ all: $(EXT_LIBS)
 #
 # Libraries (GIT + archives)
 #
+ydiago:
+	@+URL="$(url_Ydiago)"  ;   GBRANCH="$(branch_Ydiago)"   ;  GIT="$(git_Ydiago)";  LIB="$(pkgname_Ydiago)";  $(call getsrc_git,"Ydiago");
 devxlib:
 	@+URL="$(url_devxlib)" ;  GBRANCH="$(branch_devxlib)" ;  GIT="$(git_devxlib)"; LIB="$(pkgname_devxlib)" ; $(call getsrc_git,"devxlib")
 #
@@ -41,6 +43,8 @@ blacs:
 	@+URL="$(url_blacs)"    ; LIB="$(pkgname_blacs)"; $(getsrc)
 scalapack:
 	@+URL="$(url_scalapack)"; LIB="$(pkgname_scalapack)"; $(getsrc)
+elpa:
+	@+URL="$(url_elpa)"     ; LIB="$(pkgname_elpa)"; $(getsrc)
 petsc:
 	@+URL="$(url_petsc)"    ; LIB="$(pkgname_petsc)";  GBRANCH="$(branch_petsc)"  ;  GIT="$(git_petsc)" ;  $(call getsrc_git,"petsc");
 slepc:
@@ -61,6 +65,7 @@ clean_git_folders:
 #
 clean_tgz:
 	if test ! -e keep-extlibs-stamp ; then \
+          if test -s $(tarball_Ydiago)   && test "$(keep_Ydiago)"    != "yes" ;  then rm $(tarball_Ydiago)    ; fi ; \
           if test -s $(tarball_libxc)    && test "$(keep_libxc)"     != "yes" ;  then rm $(tarball_libxc)     ; fi ; \
           if test -s $(tarball_iotk)     && test "$(keep_iotk)"      != "yes" ;  then rm $(tarball_iotk)      ; fi ; \
           if test -s $(tarball_netcdf)   && test "$(keep_netcdf)"    != "yes" ;  then rm $(tarball_netcdf)    ; fi ; \
@@ -69,6 +74,7 @@ clean_tgz:
           if test -s $(tarball_etsf_io)  && test "$(keep_etsf_io)"   != "yes" ;  then rm $(tarball_etsf_io)   ; fi ; \
           if test -s $(tarball_lapack)   && test "$(keep_lapack)"    != "yes" ;  then rm $(tarball_lapack)    ; fi ; \
           if test -s $(tarball_scalapack)&& test "$(keep_scalapack)" != "yes" ;  then rm $(tarball_scalapack) ; fi ; \
+          if test -s $(tarball_elpa)     && test "$(keep_elpa)"      != "yes" ;  then rm $(tarball_elpa)      ; fi ; \
           if test -s $(tarball_blacs)    && test "$(keep_blacs)"     != "yes" ;  then rm $(tarball_blacs)     ; fi ; \
           if test -s $(tarball_petsc)    && test "$(keep_petsc)"     != "yes" ;  then rm $(tarball_petsc)     ; fi ; \
           if test -s $(tarball_slepc)    && test "$(keep_slepc)"     != "yes" ;  then rm $(tarball_slepc)     ; fi ; \

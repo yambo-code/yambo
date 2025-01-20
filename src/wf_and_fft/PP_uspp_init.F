@@ -1,15 +1,13 @@
 !
 ! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AF, IM, FP
 ! Copyright (C) 2018 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AF IM
+! Authors (see AUTHORS file for details): AF IM FP DS
 !
 subroutine PP_uspp_init()
  !
- ! checks and reads USPP DB, and, in case, initialize
- ! general USPP vars
+ ! general variables needed for the pseudo-potential
  !
  use drivers,       ONLY:l_HF_and_locXC,l_col_cut,&
 &                        list_dbs,l_setup,l_rim
@@ -41,76 +39,24 @@ subroutine PP_uspp_init()
  !complex(DP), allocatable :: strf(:,:)
  logical :: l_will_need_becp
  !
- integer, external :: io_USPP_pwscf
- integer, external :: io_VLOC_pwscf
-
- call parser('BareHfromScratch', l_will_need_becp)
- if (.not.l_will_need_becp) return
- !
- ! in case, assume qe_pseudo already alloc and init
- !
- if (qe_pseudo_alloc) return
  call timing("PP_uspp_init","start")
- ! [FP]
- if (l_use_p2_Vloc_becp) then
-   call PP_uspp_alloc() ! projectors for nonlocal part
- endif
- ! [FP] 
- !
- ! perform main data IO
- !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
- io_err=io_USPP_pwscf(ID)
- !
- pp_is_uspp=(io_err==0)
- !
- ! [FP] 
-#ifndef _USPP
- if (pp_is_uspp.and..not.l_will_need_becp) then
-   call error("[PPs] Ultrasoft PP not supported. [Is ns.uspp_pp_pwscf present but should not?]")
- endif
-#endif
  !
  ! atom mapping
  !
  call atom_mapper(qe_nat,real(qe_tau*qe_alat,SP),"cc",qe_atoms_map)
  !
- if ((pp_is_uspp.and.l_will_need_becp.and..not.l_use_p2_Vloc_becp).or.&
-    (.not.pp_is_uspp.or.nkb<=0)) then
- !if (.not.pp_is_uspp.or.nkb<=0) then
-   ! [FP]
-   pp_is_uspp=.false.
-   call PP_uspp_free()
-   call timing("PP_uspp_init","stop")
-   return
- endif
- 
-
- !
- ! checks
- ! [FP]
- if (.not.( l_setup.or.l_col_cut.or.l_rim.or.list_dbs.or. &
-            l_HF_and_locXC.or.l_use_p2_Vloc_becp) ) then
-    ! [FP]
-    call error("[PPs] USPP not implemented for current runlevel")
- endif
-
- !
  ! symmetries
  !
  qe_nsym=nsym
- call d_matrix(nsym,real(dl_sop,DP),d1,d2,d3)
- 
+ call d_matrix(nsym,real(dl_sop,DP),d1,d2,d3) 
  !
  ! init g vectors and structure factors
  !
  qe_ngm=ng_vec
  !
-
  YAMBO_ALLOC(qe_g,(3,qe_ngm))
  YAMBO_ALLOC(qe_gg,(qe_ngm))
  YAMBO_ALLOC(qe_mill,(3,qe_ngm))
-
  !
  do ig = 1, ng_vec
     !
@@ -125,7 +71,6 @@ subroutine PP_uspp_init()
     !
  enddo
  !
-
  do i = 1, 3
    gv_min=minval(qe_mill(i,:))
    gv_max=maxval(qe_mill(i,:))
@@ -136,38 +81,17 @@ subroutine PP_uspp_init()
  YAMBO_ALLOC(qe_eigts2,(-nfft(2):nfft(2),qe_nat))
  YAMBO_ALLOC(qe_eigts3,(-nfft(3):nfft(3),qe_nat))
  !
- ! [FP]
- ! vlocal quantities: strf and - if needed - vloc_yambo and vloc_full
- call vloc_alloc(l_use_p2_Vloc_becp)
- ! [FP]
- !
  qe_b=transpose(b)/qe_tpiba
+ !
+ ! This is the part which depends on the atomic positions
  !
  call struc_fact(qe_nat,qe_tau,qe_nsp,qe_ityp,qe_ngm,qe_g,qe_b,&
 &                nfft(1),nfft(2),nfft(3), &
 &                .true.,strf,.true.,qe_eigts1,qe_eigts2,qe_eigts3)
  !
- ! [FP]
- if (l_use_p2_Vloc_becp) then
-   !
-   ! Now that we have the structure factors, read and compute vloc
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID_vloc)
-   io_err=io_VLOC_pwscf(ID_vloc)
-   !
-   call PP_compute_Vloc()
-   !
-   ! Compute D_ij coefficients for nonlocal part of PP 
-   call PP_compute_deeq()
-   !
- else
-   !
-   ! Dealloc strf here
-   call vloc_dealloc()
-   !
- endif
- ! [FP]
  !
  call timing("PP_uspp_init","stop")
+ !
  return
  !
 end subroutine PP_uspp_init

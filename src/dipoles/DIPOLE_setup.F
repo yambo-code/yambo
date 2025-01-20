@@ -80,11 +80,12 @@ subroutine DIPOLE_setup(Dip)
  !
  ! If we have additional nonlocal contributions such as Hubbard U,
  ! we need to switch to the covariant approach to capture them
+ ! 2024/04/10 DS: check should be changed, checking for lda+U, and not for l_Hbare
  if (l_Hbare.and..not.STRING_same(Dip%approach,"Covariant")) then
    if(exp_user) then
-     call warning(' Dipoles approach should be Covariant for BareH calculations')
+     call warning(' Covariant dipoles should be used since the Hamiltonian contains U non local projectors')
    else
-     call warning(' Dipoles approach forced to Covariant for BareH calculations')
+     call warning(' Covariant forced, since Hamiltonian contains U non local projectors')
      Dip%approach="Covariant"
    endif
  endif

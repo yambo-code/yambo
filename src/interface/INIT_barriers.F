@@ -8,8 +8,10 @@
 subroutine INIT_barriers()
  !
  use drivers,    ONLY:l_acfdt,l_bse,l_bss,l_cohsex,l_elph_corr,l_gw0,l_phel_corr,&
-&                     l_eval_collisions,l_life,l_ppa,l_mpa,l_real_time,l_sc_run,l_tddft,l_nl_optics,l_screen
+&                     l_eval_collisions,l_life,l_ppa,l_mpa,l_real_time,l_sc_run,l_tddft,l_nl_optics,l_screen,&
+&                     l_col_cut,l_setup,l_rim,l_HF_and_locXC,list_dbs
  use pars,       ONLY:lchlen
+ use pseudo,     ONLY:pp_is_known,pp_is_uspp
  use D_lattice,  ONLY:i_time_rev,i_space_inv
  use R_lattice,  ONLY:Xk_grid_is_uniform
  use BS,         ONLY:BSK_mode
@@ -169,5 +171,12 @@ subroutine INIT_barriers()
 #if defined  _PHEL 
  if ( l_phel_corr.and.trim(QP_solver)=='s' ) QP_solver='n'
 #endif
+ !
+ ! USPP
+ !======
+ !
+ if ( pp_is_known.and.pp_is_uspp.and..not.(l_setup.or.l_col_cut.or.l_rim.or.list_dbs.or.l_HF_and_locXC) ) then
+   pp_is_known=.false.
+ endif
  !
 end subroutine

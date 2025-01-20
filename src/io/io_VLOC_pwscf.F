@@ -23,15 +23,16 @@
 !
 integer function io_VLOC_pwscf(ID)
  !
- use pars,             ONLY: DP,IP
+ use pars,             ONLY: DP,IP_YIO,LP_YIO
  use stderr,           ONLY: intc
- use IO_m,             ONLY: io_sec,read_is_on,write_is_on
+ use IO_m,             ONLY: io_sec,read_is_on,write_is_on,variable_exist
  use IO_int,           ONLY: io_connect,io_disconnect, &
 &                            io_variable_elemental,io_variable_bulk,io_header, &
 &                            def_variable_elemental,def_variable_bulk
  use qe_pseudo_m,      ONLY: nsp
  use gvect,            ONLY: ngm,ngl
  use vlocal,           ONLY: vloc_yambo
+ use pseudo,           ONLY: pp_is_uspp
  !
  implicit none
  !
@@ -46,25 +47,36 @@ integer function io_VLOC_pwscf(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
+   if (variable_exist(ID,"pp_is_uspp")) then
+     call def_variable_elemental(ID,VAR="pp_is_uspp",VAR_SZ=1,VAR_KIND=LP_YIO,MENU=0)
+     call  io_variable_elemental(ID,L0=pp_is_uspp,VAR="Pseudo is ultrasoft",CHECK=.true.,OP=(/"=="/))
+   else
+     pp_is_uspp=.false.
+   endif
+   !
    ! g-vector variables
    !
-   call def_variable_elemental(ID,VAR="ngm",VAR_SZ=1,VAR_KIND=IP+100,MENU=0)
+   call def_variable_elemental(ID,VAR="ngm",VAR_SZ=1,VAR_KIND=IP_YIO,MENU=0)
    call  io_variable_elemental(ID,I0=ngm,VAR="Number of G-vectors",CHECK=.true.,OP=(/"=="/))
    !
-   call def_variable_elemental(ID,VAR="ngl",VAR_SZ=1,VAR_KIND=IP+100,MENU=0)
+   call def_variable_elemental(ID,VAR="ngl",VAR_SZ=1,VAR_KIND=IP_YIO,MENU=0)
    call  io_variable_elemental(ID,I0=ngl,VAR="Number of G-shells",CHECK=.true.,OP=(/"=="/))
    !
-   call def_variable_elemental(ID,VAR="nsp",VAR_SZ=1,VAR_KIND=IP+100,MENU=0)
+   call def_variable_elemental(ID,VAR="nsp",VAR_SZ=1,VAR_KIND=IP_YIO,MENU=0)
    call  io_variable_elemental(ID,I0=nsp,VAR="Number of at. species",CHECK=.true.,OP=(/"=="/))
    !
    call def_variable_elemental(ID,VAR="",VAR_SZ=0,VAR_KIND=0,MENU=1)
    !
  endif
  !
- ! vloc
- !
- call def_variable_bulk(ID,"vloc",1,shape(vloc_yambo),DP)
- call  io_variable_bulk(ID,1,D2=vloc_yambo)
+ if (any((/io_sec(ID,:)==2/))) then
+   !
+   ! vloc
+   !
+   call def_variable_bulk(ID,"vloc",1,shape(vloc_yambo),DP)
+   call  io_variable_bulk(ID,1,D2=vloc_yambo)
+   !
+ endif
  !
 1 call io_disconnect(ID=ID)
  !

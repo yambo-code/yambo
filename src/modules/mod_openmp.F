@@ -103,7 +103,7 @@ module openmp
        !
      endif
      !
-     call openblas_set_num_threads(1)
+     !call openblas_set_num_threads(1)
      call omp_set_dynamic(.false.)
      call omp_set_max_active_levels(1)
 #endif

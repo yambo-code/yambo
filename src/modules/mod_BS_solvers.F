@@ -62,9 +62,12 @@ module BS_solvers
  real(SP) :: BSS_E_dir(3)         ! Electric field
  real(SP) :: BSS_P_dir(3)         ! Induced polarization
  real(SP) :: BSS_Q_dir(3)         ! Field propagation direction
+ real(SP) :: BSS_kernel_stored_size
+ integer  :: BSS_kernel_last_stored_block
  logical  :: BSS_uses_DbGd
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
+ logical  :: BSS_kernel_IO_on_the_fly
  logical  :: BSS_perturbative_width
  logical  :: l_abs_prop_chi_bse=.TRUE.
  logical  :: l_eels_can_be_computed=.TRUE.
@@ -102,6 +105,7 @@ module BS_solvers
  real(SP)         :: BSS_slepc_target_E      !find eigenvalues close to this energy
  character(schlen):: BSS_slepc_matrix_format !matrix type ("shell","explicit","explicit-debug")
  logical          :: BSS_slepc_double_grp    !duplicate the number of groups for slepc shells solver
+ logical          :: BSS_slepc_pseudo_herm   !use a BSE specific solver designed for pseudo-hermitian matrices
  !
  ! Solvers (Inversion)
  !=========

@@ -9,15 +9,15 @@ Quick installation instructions for the impatient:
 "make" alone prints a list of acceptable targets. Binaries go in bin/.
 
 ## Want to know more?
-For more information, see the Yambo [main web-site](www.yambo-code.eu/)
-Yambo is also a flagship code of the MaX Centre of Excellence [MaX web-site](www.max-centre.eu)
+For more information, see the Yambo [main web-site](https://www.yambo-code.eu/)
+Yambo is also a flagship code of the MaX Centre of Excellence [MaX web-site](https://www.max-centre.eu)
 
-For specific documentation visit the [educational web-site](www.yambo-code.eu/wiki/) and related subsections
-* [Getting started](www.yambo-code.eu/wiki/index.php?title=Tutorials)
-* [Download](www.yambo-code.eu/wiki/index.php?title=Download)
-* [Install](www.yambo-code.eu/wiki/index.php?title=Installation)
+For specific documentation visit the [educational web-site](https://www.yambo-code.eu/wiki/) and related subsections
+* [Getting started](https://www.yambo-code.eu/wiki/index.php?title=Tutorials)
+* [Download](https://www.yambo-code.eu/wiki/index.php?title=Download)
+* [Install](https://www.yambo-code.eu/wiki/index.php?title=Installation)
 
-For support please refer to the Yambo [forum web-site](http://www.yambo-code.eu/forum) 
+For support please refer to the Yambo [forum web-site](https://www.yambo-code.eu/forum) 
 
 ## License
 All the material included in this distribution is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as

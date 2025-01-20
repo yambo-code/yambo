@@ -194,6 +194,7 @@ if test x"$enable_cuda_fortran" != "xno" ; then
    # Flags to be passed to the devicexlib library
    #
    DEVXLIB_FLAGS="--enable-openmp --enable-cuda-fortran --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
+   PETSC_FLAGS="--with-cuda"
    #
    case "${FCVERSION}" in
     *nvfortran*)
@@ -295,6 +296,7 @@ AC_SUBST(GPU_LIBS)
 AC_SUBST(GPU_INCS)
 AC_SUBST(DEVXLIB_FLAGS)
 AC_SUBST(DEVXLIB_CUDALIBS)
+AC_SUBST(PETSC_FLAGS)
 AC_SUBST(LIBROCM_LIBS)
 AC_SUBST(LIBROCM_INCS)
 AC_SUBST(LIBROCM_PATH)

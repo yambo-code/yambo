@@ -8,8 +8,8 @@
 subroutine X_OUTPUT(iq,Xen,Xk,wv,X,spectra)
  !
  use pars,          ONLY:pi,SP
- use D_lattice,     ONLY:l_0D,l_1D,l_2D,l_3D
- use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc,l_col_cut
+ use D_lattice,     ONLY:l_3D
+ use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_pf_fxc,l_col_cut
  use IO_int,        ONLY:IO_and_Messaging_switch
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels

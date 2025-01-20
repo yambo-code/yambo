@@ -77,6 +77,11 @@ fi
 #
 # Parse configure options
 #
+if test "$enable_par_linalg" = "yes" ; then
+  enable_blacs="internal" ;
+  enable_scalapack="internal" ;
+fi
+#
 case $with_blacs_libs in
   yes) enable_blacs="internal" ;;
   no)  enable_blacs="no" ; enable_par_linalg="no" ;;
@@ -185,7 +190,7 @@ if test "$mpibuild"  = "yes"; then
   #fi
   #
   if test "$mpif_found" = "yes" && test "$enable_blacs" = "internal"; then
-    enable_blacs="yes"
+    enable_blacs="yes";
     internal_blacs="yes";
     BLACS_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libblacs.a ${extlibs_path}/${FCKIND}/${FC}/lib/libblacs_C_init.a ${extlibs_path}/${FCKIND}/${FC}/lib/libblacs_init.a";
     if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libblacs.a" && test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libblacs_init.a"; then

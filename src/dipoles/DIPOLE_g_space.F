@@ -7,11 +7,11 @@
 !
 #include<dev_defs.h>
 !
-subroutine Dipole_transverse(Xen,Xk,Dip)
+subroutine DIPOLE_g_space(Xen,Xk,Dip)
  !
  ! This routine returns <iR> and <P^2>.
  !
- use pars,                ONLY:SP,schlen,cZERO
+ use pars,                ONLY:SP,cZERO,schlen
  use drivers,             ONLY:l_sc_run
  use interfaces,          ONLY:WF_load,WF_free
  use LIVE_t,              ONLY:live_timing
@@ -20,18 +20,18 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_DIP
  use pseudo,              ONLY:PP_free,pp_table,pp_n_l_comp,pp_kbv_dim_yambo,pp_kbv_table,pp_factor,pp_kbv_dim_atom,pp_kbv_dim
  use D_lattice,           ONLY:n_atomic_species,n_atoms_species
- use R_lattice,           ONLY:bz_samp,g_vec,DEV_VAR(g_vec)
- use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach,&
-&                              compute_P2_dipoles,compute_Spin_dipoles,DIP_alloc
-
+ use R_lattice,           ONLY:bz_samp,g_vec_d,g_vec
+ use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,g_space_obs
+ use ALLOC,               ONLY:DIPOLE_alloc_elemental 
  use X_m,                 ONLY:l_X_terminator
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:manage_action,RD_CL_IF_END,OP_RD,OP_RD_CL
  use wave_func,           ONLY:wf_ncx,WF
  use com,                 ONLY:msg
  use timing_m,            ONLY:timing
- use gpu_m,               ONLY:have_gpu,  gpu_devsync
+ use gpu_m,               ONLY:have_gpu,gpu_devsync
  use devxlib,             ONLY:devxlib_memcpy_h2d,devxlib_memset_d
+ use stderr,              ONLY:STRING_match
  !
 #include<y_memory.h>
  !
@@ -41,23 +41,23 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  ! Work Space
  !
- character(schlen)            :: live_t_string
- logical                      :: l_eval_DIP_iR,l_eval_DIP_V,l_eval_DIP_P2,l_use_comm,l_check
+ logical                      :: l_use_comm,l_check
  logical, allocatable         :: element_1D_spin(:)
  integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,pp_dim_yambo,pp_dim_atom,&
 &                                i_sp_pol,N_elements_todo,ik_mem,ic_min,is,ia,pp_range(2),npp,npp_tab
- complex(SP), allocatable     :: kbv(:,:,:,:)
+ complex(SP), allocatable          :: kbv(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: kbv_d(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: XX(:,:,:,:,:)
  complex(SP)                  :: rho_spinor(3,n_spinor,n_spinor),rho(3),P2
  real(SP)                     :: Ev_m_Ev_KS,Dipole_Energy_treshold
+ logical                      :: LT_msg=.FALSE.
  !
  !I/O and external functions
  !
  integer                      :: ID,IO_ACT_NOW,io_err(3),io_KB_abinit_err,io_KB_pwscf_err
  integer, external            :: io_KB_abinit,io_KB_pwscf
  !
- call timing('DIPOLE_transverse',OPR='start')
+ call timing('DIPOLE_g_space',OPR='start')
  !
  ! CPU-depedent work to be done 
  !==============================
@@ -73,21 +73,14 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  enddo
  N_elements_todo=N_elements_todo*n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)
  !
- ! Logicals setup
- !================
- !
- l_eval_DIP_iR=use_g_space_approach
- l_eval_DIP_V =use_g_space_approach.or.Dip%force_v_g_space
- l_eval_DIP_P2=compute_P2_dipoles
- !
  ! Synchronize some memory
 #ifdef _GPU
  YAMBO_FREE_GPU(DEV_VAR(g_vec))
  YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
- if(l_eval_DIP_P2) call warning("P2 not coded with GPUs, CPU only algorithm for it")
+ if(STRING_match(g_space_obs,"P2")) call warning("P2 not coded with GPUs, CPU only algorithm for it")
 #endif
  !
- l_use_comm=l_eval_dip_V.or.l_eval_dip_iR
+ l_use_comm=STRING_match(g_space_obs,"V").or.STRING_match(g_space_obs,"R")
  !
  if(l_use_comm) then
    !
@@ -135,7 +128,9 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    ! Eo    are always the eigenvalues consistent with the WFs
    ! E     do also include the QP corrections when Eo are allocated
    !
-   if (allocated(Xen%Eo).and.l_eval_dip_iR) call msg('rns','[X] Using energies without QP corrections for the dipoles')
+   if (allocated(Xen%Eo).and.STRING_match(g_space_obs,"R")) then
+     call msg('rns','[X] Using energies without QP corrections for the dipoles')
+   endif
    !
    allocate(element_1D_spin(Xk%nibz*n_sp_pol))
    if (n_sp_pol==1) element_1D_spin=PAR_IND_DIPk_ibz%element_1D
@@ -143,18 +138,13 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    !
    ! sum_kb workspace
    !
-   call DIP_alloc("DIP_work",[pp_dim_yambo])
+   call DIPOLE_alloc_elemental("DIP_work",[pp_dim_yambo])
    !
  endif
-                                      live_t_string='Dipoles: P (T)'
- if (l_eval_DIP_V)                    live_t_string='Dipoles: P and v (T)'
- if (l_eval_DIP_V .and.l_eval_DIP_iR) live_t_string='Dipoles: P, V and iR (T)'
- if (l_eval_DIP_P2.and.l_eval_DIP_V ) live_t_string='Dipoles: P, V and P2 (T)'
- if (l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dipoles: iR, P, V and P2 (T)'
  !
  ! Main loop over k in IBZ
  !
- if (N_elements_todo>0) call live_timing(trim(live_t_string),N_elements_todo)
+ if (N_elements_todo>0) call live_timing(trim(g_space_obs)//" [g-space]",N_elements_todo)
  !
  do i_sp_pol=1,n_sp_pol
    !
@@ -217,8 +207,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
              !
              i_wf=WF%index(ib,ik,i_sp_pol)
              !
-             call DIPOLE_kb_project(pp_range,Dip%ib,ib,i_wf,wf_ncx,size(WF%c,3),npp,pp_dim_yambo,&
-&                                   DEV_VAR(WF%c),DEV_VAR(kbv),XX)
+             call DIPOLE_kb_project(pp_range,Dip%ib,ib,i_wf,wf_ncx,size(WF%c,3),npp,&
+             &                      pp_dim_atom,pp_dim_yambo,DEV_VAR(WF%c),DEV_VAR(kbv),XX)
              !
            enddo
            !
@@ -246,7 +236,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          !
          ! Evaluate <iv_wf|   p   |ic_wf>
          !================================
-         call DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_DIP_P2)
+         call DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,&
+&                                      STRING_match(g_space_obs,"P2"),STRING_match(g_space_obs,"M_spin"))
          !
          !=====
          ! <P>
@@ -259,17 +250,17 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          ! <P^2>
          !======
          !
-         if (l_eval_DIP_P2) P_square(ic,iv,ik_mem,i_sp_pol)= P2
+         if (STRING_match(g_space_obs,"P2")) P_square(ic,iv,ik_mem,i_sp_pol)= P2
          !
          !============
          ! <P_spinor>
          !============
          !
 #if defined _RT
-         if (compute_Spin_dipoles.and.n_spinor==2) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor
+         if (STRING_match(g_space_obs,"P_spinor")) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor
 #endif
          !
-         if(.not.(l_eval_dip_V.or.l_eval_dip_iR)) then
+         if(.not.(STRING_match(g_space_obs,"V").or.STRING_match(g_space_obs,"R"))) then
            call live_timing(steps=1)
            cycle
          endif
@@ -291,13 +282,13 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          !=====
          ! v_vc=rho
          !
-         if (l_eval_DIP_V) DIP_v(:,ic,iv,ik_mem,i_sp_pol)=rho
+         if (STRING_match(g_space_obs,"V")) DIP_v(:,ic,iv,ik_mem,i_sp_pol)=rho
          !
          !======
          ! <iR>
          !======
          !
-         if (l_eval_DIP_iR) then
+         if (STRING_match(g_space_obs,"R")) then
            ! 
            !  [x,p_x]=i we get [x,H] = [x,p^2/2]+[x,Vnl]
            ! 
@@ -336,7 +327,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  ! CLEAN
  !
  if (l_use_comm) then
-   call DIP_alloc("DIP_work")
+   call DIPOLE_alloc_elemental("DIP_work")
    if (have_gpu) then
      YAMBO_FREE_GPU(DEV_VAR(kbv))
      YAMBO_FREE_GPU(XX)
@@ -354,6 +345,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    YAMBO_FREE_GPU(DEV_VAR(g_vec))
  endif
  !
- call timing('DIPOLE_transverse',OPR='stop')
+ call timing('DIPOLE_g_space',OPR='stop')
  !
-end subroutine Dipole_transverse
+end subroutine DIPOLE_g_space

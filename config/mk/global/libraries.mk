@@ -12,7 +12,11 @@ ifeq ($(wildcard config/mk/global/defs.mk),config/mk/global/defs.mk)
 endif
 include lib/archive/package.list
 #
-INT_LIBS      = qe_pseudo slatec math77 local
+ifeq ($(do_magma_fmodules),yes)
+  INT_LIBS = qe_pseudo slatec math77 local magma_fmodules
+else
+  INT_LIBS      = qe_pseudo slatec math77 local
+endif
 YAMBO_INT_LIBS= Yio 
 YLIBIO        = modules Yio
 YLIBIO_LD     = $(YLIBIO)

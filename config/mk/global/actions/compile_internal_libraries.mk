@@ -3,7 +3,7 @@
 #
 # Copyright (C) 2020 The Yambo Team
 #
-# Authors (see AUTHORS file for details): AM
+# Authors (see AUTHORS file for details): AM DS
 #
 qe_pseudo: 
 	@+LIBS="qe_pseudo"; BASE="lib" ; ADF="$(STAMP_DBLE)"; LAB=""; $(todo_lib); $(mk_lib)
@@ -13,3 +13,5 @@ math77:
 	@+LIBS="math77";    BASE="lib" ; ADF="$(STAMP_DBLE)"; LAB=""; $(todo_lib); $(mk_lib)
 local: 
 	@+LIBS="local" ;    BASE="lib" ; ADF="$(STAMP_DBLE)"; LAB=""; $(todo_lib); $(mk_lib)
+magma_fmodules: 
+	@+LIBS="magma_fmodules"; BASE="lib" ; ADF="$(STAMP_DBLE)"; LAB=""; $(todo_lib); $(mk_lib)

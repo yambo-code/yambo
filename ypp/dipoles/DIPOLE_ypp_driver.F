@@ -14,7 +14,8 @@ subroutine DIPOLE_ypp_driver(k,E,q)
  use electrons,      ONLY:levels,n_spin
  use YPPm,           ONLY:DIPs_C_bands,DIPs_V_bands,DIPs_E_range,DIPs_direction,K_transform,coo_out,INTERP_grid,&
 &                         l_PROJECT_plane,l_PROJECT_line,PROJECT_N_par,DIPs,DIPs_mask,DIPs_kind
- use DIPOLES,        ONLY:DIPOLES_reset,DIP_alloc,DIP_iR,DIP_desc
+ use DIPOLES,        ONLY:DIPOLES_reset,DIP_iR,DIP_desc
+ use ALLOC,          ONLY:DIPOLE_ALLOC_global
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,PAR_DIPk_ibz_index
  use parallel_int,   ONLY:PARALLEL_global_indexes,PP_redux_wait
  use QP_CTL_m,       ONLY:QP_apply
@@ -200,9 +201,7 @@ subroutine DIPOLE_ypp_driver(k,E,q)
  contains 
    !
    subroutine LOCAL_clean
-    call DIP_alloc('DIP_iR')
-    call DIP_alloc('DIP_P')
-    call DIP_alloc('DIP_v')
+    call DIPOLE_ALLOC_global( )
     call DIPOLES_reset(DIPs)
    end subroutine
    !

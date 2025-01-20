@@ -31,7 +31,12 @@
 # [@GPU_check@] GPU support ( @GPU_SUPPORT@ @GPU_libinfo@@LIBCUDA_PATH@)
 # [@MPI_check@] MPI
 # [@OPENMP_check@] OpenMP
-# [@PARIO_check@] Parallel I/O
+# 
+# - I/O -
+#
+# [@PARIO_check@]: Parallel I/O @PARIO_info@
+# [@HDF5_check@]: HDF5 @HDF5_info@
+# [@NETCDF_check@]: NETCDF @NETCDF_info@
 # 
 # - LIBRARIES - 
 # 
@@ -73,10 +78,6 @@
 #                 @LIBCUDA_INCS_R@
 # [@MPI_check@] MPI       : @MPI_LIBS@ @MPI_info@
 #                 @MPI_INCS@
-# [@FUTILE_check@] FUTILE    : @FUTILE_LIBS_R@
-#                 @FUTILE_INCS_R@ 
-# [@YAML_check@] YAML      : @YAML_LIBS_R@
-#                 @YAML_INCS_R@
 #
 # - COMPILERS -
 #

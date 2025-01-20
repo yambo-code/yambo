@@ -18,7 +18,8 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use R_lattice,    ONLY:bz_samp,RIM_qpg,RIM_anisotropy,DEV_VAR(RIM_W),RIM_W_is_diagonal,&
 &                       RIM_W_ng
  use D_lattice,    ONLY:i_time_rev,i_space_inv
- use X_m,          ONLY:X_ALLOC_elemental,X_t,X_mat,DEV_VAR(X_mat)
+ use ALLOC,        ONLY:X_ALLOC_elemental
+ use X_m,          ONLY:X_t,X_mat,DEV_VAR(X_mat)
  use BS,           ONLY:BS_n_g_W,BS_W_is_diagonal,BS_W
  use IO_int,       ONLY:io_control
  use IO_m,         ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,&

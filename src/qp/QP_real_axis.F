@@ -39,7 +39,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,QP_Sc_steps,&
 &                        QP_n_W_freqs_redux,e2et,h2ht
- use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t,X_par
+ use X_m,           ONLY:X_mat,X_t,X_par
+ use ALLOC,         ONLY:X_ALLOC_elemental
  use functions,     ONLY:bose_decay
  use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev,mag_syms
@@ -217,7 +218,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    !
    do iqibz=1,q%nibz
      X%iq=iqibz
-     i_err=X_dielectric_matrix(Xen,Xk,q,X,X_life_W(iqibz),Dip,iqibz>1)
+     i_err=X_dielectric_matrix(Xen,Xk,q,X,X_life_W(iqibz),Dip,iqibz>1,.TRUE.)
    enddo
    call PP_wait()
    !
@@ -496,6 +497,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    enddo qp_loop
    !
    call MATRIX_reset(X_par(1))
+   deallocate(X_par)
    !
    if (.not.l_life) then
      !

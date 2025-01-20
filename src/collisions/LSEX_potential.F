@@ -19,7 +19,8 @@ subroutine LSEX_potential(q,X,Xw)
  use electrons,           ONLY:levels,spin_occ
  use collision_el,        ONLY:elemental_collision,elemental_collision_free, &
 &                              elemental_collision_alloc
- use X_m,                 ONLY:X_mat,X_ALLOC_elemental,X_t
+ use X_m,                 ONLY:X_mat,X_t
+ use ALLOC,               ONLY:X_ALLOC_elemental
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,manage_action, &
 &                              deliver_IO_error_message         

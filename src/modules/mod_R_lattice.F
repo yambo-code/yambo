@@ -155,7 +155,7 @@ module R_lattice
  complex(SP),allocatable, target          :: RIM_W  (:,:,:,:)
  complex(SP),allocatable, target DEV_ATTR :: RIM_W_d(:,:,:,:)
  complex(DP),allocatable :: f_coeff(:,:,:,:,:)
- character(schlen)       :: rimw_type
+ character(schlen)       :: RIMW_type
  !
  ! Coulomb (including Cutoff)
  !

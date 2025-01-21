@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
-subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,report)
+subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,BS_all_E,ID_INTERP_EXC,report)
  !
  ! This subroutine read and interpolate exciton 
  !
@@ -22,21 +22,19 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,report)
  !
  type(bz_samp) ::Xk,k,q
  type(levels)  ::Xen,en
+ real(SP),intent(out)  :: BS_all_E(EXCITONS_n_user_states,q%nibz)
  logical, intent(in) :: report
  integer, intent(inout) :: ID_INTERP_EXC
  !
  ! Work space
  !
  integer :: iq,i_c,i_l,io_err
- real(SP), allocatable    :: BS_all_E(:,:)
  real(SP), allocatable    :: values(:)
  real(SP) :: tmp_q(3)
  character(schlen), allocatable :: headings(:)
  !
  ! Allocate arrays for all eigenvalues/eigenvectors
  ! 
- YAMBO_ALLOC(BS_all_E,(EXCITONS_n_user_states,q%nibz))
- !
  call section('*','Excitons Interpolation')
  !
  call excitons_read(k,Xk,en,Xen,1,"clean",io_err)

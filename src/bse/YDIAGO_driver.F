@@ -2,7 +2,7 @@
 ! License-Identifier: GPL
 ! Copyright (C) 2024 The Yambo Team
 !
-subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
+subroutine YDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
     & neigs_this_cpu, neig_shift, neigs_range, eigvals_range, &
     & BS_VL, BS_overlap, solver_type, elpasolver)
   !
@@ -378,7 +378,7 @@ endif
   endif
   !
   ! Set the left eigen vectors in case requested
-  if (BS_K_coupling .and. compute_left_eigs) then 
+  if (compute_left_eigs) then 
   !
     if(allocated(BS_VL)) deallocate(BS_VL)
     allocate(BS_VL(SL_H_dim, evec_fac*neigs_this_cpu))
@@ -419,4 +419,4 @@ endif
   neigs_this_cpu = evec_fac*neigs_this_cpu
   neig_shift     = evec_fac*neig_shift
   !
-end subroutine K_diagonalize 
+end subroutine YDIAGO_driver 

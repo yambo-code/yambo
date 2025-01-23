@@ -171,21 +171,11 @@ module BS_solvers
    end function
 
    subroutine write_bs_ev_par(iq, i_BS_mat, BS_VR, BS_VL)
-  !
-  use pars,           ONLY:SP,schlen
-  use BS,             ONLY:BS_K_dim, BS_H_dim,BS_K_coupling,BS_res_ares_n_mat
-  use parallel_m,     ONLY:par_distribute_set
-  use IO_m,           ONLY:REP,OP_APP_CL,YAMBO_DEF_CHUNK
-  use stderr,         ONLY:intc
-  use timing_m,      ONLY:timing
-  use IO_int,        ONLY:io_connect,io_disconnect,def_variable_bulk,&
-&                        io_variable_bulk,io_control
-  !
-  implicit none
-  !
-  integer, intent(in)      :: i_BS_mat, iq
-  complex(SP),allocatable, target, optional ::BS_VR(:,:),BS_VL(:,:)
-  end subroutine write_bs_ev_par
+     use pars,           ONLY:SP
+     implicit none
+     integer, intent(in)      :: i_BS_mat, iq
+     complex(SP),allocatable, target, optional ::BS_VR(:,:),BS_VL(:,:)
+   end subroutine write_bs_ev_par
    !
    integer function io_BSS_Haydock(ID,iq,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp1)
      use pars,          ONLY:SP

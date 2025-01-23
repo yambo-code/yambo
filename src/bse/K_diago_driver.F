@@ -34,7 +34,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing
  use linear_algebra, ONLY:DIAGO
- use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver,K_diagonalize,&
+ use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver,YDIAGO_driver,&
  &                        K_diago_left_residuals,K_diago_right_residuals,PL_diago_residual,&
  &                        K_diago_residuals, K_perturbative_residuals
  use IO_int,         ONLY:io_control
@@ -125,7 +125,7 @@ subroutine K_diago_driver(iq,W,X_static)
 #if defined _SLEPC && !defined _NL
  if(l_slepc) Solver="Slepc"
 #endif
- if (l_ydiago) Solver="Ydiago" 
+ if(l_ydiago) Solver="Ydiago" 
  !
  call timing(trim(Solver)//' Solver',OPR='start')
  !
@@ -153,24 +153,26 @@ subroutine K_diago_driver(iq,W,X_static)
    if(.not.BS_K_coupling) tmp_neig = BS_K_dim(i_BS_mat)
    if(     BS_K_coupling) tmp_neig = BS_H_dim
    !
-   ! NM : In case of ydiago, BSS_n_eig will be overwritten after the solver is called! 
-   if(l_diago .or. (l_ydiago .and. BSS_n_eig==0) ) BSS_n_eig = tmp_neig
-   Input_n_eig=BSS_n_eig
-
+   if(l_diago) BSS_n_eig = tmp_neig
+   !
    ! set a Ydiago defaults.
    if(l_ydiago) then
-      neigs_range = (/BSS_First_eig, BSS_First_eig+BSS_n_eig-1/)
-      if (neigs_range(1)<1)        neigs_range(1) = 1
-      if (neigs_range(2)>tmp_neig) neigs_range(2) = tmp_neig
+     ! In case of ydiago, BSS_n_eig will be overwritten after the solver is called 
+     if( BSS_n_eig==0 ) BSS_n_eig = tmp_neig
+     neigs_range = (/BSS_First_eig, BSS_First_eig+BSS_n_eig-1/)
+     if (neigs_range(1)<1)        neigs_range(1) = 1
+     if (neigs_range(2)>tmp_neig) neigs_range(2) = tmp_neig
+     ! NM  : FIX , create a user varaible and 
+     l_eval_range = .false. ! Incase user gives value range, then set this to true.
+     ! false for index range
+     ! each cpu contains eigen-vectors from [neig_shift + 1, neigs_this_cpu + neig_shift]
    endif
-   ! NM  : FIX , create a user varaible and 
-   l_eval_range = .false. ! Incase user gives value range, then set this to true.
-   ! false for index range
-   ! each cpu contains eigen-vectors from [neig_shift + 1, neigs_this_cpu + neig_shift]
+   !
+   Input_n_eig=BSS_n_eig
    ! For backward compatibitly I set  
    neig_shift = 0
    neigs_this_cpu = BSS_n_eig
-   ! These will be changed by the ydiago_interface routine
+   ! These will be changed by the YDIAGO_driver routine
    !
    ! Allocation (BS_R and BS_E)
    !===========================
@@ -249,53 +251,79 @@ subroutine K_diago_driver(iq,W,X_static)
      !==============================================
      if(l_diago) call live_timing('BSK diagonalize',1)
      !
-     if (l_ydiago) then 
-       ! SL and diagonalize entire hamilitonian
-       ! NM : BS_V_left are only referenced in non-hermitian case
-       ! Note that in coupling case, if the user requested n values,
-       ! This means that the we compute the first min(n,BS_H_dim/2) positive and 
-       ! min(n,BS_ham/2) negative eigvals and eigvectors, making it a total of 2*min(n,BS_ham/2)
-       !
-       if (.not. l_eval_range) then
-         ! Use index range
-         call K_diagonalize(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
-&                         neigs_range=neigs_range, BS_VL=BS_V_left,BS_overlap=BS_overlap, &
-&                         solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
-       else
-        ! use value range
-        call K_diagonalize(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
-&                         eigvals_range=eigvals_range, BS_VL=BS_V_left,BS_overlap=BS_overlap, &
-&                         solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
-       endif
-       ! NM : K_diagonalize will autamatically resizes variables
-       ! The size can change in case range is requested !
-       BSS_n_eig = size(BS_E)
-       !
-     else
-     !
-     !
      if (K_is_not_hermitian) then
        !
-       if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
-#if defined _SLEPC && !defined _NL
-       if(l_slepc) call MATRIX_slepc(slepc_mat,l_target_energy,BSS_n_eig,BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
-#endif
+      if (l_ydiago) then 
+        ! BS_V_left are only referenced in non-hermitian case
+        ! Note that in coupling case, if the user requested n values,
+        ! This means that the we compute the first min(n,BS_H_dim/2) positive and 
+        ! min(n,BS_ham/2) negative eigvals and eigvectors, making it a total of 2*min(n,BS_ham/2)
+        !
+        if (.not. l_eval_range) then
+          ! Use index range
+          call YDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
+&                           neigs_range=neigs_range, BS_VL=BS_V_left,BS_overlap=BS_overlap, &
+&                           solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
+        else
+         ! use value range
+         call YDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
+&                           eigvals_range=eigvals_range, BS_VL=BS_V_left,BS_overlap=BS_overlap, &
+&                           solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
+        endif
+        ! YDIAGO_driver will autamatically resizes variables
+        ! The size can change in case range is requested !
+        BSS_n_eig = size(BS_E)
+        !
+      endif
+      if(l_diago) then
+         call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
+         if (BSS_write_eig_2_db) BS_mat=BS_V_right
+       endif
        !
-       if (BSS_write_eig_2_db) BS_mat=BS_V_right
+#if defined _SLEPC && !defined _NL
+       if(l_slepc) then
+         call MATRIX_slepc(slepc_mat,l_target_energy,BSS_n_eig,BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
+         if (BSS_write_eig_2_db) BS_mat=BS_V_right
+       endif
+#endif
        !
      else
        !
-       if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
+       !
+      if (l_ydiago) then 
+        !
+        if (.not. l_eval_range) then
+          ! Use index range
+          call YDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
+&                           neigs_range=neigs_range, &
+&                           solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
+        else
+         ! use value range
+         call YDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
+&                           eigvals_range=eigvals_range, &
+&                           solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
+        endif
+        ! YDIAGO_driver will autamatically resizes variables
+        ! The size can change in case range is requested !
+        BSS_n_eig = size(BS_E)
+        !
+      endif
+      !
+      if(l_diago) then
+         call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
+         BS_E=cmplx(BS_E_real,0._SP,kind=SP)
+         neigs_this_cpu = BSS_n_eig
+       endif
+       !
 #if defined _SLEPC && !defined _NL
-       if(l_slepc) call MATRIX_slepc(slepc_mat,l_target_energy,BSS_n_eig,BS_mat,E_real=BS_E_real)
+       if(l_slepc) then
+         call MATRIX_slepc(slepc_mat,l_target_energy,BSS_n_eig,BS_mat,E_real=BS_E_real)
+         BS_E=cmplx(BS_E_real,0._SP,kind=SP)
+         neigs_this_cpu = BSS_n_eig
+       endif
 #endif
        !
-       BS_E=cmplx(BS_E_real,0._SP,kind=SP)
-       !
      endif
-     endif !l_ydiago
-     ! For backward compatitity
-     if (.not. l_ydiago) neigs_this_cpu = BSS_n_eig
      !
 #if defined _SLEPC && !defined _NL
      !
@@ -309,6 +337,29 @@ subroutine K_diago_driver(iq,W,X_static)
 #endif
      !
      if(l_diago) call live_timing( )
+     !
+     if (l_ydiago) then 
+       !
+       ! We need to realloc as sizes can change.
+       if(allocated(BS_corrections)) call BSS_resize(BS_corrections)
+       if(associated(BS_E_SOC_corr)) call BSS_resize(BS_E_SOC_corr)
+       !
+       if(associated(BS_R_left_abs) )  call BSS_resize(BS_R_left_abs)
+       if(associated(BS_R_right_abs))  call BSS_resize(BS_R_right_abs)
+       !
+       if(associated(BS_R_left_kerr) ) call BSS_resize(BS_R_left_kerr)
+       if(associated(BS_R_right_kerr)) call BSS_resize(BS_R_right_kerr)
+       if(associated(BS_R_right_dich)) call BSS_resize(BS_R_right_dich)
+       if(associated(BS_R_left_magn) ) call BSS_resize(BS_R_left_magn)
+       if(associated(BS_R_right_magn)) call BSS_resize(BS_R_right_magn)
+       if(associated(BS_R_PL)        ) call BSS_resize(BS_R_PL)
+       !
+       ! Compute residuals
+       !
+       YAMBO_ALLOC_P(tmp_res_ptrR,(BSS_n_eig))
+       YAMBO_ALLOC_P(tmp_res_ptrL,(BSS_n_eig))
+       !
+     endif
      !
      ! Construct the residuals of epsilon
      !====================================
@@ -369,26 +420,9 @@ subroutine K_diago_driver(iq,W,X_static)
        if(l_BS_photolum) call PL_diago_residual(BS_mat,BS_mat,BS_R_PL,K_is_not_hermitian)
        !
      endif
-     else 
        !
-       ! We need to realloc as sizes can change.
-       if(allocated(BS_corrections)) call BSS_resize(BS_corrections)
-       if(associated(BS_E_SOC_corr)) call BSS_resize(BS_E_SOC_corr)
-       !
-       if(associated(BS_R_left_abs) )  call BSS_resize(BS_R_left_abs)
-       if(associated(BS_R_right_abs))  call BSS_resize(BS_R_right_abs)
-       !
-       if(associated(BS_R_left_kerr) ) call BSS_resize(BS_R_left_kerr)
-       if(associated(BS_R_right_kerr)) call BSS_resize(BS_R_right_kerr)
-       if(associated(BS_R_right_dich)) call BSS_resize(BS_R_right_dich)
-       if(associated(BS_R_left_magn) ) call BSS_resize(BS_R_left_magn)
-       if(associated(BS_R_right_magn)) call BSS_resize(BS_R_right_magn)
-       if(associated(BS_R_PL)        ) call BSS_resize(BS_R_PL)
-       !
-       ! Compute residuals
-       !
-       YAMBO_ALLOC_P(tmp_res_ptrR,(BSS_n_eig))
-       YAMBO_ALLOC_P(tmp_res_ptrL,(BSS_n_eig))
+     else
+       ! 
        ! Absorption
        if(l_abs_res) then
          call K_diago_residuals("opt1",i_BS_mat,BS_E,BS_R_right_abs, BS_V_right, &
@@ -400,10 +434,10 @@ subroutine K_diago_driver(iq,W,X_static)
          if(l_kerr_lft .and. .not. l_kerr_rgt) call K_diago_residuals("opt2",i_BS_mat,BS_E,tmp_res_ptrR, &
 &                       BS_V_right, neigs_this_cpu, neig_shift, BS_R_left_kerr,BS_V_left,BS_overlap)
          !
-        endif
+       endif
        !
        ! Dichroism
-        if(l_BS_dichroism) then
+       if(l_BS_dichroism) then
            call K_diago_residuals("dic1",i_BS_mat,BS_E,tmp_res_ptrR,BS_V_right, &
 &                               neigs_this_cpu, neig_shift, null(),BS_V_left,BS_overlap)
            BS_R_right_dich(:,1) = tmp_res_ptrR
@@ -426,23 +460,6 @@ subroutine K_diago_driver(iq,W,X_static)
              BS_R_left_magn(2,:)  = tmp_res_ptrL
            endif
        endif
-       !
-       !
-       if (l_BS_photolum) call error("PL not implemented in Ydiago solver")
-       !
-       if( BS_perturbative_SOC ) call K_perturbative_residuals(2/n_sp_pol,'SOC', i_BS_mat, &
-       &           BS_corrections, BS_V_right, neigs_this_cpu, neig_shift, BS_V_left, BS_Overlap) 
-       !
-       if(BSS_perturbative_width) call K_perturbative_residuals(1,'WID', i_BS_mat, &
-       &           BS_corrections, BS_V_right, neigs_this_cpu, neig_shift, BS_V_left, BS_Overlap) 
-
-       if(BSS_perturbative_width) BS_E=BS_E-aimag(BS_corrections(1,:))
-       !
-       if( BS_perturbative_SOC ) BS_E_SOC_corr=real(BS_corrections)
-       !
-       !if (l_BS_photolum) call K_PL_residuals(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian, &
-!&     !                                        neigs_this_cpu, neig_shift,BS_overlap) 
-       !
        !
        YAMBO_FREE_P(tmp_res_ptrR)
        YAMBO_FREE_P(tmp_res_ptrL)     
@@ -469,6 +486,26 @@ subroutine K_diago_driver(iq,W,X_static)
      BS_E=BS_E-aimag(BS_corrections(1,:))
      !
    endif
+     !
+   else
+     !
+     if (l_BS_photolum) call error("PL not implemented in Ydiago solver")
+     !
+     if( BS_perturbative_SOC ) then
+        call K_perturbative_residuals(2/n_sp_pol,'SOC', i_BS_mat, &
+        &           BS_corrections, BS_V_right, neigs_this_cpu, neig_shift, BS_V_left, BS_Overlap) 
+        BS_E_SOC_corr=real(BS_corrections)
+     endif
+        !
+     if(BSS_perturbative_width) then 
+        call K_perturbative_residuals(1,'WID', i_BS_mat, &
+        &           BS_corrections, BS_V_right, neigs_this_cpu, neig_shift, BS_V_left, BS_Overlap) 
+        BS_E=BS_E-aimag(BS_corrections(1,:))
+     endif
+     !
+     !if (l_BS_photolum) call K_PL_residuals(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian, &
+     !&     !                                        neigs_this_cpu, neig_shift,BS_overlap) 
+     !
    endif
    !
    ! Now I calculate the physical quantities

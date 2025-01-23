@@ -233,16 +233,14 @@ subroutine write_bs_ev_par(iq, i_BS_mat, BS_VR, BS_VL)
   dim_names(3) = 'neigs'
   !
   if ( BSS_n_eig < chunksize(3)) chunksize(2:3) = 0
-  ! NM : FIX ME : I used some random values. Check this !
   varid = 100
   if (present(BS_VR) .and. allocated(BS_VR)) then 
     call def_variable_bulk(ID,'BS_EIGENSTATES', varid,&
 &        (/2,SL_H_dim,BSS_n_eig/),SP,dim_names, &
 &         par_io_kind='collective',chunksize=chunksize)
     call  io_variable_bulk(ID,varid,C2=BS_VR,IPOS=(/1,1,neig_shift+1/))
-  endif 
+  endif
 
-  ! NM : FIX ME : I used some random values. Check this !
   varid = 101
   if (present(BS_VL) .and. allocated(BS_VL) ) then 
     call def_variable_bulk(ID,'BS_EIGENSTATES_LEFT', varid,&

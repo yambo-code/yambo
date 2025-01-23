@@ -36,6 +36,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use linear_algebra, ONLY:DIAGO
  use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver,YDIAGO_driver,&
  &                        K_diago_left_residuals,K_diago_right_residuals,PL_diago_residual,&
+ &                        K_diago_left_residuals_distr,K_diago_right_residuals_distr,&
  &                        K_diago_residuals, K_perturbative_residuals
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:REP,VERIFY,OP_WR_CL,OP_RD_CL

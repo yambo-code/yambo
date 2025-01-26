@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM MG DS
 !
-subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
+subroutine K_stored_in_a_big_matrix(i_BS_mat,BS_mat,iq,what)
  !
  ! Here I fill the kernel (coupling included) in an entire BIG matrix to be
  ! used for diagonalization and/or invertion
@@ -14,7 +14,7 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
  use parallel_int,   ONLY:PP_redux_wait
  use BS,             ONLY:BS_K_coupling,n_BS_blks,BS_res_ares_n_mat,&
 &                         l_BS_ares_from_res,BS_blks_free
- use BS_solvers,     ONLY:BS_mat,BS_blk,BS_H_dim,BS_K_dim,&
+ use BS_solvers,     ONLY:BS_blk,BS_H_dim,BS_K_dim,&
 &                         BSS_perturbative_width,run_inversion,run_Haydock,&
 &                         BSS_eh_E,BSS_eh_W
  use timing_m,       ONLY:timing
@@ -22,6 +22,7 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
 #include <y_memory.h>
  !
  integer,      intent(in) :: i_BS_mat,iq
+ complex(SP), allocatable, target :: BS_mat(:,:) 
  character(*), intent(in) :: what
  !
  ! Work Space

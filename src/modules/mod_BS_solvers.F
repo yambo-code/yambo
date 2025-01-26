@@ -158,7 +158,7 @@ module BS_solvers
    !
    integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,BsRr,BsE_corr,&
    &                        bsL_magn,bsR_magn,bsL_kerr,bsR_kerr,bsR_dich,bsR_pl,&
-   &                        write_ev)
+   &                        BS_mat,write_ev)
      use pars,          ONLY:SP
      use X_m,           ONLY:X_t
      implicit none
@@ -167,6 +167,7 @@ module BS_solvers
      complex(SP)        ,optional :: bsE(:)
      real(SP),   pointer,optional :: BsE_corr(:,:),bsR_pl(:,:)
      complex(SP),pointer,optional :: bsL_kerr(:),bsR_kerr(:),bsR_dich(:,:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
+     complex(SP)        ,optional :: BS_mat(:,:)
      logical, optional            :: write_ev
    end function
 

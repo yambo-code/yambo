@@ -7,7 +7,7 @@
 !
 ! Modified by NM for taking care of new parallel distribution.
 !
-subroutine K_diago_left_residuals_distr(mode, i_BS_mat, BS_E, &
+subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
 &                  neigs_this_cpu, neig_shift, BS_R_left, BS_V_left, BS_Overlap) 
  !
  !  The left eigenvector u(j) of A satisfies
@@ -125,4 +125,4 @@ subroutine K_diago_left_residuals_distr(mode, i_BS_mat, BS_E, &
  call PP_redux_wait(BS_R_left)
  call live_timing
  !
-end subroutine K_diago_left_residuals_distr
+end subroutine K_diago_L_res

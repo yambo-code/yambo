@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
-subroutine K_diago_right_residuals_distr(mode, i_BS_mat, BS_E, &
+subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
   &                  neigs_this_cpu, neig_shift, BS_R_right, BS_V_right) 
  !
  !  The right eigenvector v(j) of A satisfies
@@ -89,4 +89,4 @@ subroutine K_diago_right_residuals_distr(mode, i_BS_mat, BS_E, &
  !
  deallocate(tmp_res)
  !
-end subroutine K_diago_right_residuals_distr
+end subroutine K_diago_R_res

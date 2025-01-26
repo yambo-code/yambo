@@ -258,7 +258,7 @@ module interfaces
      complex(SP), intent(in)  :: BS_V_right(:,:)
    end subroutine K_diago_right_residuals
    !
-   subroutine K_diago_right_residuals_distr(mode,i_BS_mat,BS_E, &
+   subroutine K_diago_R_res(mode,i_BS_mat,BS_E, &
     &                  neigs_this_cpu, neig_shift,BS_R_right,BS_V_right)
      use pars,          ONLY:SP
      implicit none
@@ -267,7 +267,7 @@ module interfaces
      complex(SP), allocatable,         intent(in)  :: BS_E(:)
      complex(SP), pointer,             intent(out) :: BS_R_right(:)
      complex(SP), target, allocatable, intent(in)  :: BS_V_right(:,:)
-   end subroutine K_diago_right_residuals_distr
+   end subroutine K_diago_R_res
    !
    subroutine K_diago_left_residuals(mode,i_BS_mat,BS_E,BS_R_left,BS_V_left,BS_overlap)
      use BS_solvers,    ONLY:BSS_n_eig
@@ -281,7 +281,7 @@ module interfaces
      complex(SP),optional,intent(in)  :: BS_overlap(BSS_n_eig,BSS_n_eig)
    end subroutine K_diago_left_residuals
    !
-   subroutine K_diago_left_residuals_distr(mode,i_BS_mat,BS_E, &
+   subroutine K_diago_L_res(mode,i_BS_mat,BS_E, &
     &                  neigs_this_cpu, neig_shift,BS_R_left,BS_V_left,BS_overlap)
      use pars,          ONLY:SP
      implicit none
@@ -291,7 +291,7 @@ module interfaces
      complex(SP), pointer,             intent(out) :: BS_R_left(:)
      complex(SP), target, allocatable, intent(in)  :: BS_V_left(:,:)
      complex(SP), pointer, optional,   intent(in)  :: BS_Overlap(:,:) 
-   end subroutine K_diago_left_residuals_distr
+   end subroutine K_diago_L_res
    !
    subroutine K_diago_residuals(mode, i_BS_mat, BS_E, BS_R_right, BS_VR, &
     &                  neigs_this_cpu, neig_shift, BS_R_left, BS_VL, BS_Overlap)
@@ -307,7 +307,14 @@ module interfaces
      complex(SP), target, allocatable     :: BS_VL(:,:)
      complex(SP), pointer     :: BS_Overlap(:,:)
    end subroutine K_diago_residuals
-!
+   !
+   subroutine K_stored_in_a_big_matrix(i_BS_mat,BS_mat,iq,what)
+    use pars,           ONLY:SP
+    integer,      intent(in) :: i_BS_mat,iq
+    complex(SP), allocatable, target :: BS_mat(:,:) 
+    character(*), intent(in) :: what
+   end subroutine K_stored_in_a_big_matrix
+   !
    subroutine K_perturbative_residuals(pert_dim, what, i_BS_mat, &
     &           BS_corrections, BS_VR, neigs_this_cpu, neig_shift, BS_VL, BS_Overlap) 
      use pars,           ONLY:SP,cZERO

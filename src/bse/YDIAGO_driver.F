@@ -1,6 +1,9 @@
 !
 ! License-Identifier: GPL
+!
 ! Copyright (C) 2024 The Yambo Team
+!
+! Authors (see AUTHORS file for details): NM
 !
 subroutine YDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
     & neigs_this_cpu, neig_shift, neigs_range, eigvals_range, &

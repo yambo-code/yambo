@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2016 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS NM
 !
 module BS_solvers
  !

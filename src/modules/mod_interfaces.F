@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2013 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM DS
+! Authors (see AUTHORS file for details): AM DS NM
 !
 ! headers
 !

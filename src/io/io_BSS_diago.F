@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2015 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS NM
 !
 integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
 &                             bsL_magn,bsR_magn,bsL_kerr,bsR_kerr,bsR_dich,bsR_pl,&

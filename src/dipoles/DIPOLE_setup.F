@@ -128,6 +128,7 @@ subroutine DIPOLE_setup(Dip)
 #endif
  endif
  ! ...M_spin, M_orb, M_iti, M_orb_CD
+ specific_obs=""
  if (n_spin>1) then
    if (STRING_match(Dip%computed,"spin").or.l_BS_magnons) specific_obs=" M_spin"
    if (STRING_match(Dip%computed,"orb")) specific_obs=trim(specific_obs)//" M_orb M_it"

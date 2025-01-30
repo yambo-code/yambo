@@ -78,7 +78,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  ! Observables initialization
  !============================
- call K_observables(W_bss)
+ call K_observables(W_bss,Xk)
  !
  ! Double Grid support
  !=====================

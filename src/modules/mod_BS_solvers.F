@@ -56,6 +56,7 @@ module BS_solvers
  integer  :: BSS_n_freqs
  integer  :: BSS_n_eig            !number of eigenvalues to find
  integer  :: BSS_first_eig        !index of the first eigenvalue to find
+ real(SP) :: BSS_target_E         !find eigenvalues close to this energy
  real(SP) :: BSS_er(2)
  real(SP) :: BSS_dr(2)
  real(SP) :: BSS_damp_reference
@@ -101,7 +102,6 @@ module BS_solvers
  integer          :: BSS_slepc_maxit         !maximum number of iterations
  integer          :: BSS_slepc_mpd           !maximum allowed dimension
  real(SP)         :: BSS_slepc_tol           !tolerance for the iterative solver
- real(SP)         :: BSS_slepc_target_E      !find eigenvalues close to this energy
  character(schlen):: BSS_slepc_matrix_format !matrix type ("shell","explicit","explicit-debug")
  logical          :: BSS_slepc_double_grp    !duplicate the number of groups for slepc shells solver
  !

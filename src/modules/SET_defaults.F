@@ -46,11 +46,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,frag_WF
  use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,BSS_P_dir,BSS_E_dir,BSS_Q_dir,BSS_first_eig,&
 &                     Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,BSS_n_eig,&
-&                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
+&                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,BSS_target_E,&
 &                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH,BSS_desc,BSS_ydiago_solver
  use descriptors,ONLY:IO_desc_reset
 #if defined _SLEPC && !defined _NL
- use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_maxit,&
+ use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_maxit,&
  &                    BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_mpd
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,MAX_BSK_LIN_size,&
@@ -465,6 +465,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_n_freqs=100
  BSS_n_eig=0
  BSS_first_eig=1
+ BSS_target_E=0._SP
  MAX_BSK_LIN_size=45000*45000 ! 46341 is the sqare root of the maximum integer in IP: 2147483647
  !
  call IO_desc_reset(BSS_desc)
@@ -478,7 +479,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_slepc_ncv=0
  BSS_slepc_mpd=0
  BSS_slepc_tol=1E-6_SP
- BSS_slepc_target_E=0._SP
 #endif
  !
  ! TDDFT

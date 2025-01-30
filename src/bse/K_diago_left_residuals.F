@@ -3,12 +3,13 @@
 !
 ! Copyright (C) 2016 The Yambo Team
 !
-! Originally by AM, MG, DS
-!
-! Modified by NM for taking care of new parallel distribution.
+! Authors (see AUTHORS file for details): AM MG DS NM
 !
 subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
 &                  neigs_this_cpu, neig_shift, BS_R_left, BS_V_left, BS_Overlap) 
+ !
+ ! Originally code by AM, MG, DS
+ ! Modified by NM for taking care of new parallel distribution.
  !
  !  The left eigenvector u(j) of A satisfies
  !                u(j)**H * A = lambda(j) * u(j)**H
@@ -18,7 +19,7 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  !
  use pars,           ONLY:SP,cZERO
  use wrapper_omp,    ONLY:Vstar_dot_V_omp,V_dot_V_omp
- use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset,ncpu
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,         ONLY:live_timing
  use X_m,            ONLY:global_gauge
@@ -41,8 +42,10 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  !
  ! Workspace
  !
- integer              :: i1, i_lambda, neig_total, SL_H_dim, res_range(2)
- logical              :: velocity_correction
+ type(PP_indexes)     :: px
+ integer              :: i1, i_lambda, neig_total, SL_H_dim, res_range(2), &
+ &                       n_steps, step_shift, res_shift, i_res, neig_shift_loc
+ logical              :: velocity_correction,l_duplicate_mem_par
  character(13)        :: scheme
  !
  complex(SP),allocatable :: tmp_res(:)
@@ -62,6 +65,8 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  !
  velocity_correction=(index(mode,"opt")>0).and.(trim(global_gauge)=="velocity")
  !
+ l_duplicate_mem_par=(ncpu>1.and.neigs_this_cpu==neig_total)
+ !
  if(BS_K_coupling) then 
    SL_H_dim=BS_H_dim
    res_range=(/1,SL_H_dim/)
@@ -75,11 +80,29 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  if (trim(scheme)=="hermitian")     BS_R_tmp => BS_R_left
  if (trim(scheme)=="non-hermitian") allocate(BS_R_tmp(neig_total))
  !
+ n_steps=neigs_this_cpu
+ step_shift=neig_shift
+ res_shift=0
+ neig_shift_loc=neig_shift
+ if (l_duplicate_mem_par) then
+   call PP_indexes_reset(px)
+   call PARALLEL_index(px,(/neig_total/),CONSECUTIVE=.TRUE.)
+   n_steps=px%n_of_elements(myid+1)
+   neig_shift_loc=0
+   do i_lambda=1,neig_total
+     if (.not.px%element_1D(i_lambda)) cycle
+     step_shift=i_lambda-1
+     res_shift=i_lambda-1
+     exit
+   enddo
+ endif
+ !
  ! [1] BS_R_tmp(i)= <i_K|j><j|q0> 
  !                = conjg( BS_V_left(k,i))*BSS_dipoles(k)*R_k
+ !
  BS_R_tmp=cZERO
  !
- call live_timing(trim(mode)//' residuals ',neigs_this_cpu)
+ call live_timing(trim(mode)//' residuals ',n_steps)
  !
  if(trim(mode)=="opt1") tmp_res=BSS_dipoles_opt(1,res_range(1):res_range(2))
  if(trim(mode)=="opt2") tmp_res=BSS_dipoles_opt(2,res_range(1):res_range(2))
@@ -88,14 +111,16 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  if(trim(mode)=="mag1") tmp_res=BSS_dipoles_magn(1,res_range(1):res_range(2))
  if(trim(mode)=="mag2") tmp_res=BSS_dipoles_magn(2,res_range(1):res_range(2))
  !
- tmp_res = conjg(tmp_res)*sqrt(cmplx(BSS_eh_f(res_range(1):res_range(2)),kind=SP)) 
+ tmp_res = tmp_res*sqrt(cmplx(BSS_eh_f(res_range(1):res_range(2)),kind=SP)) 
  if (allocated(BSS_eh_Z)) tmp_res=tmp_res*sqrt(BSS_eh_Z(res_range(1):res_range(2)))
  if (velocity_correction) tmp_res=tmp_res/BSS_eh_E(res_range(1):res_range(2))
  !
- do i1=1, neigs_this_cpu
-   i_lambda = i1 + neig_shift
+ do i1=1, n_steps
    !
-   BS_R_tmp(i_lambda)=Vstar_dot_V_omp(SL_H_dim,BS_V_left(:,i1),tmp_res)
+   i_lambda = i1 + step_shift
+   i_res    = i1 + res_shift
+   !
+   BS_R_tmp(i_lambda)=Vstar_dot_V_omp(SL_H_dim,BS_V_left(:,i_res),tmp_res)
    if (velocity_correction) BS_R_tmp(i_lambda) = BS_R_tmp(i_lambda)*BS_E(i_lambda)
    !
    call live_timing(steps=1)
@@ -113,16 +138,20 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  !
  BS_R_left=cZERO
  !
- call live_timing('EPS L x overlap',neigs_this_cpu)
- do i1=1, neigs_this_cpu
-   i_lambda = i1 + neig_shift
+ call live_timing('EPS L x overlap',n_steps)
+ do i1=1, n_steps
    !
-   if (neigs_this_cpu > 0) BS_R_left(i_lambda)=&
-   & V_dot_V_omp(neigs_this_cpu,BS_overlap(i1,:),BS_R_tmp(neig_shift+1 : neig_shift+neigs_this_cpu))
+   i_lambda = i1 + step_shift
+   i_res    = i1 + res_shift
+   !
+   if (n_steps > 0) BS_R_left(i_lambda)=&
+   & V_dot_V_omp(neigs_this_cpu,BS_overlap(i_res,:),BS_R_tmp(1+neig_shift_loc : neigs_this_cpu+neig_shift_loc))
    !
    call live_timing(steps=1)
  enddo
  call PP_redux_wait(BS_R_left)
  call live_timing
+ !
+ if (l_duplicate_mem_par) call PP_indexes_reset(px)
  !
 end subroutine K_diago_L_res

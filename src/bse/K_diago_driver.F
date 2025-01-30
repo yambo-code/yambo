@@ -22,12 +22,14 @@ subroutine K_diago_driver(iq,W,X_static)
  ! 10/06/2015 Added by HM: Generic slepc method to solve 
  !
  use pars,           ONLY:SP
+ use com,            ONLY:msg
  use stderr,         ONLY:intc
+ use units,          ONLY:HA2EV
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
 &                         BS_res_ares_n_mat,l_BS_ares_from_res !,BS_Blocks_symmetrize_K,&
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode, BSS_resize, &
 &                         BSS_write_eig_2_db,BSS_eh_W,BSS_n_eig,BS_E, write_bs_ev_par, &
-&                         BSS_ydiago_solver,BSS_first_eig
+&                         BSS_ydiago_solver,BSS_first_eig,BSS_target_E
  use X_m,            ONLY:X_t,X_OUTPUT_driver
  use electrons,      ONLY:n_sp_pol,n_spinor
  use frequency,      ONLY:w_samp
@@ -68,9 +70,8 @@ subroutine K_diago_driver(iq,W,X_static)
  character(1)     :: sec
  character(10)    :: Solver
  ! Ydiago varibles
- integer, target  :: neigs_range(2)   = 0      ! index range of eigenvalues to find
- real(SP), target :: eigvals_range(2) = 0.0_SP ! value range of eigenvales to find
- logical          :: l_eval_range ! This is true if eigvals_range is given instead of neigs_range
+ integer, target  :: neigs_range(2)
+ real(SP), target :: eigvals_range(2)
  !
  ! Slepc specific
  !
@@ -86,6 +87,7 @@ subroutine K_diago_driver(iq,W,X_static)
  complex(SP),allocatable :: BS_corrections(:,:)
  !
  ! Coupling
+ complex(SP),allocatable         :: BS_mat(:,:)
  complex(SP),allocatable, target :: BS_V_left(:,:)
  complex(SP),allocatable, target :: BS_V_right(:,:)
  complex(SP),pointer             :: BS_overlap(:,:)    => null()
@@ -140,9 +142,7 @@ subroutine K_diago_driver(iq,W,X_static)
  if (isec(2)==0) sec="+"
  call section(sec,trim(Solver)//' Solver @q'//trim(intc(iq)))
  !  
-#if defined _SLEPC && !defined _NL
- if(l_slepc) call K_slepc_local_init()
-#endif
+ if(l_slepc) call K_local_init()
  !
  ! Eigenstates 2 DB ?
  !====================
@@ -154,26 +154,7 @@ subroutine K_diago_driver(iq,W,X_static)
    if(.not.BS_K_coupling) tmp_neig = BS_K_dim(i_BS_mat)
    if(     BS_K_coupling) tmp_neig = BS_H_dim
    !
-   if(l_diago) BSS_n_eig = tmp_neig
-   !
-   ! set a Ydiago defaults.
-   if(l_ydiago) then
-     ! In case of ydiago, BSS_n_eig will be overwritten after the solver is called 
-     if( BSS_n_eig==0 ) BSS_n_eig = tmp_neig
-     neigs_range = (/BSS_First_eig, BSS_First_eig+BSS_n_eig-1/)
-     if (neigs_range(1)<1)        neigs_range(1) = 1
-     if (neigs_range(2)>tmp_neig) neigs_range(2) = tmp_neig
-     ! NM  : FIX , create a user varaible and 
-     l_eval_range = .false. ! Incase user gives value range, then set this to true.
-     ! false for index range
-     ! each cpu contains eigen-vectors from [neig_shift + 1, neigs_this_cpu + neig_shift]
-   endif
-   !
-   Input_n_eig=BSS_n_eig
-   ! For backward compatibitly I set  
-   neig_shift = 0
-   neigs_this_cpu = BSS_n_eig
-   ! These will be changed by the YDIAGO_driver routine
+   call BSS_n_eig_init()
    !
    ! Allocation (BS_R and BS_E)
    !===========================
@@ -201,7 +182,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if (l_diago) then
        !
-       call K_stored_in_a_big_matrix(i_BS_mat,BS_V_right,iq,"DIAGO")
+       call K_stored_in_a_big_matrix(i_BS_mat,BS_mat,iq,"DIAGO")
        !
        ! These line will be needed when the BS kernel will not be folded in BS_mat. But in order to do so
        ! also linear_algebra_is_parallel must be swiched off when K is not hermitian.
@@ -254,30 +235,22 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if (K_is_not_hermitian) then
        !
-      if (l_ydiago) then 
-        ! BS_V_left are only referenced in non-hermitian case
-        ! Note that in coupling case, if the user requested n values,
-        ! This means that the we compute the first min(n,BS_H_dim/2) positive and 
-        ! min(n,BS_ham/2) negative eigvals and eigvectors, making it a total of 2*min(n,BS_ham/2)
-        !
-        if (.not. l_eval_range) then
-          ! Use index range
-          call YDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
-&                           neigs_range=neigs_range, BS_VL=BS_V_left,BS_overlap=BS_overlap, &
-&                           solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
-        else
-         ! use value range
+       if (l_ydiago) then 
+         ! BS_V_left are only referenced in non-hermitian case
+         ! In coupling case, if the user requested n values,
+         ! we compute the first min(n,BS_H_dim/2) positive and 
+         ! min(n,BS_ham/2) negative eigvals and eigvectors, making it a total of 2*min(n,BS_ham/2)
          call YDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
-&                           eigvals_range=eigvals_range, BS_VL=BS_V_left,BS_overlap=BS_overlap, &
-&                           solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
-        endif
-        ! YDIAGO_driver will autamatically resizes variables
-        ! The size can change in case range is requested !
-        BSS_n_eig = size(BS_E)
-        !
+         &                   neigs_range=neigs_range, eigvals_range=eigvals_range,  &
+         &                   BS_VL=BS_V_left,BS_overlap=BS_overlap,                 &
+         &                   solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
+         BSS_n_eig = size(BS_E)
       endif
+      !
       if(l_diago) then
-         call LINEAR_ALGEBRA_driver(DIAGO,M=BS_V_right,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
+         ! Linear Algebra driver needs both BS_mat and BS_V_right
+         call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
+         YAMBO_FREE(BS_mat)
        endif
        !
 #if defined _SLEPC && !defined _NL
@@ -288,28 +261,17 @@ subroutine K_diago_driver(iq,W,X_static)
        !
      else
        !
-       !
-      if (l_ydiago) then 
-        !
-        if (.not. l_eval_range) then
-          ! Use index range
-          call YDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
-&                           neigs_range=neigs_range, &
-&                           solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
-        else
-         ! use value range
+       if (l_ydiago) then 
          call YDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
-&                           eigvals_range=eigvals_range, &
+&                           neigs_range=neigs_range, eigvals_range=eigvals_range,   &
 &                           solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
-        endif
-        ! YDIAGO_driver will autamatically resizes variables
-        ! The size can change in case range is requested !
-        BSS_n_eig = size(BS_E)
-        !
-      endif
-      !
-      if(l_diago) then
-         call LINEAR_ALGEBRA_driver(DIAGO,M=BS_V_right,E_real=BS_E_real)
+         BSS_n_eig = size(BS_E)
+       endif
+       !
+       if(l_diago) then
+         call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
+         BS_V_right=BS_mat
+         YAMBO_FREE(BS_mat)
          BS_E=cmplx(BS_E_real,0._SP,kind=SP)
          neigs_this_cpu = BSS_n_eig
        endif
@@ -335,7 +297,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
 #endif
      !
-     if(l_diago) call live_timing( )
+     if (l_diago) call live_timing( )
      !
      if (l_ydiago) call K_ydiago_resize_variables()
      !
@@ -528,19 +490,30 @@ subroutine K_diago_driver(iq,W,X_static)
        !
        if(K_is_not_hermitian) then
          YAMBO_ALLOC(BS_V_left,(BS_H_dim,BSS_n_eig))
-         YAMBO_ALLOC(BS_V_right,(BS_H_dim,BSS_n_eig))
          YAMBO_ALLOC_P(BS_overlap,(BSS_n_eig,BSS_n_eig))
        else
          YAMBO_ALLOC(BS_E_real,(BSS_n_eig))
-#if defined _SLEPC && !defined _NL
-         if(l_slepc) then
-           YAMBO_ALLOC(BS_V_right,(BS_K_dim(i_BS_mat),BSS_n_eig))
-         endif
-#endif
          if(BSS_perturbative_width.and..not.allocated(BS_corrections)) then
            YAMBO_ALLOC(BS_corrections,(1,BSS_n_eig))
          endif
        endif
+       !
+       if(K_is_not_hermitian) then
+        YAMBO_ALLOC(BS_V_right,(BS_H_dim,BSS_n_eig))
+      else
+        YAMBO_ALLOC(BS_V_right,(BS_K_dim(i_BS_mat),BSS_n_eig))
+      endif
+      !
+#if defined _SLEPC && !defined _NL
+      ! ! In the old diago case BS_V_right is allocated by K_stored_in_a_big_matrix
+      ! if(l_slepc) then
+      !   if(K_is_not_hermitian) then
+      !     !AMBO_ALLOC(BS_V_right,(BS_H_dim,BSS_n_eig))
+      !   else
+      !     !AMBO_ALLOC(BS_V_right,(BS_K_dim(i_BS_mat),BSS_n_eig))
+      !   endif
+      ! endif
+#endif
        !
      end select
      !
@@ -614,43 +587,76 @@ subroutine K_diago_driver(iq,W,X_static)
      !
    end subroutine
    !
-   subroutine K_slepc_local_init()
+   subroutine K_local_init()
      !
-     use com,           ONLY:msg
-     call msg( 'sr', '[SLEPC] BSS_slepc_matrix_format                          ',BSS_slepc_matrix_format)
+#if defined _SLEPC && !defined _NL
      !
-     call parser('BSSEnTarget',l_target_energy)
+     call msg( 'sr', '[SLEPC] BSS_slepc_matrix_format  ',BSS_slepc_matrix_format)
      !
      if (index(BSS_slepc_matrix_format,'explicit')>0) &
      & call msg( 's', '[SLEPC] Faster algorithm but BSE matrix duplicated over MPI tasks')
      if (BSS_slepc_matrix_format=='shell')            &
      & call msg( 's', '[SLEPC] Slower algorithm but BSE matrix distributed over MPI tasks')
      !
-     ! Number of states for partial diagonalization
-     !================================================
-     if (BSS_n_eig==0) then
-       BSS_n_eig = nint(BS_H_dim*.01)
-       call warning(' Calculating only 1% of the eigenvalues.')
-     endif
-     !
-     ! if the number of eigenvalues to calculate is larger than matrix dimensions
-     !
-     if (BSS_n_eig>BS_H_dim) then
-       call warning(' Number of eigenvalues is larger than hamiltonian. Calculating only 1% of the eigenvalues.')
-       BSS_n_eig = nint(BS_H_dim*.01)
-     endif
-     !
-     ! if the number of eigenvalued to calculate is smaller than 1
-     !
-     if (BSS_n_eig<1) then
-       call warning(' Number of eigenvalues is smaller than hamiltonian. Calculating 1 eigenvalue.')
-       BSS_n_eig = 1
-     endif
-     !
      call SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
      !
-   end subroutine K_slepc_local_init
+#endif
+     !
+     call parser('BSSEnTarget',l_target_energy)
+     !
+   end subroutine K_local_init
    !
+   subroutine BSS_n_eig_init()
+     !
+     ! Number of states to be computed
+     !=================================
+     !
+     if (l_slepc) then
+       !
+       if (BSS_n_eig<=0) then
+         BSS_n_eig = nint(BS_H_dim*.01)
+         if (BSS_n_eig<1) BSS_n_eig = 1
+         call warning(' Calculating only 1% of the eigenvalues.')
+       endif
+       !
+       ! if the number of eigenvalues to calculate is larger than matrix dimensions
+       if (BSS_n_eig>BS_H_dim) then
+        call warning(' Number of eigenvalues is larger than hamiltonian. Calculating only 1% of the eigenvalues.')
+        BSS_n_eig = nint(BS_H_dim*.01)
+      endif
+      !
+     endif
+     !
+     if(l_diago) BSS_n_eig = tmp_neig
+     !
+     ! set a Ydiago defaults.
+     if(l_ydiago) then
+       ! In case of ydiago, BSS_n_eig will be overwritten after the solver is called 
+       if( BSS_n_eig==0 ) BSS_n_eig = tmp_neig
+       !
+       if (l_target_energy) then
+         neigs_range  = 0
+         eigvals_range= (/BSS_target_E,BSS_target_E+0.01/HA2EV*BSS_n_eig/)
+       else
+         neigs_range  = (/BSS_First_eig, BSS_First_eig+BSS_n_eig-1/)
+         eigvals_range= 0._SP
+         if (neigs_range(1)<1)        neigs_range(1) = 1
+         if (neigs_range(2)>tmp_neig) neigs_range(2) = tmp_neig
+       endif
+       !
+     endif
+     !
+     Input_n_eig=BSS_n_eig
+     !
+     ! For backward compatibitly I set  
+     neig_shift = 0
+     neigs_this_cpu = BSS_n_eig
+     !
+     ! These will be changed by the YDIAGO_driver routine
+     ! each cpu contains eigen-vectors from [neig_shift + 1, neigs_this_cpu + neig_shift]
+     !
+  end subroutine BSS_n_eig_init
+  !
    subroutine K_slepc_local_free()
      !
      if (BSS_slepc_matrix_format=='shell') then

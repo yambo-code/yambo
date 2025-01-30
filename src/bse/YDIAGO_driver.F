@@ -94,16 +94,20 @@ subroutine YDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
   integer                            :: evec_fac = 1
   ! evec_fac = 2 if bse_solver function was used to diagonalize else 1
 
-  if(present(neigs_range)) then
-    neigs_range_y(1) = neigs_range(1) 
-    neigs_range_y(2) = neigs_range(2) 
-    neigs_range_tmp = c_loc(neigs_range_y)
+  if(PRESENT(neigs_range)) then
+    if(neigs_range(1)>0) then
+      neigs_range_y(1) = neigs_range(1) 
+      neigs_range_y(2) = neigs_range(2) 
+      neigs_range_tmp = c_loc(neigs_range_y)
+    end if
   end if
   !!
   if(present(eigvals_range)) then
-    eigvals_range_y(1) = eigvals_range(1) 
-    eigvals_range_y(2) = eigvals_range(2) 
-    eigvals_range_tmp = c_loc(eigvals_range_y)
+    if(eigvals_range(1)>0._SP) then
+      eigvals_range_y(1) = eigvals_range(1) 
+      eigvals_range_y(2) = eigvals_range(2) 
+      eigvals_range_tmp = c_loc(eigvals_range_y)
+    end if
   end if
   !!
   if(present(BS_VL)) compute_left_eigs = .true.
@@ -239,7 +243,9 @@ endif
 #if defined _ELPA
     if (solver_type_aux .eq. 'e') then
       !
-      if(present(neigs_range))  neig_found = abs(maxval(neigs_range))
+      if(present(neigs_range)) then 
+         if (neigs_range(1) > 0) neig_found = abs(maxval(neigs_range))
+      endif
       !
       error_diago = Heev_Elpa(diago_mat, c_loc(eig_vals), evecs, neig_found, elpa_solver_aux, gpu_str, &
         &           elpa_nthreads)

@@ -285,7 +285,7 @@ subroutine INIT_activate()
    !
    if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSEPSInvTrs BSSInvPFratio BSSInvKdiag')
    if (index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.index(BSS_mode,'o')/=0)  call initactivate(1,'WRbsWF BSSPertWidth')
-   if (index(BSS_mode,'d')/=0)  call initactivate(1,'BSSydiaLib BSSNEig BSSFirstEig')
+   if (index(BSS_mode,'d')/=0)  call initactivate(1,'BSSydiaLib BSSNEig BSSEnTarget BSSFirstEig')
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer BSHayItrIO BSHayItrMAX')
    if (index(BSS_mode,'s')/=0)  then
      call initactivate(1,'BSSNEig BSSEnTarget BSSSlepcApproach BSSSlepcPrecondition BSSSlepcExtraction')

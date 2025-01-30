@@ -34,11 +34,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
 &                        BS_n_g_W,BS_n_g_exch,BS_n_g_fxc,BSE_L_kind,BS_K_cutoff,BSK_IO_mode,BSE_dipole_geometry
- use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
+ use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,BSS_target_E,&
 &                        BSS_dr,BSS_er,BSS_E_dir,BSS_Q_dir,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig,BSS_first_eig,Haydock_iterMAX,BSS_ydiago_solver
 #if defined _SLEPC && !defined _NL
- use BS_solvers,    ONLY:BSS_slepc_target_E,BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_maxit,&
+ use BS_solvers,    ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_maxit,&
  &                       BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_mpd,BSS_slepc_matrix_format
 #endif
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
@@ -331,7 +331,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _SLEPC && !defined _NL
  call it(defs,'BSSSlepcApproach','[SLEPC] Approach ("Krylov-Schur","Generalized-Davidson","Jacobi-Davidson")',&
 &                                                                          BSS_slepc_approach,verb_level=V_resp)
- call it(defs,'BSSEnTarget',   '[SLEPC] Target energy to find eigenvalues',BSS_slepc_target_E,E_unit)
+ call it(defs,'BSSEnTarget',   '[SLEPC] Target energy to find eigenvalues',BSS_target_E,E_unit)
  call it(defs,'BSSSlepcMaxIt', '[SLEPC] Maximum number of iterations',BSS_slepc_maxit)
  call it(defs,'BSSSlepcPrecondition','[SLEPC] Precondition technique (none|preonly+jacobi|bcgs+jacobi)',&
  &                                                                              BSS_slepc_precondition,verb_level=V_resp)

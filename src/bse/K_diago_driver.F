@@ -65,7 +65,7 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  ! Work Space
  !
- integer          :: i_BS_mat,Input_n_eig, tmp_neig, neigs_this_cpu, neig_shift, elpa_solver = 2
+ integer          :: i_BS_mat,Input_n_eig, BS_mat_dim, neigs_this_cpu, neig_shift, elpa_solver = 2
  logical          :: K_is_not_hermitian,l_diago,l_slepc,l_target_energy,l_ydiago,l_kerr_lft,l_kerr_rgt,l_abs_res
  character(1)     :: sec
  character(10)    :: Solver
@@ -151,8 +151,8 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  do i_BS_mat=1,BS_res_ares_n_mat
    !
-   if(.not.BS_K_coupling) tmp_neig = BS_K_dim(i_BS_mat)
-   if(     BS_K_coupling) tmp_neig = BS_H_dim
+   if(.not.BS_K_coupling) BS_mat_dim = BS_K_dim(i_BS_mat)
+   if(     BS_K_coupling) BS_mat_dim = BS_H_dim
    !
    call BSS_n_eig_init()
    !
@@ -182,7 +182,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if (l_diago) then
        !
-       call K_stored_in_a_big_matrix(i_BS_mat,BS_mat,iq,"DIAGO")
+       call K_stored_in_a_big_matrix(i_BS_mat,BS_mat_dim,BS_V_right,iq,"DIAGO")
        !
        ! These line will be needed when the BS kernel will not be folded in BS_mat. But in order to do so
        ! also linear_algebra_is_parallel must be swiched off when K is not hermitian.
@@ -248,7 +248,10 @@ subroutine K_diago_driver(iq,W,X_static)
       endif
       !
       if(l_diago) then
-         ! Linear Algebra driver needs both BS_mat and BS_V_right
+         ! call LINEAR_ALGEBRA_driver(DIAGO,M=BS_V_right,E_cmpl=BS_E,V_left=BS_V_left)
+         ! The following code should be replaced by the above line wich a change in LINEAR_ALGEBRA_driver
+         YAMBO_ALLOC(BS_mat,(BS_mat_dim,BS_mat_dim))
+         BS_mat=BS_V_right
          call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
          YAMBO_FREE(BS_mat)
        endif
@@ -269,9 +272,7 @@ subroutine K_diago_driver(iq,W,X_static)
        endif
        !
        if(l_diago) then
-         call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
-         BS_V_right=BS_mat
-         YAMBO_FREE(BS_mat)
+         call LINEAR_ALGEBRA_driver(DIAGO,M=BS_V_right,E_real=BS_E_real)
          BS_E=cmplx(BS_E_real,0._SP,kind=SP)
          neigs_this_cpu = BSS_n_eig
        endif
@@ -498,21 +499,11 @@ subroutine K_diago_driver(iq,W,X_static)
          endif
        endif
        !
-       if(K_is_not_hermitian) then
-        YAMBO_ALLOC(BS_V_right,(BS_H_dim,BSS_n_eig))
-      else
-        YAMBO_ALLOC(BS_V_right,(BS_K_dim(i_BS_mat),BSS_n_eig))
-      endif
-      !
 #if defined _SLEPC && !defined _NL
-      ! ! In the old diago case BS_V_right is allocated by K_stored_in_a_big_matrix
-      ! if(l_slepc) then
-      !   if(K_is_not_hermitian) then
-      !     !AMBO_ALLOC(BS_V_right,(BS_H_dim,BSS_n_eig))
-      !   else
-      !     !AMBO_ALLOC(BS_V_right,(BS_K_dim(i_BS_mat),BSS_n_eig))
-      !   endif
-      ! endif
+       ! In the old diago case BS_V_right is allocated by K_stored_in_a_big_matrix
+       if(l_slepc) then
+         YAMBO_ALLOC(BS_V_right,(BS_mat_dim,BSS_n_eig))
+       endif
 #endif
        !
      end select
@@ -627,12 +618,12 @@ subroutine K_diago_driver(iq,W,X_static)
       !
      endif
      !
-     if(l_diago) BSS_n_eig = tmp_neig
+     if(l_diago) BSS_n_eig = BS_mat_dim
      !
      ! set a Ydiago defaults.
      if(l_ydiago) then
        ! In case of ydiago, BSS_n_eig will be overwritten after the solver is called 
-       if( BSS_n_eig==0 ) BSS_n_eig = tmp_neig
+       if( BSS_n_eig==0 ) BSS_n_eig = BS_mat_dim
        !
        if (l_target_energy) then
          neigs_range  = 0
@@ -640,8 +631,8 @@ subroutine K_diago_driver(iq,W,X_static)
        else
          neigs_range  = (/BSS_First_eig, BSS_First_eig+BSS_n_eig-1/)
          eigvals_range= 0._SP
-         if (neigs_range(1)<1)        neigs_range(1) = 1
-         if (neigs_range(2)>tmp_neig) neigs_range(2) = tmp_neig
+         if (neigs_range(1)<1)          neigs_range(1) = 1
+         if (neigs_range(2)>BS_mat_dim) neigs_range(2) = BS_mat_dim
        endif
        !
      endif

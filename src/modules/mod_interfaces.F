@@ -308,9 +308,9 @@ module interfaces
      complex(SP), pointer     :: BS_Overlap(:,:)
    end subroutine K_diago_residuals
    !
-   subroutine K_stored_in_a_big_matrix(i_BS_mat,BS_mat,iq,what)
+   subroutine K_stored_in_a_big_matrix(i_BS_mat,BS_mat_dim,BS_mat,iq,what)
     use pars,           ONLY:SP
-    integer,      intent(in) :: i_BS_mat,iq
+    integer,      intent(in) :: i_BS_mat,iq,BS_mat_dim
     complex(SP), allocatable, target :: BS_mat(:,:) 
     character(*), intent(in) :: what
    end subroutine K_stored_in_a_big_matrix

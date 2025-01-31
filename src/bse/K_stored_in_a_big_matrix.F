@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM MG DS
 !
-subroutine K_stored_in_a_big_matrix(i_BS_mat,BS_mat,iq,what)
+subroutine K_stored_in_a_big_matrix(i_BS_mat,BS_mat_dim,BS_mat,iq,what)
  !
  ! Here I fill the kernel (coupling included) in an entire BIG matrix to be
  ! used for diagonalization and/or invertion
@@ -21,21 +21,18 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,BS_mat,iq,what)
  !
 #include <y_memory.h>
  !
- integer,      intent(in) :: i_BS_mat,iq
+ integer,      intent(in) :: i_BS_mat,BS_mat_dim,iq
  complex(SP), allocatable, target :: BS_mat(:,:) 
  character(*), intent(in) :: what
  !
  ! Work Space
  !
  complex(SP) :: Mij
- integer     :: i_Tk,i_Tp,i_r,i_c,H_pos(2),H_shift(2),i_B,BS_mat_dim
+ integer     :: i_Tk,i_Tp,i_r,i_c,H_pos(2),H_shift(2),i_B
  !
  if (allocated(BS_mat)) return
  !
  call timing('BSE matrix filling',OPR='start')
- !
- if (     BS_K_coupling) BS_mat_dim=BS_H_dim
- if (.not.BS_K_coupling) BS_mat_dim=BS_K_dim(i_BS_mat)
  !
  YAMBO_ALLOC(BS_mat,(BS_mat_dim,BS_mat_dim))
  BS_mat    = cZERO

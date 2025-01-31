@@ -143,7 +143,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
  else
    !
-   call K_stored_in_a_big_matrix(1,BS_mat,iq,"INV")
+   call K_stored_in_a_big_matrix(1,BS_H_dim,BS_mat,iq,"INV")
    !
    ! Diagonal removal
    !==================

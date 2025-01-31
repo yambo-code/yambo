@@ -38,7 +38,7 @@ subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
  !
  type(PP_indexes)     :: px
  integer                  :: i1, i_lambda, neig_total, SL_H_dim, res_range(2), &
- &                           n_steps, step_shift, res_shift, i_res, neig_shift_loc
+ &                           n_steps, step_shift, res_shift, i_res
  logical                  :: velocity_correction,l_duplicate_mem_par
  !
  complex(SP), allocatable :: tmp_res(:), BS_R_tmp(:) 

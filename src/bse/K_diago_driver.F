@@ -37,9 +37,8 @@ subroutine K_diago_driver(iq,W,X_static)
  use LIVE_t,         ONLY:live_timing
  use linear_algebra, ONLY:DIAGO
  use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver,YDIAGO_driver,&
- &                        K_diago_left_residuals,K_diago_right_residuals,PL_diago_residual,&
- &                        K_diago_L_res,K_diago_R_res,&
- &                        K_diago_residuals, K_perturbative_residuals, K_stored_in_a_big_matrix
+ &                        PL_diago_residual,K_diago_L_res,K_diago_R_res,&
+ &                        K_diago_perturbative, K_stored_in_a_big_matrix
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
@@ -365,6 +364,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      ! DS: this also should be changed according to the general structure
      if(l_BS_photolum) then
+       if (l_ydiago) call error("PL not implemented in Ydiago solver")
        if (K_is_not_hermitian) then
          call PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap)
        else
@@ -376,43 +376,16 @@ subroutine K_diago_driver(iq,W,X_static)
    !
    ! Define perturbative corrections
    !=================================
-   if (.not. l_ydiago) then 
    if( BS_perturbative_SOC ) then
-     !
-     ! To check if the expression for the non hermitian case is correct
-     if (     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections,2/n_sp_pol,'SOC')
-     if (.not.K_is_not_hermitian) call K_diago_perturbative(   conjg(BS_V_right)*BS_V_right,BS_corrections,2/n_sp_pol,'SOC')
-     BS_E_SOC_corr=real(BS_corrections)
-     !
+      call K_diago_perturbative(2/n_sp_pol,'SOC', i_BS_mat, &
+      &           BS_corrections, BS_V_right, neigs_this_cpu, neig_shift, BS_V_left, BS_Overlap) 
+      BS_E_SOC_corr=real(BS_corrections)
    endif
    !
-   if(BSS_perturbative_width) then
-     !
-     if(     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections(1,:),1,'WID')
-     if(.not.K_is_not_hermitian) call K_diago_perturbative(   conjg(BS_V_right)*BS_V_right,BS_corrections(1,:),1,'WID')
-     BS_E=BS_E-aimag(BS_corrections(1,:))
-     !
-   endif
-     !
-   else
-     !
-     if (l_BS_photolum) call error("PL not implemented in Ydiago solver")
-     !
-     if( BS_perturbative_SOC ) then
-        call K_perturbative_residuals(2/n_sp_pol,'SOC', i_BS_mat, &
-        &           BS_corrections, BS_V_right, neigs_this_cpu, neig_shift, BS_V_left, BS_Overlap) 
-        BS_E_SOC_corr=real(BS_corrections)
-     endif
-        !
-     if(BSS_perturbative_width) then 
-        call K_perturbative_residuals(1,'WID', i_BS_mat, &
-        &           BS_corrections, BS_V_right, neigs_this_cpu, neig_shift, BS_V_left, BS_Overlap) 
-        BS_E=BS_E-aimag(BS_corrections(1,:))
-     endif
-     !
-     !if (l_BS_photolum) call K_PL_residuals(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian, &
-     !&     !                                        neigs_this_cpu, neig_shift,BS_overlap) 
-     !
+   if(BSS_perturbative_width) then 
+      call K_diago_perturbative(1,'WID', i_BS_mat, &
+      &           BS_corrections, BS_V_right, neigs_this_cpu, neig_shift, BS_V_left, BS_Overlap) 
+      BS_E=BS_E-aimag(BS_corrections(1,:))
    endif
    !
    ! Now I calculate the physical quantities

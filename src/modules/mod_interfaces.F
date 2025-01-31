@@ -247,17 +247,6 @@ module interfaces
      real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
    end subroutine
    !
-   subroutine K_diago_right_residuals(mode,i_BS_mat,BS_E,BS_R_right,BS_V_right)
-     use BS_solvers,    ONLY:BSS_n_eig
-     use pars,          ONLY:SP
-     implicit none
-     character(*),intent(in)  :: mode
-     integer,     intent(in)  :: i_BS_mat
-     complex(SP), intent(in)  :: BS_E(BSS_n_eig)
-     complex(SP), intent(out) :: BS_R_right(BSS_n_eig)
-     complex(SP), intent(in)  :: BS_V_right(:,:)
-   end subroutine K_diago_right_residuals
-   !
    subroutine K_diago_R_res(mode,i_BS_mat,BS_E, &
     &                  neigs_this_cpu, neig_shift,BS_R_right,BS_V_right)
      use pars,          ONLY:SP
@@ -268,18 +257,6 @@ module interfaces
      complex(SP), pointer,             intent(out) :: BS_R_right(:)
      complex(SP), target, allocatable, intent(in)  :: BS_V_right(:,:)
    end subroutine K_diago_R_res
-   !
-   subroutine K_diago_left_residuals(mode,i_BS_mat,BS_E,BS_R_left,BS_V_left,BS_overlap)
-     use BS_solvers,    ONLY:BSS_n_eig
-     use pars,          ONLY:SP
-     implicit none
-     character(*),intent(in)  :: mode
-     integer,     intent(in)  :: i_BS_mat
-     complex(SP), intent(in)  :: BS_E(BSS_n_eig)
-     complex(SP),target,  intent(out) :: BS_R_left(BSS_n_eig)
-     complex(SP),         intent(in)  :: BS_V_left(:,:)
-     complex(SP),optional,intent(in)  :: BS_overlap(BSS_n_eig,BSS_n_eig)
-   end subroutine K_diago_left_residuals
    !
    subroutine K_diago_L_res(mode,i_BS_mat,BS_E, &
     &                  neigs_this_cpu, neig_shift,BS_R_left,BS_V_left,BS_overlap)
@@ -293,21 +270,6 @@ module interfaces
      complex(SP), pointer, optional,   intent(in)  :: BS_Overlap(:,:) 
    end subroutine K_diago_L_res
    !
-   subroutine K_diago_residuals(mode, i_BS_mat, BS_E, BS_R_right, BS_VR, &
-    &                  neigs_this_cpu, neig_shift, BS_R_left, BS_VL, BS_Overlap)
-     ! For distributed eigenvectors
-     use pars,           ONLY:SP
-     implicit none
-     character(*),intent(in)  :: mode
-     integer,intent(in)       :: i_BS_mat, neigs_this_cpu, neig_shift
-     complex(SP), allocatable :: BS_E(:)
-     complex(SP), pointer     :: BS_R_right(:)
-     complex(SP), target,allocatable     :: BS_VR(:,:)
-     complex(SP), pointer     :: BS_R_left(:)
-     complex(SP), target, allocatable     :: BS_VL(:,:)
-     complex(SP), pointer     :: BS_Overlap(:,:)
-   end subroutine K_diago_residuals
-   !
    subroutine K_stored_in_a_big_matrix(i_BS_mat,BS_mat_dim,BS_mat,iq,what)
     use pars,           ONLY:SP
     integer,      intent(in) :: i_BS_mat,iq,BS_mat_dim
@@ -315,7 +277,7 @@ module interfaces
     character(*), intent(in) :: what
    end subroutine K_stored_in_a_big_matrix
    !
-   subroutine K_perturbative_residuals(pert_dim, what, i_BS_mat, &
+   subroutine K_diago_perturbative(pert_dim, what, i_BS_mat, &
     &           BS_corrections, BS_VR, neigs_this_cpu, neig_shift, BS_VL, BS_Overlap) 
      use pars,           ONLY:SP,cZERO
      use wrapper_omp,    ONLY:V_dot_V_omp
@@ -331,7 +293,7 @@ module interfaces
      complex(SP), target,allocatable           :: BS_VR(:,:)
      complex(SP), target, allocatable          :: BS_VL(:,:)
      complex(SP), pointer                      :: BS_Overlap(:,:)
-   end subroutine K_perturbative_residuals
+   end subroutine K_diago_perturbative
 !
    subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap) 
      use pars,           ONLY:SP

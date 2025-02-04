@@ -551,6 +551,8 @@ subroutine K_diago_driver(iq,W,X_static)
      !
    end subroutine
    !
+#endif
+   !
    subroutine K_local_init()
      !
 #if defined _SLEPC && !defined _NL
@@ -619,8 +621,10 @@ subroutine K_diago_driver(iq,W,X_static)
      ! These will be changed by the YDIAGO_driver routine
      ! each cpu contains eigen-vectors from [neig_shift + 1, neigs_this_cpu + neig_shift]
      !
-  end subroutine BSS_n_eig_init
-  !
+   end subroutine BSS_n_eig_init
+   !
+#if defined _SLEPC && !defined _NL
+   !
    subroutine K_slepc_local_free()
      !
      if (BSS_slepc_matrix_format=='shell') then

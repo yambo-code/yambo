@@ -9,6 +9,9 @@
 
  use pars,         ONLY:IPL
  use y_memory,     ONLY:MEM_err,MEM_msg,MEM_count,MEM_global_mesg
+#if defined _OPENACC || defined _OPENMP_GPU
+ use devxlib,      ONLY:devxlib_map,devxlib_unmap,devxlib_mapped,devxlib_memcpy_h2d
+#endif
 
  implicit none
 

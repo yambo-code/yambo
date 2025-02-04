@@ -116,14 +116,14 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
    !
    if(present(bsL_magn)) then
      if(associated(bsL_magn)) then
-       call io_bulk(ID,'BS_L_magn_Residuals',VAR_SZ=(/2,2,BSS_n_eig/))
+       call io_bulk(ID,'BS_L_magn_Residuals',VAR_SZ=(/2,BSS_n_eig,2/))
        call io_bulk(ID,C2=bsL_magn)
      endif
    endif
    !
    if(present(bsR_magn)) then
      if(associated(bsR_magn)) then
-       call io_bulk(ID,'BS_R_magn_Residuals',VAR_SZ=(/2,2,BSS_n_eig/))
+       call io_bulk(ID,'BS_R_magn_Residuals',VAR_SZ=(/2,BSS_n_eig,2/))
        call io_bulk(ID,C2=bsR_magn)
      endif
    endif

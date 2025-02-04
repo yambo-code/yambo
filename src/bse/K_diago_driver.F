@@ -299,7 +299,9 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if (l_diago) call live_timing( )
      !
-     if (l_ydiago) call K_ydiago_resize_variables()
+     if (l_ydiago) then
+       if (Input_n_eig>BSS_n_eig) call K_ydiago_resize_variables()
+     endif
      !
      ! Compute residuals
      !
@@ -323,10 +325,10 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if(l_BS_magnons) then
        call K_diago_R_res("mag1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptrR,BS_V_right)
-       BS_R_right_magn(1,:) = tmp_res_ptrR
+       BS_R_right_magn(:,1) = tmp_res_ptrR
        if(n_spinor==2) then
          call K_diago_R_res("mag2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptrR,BS_V_right)
-         BS_R_right_magn(2,:) = tmp_res_ptrR
+         BS_R_right_magn(:,2) = tmp_res_ptrR
        endif
      endif
      !
@@ -453,8 +455,8 @@ subroutine K_diago_driver(iq,W,X_static)
          YAMBO_ALLOC_P(BS_R_right_dich,(BSS_n_eig,2))
        endif
        if (l_BS_magnons) then
-         YAMBO_ALLOC_P(BS_R_left_magn,(2,BSS_n_eig))
-         YAMBO_ALLOC_P(BS_R_right_magn,(2,BSS_n_eig))
+         YAMBO_ALLOC_P(BS_R_left_magn,(BSS_n_eig,2))
+         YAMBO_ALLOC_P(BS_R_right_magn,(BSS_n_eig,2))
        endif
        if(l_BS_photolum) then
          YAMBO_ALLOC_P(BS_R_PL,(2,BSS_n_eig))
@@ -524,8 +526,6 @@ subroutine K_diago_driver(iq,W,X_static)
 #if defined _SLEPC && !defined _NL
    !
    subroutine K_slepc_resize_variables()
-     !
-     use BS_solvers,   ONLY:BSS_resize
      !
      call warning(" resizing alla variables whose size depends on BSS_n_eig ")
      if(allocated(BS_E))          call BSS_resize(BS_E)

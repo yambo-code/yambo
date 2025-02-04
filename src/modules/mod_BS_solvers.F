@@ -272,11 +272,11 @@ module BS_solvers
      complex(SP), allocatable                :: TMP_C2(:,:)
      integer :: dim1
      !
-     dim1=size(VAR_C2(:,1))
-     allocate(TMP_C2(dim1,BSS_n_eig))
-     TMP_C2=VAR_C2(:,:BSS_n_eig)
+     dim1=size(VAR_C2,2)
+     allocate(TMP_C2(BSS_n_eig,dim1))
+     TMP_C2=VAR_C2(:BSS_n_eig,:)
      deallocate(VAR_C2)
-     allocate(VAR_C2(dim1,BSS_n_eig))
+     allocate(VAR_C2(BSS_n_eig,dim1))
      VAR_C2=TMP_C2
      !
    end subroutine resizeC2
@@ -287,11 +287,11 @@ module BS_solvers
      complex(SP), allocatable            :: TMP_C2(:,:)
      integer :: dim1
      !
-     dim1=size(VAR_C2(:,1))
-     allocate(TMP_C2(dim1,BSS_n_eig))
-     TMP_C2=VAR_C2(:,:BSS_n_eig)
-     deallocate(VAR_C2); nullify(VAR_C2)
-     allocate(VAR_C2(dim1,BSS_n_eig))
+     dim1=size(VAR_C2,2)
+     allocate(TMP_C2(BSS_n_eig,dim1))
+     TMP_C2=VAR_C2(:BSS_n_eig,:)
+     deallocate(VAR_C2)
+     allocate(VAR_C2(BSS_n_eig,dim1))
      VAR_C2=TMP_C2
      !
    end subroutine resizeC2p

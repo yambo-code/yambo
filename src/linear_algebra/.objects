@@ -13,7 +13,7 @@ CHASE_objs = SERIAL_HERMITIAN_chase.o SERIAL_PSEUDOHERM_chase.o
 CHASE_objs += PARALLEL_HERMITIAN_chase.o
 #endif
 #if defined _GPU && defined _PGI
-GPU_objs = SERIAL_lin_system_gpu.o
+GPU_objs = SERIAL_lin_system_gpu.o PARALLEL_lin_system_gpu.o
 #endif
 objs = LINEAR_ALGEBRA_driver.o SERIAL_SVD_inversion.o SERIAL_inversion.o SERIAL_diago.o \
        SERIAL_HERMITIAN_diago.o SERIAL_HERMITIAN_diagx.o SERIAL_lin_system.o \

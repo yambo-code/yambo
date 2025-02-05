@@ -84,7 +84,6 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  else if (present(M)) then
    N=size(M,1)
  endif
-
  if(present(neig).and.((neig<=0).or.(neig>size(M,1)))) then
         neig = min(n,10)
  endif
@@ -106,7 +105,6 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  if (idriver==SVD_INV.or.idriver==INV.or.idriver==DIAGO.or.idriver==DIAGX&
 &                    .or.idriver==MAT_MUL) USE_GPU=.false.
- if (USE_GPU) lib_in_use=USE_LK
  !
 #if ! defined _CHASE
  if (idriver==CHASE) idriver=DIAGO
@@ -358,18 +356,26 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    !
  endif
  !
- ! =============== SERIAL SECTION GPU ============================================================
+ ! =============== SECTION GPU ===============================================================
  !
- if (lib_in_use==USE_LK.and.USE_GPU) then
+ if (USE_GPU) then
    !
    ! ####> LINEAR SYSTEM SOLUTION
    !
    if (idriver==LIN_SYS) then
+     if (lib_in_use==USE_LK) then
 #if defined _GPU && defined _PGI
-     call SERIAL_lin_system_gpu(N,N,DEV_VAR(M_slk%blc)(:,:,M_slk%I),DEV_VAR(B_slk%blc)(:,:,B_slk%I))
+       call SERIAL_lin_system_gpu(N,N,DEV_VAR(M_slk%blc)(:,:,M_slk%I),DEV_VAR(B_slk%blc)(:,:,B_slk%I))
 #else
-     call error('[LA] GPU support required but not present')
+       call error('[LA] GPU support required but not present')
 #endif
+     else if (lib_in_use==USE_SLK) then
+#if defined _GPU && defined _PGI && defined _CUSOLVERMP
+       call PARALLEL_lin_system_gpu(M_slk, B_slk, N, N)
+#else
+       call error('[LA] GPU support required but not present')
+#endif
+     endif
    endif
    !
  endif

@@ -52,6 +52,7 @@ module gpu_m
   public
   !
   integer :: GPU_test_dim = 1000000
+  integer :: device_id = 0
   !
 #ifdef _GPU
   logical, parameter:: have_gpu=.true.
@@ -188,7 +189,8 @@ contains
 #if defined _CUDAF && defined _CUDA
     ierr = cudaGetDeviceCount( ndev )
     if (ierr/=0) call error("[GPU] cannot get DeviceCount")
-    ierr = cudaSetDevice(mod(myid_host_loc, ndev))
+    device_id = mod(myid_host_loc, ndev)
+    ierr = cudaSetDevice(device_id)
     if (ierr/=0) call error("[GPU] cannot set device")
     ierr = cudaDeviceSynchronize()
     if (ierr/=0) call error("[GPU] cannot device-sync")
@@ -196,7 +198,8 @@ contains
 #if defined _OPENACC
     devtype = acc_get_device_type()
     ndev = acc_get_num_devices(devtype)
-    call acc_set_device_num(mod(myid_host_loc, ndev),devtype)
+    device_id = mod(myid_host_loc, ndev)
+    call acc_set_device_num(device_id,devtype)
 # if defined _CUDA
     ierr = cudaDeviceSynchronize()
     if (ierr/=0) call error("[GPU] cannot device-sync")
@@ -205,7 +208,8 @@ contains
 #if defined _HIP
     ierr = hipGetDeviceCount( ndev )
     if (ierr/=0) call error("[GPU] cannot get DeviceCount")
-    ierr = hipSetDevice(mod(myid_host_loc, ndev))
+    device_id = mod(myid_host_loc, ndev)
+    ierr = hipSetDevice(device_id)
     if (ierr/=0) call error("[GPU] cannot set device")
     ierr = hipDeviceSynchronize()
     if (ierr/=0) call error("[GPU] cannot device-sync")
@@ -213,7 +217,8 @@ contains
 #if defined _MKLGPU && defined _OPENMP_GPU
     ndev = omp_get_num_devices()
     if (ndev==0) call error("[GPU] cannot get DeviceCount")
-    call omp_set_default_device(mod(myid_host_loc, ndev))
+    device_id = mod(myid_host_loc, ndev)
+    call omp_set_default_device(device_id)
 #endif
     !
     gpu_subscription=PAR_COM_HOST%n_CPU / ndev
@@ -298,9 +303,13 @@ contains
     !
 #endif
     !
+#ifndef _CUSOLVERMP
+    !
     ! basic LinAlg functionalities of devxlib
     !
     call dev_linalg_setup()
+    !
+#endif
     !
   end subroutine gpu_setup
   !
@@ -310,8 +319,10 @@ contains
     integer :: istat
     istat = cublasInit()
     if(istat/=0) call error('cublasInit failed')
+#ifndef _CUSOLVERMP
     istat = cusolverDnCreate(cusolv_h)
     if(istat/=CUSOLVER_STATUS_SUCCESS) call error('cusolverDnCreate failed')
+#endif
 #endif
     gpu_linalg_init=.true.
   end subroutine

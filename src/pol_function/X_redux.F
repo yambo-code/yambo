@@ -80,8 +80,6 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  !
  compute_on_gpu=have_gpu.and.X_use_gpu
  !
- if (PAR_COM_SLK%n_CPU>=4.and.have_gpu) compute_on_gpu=.false.
- !
  ! AMD-GPUs + GPU linalg not yet implemented
  if (have_hip) compute_on_gpu=.false.
  !
@@ -245,7 +243,6 @@ subroutine X_redux(iq,what,X_par,Xw,X)
      !                  BUFFER%blc(:,:,BUFFER%I) =  Xo%blc(:,:,1)
      !endif
      !
-     !call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=BUFFER)
      call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=Xo)
      !
    else
@@ -389,8 +386,8 @@ end subroutine
      !
      if (compute_on_gpu) then
        !
-       KERNEL_p => DEV_VAR(KERNEL%blc)(:,:,:)
-       Xo_p     => DEV_VAR(Xo%blc)(:,:,:)
+       KERNEL_p => DEV_VAR(KERNEL%blc)
+       Xo_p     => DEV_VAR(Xo%blc)
        !
        !DEV_ACC_DEBUG data present(KERNEL_p,Xo_p,bare_qpg)
        !DEV_ACC parallel loop collapse(2)

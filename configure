@@ -848,6 +848,7 @@ GPU_SUPPORT
 enable_openmp5
 enable_openacc
 enable_cuda_fortran
+enable_cusolvermp
 def_compiler
 HDF5_MODE
 DEBUG_FLAGS
@@ -975,6 +976,7 @@ enable_openacc
 enable_openmp5
 enable_open_mp
 enable_mpi
+enable_cusolvermp
 with_mpi_libs
 with_mpi_path
 with_mpi_libdir
@@ -1722,6 +1724,7 @@ Optional Features:
   --enable-openmp5        Enable OPENMP5 support [default=no]
   --enable-open-mp        Enable OpenMP support
   --enable-mpi            Enable mpi parallelization . Default is yes.
+  --enable-cusolvermp     Enable cuSOLVERMp support [default=no]
   --enable-ydb            Activate the YDB support
   --enable-int-linalg     Force internal linear algebra. Default is no
   --enable-openmp-int-linalg
@@ -7317,7 +7320,12 @@ if test x"$enable_openacc" != "xno"      ; then GPU_SUPPORT="openacc" ; enable_o
 if test x"$enable_openmp5" != "xno"      ; then GPU_SUPPORT="openmp5" ; fi
 #
 
-
+# Check whether --enable-cusolvermp was given.
+if test "${enable_cusolvermp+set}" = set; then :
+  enableval=$enable_cusolvermp;
+else
+  enable_cusolvermp="no"
+fi
 
 
 #
@@ -15176,6 +15184,11 @@ else
   with_cuda_int_libs=cufft,cublas,cusolver
 fi
 
+# Check whether --enable-cusolvermp was given.
+if test x"$enable_cusolvermp" != "xno" ; then
+  with_cuda_int_libs+=",cusolvermp"
+fi
+
 #
 # Check whether --enable-nvtx was given.
 if test "${enable_nvtx+set}" = set; then :
@@ -15480,6 +15493,11 @@ if test x"$enable_openmp5" != "xno" ; then
    #
 fi
 #
+
+# cuSOLVERMp
+if test x"$enable_cusolvermp" != "xno" ; then
+    def_gpu+=" -D_CUSOLVERMP "
+fi
 
 
 

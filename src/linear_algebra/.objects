@@ -7,7 +7,7 @@ SLK_objs = SLK_test.o SLK_ORTHO_group.o SLK_ORTHO_init.o SLK_setup.o PARALLEL_in
 SLEPC_objs = MATRIX_slepc.o 
 #endif
 #if defined _GPU && defined _PGI
-GPU_objs = SERIAL_lin_system_gpu.o
+GPU_objs = SERIAL_lin_system_gpu.o PARALLEL_lin_system_gpu.o
 #endif
 objs = LINEAR_ALGEBRA_driver.o SERIAL_SVD_inversion.o SERIAL_inversion.o SERIAL_diagonalization.o \
        SERIAL_HERMITIAN_diagonalization.o SERIAL_lin_system.o $(SLK_objs) $(SLEPC_objs) $(GPU_objs)

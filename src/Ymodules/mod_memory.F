@@ -85,6 +85,7 @@ module y_memory
 &                             MEM_i1_d, MEM_i2_d, MEM_i3_d, MEM_i4_d, MEM_i5_d,             &
 &                             MEM_r1_d, MEM_r2_d, MEM_r3_d, MEM_r4_d, MEM_r5_d,             &
 &                             MEM_c1_d, MEM_c2_d, MEM_c3_d, MEM_c4_d, MEM_c5_d, MEM_c6_d,   &
+&                             MEM_ipl1_d, MEM_ipl2_d,                                       &
 #  ifndef _DOUBLE
 &                             MEM_cd1_d,MEM_cd2_d,MEM_cd3_d,MEM_cd4_d,MEM_cd5_d,MEM_cd6_d,  &
 #  endif
@@ -100,6 +101,7 @@ module y_memory
 #endif
 &                             MEM_l1,  MEM_l2,  MEM_l3,  MEM_l4,  MEM_l5,  MEM_l6,          &
 &                             MEM_lp1,          MEM_lp3,                                    &
+&                             MEM_ipl1, MEM_ipl2,                                           &
 &                             MEM_ch1,          MEM_ch3
  end interface MEM_count
  !
@@ -110,7 +112,8 @@ module y_memory
 #  endif
 &                             MEM_i1_d, MEM_i2_d, MEM_i3_d, MEM_i4_d, MEM_i5_d,             &
 &                             MEM_r1_d, MEM_r2_d, MEM_r3_d, MEM_r4_d, MEM_r5_d,             &
-&                             MEM_c1_d, MEM_c2_d, MEM_c3_d, MEM_c4_d, MEM_c5_d, MEM_c6_d
+&                             MEM_c1_d, MEM_c2_d, MEM_c3_d, MEM_c4_d, MEM_c5_d, MEM_c6_d,   &
+&                             MEM_ipl1_d, MEM_ipl2_d
  end interface MEM_count_d
  !
  contains
@@ -198,6 +201,11 @@ module y_memory
      integer(LP) ::i(:)
      call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1)),HOST_)
    end subroutine
+   subroutine MEM_ipl1(name,i)
+     character(*)::name
+     integer(IPL) ::i(:)
+     call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1)),HOST_)
+   end subroutine
    subroutine MEM_ch1(name,ch)
      character(*)::name
      character   ::ch(:)
@@ -206,6 +214,11 @@ module y_memory
    subroutine MEM_i2(name,i)
      character(*)::name
      integer     ::i(:,:)
+     call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1,1)),HOST_)
+   end subroutine
+   subroutine MEM_ipl2(name,i)
+     character(*)::name
+     integer(IPL) ::i(:,:)
      call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1,1)),HOST_)
    end subroutine
    subroutine MEM_i3(name,i)
@@ -250,9 +263,19 @@ module y_memory
      integer DEV_ATTR ::i(:)
      call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1)),DEV_)
    end subroutine
+   subroutine MEM_ipl1_d(name,i)
+     character(*)::name
+     integer(IPL) DEV_ATTR ::i(:)
+     call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1)),DEV_)
+   end subroutine
    subroutine MEM_i2_d(name,i)
      character(*)::name
      integer DEV_ATTR ::i(:,:)
+     call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1,1)),DEV_)
+   end subroutine
+   subroutine MEM_ipl2_d(name,i)
+     character(*)::name
+     integer(IPL) DEV_ATTR ::i(:,:)
      call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1,1)),DEV_)
    end subroutine
    subroutine MEM_i3_d(name,i)

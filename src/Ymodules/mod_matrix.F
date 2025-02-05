@@ -10,6 +10,9 @@ module matrix
  use pars,       ONLY:schlen,SP
  use parallel_m, ONLY:yMPI_comm
  use devxlib,    ONLY:devxlib_mapped,devxlib_memset_d
+#ifdef _CUSOLVERMP
+ use cusolvermp, ONLY:cusolverMpHandle, cal_comm, cusolverMpGrid, cusolverMpMatrixDescriptor
+#endif
  !
 #include<dev_defs.h>
 #include<y_memory.h>
@@ -51,6 +54,14 @@ module matrix
    integer :: lrwork
    integer :: liwork
    integer :: info
+   !
+#ifdef _CUSOLVERMP
+   ! cuSOLVERMp
+   type(cusolverMpHandle)           :: cusolvermp_h
+   type(cal_comm)                   :: comm_mp
+   type(cusolverMpGrid)             :: grid_mp
+   type(cusolverMpMatrixDescriptor) :: desc_mp
+#endif
    !
    ! COMMs
    type(yMPI_comm) :: INTRA_comm

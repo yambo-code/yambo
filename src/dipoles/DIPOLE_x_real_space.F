@@ -47,10 +47,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
  !
  YAMBO_ALLOC(x_cc,(fft_size,3,1))
  !
- x_center(1)=molecule_position(1)*a(1,1)
- x_center(2)=molecule_position(2)*a(2,2)
- x_center(3)=molecule_position(3)*a(3,3)
- call load_cc(.false.,x_center,1)
+ call load_cc(.false.,molecule_position,1)
  !
  n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&

@@ -13,6 +13,9 @@ MODULE timing_m
  USE pars,          ONLY:SP,DP,lchlen
  USE openmp,        ONLY:master_thread
  USE stderr,        ONLY:log_as_a_file
+#ifdef _NVTX
+ USE nvtx,          ONLY:nvtxStartRange,nvtxEndRange
+#endif
  !
  IMPLICIT NONE
  PRIVATE
@@ -146,9 +149,15 @@ MODULE timing_m
      ! 
      SELECT CASE ( TRIM(opr_) )  
        CASE("start","START") 
+#ifdef _NVTX
+         CALL nvtxStartRange(TRIM(name), index)
+#endif
          CALL clock_start( listp%clock(index) ) 
        CASE("stop","STOP")
-         CALL clock_stop( listp%clock(index) ) 
+         CALL clock_stop( listp%clock(index) )
+#ifdef _NVTX
+         CALL nvtxEndRange
+#endif
        CASE DEFAULT
          CALL error('timing:  Invalid operation '//TRIM(opr_))
      END SELECT

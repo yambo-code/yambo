@@ -15251,7 +15251,6 @@ fi
 
 use_int_cuda_libs="no"
 use_gpu_libs="no"
-enable_nvtx=no
 DEVXLIB_CUDALIBS=""
 DEVXLIBLIB_FLAGS=""
 GPU_LIBS=""

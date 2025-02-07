@@ -54,9 +54,10 @@ module BS_solvers
  character(schlen):: BSS_mode
  complex(SP)      :: BSS_Wd
  integer  :: BSS_n_freqs
- integer  :: BSS_n_eig            !number of eigenvalues to find
- integer  :: BSS_first_eig        !index of the first eigenvalue to find
- real(SP) :: BSS_target_E         !find eigenvalues close to this energy
+ integer  :: BSS_n_eig            ! number of eigenvalues to find. Ydiago/Slepc
+ integer  :: BSS_first_eig        ! index of the first eigenvalue to find. Ydiago
+ real(SP) :: BSS_target_E         ! find eigenvalues close to this energy. Slepc
+ real(SP) :: BSS_trange_E(2)      ! find eigenvalues in this energy range. Ydiago
  real(SP) :: BSS_er(2)
  real(SP) :: BSS_dr(2)
  real(SP) :: BSS_damp_reference

@@ -29,7 +29,7 @@ subroutine K_diago_driver(iq,W,X_static)
 &                         BS_res_ares_n_mat,l_BS_ares_from_res !,BS_Blocks_symmetrize_K,&
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode, BSS_resize, &
 &                         BSS_write_eig_2_db,BSS_eh_W,BSS_n_eig,BS_E, write_bs_ev_par, &
-&                         BSS_ydiago_solver,BSS_first_eig,BSS_target_E
+&                         BSS_ydiago_solver,BSS_first_eig,BSS_target_E,BSS_trange_E,BSS_er
  use X_m,            ONLY:X_t,X_OUTPUT_driver
  use electrons,      ONLY:n_sp_pol,n_spinor
  use frequency,      ONLY:w_samp
@@ -65,7 +65,8 @@ subroutine K_diago_driver(iq,W,X_static)
  ! Work Space
  !
  integer          :: i_BS_mat,Input_n_eig, BS_mat_dim, neigs_this_cpu, neig_shift, elpa_solver = 2
- logical          :: K_is_not_hermitian,l_diago,l_slepc,l_target_energy,l_ydiago,l_kerr_lft,l_kerr_rgt,l_abs_res
+ logical          :: K_is_not_hermitian,l_diago,l_slepc,l_target_energy,l_target_erange,l_neig_input, &
+ &                   l_ydiago,l_kerr_lft,l_kerr_rgt,l_abs_res
  character(1)     :: sec
  character(10)    :: Solver
  ! Ydiago varibles
@@ -557,18 +558,71 @@ subroutine K_diago_driver(iq,W,X_static)
      !
 #if defined _SLEPC && !defined _NL
      !
-     call msg( 'sr', '[SLEPC] BSS_slepc_matrix_format  ',BSS_slepc_matrix_format)
-     !
-     if (index(BSS_slepc_matrix_format,'explicit')>0) &
-     & call msg( 's', '[SLEPC] Faster algorithm but BSE matrix duplicated over MPI tasks')
-     if (BSS_slepc_matrix_format=='shell')            &
-     & call msg( 's', '[SLEPC] Slower algorithm but BSE matrix distributed over MPI tasks')
-     !
-     call SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
+     if (l_slepc) then
+       !
+       call msg( 'sr', '[SLEPC] BSS_slepc_matrix_format  ',BSS_slepc_matrix_format)
+       if (index(BSS_slepc_matrix_format,'explicit')>0) &
+       & call msg( 's', '[SLEPC] Faster algorithm but BSE matrix duplicated over MPI tasks')
+       if (BSS_slepc_matrix_format=='shell')            &
+       & call msg( 's', '[SLEPC] Slower algorithm but BSE matrix distributed over MPI tasks')
+       !
+       call SlepcInitialize(PETSC_NULL_CHARACTER,ierr)
+       !
+     endif
      !
 #endif
      !
      call parser('BSSEnTarget',l_target_energy)
+     !
+     if (l_ydiago) then
+       !
+       if (BSS_ydiago_solver/="s" .and. BSS_ydiago_solver/="e") then
+         call warning("Invalid ydiago solver. Switching to default")
+#if defined _ELPA
+         BSS_ydiago_solver="e"
+#else
+         BSS_ydiago_solver="s"
+#endif
+       endif
+       !
+#if defined _GPU && defined _ELPA
+       if (BSS_ydiago_solver=="s") then
+         call warning("gpu ported code. Switching to Elpa solver")
+         BSS_ydiago_solver="e"
+       endif
+#endif
+       !
+#if !defined _ELPA
+       if (BSS_ydiago_solver=="e") then
+         call warning("Elpa solver selected, but elpa not linked. Switching to scalapack")
+         BSS_ydiago_solver="s"
+       endif
+#endif
+       !
+       l_target_erange=BSS_trange_E(1)>0._SP .and. BSS_trange_E(2)>BSS_trange_E(1)
+       l_neig_input=BSS_n_eig>0
+       !
+       if (l_target_erange .and. BSS_ydiago_solver=="e") then
+#if defined _GPU && defined _ELPA
+         call warning(' energy range not compatible with elpa. switching it off on gpu')
+         l_target_erange=.false.
+#else
+         call warning(' energy range not compatible with elpa. switching to scalapack on cpu')
+         BSS_ydiago_solver="s"
+#endif
+       endif
+       !
+       if (BSS_first_eig>1 .and. BSS_ydiago_solver=="e") then
+#if defined _GPU && defined _ELPA
+         call warning(' eigenvalues range not compatible with elpa. switching it off on gpu')
+         BSS_first_eig=1
+#else
+         call warning(' eigenvalues range not compatible with elpa. switching to scalapack on cpu')
+         BSS_ydiago_solver="s"
+#endif
+       endif
+       !
+     endif
      !
    end subroutine K_local_init
    !
@@ -597,17 +651,29 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      ! set a Ydiago defaults.
      if(l_ydiago) then
+       !
        ! In case of ydiago, BSS_n_eig will be overwritten after the solver is called 
        if( BSS_n_eig==0 ) BSS_n_eig = BS_mat_dim
        !
-       if (l_target_energy) then
-         neigs_range  = 0
-         eigvals_range= (/BSS_target_E,BSS_target_E+0.01/HA2EV*BSS_n_eig/)
-       else
-         neigs_range  = (/BSS_First_eig, BSS_First_eig+BSS_n_eig-1/)
+       neigs_range  = 0
+       eigvals_range= BSS_er
+       !
+       if( l_neig_input ) then
+         ! in case the user specified the number of eigenvalues
+         neigs_range(1)=1
+         if(BSS_First_Eig>0) neigs_range(1)=BSS_First_eig
+         neigs_range(2)=neigs_range(1)+BSS_n_eig-1
          eigvals_range= 0._SP
          if (neigs_range(1)<1)          neigs_range(1) = 1
          if (neigs_range(2)>BS_mat_dim) neigs_range(2) = BS_mat_dim
+       else if (l_target_erange) then
+         ! in case the user specified an energy range
+         neigs_range  = 0
+         eigvals_range= BSS_trange_E
+       else if (BSS_ydiago_solver=="s") then
+         ! with scalapack use the energy range needed by default
+         neigs_range  = 0
+         eigvals_range= BSS_er
        endif
        !
      endif

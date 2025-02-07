@@ -65,7 +65,7 @@ subroutine YDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
   !
   ! Local variables
   type(c_ptr)                        :: mpicxt, diago_mat, evecs
-  integer                            :: nProcs, my_rank
+  integer                            :: nProcs, my_rank, neig_tmp
   integer(YDIAGO_INT)                :: SL_H_dim, ProcX, ProcY, elpa_nthreads, mpi_comm
   integer(ERROR_INT)                 :: error_diago ! diagonalization error code
   integer                            :: ierr !! mpi error code 
@@ -94,8 +94,12 @@ subroutine YDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
 
   if(PRESENT(neigs_range)) then
     if(neigs_range(1)>0) then
+      neig_tmp=neigs_range(2)-neigs_range(1)+1
       neigs_range_y(1) = neigs_range(1) 
       neigs_range_y(2) = neigs_range(2) 
+      ! DS: I need to divide by 2 the nnumber of requested eigenv in the
+      ! coupling case, otherwise dimensions do not match
+      if (BS_K_coupling) neigs_range_y(2) = neigs_range_y(1) + neig_tmp/2-1
       neigs_range_tmp = c_loc(neigs_range_y)
     end if
   end if
@@ -260,10 +264,13 @@ endif
     !          [X_2, conj(X_1) ]        [ -X_2,  conj(X_1)],
     ! Note that the overlap matrix is identity in this case, so we donot construct
     !
+    ! Elpa always gives full spectrum
     neig_found = SL_H_dim/2 ! Only +ve eigenvalues computes and rest are retreived
+    if (solver_type_aux .eq. 's' .and. present(neigs_range)) then
+    endif
+    !
     if (solver_type_aux .eq. 'e') then
 #if defined _ELPA
-      ! Elpa always gives full spectrum
       error_diago = BSE_Solver_Elpa(diago_mat, c_loc(eig_vals), evecs, elpa_solver_aux, gpu_str, elpa_nthreads) 
 #endif
     else 

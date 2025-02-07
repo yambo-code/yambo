@@ -142,7 +142,7 @@ subroutine K_diago_driver(iq,W,X_static)
  if (isec(2)==0) sec="+"
  call section(sec,trim(Solver)//' Solver @q'//trim(intc(iq)))
  !  
- if(l_slepc) call K_local_init()
+ call K_local_init()
  !
  ! Eigenstates 2 DB ?
  !====================
@@ -166,8 +166,6 @@ subroutine K_diago_driver(iq,W,X_static)
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
    io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
   &                    BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
-   !
-   K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
    !
    ! Kernel and/or BSS components loading
    !======================================
@@ -238,8 +236,8 @@ subroutine K_diago_driver(iq,W,X_static)
        if (l_ydiago) then 
          ! BS_V_left are only referenced in non-hermitian case
          ! In coupling case, if the user requested n values,
-         ! we compute the first min(n,BS_H_dim/2) positive and 
-         ! min(n,BS_ham/2) negative eigvals and eigvectors, making it a total of 2*min(n,BS_ham/2)
+         ! we compute the first min(n/2,BS_H_dim/2) positive and 
+         ! min(n/2,BS_ham/2) negative eigvals and eigvectors, making it a total of min(n,BS_ham)
          call YDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
          &                   neigs_range=neigs_range, eigvals_range=eigvals_range,  &
          &                   BS_VL=BS_V_left,BS_overlap=BS_overlap,                 &
@@ -556,6 +554,8 @@ subroutine K_diago_driver(iq,W,X_static)
    !
    subroutine K_local_init()
      !
+     K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
+     !
 #if defined _SLEPC && !defined _NL
      !
      if (l_slepc) then
@@ -601,23 +601,35 @@ subroutine K_diago_driver(iq,W,X_static)
        !
        l_target_erange=BSS_trange_E(1)>0._SP .and. BSS_trange_E(2)>BSS_trange_E(1)
        l_neig_input=BSS_n_eig>0
+       ! Here I double the number of n_eig to get correct allocations
+       if (l_neig_input .and. K_is_not_hermitian) BSS_n_eig=BSS_n_eig*2
        !
        if (l_target_erange .and. BSS_ydiago_solver=="e") then
 #if defined _GPU && defined _ELPA
-         call warning(' energy range not compatible with elpa. switching it off on gpu')
+         call warning(' energy range not compatible with elpa. Switching it off on gpu')
          l_target_erange=.false.
 #else
-         call warning(' energy range not compatible with elpa. switching to scalapack on cpu')
+         call warning(' energy range not compatible with elpa. Switching to scalapack on cpu')
          BSS_ydiago_solver="s"
 #endif
        endif
        !
        if (BSS_first_eig>1 .and. BSS_ydiago_solver=="e") then
 #if defined _GPU && defined _ELPA
-         call warning(' eigenvalues range not compatible with elpa. switching it off on gpu')
+         call warning(' eigenvalues range not compatible with elpa. Switching it off on gpu')
          BSS_first_eig=1
 #else
-         call warning(' eigenvalues range not compatible with elpa. switching to scalapack on cpu')
+         call warning(' eigenvalues range not compatible with elpa. Switching to scalapack on cpu')
+         BSS_ydiago_solver="s"
+#endif
+       endif
+       !
+       if (l_neig_input .and. BSS_ydiago_solver=="e" .and. K_is_not_hermitian) then
+#if defined _GPU && defined _ELPA
+         call warning(' Few eigenvalues not compatible with non hermitian elpa. Switching it off on gpu')
+         l_neig_input=.false.
+#else
+         call warning(' Few eigenvalues not compatible with non hermitian elpa. Switching to scalapack on cpu')
          BSS_ydiago_solver="s"
 #endif
        endif
@@ -656,7 +668,7 @@ subroutine K_diago_driver(iq,W,X_static)
        if( BSS_n_eig==0 ) BSS_n_eig = BS_mat_dim
        !
        neigs_range  = 0
-       eigvals_range= BSS_er
+       eigvals_range= -1._SP
        !
        if( l_neig_input ) then
          ! in case the user specified the number of eigenvalues

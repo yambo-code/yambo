@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2013 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM DS
+! Authors (see AUTHORS file for details): AM DS NM
 !
 ! headers
 !
@@ -111,17 +111,10 @@ module interfaces
      !
    end subroutine
    !
-  subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
+  subroutine YDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
     & neigs_this_cpu, neig_shift, neigs_range, eigvals_range, &
     & BS_VL, BS_overlap, solver_type, elpasolver)
-    use pars,           ONLY:cI,cONE, SP
-    use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling,&
-&                        BS_res_ares_n_mat,l_BS_ares_from_res
-    use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width
-    use gpu_m,          ONLY:have_cuda
-    use parallel_m,     ONLY:MPI_COMM_WORLD
-    use openmp,         ONLY:n_threads_K
-    use ydiago_interface
+    use pars,           ONLY:SP
     implicit none
     integer, intent(in)      :: i_BS_mat
     complex(SP), allocatable :: BS_energies(:)
@@ -134,7 +127,7 @@ module interfaces
     character, optional                :: solver_type
     integer,  optional                 :: elpasolver
     complex(SP),pointer,optional       :: BS_overlap(:,:)
-  end subroutine K_diagonalize
+  end subroutine YDIAGO_driver
 
    subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
      use pars,           ONLY:SP
@@ -254,56 +247,37 @@ module interfaces
      real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
    end subroutine
    !
-   subroutine K_diago_right_residuals(mode,i_BS_mat,BS_E,BS_R_right,BS_V_right)
-     use BS_solvers,    ONLY:BSS_n_eig
+   subroutine K_diago_R_res(mode,i_BS_mat,BS_E, &
+    &                  neigs_this_cpu, neig_shift,BS_R_right,BS_V_right)
      use pars,          ONLY:SP
      implicit none
      character(*),intent(in)  :: mode
-     integer,     intent(in)  :: i_BS_mat
-     complex(SP), intent(in)  :: BS_E(BSS_n_eig)
-     complex(SP), intent(out) :: BS_R_right(BSS_n_eig)
-     complex(SP), intent(in)  :: BS_V_right(:,:)
-   end subroutine K_diago_right_residuals
+     integer,     intent(in)  :: i_BS_mat, neigs_this_cpu, neig_shift
+     complex(SP), allocatable,         intent(in)  :: BS_E(:)
+     complex(SP), pointer,             intent(out) :: BS_R_right(:)
+     complex(SP), target, allocatable, intent(in)  :: BS_V_right(:,:)
+   end subroutine K_diago_R_res
    !
-   subroutine K_diago_left_residuals(mode,i_BS_mat,BS_E,BS_R_left,BS_V_left,BS_overlap)
-     use BS_solvers,    ONLY:BSS_n_eig
+   subroutine K_diago_L_res(mode,i_BS_mat,BS_E, &
+    &                  neigs_this_cpu, neig_shift,BS_R_left,BS_V_left,BS_overlap)
      use pars,          ONLY:SP
      implicit none
      character(*),intent(in)  :: mode
-     integer,     intent(in)  :: i_BS_mat
-     complex(SP), intent(in)  :: BS_E(BSS_n_eig)
-     complex(SP),target,  intent(out) :: BS_R_left(BSS_n_eig)
-     complex(SP),         intent(in)  :: BS_V_left(:,:)
-     complex(SP),optional,intent(in)  :: BS_overlap(BSS_n_eig,BSS_n_eig)
-   end subroutine K_diago_left_residuals
+     integer,     intent(in)  :: i_BS_mat, neigs_this_cpu, neig_shift
+     complex(SP), allocatable,         intent(in)  :: BS_E(:)
+     complex(SP), pointer,             intent(out) :: BS_R_left(:)
+     complex(SP), target, allocatable, intent(in)  :: BS_V_left(:,:)
+     complex(SP), pointer, optional,   intent(in)  :: BS_Overlap(:,:) 
+   end subroutine K_diago_L_res
    !
-   subroutine K_diago_residuals(mode, i_BS_mat, BS_E, BS_R_right, BS_VR, &
-    &                  neigs_this_cpu, neig_shift, BS_R_left, BS_VL, BS_Overlap)
-     ! For distributed eigenvectors
-     use pars,           ONLY:SP,cZERO
-     use wrapper_omp,    ONLY:Vstar_dot_V_omp,V_dot_V_omp
-     use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
-     use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
-     use LIVE_t,         ONLY:live_timing
-     use X_m,            ONLY:global_gauge
-     use BS_solvers,     ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f
-     use BS,             ONLY:BS_K_coupling,BS_K_dim,BS_H_dim
-     use MAGNONS,        ONLY:BSS_dipoles_magn
-     use DICHROISM,      ONLY:BSS_dipoles_dich
-     !
-     implicit none
-     !
-     character(*),intent(in)  :: mode
-     integer,intent(in)       :: i_BS_mat, neigs_this_cpu, neig_shift
-     complex(SP), allocatable :: BS_E(:) ! Full set of eigvals are required
-     complex(SP), pointer     :: BS_R_right(:)
-     complex(SP), target,allocatable     :: BS_VR(:,:)
-     complex(SP), pointer     :: BS_R_left(:)
-     complex(SP), target, allocatable     :: BS_VL(:,:)
-     complex(SP), pointer     :: BS_Overlap(:,:)
-   end subroutine K_diago_residuals
-!
-   subroutine K_perturbative_residuals(pert_dim, what, i_BS_mat, &
+   subroutine K_stored_in_a_big_matrix(i_BS_mat,BS_mat_dim,BS_mat,iq,what)
+    use pars,           ONLY:SP
+    integer,      intent(in) :: i_BS_mat,iq,BS_mat_dim
+    complex(SP), allocatable, target :: BS_mat(:,:) 
+    character(*), intent(in) :: what
+   end subroutine K_stored_in_a_big_matrix
+   !
+   subroutine K_diago_perturbative(pert_dim, what, i_BS_mat, &
     &           BS_corrections, BS_VR, neigs_this_cpu, neig_shift, BS_VL, BS_Overlap) 
      use pars,           ONLY:SP,cZERO
      use wrapper_omp,    ONLY:V_dot_V_omp
@@ -319,7 +293,7 @@ module interfaces
      complex(SP), target,allocatable           :: BS_VR(:,:)
      complex(SP), target, allocatable          :: BS_VL(:,:)
      complex(SP), pointer                      :: BS_Overlap(:,:)
-   end subroutine K_perturbative_residuals
+   end subroutine K_diago_perturbative
 !
    subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap) 
      use pars,           ONLY:SP

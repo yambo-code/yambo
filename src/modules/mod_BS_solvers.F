@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2016 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS NM
 !
 module BS_solvers
  !
@@ -54,8 +54,10 @@ module BS_solvers
  character(schlen):: BSS_mode
  complex(SP)      :: BSS_Wd
  integer  :: BSS_n_freqs
- integer  :: BSS_n_eig            !number of eigenvalues to find
- integer  :: BSS_first_eig        !index of the first eigenvalue to find
+ integer  :: BSS_n_eig            ! number of eigenvalues to find. Ydiago/Slepc
+ integer  :: BSS_first_eig        ! index of the first eigenvalue to find. Ydiago
+ real(SP) :: BSS_target_E         ! find eigenvalues close to this energy. Slepc
+ real(SP) :: BSS_trange_E(2)      ! find eigenvalues in this energy range. Ydiago
  real(SP) :: BSS_er(2)
  real(SP) :: BSS_dr(2)
  real(SP) :: BSS_damp_reference
@@ -101,7 +103,6 @@ module BS_solvers
  integer          :: BSS_slepc_maxit         !maximum number of iterations
  integer          :: BSS_slepc_mpd           !maximum allowed dimension
  real(SP)         :: BSS_slepc_tol           !tolerance for the iterative solver
- real(SP)         :: BSS_slepc_target_E      !find eigenvalues close to this energy
  character(schlen):: BSS_slepc_matrix_format !matrix type ("shell","explicit","explicit-debug")
  logical          :: BSS_slepc_double_grp    !duplicate the number of groups for slepc shells solver
  !
@@ -158,7 +159,7 @@ module BS_solvers
    !
    integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,BsRr,BsE_corr,&
    &                        bsL_magn,bsR_magn,bsL_kerr,bsR_kerr,bsR_dich,bsR_pl,&
-   &                        write_ev)
+   &                        BS_mat,write_ev)
      use pars,          ONLY:SP
      use X_m,           ONLY:X_t
      implicit none
@@ -167,25 +168,16 @@ module BS_solvers
      complex(SP)        ,optional :: bsE(:)
      real(SP),   pointer,optional :: BsE_corr(:,:),bsR_pl(:,:)
      complex(SP),pointer,optional :: bsL_kerr(:),bsR_kerr(:),bsR_dich(:,:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
+     complex(SP)        ,optional :: BS_mat(:,:)
      logical, optional            :: write_ev
    end function
 
    subroutine write_bs_ev_par(iq, i_BS_mat, BS_VR, BS_VL)
-  !
-  use pars,           ONLY:SP,schlen
-  use BS,             ONLY:BS_K_dim, BS_H_dim,BS_K_coupling,BS_res_ares_n_mat
-  use parallel_m,     ONLY:par_distribute_set
-  use IO_m,           ONLY:REP,OP_APP_CL,YAMBO_DEF_CHUNK
-  use stderr,         ONLY:intc
-  use timing_m,      ONLY:timing
-  use IO_int,        ONLY:io_connect,io_disconnect,def_variable_bulk,&
-&                        io_variable_bulk,io_control
-  !
-  implicit none
-  !
-  integer, intent(in)      :: i_BS_mat, iq
-  complex(SP),allocatable, target, optional ::BS_VR(:,:),BS_VL(:,:)
-  end subroutine write_bs_ev_par
+     use pars,           ONLY:SP
+     implicit none
+     integer, intent(in)      :: i_BS_mat, iq
+     complex(SP),allocatable, target, optional ::BS_VR(:,:),BS_VL(:,:)
+   end subroutine write_bs_ev_par
    !
    integer function io_BSS_Haydock(ID,iq,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp1)
      use pars,          ONLY:SP
@@ -281,11 +273,11 @@ module BS_solvers
      complex(SP), allocatable                :: TMP_C2(:,:)
      integer :: dim1
      !
-     dim1=size(VAR_C2(:,1))
-     allocate(TMP_C2(dim1,BSS_n_eig))
-     TMP_C2=VAR_C2(:,:BSS_n_eig)
+     dim1=size(VAR_C2,2)
+     allocate(TMP_C2(BSS_n_eig,dim1))
+     TMP_C2=VAR_C2(:BSS_n_eig,:)
      deallocate(VAR_C2)
-     allocate(VAR_C2(dim1,BSS_n_eig))
+     allocate(VAR_C2(BSS_n_eig,dim1))
      VAR_C2=TMP_C2
      !
    end subroutine resizeC2
@@ -296,11 +288,11 @@ module BS_solvers
      complex(SP), allocatable            :: TMP_C2(:,:)
      integer :: dim1
      !
-     dim1=size(VAR_C2(:,1))
-     allocate(TMP_C2(dim1,BSS_n_eig))
-     TMP_C2=VAR_C2(:,:BSS_n_eig)
-     deallocate(VAR_C2); nullify(VAR_C2)
-     allocate(VAR_C2(dim1,BSS_n_eig))
+     dim1=size(VAR_C2,2)
+     allocate(TMP_C2(BSS_n_eig,dim1))
+     TMP_C2=VAR_C2(:BSS_n_eig,:)
+     deallocate(VAR_C2)
+     allocate(VAR_C2(BSS_n_eig,dim1))
      VAR_C2=TMP_C2
      !
    end subroutine resizeC2p

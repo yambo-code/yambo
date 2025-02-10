@@ -1,8 +1,11 @@
 !
 ! License-Identifier: GPL
+!
 ! Copyright (C) 2024 The Yambo Team
 !
-subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
+! Authors (see AUTHORS file for details): NM
+!
+subroutine YDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
     & neigs_this_cpu, neig_shift, neigs_range, eigvals_range, &
     & BS_VL, BS_overlap, solver_type, elpasolver)
   !
@@ -54,8 +57,6 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   integer,  optional                 :: elpasolver
   ! 1 or 2. put 2 as default and give an option to user (input)
   complex(SP),pointer,optional       :: BS_overlap(:,:) ! overlap matrix
-  ! Note Overlap matrix is allocated and computed only when geev solver is called.
-  ! If overlap matrix is not allocated, this implies that BS_overlap is a identity matrix.
   !
   ! FIX ME : Move to a better place (modules)
   integer, parameter                 :: blacs_block_size = 64
@@ -64,7 +65,7 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   !
   ! Local variables
   type(c_ptr)                        :: mpicxt, diago_mat, evecs
-  integer                            :: nProcs, my_rank
+  integer                            :: nProcs, my_rank, neig_tmp
   integer(YDIAGO_INT)                :: SL_H_dim, ProcX, ProcY, elpa_nthreads, mpi_comm
   integer(ERROR_INT)                 :: error_diago ! diagonalization error code
   integer                            :: ierr !! mpi error code 
@@ -91,21 +92,35 @@ subroutine K_diagonalize(i_BS_mat, BS_energies, BS_VR, &
   integer                            :: evec_fac = 1
   ! evec_fac = 2 if bse_solver function was used to diagonalize else 1
 
-  if(present(neigs_range)) then
-    neigs_range_y(1) = neigs_range(1) 
-    neigs_range_y(2) = neigs_range(2) 
-    neigs_range_tmp = c_loc(neigs_range_y)
+  if(PRESENT(neigs_range)) then
+    if(neigs_range(1)>0) then
+      neig_tmp=neigs_range(2)-neigs_range(1)+1
+      neigs_range_y(1) = neigs_range(1) 
+      neigs_range_y(2) = neigs_range(2) 
+      ! DS: I need to divide by 2 the nnumber of requested eigenv in the
+      ! coupling case, otherwise dimensions do not match
+      if (BS_K_coupling) neigs_range_y(2) = neigs_range_y(1) + neig_tmp/2-1
+      neigs_range_tmp = c_loc(neigs_range_y)
+    end if
   end if
   !!
   if(present(eigvals_range)) then
-    eigvals_range_y(1) = eigvals_range(1) 
-    eigvals_range_y(2) = eigvals_range(2) 
-    eigvals_range_tmp = c_loc(eigvals_range_y)
+    if(eigvals_range(1)>0._SP) then
+      eigvals_range_y(1) = eigvals_range(1) 
+      eigvals_range_y(2) = eigvals_range(2) 
+      eigvals_range_tmp = c_loc(eigvals_range_y)
+    end if
   end if
   !!
   if(present(BS_VL)) compute_left_eigs = .true.
   if(present(solver_type)) solver_type_aux = solver_type
   if(present(elpasolver)) elpa_solver_aux = elpasolver
+  !
+#if !defined _ELPA
+  ! K_diago_driver does these checks. Here we just proceed
+  ! if defined _ELPA is only needed for compilation purposes
+  if (solver_type_aux .eq. 'e') call error("elpa solver requested but elpa not available")
+#endif
   !
   run_gpu = have_cuda ! Turn this flag to run the diagonalization on gpu.
   ! Note that even when compiled with gpu support, if this is set to false,
@@ -210,43 +225,32 @@ endif
     !
   endif
   !
-#if defined _ELPA
-  if (solver_type_aux .eq. 'e') then
-    !
-    call section('=','ELPA Diagonalization')
-    !
-  else
-    !
-    call section('=','Scalapack Diagonalization')
-    !
-  endif
-#else 
-  call section('=','Scalapack Diagonalization')
-#endif
+  if (solver_type_aux .eq. 'e')   call section('=','ELPA Diagonalization')
+  if (solver_type_aux .eq. 's')   call section('=','Scalapack Diagonalization')
   !
   ! Call the solvers
   ! 
-  neig_found = SL_H_dim ! This will be modified by scalapack functions
-  evec_fac = 1 ! This is important set to 1
+  evec_fac = 1          ! This is important set to 1
   !
   call live_timing('BSK diagonalize',1)
+  !
   if (.not. BS_K_coupling) then
     !
+    neig_found = SL_H_dim ! This will be modified by scalapack functions
+    if (solver_type_aux .eq. 'e' .and. present(neigs_range)) then
+      ! DS: Just for the elpa case I need to set neig_found in input
+      !     This is at least what was in the coding before
+      if (neigs_range(2) > 0) neig_found = neigs_range(2)
+    endif
+    !
     ! ===========  TDA Case ===============
-#if defined _ELPA
     if (solver_type_aux .eq. 'e') then
-      !
-      if(present(neigs_range))  neig_found = abs(maxval(neigs_range))
-      !
-      error_diago = Heev_Elpa(diago_mat, c_loc(eig_vals), evecs, neig_found, elpa_solver_aux, gpu_str, &
-        &           elpa_nthreads)
+#if defined _ELPA
+      error_diago = Heev_Elpa(diago_mat, c_loc(eig_vals), evecs, neig_found, elpa_solver_aux, gpu_str, elpa_nthreads)
+#endif
     else
       error_diago = Heev(diago_mat, 'L', neigs_range_tmp, eigvals_range_tmp, c_loc(eig_vals), evecs, neig_found)
     endif
-#else 
-    error_diago = Heev(diago_mat, 'L', neigs_range_tmp, eigvals_range_tmp, c_loc(eig_vals), evecs, neig_found)
-#endif
-    !
     !
   else if (l_BS_ares_from_res.and.BS_K_coupling) then
     !
@@ -260,20 +264,18 @@ endif
     !          [X_2, conj(X_1) ]        [ -X_2,  conj(X_1)],
     ! Note that the overlap matrix is identity in this case, so we donot construct
     !
+    ! Elpa always gives full spectrum
     neig_found = SL_H_dim/2 ! Only +ve eigenvalues computes and rest are retreived
-#if defined _ELPA
-    if (solver_type_aux .eq. 'e') then
-      ! Elpa always gives full spectrum
-      error_diago = BSE_Solver_Elpa(diago_mat, c_loc(eig_vals), evecs, elpa_solver_aux, gpu_str, &
-        &           elpa_nthreads) 
-    else 
-      !
-      error_diago = BSE_Solver(diago_mat, neigs_range_tmp, eigvals_range_tmp, c_loc(eig_vals), evecs, neig_found)
-      !
+    if (solver_type_aux .eq. 's' .and. present(neigs_range)) then
     endif
-#else 
-    error_diago = BSE_Solver(diago_mat, neigs_range_tmp, eigvals_range_tmp, c_loc(eig_vals), evecs, neig_found)
+    !
+    if (solver_type_aux .eq. 'e') then
+#if defined _ELPA
+      error_diago = BSE_Solver_Elpa(diago_mat, c_loc(eig_vals), evecs, elpa_solver_aux, gpu_str, elpa_nthreads) 
 #endif
+    else 
+      error_diago = BSE_Solver(diago_mat, neigs_range_tmp, eigvals_range_tmp, c_loc(eig_vals), evecs, neig_found)
+    endif
     !
     ! Incase of Chosleky failure (due to not being +ve definite, fall back to Geev solver)
     ! -50 is the error code when CHOLESKY factorization fails. see Ydiago/src/common/error.h
@@ -341,7 +343,7 @@ endif
   ! neigs_this_cpu, neig_shift
   call par_distribute_set(neig_found, neigs_this_cpu, neig_shift)
 
-  ! Set the Overlap to null() as this is always identity incase Ydiago solver is used
+  ! Set the Overlap to null() as this is always identity in case Ydiago solver is used
   if (present(BS_overlap)) BS_overlap => null()
 
   nelements = neigs_this_cpu*SL_H_dim
@@ -370,7 +372,7 @@ endif
   ! we got the data ! Free right eigen-vectors.
   call free_D_Matrix(evecs)
   call live_timing()
-
+  !
   if (evec_fac == 2) then
     ! set the right eigenvectors for -ve eigenvalues
     BS_VR(1:SL_H_dim/2, 2:2*neigs_this_cpu:2)  = conjg(BS_VR(SL_H_dim/2 + 1:SL_H_dim, 1:2*neigs_this_cpu:2))
@@ -378,11 +380,11 @@ endif
   endif
   !
   ! Set the left eigen vectors in case requested
-  if (BS_K_coupling .and. compute_left_eigs) then 
-  !
+  if (compute_left_eigs) then 
+    !
     if(allocated(BS_VL)) deallocate(BS_VL)
     allocate(BS_VL(SL_H_dim, evec_fac*neigs_this_cpu))
-
+    !
     if (evec_fac  == 2) then 
       ! left eigen-vectors for +ve eigenvalues
       BS_VL(1:SL_H_dim/2, 1:2*neigs_this_cpu:2)            =  BS_VR(1:SL_H_dim/2, 1:2*neigs_this_cpu:2)
@@ -408,15 +410,15 @@ endif
       if (error_diago /= 0) call error("Failed to Process left eigen vectors GetQueue")
       call live_timing()
     endif
-  !
+    !
   endif
   !
   ! Free remaining resources
   call free_D_Matrix(evecs_left)
   ! Free blacs context
   call BLACScxtFree(mpicxt)
-
+  !
   neigs_this_cpu = evec_fac*neigs_this_cpu
   neig_shift     = evec_fac*neig_shift
   !
-end subroutine K_diagonalize 
+end subroutine YDIAGO_driver 

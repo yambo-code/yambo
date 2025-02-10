@@ -11,7 +11,8 @@ SLK_objects = K_inversion_do_it_SLK.o
 objs =	K_blocks.o K_driver_init.o K_dipoles.o K_IP.o K_IP_sort.o \
         K_Transitions_setup.o K_Transition_check.o \
         K_driver.o BSE_utilities.o K_WF_phases.o \
-        K_fill_block_cyclic.o K_diagonalize.o K_residuals.o \
+        K_fill_block_cyclic.o \
+        YDIAGO_driver.o \
         K_kernel.o $(PARIO_objects) K_correlation_collisions_dir.o K_correlation_collisions_std.o K_exchange_collisions.o \
         K_correlation_kernel_dir.o K_correlation_kernel_std.o K_exchange_kernel.o \
         K_restart.o K_solvers.o K_Haydock.o K_Haydock_response.o K_Haydock_gather.o K_Haydock_scatter.o K_screened_interaction.o \

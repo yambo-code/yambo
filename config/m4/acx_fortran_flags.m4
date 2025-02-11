@@ -280,6 +280,15 @@ aarch*linux* | arm*linux* )
     NETCDFFLAGS="-DgFortran"
     DEBUG_FLAGS="-Og -g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
+  *frt*)
+    SYSFLAGS="-Kfast -Nalloc_assign"
+    FUFLAGS="-O0 -g"
+    SLK_FC_FLAGS="-fallow-argument-mismatch"
+    FCMFLAG=""
+    OMPFLAGS="-Kopenmp -Kparallel -Nlibomp"
+    NETCDFFLAGS="-DgFortran"
+    DEBUG_FLAGS="-Og -g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
+    ;;
   *)
     SYSFLAGS="-g -O"
     FUFLAGS="-O0"

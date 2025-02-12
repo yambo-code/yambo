@@ -26,7 +26,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  use com,           ONLY : msg
  use stderr,        ONLY : intc
  use BS_solvers,    ONLY : BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_maxit,&
- &                         BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_precondition,&
+ &                         BSS_slepc_tol,BSS_target_E,BSS_slepc_precondition,&
  &                         BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_mpd
  !
  use petscsys
@@ -203,7 +203,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  if (l_target_energy.or.l_precondition) then
    target_energy=0._SP
-   if(l_target_energy) target_energy=BSS_slepc_target_E
+   if(l_target_energy) target_energy=BSS_target_E
    call msg( 'nsr', '[SLEPC] Criterion is target energy        ', real(target_energy,SP)*HA2EV,'[eV]')
    call EPSSetTarget(eps,target_energy,ierr)
    call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)

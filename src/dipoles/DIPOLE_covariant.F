@@ -158,7 +158,7 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
        do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
          if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
          do idir=1,3
-           DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)=(DIP_tmp(idir,ic,iv)+conjg(DIP_tmp(idir,iv,ic)))/cI
+           DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)=(DIP_tmp(idir,ic,iv)+conjg(DIP_tmp(idir,iv,ic)))*cI
          enddo
        enddo
      enddo

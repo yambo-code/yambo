@@ -17,8 +17,9 @@ subroutine NL_initialize(E,k)
  use X_m,            ONLY:global_gauge
  use zeros,          ONLY:zero_dfl
  use com,            ONLY:msg
+ use stderr,         ONLY:real2ch
  use QP_m,           ONLY:QP_ng_Sc,QP_ng_Sx,QP_ng_Sh
- use collision_ext,  ONLY:ng_oscll
+ use collision_ext,  ONLY:ng_oscll,COLLISIONS_cutoff
  use R_lattice,      ONLY:bz_samp,k_map
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field,l_NE_with_fields, &
@@ -380,6 +381,7 @@ subroutine NL_initialize(E,k)
    COLLISIONS_load_SP =.not.l_no_compress_COLL
    COLLISIONS_compr   =.not.l_no_compress_COLL
    if(SP==DP.and.COLLISIONS_load_SP) call msg('sr','COLLISIONS in single precisions')
+   if(COLLISIONS_compr) call msg("sr","COLLISIONS cutoff "//real2ch(COLLISIONS_cutoff))
  endif
  !   
  ! Set the number of g-vectors for oscillators and W(q,G,G') or V(q,G)

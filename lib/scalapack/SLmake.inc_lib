@@ -32,11 +32,11 @@ FC            = $(fc)
 CC            = $(cc) 
 NOOPT         = $(fcuflags)
 FCFLAGS       = $(fcflags) $(slkfcflags)
-CCFLAGS       = $(ccflags)
+CCFLAGS       = $(cflags)
 FCLOADER      = $(fc)
 CCLOADER      = $(cc)
 FCLOADFLAGS   = $(fcflags)
-CCLOADFLAGS   = $(ccflags)
+CCLOADFLAGS   = $(cflags)
 
 #
 #  The archiver and the flag(s) to use when building archive (library)

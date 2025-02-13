@@ -32,7 +32,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  !
  if (SLK_ORTHO%coordinate(1)==-1) return
  !
- call timing('PARALLEL_HERMITIAN_diagonalization',OPR='start')
+ call timing('PAR_HERM_diago',OPR='start')
  !
  lwork=-1
  lrwork=-1
@@ -65,7 +65,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  !
  call LINEAR_ALGEBRA_WS_reset(WS) 
  !
- call timing('PARALLEL_HERMITIAN_diagonalization',OPR='stop')
+ call timing('PAR_HERM_diago',OPR='stop')
  !
 end subroutine PARALLEL_HERMITIAN_diagonalization
 

@@ -39,7 +39,11 @@ blacs: scalapack
 	@if test "$(do_blacs)" = yes ; then LIBS="blacs" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) blacs-dl; $(mk_external_lib); fi
 scalapack: lapack
 	@if test "$(do_slk)" = yes ; then LIBS="scalapack" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) scalapack-dl ; $(mk_external_lib); fi
+elpa: scalapack blacs
+	@if test "$(do_elpa)" = yes ; then LIBS="elpa" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) elpa-dl ; $(mk_external_lib); fi
 petsc:
 	@if test "$(do_petsc)" = yes ; then LIBS="petsc" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) petsc-dl; $(mk_external_lib); fi
 slepc: petsc
 	@if test "$(do_slepc)" = yes ; then LIBS="slepc" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) slepc-dl; $(mk_external_lib); fi
+ydiago: scalapack blacs elpa
+	@if test "$(do_ydiago)" = yes ; then LIBS="ydiago" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) ydiago-dl; $(mk_external_lib); fi

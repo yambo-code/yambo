@@ -223,7 +223,7 @@ subroutine K_diago_driver(iq,W,X_static)
    !
    ! Allocation (BS_E_real or BS_V)
    !===============================
-   if (.not. l_ydiago) call local_alloc("V")
+   call local_alloc("V")
    !
    if (io_err<0) then
      !
@@ -289,7 +289,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if (l_slepc) then
        ! BSS_n_eig could be lowered by MATRIX_slepc
-       if (Input_n_eig>BSS_n_eig) call K_slepc_resize_variables()
+       if (Input_n_eig>BSS_n_eig) call K_resize_variables()
        ! Destroy the matrix
        call MatDestroy(slepc_mat,ierr)
      endif
@@ -299,7 +299,7 @@ subroutine K_diago_driver(iq,W,X_static)
      if (l_diago) call live_timing( )
      !
      if (l_ydiago) then
-       if (Input_n_eig>BSS_n_eig) call K_ydiago_resize_variables()
+       if (Input_n_eig>BSS_n_eig) call K_resize_variables()
      endif
      !
      ! Compute residuals
@@ -463,6 +463,8 @@ subroutine K_diago_driver(iq,W,X_static)
        !
      case("V")
        !
+       if (l_ydiago)  return
+       !
        if(K_is_not_hermitian) then
          YAMBO_ALLOC(BS_V_left,(BS_H_dim,BSS_n_eig))
          YAMBO_ALLOC_P(BS_overlap,(BSS_n_eig,BSS_n_eig))
@@ -504,31 +506,9 @@ subroutine K_diago_driver(iq,W,X_static)
    end subroutine local_free
    !
    !
-   subroutine K_ydiago_resize_variables()
-    !
-    ! We need to realloc as sizes can change.
-    if(allocated(BS_corrections)) call BSS_resize(BS_corrections)
-    if(associated(BS_E_SOC_corr)) call BSS_resize(BS_E_SOC_corr)
-    !
-    if(associated(BS_R_left_abs) )  call BSS_resize(BS_R_left_abs)
-    if(associated(BS_R_right_abs))  call BSS_resize(BS_R_right_abs)
-    !
-    if(associated(BS_R_left_kerr) ) call BSS_resize(BS_R_left_kerr)
-    if(associated(BS_R_right_kerr)) call BSS_resize(BS_R_right_kerr)
-    if(associated(BS_R_right_dich)) call BSS_resize(BS_R_right_dich)
-    if(associated(BS_R_left_magn) ) call BSS_resize(BS_R_left_magn)
-    if(associated(BS_R_right_magn)) call BSS_resize(BS_R_right_magn)
-    if(associated(BS_R_PL)        ) call BSS_resize(BS_R_PL)
-    !
-   end subroutine K_ydiago_resize_variables
-   !
-#if defined _SLEPC && !defined _NL
-   !
-   subroutine K_slepc_resize_variables()
+   subroutine K_resize_variables()
      !
-     call warning(" resizing alla variables whose size depends on BSS_n_eig ")
-     if(allocated(BS_E))          call BSS_resize(BS_E)
-     !
+     ! We need to realloc as sizes can change.
      if(allocated(BS_corrections)) call BSS_resize(BS_corrections)
      if(associated(BS_E_SOC_corr)) call BSS_resize(BS_E_SOC_corr)
      !
@@ -542,15 +522,18 @@ subroutine K_diago_driver(iq,W,X_static)
      if(associated(BS_R_right_magn)) call BSS_resize(BS_R_right_magn)
      if(associated(BS_R_PL)        ) call BSS_resize(BS_R_PL)
      !
+     if (l_ydiago) return
+     !
+     if(allocated(BS_E))          call BSS_resize(BS_E)
+     !
      if(allocated(BS_V_left))   call BSS_resize(BS_V_left)
      if(allocated(BS_V_right))  call BSS_resize(BS_V_right)
      if(associated(BS_overlap)) call BSS_resize(BS_overlap,.true.)
      !
      if(allocated(BS_E_real))   call BSS_resize(BS_E_real)
      !
-   end subroutine
+   end subroutine K_resize_variables
    !
-#endif
    !
    subroutine K_local_init()
      !

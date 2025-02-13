@@ -172,14 +172,13 @@ module interfaces
    end subroutine el_density_of_states
    !
 #if defined _SLEPC && !defined _NL
-   subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cmpl)
+   subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
      !
      use pars,           ONLY:SP,schlen
      use petscmatdef,    ONLY:tmat
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscmat.h>
      Mat                         :: M_slepc      ! matrix to diagonalize of stype from slepc
-     logical                     :: l_target_energy
      integer                     :: n_eig        ! number of eigenvalues to compute
      complex(SP)                 :: V_right(:,:) ! right eigenvalues
      complex(SP),  optional      :: V_left(:,:)  ! left eigenvalues

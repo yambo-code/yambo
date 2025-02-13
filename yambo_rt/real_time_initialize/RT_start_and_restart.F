@@ -40,7 +40,7 @@ subroutine RT_start_and_restart(E,k,q)
  use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc
  use RT_lifetimes,   ONLY:RT_life_extrap_times,l_RT_iterative_ELPH_lifetimes
  use fields,         ONLY:A_tot
- use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc,E_reference,rho_n,magn_n
+ use hamiltonian,    ONLY:Hzero,H_nl_sc,V_hartree_sc,V_xc_sc,E_reference,rho_n,magn_n
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,&
 &                         manage_action,REP,VERIFY,NONE,DUMP
@@ -96,6 +96,8 @@ subroutine RT_start_and_restart(E,k,q)
    !
    rho_n=rho_reference
    if(n_spin>1) magn_n=magn_reference
+   !
+   Hzero=cZERO
    !
    call Bare_Hamiltonian(E,k,k)
    !

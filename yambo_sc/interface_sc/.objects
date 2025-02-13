@@ -1,6 +1,8 @@
 objs = LEVELS_mirror_sc.o \
 LEVELS_respect_degenerations_sc.o  \
+PARALLEL_global_indexes_sc.o  \
 PARALLEL_global_dimensions_sc.o  \
+PARALLEL_global_Self_Energy_sc.o  \
 WF_and_dipole_dimensions_sc.o \
 INIT_activate_sc.o \
 INIT_load_sc.o \

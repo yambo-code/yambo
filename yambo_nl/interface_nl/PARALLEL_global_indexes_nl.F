@@ -133,7 +133,7 @@ subroutine PARALLEL_global_indexes_nl(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_
    if (l_eval_collisions)              MORE="bz"
    if ( index(ENVIRONMENT,"RIM")>0 ) MORE="RIM"
    if ( index(ENVIRONMENT,"bz")>0 )  MORE="RIM"
-   call PARALLEL_global_Self_Energy_ham(E,Xk,q,MORE)
+   call PARALLEL_global_Self_Energy_rt(E,Xk,q,MORE)
  endif
  !
  if (      ENVIRONMENT=="Non_Linear")          call PARALLEL_global_Non_Linear(E,Xk,q)

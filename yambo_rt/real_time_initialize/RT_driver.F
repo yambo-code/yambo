@@ -43,7 +43,6 @@ subroutine RT_driver(E,X,k,q,Dip)
  use QP_CTL_m,        ONLY:QP_apply
  use parallel_int,    ONLY:PP_bcast,PP_wait,PARALLEL_WF_index
  use RT_control,      ONLY:PARALLEL_global_indexes_rt
- use common_sc_rt,    ONLY:PARALLEL_global_indexes_ham
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PAR_COM_Xk_ibz_INDEX
  use units,           ONLY:FS2AUT
  use RT_lifetimes,    ONLY:l_initial_equilibrium

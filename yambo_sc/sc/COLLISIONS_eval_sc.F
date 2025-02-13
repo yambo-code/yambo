@@ -38,9 +38,10 @@ subroutine COLLISIONS_eval_sc(E,X,k,xk,q,Xw)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,OP_RD,RD_CL_IF_END,VERIFY,REP,io_COLLs,manage_action
  use parallel_m,     ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
- use parallel_int,   ONLY:PP_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use parallel_int,   ONLY:PP_wait,PARALLEL_WF_index
  use interfaces,     ONLY:WF_free
  use timing_m,       ONLY:timing
+ use SC,             ONLY:PARALLEL_global_indexes_sc
  !
  implicit none
  !
@@ -91,7 +92,7 @@ subroutine COLLISIONS_eval_sc(E,X,k,xk,q,Xw)
    PAR_ch="Self_Energy"
    !
    ! PARALLEL indexes ...
-   call PARALLEL_global_indexes(E,k,q,trim(PAR_ch))
+   call PARALLEL_global_indexes_sc(E,k,q,trim(PAR_ch))
    !
    ! PARALLEL WF distribution ...
    ! ... k-q + final band index...

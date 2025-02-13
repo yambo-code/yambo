@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine PARALLEL_global_Self_Energy_ham(E,Xk,q,WHAT)
+subroutine PARALLEL_global_Self_Energy_sc(E,Xk,q,WHAT)
  !
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nqbz,nXkibz,nXkbz
@@ -58,7 +58,7 @@ subroutine PARALLEL_global_Self_Energy_ham(E,Xk,q,WHAT)
  ! AF: here we disable the RL parallelism (g) for SC and RT, where
  !     the parallel structure needs to be adapted to the SE g parallelism
  !
- if (l_sc_run.or.l_real_time) then
+ if (l_sc_run) then
    !
    call PARALLEL_structure(3,(/"q ","qp","b "/))
    call PARALLEL_assign_chains_and_COMMs(3,COMM_index_1=PAR_COM_Q_INDEX,&
@@ -284,4 +284,4 @@ subroutine PARALLEL_global_Self_Energy_ham(E,Xk,q,WHAT)
  !
  call OPENMP_set_threads(n_threads_in=n_threads_SE)
  !
-end subroutine PARALLEL_global_Self_Energy_ham
+end subroutine PARALLEL_global_Self_Energy_sc

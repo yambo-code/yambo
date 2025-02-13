@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine PARALLEL_global_indexes_ham(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre_defined)
+subroutine PARALLEL_global_indexes_sc(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre_defined)
  !
  ! LOGICALS
  use parallel_m,    ONLY:l_par_X_T,l_par_RT,l_par_SE,l_par_X_G,l_par_X_G_finite_q,&
@@ -115,7 +115,7 @@ subroutine PARALLEL_global_indexes_ham(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits
    if (trim(Dip%approach)=="Shifted grids") MORE="_SHIFTED"
  endif
  !
- call PARALLEL_global_dimensions_ham(E,Xk,q,ENVIRONMENT)
+ call PARALLEL_global_dimensions_sc(E,Xk,q,ENVIRONMENT)
  !
  !==========
  ! DEFAULTS
@@ -132,7 +132,7 @@ subroutine PARALLEL_global_indexes_ham(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits
    if (l_eval_collisions)              MORE="bz"
    if ( index(ENVIRONMENT,"RIM")>0 ) MORE="RIM"
    if ( index(ENVIRONMENT,"bz")>0 )  MORE="RIM"
-   call PARALLEL_global_Self_Energy_ham(E,Xk,q,MORE)
+   call PARALLEL_global_Self_Energy_sc(E,Xk,q,MORE)
  endif
  !
 end subroutine

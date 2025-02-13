@@ -79,9 +79,9 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,H_pseudo,l_equilibrium)
      ibp=QP_table(i_qp,2)
      PAR_IND_local(ib,ibp)=.TRUE.
    enddo 
-   n_par_el=n_sp_pol*Xk%nibz*(count(PAR_IND_LOCAL))
+   n_par_el=n_sp_pol*Xk%nibz !*(count(PAR_IND_LOCAL))
    if (n_par_el>0) call live_timing('MAG-pseudo',n_par_el)
-   !      
+   !
  endif
  !
  PAR_IND_local=.true.
@@ -113,7 +113,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,H_pseudo,l_equilibrium)
        enddo 
        !
        call WF_load(WF,0,1,(/H_ref_bands(1),H_ref_bands(2)/),(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),&
-       &  title='-Pseudo',impose_free_and_alloc=.TRUE.,keep_states_to_load=.true.)
+       &  title='-Pseudo',impose_free_and_alloc=.TRUE.,keep_states_to_load=.true.,quiet=.true.)
        !
      endif
      !
@@ -178,5 +178,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,H_pseudo,l_equilibrium)
  YAMBO_FREE(kbv_real_space)
  YAMBO_FREE(kbv_gauged)
  YAMBO_FREE(gauge_factor)
+ !
+ if(l_sc_magnetic) call live_timing()
  !
 end subroutine Pseudo_Hamiltonian

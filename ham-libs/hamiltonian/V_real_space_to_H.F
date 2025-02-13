@@ -37,7 +37,9 @@ subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
  complex(SP) :: V_mat(fft_size,n_spin,n_spin)
  logical     :: PAR_IND_local(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  !
- if (l_real_time.and.(.not.PAR_IND_WF_k%element_1D(ik))) return
+ if (l_real_time) then
+   if(.not.PAR_IND_WF_k%element_1D(ik)) return
+ endif
  !
  if(index(V_kind,"xc") >0 .and. .not.present(Vxc)) call error(' V_real_space_to_H called with xc kind but without Vxc')
  if(index(V_kind,"def")>0 .and. .not.present(V)  ) call error(' V_real_space_to_H called with def kind but without V')

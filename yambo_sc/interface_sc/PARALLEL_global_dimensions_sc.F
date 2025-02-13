@@ -44,24 +44,20 @@ subroutine PARALLEL_global_dimensions_sc(E,Xk,q,ENVIRONMENT)
    if (index(ENVIRONMENT, "Response_G_space")>0     ) PAR_n_v_bands= (/1,PAR_X_ib(2)/)
  endif
  !
- if (ENVIRONMENT=="Self_Energy"       ) then
-   PAR_n_G_vectors= X_ng
-   if (l_sc_run.and.any( (/P_collisions%N,COH_collisions%N,HXC_collisions%N/)> 0))  &
-&                                               PAR_Q_bz_range=(/1,nqbz/)
- endif
+ if (.not. ENVIRONMENT=="Self_Energy") return
  !
+ PAR_n_G_vectors= X_ng
+ if (l_sc_run.and.any( (/P_collisions%N,COH_collisions%N,HXC_collisions%N/)> 0)) PAR_Q_bz_range=(/1,nqbz/)
  !
  ! Generic Bands
  !---------------
- if (ENVIRONMENT=="Self_Energy"                     ) then
-   if (l_HF_and_locXC)                               PAR_n_bands=(/1,maxval((/E%nbm(:),QP_nb/))/)
-   if ((l_gw0.or.l_life).and..not.computing_Fock)    PAR_n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
-   if (.not.computing_Fock)                          PAR_n_bands(1)=QP_n_G_bands(1)
-   if (l_sc_run)           PAR_n_bands=SC_bands
- endif
+ if (l_HF_and_locXC)                               PAR_n_bands=(/1,maxval((/E%nbm(:),QP_nb/))/)
+ if ((l_gw0.or.l_life).and..not.computing_Fock)    PAR_n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
+ if (.not.computing_Fock)                          PAR_n_bands(1)=QP_n_G_bands(1)
+ if (l_sc_run)           PAR_n_bands=SC_bands
  !
  ! QP states
  !-----------
- if (ENVIRONMENT=="Self_Energy"                     ) PAR_QP_range=QP_n_states
+ PAR_QP_range=QP_n_states
  !
 end subroutine PARALLEL_global_dimensions_sc

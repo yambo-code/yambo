@@ -38,7 +38,7 @@ subroutine COLLISIONS_eval_rt(E,X,k,xk,q,Xw)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,OP_RD,RD_CL_IF_END,VERIFY,REP,io_COLLs,manage_action
  use parallel_m,     ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
- use parallel_int,   ONLY:PP_wait,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use parallel_int,   ONLY:PP_wait,PARALLEL_WF_index
  use RT_control,     ONLY:PARALLEL_global_indexes_rt
  use interfaces,     ONLY:WF_free
  use timing_m,       ONLY:timing
@@ -169,13 +169,13 @@ subroutine COLLISIONS_eval_rt(E,X,k,xk,q,Xw)
    if (.not.l_use_Hxc_collisions) call section('+','NEQ GW (e-e scattering)')
    !=========================================================================
    !
-   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
-   call PARALLEL_global_indexes(E,k,q,"Real_Time")
+   call PARALLEL_global_indexes_rt(E,k,q," ",RESET=.TRUE.)
+   call PARALLEL_global_indexes_rt(E,k,q,"Real_Time")
    !
    call PLASMA_build_up(E,k,q)
    call PLASMA_parallel_setup(EH_gas)
    !
-   call PARALLEL_WF_distribute(PLASMA_index=PAR_IND_Plasma,CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_distribute_ham(PLASMA_index=PAR_IND_Plasma,CLEAN_UP=.TRUE.)
    call COLLISIONS_basic_operations( "WF_distribute", GW_NEQ_collisions )
    call PARALLEL_WF_index( )
    !

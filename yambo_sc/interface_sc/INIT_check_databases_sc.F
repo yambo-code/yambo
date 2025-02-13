@@ -6,8 +6,7 @@
 ! Authors (see AUTHORS file for details): AM DS
 !
 subroutine INIT_check_databases_sc(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
-&                               io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,&
-&                               io_ELPH_err,io_SC_E_err)
+&                               io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_SC_E_err)
  !
  use electrons,      ONLY:levels,n_spinor
  use C_driver,       ONLY:code_branch
@@ -47,7 +46,7 @@ subroutine INIT_check_databases_sc(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,inst
  integer          :: lnstr
  character(lnstr) :: instr
  integer          :: INIT
- integer          :: io_X_err(5),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2),io_SC_E_err
+ integer          :: io_X_err(5),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_SC_E_err
  !
  ! Workspace
  !

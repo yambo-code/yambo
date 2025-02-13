@@ -6,8 +6,7 @@
 ! Authors (see AUTHORS file for details): AM DS
 !
 subroutine INIT_check_databases_ph(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
-&                               io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,&
-&                               io_ELPH_err,io_SC_E_err)
+&                               io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err)
  !
  use electrons,      ONLY:levels,n_spinor
  use C_driver,       ONLY:code_branch
@@ -40,7 +39,7 @@ subroutine INIT_check_databases_ph(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,inst
  integer          :: lnstr
  character(lnstr) :: instr
  integer          :: INIT
- integer          :: io_X_err(5),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2),io_SC_E_err
+ integer          :: io_X_err(5),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2)
  !
  ! Workspace
  !
@@ -240,7 +239,7 @@ subroutine INIT_check_databases_ph(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,inst
  !
  ! DbGd (electrons)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=io_Double_Grid(en,k,io_ID,'electrons')
+ io_err=io_Double_Grid(en,k,io_ID,'electrons','')
  !
  ! ELPH 
  !

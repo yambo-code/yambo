@@ -50,7 +50,7 @@ module it_m
  integer, parameter :: maxr3vars=100
  integer, parameter :: maxr4vars=50
  integer, parameter :: maxc1vars=50
- integer, parameter :: maxchvars=100
+ integer, parameter :: maxchvars=120
  integer, parameter :: nvars=(maxi1vars+2*maxi2vars+2*maxi3vars+&
 &                             maxr1vars+2*maxr2vars+2*maxr3vars+4*maxr4vars+&
 &                             maxc1vars+maxchvars)

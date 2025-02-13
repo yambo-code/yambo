@@ -30,6 +30,7 @@ module BS
  logical :: BS_not_const_eh_f=.FALSE.
  logical :: BS_perturbative_SOC=.FALSE.
  logical :: BS_K_has_been_calculated_loaded=.FALSE.
+ logical :: BSK_IO_sum_value
  character(schlen) :: BSE_L_kind
  character(schlen) :: BSE_mode
  character(schlen) :: BSE_prop
@@ -66,7 +67,9 @@ module BS
  integer :: MAX_BSK_LIN_size
  integer :: BS_bands(2)
  integer :: BS_q(2)
+ integer :: BS_iq_now
  integer :: BS_identifier
+ integer :: BS_ID(3)
  integer(IPL) :: BS_lin_size_compressed
  integer :: BS_dip_size
  real(SP):: BS_field_direction(3,3)
@@ -316,17 +319,6 @@ module BS
      !
      BS_T_grp(iT)%E(:,:) = 0._SP
      !
-   end subroutine
-   !
-   subroutine BS_blks_free(i_BS_mat)
-     integer, intent(in) :: i_BS_mat
-     integer :: iB
-     do iB=1,n_BS_blks
-       if(i_BS_mat/=BS_blk(iB)%ira_k) cycle
-       if(.not.allocated(BS_blk(iB)%mat)) cycle
-       YAMBO_FREE(BS_blk(iB)%mat)
-       deallocate(BS_blk(iB)%done)
-     enddo
    end subroutine
    !
    subroutine BS_Blocks_and_Transitions_free()

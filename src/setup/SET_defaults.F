@@ -47,11 +47,13 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,BSS_P_dir,BSS_E_dir,BSS_Q_dir,BSS_first_eig,&
 &                     Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,BSS_n_eig,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,BSS_target_E,&
-&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH,BSS_desc,BSS_ydiago_solver,BSS_trange_E
+&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH,BSS_desc,BSS_ydiago_solver,BSS_trange_E,&
+&                     BSS_kernel_IO_on_the_fly,BSS_kernel_stored_size,BSS_kernel_last_stored_block
  use descriptors,ONLY:IO_desc_reset
 #if defined _SLEPC
  use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_maxit,&
- &                    BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_mpd
+&                     BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_mpd,&
+&                     BSS_slepc_pseudo_herm
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,MAX_BSK_LIN_size,&
 &                     BS_K_dim,BS_not_const_eh_f,BSK_mode,l_BSE_kernel_complete,&
@@ -404,6 +406,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_Vnl_included=.FALSE.
  BSS_uses_GreenF=.FALSE.
  BSS_perturbative_width=.FALSE.
+ BSS_kernel_IO_on_the_fly=.FALSE.
+ BSS_kernel_stored_size=-1._SP
+ BSS_kernel_last_stored_block=-1
  K_INV_PI_PH%what = "PH_PI"
  K_INV_PL%what     = "PLS"
  K_INV_PL%treshold =0.5_SP
@@ -428,6 +433,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_slepc_ncv=0
  BSS_slepc_mpd=0
  BSS_slepc_tol=1E-6_SP
+ BSS_slepc_pseudo_herm=.FALSE.
 #endif
  !
  ! TDDFT

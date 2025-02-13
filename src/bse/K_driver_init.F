@@ -7,17 +7,18 @@
 !
 subroutine K_driver_init(what,iq,Ken,Xk,BSE_occ_mode,l_neq_carriers_in_use)
  !
+ use pars,         ONLY:SP,schlen
  use R_lattice,    ONLY:bz_samp
  use electrons,    ONLY:levels,n_sp_pol,n_spin
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
- use stderr,       ONLY:STRING_match
- use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix_format,BSS_uses_DbGd,BSS_ydiago_solver,&
-&                       BSS_slepc_double_grp,run_Slepc,BSS_mode,BSS_first_eig,       &
-&                       l_abs_prop_chi_bse,l_eels_can_be_computed,l_eels_from_inversion,  &
-&                       BSS_ydiago_solver
+ use stderr,       ONLY:STRING_match,STRING_split
+ use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix_format,BSS_uses_DbGd,BSS_uses_FKE,BSS_ydiago_solver,&
+&                       BSS_slepc_pseudo_herm,BSS_slepc_double_grp,run_Slepc,BSS_mode,BSS_first_eig,&
+&                       l_abs_prop_chi_bse,l_eels_can_be_computed,l_eels_from_inversion,&
+&                       BSS_kernel_IO_on_the_fly,BSS_kernel_stored_size
  use BS,           ONLY:BSE_L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
-&                       BS_perturbative_SOC,l_BS_magnons,l_BS_photolum,&
+&                       BS_perturbative_SOC,l_BS_magnons,l_BS_photolum,BSK_IO_mode,&
 &                       BS_cpl_K_exchange,BS_n_g_exch,BS_res_K_exchange,BS_K_coupling,BS_res_ares_n_mat,&
 &                       BS_n_eh_spaces,l_BS_ares_from_res,BS_bands,BS_K_anti_resonant
  use TDDFT,        ONLY:FXC_is_retarded,FXC_n_g_corr,l_Fxc_from_Vxc
@@ -39,7 +40,9 @@ subroutine K_driver_init(what,iq,Ken,Xk,BSE_occ_mode,l_neq_carriers_in_use)
  !
  ! Work Space
  !
+ integer :: i1,BSK_IO_n_strings
  logical :: l_flag,l_slepc_special,l_Fxc_Libxc
+ character(schlen) ::BSK_IO_strings(10)
  !
  ! Defaults
  !==========
@@ -239,22 +242,38 @@ subroutine K_driver_init(what,iq,Ken,Xk,BSE_occ_mode,l_neq_carriers_in_use)
  !
 #if defined _SLEPC
  !
+ if(index(BSS_slepc_matrix_format,"shell")==0.and.index(BSS_slepc_matrix_format,"explicit")==0) &
+ & call error("Wrong value of slepc matrix format: "//trim(BSS_slepc_matrix_format))
+ !
  ! Special case, slepc with distributed matrix need to explicitly compute the anti-resonant block
- l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (BSS_slepc_matrix_format=="shell")
+ ! This was needed in the past. Now the older implementation can be imposed
+ ! chosing shell-debug matric format
+ l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (BSS_slepc_matrix_format=="shell-debug")
  !
- ! The doubling is activated unless explicily imposed by input since slepc
- ! with shells requires the extended K_multiply_by_V for the non hermitian algorithm
- ! Slepc are not (yet) able to deal with a pseudo-hermitian algorithm 
- !
- call parser('ImposeSymm',l_flag)
- if (l_slepc_special.and..not.l_flag) l_BS_ares_from_res=.FALSE.
  BSS_slepc_double_grp=l_BS_ares_from_res.and.l_slepc_special
+ if (l_slepc_special) l_BS_ares_from_res=.FALSE.
+ !
+ BSS_slepc_pseudo_herm=BS_K_coupling .and. l_BS_ares_from_res .and. &
+ &                     (.not.BSS_slepc_double_grp) .and. index(BSS_slepc_matrix_format,"debug")==0
  !
 #endif
  !
  ! Double Grid support
  !=====================
- BSS_uses_DbGd = (Ken%FG%nb>=BS_bands(2)).and.STRING_match(BSS_mode,'i')
+ BSS_uses_DbGd = ((Ken%FG%nb>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)) &
+ &          .or. ((Ken%FG%nb>=BS_bands(2)) .and. (index(BSS_mode,'h')/=0))
+ !
+ call parser('BSS_FKE',BSS_uses_FKE)
+ !
+ BSS_kernel_IO_on_the_fly=index(BSK_IO_mode,"read_on_the_fly")>0 .and. (index(BSS_mode,'h')/=0 .or. index(BSS_mode,'s')/=0)
+ if (BSS_kernel_IO_on_the_fly) then
+   call STRING_split(BSK_IO_mode,BSK_IO_strings,n_non_empty_strings=BSK_IO_n_strings)
+   BSS_kernel_stored_size=0._SP
+   do i1=1,BSK_IO_n_strings
+     if (.not.STRING_match(BSK_IO_strings(i1),"GB")) cycle
+     read (BSK_IO_strings(i1-1),*) BSS_kernel_stored_size
+   enddo
+ endif
  !
 #if defined _ELPA
  if ( index(BSS_mode,'d')/=0 .and. BSS_ydiago_solver=='e' .and. BSS_first_eig>1) then

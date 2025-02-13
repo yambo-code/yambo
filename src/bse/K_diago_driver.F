@@ -262,7 +262,7 @@ subroutine K_diago_driver(iq,W,X_static)
        !
      else
        !
-       if (l_ydiago) then 
+       if (l_ydiago) then
          call YDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
 &                           neigs_range=neigs_range, eigvals_range=eigvals_range,   &
 &                           solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
@@ -682,10 +682,12 @@ subroutine K_diago_driver(iq,W,X_static)
          ! in case the user specified an energy range
          neigs_range  = 0
          eigvals_range= BSS_trange_E
-       else if (BSS_ydiago_solver=="s") then
-         ! with scalapack use the energy range needed by default
-         neigs_range  = 0
-         eigvals_range= BSS_er
+       ! The following is a good idea but it is the source of many fails in the
+       ! test-suite. Commenting it for now
+       !else if (BSS_ydiago_solver=="s") then
+       !  ! with scalapack use the energy range needed by default
+       !  neigs_range  = 0
+       !  eigvals_range= BSS_er
        endif
        !
      endif

@@ -98,7 +98,10 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
      res_dich=(BS_R_left_abs(i1)*BS_R_right_dich(i1,1)+BS_R_left_kerr(i1)*BS_R_right_dich(i1,2))
      res_dich=res_dich*ares_fac/q0_def_norm/2._SP
    endif
-   if(l_BS_magnons) res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)*ares_fac
+   if(l_BS_magnons) then
+     res_magn(1)=BS_R_left_magn(i1,1)*BS_R_right_magn(i1,1)*ares_fac
+     res_magn(2)=BS_R_left_magn(i1,2)*BS_R_right_magn(i1,2)*ares_fac
+   endif
    !
    if (     BS_perturbative_SOC) EXC_E(:)=BS_E(i1)+BS_E_SOC_corr(:,i1)
    !

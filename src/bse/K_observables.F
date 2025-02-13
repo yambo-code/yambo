@@ -105,7 +105,7 @@ subroutine K_observables(W,Xk)
  !
  ! Solver Logicals
  !=================
- run_Diago     = STRING_match(BSS_mode,'d')
+ run_Diago     = STRING_match(BSS_mode,'d').or.STRING_match(BSS_mode,'o')
  run_Haydock   = STRING_match(BSS_mode,'h')
  run_inversion = STRING_match(BSS_mode,'i')
 #if defined _SLEPC && !defined _NL

@@ -35,7 +35,11 @@ blacs-dl:
 	@LIB2DO="blacs"; $(get_external_libraries)
 scalapack-dl: 
 	@LIB2DO="scalapack"; $(get_external_libraries)
+elpa-dl: 
+	@LIB2DO="elpa"; $(get_external_libraries)
 petsc-dl: 
 	@LIB2DO="petsc"; $(get_external_libraries)
 slepc-dl: 
 	@LIB2DO="slepc"; $(get_external_libraries)
+ydiago-dl:
+	@LIB2DO="ydiago"; $(get_external_libraries)

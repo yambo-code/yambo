@@ -158,6 +158,12 @@ module nl_optics
  logical,      allocatable :: runs_done(:)
  type(IO_desc)             :: NL_desc
  !
+ ! Symmetries of the system at equilibrium
+ !
+ integer :: nsym_eq ! number of symmetries at equilibrium
+ integer, allocatable :: kpts_map(:,:)  ! map of new points respect to the old one
+ real(SP), allocatable :: dl_dop_eq(:,:,:) ! full symmetries before removing part of them
+ !
  contains
    !
    subroutine NL_alloc(en)

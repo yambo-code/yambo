@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !                  
-subroutine Berry_polarization_EQ(P_Berry_Red,All_S_det,en,Xk,k_map)
+subroutine Berry_polarization_EQ(P_Berry_RED,All_S_det,en,Xk,k_map)
  !
  ! Evalute polarization using Berry phase formulation
  ! from the determinants (All_S_det) of the valence bands overlaps

@@ -30,6 +30,11 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use gpu_m,             ONLY:have_gpu
  use timing_m,          ONLY:timing
  !
+#if defined _NL
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_RD_CL,REP,VERIFY
+#endif
+ !
 #include<y_memory.h>
  !
  type(bz_samp), intent(in)    :: Xk 
@@ -48,6 +53,11 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  complex(SP), pointer DEV_ATTR :: WF_tmp(:,:,:)
  !
  logical           :: USE_shifted_wf
+ !
+#if defined _NL
+ integer 	:: io_additional_SYMM,ID_io
+ integer, external :: io_full_SYMM
+#endif
  !
  call timing("DIPOLE_overlaps",OPR="start")
  !
@@ -80,9 +90,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  YAMBO_ALLOC_GPU(WF_ikp,    (wf_ng_overlaps,n_spinor,1))
  YAMBO_ALLOC_GPU(WF_ik,     (wf_ng_overlaps,n_spinor,Dip%ib(2)))
  !
-!$OMP WORKSHARE
  DIP_S=cZERO
-!$OMP END WORKSHARE
  !
  call live_timing("Overlaps",PAR_IND_DIPk_bz%n_of_elements(PAR_IND_DIPk_bz_ID+1)*n_sp_pol)
  !
@@ -196,6 +204,18 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  call WF_free(WF)
  !
+ ! Apply symmetries of the uperturbated systems if present
+ !
+#if defined _NL
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID_io)
+ io_additional_SYMM=io_full_SYMM(ID_io) 
+ !
+ if (io_additional_SYMM/=0) then
+ endif
+ !
+#endif
+ ! 
  call timing("DIPOLE_overlaps",OPR="stop")
  !
 end subroutine Dipole_Overlaps

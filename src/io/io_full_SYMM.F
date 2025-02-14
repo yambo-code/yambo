@@ -14,6 +14,10 @@ integer function io_full_SYMM(ID)
  !
  use R_lattice,        ONLY:nkibz
  use nl_optics,        ONLY:dl_sop_eq,nsym_eq,kpts_map
+ use IO_m,             ONLY:io_sec,read_is_on,write_is_on
+ use IO_int,           ONLY:io_connect,io_disconnect,io_bulk,io_header,def_variable_elemental,&
+&                        io_fragment,io_elemental,io_variable_elemental
+
  !
 #include<y_memory.h>
  !
@@ -32,7 +36,9 @@ integer function io_full_SYMM(ID)
  !   
  if (read_is_on(ID)) then
     YAMBO_ALLOC(dl_sop_eq,(3,3,nsym_eq))
-    YAMBO_ALLOC(kpts_map,(2,nkibz)
+    YAMBO_ALLOC(kpts_map,(2,nkibz))
  endif
+ !
+1  call io_disconnect(ID=ID)
  !
 end function io_full_SYMM

@@ -162,7 +162,7 @@ module nl_optics
  !
  integer :: nsym_eq ! number of symmetries at equilibrium
  integer, allocatable :: kpts_map(:,:)  ! map of new points respect to the old one
- real(SP), allocatable :: dl_dop_eq(:,:,:) ! full symmetries before removing part of them
+ real(SP), allocatable :: dl_sop_eq(:,:,:) ! full symmetries before removing part of them
  !
  contains
    !

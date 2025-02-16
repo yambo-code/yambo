@@ -44,7 +44,7 @@ subroutine QP_report_and_write_ph(k,qp,en,QPdb_read_err)
  type(QP_t)       ::qp_expanded
  !
  !I/O
- integer, external::io_QP_and_GF
+ integer, external::io_qp_and_GF_ph
  logical          ::do_IO
  integer          ::ID,io_err
  !
@@ -81,7 +81,7 @@ subroutine QP_report_and_write_ph(k,qp,en,QPdb_read_err)
    !
    if (do_IO) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
-     io_err=io_QP_and_GF('G',qp,ID) 
+     io_err=io_qp_and_GF_ph('G',qp,ID) 
    endif
    return
  endif
@@ -263,8 +263,8 @@ subroutine QP_report_and_write_ph(k,qp,en,QPdb_read_err)
  !=================
  if (do_IO) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
-   if (.not.allocated(qp_expanded%E)) io_err=io_QP_and_GF('QP',qp,ID)
-   if (     allocated(qp_expanded%E)) io_err=io_QP_and_GF('QP',qp_expanded,ID)
+   if (.not.allocated(qp_expanded%E)) io_err=io_qp_and_GF_ph('QP',qp,ID)
+   if (     allocated(qp_expanded%E)) io_err=io_qp_and_GF_ph('QP',qp_expanded,ID)
  endif
  !
  call QP_reset(qp_expanded)

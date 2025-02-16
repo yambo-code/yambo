@@ -72,7 +72,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(QP_t)       ::qp
  type(w_samp)     ::Xxcw
  type(levels)     ::en_sc
- integer          ::io_X_err(5),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_SC_E_err,i_r
+ integer          ::io_X_err(5),io_BS_err,io_BS_Fxc_err,io_QINDX_err,i_r
  !
  logical, external:: file_exists
  !
@@ -83,7 +83,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  io_BS_err    =-1
  io_BS_Fxc_err=-1
  io_QINDX_err =-1
- io_SC_E_err  =-1
  !
  if (.not.FINALIZE.and..not.CLOSE_Gs) then
    !
@@ -167,7 +166,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  endif
  !
  call INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
-&                          io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_SC_E_err)
+&                          io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err)
  !
  if (list_dbs) then
    call msg('s','')

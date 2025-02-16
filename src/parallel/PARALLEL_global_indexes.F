@@ -78,7 +78,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
  l_par_X_T          =ENVIRONMENT=="Response_T_space"
  l_par_X_G_finite_q =ENVIRONMENT=="Response_G_space_and_IO"
  l_par_X_G          =ENVIRONMENT=="Response_G_space"
- l_par_SE           =index(ENVIRONMENT,"Self_Energy")>0
+ l_par_SE           =ENVIRONMENT=="Self_Energy"
  l_par_SC           =ENVIRONMENT=="Self_Energy"
  !
  !==================================
@@ -141,8 +141,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
  if (l_par_SE) then
    MORE="ibz"
    if (l_eval_collisions)              MORE="bz"
-   if ( index(ENVIRONMENT,"RIM")>0 ) MORE="RIM"
-   if ( index(ENVIRONMENT,"bz")>0 )  MORE="RIM"
    call PARALLEL_global_Self_Energy(E,Xk,q,MORE)
  endif
  !

@@ -47,7 +47,7 @@ subroutine QP_driver_ph(X,Xen,Xk,en,k,q,Xw,Dip)
  type(QP_t)        ::qp
  integer           ::i1,io_QP_and_GF_err,io_G_err,ID_QP,ID_G,i_spin
  integer           ::lw_bnd
- integer, external ::io_QP_and_GF
+ integer, external ::io_QP_and_GF_ph
  real(SP),external ::G2E
  !
  ! Logicals (and basic setups)
@@ -213,12 +213,12 @@ subroutine QP_driver_ph(X,Xen,Xk,en,k,q,Xw,Dip)
    !========
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID_QP)
-   io_QP_and_GF_err=io_QP_and_GF('QP',qp,ID_QP)
+   io_QP_and_GF_err=io_qp_and_GF_ph('QP',qp,ID_QP)
    !
    if (io_QP_and_GF_err==0.and..not.trim(QP_solver)=='g') then
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID_QP)
-     io_QP_and_GF_err=io_QP_and_GF('QP',qp,ID_QP)
-     call QP_report_and_write(k,qp,en,0)
+     io_QP_and_GF_err=io_qp_and_GF_ph('QP',qp,ID_QP)
+     call QP_report_and_write_ph(k,qp,en,0)
      call local_free()
      return
    endif
@@ -229,7 +229,7 @@ subroutine QP_driver_ph(X,Xen,Xk,en,k,q,Xw,Dip)
    if (trim(QP_solver)=='g') then
      !
      call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID_G)
-     io_G_err=io_QP_and_GF('G',qp,ID_G)
+     io_G_err=io_qp_and_GF_ph('G',qp,ID_G)
      !
      if (io_G_err==0.or.io_G_err==IO_NO_BINDING_ERROR) then
        !
@@ -237,11 +237,11 @@ subroutine QP_driver_ph(X,Xen,Xk,en,k,q,Xw,Dip)
        if (use_GreenF_Zoom)       use_GreenF_Zoom=io_G_err==IO_NO_BINDING_ERROR.and..not.use_GreenF_to_eval_QP
        !
        call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID_G)
-       io_G_err=io_QP_and_GF('G',qp,ID_G)
+       io_G_err=io_qp_and_GF_ph('G',qp,ID_G)
        !
        if (use_GreenF_to_eval_QP) then
          call QP_Green_Function(qp,en,0) 
-         call QP_report_and_write(k,qp,en,-1)
+         call QP_report_and_write_ph(k,qp,en,-1)
          call local_free()
          return
        endif
@@ -253,7 +253,7 @@ subroutine QP_driver_ph(X,Xen,Xk,en,k,q,Xw,Dip)
        endif
        call QP_Green_Function(qp,en,0) 
        if (.not.use_GreenF_Zoom) then
-         call QP_report_and_write(k,qp,en,0)
+         call QP_report_and_write_ph(k,qp,en,0)
          call local_free()
          return
        endif
@@ -269,7 +269,7 @@ subroutine QP_driver_ph(X,Xen,Xk,en,k,q,Xw,Dip)
  ! Updated descriptions (needed in case of Zoomed GFs)
  !=====================================================
  !
- call QP_descriptions(qp,X,Xw,.TRUE.)
+ call QP_descriptions_ph(qp,X,Xw,.TRUE.)
  !
  ! Solvers 
  !=========
@@ -278,7 +278,7 @@ subroutine QP_driver_ph(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    ! NEWTON
    !--------
-   call QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
+   call QP_newton_ph(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    !
  endif
  !
@@ -310,7 +310,7 @@ subroutine QP_driver_ph(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    call QP_Green_Function(qp,en,-1)
    !
-   call QP_report_and_write(k,qp,en,-1)
+   call QP_report_and_write_ph(k,qp,en,-1)
    call local_free()
    return
    !
@@ -326,7 +326,7 @@ subroutine QP_driver_ph(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    qp%Z=cONE
    !
-   call QP_report_and_write(k,qp,en,-1)
+   call QP_report_and_write_ph(k,qp,en,-1)
    call local_free()
    return
    !
@@ -334,7 +334,7 @@ subroutine QP_driver_ph(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  ! Reporting
  !
- call QP_report_and_write(k,qp,en,-1)
+ call QP_report_and_write_ph(k,qp,en,-1)
  call local_free()
  !
  contains

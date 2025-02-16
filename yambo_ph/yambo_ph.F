@@ -16,8 +16,7 @@ integer function yambo_ph(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_mpa,l_bss,l_bse,l_em1d,l_X,&
-&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_gpu_test,&
-&                        l_slk_test
+&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr
  use drivers,       ONLY:l_elph_Hamiltonian
  use gpu_m,         ONLY:GPU_test_dim
  use X_m,           ONLY:X_t,i_X_kind_existing_DB
@@ -113,31 +112,27 @@ integer function yambo_ph(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  !
  ! Basical 
  !
- launch_me= .not.(l_slk_test.or.l_gpu_test)
- if(launch_me) call setup(en,Xen,Ken,k,Xk)
+ call setup(en,Xen,Ken,k,Xk)
  !
  ! Update the default variables
  !
- if(launch_me) i_err=INIT_ph(en,q,k,X,Xw,Dip,instr,lnstr,.true.,.false.)
+ i_err=INIT_ph(en,q,k,X,Xw,Dip,instr,lnstr,.true.,.false.)
  !
  ! BZ sampling
  !==============
  !
- if(launch_me) call bz_samp_indexes(en,k,Xk,q,elph_use_q_grid,.true.,.true.) 
+ call bz_samp_indexes(en,k,Xk,q,elph_use_q_grid,.true.,.true.) 
  !
  ! COLOUMB DRIVER
  !================
  ! In non-linear optics we do not need bare_qpg
  ! it will be loaded only if required
  !
- launch_me= .not.(l_slk_test.or.l_gpu_test.or.l_nl_optics)
- if(launch_me) call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
+ call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
  !
  ! MAGN and DEN
  !=============
- !
- !launch_me= .not.(l_slk_test.or.l_gpu_test)
- !if(launch_me) call eval_Mtot(en,k,q)
+ !call eval_Mtot(en,k,q)
  !
  ! reset the section numbering
  !=============================
@@ -152,8 +147,7 @@ integer function yambo_ph(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,co
  ! QP and RT CORRECTIONS
  !=======================
  !
- launch_me= .not.(l_slk_test.or.l_gpu_test)
- if(launch_me) call External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
+ call External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  !
  ! DIPOLES
  !=========

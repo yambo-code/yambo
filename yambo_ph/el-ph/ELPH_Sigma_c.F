@@ -19,7 +19,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:l_elel_corr
- use parallel_int,  ONLY:PP_wait,PARALLEL_global_indexes
+ use parallel_int,  ONLY:PP_wait
  use parallel_m,    ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_IND_QP,&
 &                        PAR_IND_Q_bz_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,master_cpu,&
                          PAR_COM_Q_A2A,PAR_COM_Q_INDEX,myid
@@ -60,7 +60,6 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  type(w_samp)     ::Sc_W(qp%n_states)
  integer          ::io_err,ID,IO_ACT,ID_DG
  integer, external::io_ELPH,io_Double_Grid,io_gFsq
- character(schlen)::tmp_ch
  real(SP)         ::ph_E,factor,elph_gkkp_sq,E_random_shift
  logical          ::l_WRgFsq,l_GF_from_CA,load_gkkp_DB
  real(SP), allocatable :: q_weight(:)
@@ -163,9 +162,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! Parallelization
  !-----------------
- if (     elph_use_q_grid)    tmp_ch="bz"
- if (.not.elph_use_q_grid)    tmp_ch="RIM"
- call PARALLEL_global_indexes(en,k,q,"Self_Energy elph "//tmp_ch)
+ call PARALLEL_global_indexes_ph(en,k,q,"Self_Energy")
  !
  ! Note that only by using causal ordering it is correct to use 
  ! the KK to calculate the Green's function

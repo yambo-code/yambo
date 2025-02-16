@@ -2,8 +2,9 @@
 PHEL_obj = io_PH.o
 #endif
 objs = mod_ELPH.o FREQUENCIES_Green_Function_spectral.o mod_ELPH_intfcs.o \
+       PARALLEL_global_indexes_ph.o PARALLEL_global_dimensions_elph.o \
        variables_ELPH.o io_ELPH.o io_gFsq.o $(PHEL_obj) io_QP_and_GF_ph.o \
-       SET_defaults_ph.o $(INIT_objs)  \
+       SET_defaults_ph.o  \
        ELPH_alloc.o ELPH_Sigma_c.o ELPH_Hamiltonian.o ELPH_simmetrize_and_distribute_gsqF.o Eval_Efermi_DbGd.o \
        ELPH_gsqF_to_Sigma.o ELPH_Sigma_c_engine.o En_k_plus_q_interpolate.o get_ph_E_DbGd.o \
        ELPH_databases_load.o ELPH_databases_check.o ELPH_databases_grids_map.o \

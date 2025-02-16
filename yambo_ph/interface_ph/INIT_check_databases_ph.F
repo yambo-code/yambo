@@ -46,7 +46,7 @@ subroutine INIT_check_databases_ph(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,inst
  integer           :: i_io,io_ID,io_err,io_DIP_err,io_WF_err,io_KB_abinit_err,io_KB_pwscf_err,io_ATMPROJ_pwscf_err
  !
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
-&                     io_HF_and_locXC,io_QP_and_GF,io_DB1,io_KB_abinit,io_KB_pwscf,&
+&                     io_HF_and_locXC,io_qp_and_GF_ph,io_DB1,io_KB_abinit,io_KB_pwscf,&
 &                     io_COL_CUT,io_E_SOC_map,io_ATMPROJ_pwscf,io_Double_Grid
 #if !defined _PAR_IO
  integer, external :: io_BS
@@ -140,7 +140,7 @@ subroutine INIT_check_databases_ph(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,inst
  ! QP
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
- io_err=io_QP_and_GF('QP',qp,io_ID) 
+ io_err=io_qp_and_GF_ph('QP',qp,io_ID) 
  !
  !In DUMP mode qp%table is dumped as well (to be used in QP_apply).
  !Here, however, qp%table is not needed
@@ -150,12 +150,12 @@ subroutine INIT_check_databases_ph(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,inst
  ! Green Functions
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
- io_err=io_QP_and_GF('G',qp,io_ID) 
+ io_err=io_qp_and_GF_ph('G',qp,io_ID) 
  !
  ! W
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
- io_err=io_QP_and_GF('W',qp,io_ID) 
+ io_err=io_qp_and_GF_ph('W',qp,io_ID) 
  !
  ! Dipoles: Exporting DB1 informations to variables to be proposed in the input file.
  !

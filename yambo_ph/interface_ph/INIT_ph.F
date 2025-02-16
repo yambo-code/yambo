@@ -87,8 +87,6 @@ integer function INIT_ph(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  io_QINDX_err =-1
  io_ELPH_err  =-1
  !
- write(*,*) "INIT_ph call 1"
- !
  if (.not.FINALIZE.and..not.CLOSE_Gs) then
    !
    ! Global Logicals
@@ -119,8 +117,6 @@ integer function INIT_ph(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  call W_reset(Xxcw)
  call X_reset(Xbsk)
  !
- write(*,*) "INIT_ph call 2",FINALIZE,CLOSE_Gs
- !
  if (FINALIZE) then
    call call_INIT_load('Game_Over')
    call initinfio(defs,repfile_unit)
@@ -142,8 +138,6 @@ integer function INIT_ph(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  endif
  !
  ! First vars loading
- !
- write(*,*) "INIT_ph call 3"
  !
  call call_INIT_load('create_shadow_vars')
  !
@@ -173,8 +167,6 @@ integer function INIT_ph(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  else if (.not.infile_editing) then
    infile='(none)'
  endif
- !
- write(*,*) "INIT_ph call 4"
  !
  call INIT_check_databases_ph(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT_ph,&
 &                          io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err)

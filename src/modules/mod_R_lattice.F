@@ -93,10 +93,10 @@ module R_lattice
  end type bz_map 
  !
  ! Small symmetry group for each k-point of the IBZ
- type k_symm_sm_grp
-   integer, allocatable :: nsymm(:)  ! Number of symmetries for each k-point
+ type k_symm_small_grp
+   integer, allocatable :: nsym(:)  ! Number of symmetries for each k-point
    integer, allocatable :: indx(:,:) ! Symmetries indexes 
- end type k_symm_sm_grp
+ end type k_symm_small_grp
  !
  ! Q/K sampling shadow tables
  !

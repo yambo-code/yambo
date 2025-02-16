@@ -58,6 +58,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  integer           ::i_err,i_X_kind
  logical           ::launch_me
+ type(k_symm_small_grp) :: k_symm_grp
  !
  ! Externals
  !
@@ -125,7 +126,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !==============
  !
  if(launch_me) call bz_samp_indexes(en,k,Xk,q) 
- type(k_symm_small_grp) :: k_symm_grp
  call k_small_symmetry_group(k,k_symm_grp)
  stop
  !

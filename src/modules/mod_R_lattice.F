@@ -92,6 +92,12 @@ module R_lattice
    real(SP)     :: q_step(3)
  end type bz_map 
  !
+ ! Small symmetry group for each k-point of the IBZ
+ type k_symm_sm_grp
+   integer, allocatable :: nk_symm(:)  ! Number of symmetries for each k-point
+   integer, allocatable :: k_symm(:,:) ! Symmetries indexes 
+ end type k_symm_sm_grp
+ !
  ! Q/K sampling shadow tables
  !
  real(SP),allocatable :: k_pt(:,:)

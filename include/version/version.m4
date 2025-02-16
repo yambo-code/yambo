@@ -1,9 +1,9 @@
-AC_INIT(Yambo, 5.3.0 r.23929 h.ffad4fbd8, yambo@yambo-code.org)
+AC_INIT(Yambo, 5.3.0 r.23930 h.cad1cb26f, yambo@yambo-code.org)
 SVERSION="5"
 SSUBVERSION="3"
 SPATCHLEVEL="0"
-SREVISION="23929"
-SHASH="ffad4fbd8"
+SREVISION="23930"
+SHASH="cad1cb26f"
 AC_SUBST(SVERSION)
 AC_SUBST(SSUBVERSION)
 AC_SUBST(SPATCHLEVEL)

@@ -108,6 +108,31 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
  !
  if (pp_is_uspp) call error("[PPs] USPP not implemented for bare Hamiltonian reconstruction")
  !
+ ! Parallel indexes
+ !=======================
+ call PARALLEL_global_indexes(E,k,q,"Self_Energy")
+ ! 
+ ! WF distributed & load
+ !=======================
+! l_distribute_wfs=.true.
+!#if defined _SC
+! l_distribute_wfs=.not.l_sc_run
+!#endif
+ !
+ ! DS: if WFs are distributed, also becp needs to be distributed in memory
+ ! See commented line in PP_compute_becp 
+ ! This would require to add an "if( indixe(ik) ) cycle in the final loop
+ ! of this subroutine, plus e final PP_redux
+ l_distribute_wfs=.false.
+ ! 
+ if (l_distribute_wfs) then
+   ! Final states (k-q,np)...
+   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+   ! Initial states (k,n \in QP)...
+   call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
+   call PARALLEL_WF_index( )
+ endif
+ !
  ! Read dipoles
  !
  ! (NB : In the final version this may be done in a different subroutine)
@@ -132,23 +157,6 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
  !             NB: quantities in real space [vlocal and VHartree] require loading all occupied states
  !=====================================================================
  WFbands=(/H_ref_bands(1),max(H_ref_bands(2),maxval(E%nbm))/)
- ! 
- ! WF distributed & load
- !=======================
- !
- l_distribute_wfs=.true.
-#if defined _SC
- l_distribute_wfs=.not.l_sc_run
-#endif
- if (l_distribute_wfs) then
-   call PARALLEL_global_indexes(E,k,q,"Self_Energy")
-   ! 
-   ! Final states (k-q,np)...
-   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
-   ! Initial states (k,n \in QP)...
-   call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
-   call PARALLEL_WF_index( )
- endif
  !
  call WF_load(WF,QP_ng_Vxc,WF_Go_indx,WFbands,(/1,k%nibz/),title='-vloc')
  !
@@ -199,6 +207,8 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
      !
      !write (*,*) "H_pseudo (ik,i_sp_pol) ",ik,i_sp_pol
      !write (*,*) "H_zero (ik,i_sp_pol) ",ik,i_sp_pol
+     !
+     !if ( .not.PAR_IND_Xk_ibz%element_1D(ikibz) ) cycle
      !
      Hext_loc=cZERO
      Hext_nl=cZERO
@@ -313,17 +323,10 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
        enddo
      endif
      !
-#if defined _RT
-     if(l_real_time) then
-       if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-     endif
-#endif
-     !
    enddo
    !
  enddo
  !
- pp_is_uspp=.false. 
  call vloc_dealloc() ! Dealloc here since we couldn't do it in PP_uspp_init 
  YAMBO_FREE(vloc_full_r)
  !

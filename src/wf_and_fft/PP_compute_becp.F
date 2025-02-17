@@ -41,7 +41,7 @@ subroutine PP_compute_becp(bands)
      call WF_load(WF,WF_G_max,WF_Go_indx,bands,(/ikibz,ikibz/),(/i_sp_pol,i_sp_pol/),&
      &            title='-becp',space="C",keep_states_to_load=.true.)
      !
-     if (.not.any((/PAR_IND_WF_linear%element_2D(:,ikibz)/)) ) cycle
+     !if (.not.any((/PAR_IND_WF_linear%element_2D(:,ikibz)/)) ) cycle
      !
      call c2a(b,k_pt(ikibz,:),xk,mode="ki2c")
      xk=xk/real(tpiba,SP)

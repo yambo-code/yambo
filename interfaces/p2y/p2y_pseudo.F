@@ -159,10 +159,10 @@ subroutine p2y_pseudo(k)
    allocate(vloc_yambo(ngm_,nsp_))
    call set_vloc_yambo()
    !
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID_vloc)
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID_vloc)
    io_err = io_VLOC_pwscf(ID_vloc)
    !
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=io_VPRJ_pwscf(ID)
    !
    !call PP_uspp_free()

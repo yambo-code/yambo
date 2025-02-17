@@ -35,6 +35,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID,PAR_IND_G_b_ID,PAR_IND_QP_ID,PAR_IND_Q_ibz_ID,PAR_IND_Q_bz_ID
 #if defined _SC
  use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX
+ use pseudo,        ONLY:l_use_p2_Vloc_becp 
 #endif
 #if defined _SC || defined _RT || defined _QED
  use drivers,       ONLY:l_elphoton_corr,l_life,l_real_time,l_sc_run
@@ -267,9 +268,11 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    !
  endif
  !
- if (l_elphoton_corr.and.l_life) then
+ if ((l_elphoton_corr.and.l_life).or.l_use_p2_Vloc_becp) then
    !
-   ! Oscillators needed to evaluate the Radiative Lifetimes
+   ! Oscillators needed to:
+   ! a) evaluate the Radiative Lifetimes
+   ! b) evaluate bare hamiltonian from scratch
    !
    YAMBO_FREE(PAR_DIPk_ibz_index)
    YAMBO_FREE(PAR_DIPk_bz_index)

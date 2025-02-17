@@ -117,7 +117,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
  if (.not.STRING_match(Dip%computed,"p2")) call error("[DIP] P_square not activated")
  call DIPOLE_dimensions(E,Dip,H_ref_bands,(/0._SP,0._SP,0._SP/))
  !
- DIP_par_scheme="K"
+ DIP_par_scheme="HAM"
 #if defined _SC
  if(l_sc_run) DIP_par_scheme="SC"
 #endif

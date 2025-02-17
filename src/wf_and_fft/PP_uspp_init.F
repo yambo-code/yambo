@@ -15,8 +15,7 @@ subroutine PP_uspp_init()
  use vec_operate,   ONLY:c2a
  use D_lattice,     ONLY:nsym,dl_sop,atom_mapper
  use R_lattice,     ONLY:b,g_vec,ng_vec
- use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,PP_uspp_free,qe_atoms_map,&
-&                        l_use_p2_Vloc_becp,PP_uspp_alloc
+ use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,PP_uspp_free,qe_atoms_map,PP_uspp_alloc
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,REP
  !

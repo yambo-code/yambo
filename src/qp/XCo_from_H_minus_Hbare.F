@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2023 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): FP DS
 !
 !> @brief Calculate QP_Vxc = E_bare - h0 - VHartree (i.e., for GW+U calculations)
 !
@@ -74,11 +58,11 @@ subroutine XCo_from_H_minus_Hbare(E,Xk,k,q,Dip)
  call parser('WriteVxc',l_write_Vxc) ! only for testing purposes
  !
  if (l_write_Vxc) then
-  open(3, file='Hbare_TEST.dat')
-  open(4, file='Hplus_TEST.dat')
-  open(5, file='Eref_TEST.dat')
-  open(6, file='QPVxc_TEST.dat')
-  open(7, file='VHartree_TEST.dat')
+  open(133, file='Hbare_TEST.dat')
+  open(134, file='Hplus_TEST.dat')
+  open(135, file='Eref_TEST.dat')
+  open(136, file='QPVxc_TEST.dat')
+  open(137, file='VHartree_TEST.dat')
  endif
  !
  call timing('XCo_from_H_minus_Hbare',OPR="start")
@@ -119,14 +103,14 @@ subroutine XCo_from_H_minus_Hbare(E,Xk,k,q,Dip)
     !
     call V_real_space_to_H(ik,i_sp_pol,Vh_test(:,:,ik,i_sp_pol),WF,'def',V=V_hartree_sc)
     !
-    write(7,*) "# Vh    (ik,i_sp_pol) ",ik,i_sp_pol
+    write(137,*) "# Vh    (ik,i_sp_pol) ",ik,i_sp_pol
     do ib=H_ref_bands(1),H_ref_bands(2)
-      write(7,*) Vh_test(ib,:,ik,i_sp_pol)
+      write(137,*) Vh_test(ib,:,ik,i_sp_pol)
     enddo
     !
     enddo
    enddo
-   close(7)
+   close(137)
    !
  endif
  ![DEBUG<]
@@ -136,12 +120,12 @@ subroutine XCo_from_H_minus_Hbare(E,Xk,k,q,Dip)
   !
   ![DEBUG>]
   if (l_write_Vxc) then
-   write(3,*) "# Ho    (ik,i_sp_pol) ",ik,i_sp_pol
-   write(4,*) "# Ho+ VH (ik,i_sp_pol) ",ik,i_sp_pol
-   write(5,*) "# E_reference (ik,i_sp_pol) ",ik,i_sp_pol
+   write(133,*) "# Ho    (ik,i_sp_pol) ",ik,i_sp_pol
+   write(134,*) "# Ho+ VH (ik,i_sp_pol) ",ik,i_sp_pol
+   write(135,*) "# E_reference (ik,i_sp_pol) ",ik,i_sp_pol
    do ib=H_ref_bands(1),H_ref_bands(2)
-    write(3,*) Hzero(ib,:,ik,i_sp_pol)
-    write(5,*) E_reference%E(ib,ik,i_sp_pol)
+    write(133,*) Hzero(ib,:,ik,i_sp_pol)
+    write(135,*) E_reference%E(ib,ik,i_sp_pol)
    enddo
   endif
   ![DEBUG<]
@@ -151,7 +135,7 @@ subroutine XCo_from_H_minus_Hbare(E,Xk,k,q,Dip)
   ![DEBUG>]
   if (l_write_Vxc) then
    do ib=H_ref_bands(1),H_ref_bands(2)
-    write(4,*) Hzero(ib,:,ik,i_sp_pol)
+    write(134,*) Hzero(ib,:,ik,i_sp_pol)
    enddo
   endif
   ![DEBUG<]
@@ -174,8 +158,8 @@ subroutine XCo_from_H_minus_Hbare(E,Xk,k,q,Dip)
   !
   ![DEBUG>]
   if (l_write_Vxc) then
-   write(6,*) "#QP_Vxc (ik,i_sp_pol,ib,ibp) ",ik,i_sp_pol,ib,ibp
-   write(6,*) QP_Vxc(i1)
+   write(136,*) "#QP_Vxc (ik,i_sp_pol,ib,ibp) ",ik,i_sp_pol,ib,ibp
+   write(136,*) QP_Vxc(i1)
   endif
   ![DEBUG<]
   !
@@ -185,10 +169,10 @@ subroutine XCo_from_H_minus_Hbare(E,Xk,k,q,Dip)
  !
  ![DEBUG>]
  if (l_write_Vxc) then
-  close(3)
-  close(4)
-  close(5)
-  close(6)
+  close(133)
+  close(134)
+  close(135)
+  close(136)
   deallocate(Vh_test)
  endif
  ![DEBUG<]

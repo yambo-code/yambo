@@ -77,6 +77,13 @@ subroutine XCo_driver(E,k,Xk,q,Dip)
  l_Vxc   =.not.l_sc_run.and..not.l_real_time
  l_Vnl_xc=.TRUE.
  !
+ l_use_libxc=.true.
+#if defined _SC
+ call parser('BareHfromScratch', l_use_p2_Vloc_becp)
+ l_use_libxc=.not.l_use_p2_Vloc_becp
+ l_use_qe_pseudo=l_use_p2_Vloc_becp
+#endif
+ !
  ! AM, 22/4/2021: a tiny WF_exx_screening causes NaN in the call to scatter_ModScr
  l_screen_hyb=(WF_exx_screening > zero_dfl) 
  !
@@ -162,15 +169,8 @@ subroutine XCo_driver(E,k,Xk,q,Dip)
  !
  if (l_Vxc) then
    !
-   l_use_libxc=.true.
-#if defined _SC
-   ! l_use_p2_Vloc_becp changes the behaviour of WF_load causing
-   ! it to enter uspp sections in order to get Hbare parameters
-   call parser('BareHfromScratch', l_use_p2_Vloc_becp)
-   l_use_libxc=.not.l_use_p2_Vloc_becp
-   l_use_qe_pseudo=l_use_p2_Vloc_becp
+#if defined _SC && defined _MPI
    ! FP 15/11/23: MPI q-tasks lead to problems with DIPOLE_IO of P_square in Bare_Hamiltonian_from_Scracth (to be fixed)
-#if defined _MPI 
    if (l_use_p2_Vloc_becp) then
      if(ncpu/=1) then
        do i_role=1,size(PARALLEL_CPU_role)
@@ -183,7 +183,6 @@ subroutine XCo_driver(E,k,Xk,q,Dip)
        enddo
      endif
    endif
-#endif
 #endif
    !
    if (l_use_libxc) then 
@@ -201,9 +200,6 @@ subroutine XCo_driver(E,k,Xk,q,Dip)
    !
 #if defined _SC
    if (l_use_qe_pseudo) call XCo_from_H_minus_Hbare(E,Xk,k,q,Dip)
-   !
-   ! Now WF_load can be safely called again
-   l_use_p2_Vloc_becp=.false.
 #endif
    !
  endif

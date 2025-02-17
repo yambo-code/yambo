@@ -27,6 +27,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_ng_Vxc,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
 #if defined _SC
+ use pseudo,        ONLY:l_use_p2_Vloc_becp
  use drivers,       ONLY:l_sc_exx
  use SC,            ONLY:it_now
 #endif
@@ -53,7 +54,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  complex(SP), pointer DEV_ATTR     :: isc_rhotw_p(:), iscp_rhotw_p(:)
  !
  integer                  :: iq,iq_ibz,is_ibz,ib,ibp,jb,i_qp
- integer                  :: ik,ikp,iGp,i_sp_pol  ! QP list
+ integer                  :: ik,ikp,iGp,i_sp_pol,WF_g_max  ! QP list
  integer                  :: Sx_lower_band,Sx_upper_band(2),n_lt_bands,n_lt_steps
  integer                  :: ig_first,ig_last
  complex(DP)              :: DP_Sx, DP_Sx_l
@@ -99,7 +100,12 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      !
    endif
    !
-   call WF_load(WF,max(QP_ng_Sx,QP_ng_Vxc),maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
+   WF_g_max=max(QP_ng_Sx,QP_ng_Vxc)
+   ! In case Vxc is computed from Hzero, only cutoff on Sx is needed here
+#if defined _SC
+   if (l_use_p2_Vloc_becp) WF_g_max=QP_ng_Sx
+#endif
+   call WF_load(WF,WF_g_max,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
    !
  endif
  !

@@ -151,7 +151,7 @@ subroutine INIT_activate()
  !
  !XX
  !
- if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs VXCRLvcs UseNLCC')  
+ if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs VXCRLvcs HARRLvcs UseNLCC')  
  !
  ! Kernels
  !

@@ -25,7 +25,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
  !
  use pars,           ONLY:DP,SP,cZERO,schlen,lchlen
  use electrons,      ONLY:levels,n_sp_pol,n_spin,l_spin_orbit,spin_occ,n_spinor
- use dipoles,        ONLY:DIPOLE_t,compute_P2_dipoles,P_square
+ use dipoles,        ONLY:DIPOLE_t,P_square
  use QP_m,           ONLY:QP_nk,QP_ng_Vxc
  use interfaces,     ONLY:el_density_and_current,el_magnetization,WF_load
  use hamiltonian,    ONLY:Hzero,H_ref_bands,WF_G_max,WF_Go_indx,Hext_nl,Hext_loc,&
@@ -49,7 +49,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:NONE,OP_RD_CL,REP,DUMP
  use gvect,          ONLY:ngm
- use stderr,         ONLY:intc
+ use stderr,         ONLY:intc,STRING_match
  use parser_m,       ONLY:parser
 #if defined _SC
  use drivers,        ONLY:l_sc_run
@@ -114,7 +114,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
  ! (NB2: Incompatibility of DIP_par_scheme and DIPOLE_IO call in the present version
  !       is the reason why SE parall. over q is turned off in XCo_driver)
  !=====================================================================
- if (.not.compute_P2_dipoles) call error("[DIP] P_square not activated")
+ if (.not.STRING_match(Dip%computed,"p2")) call error("[DIP] P_square not activated")
  call DIPOLE_dimensions(E,Dip,H_ref_bands,(/0._SP,0._SP,0._SP/))
  !
  DIP_par_scheme="K"

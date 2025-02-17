@@ -285,7 +285,7 @@ aarch*linux* | arm*linux* )
     FUFLAGS="-O0 -g"
     SLK_FC_FLAGS="-fallow-argument-mismatch"
     FCMFLAG=""
-    OMPFLAGS="-Kopenmp -Kparallel -Nlibomp"
+    OMPFLAGS="-Kopenmp -Kparallel -Nfjomplib"
     NETCDFFLAGS="-DgFortran"
     DEBUG_FLAGS="-Og -g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;

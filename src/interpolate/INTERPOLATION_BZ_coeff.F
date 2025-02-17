@@ -104,13 +104,11 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  enddo
  !
  YAMBO_ALLOC(BZ_star,(PAR_nshells,Nk))
- BZ_star=cZERO
+ BZ_star=(0._DP,0._DP)
  !
  if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation@"//trim(INTERP_obj(ID)%what)//" (star)",PAR_nshells)
  !==================================================================================================================
  do i_shell=1,nshells
-   !
-   i_par_shell=SHELL_index(i_shell)
    !
    if (i_shell==1) then
      if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
@@ -118,6 +116,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
    endif
    !
    if (.not.px%element_1D(i_shell)) cycle
+   i_par_shell=SHELL_index(i_shell)
    !
    call make_star(lattice_vectors(:,i_shell),nsym_interp,int_sop,nstar,star_vec) 
    do ik=1,Nk

@@ -148,13 +148,14 @@ subroutine DIPOLE_setup(Dip)
 #endif
  endif
  ! ...M_spin, M_orb, M_iti, M_orb_CD
+ specific_obs=""
  if (n_spin>1) then
-#if defined _RT
-   if (l_real_time) specific_obs=" M_spin M_orb M_it"
-#else
-   if (STRING_match(Dip%computed,"orb")) specific_obs=trim(specific_obs)//" M_orb M_it"
-#endif
    if (STRING_match(Dip%computed,"spin").or.l_BS_magnons) specific_obs=" M_spin"
+   if (STRING_match(Dip%computed,"orb")) specific_obs=trim(specific_obs)//" M_orb M_it"
+#if defined _RT
+   ! Always force all dipoles in real-time case
+   if (l_real_time) specific_obs=" M_spin M_orb M_it"
+#endif
  endif
  if (l_BS_dichroism) specific_obs=trim(specific_obs)//" M_CD_orb"
  ! 

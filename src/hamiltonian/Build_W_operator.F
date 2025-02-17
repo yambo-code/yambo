@@ -130,6 +130,17 @@ subroutine Build_W_operator(en,Xk,A_input,ik,i_sp,V_bands,H_nl_sc)
  enddo
  !$omp end parallel do
  !
+ ! Symmetrization with residual small group symmetries 
+ !
+! if(nksymm>1) then
+!   do i1=H_ref_bands(1),H_ref_bands(2)
+!     do i2=i1,H_ref_bands(2)
+!       call K_symm_vector(ik,Wk(:,i1,i2))
+!       Wk(:,i2,i1)=conjg(Wk(:,i1,i2))
+!     enddo
+!   enddo
+! endif
+ !
  !$omp parallel do default(shared), private(i1,id)
  do i1=H_ref_bands(1),H_ref_bands(2)
    do id=1,3

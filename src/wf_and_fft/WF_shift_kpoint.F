@@ -19,7 +19,12 @@ subroutine WF_shift_kpoint_gpu(b_to_shift,nb_to_shift,ikbz,i_sp_pol,wf_shift,Xk,
  !
 #include<y_memory.h>
  !
- integer,       intent(in) :: wf_shift(3),ikbz,i_sp_pol,b_to_shift(2),nb_to_shift
+ integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2),nb_to_shift
+#if defined _FJ
+ integer,                  :: i_sp_pol
+#else
+ integer,       intent(in) :: i_sp_pol
+#endif
  type(bz_samp), intent(in) :: Xk
  complex(SP), intent(in)  DEV_ATTR :: WF_k_in (wf_ng_1st_BZ, n_spinor,nb_to_shift)
  complex(SP), intent(out) DEV_ATTR :: WF_k_out(wf_ng_overlaps,n_spinor,nb_to_shift)

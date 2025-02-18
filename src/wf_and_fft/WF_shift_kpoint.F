@@ -21,7 +21,7 @@ subroutine WF_shift_kpoint_gpu(b_to_shift,nb_to_shift,ikbz,i_sp_pol,wf_shift,Xk,
  !
  integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2),nb_to_shift
 #if defined _FJ
- integer,                  :: i_sp_pol
+ integer                   :: i_sp_pol
 #else
  integer,       intent(in) :: i_sp_pol
 #endif

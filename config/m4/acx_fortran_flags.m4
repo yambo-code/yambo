@@ -288,6 +288,7 @@ aarch*linux* | arm*linux* )
     OMPFLAGS="-Kopenmp -Kparallel -Nfjomplib"
     NETCDFFLAGS="-DgFortran"
     DEBUG_FLAGS="-Og -g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
+    def_compiler="-D_FJ"
     ;;
   *)
     SYSFLAGS="-g -O"

@@ -30,7 +30,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
- use R_lattice,     ONLY:bz_samp,bz_samp_reset,k_symm_small_grp
+ use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
  !
  implicit none
@@ -58,7 +58,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  integer           ::i_err,i_X_kind
  logical           ::launch_me
- type(k_symm_small_grp) :: k_symm_grp
  !
  ! Externals
  !
@@ -126,8 +125,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !==============
  !
  if(launch_me) call bz_samp_indexes(en,k,Xk,q) 
- call k_small_symmetry_group(k,k_symm_grp)
- stop
  !
  ! COLOUMB DRIVER
  !================

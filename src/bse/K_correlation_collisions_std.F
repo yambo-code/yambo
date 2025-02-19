@@ -329,10 +329,11 @@ subroutine K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
        !
        integer, intent(in)   :: j_Tk,j_Tp,j_Tgrp_k,j_Tgrp_p,j_block,j_q
        integer, intent(out)  :: j_kp_s,j_s_star,j_kp_mq_s,j_s_mq_star,    &
-       &                        j_k,j_p,j_kmq,j_pmq,j_kmq_t,j_pmq_t,      &
+       &                        j_kmq,j_pmq,j_kmq_t,j_pmq_t,      &
        &                        j_c_p,j_v_p,j_p_sp_pol_v,j_p_sp_pol_c,    &
        &                        j_v_k,j_c_k,j_k_sp_pol_v,j_k_sp_pol_c,j_q_W
-       integer, intent(inout):: j_p_bz_last,j_k_bz_last,j_q_W_bz_last,j_g_W_last
+       integer, intent(inout):: j_p_bz_last,j_k_bz_last,j_q_W_bz_last,j_g_W_last, &
+       &                        j_k,j_p
        !
        ! local variables
        !

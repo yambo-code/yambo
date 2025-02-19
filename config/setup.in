@@ -99,6 +99,8 @@ lfutile     = @FUTILE_LIBS@
 ifutile     = @FUTILE_INCS@
 letsf       = @ETSF_LIBS@
 ietsf       = @ETSF_INCS@
+lmagma      = @MAGMA_LIBS@
+imagma      = @MAGMA_INCS@
 mpipath     = @MPI_PATH@
 #
 # VPATH

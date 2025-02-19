@@ -1,0 +1,5 @@
+#if defined _MAGMA
+MAGMA_objects    = mod_magma2_common.o mod_magma2_sfortran.o mod_magma2_dfortran.o \
+                   mod_magma2_cfortran.o mod_magma2_zfortran.o mod_magma2.o
+#endif
+objs = $(MAGMA_objects)

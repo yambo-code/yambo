@@ -39,7 +39,7 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
  use cublas,         ONLY:CUBLAS_OP_N
  use cusolvermp
 #endif
- use gpu_m,          ONLY:device_id
+ use gpu_m,          ONLY:device_id,stream_d
  !
 #include<dev_defs.h>
 #include<y_memory.h>
@@ -72,8 +72,6 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
 
  complex(SP) :: c_value = 1.0
 
- integer(kind=cuda_stream_kind) :: stream
-
  character(len=512) :: error_msg
  !
  if (SLK_ORTHO%coordinate(1)==-1) return
@@ -90,10 +88,9 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
  ierr = cal_comm_create_mpi(SLK_ORTHO%COMM, SLK_ORTHO%task, SLK_ORTHO%n_CPU, device_id, A%comm_mp)
 
  ierr = cudaSetDevice(device_id)
- ierr = cudaStreamCreate(stream)
 
  ! initialize the cuSOLVERMp environment
- ierr = cusolverMpCreate(A%cusolvermp_h, device_id, stream)
+ ierr = cusolverMpCreate(A%cusolvermp_h, device_id, stream_d)
 
  ierr = cusolverMpCreateDeviceGrid(A%cusolvermp_h, A%grid_mp, A%comm_mp, SLK_ORTHO%grid(1), SLK_ORTHO%grid(2), CUSOLVERMP_GRID_MAPPING_ROW_MAJOR)
 
@@ -188,7 +185,7 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
    call LINEAR_ALGEBRA_error(subname,error_msg)
  endif
 
- !ierr = cal_stream_sync(A%comm_mp, stream)
+ !ierr = cal_stream_sync(A%comm_mp, stream_d)
 
  ierr = cusolverMpGetrs(A%cusolvermp_h, CUBLAS_OP_N, &
         n, nrhs, DEV_VAR(A%blc)(:,:,A%I), one, one, A%desc_mp, DEV_VAR(ipiv), &

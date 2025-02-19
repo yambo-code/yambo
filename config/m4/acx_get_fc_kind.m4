@@ -10,7 +10,12 @@ AC_DEFUN([ACX_GET_FC_KIND],
 INTELVERSION="unknown"
 FCKIND="unknown"
 case "${FC}" in
+    *frt*)
+      FCKIND="fujitsu"
+      FCVERSION=`$FC --version`
+      ;;
     *ftn*)
+      FCKIND="cray"
       FCVERSION=`$FC --version`
       ;;
     *abf90*)

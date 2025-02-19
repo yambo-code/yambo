@@ -284,7 +284,7 @@ aarch*linux* | arm*linux* )
     SYSFLAGS="-Kfast -Nalloc_assign"
     FUFLAGS="-O0 -g"
     SLK_FC_FLAGS="-fallow-argument-mismatch"
-    FCMFLAG=""
+    FCMFLAG="-mlcmain=main"
     OMPFLAGS="-Kopenmp -Kparallel -Nfjomplib"
     NETCDFFLAGS="-DgFortran"
     DEBUG_FLAGS="-Og -g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"

@@ -74,10 +74,6 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  ! compute X on GPU if compiled with GPU support,
  ! unless GPU-usage is switch-off from input
  !
- ! Main logic:
- ! if SLK are present .and. ncpu_SLK >1 .and. CUDA => SLK on CPU
- ! otherwise a problem is obtained since SLK doesn't work on GPU yet
- !
  compute_on_gpu=have_gpu.and.X_use_gpu
  !
  ! AMD-GPUs + GPU linalg not yet implemented

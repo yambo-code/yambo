@@ -39,7 +39,7 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
  use cublas,         ONLY:CUBLAS_OP_N
  use cusolvermp
 #endif
- use gpu_m,          ONLY:device_id,stream_h2d
+ use gpu_m,          ONLY:device_id
  !
 #include<dev_defs.h>
 #include<y_memory.h>
@@ -217,11 +217,42 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
  if(info(1)/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverMpGetrf failed')
  if(info(2)/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverMpGetrs failed')
 
+ ! free resources
+
+ YAMBO_FREE_GPU(DEV_VAR(ipiv))
+ YAMBO_FREE_GPU(DEV_VAR(info))
+
  YAMBO_FREE(h_work_trf)
  YAMBO_FREE(h_work_trs)
 
  YAMBO_FREE_GPU(d_work_trf)
  YAMBO_FREE_GPU(d_work_trs)
+
+ ! release cuSOLVERMp resources
+
+ ! destroying cuSOLVERMp matrix descriptors
+ ierr = cusolverMpDestroyMatrixDesc(A%desc_mp)
+
+ if(ierr/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverMpDestroyMatrixDesc A%desc_mp failed')
+
+ ierr = cusolverMpDestroyMatrixDesc(B%desc_mp)
+
+ if(ierr/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverMpDestroyMatrixDesc B%desc_mp failed')
+
+ ! destroying device grid
+ ierr = cusolverMpDestroyGrid(A%grid_mp)
+
+ if(ierr/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverMpDestroyGrid failed')
+
+ ! destroying cuSOLVERMp handler
+ ierr = cusolverMpDestroy(A%cusolvermp_h)
+
+ if(ierr/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverMpDestroy failed')
+
+ ! destroying communicator handle
+ ierr = cal_comm_destroy(A%comm_mp)
+
+ if(ierr/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cal_comm_destroy failed')
 
 #endif
  !

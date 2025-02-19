@@ -257,7 +257,7 @@ contains
     stream_default=cudaforGetDefaultStream()
     ierr = CudaStreamCreateWithFlags(stream_h2d,cudaStreamNonBlocking)
     ierr = CudaStreamCreateWithFlags(stream_d2h,cudaStreamNonBlocking)
-    ierr = CudaStreamCreateWithFlags(stream_d,  cudaStreamNonBlocking)
+    ierr = CudaStreamCreate(stream_d)
     async_default =stream_default
     async_h2d     =stream_h2d
     async_d2h     =stream_d2h

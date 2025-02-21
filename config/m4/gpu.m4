@@ -100,8 +100,8 @@ AC_ARG_WITH([cuda-cc],
 
 
 AC_ARG_WITH([cuda-runtime],
-   [AS_HELP_STRING([--with-cuda-runtime=VAL],[CUDA runtime (Pascal: 8+, Volta: 9+) @<:@default=10.1@:>@])],
-   [],[with_cuda_runtime=10.1])
+   [AS_HELP_STRING([--with-cuda-runtime=VAL],[CUDA runtime (Pascal: 8+, Volta: 9+) @<:@default=none, checks if the NVHPC_CUDA_HOME variable is set.@:>@])],
+   [],[with_cuda_runtime=none])
 # 
 AC_ARG_WITH([cuda-int-libs],
    [AS_HELP_STRING([--with-cuda-int-libs=VAL],[CUDA internal libraries () @<:@default=cuda,cufft,cublas,cusolver,cudart@:>@])],
@@ -193,17 +193,26 @@ if test x"$enable_cuda_fortran" != "xno" ; then
    #
    # Flags to be passed to the devicexlib library
    #
-   DEVXLIB_FLAGS="--enable-openmp --enable-cuda-fortran --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
+   DEVXLIB_FLAGS="--enable-openmp --enable-cuda-fortran --with-cuda-cc=${with_cuda_cc}"
+   if test "x$with_cuda_runtime" != "xnone" ; then
+     DEVXLIB_FLAGS+=" --with-cuda-runtime=${with_cuda_runtime}"
+   fi
    #
    case "${FCVERSION}" in
     *nvfortran*)
-      GPU_FLAGS="-cuda -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
+      GPU_FLAGS="-cuda -gpu=cc${with_cuda_cc}"
+      if test "x$with_cuda_runtime" != "xnone" ; then
+        GPU_FLAGS+=" -gpu=cuda${with_cuda_runtime}";
+      fi
       if test x"$use_int_cuda_libs" = "xyes" ; then
         GPU_FLAGS+=" -cudalib=${with_cuda_int_libs}";
       fi
       ;;
     *)
-      GPU_FLAGS="-Mcuda=cc${with_cuda_cc},cuda${with_cuda_runtime}"
+      GPU_FLAGS="-Mcuda=cc${with_cuda_cc}"
+      if test "x$with_cuda_runtime" != "xnone" ; then
+        GPU_FLAGS+=" -gpu=cuda${with_cuda_runtime}"
+      fi
       if test x"$use_int_cuda_libs" = "xyes" ; then
         GPU_FLAGS+=" -Mcudalib=${with_cuda_int_libs}"
       fi
@@ -243,14 +252,17 @@ if test x"$enable_openacc" != "xno" ; then
    case "${FCVERSION}" in
     *nvfortran*)
       DEVXLIB_FLAGS+="--enable-openmp"
-      GPU_FLAGS="-acc=gpu,multicore -acclibs -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime} " # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
+      GPU_FLAGS="-acc=gpu,multicore -acclibs -gpu=cc${with_cuda_cc}"
+      if test "x$with_cuda_runtime" != "xnone" ; then
+        GPU_FLAGS+=" -gpu=cuda${with_cuda_runtime}"
+      fi
       if test x"$use_int_cuda_libs" = "xyes" ; then
         GPU_FLAGS+=" -cudalib=${with_cuda_int_libs}";
       fi
       ;;
     *pgfortran*)
       DEVXLIB_FLAGS+="--enable-openmp"
-      GPU_FLAGS="-acc -acclibs -ta=tesla:cc${with_cuda_cc} "           # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
+      GPU_FLAGS="-acc -acclibs -ta=tesla:cc${with_cuda_cc} "
       if test x"$use_int_cuda_libs" = "xyes" ; then
         GPU_FLAGS+=" -cudalib=${with_cuda_int_libs}";
       fi
@@ -259,7 +271,6 @@ if test x"$enable_openacc" != "xno" ; then
       GPU_FLAGS="-fopenacc -foffload=-lm  -foffload=-lgfortran" 
       # -foffload=nvptx-none
       # -foffload=amdgcn-amdhsa  -foffload=-march=gfx908 
-      # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}
    esac
    #
 fi
@@ -271,8 +282,8 @@ if test x"$enable_openmp5" != "xno" ; then
    # Flags to be passed to the devicexlib library
    #
    def_gpu="-D_GPU -D_OPENMP_GPU"
-   GPU_FLAGS="-fopenmp" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
-   DEVXLIB_FLAGS="--enable-openmp5" # --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
+   GPU_FLAGS="-fopenmp"
+   DEVXLIB_FLAGS="--enable-openmp5"
    if test x"$LIBROCM_LIBS" != "x" ; then
      DEVXLIB_FLAGS+=" --enable-rocblas --with-rocm-libs=$LIBROCM_LIBS";
      def_gpu="$def_gpu -D_HIP"

@@ -20,6 +20,7 @@ subroutine Build_W_operator(en,Xk,A_input,ik,i_sp,V_bands,H_nl_sc)
  use D_lattice,      ONLY:a
  use matrix_operate, ONLY:hermitian
  use fields,         ONLY:gauge_field
+ use electric,       ONLY:l_no_res_symms
  !
  implicit none
  !
@@ -132,14 +133,14 @@ subroutine Build_W_operator(en,Xk,A_input,ik,i_sp,V_bands,H_nl_sc)
  !
  ! Symmetrization with residual small group symmetries 
  !
-! if(nksymm>1) then
-!   do i1=H_ref_bands(1),H_ref_bands(2)
-!     do i2=i1,H_ref_bands(2)
+ if(nsym>1.and..not.l_no_res_symms) then
+   do i1=H_ref_bands(1),H_ref_bands(2)
+     do i2=i1,H_ref_bands(2)
 !       call K_symm_vector(ik,Wk(:,i1,i2))
 !       Wk(:,i2,i1)=conjg(Wk(:,i1,i2))
-!     enddo
-!   enddo
-! endif
+     enddo
+   enddo
+ endif
  !
  !$omp parallel do default(shared), private(i1,id)
  do i1=H_ref_bands(1),H_ref_bands(2)

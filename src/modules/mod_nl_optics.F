@@ -160,7 +160,7 @@ module nl_optics
  type(IO_desc)             :: NL_desc
  !
  ! Small symmetries group
- type(k_symm_small_grp) :: Xk_symm_grp
+ type(k_symm_small_grp) :: k_symm_grp
  !
  contains
    !

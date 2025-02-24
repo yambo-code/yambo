@@ -42,9 +42,9 @@ subroutine k_small_symmetry_group(k,k_symm_grp)
  k_symm_grp%nsym=1
  k_symm_grp%indx=1     
  !
- write(*,*) 'size nsymm ',nsym
+ write(*,*) ' nsym ',nsym
  do ik=1,k%nibz
-   write(*,*) ik,k%nstar(ik)
+   k_symm_grp%nsym=nsym-k%nstar(ik)+1
  enddo
  !
 end subroutine

@@ -91,7 +91,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  !
  ! Build small group symmetries
  ! ===================================
- call k_small_symmetry_group(Xk,Xk_symm_grp)
+ call k_small_symmetry_group(k,Xk_symm_grp)
  !
  ! Non_Linear parallization
  ! ===================================

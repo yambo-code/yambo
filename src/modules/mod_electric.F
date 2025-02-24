@@ -30,6 +30,8 @@ module electric
  !
  logical :: l_P_periodic ! Enforce periodicity in the polarization
  !
+ logical  :: l_no_res_symms=.FALSE.  ! Do not use resisual symmetries (default False)
+ !
  contains
    !
    subroutine ELECTRIC_alloc(en)

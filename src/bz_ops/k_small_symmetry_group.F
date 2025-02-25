@@ -17,6 +17,7 @@ subroutine k_small_symmetry_group(k,k_symm_grp)
  use com,            ONLY:msg
  use zeros,          ONLY:k_rlu_zero
  use vec_operate,    ONLY:rlu_v_is_zero,c2a,k2bz
+ use stderr,	     ONLY:intc
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:bz_samp,k_symm_small_grp,rl_sop
  !     
@@ -63,6 +64,8 @@ subroutine k_small_symmetry_group(k,k_symm_grp)
        k_symm_grp%indx(ik,k_symm_grp%nsym(ik))=is
      endif
    enddo
+   !
+   call msg('r','k-point '//intc(ik)//', small group size: '//intc(k_symm_grp%nsym(ik)))
    !
  enddo
  !

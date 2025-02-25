@@ -24,22 +24,22 @@ subroutine Apply_W_field(A_input,Wk,ik,H_nl_sc)
  ! Work Space
  !
  integer :: i1,i2,id,is,is_idx
- complex(SP) :: E_vec_pot(3),WF_symm(3)
+ complex(SP) :: E_vec_pot(3),Wk_symm(3)
  !
  E_vec_pot=-A_input%vecpot_vel/SPEED_OF_LIGHT
  !
  ! Apply residual symmetries if present to Wk
  !
  if(.not.l_no_res_symms.and.k_symm_grp%nsym(ik)>1) then
- !$omp parallel do default(shared), private(i1,i2,WF_symm)
+ !$omp parallel do default(shared), private(i1,i2,Wk_symm)
    do i1=H_ref_bands(1),H_ref_bands(2)
      do i2=i1,H_ref_bands(2)
-       WF_symm=cZERO  
+       Wk_symm=cZERO  
        do is=1,k_symm_grp%nsym(ik)
 	 is_idx=k_symm_grp%indx(ik,is)
-	 WF_symm=WF_symm+matmul(dl_sop(:,:,is_idx),Wk(:,i1,i2))
+	 Wk_symm=Wk_symm+matmul(dl_sop(:,:,is_idx),Wk(:,i1,i2))
        enddo
-       Wk(:,i1,i2)=WF_symm/dble(k_symm_grp%nsym(ik))
+       Wk(:,i1,i2)=Wk_symm/dble(k_symm_grp%nsym(ik))
        Wk(:,i2,i1)=conjg(Wk(:,i1,i2))
      enddo
    enddo

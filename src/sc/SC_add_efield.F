@@ -25,6 +25,7 @@ subroutine SC_add_efield(E,k,i_sp_pol,V_bands,Pol)
  integer,       intent(in)  :: i_sp_pol
  complex(SP),   intent(in)  :: V_bands(SC_bands(1):SC_bands(2),E%nbf(i_sp_pol),QP_nk)
  complex(SP),   intent(out) :: Pol(3)
+ complex(SP) :: Wk(3,SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  !
  ! Working space
  !
@@ -51,7 +52,8 @@ subroutine SC_add_efield(E,k,i_sp_pol,V_bands,Pol)
  W_electric=cZERO
  !
  do ik=1,QP_nk
-   call Build_W_operator(E,k,A_tot,ik,i_sp_pol,V_bands,W_electric(:,:,ik,i_sp_pol))
+   call Build_W_operator(E,k,ik,i_sp_pol,V_bands,Wk)
+   call Apply_W_field(A_tot,Wk,W_electric(:,:,ik,i_sp_pol))
  enddo
  !
 end subroutine SC_add_efield

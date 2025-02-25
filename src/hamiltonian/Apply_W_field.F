@@ -7,7 +7,7 @@
 !
 subroutine Apply_W_field(A_input,Wk,H_nl_sc)
  !
- use pars,           ONLY:SP,cI,cZERO,pi
+ use pars,           ONLY:SP
  use units,          ONLY:SPEED_OF_LIGHT
  use hamiltonian,    ONLY:H_ref_bands
  use fields,         ONLY:gauge_field

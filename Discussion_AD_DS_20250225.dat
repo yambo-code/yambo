@@ -1,0 +1,29 @@
+
+
+- mod_wrapper --> wrapper yambo for single and double to blas --> when available calls devxlib single and double subroutines
+
+- mod_linear algebra has wrappers single and double to few selected lapack
+  --> LU_factorization
+  --> SV_decomposition
+
+- dedicated subroutines which interfaces lapack or magma (single and double precision version), and serial or parallel (?)
+  
+  SERIAL_HERMITIAN_diagonalization            --> could be renamed HEEV
+  SERIAL_diagonalization (non hermitian case) --> could be renamed GEEV ?
+  SERIAL_inversion
+  SERIAL_SVD_inversion
+  SERIAL_lin_system (to be merge also with SERIAL_lin_system_gpu)
+  
+  PARALLEL_HERMITIAN_diagonalization            --> could be merged with SERIAL_HERMITIAN_diagonalization 
+  PARALLEL_diagonalization (non hermitian case) --> could be merged with SERIAL_diagonalization
+
+  PARALLEL_MbyM could be created (for now it does not exist)
+
+  The kind of operation could be managed via an handle, however the sobroutines must be cleaned by all extra operations, e.g.
+  allocation, parallel setup, etc ... which should be shifted inside LINEAR_ALGEBRA_init or similar subroutine
+
+  LINEAR_ALGEBRA_driver is never directly called, but the above subroutines are directly called. It only performs initializations
+
+
+- To be removed:
+    M_eigenvalues, heev and geev interfaces 

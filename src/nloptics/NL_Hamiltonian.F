@@ -17,7 +17,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use drivers,        ONLY:l_use_Hxc_collisions
- use hamiltonian,    ONLY:rho_n,H_nl_sc,V_hartree_sc,V_xc_sc
+ use hamiltonian,    ONLY:rho_n,H_nl_sc,V_hartree_sc,V_xc_sc,H_ref_bands
  use QP_m,           ONLY:QP_nk
  use X_m,            ONLY:global_gauge,X_t
  use fields,         ONLY:A_ext,A_tot,Efield
@@ -50,6 +50,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !
  integer     :: ik,i_sp_pol,is,ir,i1,ik_mem
  complex(SP) :: E_vec_pot(3),E_xc_pot(3)
+ complex(SP) :: Wk(3,H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  real :: alpha_
  !
 #if defined _TIMING
@@ -215,7 +216,9 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
      !
      ! Use Sm1_plus, Sm1_minus and V_bands to build the W operator
      !
-     call  Build_W_operator(E,k,A_tot,ik,i_sp_pol,V_bands(:,:E%nbf(i_sp_pol),:,i_sp_pol),H_nl_sc)
+     call Build_W_operator(E,k,ik,i_sp_pol,V_bands(:,:E%nbf(i_sp_pol),:,i_sp_pol),Wk)
+     ! 
+     call Apply_W_field(A_tot,Wk,H_nl_sc)
      !
    endif                                                         
    !
@@ -234,7 +237,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    ! Store the Hamiltonian
    ! =====================
 !$omp parallel do default(shared), private(i1)
-   do i1=NL_bands(1),NL_bands(2)
+ do i1=NL_bands(1),NL_bands(2)
      Ho_plus_Sigma(NL_bands(1):NL_bands(2),i1,ik_mem,i_sp_pol)=H_nl_sc(NL_bands(1):NL_bands(2),i1)
    enddo
 !$omp end parallel do

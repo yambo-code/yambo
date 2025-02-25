@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
-subroutine Build_W_operator(en,Xk,A_input,ik,i_sp,V_bands,H_nl_sc)
+subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
  !
  ! Build the Hermitian W operator eq. 62 and 63
  ! in PRB 69, 085106 (2004)
@@ -19,29 +19,23 @@ subroutine Build_W_operator(en,Xk,A_input,ik,i_sp,V_bands,H_nl_sc)
  use R_lattice,      ONLY:bz_samp,k_map
  use D_lattice,      ONLY:a
  use matrix_operate, ONLY:hermitian
- use fields,         ONLY:gauge_field
- use electric,       ONLY:l_no_res_symms
  !
  implicit none
  !
  type(levels), intent(in)      :: en
  type(bz_samp),intent(in)      :: Xk
- type(gauge_field), intent(in) :: A_input
  integer,      intent(in)      :: ik
  integer,      intent(in)      :: i_sp
  complex(SP),  intent(in)      :: V_bands(H_ref_bands(2),en%nbf(i_sp),QP_nk)
- complex(SP),  intent(inout)   :: H_nl_sc(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
+ complex(SP),  intent(out)     :: Wk(3,H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  !
  ! Work Space
  !
  integer :: i1,i2,im,id,id_red
  integer :: ikbz,istep,max_step
- complex(SP) :: Wk(3,H_ref_bands(2),H_ref_bands(2))
  complex(SP) :: Wop(H_ref_bands(2),H_ref_bands(2),2)
  complex(SP) :: V_tilde(en%nbf(i_sp),H_ref_bands(2),2)
  complex(SP) :: E_vec_pot(3)
- !
- E_vec_pot=-A_input%vecpot_vel/SPEED_OF_LIGHT
  !
  Wk=cZERO
  !
@@ -128,26 +122,6 @@ subroutine Build_W_operator(en,Xk,A_input,ik,i_sp,V_bands,H_nl_sc)
    Wk(id,H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))=                     &
    &     (Wk(id,H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))               &
    &      +hermitian(Wk(id,H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))))
- enddo
- !$omp end parallel do
- !
- ! Symmetrization with residual small group symmetries 
- !
- if(nsym>1.and..not.l_no_res_symms) then
-   do i1=H_ref_bands(1),H_ref_bands(2)
-     do i2=i1,H_ref_bands(2)
-!       call K_symm_vector(ik,Wk(:,i1,i2))
-!       Wk(:,i2,i1)=conjg(Wk(:,i1,i2))
-     enddo
-   enddo
- endif
- !
- !$omp parallel do default(shared), private(i1,id)
- do i1=H_ref_bands(1),H_ref_bands(2)
-   do id=1,3
-     H_nl_sc(i1,H_ref_bands(1):H_ref_bands(2))=H_nl_sc(i1,H_ref_bands(1):H_ref_bands(2))-         &
-     &                                               E_vec_pot(id)*Wk(id,i1,H_ref_bands(1):H_ref_bands(2))
-   enddo
  enddo
  !$omp end parallel do
  !

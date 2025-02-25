@@ -34,4 +34,4 @@ subroutine Apply_W_field(A_input,Wk,H_nl_sc)
  enddo
  !$omp end parallel do
  !
-end subroutine Apply_W_filed
+end subroutine Apply_W_field

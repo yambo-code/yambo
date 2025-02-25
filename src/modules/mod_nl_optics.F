@@ -11,7 +11,7 @@ module nl_optics
  use pars,            ONLY:SP,schlen,lchlen
  use electrons,       ONLY:levels
  use real_time,       ONLY:NE_steps
- use R_lattice,       ONLY:bz_samp,k_symm_small_grp
+ use R_lattice,       ONLY:bz_samp
  !
 #include<y_memory.h>
  !
@@ -158,9 +158,6 @@ module nl_optics
  complex(SP)               :: E_tot(3),E_ext(3),E_ks(3)
  logical,      allocatable :: runs_done(:)
  type(IO_desc)             :: NL_desc
- !
- ! Small symmetries group
- type(k_symm_small_grp) :: k_symm_grp
  !
  contains
    !

@@ -29,8 +29,8 @@ subroutine NL_initialize(E,k)
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM,  &
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity,LSEX,&
 &                         l_eval_CURRENT,l_pump_and_probe,DephMult,l_velocity_IPA,n_angles,l_test_OSCLL,LHF,eval_OSCLL,  &
-&                         NL_ang_step,n_runs,NL_rot_axis,loop_on_frequencies,loop_on_angles,NL_initial_versor,k_symm_grp 
- use electric,       ONLY:l_force_SndOrd,l_P_periodic,l_no_res_symms
+&                         NL_ang_step,n_runs,NL_rot_axis,loop_on_frequencies,loop_on_angles,NL_initial_versor
+ use electric,       ONLY:l_force_SndOrd,l_P_periodic,l_no_res_symms,k_symm_grp 
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  !

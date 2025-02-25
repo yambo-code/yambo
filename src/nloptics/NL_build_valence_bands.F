@@ -5,7 +5,14 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
-!> @brief Construct time-dependent valence bands V(i_G,i_v,i_k,i_spin)
+!> @brief Construct time-dependent valence bands in g-space
+!
+!! @param[in]       V_input                     time-dependent valence bands
+!! @param[in]       en                          energies array
+!! @param[in]       lowest_bands		lowest valence band in the dynamics
+!! @param[in]       WF				Kohn-Sham wavefunctions in g-space
+!!
+!! @param[out]      VAL_BANDS                   time-dependent valence bands in g-space
 !     
 subroutine NL_build_valence_bands(en,V_input,VAL_BANDS,lowest_band) 
  !

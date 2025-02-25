@@ -77,7 +77,7 @@ subroutine Berry_polarization_NEQ(Xen,Xk,i_sp_pol,V_bands,Polarization)
    do is=1,nsym/(i_time_rev+1) ! Time reversal is not present 
      Pol_symm(:)=Pol_symm(:)+matmul(dl_sop(:,:,is),Polarization)
    enddo
-   Polarization=Pol_symm/dble(nsym)
+   Polarization=Pol_symm/dble(nsym/(i_time_rev+1))
  endif
  !
 #if defined _TIMING

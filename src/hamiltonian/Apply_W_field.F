@@ -29,6 +29,8 @@ subroutine Apply_W_field(A_input,Wk,ik,H_nl_sc)
  E_vec_pot=-A_input%vecpot_vel/SPEED_OF_LIGHT
  !
  ! Apply residual symmetries if present to Wk
+ ! Notice that the external field commute with residual symmetry
+ ! operations     
  !
  if(.not.l_no_res_symms.and.k_symm_grp%nsym(ik)>1) then
  !$omp parallel do default(shared), private(i1,i2,Wk_symm)

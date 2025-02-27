@@ -53,7 +53,7 @@ subroutine SC_add_efield(E,k,i_sp_pol,V_bands,Pol)
  !
  do ik=1,QP_nk
    call Build_W_operator(E,k,ik,i_sp_pol,V_bands,Wk)
-   call Apply_W_field(A_tot,Wk,ik,W_electric(:,:,ik,i_sp_pol))
+   call Apply_W_field(A_tot,Wk,W_electric(:,:,ik,i_sp_pol))
  enddo
  !
 end subroutine SC_add_efield

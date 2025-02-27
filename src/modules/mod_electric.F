@@ -9,7 +9,6 @@ module electric
  !
  use pars,       ONLY:SP,schlen,lchlen
  use electrons,  ONLY:levels
- use R_lattice,  ONLY:k_symm_small_grp
  !
 #include<y_memory.h>
  !
@@ -32,9 +31,6 @@ module electric
  logical :: l_P_periodic ! Enforce periodicity in the polarization
  !
  logical  :: l_no_res_symms=.FALSE.  ! Do not use resisual symmetries (default False)
- !
- ! Small symmetries group
- type(k_symm_small_grp) :: k_symm_grp
  !
  contains
    !

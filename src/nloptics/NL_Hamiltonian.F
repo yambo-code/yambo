@@ -217,8 +217,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
      ! Use Sm1_plus, Sm1_minus and V_bands to build the W operator
      !
      call Build_W_operator(E,k,ik,i_sp_pol,V_bands(:,:E%nbf(i_sp_pol),:,i_sp_pol),Wk)
-     ! 
-     call Apply_W_field(A_tot,Wk,ik,H_nl_sc)
+     call Apply_W_field(A_tot,Wk,H_nl_sc)
      !
    endif                                                         
    !

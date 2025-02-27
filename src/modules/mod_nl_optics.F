@@ -152,7 +152,7 @@ module nl_optics
  !
  ! Wk operator at equilibrium 
  !
- complex(SP), allocatable :: Wk_EQ(:,:,:,:)
+ complex(SP), allocatable :: Wk_EQ(:,:,:,:,:)
  !     
  ! IO variables
  !
@@ -244,7 +244,7 @@ module nl_optics
        YAMBO_ALLOC(Sigma_SEX_EQ,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_sp_pol,PAR_Xk_nibz))
      endif          
      !  
-     YAMBO_ALLOC(Wk_EQ,(3,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),PAR_Xk_nibz))
+     YAMBO_ALLOC(Wk_EQ,(3,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_sp_pol,PAR_Xk_nibz))
      !
    end subroutine NL_alloc_k_distributed
    !

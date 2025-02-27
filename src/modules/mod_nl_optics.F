@@ -150,6 +150,10 @@ module nl_optics
  logical  :: l_eval_CURRENT  ! Evaluate current using the commutator v=[H,r] and the IP formulation
  logical  :: l_test_OSCLL    ! Test collisions built using OSCLLs vs standard Collisions
  !
+ ! Wk operator at equilibrium 
+ !
+ complex(SP), allocatable :: Wk_EQ(:,:,:,:)
+ !     
  ! IO variables
  !
  real(SP),     allocatable :: NL_P_t(:,:)
@@ -239,6 +243,8 @@ module nl_optics
      if(Correlation==LSEX.or.Correlation==LHF) then
        YAMBO_ALLOC(Sigma_SEX_EQ,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_sp_pol,PAR_Xk_nibz))
      endif          
+     !  
+     YAMBO_ALLOC(Wk_EQ,(3,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),PAR_Xk_nibz))
      !
    end subroutine NL_alloc_k_distributed
    !
@@ -265,6 +271,7 @@ module nl_optics
      !
      if(.not.l_use_DIPOLES) then
        call ELECTRIC_free()
+       YAMBO_FREE(Wk_EQ)
      endif
      !
      YAMBO_FREE(NL_P_t)
@@ -284,6 +291,10 @@ module nl_optics
        YAMBO_FREE(dG)
      endif
      !
+     if(Correlation==LSEX.or.Correlation==LHF) then
+       YAMBO_FREE(Sigma_SEX_EQ)
+     endif
+     !  
    end subroutine NL_free
    !
    real function Alpha_ED(en,omega)

@@ -46,7 +46,7 @@ module D_lattice
  !
  ! Full symmetries after removing them with ypp -y
  integer  :: old_nsym
- real(SP), allocatable :: old_dl_dop(:,:,:)
+ real(SP), allocatable :: old_dl_sop(:,:,:)
  integer,  allocatable :: kpoints_map(:,:)
  !                       
  ! device memory

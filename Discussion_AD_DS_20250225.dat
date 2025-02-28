@@ -1,5 +1,9 @@
 
 
+-----------------------
+OVERALL philosophy
+-----------------------
+
 - mod_wrapper --> wrapper yambo for single and double to blas --> when available calls devxlib single and double subroutines
 
 - mod_linear algebra has wrappers single and double to few selected lapack
@@ -24,6 +28,12 @@
 
   LINEAR_ALGEBRA_driver is never directly called, but the above subroutines are directly called. It only performs initializations
 
+
+-----------------------
+DONE
+-----------------------
+
+- compilation to be fixed
 
 - To be removed:
     M_eigenvalues, heev and geev interfaces 

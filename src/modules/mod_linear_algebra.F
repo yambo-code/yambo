@@ -10,13 +10,9 @@ module linear_algebra
  use iso_c_binding
  use iso_fortran_env,  ONLY: int64
  !
- use pars,       ONLY: SP,schlen
+ use pars,             ONLY: SP,schlen
 #ifdef _MAGMA
- use magma,      ONLY: magmaf_init,magmaf_queue_create, &
-&                      magmaf_cgeev_m,magmaf_zgeev_m,MagmaVec
-#endif
-#ifdef _OPENMP
- use omp_lib
+ use magma,            ONLY: magmaf_init,magmaf_queue_create
 #endif
  !
 #include<dev_defs.h>
@@ -35,8 +31,13 @@ module linear_algebra
  !
  ! magma vars
  !
- integer(int64) :: magma_queue    !! magma_queue_t
- logical     :: magma_init_done = .false.
+ integer(int64)     :: magma_queue    !! magma_queue_t
+ logical            :: magma_init_done = .false.
+#if defined _MAGMA
+ logical, parameter :: have_magma=.true.
+#else
+ logical, parameter :: have_magma=.false.
+#endif
  !
  ! Common Work Space
  !
@@ -67,11 +68,6 @@ module linear_algebra
  public :: LU_factorization
  public :: LU_inversion
  public :: SV_decomposition
- public :: M_eigenvalues
- !
- interface M_eigenvalues
-   module procedure heev,geev
- end interface
  !
  contains
    !
@@ -98,15 +94,6 @@ module linear_algebra
        YAMBO_FREE(WS%vp_int)
        YAMBO_FREE(WS%v_int)
      else
-       if(allocated(WS%v_real))   deallocate(WS%v_real)
-       if(allocated(WS%vp_real))  deallocate(WS%vp_real)
-       if(allocated(WS%v_cmplx))  deallocate(WS%v_cmplx)
-       if(allocated(WS%vp_cmplx)) deallocate(WS%vp_cmplx)
-       if(allocated(WS%m1_cmplx)) deallocate(WS%m1_cmplx)
-       if(allocated(WS%m2_cmplx)) deallocate(WS%m2_cmplx)
-       if(allocated(WS%vp_int))   deallocate(WS%vp_int)
-       if(allocated(WS%v_int))    deallocate(WS%v_int)
-       !
 #ifdef _CUDAF
        if(allocated(WS%v_real_d))   deallocate(WS%v_real_d)
        if(allocated(WS%vp_real_d))  deallocate(WS%vp_real_d)
@@ -123,6 +110,16 @@ module linear_algebra
        !
        !call error("[GPU] openacc FREE not implemented in LinAlg_WS_reset")
 #endif
+       !
+       if(allocated(WS%v_real))   deallocate(WS%v_real)
+       if(allocated(WS%vp_real))  deallocate(WS%vp_real)
+       if(allocated(WS%v_cmplx))  deallocate(WS%v_cmplx)
+       if(allocated(WS%vp_cmplx)) deallocate(WS%vp_cmplx)
+       if(allocated(WS%m1_cmplx)) deallocate(WS%m1_cmplx)
+       if(allocated(WS%m2_cmplx)) deallocate(WS%m2_cmplx)
+       if(allocated(WS%vp_int))   deallocate(WS%vp_int)
+       if(allocated(WS%v_int))    deallocate(WS%v_int)
+       !
      endif
      !
    end subroutine
@@ -215,62 +212,5 @@ module linear_algebra
 #endif
      !
    end subroutine heev 
-   !
-   subroutine geev(msize,M,E_cmpl,V_left,V_right,work,lwork,rwk,ifail)
-     !
-     use com,      ONLY:msg
-     !
-     integer,    intent(in)    :: msize,lwork
-     integer,    intent(out)   :: ifail
-     real(SP),   intent(out)   :: rwk(*)
-     complex(SP),intent(out)   :: E_cmpl(*),V_left(msize,*),V_right(msize,*),work(*)
-     complex(SP),intent(inout) :: M(msize,*)
-     !
-     integer :: nthreads
-     !
-     !
-     ! use magma (if available)
-     !
-#if defined _MAGMA
-     !
-     if (.not.magma_init_done) then
-       call msg('sr','Initializing magma library in geev')
-       call magma_setup()
-     endif
-     call msg('sr','SERIAL diagonalization with magma')
-     !
-#  if defined _OPENMP
-     ! thread safety
-     nthreads=omp_get_max_threads()
-     call omp_set_num_threads(1)
-#  endif
-     !
-#  if defined _DOUBLE
-     call magmaf_zgeev_m(MagmaVec,MagmaVec, msize,M,msize,E_cmpl,V_left,msize,V_right,msize,&
-&                        work,lwork,rwk,ifail)
-#  else
-     call magmaf_cgeev_m(MagmaVec,MagmaVec, msize,M,msize,E_cmpl,V_left,msize,V_right,msize,&
-&                        work,lwork,rwk,ifail)
-#  endif
-     !
-#  if defined _OPENMP
-     call omp_set_num_threads(nthreads)
-#  endif
-     !
-#else
-     !
-     call msg('sr','SERIAL diagonalization with lapack')
-     !
-     ! use lapack
-     !
-#  if defined _DOUBLE
-     call ZGEEV('V','V',msize,M,msize,E_cmpl,V_left,msize,V_right,msize,work,lwork,rwk,ifail)
-#  else
-     call CGEEV('V','V',msize,M,msize,E_cmpl,V_left,msize,V_right,msize,work,lwork,rwk,ifail)
-#  endif
-     !
-#endif
-     !
-   end subroutine geev
    !
 end module linear_algebra

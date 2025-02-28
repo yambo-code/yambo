@@ -76,6 +76,10 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  !
  compute_on_gpu=have_gpu.and.X_use_gpu
  !
+#ifndef _CUSOLVERMP
+  if (PAR_COM_SLK%n_CPU>=4.and.have_gpu) compute_on_gpu=.false.
+#endif
+ !
  ! AMD-GPUs + GPU linalg not yet implemented
  if (have_hip) compute_on_gpu=.false.
  !

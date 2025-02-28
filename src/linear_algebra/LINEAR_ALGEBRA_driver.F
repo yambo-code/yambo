@@ -24,6 +24,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  ! * MAT_MUL: M_slk/M + B_slk/B => C_slk/C 
  !
  use pars,          ONLY:SP,cONE,cZERO
+ use com,           ONLY:msg
  use linear_algebra,ONLY:INV,DIAGO,LIN_SYS,SVD_INV,MAT_MUL,USE_LK,USE_SLK
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
  use wrapper,       ONLY:M_by_M
@@ -277,12 +278,14 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    if (idriver==LIN_SYS) then
      if (lib_in_use==USE_LK) then
 #if defined _GPU && defined _PGI
+       call msg('s','[LA] Serial Driver on GPU')
        call SERIAL_lin_system_gpu(N,N,DEV_VAR(M_slk%blc)(:,:,M_slk%I),DEV_VAR(B_slk%blc)(:,:,B_slk%I))
 #else
        call error('[LA] GPU support required but not present')
 #endif
      else if (lib_in_use==USE_SLK) then
 #if defined _GPU && defined _PGI && defined _CUSOLVERMP
+       call msg('s','[LA] Parallel Driver on GPU')
        call PARALLEL_lin_system_gpu(M_slk, B_slk, N, N)
 #else
        call error('[LA] GPU support required but not present')

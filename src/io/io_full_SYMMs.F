@@ -23,7 +23,7 @@ integer function io_full_SYMMs(ID)
  call timing('io_full_SYMMs',OPR='start')
 #endif
  !
- call io_disconnect(ID=ID)
+! call io_disconnect(ID=ID)
  !
 #if defined _TIMING
  call timing('io_full_SYMMs',OPR='stop')

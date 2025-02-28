@@ -18,6 +18,8 @@ subroutine symmetries_driver(E,Xk)
  use wave_func,           ONLY:wf_ng,WF
  use stderr,              ONLY:intc
  use interfaces,          ONLY:WF_load,WF_free,el_magnetization
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:REP,OP_WR_CL,VERIFY
  use parser_m,            ONLY:parser
  !
 #include<y_memory.h>
@@ -35,7 +37,7 @@ subroutine symmetries_driver(E,Xk)
  integer               :: old_sop_inv(nsym)
  logical               :: S_contains_TR(nsym),l_keep_k_grid
  !
- integer               :: old_nkpt
+ integer               :: old_nkpt,ID
  !
  if (core_io_path==more_io_path) more_io_path=trim(core_io_path)//"/FixSymm"
  !
@@ -120,6 +122,11 @@ subroutine symmetries_driver(E,Xk)
  !
  ! Rotate atomic projections
  call fix_ATOMPROJs(E,Xk,Xk_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
+ !
+ ! Savel old symmetries on file
+ ! ============================
+ call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+ call io_full_SYMMs(ID)
  !
  ! CLEAN
  !=======

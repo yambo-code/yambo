@@ -221,6 +221,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
      ! 
      call Build_W_operator(E,k,ik,i_sp_pol,V_bands(:,:E%nbf(i_sp_pol),:,i_sp_pol),Wk)
      !  This part of the operator is symmetriezed before the dynamics
+!#     call Apply_W_field(A_tot,Wk,H_nl_sc)
      call Apply_W_field(A_tot,Wk-Wk_EQ(:,:,:,i_sp_pol,ik_mem),H_nl_sc)
      call RT_apply_field(ik,i_sp_pol,H_nl_sc,A_tot)
      !

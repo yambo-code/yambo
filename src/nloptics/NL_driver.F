@@ -99,6 +99,10 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  call DIPOLE_IO(k,E,Dip,'read ',io_err,'NL')
  if(io_err/=0) call error("Error in DIPOLES! ")
  !
+ ! Symmetrize dipoles if old-symmetries are present
+ ! =================================================
+ call DIPOLE_symmetrize(Xk)
+ !
  ! Generate bare_qpg if required
  !=============================
  if(eval_HARTREE.or.CORRELATION==JGM.or.CORRELATION==LSEX.or.CORRELATION==LHF) &

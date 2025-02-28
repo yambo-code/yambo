@@ -35,7 +35,8 @@ subroutine symmetries_driver(E,Xk)
  integer               :: old_sop_inv(nsym)
  logical               :: S_contains_TR(nsym),l_keep_k_grid
  !
- integer               :: old_nkpt,ID
+ integer               :: old_nkpt,ID,io_old_SYMMs
+ integer, external     :: io_full_SYMMs
  !
  YAMBO_ALLOC(old_dl_sop,(3,3,nsym))
  !     
@@ -126,7 +127,7 @@ subroutine symmetries_driver(E,Xk)
  ! Savel old symmetries on file
  ! ============================
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
- call io_full_SYMMs(Xk,ID)
+ io_old_SYMM=io_full_SYMMs(Xk,ID)
  !
  ! CLEAN
  !=======

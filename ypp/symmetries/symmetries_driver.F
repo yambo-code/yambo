@@ -21,6 +21,7 @@ subroutine symmetries_driver(E,Xk)
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:REP,OP_WR_CL,VERIFY
  use parser_m,            ONLY:parser
+ use D_lattice,           ONLY:kpoints_map,old_nsym,old_dl_sop
  !
 #include<y_memory.h>
  !
@@ -30,15 +31,14 @@ subroutine symmetries_driver(E,Xk)
  ! Work Space
  !
  type(bz_samp)         :: Xk_save
- integer,allocatable   :: kpoints_map(:,:)
  ! 
- integer               :: old_nsym
- real(SP)              :: old_dl_sop(3,3,nsym)
  integer               :: old_sop_inv(nsym)
  logical               :: S_contains_TR(nsym),l_keep_k_grid
  !
  integer               :: old_nkpt,ID
  !
+ YAMBO_ALLOC(old_dl_sop,(3,3,nsym))
+ !     
  if (core_io_path==more_io_path) more_io_path=trim(core_io_path)//"/FixSymm"
  !
  call parser('KeepKGrid',l_keep_k_grid)
@@ -126,7 +126,7 @@ subroutine symmetries_driver(E,Xk)
  ! Savel old symmetries on file
  ! ============================
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
- call io_full_SYMMs(ID)
+ call io_full_SYMMs(k,ID)
  !
  ! CLEAN
  !=======

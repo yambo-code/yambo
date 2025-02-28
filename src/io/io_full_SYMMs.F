@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
-integer function io_full_SYMMs(ID)
+integer function io_full_SYMMs(k,kpoints_map,old_nsym,old_dl_sop,ID)
  !
  use pars,          ONLY:schlen,SP,IP
  !
@@ -29,4 +29,4 @@ integer function io_full_SYMMs(ID)
  call timing('io_full_SYMMs',OPR='stop')
 #endif
  !
-end function
+end function:

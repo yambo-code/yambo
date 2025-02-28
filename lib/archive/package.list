@@ -1,7 +1,7 @@
 #
 # Libs list
 #
-EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff etsf_io libxc lapack blacs scalapack petsc slepc fftw fftqe devxlib
+EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff etsf_io libxc lapack blacs scalapack magma petsc slepc fftw fftqe devxlib
 #
 # storing options
 #

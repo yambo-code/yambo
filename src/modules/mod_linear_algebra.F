@@ -8,10 +8,12 @@
 module linear_algebra
  !
  use iso_c_binding
+ use iso_fortran_env,  ONLY: int64
+ !
  use pars,       ONLY: SP,schlen
 #ifdef _MAGMA
- use magma2,     ONLY: magma_init,magma_queue_create, &
-&                      magma_cgeev_m,magma_zgeev_m,MagmaVec
+ use magma,      ONLY: magmaf_init,magmaf_queue_create, &
+&                      magmaf_cgeev_m,magmaf_zgeev_m,MagmaVec
 #endif
 #ifdef _OPENMP
  use omp_lib
@@ -33,7 +35,7 @@ module linear_algebra
  !
  ! magma vars
  !
- type(c_ptr) :: magma_queue    !! magma_queue_t
+ integer(int64) :: magma_queue    !! magma_queue_t
  logical     :: magma_init_done = .false.
  !
  ! Common Work Space
@@ -133,8 +135,8 @@ module linear_algebra
    !
    subroutine magma_setup()
 #ifdef _MAGMA
-     call magma_init()
-     call magma_queue_create( 0, magma_queue )
+     call magmaf_init()
+     call magmaf_queue_create( 0, magma_queue )
      magma_init_done=.true.
 #endif
      return
@@ -244,11 +246,11 @@ module linear_algebra
 #  endif
      !
 #  if defined _DOUBLE
-     call magma_zgeev_m(MagmaVec,MagmaVec, msize,M,msize,E_cmpl,V_left,msize,V_right,msize,&
-&                       work,lwork,rwk,ifail)
+     call magmaf_zgeev_m(MagmaVec,MagmaVec, msize,M,msize,E_cmpl,V_left,msize,V_right,msize,&
+&                        work,lwork,rwk,ifail)
 #  else
-     call magma_cgeev_m(MagmaVec,MagmaVec, msize,M,msize,E_cmpl,V_left,msize,V_right,msize,&
-&                       work,lwork,rwk,ifail)
+     call magmaf_cgeev_m(MagmaVec,MagmaVec, msize,M,msize,E_cmpl,V_left,msize,V_right,msize,&
+&                        work,lwork,rwk,ifail)
 #  endif
      !
 #  if defined _OPENMP

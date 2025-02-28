@@ -1,4 +1,4 @@
-module magma2_common
+module magma_common
 
 use iso_c_binding
 implicit none
@@ -29,7 +29,7 @@ interface
 
     !! -------------------------------------------------------------------------
     !! magma_malloc (GPU memory)
-    integer(c_int) function magma_malloc( ptr, bytes ) &
+    integer(c_int) function magmaf_malloc( ptr, bytes ) &
     bind(C, name="magma_malloc")
         use iso_c_binding
         type(c_ptr), target :: ptr  !! void**
@@ -38,7 +38,7 @@ interface
 
     !! todo imalloc
 
-    integer(c_int) function magma_free_internal( ptr, func, file, line ) &
+    integer(c_int) function magmaf_free_internal( ptr, func, file, line ) &
     bind(C, name="magma_free_internal")
         use iso_c_binding
         type(c_ptr), value :: ptr  !! void*
@@ -49,7 +49,7 @@ interface
     !! -------------------------------------------------------------------------
     !! magma_malloc_cpu (CPU main memory)
     !! these are aligned to 32-byte boundary
-    integer(c_int) function magma_malloc_cpu( ptr, bytes ) &
+    integer(c_int) function magmaf_malloc_cpu( ptr, bytes ) &
     bind(C, name="magma_malloc_cpu")
         use iso_c_binding
         type(c_ptr), target :: ptr  !! void**
@@ -58,7 +58,7 @@ interface
 
     !! todo imalloc_cpu
 
-    integer(c_int) function magma_free_cpu( ptr ) &
+    integer(c_int) function magmaf_free_cpu( ptr ) &
     bind(C, name="magma_free_cpu")
         use iso_c_binding
         type(c_ptr), value :: ptr  !! void*
@@ -66,7 +66,7 @@ interface
 
     !! -------------------------------------------------------------------------
     !! magma_malloc_pinned (pinned CPU main memory)
-    integer(c_int) function magma_malloc_pinned( ptr, bytes ) &
+    integer(c_int) function magmaf_malloc_pinned( ptr, bytes ) &
     bind(C, name="magma_malloc_pinned")
         use iso_c_binding
         type(c_ptr), target :: ptr  !! void**
@@ -75,7 +75,7 @@ interface
 
     !! todo imalloc_pinned
 
-    integer(c_int) function magma_free_pinned_internal( ptr, func, file, line ) &
+    integer(c_int) function magmaf_free_pinned_internal( ptr, func, file, line ) &
     bind(C, name="magma_free_pinned_internal")
         use iso_c_binding
         type(c_ptr), value :: ptr  !! void*
@@ -85,7 +85,7 @@ interface
 
     !! -------------------------------------------------------------------------
     !! set/get
-    subroutine magma_setmatrix_internal( &
+    subroutine magmaf_setmatrix_internal( &
         m, n, elemsize, hA_src, lda, dB_dst, ldb, queue, func, file, line ) &
     bind(C, name="magma_setmatrix_internal")
         use iso_c_binding
@@ -97,7 +97,7 @@ interface
         integer(c_int),    value  :: line
     end subroutine
 
-    subroutine magma_getmatrix_internal( &
+    subroutine magmaf_getmatrix_internal( &
         m, n, elemsize, dA_src, lda, hB_dst, ldb, queue, func, file, line ) &
     bind(C, name="magma_getmatrix_internal")
         use iso_c_binding
@@ -109,7 +109,7 @@ interface
         integer(c_int),    value  :: line
     end subroutine
     
-    subroutine magma_setvector_internal( &
+    subroutine magmaf_setvector_internal( &
         n, elemsize, hx_src, incx, dy_dst, incy, queue, func, file, line ) &
     bind(C, name="magma_setvector_internal")
         use iso_c_binding
@@ -121,7 +121,7 @@ interface
         integer(c_int),    value  :: line
     end subroutine
 
-    subroutine magma_getvector_internal( &
+    subroutine magmaf_getvector_internal( &
         n, elemsize, dx_src, incx, hy_dst, incy, queue, func, file, line ) &
     bind(C, name="magma_getvector_internal")
         use iso_c_binding
@@ -141,46 +141,46 @@ contains
 
     !! -------------------------------------------------------------------------
     !! malloc wrappers
-    integer(c_int) function magma_imalloc( ptr, n )
+    integer(c_int) function magmaf_imalloc( ptr, n )
         use iso_c_binding
         type(c_ptr),       target :: ptr  !! void**
         integer(c_size_t), value  :: n
         
-        magma_imalloc = magma_malloc( ptr, n*sizeof_int )
+        magmaf_imalloc = magmaf_malloc( ptr, n*sizeof_int )
     end function
 
-    integer(c_int) function magma_imalloc_cpu( ptr, n )
+    integer(c_int) function magmaf_imalloc_cpu( ptr, n )
         use iso_c_binding
         type(c_ptr),       target :: ptr  !! void**
         integer(c_size_t), value  :: n
         
-        magma_imalloc_cpu = magma_malloc_cpu( ptr, n*sizeof_int )
+        magmaf_imalloc_cpu = magmaf_malloc_cpu( ptr, n*sizeof_int )
     end function
 
-    integer(c_int) function magma_imalloc_pinned( ptr, n )
+    integer(c_int) function magmaf_imalloc_pinned( ptr, n )
         use iso_c_binding
         type(c_ptr),       target :: ptr  !! void**
         integer(c_size_t), value  :: n
         
-        magma_imalloc_pinned = magma_malloc_pinned( ptr, n*sizeof_int )
+        magmaf_imalloc_pinned = magmaf_malloc_pinned( ptr, n*sizeof_int )
     end function
 
     !! -------------------------------------------------------------------------
     !! magma_free wrappers
-    integer(c_int) function magma_free( ptr )
+    integer(c_int) function magmaf_free( ptr )
         type(c_ptr) :: ptr
         
-        magma_free = magma_free_internal( &
+        magmaf_free = magmaf_free_internal( &
                 ptr, &
                 "magma_free" // c_null_char, &
                 __FILE__ // c_null_char, &
                 __LINE__ )
     end function
 
-    integer(c_int) function magma_free_pinned( ptr )
+    integer(c_int) function magmaf_free_pinned( ptr )
         type(c_ptr) :: ptr
         
-        magma_free_pinned = magma_free_internal( &
+        magmaf_free_pinned = magmaf_free_internal( &
                 ptr, &
                 "magma_free_pinned" // c_null_char, &
                 __FILE__ // c_null_char, &
@@ -189,7 +189,7 @@ contains
 
     !! -------------------------------------------------------------------------
     !! set/get wrappers
-    subroutine magma_setmatrix( &
+    subroutine magmaf_setmatrix( &
         m, n, elemsize, hA_src, lda, dB_dst, ldb, queue )
         use iso_c_binding
         integer(c_int),    value  :: m, n, elemsize, lda, ldb
@@ -197,14 +197,14 @@ contains
         type(c_ptr),       value  :: dB_dst
         type(c_ptr),       value  :: queue
         
-        call magma_setmatrix_internal( &
+        call magmaf_setmatrix_internal( &
                 m, n, elemsize, hA_src, lda, dB_dst, ldb, queue, &
                 "magma_setmatrix" // c_null_char, &
                 __FILE__ // c_null_char, &
                 __LINE__ )
     end subroutine
 
-    subroutine magma_getmatrix( &
+    subroutine magmaf_getmatrix( &
         m, n, elemsize, dA_src, lda, hB_dst, ldb, queue )
         use iso_c_binding
         integer(c_int),    value  :: m, n, elemsize, lda, ldb
@@ -212,14 +212,14 @@ contains
         type(c_ptr),       value  :: hB_dst
         type(c_ptr),       value  :: queue
         
-        call magma_getmatrix_internal( &
+        call magmaf_getmatrix_internal( &
                 m, n, elemsize, dA_src, lda, hB_dst, ldb, queue, &
                 "magma_getmatrix" // c_null_char, &
                 __FILE__ // c_null_char, &
                 __LINE__ )
     end subroutine
     
-    subroutine magma_setvector( &
+    subroutine magmaf_setvector( &
         n, elemsize, hx_src, incx, dy_dst, incy, queue )
         use iso_c_binding
         integer(c_int),    value  :: n, elemsize, incx, incy
@@ -227,14 +227,14 @@ contains
         type(c_ptr),       value  :: dy_dst
         type(c_ptr),       value  :: queue
         
-        call magma_setvector_internal( &
+        call magmaf_setvector_internal( &
                 n, elemsize, hx_src, incx, dy_dst, incy, queue, &
                 "magma_setvector" // c_null_char, &
                 __FILE__ // c_null_char, &
                 __LINE__ )
     end subroutine
 
-    subroutine magma_getvector( &
+    subroutine magmaf_getvector( &
         n, elemsize, dx_src, incx, hy_dst, incy, queue )
         use iso_c_binding
         integer(c_int),    value  :: n, elemsize, incx, incy
@@ -242,7 +242,7 @@ contains
         type(c_ptr),       value  :: hy_dst
         type(c_ptr),       value  :: queue
         
-        call magma_getvector_internal( &
+        call magmaf_getvector_internal( &
                 n, elemsize, dx_src, incx, hy_dst, incy, queue, &
                 "magma_getvector" // c_null_char, &
                 __FILE__ // c_null_char, &
@@ -252,7 +252,7 @@ contains
     !! -------------------------------------------------------------------------
     !! set/get wrappers
     !! matrices & vectors of integers
-    subroutine magma_isetmatrix( &
+    subroutine magmaf_isetmatrix( &
         m, n, hA_src, lda, dB_dst, ldb, queue )
         use iso_c_binding
         integer(c_int), value  :: m, n, lda, ldb
@@ -260,14 +260,14 @@ contains
         type(c_ptr),    value  :: dB_dst
         type(c_ptr),    value  :: queue
         
-        call magma_setmatrix_internal( &
+        call magmaf_setmatrix_internal( &
                 m, n, int(sizeof_int), c_loc(hA_src), lda, dB_dst, ldb, queue, &
                 "magma_isetmatrix" // c_null_char, &
                 __FILE__ // c_null_char, &
                 __LINE__ )
     end subroutine
 
-    subroutine magma_igetmatrix( &
+    subroutine magmaf_igetmatrix( &
         m, n, dA_src, lda, hB_dst, ldb, queue )
         use iso_c_binding
         integer(c_int), value  :: m, n, lda, ldb
@@ -275,14 +275,14 @@ contains
         integer(c_int), target :: hB_dst(ldb,*)
         type(c_ptr),    value  :: queue
         
-        call magma_getmatrix_internal( &
+        call magmaf_getmatrix_internal( &
                 m, n, int(sizeof_int), dA_src, lda, c_loc(hB_dst), ldb, queue, &
                 "magma_igetmatrix" // c_null_char, &
                 __FILE__ // c_null_char, &
                 __LINE__ )
     end subroutine
     
-    subroutine magma_isetvector( &
+    subroutine magmaf_isetvector( &
         n, hx_src, incx, dy_dst, incy, queue )
         use iso_c_binding
         integer(c_int), value  :: n, incx, incy
@@ -290,14 +290,14 @@ contains
         type(c_ptr),    value  :: dy_dst
         type(c_ptr),    value  :: queue
         
-        call magma_setvector_internal( &
+        call magmaf_setvector_internal( &
                 n, int(sizeof_int), c_loc(hx_src), incx, dy_dst, incy, queue, &
                 "magma_isetvector" // c_null_char, &
                 __FILE__ // c_null_char, &
                 __LINE__ )
     end subroutine
 
-    subroutine magma_igetvector( &
+    subroutine magmaf_igetvector( &
         n, dx_src, incx, hy_dst, incy, queue )
         use iso_c_binding
         integer(c_int), value  :: n, incx, incy
@@ -305,7 +305,7 @@ contains
         integer(c_int), target :: hy_dst(*)
         type(c_ptr),    value  :: queue
         
-        call magma_getvector_internal( &
+        call magmaf_getvector_internal( &
                 n, int(sizeof_int), dx_src, incx, c_loc(hy_dst), incy, queue, &
                 "magma_igetvector" // c_null_char, &
                 __FILE__ // c_null_char, &
@@ -315,7 +315,7 @@ contains
     !! -------------------------------------------------------------------------
     !! set/get wrappers
     !! matrices & vectors of c_ptr pointers
-    subroutine magma_psetmatrix( &
+    subroutine magmaf_psetmatrix( &
         m, n, hA_src, lda, dB_dst, ldb, queue )
         use iso_c_binding
         integer(c_int), value  :: m, n, lda, ldb
@@ -323,14 +323,14 @@ contains
         type(c_ptr),    value  :: dB_dst
         type(c_ptr),    value  :: queue
         
-        call magma_setmatrix_internal( &
+        call magmaf_setmatrix_internal( &
                 m, n, int(sizeof_ptr), c_loc(hA_src), lda, dB_dst, ldb, queue, &
                 "magma_psetmatrix" // c_null_char, &
                 __FILE__ // c_null_char, &
                 __LINE__ )
     end subroutine
 
-    subroutine magma_pgetmatrix( &
+    subroutine magmaf_pgetmatrix( &
         m, n, dA_src, lda, hB_dst, ldb, queue )
         use iso_c_binding
         integer(c_int), value  :: m, n, lda, ldb
@@ -338,14 +338,14 @@ contains
         type(c_ptr),    target :: hB_dst(ldb,*)
         type(c_ptr),    value  :: queue
         
-        call magma_getmatrix_internal( &
+        call magmaf_getmatrix_internal( &
                 m, n, int(sizeof_ptr), dA_src, lda, c_loc(hB_dst), ldb, queue, &
                 "magma_pgetmatrix" // c_null_char, &
                 __FILE__ // c_null_char, &
                 __LINE__ )
     end subroutine
     
-    subroutine magma_psetvector( &
+    subroutine magmaf_psetvector( &
         n, hx_src, incx, dy_dst, incy, queue )
         use iso_c_binding
         integer(c_int), value  :: n, incx, incy
@@ -353,14 +353,14 @@ contains
         type(c_ptr),    value  :: dy_dst
         type(c_ptr),    value  :: queue
         
-        call magma_setvector_internal( &
+        call magmaf_setvector_internal( &
                 n, int(sizeof_ptr), c_loc(hx_src), incx, dy_dst, incy, queue, &
                 "magma_psetvector" // c_null_char, &
                 __FILE__ // c_null_char, &
                 __LINE__ )
     end subroutine
 
-    subroutine magma_pgetvector( &
+    subroutine magmaf_pgetvector( &
         n, dx_src, incx, hy_dst, incy, queue )
         use iso_c_binding
         integer(c_int), value  :: n, incx, incy
@@ -368,7 +368,7 @@ contains
         type(c_ptr),    target :: hy_dst(*)
         type(c_ptr),    value  :: queue
         
-        call magma_getvector_internal( &
+        call magmaf_getvector_internal( &
                 n, int(sizeof_ptr), dx_src, incx, c_loc(hy_dst), incy, queue, &
                 "magma_pgetvector" // c_null_char, &
                 __FILE__ // c_null_char, &

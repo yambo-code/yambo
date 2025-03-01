@@ -15,14 +15,14 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !                V_left(j)**H * M = E(j) * V_left(j)**H
  !  where V_left(j)**H denotes the conjugate transpose of V_left(j).
  !
- use pars,          ONLY: SP
- use linear_algebra,ONLY: LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS,&
-&                         magma_init_done,magma_setup,have_magma
- use timing_m,      ONLY: timing
- use com,           ONLY: msg
+ use pars,            ONLY: SP
+ use linear_algebra,  ONLY: LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS,&
+&                           magma_init_done,magma_setup,xgeev
 #ifdef _MAGMA
- use magma,         ONLY: magmaf_cgeev_m,magmaf_zgeev_m,MagmaVec
+ use linear_algebra,  ONLY: magmaf_xgeev_m
 #endif
+ use timing_m,        ONLY: timing
+ use com,             ONLY: msg
 #ifdef _OPENMP
  use omp_lib
 #endif
@@ -35,17 +35,7 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !
  integer :: nthreads_save
 
- !
- ! name aliasing
- !
-#if defined _DOUBLE
-#  define _XGEEV_ ZGEEV
-#  define _MAGMAF_XGEEV_ magmaf_ZGEEV_m
-#else
-#  define _XGEEV_ CGEEV
-#  define _MAGMAF_XGEEV_ magmaf_CGEEV_m
-#endif
- !
+
  call timing('SERIAL_diagonalization',OPR='start')
  !
  ! Thread safety
@@ -67,10 +57,10 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
      call magma_setup()
    endif
    !   
-   call _MAGMAF_XGEEV_(MagmaVec,MagmaVec, n,M,n,E,V_left,n,V_right,n,&
+   call magmaf_xgeev_m('V','V', n,M,n,E,V_left,n,V_right,n,&
 &                      WS%v_cmplx,-1,WS%v_real,WS%i_fail)
 #else
-   call _XGEEV_('V','V',n,M,n,E,V_left,n,V_right,n,WS%v_cmplx,-1,WS%v_real,WS%i_fail)
+   call xgeev('V','V',n,M,n,E,V_left,n,V_right,n,WS%v_cmplx,-1,WS%v_real,WS%i_fail)
 #endif
  !
  if(WS%i_fail /=0 ) call LINEAR_ALGEBRA_error(' _XGEEV_ ','WS%v_cmplx size query failed')
@@ -86,7 +76,7 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !   
  call msg('sr','SERIAL diagonalization with magma')
  !
- call _MAGMAF_XGEEV_(MagmaVec,MagmaVec, n,M,n,E,V_left,n,V_right,n,&
+ call magmaf_xgeev_m('V','V', n,M,n,E,V_left,n,V_right,n,&
 &                    WS%v_cmplx,WS%dim,WS%v_real,WS%i_fail)
  !   
 #else
@@ -95,7 +85,7 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !   
  call msg('sr','SERIAL diagonalization with lapack')
  !
- call _XGEEV_('V','V',n,M,n,E,V_left,n,V_right,n,WS%v_cmplx,WS%dim,WS%v_real,WS%i_fail)
+ call xgeev('V','V',n,M,n,E,V_left,n,V_right,n,WS%v_cmplx,WS%dim,WS%v_real,WS%i_fail)
  !   
 #endif
  !

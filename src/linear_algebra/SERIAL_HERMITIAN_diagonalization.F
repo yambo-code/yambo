@@ -10,12 +10,13 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  use pars,           ONLY: SP
  use drivers,        ONLY: l_nl_optics,l_real_time
  use linear_algebra, ONLY: LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS,&
-&                          magma_init_done,magma_setup
- use timing_m,       ONLY: timing
- use com,            ONLY: msg 
+&                          magma_init_done,magma_setup,xheev
 #ifdef _MAGMA
- use magma,          ONLY: magmaf_cheevd_m,magmaf_zheevd_m,MagmaVec
+ use magma,          ONLY: magmaf_cheevd_m, magmaf_zheevd_m
+! use linear_algebra, ONLY: magmaf_xheevd_m
 #endif
+ use timing_m,       ONLY: timing
+ use com,            ONLY: msg
 #ifdef _OPENMP
  use omp_lib
 #endif
@@ -32,17 +33,12 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
  integer     :: nthreads_save
 
- !
- ! name aliasing
- !
 #if defined _DOUBLE
-#  define _XHEEV_ ZHEEV
-#  define _MAGMAF_XHEEV_ magmaf_ZHEEVD_m
+#  define magmaf_xheevd_m magmaf_zheevd_m
 #else
-#  define _XHEEV_ CHEEV
-#  define _MAGMAF_XHEEV_ magmaf_CHEEVD_m
+#  define magmaf_xheevd_m magmaf_cheevd_m
 #endif
- !
+
  if(.not.(l_nl_optics.or.l_real_time)) then
    call timing('SERIAL_HERMITIAN_diagonalization',OPR='start')
  endif
@@ -70,10 +66,10 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
      call magma_setup()
    endif
    !   
-   call _MAGMAF_XHEEV_(1,'v','u', n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,&
-&                      lrwork,WS%v_int,liwork,WS%i_fail)
+   call magmaf_xheevd_m(1,'v','u', n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,&
+&                       lrwork,WS%v_int,liwork,WS%i_fail)
 #else
-   call _XHEEV_('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
+   call xheev('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
 #endif
  !
  if(WS%i_fail /=0 ) call LINEAR_ALGEBRA_error(' _XHEEV_ ','WS%v_cmplx size query failed')
@@ -101,16 +97,16 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !   
 #if defined _MAGMA
  ! 
- call _MAGMAF_XHEEV_(1,'v','u',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,&
-&                    lrwork,WS%v_int,liwork,WS%i_fail)
+ call magmaf_xheevd_m(1,'v','u',n, M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,&
+&                     lrwork,WS%v_int,liwork,WS%i_fail)
  !
 #else
  !
- call _XHEEV_('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
+ call xheev('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
  !
 #endif
  !
- if(WS%i_fail /= 0) call LINEAR_ALGEBRA_error(' _XHEEV_ ','failed')
+ if(WS%i_fail /= 0) call LINEAR_ALGEBRA_error(' XHEEV ','failed')
  !
  call LINEAR_ALGEBRA_WS_reset(WS)
  !

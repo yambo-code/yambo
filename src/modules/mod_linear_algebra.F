@@ -9,10 +9,11 @@ module linear_algebra
  !
  use iso_c_binding
  use iso_fortran_env,  ONLY: int64
- !
  use pars,             ONLY: SP,schlen
+ !
 #ifdef _MAGMA
- use magma,            ONLY: magmaf_init,magmaf_queue_create
+ use magma,            ONLY: magmaf_init,magmaf_queue_create,&
+&                            magmaf_cgeev_m,magmaf_zgeev_m,MagmaVec
 #endif
  !
 #include<dev_defs.h>
@@ -64,12 +65,78 @@ module linear_algebra
    integer    , allocatable DEV_ATTR :: vp_int_d(:)
    !
  end type LALGEBRA_WS
+
+ !
+ !===============
+ ! INTERFACES
+ !===============
+ !
+ interface xgeev
+   subroutine zgeev(jobvl,jobvr,n,A,lda,w,vl,ldvl,vr,ldvr,work,lwork,rwork,info)
+     use iso_fortran_env, ONLY : WP => real64
+     character(1) :: jobvl,jobvr 
+     integer      :: n,lda,ldvl,ldvr,lwork,info
+     complex(WP)  :: w(*), A(lda,*), vl(ldvl,*), vr(ldvr,*), work(*)
+     real(WP)     :: rwork(*)
+   end subroutine
+   subroutine cgeev(jobvl,jobvr,n,A,lda,w,vl,ldvl,vr,ldvr,work,lwork,rwork,info)
+     use iso_fortran_env, ONLY : WP => real32
+     character(1) :: jobvl,jobvr 
+     integer      :: n,lda,ldvl,ldvr,lwork,info
+     complex(WP)  :: w(*), A(lda,*), vl(ldvl,*), vr(ldvr,*), work(*)
+     real(WP)     :: rwork(*)
+   end subroutine
+ end interface
+ !
+ interface xheev
+   subroutine zheev(jobz,uplo,n,A,lda,w,work,lwork,rwork,info)
+     use iso_fortran_env, ONLY : WP => real64
+     character(1) :: jobz,uplo
+     integer      :: n,lda,lwork,info
+     complex(WP)  :: A(lda,*), work(*)
+     real(WP)     :: w(*), rwork(*)
+   end subroutine
+   subroutine cheev(jobz,uplo,n,A,lda,w,work,lwork,rwork,info)
+     use iso_fortran_env, ONLY : WP => real32
+     character(1) :: jobz,uplo
+     integer      :: n,lda,lwork,info
+     complex(WP)  :: A(lda,*), work(*)
+     real(WP)     :: w(*), rwork(*)
+   end subroutine
+ end interface
+ !
+#ifdef _MAGMA
+ !
+ interface magmaf_xgeev_m
+   procedure :: magmaf_cgeev_m,magmaf_zgeev_m
+ end interface
+ !
+ interface magmaf_xheevd_m
+   procedure :: magmaf_cheevd_m,magmaf_zheevd_m
+ end interface
+ !
+#endif
+ 
+
+
+ !
+ !====================
+ ! PUBLIC STATEMENTS
+ !====================
  !
  public :: LU_factorization
  public :: LU_inversion
  public :: SV_decomposition
+ public :: xgeev,xheev
+#ifdef _MAGMA
+ public :: magmaf_xgeev_m,magmaf_xheevd_m
+#endif
  !
  contains
+   !
+   !============================
+   ! AUXILIARY FUNCTIONS
+   !============================
    !
    subroutine LINEAR_ALGEBRA_WS_reset(WS)
      use drivers,   ONLY:l_nl_optics,l_real_time

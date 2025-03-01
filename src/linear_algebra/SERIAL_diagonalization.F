@@ -55,19 +55,25 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
 #endif
 
  !
- ! workspace
+ ! Workspace
  !
  allocate(WS%v_cmplx(1))
  YAMBO_ALLOC(WS%v_real,(2*n))
  !
 #if defined _MAGMA
-    call _MAGMAF_XGEEV_(MagmaVec,MagmaVec, n,M,n,E,V_left,n,V_right,n,&
-&                       WS%v_cmplx,-1,WS%v_real,WS%i_fail)
+   !
+   if (.not.magma_init_done) then
+     call msg('sr','Initializing magma library in geev')
+     call magma_setup()
+   endif
+   !   
+   call _MAGMAF_XGEEV_(MagmaVec,MagmaVec, n,M,n,E,V_left,n,V_right,n,&
+&                      WS%v_cmplx,-1,WS%v_real,WS%i_fail)
 #else
-    call _XGEEV_('V','V',n,M,n,E,V_left,n,V_right,n,WS%v_cmplx,-1,WS%v_real,WS%i_fail)
+   call _XGEEV_('V','V',n,M,n,E,V_left,n,V_right,n,WS%v_cmplx,-1,WS%v_real,WS%i_fail)
 #endif
  !
- if(WS%i_fail /=0 ) call LINEAR_ALGEBRA_error(' _XGEEV_ ','WS%v_cmplxspace failed')
+ if(WS%i_fail /=0 ) call LINEAR_ALGEBRA_error(' _XGEEV_ ','WS%v_cmplx size query failed')
  !
  WS%dim=int(real(WS%v_cmplx(1)))
  deallocate(WS%v_cmplx)
@@ -80,11 +86,6 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !   
  call msg('sr','SERIAL diagonalization with magma')
  !
- if (.not.magma_init_done) then
-   call msg('sr','Initializing magma library in geev')
-   call magma_setup()
- endif
- !   
  call _MAGMAF_XGEEV_(MagmaVec,MagmaVec, n,M,n,E,V_left,n,V_right,n,&
 &                    WS%v_cmplx,WS%dim,WS%v_real,WS%i_fail)
  !   
@@ -98,7 +99,7 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !   
 #endif
  !
- if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(' _XGEEV_ ','failed')
+ if(WS%i_fail /= 0) call LINEAR_ALGEBRA_error(' _XGEEV_ ','failed')
  !
  call LINEAR_ALGEBRA_WS_reset(WS)
  !

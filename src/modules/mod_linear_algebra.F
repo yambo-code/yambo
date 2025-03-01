@@ -193,24 +193,5 @@ module linear_algebra
      !
    end subroutine LU_inversion
    !
-   !==============================
-   ! EIGENVALUES AND EIGENVECTORS 
-   !==============================
-   !
-   subroutine heev(msize,M,E_real,work,lwork,rwk,ifail)
-     !
-     integer,    intent(in)    :: msize,lwork
-     integer,    intent(out)   :: ifail
-     real(SP),   intent(out)   :: E_real(*), rwk(*)
-     complex(SP),intent(out)   :: work(*)
-     complex(SP),intent(inout) :: M(msize,*)
-     !
-#if defined _DOUBLE
-     call ZHEEV('V','U',msize,M,msize,E_real,work,lwork,rwk,ifail)
-#else
-     call CHEEV('V','U',msize,M,msize,E_real,work,lwork,rwk,ifail)
-#endif
-     !
-   end subroutine heev 
-   !
 end module linear_algebra
+

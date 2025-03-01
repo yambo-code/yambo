@@ -4,12 +4,6 @@
 OVERALL philosophy
 -----------------------
 
-- mod_wrapper --> wrapper yambo for single and double to blas --> when available calls devxlib single and double subroutines
-
-- mod_linear algebra has wrappers single and double to few selected lapack
-  --> LU_factorization
-  --> SV_decomposition
-
 - dedicated subroutines which interfaces lapack or magma (single and double precision version), and serial or parallel (?)
   
   SERIAL_HERMITIAN_diagonalization            --> could be renamed HEEV
@@ -37,3 +31,10 @@ DONE
 
 - To be removed:
     M_eigenvalues, heev and geev interfaces 
+
+- mod_wrapper --> wrapper yambo for single and double to blas --> when available calls devxlib single and double subroutines
+
+- mod_linear algebra has wrappers single and double to few selected lapack
+  --> LU_factorization
+  --> SV_decomposition
+

@@ -71,7 +71,9 @@ module linear_algebra
  ! INTERFACES
  !===============
  !
- interface xgeev
+ ! Eigensolvers
+ !
+ interface la_xgeev
    subroutine zgeev(jobvl,jobvr,n,A,lda,w,vl,ldvl,vr,ldvr,work,lwork,rwork,info)
      use iso_fortran_env, ONLY : WP => real64
      character(1) :: jobvl,jobvr 
@@ -88,7 +90,7 @@ module linear_algebra
    end subroutine
  end interface
  !
- interface xheev
+ interface la_xheev
    subroutine zheev(jobz,uplo,n,A,lda,w,work,lwork,rwork,info)
      use iso_fortran_env, ONLY : WP => real64
      character(1) :: jobz,uplo
@@ -116,7 +118,74 @@ module linear_algebra
  end interface
  !
 #endif
- 
+ ! 
+ ! Singular Value Decomposition
+ !
+ interface la_xgesvd
+   subroutine zgesvd(jobu,jobvt,m,n,A,lda,s,U,ldu,VT,ldvt,work,lwork,rwork,info)
+     use iso_fortran_env, ONLY : WP => real64
+     character(1) :: jobu,jobvt
+     integer      :: m,n,lda,ldu,ldvt,lwork,info
+     complex(WP)  :: A(lda,*), U(ldu,*), VT(ldvt,*), work(*)
+     real(WP)     :: s(*), rwork(*)
+   end subroutine
+   subroutine cgesvd(jobu,jobvt,m,n,A,lda,s,U,ldu,VT,ldvt,work,lwork,rwork,info)
+     use iso_fortran_env, ONLY : WP => real32
+     character(1) :: jobu,jobvt
+     integer      :: m,n,lda,ldu,ldvt,lwork,info
+     complex(WP)  :: A(lda,*), U(ldu,*), VT(ldvt,*), work(*)
+     real(WP)     :: s(*), rwork(*)
+   end subroutine
+ end interface
+ !
+ ! Lower/Upper Factorization and Inverison
+ !
+ interface la_xgetrf
+   subroutine zgetrf(m,n,A,lda,ipiv,info)
+     use iso_fortran_env, ONLY : WP => real64
+     integer      :: m,n,lda,info
+     integer      :: ipiv(*)
+     complex(WP)  :: A(lda,*) 
+   end subroutine
+   subroutine cgetrf(m,n,A,lda,ipiv,info)
+     use iso_fortran_env, ONLY : WP => real32
+     integer      :: m,n,lda,info
+     integer      :: ipiv(*)
+     complex(WP)  :: A(lda,*) 
+   end subroutine
+ end interface
+ !
+ interface la_xgetri
+   subroutine zgetri(n,A,lda,ipiv,work,lwork,info)
+     use iso_fortran_env, ONLY : WP => real64
+     integer      :: n,lda,info,lwork
+     integer      :: ipiv(*)
+     complex(WP)  :: A(lda,*), work(*)
+   end subroutine
+   subroutine cgetri(n,A,lda,ipiv,work,lwork,info)
+     use iso_fortran_env, ONLY : WP => real32
+     integer      :: n,lda,info,lwork
+     integer      :: ipiv(*)
+     complex(WP)  :: A(lda,*), work(*)
+   end subroutine
+ end interface
+ !
+ interface la_xgetrs
+   subroutine zgetrs(trans,n,nrhs,A,lda,ipiv,B,ldb,info)
+     use iso_fortran_env, ONLY : WP => real64
+     character(1) :: trans
+     integer      :: n,nrhs,lda,ldb,info
+     integer      :: ipiv(*)
+     complex(WP)  :: A(lda,*), B(ldb,*)
+   end subroutine
+   subroutine cgetrs(trans,n,nrhs,A,lda,ipiv,B,ldb,info)
+     use iso_fortran_env, ONLY : WP => real32
+     character(1) :: trans
+     integer      :: n,nrhs,lda,ldb,info
+     integer      :: ipiv(*)
+     complex(WP)  :: A(lda,*), B(ldb,*)
+   end subroutine
+ end interface
 
 
  !
@@ -124,19 +193,28 @@ module linear_algebra
  ! PUBLIC STATEMENTS
  !====================
  !
- public :: LU_factorization
- public :: LU_inversion
- public :: SV_decomposition
- public :: xgeev,xheev
+ public :: la_xgeev, la_xheev
 #ifdef _MAGMA
  public :: magmaf_xgeev_m,magmaf_xheevd_m
 #endif
+ public :: la_xgesvd
+ public :: la_xgetrf, la_xgetri, la_xgetrs
+ !
  !
  contains
    !
    !============================
    ! AUXILIARY FUNCTIONS
    !============================
+   !
+   subroutine magma_setup()
+#ifdef _MAGMA
+     call magmaf_init()
+     call magmaf_queue_create( 0, magma_queue )
+     magma_init_done=.true.
+#endif
+     return
+   end subroutine
    !
    subroutine LINEAR_ALGEBRA_WS_reset(WS)
      use drivers,   ONLY:l_nl_optics,l_real_time
@@ -196,69 +274,6 @@ module linear_algebra
      character(*) calling_subr,message_
      call error( trim( STRING_pack('LINEAR ALGEBRA driver [',trim(calling_subr),'] ',trim(message_)) ))
    end subroutine
-   !
-   subroutine magma_setup()
-#ifdef _MAGMA
-     call magmaf_init()
-     call magmaf_queue_create( 0, magma_queue )
-     magma_init_done=.true.
-#endif
-     return
-   end subroutine
-   !
-   !============================
-   ! SINGLE VALUE DECOMPOSITION
-   !============================
-   !
-   subroutine SV_decomposition(msize, M, SV, U, VH, work, lwork, r_WK, ifail)
-     !
-     integer,    intent(in)   :: msize, lwork
-     integer,    intent(out)  :: ifail
-     !     
-     real(SP),   intent(out)  :: r_WK(*), SV(*)
-     complex(SP),intent(inout):: M(msize,*)
-     complex(SP),intent(out)  :: U(msize,*), VH(msize,*), work(*)
-     !
-#if defined _DOUBLE
-   call ZGESVD('S','A',msize,msize,M,msize,SV,U,msize,VH,msize,work,lwork,r_WK,ifail)
-#else
-   call CGESVD('S','A',msize,msize,M,msize,SV,U,msize,VH,msize,work,lwork,r_WK,ifail)
-#endif
-     !
-   end subroutine SV_decomposition
-   !
-   !=========================================
-   ! LOWER/UPPER FACTORIZATION and INVERISON
-   !=========================================
-   !
-   subroutine LU_factorization(msize,M,ipvt,ifail)
-     !
-     integer,     intent(in)   :: msize
-     integer,     intent(out)  :: ifail, ipvt(*)
-     complex(SP), intent(inout):: M(msize,*)
-     !
-#if defined _DOUBLE
-     call zgetrf(msize,msize,M,msize,ipvt,ifail)
-#else
-     call cgetrf(msize,msize,M,msize,ipvt,ifail)
-#endif
-     !
-   end subroutine LU_factorization
-   !
-   subroutine LU_inversion(msize,M,ipvt,work,lwork,ifail)
-     !
-     integer,     intent(in)   :: msize, lwork, ipvt(*)
-     integer,     intent(out)  :: ifail
-     complex(SP), intent(inout):: M(msize,*)
-     complex(SP), intent(out)  :: work(*)
-     !
-#if defined _DOUBLE
-     call zgetri(msize,M,msize,ipvt,work,lwork,ifail)
-#else
-     call cgetri(msize,M,msize,ipvt,work,lwork,ifail)
-#endif
-     !
-   end subroutine LU_inversion
    !
 end module linear_algebra
 

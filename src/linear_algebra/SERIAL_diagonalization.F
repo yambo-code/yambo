@@ -17,7 +17,7 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !
  use pars,            ONLY: SP
  use linear_algebra,  ONLY: LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS,&
-&                           magma_init_done,magma_setup,xgeev
+&                           magma_init_done,magma_setup,la_xgeev
 #ifdef _MAGMA
  use linear_algebra,  ONLY: magmaf_xgeev_m
 #endif
@@ -60,7 +60,7 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
    call magmaf_xgeev_m('V','V', n,M,n,E,V_left,n,V_right,n,&
 &                      WS%v_cmplx,-1,WS%v_real,WS%i_fail)
 #else
-   call xgeev('V','V',n,M,n,E,V_left,n,V_right,n,WS%v_cmplx,-1,WS%v_real,WS%i_fail)
+   call la_xgeev('V','V',n,M,n,E,V_left,n,V_right,n,WS%v_cmplx,-1,WS%v_real,WS%i_fail)
 #endif
  !
  if(WS%i_fail /=0 ) call LINEAR_ALGEBRA_error(' _XGEEV_ ','WS%v_cmplx size query failed')
@@ -85,7 +85,7 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !   
  call msg('sr','SERIAL diagonalization with lapack')
  !
- call xgeev('V','V',n,M,n,E,V_left,n,V_right,n,WS%v_cmplx,WS%dim,WS%v_real,WS%i_fail)
+ call la_xgeev('V','V',n,M,n,E,V_left,n,V_right,n,WS%v_cmplx,WS%dim,WS%v_real,WS%i_fail)
  !   
 #endif
  !

@@ -10,7 +10,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  use pars,           ONLY: SP
  use drivers,        ONLY: l_nl_optics,l_real_time
  use linear_algebra, ONLY: LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS,&
-&                          magma_init_done,magma_setup,xheev
+&                          magma_init_done,magma_setup,la_xheev
 #ifdef _MAGMA
  use magma,          ONLY: magmaf_cheevd_m, magmaf_zheevd_m
 ! use linear_algebra, ONLY: magmaf_xheevd_m
@@ -69,7 +69,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
    call magmaf_xheevd_m(1,'v','u', n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,&
 &                       lrwork,WS%v_int,liwork,WS%i_fail)
 #else
-   call xheev('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
+   call la_xheev('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
 #endif
  !
  if(WS%i_fail /=0 ) call LINEAR_ALGEBRA_error(' _XHEEV_ ','WS%v_cmplx size query failed')
@@ -102,7 +102,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
 #else
  !
- call xheev('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
+ call la_xheev('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
  !
 #endif
  !

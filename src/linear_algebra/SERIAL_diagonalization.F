@@ -19,7 +19,7 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  use linear_algebra,  ONLY: LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS,&
 &                           magma_init_done,magma_setup,la_xgeev
 #ifdef _MAGMA
- use linear_algebra,  ONLY: magmaf_xgeev_m
+ use magma,           ONLY: magmaf_zgeev_m,magmaf_cgeev_m
 #endif
  use timing_m,        ONLY: timing
  use com,             ONLY: msg
@@ -35,6 +35,11 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !
  integer :: nthreads_save
 
+#if defined _DOUBLE
+#  define magmaf_xgeev_m magmaf_zgeev_m
+#else
+#  define magmaf_xgeev_m magmaf_cgeev_m
+#endif
 
  call timing('SERIAL_diagonalization',OPR='start')
  !

@@ -13,7 +13,6 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
 &                          magma_init_done,magma_setup,la_xheev
 #ifdef _MAGMA
  use magma,          ONLY: magmaf_cheevd_m, magmaf_zheevd_m
-! use linear_algebra, ONLY: magmaf_xheevd_m
 #endif
  use timing_m,       ONLY: timing
  use com,            ONLY: msg

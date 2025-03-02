@@ -107,17 +107,17 @@ module linear_algebra
    end subroutine
  end interface
  !
-#ifdef _MAGMA
- !
- interface magmaf_xgeev_m
-   procedure :: magmaf_cgeev_m,magmaf_zgeev_m
- end interface
- !
- interface magmaf_xheevd_m
-   procedure :: magmaf_cheevd_m,magmaf_zheevd_m
- end interface
- !
-#endif
+!#ifdef _MAGMA
+! !
+! interface magmaf_xgeev_m
+!   procedure :: magmaf_cgeev_m,magmaf_zgeev_m
+! end interface
+! !
+! interface magmaf_xheevd_m
+!   procedure :: magmaf_cheevd_m,magmaf_zheevd_m
+! end interface
+! !
+!#endif
  ! 
  ! Singular Value Decomposition
  !

@@ -193,10 +193,10 @@ module linear_algebra
  ! PUBLIC STATEMENTS
  !====================
  !
+!#ifdef _MAGMA
+! public :: magmaf_xgeev_m,magmaf_xheevd_m
+!#endif
  public :: la_xgeev, la_xheev
-#ifdef _MAGMA
- public :: magmaf_xgeev_m,magmaf_xheevd_m
-#endif
  public :: la_xgesvd
  public :: la_xgetrf, la_xgetri, la_xgetrs
  !

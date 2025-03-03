@@ -12,7 +12,7 @@ integer function io_full_SYMMs(k,ID)
  use R_lattice,     ONLY:bz_samp
  use IO_m,          ONLY:io_sec,read_is_on,write_is_on,io_extension
  use IO_int,        ONLY:io_connect,io_disconnect,io_bulk,def_variable_elemental, &
-&                        io_variable_elemental,io_bulk
+&                        io_variable_elemental,io_variable_bulk,def_variable_bulk,io_header
  !
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -31,26 +31,30 @@ integer function io_full_SYMMs(k,ID)
  !
  io_extension(ID)="full_SYMMs"
  !
- io_full_SYMMs=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
+ io_full_SYMMs=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))))
  if (io_full_SYMMs/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   call def_variable_elemental(ID,"old_nsymm",1,IP_YIO,0)
+   io_full_SYMMs=io_header(ID,D_LATT=.true.)
+   if (io_full_SYMMs/=0) goto 1
+   !
+   call def_variable_elemental(ID,VAR="old_nsym",VAR_SZ=1,VAR_KIND=IP_YIO,MENU=0)
    call io_variable_elemental(ID,VAR="Old number of symmetries",I0=old_nsym)
    !
  endif
  !
  if(read_is_on(ID)) then
+   write(*,*) 'passo qui ',old_nsym
    YAMBO_ALLOC(old_dl_sop,(3,3,old_nsym))
    YAMBO_ALLOC(kpoints_map,(2,k%nibz))
  endif
  !
- call io_bulk(ID,VAR="old_DL_dop",VAR_SZ=shape(old_dl_sop))
- call io_bulk(ID,R3=old_dl_sop)
+ call def_variable_bulk(ID,VAR="old_DL_dop",VAR_ID=1,VAR_SZ=shape(old_dl_sop),VAR_KIND=SP)
+ call io_variable_bulk(ID,1,R3=old_dl_sop)
  !
- call io_bulk(ID,VAR="kpoints_map",VAR_SZ=shape(kpoints_map))
- call io_bulk(ID,I2=kpoints_map)
+ call def_variable_bulk(ID,VAR="kpoints_map",VAR_ID=1,VAR_SZ=shape(kpoints_map),VAR_KIND=IP_YIO)
+ call io_variable_bulk(ID,1,I2=kpoints_map)
  !
 1  call io_disconnect(ID=ID)
  !

@@ -35,6 +35,8 @@ subroutine DIPOLE_symmetrize(k)
  ! Loop on k-points and application of symmetries to the dipole
  ! For the moment this subroutine does not work with k-parallelization!!!!
  !
+ call msg('rs','Dipoles symmetrized with full 
+ !
  do ik=1,k%nibz
    ! 
    ik_old=kpoints_map(1,ik)

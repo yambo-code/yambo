@@ -1,3 +1,4 @@
+ DIPOLE_symmetrize.o
  DIP_polarization.o
  EXC_macroscopic_JGM.o
  EXP_op.o

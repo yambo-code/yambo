@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !                  
-subroutine DIP_symmetrize(k)
+subroutine DIPOLE_symmetrize(k)
  !
  use pars,           ONLY:SP,cI
  use R_lattice,      ONLY:bz_samp
@@ -13,4 +13,4 @@ subroutine DIP_symmetrize(k)
  implicit none           
  type(bz_samp), intent(in)  :: k
  !
-end subroutine DIP_symmetrize
+end subroutine DIPOLE_symmetrize

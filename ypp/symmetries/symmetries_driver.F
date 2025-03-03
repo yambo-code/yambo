@@ -127,7 +127,7 @@ subroutine symmetries_driver(E,Xk)
  ! Savel old symmetries on file
  ! ============================
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
- io_old_SYMM=io_full_SYMMs(Xk,ID)
+ io_old_SYMMs=io_full_SYMMs(Xk,ID)
  !
  ! CLEAN
  !=======

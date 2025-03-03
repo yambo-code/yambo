@@ -14,7 +14,7 @@ subroutine DIPOLE_symmetrize(k)
  use D_lattice,      ONLY:kpoints_map,old_dl_sop
  use DIPOLES,        ONLY:DIP_iR
  use IO_int,         ONLY:io_control
- use IO_m,           ONLY:REP,OP_RD_CL,DUMP,OP_RD
+ use IO_m,           ONLY:REP,OP_RD_CL,DUMP
  use com,            ONLY:msg
  !
 #include<y_memory.h>
@@ -29,7 +29,7 @@ subroutine DIPOLE_symmetrize(k)
  !     
  ! Load old full symmetries if present
  !
- call io_control(ACTION=OP_RD,COM=REP,SEC=(/1,2/),ID=ID)
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID)
  io_old_SYMMs=io_full_SYMMs(k,ID)
  !
  if(io_old_SYMMs/=0) return
@@ -38,7 +38,6 @@ subroutine DIPOLE_symmetrize(k)
  ! For the moment this subroutine does not work with k-parallelization!!!!
  !
  call msg('rs','Dipoles symmetrized with full symmetries of the system') 
- return
  !
  do ik=1,k%nibz
    ! 

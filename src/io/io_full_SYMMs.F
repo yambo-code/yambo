@@ -31,7 +31,7 @@ integer function io_full_SYMMs(k,ID)
  !
  io_extension(ID)="full_SYMMs"
  !
- io_full_SYMMs=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))))
+ io_full_SYMMs=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
  if (io_full_SYMMs/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -45,7 +45,6 @@ integer function io_full_SYMMs(k,ID)
  endif
  !
  if(read_is_on(ID)) then
-   write(*,*) 'passo qui ',old_nsym
    YAMBO_ALLOC(old_dl_sop,(3,3,old_nsym))
    YAMBO_ALLOC(kpoints_map,(2,k%nibz))
  endif

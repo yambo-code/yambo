@@ -11,7 +11,7 @@ subroutine DIPOLE_symmetrize(k)
  use nl_optics,      ONLY:NL_bands
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:n_sp_pol
- use D_lattice,      ONLY:kpoints_map,old_dl_sop
+ use D_lattice,      ONLY:kpoints_map,old_dl_sop,old_S_contains_TR
  use DIPOLES,        ONLY:DIP_iR
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:REP,OP_RD_CL,DUMP
@@ -53,6 +53,7 @@ subroutine DIPOLE_symmetrize(k)
    enddo
    enddo
    enddo
+   if(old_S_contains_TR(is)==1) DIP_iR(:,:,:,ik,i_sp)=-conjg(DIP_iR(:,:,:,ik,i_sp))
    !     
  enddo 
  !

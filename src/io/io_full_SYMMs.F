@@ -7,11 +7,11 @@
 !
 integer function io_full_SYMMs(k,ID)
  !
- use pars,          ONLY:schlen,SP,IP,IP_YIO
- use D_lattice,     ONLY:kpoints_map,old_nsym,old_dl_sop
+ use pars,          ONLY:schlen,SP,IP,IP_YIO,LP_YIO
+ use D_lattice,     ONLY:kpoints_map,old_nsym,old_dl_sop,old_S_contains_TR
  use R_lattice,     ONLY:bz_samp
  use IO_m,          ONLY:io_sec,read_is_on,write_is_on,io_extension
- use IO_int,        ONLY:io_connect,io_disconnect,io_bulk,def_variable_elemental, &
+ use IO_int,        ONLY:io_connect,io_disconnect,io_bulk,def_variable_elemental,io_bulk, &
 &                        io_variable_elemental,io_variable_bulk,def_variable_bulk,io_header
  !
 #if defined _TIMING
@@ -47,6 +47,7 @@ integer function io_full_SYMMs(k,ID)
  if(read_is_on(ID)) then
    YAMBO_ALLOC(old_dl_sop,(3,3,old_nsym))
    YAMBO_ALLOC(kpoints_map,(2,k%nibz))
+   YAMBO_ALLOC(old_S_contains_TR,(old_nsym))
  endif
  !
  call def_variable_bulk(ID,VAR="old_DL_dop",VAR_ID=1,VAR_SZ=shape(old_dl_sop),VAR_KIND=SP)
@@ -54,6 +55,11 @@ integer function io_full_SYMMs(k,ID)
  !
  call def_variable_bulk(ID,VAR="kpoints_map",VAR_ID=1,VAR_SZ=shape(kpoints_map),VAR_KIND=IP_YIO)
  call io_variable_bulk(ID,1,I2=kpoints_map)
+ !
+ call io_bulk(ID,VAR="S_contains_TR",VAR_SZ=shape(old_S_contains_TR))
+ call io_bulk(ID,L1=old_S_contains_TR)
+! call def_variable_bulk(ID,VAR="S_contains_TR",VAR_ID=1,VAR_SZ=shape(old_S_contains_TR),VAR_KIND=LP_YIO)
+! call io_variable_bulk(ID,1,L1=old_S_contains_TR)
  !
 1  call io_disconnect(ID=ID)
  !

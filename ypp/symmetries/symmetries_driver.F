@@ -21,7 +21,7 @@ subroutine symmetries_driver(E,Xk)
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:REP,OP_WR_CL,VERIFY
  use parser_m,            ONLY:parser
- use D_lattice,           ONLY:kpoints_map,old_nsym,old_dl_sop
+ use D_lattice,           ONLY:kpoints_map,old_nsym,old_dl_sop,old_S_contains_TR
  !
 #include<y_memory.h>
  !
@@ -33,12 +33,13 @@ subroutine symmetries_driver(E,Xk)
  type(bz_samp)         :: Xk_save
  ! 
  integer               :: old_sop_inv(nsym)
- logical               :: S_contains_TR(nsym),l_keep_k_grid
+ logical               :: l_keep_k_grid
  !
  integer               :: old_nkpt,ID,io_old_SYMMs
  integer, external     :: io_full_SYMMs
  !
  YAMBO_ALLOC(old_dl_sop,(3,3,nsym))
+ YAMBO_ALLOC(old_S_contains_TR,(nsym))
  !     
  if (core_io_path==more_io_path) more_io_path=trim(core_io_path)//"/FixSymm"
  !
@@ -72,7 +73,7 @@ subroutine symmetries_driver(E,Xk)
  YAMBO_FREE(Xk%pt)
  call k_reduce(Xk,.false.)
  !
- call fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
+ call fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,old_S_contains_TR)
  !
  if(old_nsym==nsym) then
    call msg('s','Symmetries did not change. Program terminaned.')
@@ -116,13 +117,13 @@ subroutine symmetries_driver(E,Xk)
  endif
  !
  ! Energies and Wave-functions
- call fix_WFs_and_E(E,Xk,Xk_save,kpoints_map,old_nsym,S_contains_TR)
+ call fix_WFs_and_E(E,Xk,Xk_save,kpoints_map,old_nsym,old_S_contains_TR)
  !
  ! Rotate KB or Vnl
- call fix_PPs(E,Xk,Xk_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
+ call fix_PPs(E,Xk,Xk_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,old_S_contains_TR)
  !
  ! Rotate atomic projections
- call fix_ATOMPROJs(E,Xk,Xk_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
+ call fix_ATOMPROJs(E,Xk,Xk_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,old_S_contains_TR)
  !
  ! Savel old symmetries on file
  ! ============================

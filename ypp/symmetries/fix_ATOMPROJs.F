@@ -7,7 +7,7 @@
 !
 subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  !
- use pars,                ONLY:SP,lchlen,cZERO
+ use pars,                ONLY:LP,SP,lchlen,cZERO
  use com,                 ONLY:msg,core_io_path,more_io_path
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:NONE,OP_APP_CL,OP_RD,VERIFY,&
@@ -30,7 +30,7 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
  integer,intent(in)       :: old_nsym
  real(SP),intent(in)      :: old_dl_sop(3,3,old_nsym)
  integer,intent(in)       :: old_sop_inv(old_nsym)
- logical,intent(in)       :: S_contains_TR(old_nsym)
+ integer(LP),intent(in)   :: S_contains_TR(old_nsym)
  !
  ! Work space
  !

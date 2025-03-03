@@ -101,7 +101,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  !
  ! Symmetrize dipoles if old-symmetries are present
  ! =================================================
- call DIPOLE_symmetrize(Xk)
+ call DIPOLE_symmetrize(k)
  !
  ! Generate bare_qpg if required
  !=============================

@@ -122,9 +122,8 @@ subroutine Build_W_operator(en,Xk,A_input,ik,i_sp,V_bands,H_nl_sc)
    !
  enddo ! loop on id_red
  !
- ! Make an Hermitian operator
- !
- ! Eq. 64 of PRB 69 085106
+ ! Make an Hermitian operator: Eq. 64 of PRB 69 085106
+ ! and discussion above 
  !
  !$omp parallel do default(shared), private(id)
  do id=1,3

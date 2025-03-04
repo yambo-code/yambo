@@ -52,7 +52,7 @@ subroutine DIPOLE_symmetrize(k)
      DIP_iR(:,ib1,ib2,ik,i_sp)=matmul(old_dl_sop(:,:,is),DIP_iR(:,ib1,ib2,ik_old,i_sp)) 
    enddo
    enddo
-!   if(old_S_contains_TR(is)==1) DIP_iR(:,:,:,ik,i_sp)=conjg(DIP_iR(:,:,:,ik,i_sp))
+   if(old_S_contains_TR(is)==1) DIP_iR(:,:,:,ik,i_sp)=conjg(DIP_iR(:,:,:,ik,i_sp))
    enddo
    !     
  enddo 

@@ -65,6 +65,8 @@ subroutine Build_W_operator(en,Xk,A_input,ik,i_sp,V_bands,H_nl_sc)
        !
        ! W(i,j) = \sum_m V*(m,i) * [\tilde Vp(m,j) - \tilde Vm(m,j) ]
        !
+       ! Eq. C13 in PRB 69, 085106
+       !
        !$omp parallel do default(shared), private(i2,i1), collapse(2)
        do i2=H_ref_bands(1),H_ref_bands(2)
          do i1=H_ref_bands(1),H_ref_bands(2)
@@ -121,6 +123,8 @@ subroutine Build_W_operator(en,Xk,A_input,ik,i_sp,V_bands,H_nl_sc)
  enddo ! loop on id_red
  !
  ! Make an Hermitian operator
+ !
+ ! Eq. 64 of PRB 69 085106
  !
  !$omp parallel do default(shared), private(id)
  do id=1,3

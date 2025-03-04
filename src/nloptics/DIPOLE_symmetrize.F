@@ -47,13 +47,13 @@ subroutine DIPOLE_symmetrize(k)
    if(is==1) continue
    !
    do i_sp=1,n_sp_pol
-   do ib1=1,NL_bands(2)
-   do ib2=1,NL_bands(2)
+   do ib1=NL_bands(1),NL_bands(2)
+   do ib2=NL_bands(1),NL_bands(2)
      DIP_iR(:,ib1,ib2,ik,i_sp)=matmul(old_dl_sop(:,:,is),DIP_iR(:,ib1,ib2,ik_old,i_sp)) 
    enddo
    enddo
+!   if(old_S_contains_TR(is)==1) DIP_iR(:,:,:,ik,i_sp)=conjg(DIP_iR(:,:,:,ik,i_sp))
    enddo
-   if(old_S_contains_TR(is)==1) DIP_iR(:,:,:,ik,i_sp)=-conjg(DIP_iR(:,:,:,ik,i_sp))
    !     
  enddo 
  !

@@ -15,7 +15,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_sp_pol
  use collision_ext,  ONLY:COLLISIONS_CV_only,HXC_collisions 
- use X_m,            ONLY:X_t
+ use X_m,            ONLY:global_gauge,X_t
  use DIPOLES,        ONLY:DIPOLE_t,DIP_S
  use ALLOC,          ONLY:DIPOLE_ALLOC_elemental,DIPOLE_ALLOC_global
  use wave_func,      ONLY:WF,wf_ng
@@ -237,14 +237,16 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  endif
  !
  ! Store Equilibrium Wk
- do ik=1,QP_nk
-   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
-   ik_mem=PAR_Xk_ibz_index(ik)
-   do i_sp_pol=1,n_sp_pol
-     call Build_W_operator(E,k,ik,i_sp_pol,V_bands(:,:E%nbf(i_sp_pol),:,i_sp_pol), & 
-&                          Wk_EQ(:,:,:,i_sp_pol,ik_mem))
+ if(.not.l_use_DIPOLES.and..not.trim(global_gauge)=='velocity') then
+   do ik=1,QP_nk
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+     ik_mem=PAR_Xk_ibz_index(ik)
+     do i_sp_pol=1,n_sp_pol
+       call Build_W_operator(E,k,ik,i_sp_pol,V_bands(:,:E%nbf(i_sp_pol),:,i_sp_pol), & 
+&                            Wk_EQ(:,:,:,i_sp_pol,ik_mem))
+     enddo
    enddo
- enddo
+ endif
  !
  !
  ! Check if calculation was already done

@@ -79,7 +79,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
    if (l_NE_with_fields) then
      !
      H_field=cZERO
-     call RT_apply_field(ik,1,H_field,A_input)
+     call Apply_field(ik,1,H_field,A_input)
      call M_plus_alpha_M_omp(RT_nbands,cONE,-H_field,H)
      !
    endif

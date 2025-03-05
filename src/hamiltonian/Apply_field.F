@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM CA DS
 !
-subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
+subroutine Apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  !
  ! This subroutine add the vector potential to the Hamiltonian
  !
@@ -16,7 +16,8 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  use fields,         ONLY:gauge_field
  use DIPOLES,        ONLY:DIP_iR,DIP_P,DIP_v,DIP_P_spinor
  use X_m,            ONLY:global_gauge
- use real_time,      ONLY:RT_bands,l_update_SOC,l_velocity_gauge_corr
+ use real_time,      ONLY:l_update_SOC,l_velocity_gauge_corr
+ use hamiltonian,    ONLY:H_ref_bands
  use vec_operate,    ONLY:cross_product
  use D_lattice,      ONLY:sigma_x,sigma_y,sigma_z
  use parallel_m,     ONLY:PAR_Xk_ibz_index
@@ -24,7 +25,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  implicit none
  !
  integer,           intent(in) :: ik,i_sp_pol
- complex(SP),    intent(inout) :: H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP),    intent(inout) :: H_nl_sc(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  type(gauge_field), intent(in) :: A_input
  ! 
  ! Work Space
@@ -48,7 +49,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    ! and the intraband optical matrix elements have been set to zero
    !
 !$omp parallel do default(shared), private(i1,Jtot,A_dot_J)
-   do i1=RT_bands(1),RT_bands(2)
+   do i1=H_ref_bands(1),H_ref_bands(2)
      !
      ! Case A: the pseudo-potential is correctly gauged, so A*p enters the hamiltonian
      if (     l_velocity_gauge_corr) Jtot(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)
@@ -73,8 +74,8 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
 !$omp end parallel do
    !
 !$omp parallel do default(shared), private(i1,i2,Jtot,A_dot_J)
-   do i1=RT_bands(1),RT_bands(2)
-     do i2=i1+1,RT_bands(2)
+   do i1=H_ref_bands(1),H_ref_bands(2)
+     do i2=i1+1,H_ref_bands(2)
        !
        ! Note that (P)_cv = DIP_P (:,iv,ic,:,:)
        ! the off-diagonal diamagnetic term is zero
@@ -103,7 +104,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    !
    ! Intraband terms
    !
-   do i1=RT_bands(1),RT_bands(2)
+   do i1=H_ref_bands(1),H_ref_bands(2)
      POL(:)=cI*DIP_iR(:,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)
      E_dot_P(1)=sum(E_vec_pot(1:3)*      POL(1:3) )
      E_dot_P(2)=sum(E_vec_pot(1:3)*conjg(POL(1:3)))
@@ -130,8 +131,8 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    !
    ! Inter-band terms
    !
-   do i1=RT_bands(1),RT_bands(2)
-     do i2=i1+1,RT_bands(2)
+   do i1=H_ref_bands(1),H_ref_bands(2)
+     do i2=i1+1,H_ref_bands(2)
        !
        ! Note that (iR)_cv = DIP_iR (:,iv,ic,:,:)
        !
@@ -160,4 +161,4 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    !
  end select
  !
-end subroutine RT_apply_field
+end subroutine Apply_field

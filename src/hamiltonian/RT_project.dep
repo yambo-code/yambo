@@ -1,3 +1,4 @@
+ Apply_field.o
  Bare_Hamiltonian.o
  Check_symmetries.o
  Pseudo_Hamiltonian.o

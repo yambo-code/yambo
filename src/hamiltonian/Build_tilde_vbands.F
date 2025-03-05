@@ -18,7 +18,7 @@ subroutine Build_tilde_vbands(en,Xk,ikbz,i_sp,istep,id_red,V_bands,V_tilde)
  use R_lattice,      ONLY:bz_samp,k_map
  use vec_operate,    ONLY:k_periodic_idx
  use DIPOLES,        ONLY:DIP_S
- use wrapper_omp,    ONLY:M_by_M_omp
+ use wrapper_omp,    ONLY:M_by_M_omp,V_dot_V_omp
  !
  implicit none
  !
@@ -83,14 +83,14 @@ subroutine Build_tilde_vbands(en,Xk,ikbz,i_sp,istep,id_red,V_bands,V_tilde)
  ! \tilde V(k+dk)_{n,i} = \sum_m S^-1(k,k+dk)_{m,n} * V'(k+dk)_(i,m)
  ! \tilde V(k-dk)_{n,i} = \sum_m S^-1(k,k-dk)_{m,n} * V'(k-dk)_(i,m)
  ! 
-!$omp parallel do default(shared), private(i2,iv1), collapse(2)
  do i2=H_ref_bands(1),H_ref_bands(2)
    do iv1=1,en%nbf(i_sp)
-     V_tilde(iv1,i2,1)=sum( Sm1_plus(:en%nbf(i_sp),iv1,id_red+(istep-1)*3,ikbz,i_sp)*tmp_Vp(i2,:en%nbf(i_sp)))
-     V_tilde(iv1,i2,2)=sum(Sm1_minus(:en%nbf(i_sp),iv1,id_red+(istep-1)*3,ikbz,i_sp)*tmp_Vm(i2,:en%nbf(i_sp)))
+     V_tilde(iv1,i2,1)=V_dot_V_omp(en%nbf(i_sp),Sm1_plus(:en%nbf(i_sp),iv1,id_red+(istep-1)*3,ikbz,i_sp)   &
+&                       ,tmp_Vp(i2,:en%nbf(i_sp)))
+     V_tilde(iv1,i2,2)=V_dot_V_omp(en%nbf(i_sp),Sm1_minus(:en%nbf(i_sp),iv1,id_red+(istep-1)*3,ikbz,i_sp)  &
+&                       ,tmp_Vm(i2,:en%nbf(i_sp)))
    enddo
  enddo
-!$omp end parallel do
  !
  ! with (see Build_overlaps_det_NEQ)
  !

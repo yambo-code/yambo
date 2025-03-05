@@ -65,7 +65,7 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
        !$omp parallel do default(shared), private(i2,i1), collapse(2)
        do i2=H_ref_bands(1),H_ref_bands(2)
          do i1=H_ref_bands(1),H_ref_bands(2)
-           Wop(i1,i2,istep)=sum(conjg(V_bands(i2,1:en%nbf(i_sp),ik))*(V_tilde(1:en%nbf(i_sp),i1,1)-V_tilde(1:en%nbf(i_sp),i1,2)))
+           Wop(i1,i2,istep)=dot_product(V_bands(i2,:,ik),V_tilde(:,i1,1)-V_tilde(:,i1,2))
          enddo
        enddo
        !$omp end parallel do

@@ -214,7 +214,7 @@ subroutine check_shifts(Xk,WF_shifts)
  !
  ! *) If a k-point is negative I assign a positive shift WF_shifts=1
  !    to the WF to bring it in the correct BZ
- ! *) If a k-point is larger than 1 I assign a negative shift WF_shifts=2
+ ! *) If a k-point is larger than 1 I assign a negative shift WF_shifts=-1
  !    to bring in the BZ
  ! *) If a k-point is already between 0-1 I do not need to shift it
  !
@@ -238,7 +238,7 @@ subroutine check_shifts(Xk,WF_shifts)
      if(Xk%ptbz(ik,id)<-EPS) then
         WF_shifts(ik,id)=1
      elseif(Xk%ptbz(ik,id)>1._SP-EPS) then
-        WF_shifts(ik,id)=2
+        WF_shifts(ik,id)=-1
      endif
    enddo
  enddo

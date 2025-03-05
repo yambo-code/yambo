@@ -28,7 +28,7 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  use parallel_int,   ONLY:PP_redux_wait
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:NL_bands
- use electric,       ONLY:l_no_res_symms
+ use electric,       ONLY:l_res_symms
  !
  implicit none           
  !
@@ -134,7 +134,7 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  !
  ! Apply residual symmetries
  !
- if(nsym>1.and..not.l_no_res_symms) then
+ if(nsym>1.and.l_res_symms) then
    NL_J_symm=cZERO
    do is=1,nsym/(i_time_rev+1) ! Time-reversal is never present 
      NL_J_symm(:)=NL_J_symm(:)+matmul(dl_sop(:,:,is),NL_J)

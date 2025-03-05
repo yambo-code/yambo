@@ -13,7 +13,7 @@ subroutine Berry_polarization_NEQ(Xen,Xk,i_sp_pol,V_bands,Polarization)
  use R_lattice,      ONLY:bz_samp,k_map,nXkbz
  use hamiltonian,    ONLY:H_ref_bands
  use QP_m,           ONLY:QP_nk
- use electric,       ONLY:All_S_det,Sm1_plus,Sm1_minus,l_no_res_symms
+ use electric,       ONLY:All_S_det,Sm1_plus,Sm1_minus,l_res_symms
  use parallel_m,     ONLY:PAR_IND_Xk_bz,PAR_COM_Xk_ibz_INDEX
  use parallel_int,   ONLY:PP_redux_wait
 #if defined _TIMING
@@ -72,7 +72,7 @@ subroutine Berry_polarization_NEQ(Xen,Xk,i_sp_pol,V_bands,Polarization)
  !
  ! Apply residual symmetries
  !
- if(nsym>1.and..not.l_no_res_symms) then
+ if(nsym>1.and.l_res_symms) then
    Pol_symm=cZERO
    do is=1,nsym/(i_time_rev+1) ! Time reversal is not present 
      Pol_symm(:)=Pol_symm(:)+matmul(dl_sop(:,:,is),Polarization)

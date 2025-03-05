@@ -16,6 +16,7 @@ subroutine DIPOLE_symmetrize(k)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:REP,OP_RD_CL,DUMP
  use com,            ONLY:msg
+ use parallel_m,     ONLY:ncpu
  !
 #include<y_memory.h>
  !     
@@ -33,6 +34,8 @@ subroutine DIPOLE_symmetrize(k)
  io_old_SYMMs=io_full_SYMMs(k,ID)
  !
  if(io_old_SYMMs/=0) return
+ !
+ if(ncpu>1) call error("This subroutine does not work in parallel yet!")
  !
  ! Loop on k-points and application of symmetries to the dipole
  ! For the moment this subroutine does not work with k-parallelization!!!!

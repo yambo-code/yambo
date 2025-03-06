@@ -29,7 +29,7 @@ subroutine Build_tilde_vbands(en,Xk,ikbz,i_sp,istep,id_red,V_bands,V_tilde)
  integer,      intent(in)      :: istep
  integer,      intent(in)      :: id_red
  complex(SP),  intent(in)      :: V_bands(H_ref_bands(2),en%nbf(i_sp),QP_nk)
- complex(SP),  intent(out)     :: V_tilde(en%nbf(i_sp),H_ref_bands(2),2)
+ complex(SP),  intent(out)     :: V_tilde(en%nbf(i_sp),H_ref_bands(1):H_ref_bands(2),2)
  !
  ! Work Space
  !

@@ -34,10 +34,10 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
  !
  integer :: i1,i2,im,id,id_red
  integer :: ikbz,istep,max_step,nval
- complex(SP) :: Wop(H_ref_bands(2),H_ref_bands(2),2)
- complex(SP) :: V_tilde(en%nbf(i_sp),H_ref_bands(2),2)
- complex(SP) :: delta_V_tilde(en%nbf(i_sp),H_ref_bands(2))
- complex(SP) :: E_vec_pot(3)
+ complex(SP) :: Wop(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),2)
+ complex(SP) :: V_tilde(en%nbf(i_sp),H_ref_bands(1):H_ref_bands(2),2)
+ complex(SP) :: delta_V_tilde(en%nbf(i_sp),H_ref_bands(1):H_ref_bands(2))
+ complex(SP) :: E_vec_pot(3),alpha
  !
  Wk=cZERO
  !
@@ -66,8 +66,12 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
        ! Eq. (C13) in PRB 69, 085106 [sum_sigma  di eq. (61) PRB 69, 085106 (2004)]
        !
        delta_V_tilde=V_tilde(:,:,1)-V_tilde(:,:,2)
-       call mm_cgemm('N','T',H_ref_nbands,H_ref_nbands,nval,cONE,V_bands(H_ref_bands(1):,:,ik),H_ref_nbands, &
-&	  delta_V_tilde(:,H_ref_bands(1):),H_ref_nbands,cZERO,Wop(H_ref_bands(1):,H_ref_bands(1):,istep),H_ref_nbands) 
+       !
+       alpha=cI*real(k_map%max_kdir(id_red),SP)/(4._SP*pi*real(istep,SP))
+       !
+       call mm_cgemm('N','T',H_ref_nbands,H_ref_nbands,nval,alpha,V_bands(H_ref_bands(1):,:,ik),H_ref_nbands, &
+&	  delta_V_tilde(:,:),H_ref_nbands,cZERO,Wop(:,:,istep),H_ref_nbands) 
+       !		       
 !       !$omp parallel do default(shared), private(i2,i1), collapse(2)
 !       do i2=H_ref_bands(1),H_ref_bands(2)
 !         do i1=H_ref_bands(1),H_ref_bands(2)
@@ -76,11 +80,11 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
 !       enddo
 !       !$omp end parallel do
        !
-       !$omp parallel do default(shared), private(i1)
-       do i1=H_ref_bands(1),H_ref_bands(2)
-         Wop(i1,H_ref_bands(1):,istep)=Wop(i1,H_ref_bands(1):,istep)*cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP))
-       enddo
-       !$omp end parallel do
+!       !$omp parallel do default(shared), private(i1)
+!       do i1=H_ref_bands(1),H_ref_bands(2)
+!         Wop(i1,H_ref_bands(1):,istep)=Wop(i1,H_ref_bands(1):,istep)*cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP))
+!       enddo
+!       !$omp end parallel do
        !
      enddo
      !

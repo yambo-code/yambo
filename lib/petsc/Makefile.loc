@@ -7,7 +7,7 @@ include ../../config/setup
 include ../archive/package.list
 #
 LIBNAME=libpetsc.a
-LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${yprecision}
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${yprecision} #-${gpu_support}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_petsc)
@@ -15,13 +15,15 @@ TARBALL=$(tarball_petsc)
 #
 include ../config/external_libs_commons.mk
 include ../config/external_libs_defs.mk
+#         FOPTFLAGS="$(fcflags)" COPTFLAGS="$(cflags)" \
 #
 PETSC_ARCH=yambo_${yprecision}_complex
-CONFFLAGS=--prefix="$(LIBPATH)" \
+CONFFLAGS=--prefix="$(LIBPATH)" $(petsc_flgs) \
+         FOPTFLAGS="-O1" COPTFLAGS="-O2" \
          --PETSC_ARCH=${PETSC_ARCH} \
          --with-ssl=0 \
          --with-x=0 \
-         --with-cxx=0 \
+         --with-debugging=no \
          --with-shared-libraries=$(spetsc) \
          --with-blaslapack-lib="$(llapackpetsc) $(lblaspetsc)" \
          --with-scalar-type="complex" \

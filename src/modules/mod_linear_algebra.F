@@ -8,13 +8,12 @@
 module linear_algebra
  !
  use iso_c_binding
- use pars,       ONLY: SP,schlen
+ use iso_fortran_env,  ONLY: int64
+ use pars,             ONLY: SP,schlen
+ !
 #ifdef _MAGMA
- use magma2,     ONLY: magma_init,magma_queue_create, &
-&                      magma_cgeev_m,magma_zgeev_m,MagmaVec
-#endif
-#ifdef _OPENMP
- use omp_lib
+ use magma,            ONLY: magmaf_init,magmaf_queue_create,&
+&                            magmaf_cgeev_m,magmaf_zgeev_m,MagmaVec
 #endif
  !
 #include<dev_defs.h>
@@ -33,8 +32,13 @@ module linear_algebra
  !
  ! magma vars
  !
- type(c_ptr) :: magma_queue    !! magma_queue_t
- logical     :: magma_init_done = .false.
+ integer(int64)     :: magma_queue    !! magma_queue_t
+ logical            :: magma_init_done = .false.
+#if defined _MAGMA
+ logical, parameter :: have_magma=.true.
+#else
+ logical, parameter :: have_magma=.false.
+#endif
  !
  ! Common Work Space
  !
@@ -61,17 +65,156 @@ module linear_algebra
    integer    , allocatable DEV_ATTR :: vp_int_d(:)
    !
  end type LALGEBRA_WS
+
  !
- public :: LU_factorization
- public :: LU_inversion
- public :: SV_decomposition
- public :: M_eigenvalues
+ !===============
+ ! INTERFACES
+ !===============
  !
- interface M_eigenvalues
-   module procedure heev,geev
+ ! Eigensolvers
+ !
+ interface la_xgeev
+   subroutine zgeev(jobvl,jobvr,n,A,lda,w,vl,ldvl,vr,ldvr,work,lwork,rwork,info)
+     use iso_fortran_env, ONLY : WP => real64
+     character(1) :: jobvl,jobvr 
+     integer      :: n,lda,ldvl,ldvr,lwork,info
+     complex(WP)  :: w(*), A(lda,*), vl(ldvl,*), vr(ldvr,*), work(*)
+     real(WP)     :: rwork(*)
+   end subroutine
+   subroutine cgeev(jobvl,jobvr,n,A,lda,w,vl,ldvl,vr,ldvr,work,lwork,rwork,info)
+     use iso_fortran_env, ONLY : WP => real32
+     character(1) :: jobvl,jobvr 
+     integer      :: n,lda,ldvl,ldvr,lwork,info
+     complex(WP)  :: w(*), A(lda,*), vl(ldvl,*), vr(ldvr,*), work(*)
+     real(WP)     :: rwork(*)
+   end subroutine
  end interface
  !
+ interface la_xheev
+   subroutine zheev(jobz,uplo,n,A,lda,w,work,lwork,rwork,info)
+     use iso_fortran_env, ONLY : WP => real64
+     character(1) :: jobz,uplo
+     integer      :: n,lda,lwork,info
+     complex(WP)  :: A(lda,*), work(*)
+     real(WP)     :: w(*), rwork(*)
+   end subroutine
+   subroutine cheev(jobz,uplo,n,A,lda,w,work,lwork,rwork,info)
+     use iso_fortran_env, ONLY : WP => real32
+     character(1) :: jobz,uplo
+     integer      :: n,lda,lwork,info
+     complex(WP)  :: A(lda,*), work(*)
+     real(WP)     :: w(*), rwork(*)
+   end subroutine
+ end interface
+ !
+!#ifdef _MAGMA
+! !
+! interface magmaf_xgeev_m
+!   procedure :: magmaf_cgeev_m,magmaf_zgeev_m
+! end interface
+! !
+! interface magmaf_xheevd_m
+!   procedure :: magmaf_cheevd_m,magmaf_zheevd_m
+! end interface
+! !
+!#endif
+ ! 
+ ! Singular Value Decomposition
+ !
+ interface la_xgesvd
+   subroutine zgesvd(jobu,jobvt,m,n,A,lda,s,U,ldu,VT,ldvt,work,lwork,rwork,info)
+     use iso_fortran_env, ONLY : WP => real64
+     character(1) :: jobu,jobvt
+     integer      :: m,n,lda,ldu,ldvt,lwork,info
+     complex(WP)  :: A(lda,*), U(ldu,*), VT(ldvt,*), work(*)
+     real(WP)     :: s(*), rwork(*)
+   end subroutine
+   subroutine cgesvd(jobu,jobvt,m,n,A,lda,s,U,ldu,VT,ldvt,work,lwork,rwork,info)
+     use iso_fortran_env, ONLY : WP => real32
+     character(1) :: jobu,jobvt
+     integer      :: m,n,lda,ldu,ldvt,lwork,info
+     complex(WP)  :: A(lda,*), U(ldu,*), VT(ldvt,*), work(*)
+     real(WP)     :: s(*), rwork(*)
+   end subroutine
+ end interface
+ !
+ ! Lower/Upper Factorization and Inverison
+ !
+ interface la_xgetrf
+   subroutine zgetrf(m,n,A,lda,ipiv,info)
+     use iso_fortran_env, ONLY : WP => real64
+     integer      :: m,n,lda,info
+     integer      :: ipiv(*)
+     complex(WP)  :: A(lda,*) 
+   end subroutine
+   subroutine cgetrf(m,n,A,lda,ipiv,info)
+     use iso_fortran_env, ONLY : WP => real32
+     integer      :: m,n,lda,info
+     integer      :: ipiv(*)
+     complex(WP)  :: A(lda,*) 
+   end subroutine
+ end interface
+ !
+ interface la_xgetri
+   subroutine zgetri(n,A,lda,ipiv,work,lwork,info)
+     use iso_fortran_env, ONLY : WP => real64
+     integer      :: n,lda,info,lwork
+     integer      :: ipiv(*)
+     complex(WP)  :: A(lda,*), work(*)
+   end subroutine
+   subroutine cgetri(n,A,lda,ipiv,work,lwork,info)
+     use iso_fortran_env, ONLY : WP => real32
+     integer      :: n,lda,info,lwork
+     integer      :: ipiv(*)
+     complex(WP)  :: A(lda,*), work(*)
+   end subroutine
+ end interface
+ !
+ interface la_xgetrs
+   subroutine zgetrs(trans,n,nrhs,A,lda,ipiv,B,ldb,info)
+     use iso_fortran_env, ONLY : WP => real64
+     character(1) :: trans
+     integer      :: n,nrhs,lda,ldb,info
+     integer      :: ipiv(*)
+     complex(WP)  :: A(lda,*), B(ldb,*)
+   end subroutine
+   subroutine cgetrs(trans,n,nrhs,A,lda,ipiv,B,ldb,info)
+     use iso_fortran_env, ONLY : WP => real32
+     character(1) :: trans
+     integer      :: n,nrhs,lda,ldb,info
+     integer      :: ipiv(*)
+     complex(WP)  :: A(lda,*), B(ldb,*)
+   end subroutine
+ end interface
+
+
+ !
+ !====================
+ ! PUBLIC STATEMENTS
+ !====================
+ !
+!#ifdef _MAGMA
+! public :: magmaf_xgeev_m,magmaf_xheevd_m
+!#endif
+ public :: la_xgeev, la_xheev
+ public :: la_xgesvd
+ public :: la_xgetrf, la_xgetri, la_xgetrs
+ !
+ !
  contains
+   !
+   !============================
+   ! AUXILIARY FUNCTIONS
+   !============================
+   !
+   subroutine magma_setup()
+#ifdef _MAGMA
+     call magmaf_init()
+     call magmaf_queue_create( 0, magma_queue )
+     magma_init_done=.true.
+#endif
+     return
+   end subroutine
    !
    subroutine LINEAR_ALGEBRA_WS_reset(WS)
      use drivers,   ONLY:l_nl_optics,l_real_time
@@ -96,15 +239,6 @@ module linear_algebra
        YAMBO_FREE(WS%vp_int)
        YAMBO_FREE(WS%v_int)
      else
-       if(allocated(WS%v_real))   deallocate(WS%v_real)
-       if(allocated(WS%vp_real))  deallocate(WS%vp_real)
-       if(allocated(WS%v_cmplx))  deallocate(WS%v_cmplx)
-       if(allocated(WS%vp_cmplx)) deallocate(WS%vp_cmplx)
-       if(allocated(WS%m1_cmplx)) deallocate(WS%m1_cmplx)
-       if(allocated(WS%m2_cmplx)) deallocate(WS%m2_cmplx)
-       if(allocated(WS%vp_int))   deallocate(WS%vp_int)
-       if(allocated(WS%v_int))    deallocate(WS%v_int)
-       !
 #ifdef _CUDAF
        if(allocated(WS%v_real_d))   deallocate(WS%v_real_d)
        if(allocated(WS%vp_real_d))  deallocate(WS%vp_real_d)
@@ -121,6 +255,16 @@ module linear_algebra
        !
        !call error("[GPU] openacc FREE not implemented in LinAlg_WS_reset")
 #endif
+       !
+       if(allocated(WS%v_real))   deallocate(WS%v_real)
+       if(allocated(WS%vp_real))  deallocate(WS%vp_real)
+       if(allocated(WS%v_cmplx))  deallocate(WS%v_cmplx)
+       if(allocated(WS%vp_cmplx)) deallocate(WS%vp_cmplx)
+       if(allocated(WS%m1_cmplx)) deallocate(WS%m1_cmplx)
+       if(allocated(WS%m2_cmplx)) deallocate(WS%m2_cmplx)
+       if(allocated(WS%vp_int))   deallocate(WS%vp_int)
+       if(allocated(WS%v_int))    deallocate(WS%v_int)
+       !
      endif
      !
    end subroutine
@@ -131,144 +275,5 @@ module linear_algebra
      call error( trim( STRING_pack('LINEAR ALGEBRA driver [',trim(calling_subr),'] ',trim(message_)) ))
    end subroutine
    !
-   subroutine magma_setup()
-#ifdef _MAGMA
-     call magma_init()
-     call magma_queue_create( 0, magma_queue )
-     magma_init_done=.true.
-#endif
-     return
-   end subroutine
-   !
-   !============================
-   ! SINGLE VALUE DECOMPOSITION
-   !============================
-   !
-   subroutine SV_decomposition(msize, M, SV, U, VH, work, lwork, r_WK, ifail)
-     !
-     integer,    intent(in)   :: msize, lwork
-     integer,    intent(out)  :: ifail
-     !     
-     real(SP),   intent(out)  :: r_WK(*), SV(*)
-     complex(SP),intent(inout):: M(msize,*)
-     complex(SP),intent(out)  :: U(msize,*), VH(msize,*), work(*)
-     !
-#if defined _DOUBLE
-   call ZGESVD('S','A',msize,msize,M,msize,SV,U,msize,VH,msize,work,lwork,r_WK,ifail)
-#else
-   call CGESVD('S','A',msize,msize,M,msize,SV,U,msize,VH,msize,work,lwork,r_WK,ifail)
-#endif
-     !
-   end subroutine SV_decomposition
-   !
-   !=========================================
-   ! LOWER/UPPER FACTORIZATION and INVERISON
-   !=========================================
-   !
-   subroutine LU_factorization(msize,M,ipvt,ifail)
-     !
-     integer,     intent(in)   :: msize
-     integer,     intent(out)  :: ifail, ipvt(*)
-     complex(SP), intent(inout):: M(msize,*)
-     !
-#if defined _DOUBLE
-     call zgetrf(msize,msize,M,msize,ipvt,ifail)
-#else
-     call cgetrf(msize,msize,M,msize,ipvt,ifail)
-#endif
-     !
-   end subroutine LU_factorization
-   !
-   subroutine LU_inversion(msize,M,ipvt,work,lwork,ifail)
-     !
-     integer,     intent(in)   :: msize, lwork, ipvt(*)
-     integer,     intent(out)  :: ifail
-     complex(SP), intent(inout):: M(msize,*)
-     complex(SP), intent(out)  :: work(*)
-     !
-#if defined _DOUBLE
-     call zgetri(msize,M,msize,ipvt,work,lwork,ifail)
-#else
-     call cgetri(msize,M,msize,ipvt,work,lwork,ifail)
-#endif
-     !
-   end subroutine LU_inversion
-   !
-   !==============================
-   ! EIGENVALUES AND EIGENVECTORS 
-   !==============================
-   !
-   subroutine heev(msize,M,E_real,work,lwork,rwk,ifail)
-     !
-     integer,    intent(in)    :: msize,lwork
-     integer,    intent(out)   :: ifail
-     real(SP),   intent(out)   :: E_real(*), rwk(*)
-     complex(SP),intent(out)   :: work(*)
-     complex(SP),intent(inout) :: M(msize,*)
-     !
-#if defined _DOUBLE
-     call ZHEEV('V','U',msize,M,msize,E_real,work,lwork,rwk,ifail)
-#else
-     call CHEEV('V','U',msize,M,msize,E_real,work,lwork,rwk,ifail)
-#endif
-     !
-   end subroutine heev 
-   !
-   subroutine geev(msize,M,E_cmpl,V_left,V_right,work,lwork,rwk,ifail)
-     !
-     use com,      ONLY:msg
-     !
-     integer,    intent(in)    :: msize,lwork
-     integer,    intent(out)   :: ifail
-     real(SP),   intent(out)   :: rwk(*)
-     complex(SP),intent(out)   :: E_cmpl(*),V_left(msize,*),V_right(msize,*),work(*)
-     complex(SP),intent(inout) :: M(msize,*)
-     !
-     integer :: nthreads
-     !
-     !
-     ! use magma (if available)
-     !
-#if defined _MAGMA
-     !
-     if (.not.magma_init_done) then
-       call msg('sr','Initializing magma library in geev')
-       call magma_setup()
-     endif
-     call msg('sr','SERIAL diagonalization with magma')
-     !
-#  if defined _OPENMP
-     ! thread safety
-     nthreads=omp_get_max_threads()
-     call omp_set_num_threads(1)
-#  endif
-     !
-#  if defined _DOUBLE
-     call magma_zgeev_m(MagmaVec,MagmaVec, msize,M,msize,E_cmpl,V_left,msize,V_right,msize,&
-&                       work,lwork,rwk,ifail)
-#  else
-     call magma_cgeev_m(MagmaVec,MagmaVec, msize,M,msize,E_cmpl,V_left,msize,V_right,msize,&
-&                       work,lwork,rwk,ifail)
-#  endif
-     !
-#  if defined _OPENMP
-     call omp_set_num_threads(nthreads)
-#  endif
-     !
-#else
-     !
-     call msg('sr','SERIAL diagonalization with lapack')
-     !
-     ! use lapack
-     !
-#  if defined _DOUBLE
-     call ZGEEV('V','V',msize,M,msize,E_cmpl,V_left,msize,V_right,msize,work,lwork,rwk,ifail)
-#  else
-     call CGEEV('V','V',msize,M,msize,E_cmpl,V_left,msize,V_right,msize,work,lwork,rwk,ifail)
-#  endif
-     !
-#endif
-     !
-   end subroutine geev
-   !
 end module linear_algebra
+

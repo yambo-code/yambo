@@ -1,8 +1,8 @@
-!! @generated from magma2_zfortran.F90, fortran z -> s, Sat Apr 22 18:54:26 2023
+!! @generated from magma_zfortran.F90, fortran z -> d, Sat Apr 22 18:54:26 2023
 
-module magma2_sfortran
+module magma_dfortran
 
-use magma2_common
+use magma_common
 implicit none
 
 !! =============================================================================
@@ -11,63 +11,63 @@ interface
 
     !! -------------------------------------------------------------------------
     !! CPU interfaces (matrix in CPU memory)
-    subroutine magma_sgetrf( m, n, A, lda, ipiv, info ) &
-    bind(C, name="magma_sgetrf")
+    subroutine magmaf_dgetrf( m, n, A, lda, ipiv, info ) &
+    bind(C, name="magma_dgetrf")
         use iso_c_binding
         integer(c_int),            value  :: m, n, lda
-        real(c_float), target :: A(lda,*)
+        real(c_double), target :: A(lda,*)
         integer(c_int),            target :: ipiv(*)
         integer(c_int),            target :: info  !! int*
     end subroutine
 
-    subroutine magma_spotrf( uplo, n, A, lda, info ) &
-    bind(C, name="magma_spotrf")
+    subroutine magmaf_dpotrf( uplo, n, A, lda, info ) &
+    bind(C, name="magma_dpotrf")
         use iso_c_binding
         integer(c_int),            value  :: uplo
         integer(c_int),            value  :: n, lda
-        real(c_float), target :: A(lda,*)
+        real(c_double), target :: A(lda,*)
         integer(c_int),            target :: info  !! int*
     end subroutine
 
-    subroutine magma_sgeev( jobvl, jobvr, n, A, lda, w, VL, ldvl, VR, ldvr, &
+    subroutine magmaf_dgeev( jobvl, jobvr, n, A, lda, w, VL, ldvl, VR, ldvr, &
                             work,  lwork, rwork, info) &
-    bind(C, name="magma_sgeev")
+    bind(C, name="magma_dgeev")
         use iso_c_binding
         integer(c_int),            value  :: jobvl, jobvr
         integer(c_int),            value  :: n, lda, ldvl, ldvr, lwork
-        real(c_float), target :: A(lda,*)
-        real(c_float), target :: w(*)
-        real(c_float), target :: VR(ldvr,*),  VL(ldvl,*)
-        real(c_float), target :: work(*)
-        real(c_float),            target :: rwork(*)
+        real(c_double), target :: A(lda,*)
+        real(c_double), target :: w(*)
+        real(c_double), target :: VR(ldvr,*),  VL(ldvl,*)
+        real(c_double), target :: work(*)
+        real(c_double),            target :: rwork(*)
         integer(c_int),            target :: info  !! int*
     end subroutine
 
-    subroutine magma_sgeev_m( jobvl, jobvr, n, A, lda, w, VL, ldvl, VR, ldvr, &
+    subroutine magmaf_dgeev_m( jobvl, jobvr, n, A, lda, w, VL, ldvl, VR, ldvr, &
                             work,  lwork, rwork, info) &
-    bind(C, name="magma_sgeev_m")
+    bind(C, name="magma_dgeev_m")
         use iso_c_binding
         integer(c_int),            value  :: jobvl, jobvr
         integer(c_int),            value  :: n, lda, ldvl, ldvr, lwork
-        real(c_float), target :: A(lda,*)
-        real(c_float), target :: w(*)
-        real(c_float), target :: VR(ldvr,*),  VL(ldvl,*)
-        real(c_float), target :: work(*)
-        real(c_float),            target :: rwork(*)
+        real(c_double), target :: A(lda,*)
+        real(c_double), target :: w(*)
+        real(c_double), target :: VR(ldvr,*),  VL(ldvl,*)
+        real(c_double), target :: work(*)
+        real(c_double),            target :: rwork(*)
         integer(c_int),            target :: info  !! int*
     end subroutine
 
-    subroutine magma_ssyevd_m( ngpu, jobz, uplo, n, A, lda, w, work,  lwork, &
+    subroutine magmaf_dsyevd_m( ngpu, jobz, uplo, n, A, lda, w, work,  lwork, &
                                rwork, lrwork, iwork, liwork, info) &
-    bind(C, name="magma_ssyevd_m")
+    bind(C, name="magma_dsyevd_m")
         use iso_c_binding
         integer(c_int),            value  :: ngpu
         integer(c_int),            value  :: jobz, uplo
         integer(c_int),            value  :: n, lda, lwork, lrwork, liwork
-        real(c_float), target :: A(lda,*)
-        real(c_float),             target :: w(*)
-        real(c_float), target :: work(*)
-        real(c_float),             target :: rwork(*)
+        real(c_double), target :: A(lda,*)
+        real(c_double),            target :: w(*)
+        real(c_double), target :: work(*)
+        real(c_double),            target :: rwork(*)
         integer(c_int),            target :: iwork(*)
         integer(c_int),            target :: info  !! int*
     end subroutine
@@ -75,8 +75,8 @@ interface
     !! -------------------------------------------------------------------------
     !! -------------------------------------------------------------------------
     !! GPU interfaces (matrix in GPU memory)
-    subroutine magma_sgetrf_gpu( m, n, dA, lda, ipiv, info ) &
-    bind(C, name="magma_sgetrf_gpu")
+    subroutine magmaf_dgetrf_gpu( m, n, dA, lda, ipiv, info ) &
+    bind(C, name="magma_dgetrf_gpu")
         use iso_c_binding
         integer(c_int), value  :: m, n, lda
         type(c_ptr),    value  :: dA
@@ -84,24 +84,24 @@ interface
         integer(c_int), target :: info  !! int*
     end subroutine
 
-    subroutine magma_spotrf_gpu( uplo, n, dA, lda, info ) &
-    bind(C, name="magma_spotrf_gpu")
+    subroutine magmaf_dpotrf_gpu( uplo, n, dA, lda, info ) &
+    bind(C, name="magma_dpotrf_gpu")
         use iso_c_binding
         integer(c_int), value  :: uplo, n, lda
         type(c_ptr),    value  :: dA
         integer(c_int), target :: info  !! int*
     end subroutine
 
-    subroutine magma_ssyevd_gpu( jobz, uplo, n, dA, ldda, w, wA, ldwa, work, lwork, &
+    subroutine magmaf_dsyevd_gpu( jobz, uplo, n, dA, ldda, w, wA, ldwa, work, lwork, &
                                  rwork, lrwork, iwork, liwork, info) &
-    bind(C, name="magma_ssyevd_gpu")
+    bind(C, name="magma_dsyevd_gpu")
         use iso_c_binding
         integer(c_int),            value  :: jobz, uplo
         integer(c_int),            value  :: n, ldda, ldwa, lwork, lrwork, liwork
         type(c_ptr),               value  :: dA  !! double real**
         real(c_double),            target :: w(*)
-        real(c_float), target :: wA(*)
-        real(c_float), target :: work(*)
+        real(c_double), target :: wA(*)
+        real(c_double), target :: work(*)
         real(c_double),            target :: rwork(*)
         integer(c_int),            target :: iwork(*)
         integer(c_int),            target :: info  !! int*
@@ -109,9 +109,9 @@ interface
 
     !! -------------------------------------------------------------------------
     !! batched GPU interfaces (all arrays in GPU memory)
-    subroutine magma_sgetrf_batched( &
+    subroutine magmaf_dgetrf_batched( &
         m, n, dA_array, lda, ipiv_array, info_array, batchcount, queue ) &
-    bind(C, name="magma_sgetrf_batched")
+    bind(C, name="magma_dgetrf_batched")
         use iso_c_binding
         integer(c_int), value  :: m, n, lda, batchcount
         type(c_ptr),    value  :: dA_array    !! double_real**
@@ -122,43 +122,43 @@ interface
 
     !! -------------------------------------------------------------------------
     !! BLAS (matrices in GPU memory)
-    subroutine magma_saxpy( &
+    subroutine magmaf_daxpy( &
         n, &
         alpha, dx, incx, &
                dy, incy, &
         queue ) &
-    bind(C, name="magma_saxpy")
+    bind(C, name="magma_daxpy")
         use iso_c_binding
         integer(c_int),             value :: n, incx, incy
-        real(c_float),  value :: alpha
+        real(c_double),  value :: alpha
         type(c_ptr),                value :: dx, dy
         type(c_ptr),                value :: queue  !! queue_t
     end subroutine
 
-    subroutine magma_sgemv( &
+    subroutine magmaf_dgemv( &
         transA, m, n, &
         alpha, dA, lda, &
                dx, incx, &
         beta,  dy, incy, &
         queue ) &
-    bind(C, name="magma_sgemv")
+    bind(C, name="magma_dgemv")
         use iso_c_binding
         integer(c_int),             value :: transA, m, n, lda, incx, incy
-        real(c_float),  value :: alpha, beta
+        real(c_double),  value :: alpha, beta
         type(c_ptr),                value :: dA, dx, dy
         type(c_ptr),                value :: queue  !! queue_t
     end subroutine
 
-    subroutine magma_sgemm( &
+    subroutine magmaf_dgemm( &
         transA, transB, m, n, k, &
         alpha, dA, lda, &
                dB, ldb, &
         beta,  dC, ldc, &
         queue ) &
-    bind(C, name="magma_sgemm")
+    bind(C, name="magma_dgemm")
         use iso_c_binding
         integer(c_int),             value :: transA, transB, m, n, k, lda, ldb, ldc
-        real(c_float),  value :: alpha, beta
+        real(c_double),  value :: alpha, beta
         type(c_ptr),                value :: dA, dB, dC
         type(c_ptr),                value :: queue  !! queue_t
     end subroutine
@@ -171,58 +171,58 @@ contains
 
     !! -------------------------------------------------------------------------
     !! malloc wrappers
-    integer(c_int) function magma_smalloc( ptr, n )
+    integer(c_int) function magmaf_dmalloc( ptr, n )
         use iso_c_binding
         type(c_ptr),       target :: ptr  !! void**
         integer(c_size_t), value  :: n
         
-        magma_smalloc = magma_malloc( ptr, n*sizeof_real )
+        magmaf_dmalloc = magmaf_malloc( ptr, n*sizeof_double )
     end function
 
-    integer(c_int) function magma_smalloc_cpu( ptr, n )
+    integer(c_int) function magmaf_dmalloc_cpu( ptr, n )
         use iso_c_binding
         type(c_ptr),       target :: ptr  !! void**
         integer(c_size_t), value  :: n
         
-        magma_smalloc_cpu = magma_malloc_cpu( ptr, n*sizeof_real )
+        magmaf_dmalloc_cpu = magmaf_malloc_cpu( ptr, n*sizeof_double )
     end function
 
-    integer(c_int) function magma_smalloc_pinned( ptr, n )
+    integer(c_int) function magmaf_dmalloc_pinned( ptr, n )
         use iso_c_binding
         type(c_ptr),       target :: ptr  !! void**
         integer(c_size_t), value  :: n
         
-        magma_smalloc_pinned = magma_malloc_pinned( ptr, n*sizeof_real )
+        magmaf_dmalloc_pinned = magmaf_malloc_pinned( ptr, n*sizeof_double )
     end function
 
     !! -------------------------------------------------------------------------
     !! set/get wrappers
-    subroutine magma_ssetmatrix( &
+    subroutine magmaf_dsetmatrix( &
         m, n, hA_src, lda, dB_dst, ldb, queue )
         use iso_c_binding
         integer(c_int),            value  :: m, n, lda, ldb
-        real(c_float), target :: hA_src(lda,*)
+        real(c_double), target :: hA_src(lda,*)
         type(c_ptr),               value  :: dB_dst
         type(c_ptr),               value  :: queue
         
-        call magma_setmatrix_internal( &
-                m, n, int(sizeof_real), c_loc(hA_src), lda, dB_dst, ldb, queue, &
-                "magma_ssetmatrix" // c_null_char, &
+        call magmaf_setmatrix_internal( &
+                m, n, int(sizeof_double), c_loc(hA_src), lda, dB_dst, ldb, queue, &
+                "magma_dsetmatrix" // c_null_char, &
                 __FILE__ // c_null_char, &
                 __LINE__ )
     end subroutine
 
-    subroutine magma_sgetmatrix( &
+    subroutine magmaf_dgetmatrix( &
         m, n, dA_src, lda, hB_dst, ldb, queue )
         use iso_c_binding
         integer(c_int),            value  :: m, n, lda, ldb
         type(c_ptr),               value  :: dA_src
-        real(c_float), target :: hB_dst(ldb,*)
+        real(c_double), target :: hB_dst(ldb,*)
         type(c_ptr),               value  :: queue
         
-        call magma_getmatrix_internal( &
-                m, n, int(sizeof_real), dA_src, lda, c_loc(hB_dst), ldb, queue, &
-                "magma_sgetmatrix" // c_null_char, &
+        call magmaf_getmatrix_internal( &
+                m, n, int(sizeof_double), dA_src, lda, c_loc(hB_dst), ldb, queue, &
+                "magma_dgetmatrix" // c_null_char, &
                 __FILE__ // c_null_char, &
                 __LINE__ )
     end subroutine

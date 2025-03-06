@@ -6,15 +6,15 @@
 !      @date February 2023
 !
 
-module magma2
+module magma
 
 use iso_c_binding
 
-use magma2_common
-use magma2_sfortran
-use magma2_dfortran
-use magma2_cfortran
-use magma2_zfortran
+use magma_common
+use magma_sfortran
+use magma_dfortran
+use magma_cfortran
+use magma_zfortran
 
 implicit none
 
@@ -59,37 +59,37 @@ interface
 
     !! -------------------------------------------------------------------------
     !! initialize
-    subroutine magma_init() &
+    subroutine magmaf_init() &
     bind(C, name="magma_init")
         use iso_c_binding
     end subroutine
 
-    subroutine magma_finalize() &
+    subroutine magmaf_finalize() &
     bind(C, name="magma_finalize")
         use iso_c_binding
     end subroutine
 
     !! -------------------------------------------------------------------------
     !! version
-    subroutine magma_version( major, minor, micro ) &
+    subroutine magmaf_version( major, minor, micro ) &
     bind(C, name="magma_version")
         use iso_c_binding
         integer(c_int), target :: major, minor, micro
     end subroutine
 
-    subroutine magma_print_environment() &
+    subroutine magmaf_print_environment() &
     bind(C, name="magma_print_environment")
         use iso_c_binding
     end subroutine
 
     !! -------------------------------------------------------------------------
     !! timing
-    real(c_double) function magma_wtime() &
+    real(c_double) function magmaf_wtime() &
     bind(C, name="magma_wtime")
         use iso_c_binding
     end function
 
-    real(c_double) function magma_sync_wtime( queue ) &
+    real(c_double) function magmaf_sync_wtime( queue ) &
     bind(C, name="magma_wtime")
         use iso_c_binding
         type(c_ptr), value :: queue
@@ -97,29 +97,29 @@ interface
 
     !! -------------------------------------------------------------------------
     !! device support
-    integer(c_int) function magma_num_gpus() &
+    integer(c_int) function magmaf_num_gpus() &
     bind(C, name="magma_num_gpus")
         use iso_c_binding
     end function
 
-    integer(c_int) function magma_get_device_arch() &
+    integer(c_int) function magmaf_get_device_arch() &
     bind(C, name="magma_getdevice_arch")
         use iso_c_binding
     end function
 
-    subroutine magma_get_device( dev ) &
+    subroutine magmaf_get_device( dev ) &
     bind(C, name="magma_getdevice")
         use iso_c_binding
         integer(c_int), target :: dev
     end subroutine
 
-    subroutine magma_set_device( dev ) &
+    subroutine magmaf_set_device( dev ) &
     bind(C, name="magma_setdevice")
         use iso_c_binding
         integer(c_int), value :: dev
     end subroutine
 
-    integer(c_size_t) function magma_mem_size( queue ) &
+    integer(c_size_t) function magmaf_mem_size( queue ) &
     bind(C, name="magma_mem_size")
         use iso_c_binding
         type(c_ptr), value :: queue
@@ -127,7 +127,7 @@ interface
 
     !! -------------------------------------------------------------------------
     !! queue support
-    subroutine magma_queue_create_internal( dev, queue_ptr, func, file, line ) &
+    subroutine magmaf_queue_create_internal( dev, queue_ptr, func, file, line ) &
     bind(C, name="magma_queue_create_internal")
         use iso_c_binding
         integer(c_int), value :: dev
@@ -136,7 +136,7 @@ interface
         integer(c_int), value :: line
     end subroutine
 
-    subroutine magma_queue_destroy_internal( queue, func, file, line ) &
+    subroutine magmaf_queue_destroy_internal( queue, func, file, line ) &
     bind(C, name="magma_queue_destroy_internal")
         use iso_c_binding
         type(c_ptr), value :: queue  !! queue_t
@@ -144,7 +144,7 @@ interface
         integer(c_int), value :: line
     end subroutine
 
-    subroutine magma_queue_sync_internal( queue, func, file, line ) &
+    subroutine magmaf_queue_sync_internal( queue, func, file, line ) &
     bind(C, name="magma_queue_sync_internal")
         use iso_c_binding
         type(c_ptr), value :: queue  !! queue_t
@@ -152,7 +152,7 @@ interface
         integer(c_int), value :: line
     end subroutine
 
-    integer(c_int) function magma_queue_get_device( queue ) &
+    integer(c_int) function magmaf_queue_get_device( queue ) &
     bind(C, name="magma_queue_get_device")
         use iso_c_binding
         type(c_ptr), value :: queue  !! queue_t
@@ -161,35 +161,35 @@ interface
     !! -------------------------------------------------------------------------
     !! offsets pointers -- 1D vectors with inc
     !! see offset.c
-    type(c_ptr) function magma_soffset_1d( ptr, inc, i ) &
+    type(c_ptr) function magmaf_soffset_1d( ptr, inc, i ) &
     bind(C, name="magma_soffset_1d")
         use iso_c_binding
         type(c_ptr),    value :: ptr
         integer(c_int), value :: inc, i
     end function
 
-    type(c_ptr) function magma_doffset_1d( ptr, inc, i ) &
+    type(c_ptr) function magmaf_doffset_1d( ptr, inc, i ) &
     bind(C, name="magma_doffset_1d")
         use iso_c_binding
         type(c_ptr),    value :: ptr
         integer(c_int), value :: inc, i
     end function
 
-    type(c_ptr) function magma_coffset_1d( ptr, inc, i ) &
+    type(c_ptr) function magmaf_coffset_1d( ptr, inc, i ) &
     bind(C, name="magma_coffset_1d")
         use iso_c_binding
         type(c_ptr),    value :: ptr
         integer(c_int), value :: inc, i
     end function
 
-    type(c_ptr) function magma_zoffset_1d( ptr, inc, i ) &
+    type(c_ptr) function magmaf_zoffset_1d( ptr, inc, i ) &
     bind(C, name="magma_zoffset_1d")
         use iso_c_binding
         type(c_ptr),    value :: ptr
         integer(c_int), value :: inc, i
     end function
 
-    type(c_ptr) function magma_ioffset_1d( ptr, inc, i ) &
+    type(c_ptr) function magmaf_ioffset_1d( ptr, inc, i ) &
     bind(C, name="magma_ioffset_1d")
         use iso_c_binding
         type(c_ptr),    value :: ptr
@@ -199,35 +199,35 @@ interface
     !! -------------------------------------------------------------------------
     !! offsets pointers -- 2D matrices with lda
     !! see offset.c
-    type(c_ptr) function magma_soffset_2d( ptr, lda, i, j ) &
+    type(c_ptr) function magmaf_soffset_2d( ptr, lda, i, j ) &
     bind(C, name="magma_soffset_2d")
         use iso_c_binding
         type(c_ptr),    value:: ptr
         integer(c_int), value :: lda, i, j
     end function
 
-    type(c_ptr) function magma_doffset_2d( ptr, lda, i, j ) &
+    type(c_ptr) function magmaf_doffset_2d( ptr, lda, i, j ) &
     bind(C, name="magma_doffset_2d")
         use iso_c_binding
         type(c_ptr),    value:: ptr
         integer(c_int), value :: lda, i, j
     end function
 
-    type(c_ptr) function magma_coffset_2d( ptr, lda, i, j ) &
+    type(c_ptr) function magmaf_coffset_2d( ptr, lda, i, j ) &
     bind(C, name="magma_coffset_2d")
         use iso_c_binding
         type(c_ptr),    value:: ptr
         integer(c_int), value :: lda, i, j
     end function
 
-    type(c_ptr) function magma_zoffset_2d( ptr, lda, i, j ) &
+    type(c_ptr) function magmaf_zoffset_2d( ptr, lda, i, j ) &
     bind(C, name="magma_zoffset_2d")
         use iso_c_binding
         type(c_ptr),    value:: ptr
         integer(c_int), value :: lda, i, j
     end function
 
-    type(c_ptr) function magma_ioffset_2d( ptr, lda, i, j ) &
+    type(c_ptr) function magmaf_ioffset_2d( ptr, lda, i, j ) &
     bind(C, name="magma_ioffset_2d")
         use iso_c_binding
         type(c_ptr),    value:: ptr
@@ -242,34 +242,34 @@ contains
 
     !! -------------------------------------------------------------------------
     !! queue support
-    subroutine magma_queue_create( dev, queue_ptr )
+    subroutine magmaf_queue_create( dev, queue_ptr )
         use iso_c_binding
         integer(c_int), value :: dev
         type(c_ptr), target :: queue_ptr  !! queue_t*
         
-        call magma_queue_create_internal( &
+        call magmaf_queue_create_internal( &
                 dev, queue_ptr, &
                 "magma_queue_create" // c_null_char, &
                 __FILE__ // c_null_char, &
                 __LINE__ )
     end subroutine
 
-    subroutine magma_queue_destroy( queue )
+    subroutine magmaf_queue_destroy( queue )
         use iso_c_binding
         type(c_ptr), value :: queue  !! queue_t
         
-        call magma_queue_destroy_internal( &
+        call magmaf_queue_destroy_internal( &
                 queue, &
                 "magma_queue_destroy" // c_null_char, &
                 __FILE__ // c_null_char, &
                 __LINE__ )
     end subroutine
 
-    subroutine magma_queue_sync( queue )
+    subroutine magmaf_queue_sync( queue )
         use iso_c_binding
         type(c_ptr), value :: queue  !! queue_t
         
-        call magma_queue_sync_internal( &
+        call magmaf_queue_sync_internal( &
                 queue, &
                 "magma_queue_sync" // c_null_char, &
                 __FILE__ // c_null_char, &

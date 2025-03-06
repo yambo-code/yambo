@@ -7,12 +7,19 @@
 !
 subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
- use magma
- use pars,           ONLY:SP
- use drivers,        ONLY:l_nl_optics,l_real_time
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,&
-&                         LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
- use timing_m,       ONLY:timing
+ use pars,           ONLY: SP
+ use drivers,        ONLY: l_nl_optics,l_real_time
+ use linear_algebra, ONLY: LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS,&
+&                          magma_init_done,magma_setup,la_xheev
+#ifdef _MAGMA
+ use magma,          ONLY: magmaf_cheevd_m, magmaf_zheevd_m
+#endif
+ use timing_m,       ONLY: timing
+ use com,            ONLY: msg
+#ifdef _OPENMP
+ use omp_lib
+#endif
+ !
 #include<y_memory.h>
  !
  integer     :: n
@@ -23,8 +30,26 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  integer           :: lwork, lrwork, liwork
  type(LALGEBRA_WS) :: WS
  !
- ! MAGMA
- call magmaf_init()
+ integer     :: nthreads_save
+
+#if defined _DOUBLE
+#  define magmaf_xheevd_m magmaf_zheevd_m
+#else
+#  define magmaf_xheevd_m magmaf_cheevd_m
+#endif
+
+ if(.not.(l_nl_optics.or.l_real_time)) then
+   call timing('SERIAL_HERMITIAN_diagonalization',OPR='start')
+ endif
+ !
+ ! Thread safety
+#if defined _OPENMP
+ nthreads_save=omp_get_max_threads()
+ call omp_set_num_threads(1)
+#endif
+
+ !
+ ! Workspace
  !
  lwork=-1
  lrwork=-1
@@ -33,19 +58,21 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  allocate(WS%v_real(1))
  allocate(WS%v_int(1))
  !
- if(.not.(l_nl_optics.or.l_real_time)) then
-   call timing('SERIAL_HERMITIAN_diagonalization',OPR='start')
- endif
- !
- ! Query lwork, lrwork, liwork
- !
-#if defined _DOUBLE
- call ZHEEV('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
+#if defined _MAGMA
+   !
+   if (.not.magma_init_done) then
+     call msg('sr','Initializing magma library in geev')
+     call magma_setup()
+   endif
+   !   
+   call magmaf_xheevd_m(1,'v','u', n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,&
+&                       lrwork,WS%v_int,liwork,WS%i_fail)
 #else
- call magmaf_cheevd_m(2,'v','u',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,lrwork,WS%v_int,liwork,WS%i_fail)
+   call la_xheev('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
 #endif
  !
- ! Allocate v_cmplx, v_real, v_int
+ if(WS%i_fail /=0 ) call LINEAR_ALGEBRA_error(' _XHEEV_ ','WS%v_cmplx size query failed')
+ !
  !
  lwork=nint(real(WS%v_cmplx(1)))
  lrwork=nint(WS%v_real(1))
@@ -63,22 +90,33 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
    allocate(WS%v_real(lrwork))
    allocate(WS%v_int(liwork))
  endif
+
+ !   
+ ! use magma (if available)
+ !   
+#if defined _MAGMA
+ ! 
+ call magmaf_xheevd_m(1,'v','u',n, M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,&
+&                     lrwork,WS%v_int,liwork,WS%i_fail)
  !
- ! Compute eigenvalues
- !
-#if defined _DOUBLE
- call ZHEEV('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
- if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing ZHEEV')
 #else
- call magmaf_cheevd_m(2,'v','u',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,lrwork,WS%v_int,liwork,WS%i_fail)
- if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing CHEEV')
+ !
+ call la_xheev('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
+ !
 #endif
  !
+ if(WS%i_fail /= 0) call LINEAR_ALGEBRA_error(' XHEEV ','failed')
+ !
  call LINEAR_ALGEBRA_WS_reset(WS)
+ !
+ ! Thread safety
+#if defined _OPENMP
+ call omp_set_num_threads(nthreads_save)
+#endif
  !
  if(.not.(l_nl_optics.or.l_real_time)) then
    call timing('SERIAL_HERMITIAN_diagonalization',OPR='stop')
  endif
  !
- call magmaf_finalize()
 end subroutine
+

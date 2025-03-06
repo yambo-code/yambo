@@ -1,8 +1,8 @@
 !! @precisions fortran z -> s d c
 
-module magma2_zfortran
+module magma_zfortran
 
-use magma2_common
+use magma_common
 implicit none
 
 !! =============================================================================
@@ -11,7 +11,7 @@ interface
 
     !! -------------------------------------------------------------------------
     !! CPU interfaces (matrix in CPU memory)
-    subroutine magma_zgetrf( m, n, A, lda, ipiv, info ) &
+    subroutine magmaf_zgetrf( m, n, A, lda, ipiv, info ) &
     bind(C, name="magma_zgetrf")
         use iso_c_binding
         integer(c_int),            value  :: m, n, lda
@@ -20,7 +20,7 @@ interface
         integer(c_int),            target :: info  !! int*
     end subroutine
 
-    subroutine magma_zpotrf( uplo, n, A, lda, info ) &
+    subroutine magmaf_zpotrf( uplo, n, A, lda, info ) &
     bind(C, name="magma_zpotrf")
         use iso_c_binding
         integer(c_int),            value  :: uplo
@@ -29,7 +29,7 @@ interface
         integer(c_int),            target :: info  !! int*
     end subroutine
 
-    subroutine magma_zgeev( jobvl, jobvr, n, A, lda, w, VL, ldvl, VR, ldvr, &
+    subroutine magmaf_zgeev( jobvl, jobvr, n, A, lda, w, VL, ldvl, VR, ldvr, &
                             work,  lwork, rwork, info) &
     bind(C, name="magma_zgeev")
         use iso_c_binding
@@ -43,7 +43,7 @@ interface
         integer(c_int),            target :: info  !! int*
     end subroutine
 
-    subroutine magma_zgeev_m( jobvl, jobvr, n, A, lda, w, VL, ldvl, VR, ldvr, &
+    subroutine magmaf_zgeev_m( jobvl, jobvr, n, A, lda, w, VL, ldvl, VR, ldvr, &
                             work,  lwork, rwork, info) &
     bind(C, name="magma_zgeev_m")
         use iso_c_binding
@@ -57,7 +57,7 @@ interface
         integer(c_int),            target :: info  !! int*
     end subroutine
 
-    subroutine magma_zheevd_m( ngpu, jobz, uplo, n, A, lda, w, work,  lwork, &
+    subroutine magmaf_zheevd_m( ngpu, jobz, uplo, n, A, lda, w, work,  lwork, &
                                rwork, lrwork, iwork, liwork, info) &
     bind(C, name="magma_zheevd_m")
         use iso_c_binding
@@ -75,7 +75,7 @@ interface
     !! -------------------------------------------------------------------------
     !! -------------------------------------------------------------------------
     !! GPU interfaces (matrix in GPU memory)
-    subroutine magma_zgetrf_gpu( m, n, dA, lda, ipiv, info ) &
+    subroutine magmaf_zgetrf_gpu( m, n, dA, lda, ipiv, info ) &
     bind(C, name="magma_zgetrf_gpu")
         use iso_c_binding
         integer(c_int), value  :: m, n, lda
@@ -84,7 +84,7 @@ interface
         integer(c_int), target :: info  !! int*
     end subroutine
 
-    subroutine magma_zpotrf_gpu( uplo, n, dA, lda, info ) &
+    subroutine magmaf_zpotrf_gpu( uplo, n, dA, lda, info ) &
     bind(C, name="magma_zpotrf_gpu")
         use iso_c_binding
         integer(c_int), value  :: uplo, n, lda
@@ -92,7 +92,7 @@ interface
         integer(c_int), target :: info  !! int*
     end subroutine
 
-    subroutine magma_zheevd_gpu( jobz, uplo, n, dA, ldda, w, wA, ldwa, work, lwork, &
+    subroutine magmaf_zheevd_gpu( jobz, uplo, n, dA, ldda, w, wA, ldwa, work, lwork, &
                                  rwork, lrwork, iwork, liwork, info) &
     bind(C, name="magma_zheevd_gpu")
         use iso_c_binding
@@ -109,7 +109,7 @@ interface
 
     !! -------------------------------------------------------------------------
     !! batched GPU interfaces (all arrays in GPU memory)
-    subroutine magma_zgetrf_batched( &
+    subroutine magmaf_zgetrf_batched( &
         m, n, dA_array, lda, ipiv_array, info_array, batchcount, queue ) &
     bind(C, name="magma_zgetrf_batched")
         use iso_c_binding
@@ -122,7 +122,7 @@ interface
 
     !! -------------------------------------------------------------------------
     !! BLAS (matrices in GPU memory)
-    subroutine magma_zaxpy( &
+    subroutine magmaf_zaxpy( &
         n, &
         alpha, dx, incx, &
                dy, incy, &
@@ -135,7 +135,7 @@ interface
         type(c_ptr),                value :: queue  !! queue_t
     end subroutine
 
-    subroutine magma_zgemv( &
+    subroutine magmaf_zgemv( &
         transA, m, n, &
         alpha, dA, lda, &
                dx, incx, &
@@ -149,7 +149,7 @@ interface
         type(c_ptr),                value :: queue  !! queue_t
     end subroutine
 
-    subroutine magma_zgemm( &
+    subroutine magmaf_zgemm( &
         transA, transB, m, n, k, &
         alpha, dA, lda, &
                dB, ldb, &
@@ -171,33 +171,33 @@ contains
 
     !! -------------------------------------------------------------------------
     !! malloc wrappers
-    integer(c_int) function magma_zmalloc( ptr, n )
+    integer(c_int) function magmaf_zmalloc( ptr, n )
         use iso_c_binding
         type(c_ptr),       target :: ptr  !! void**
         integer(c_size_t), value  :: n
         
-        magma_zmalloc = magma_malloc( ptr, n*sizeof_complex16 )
+        magmaf_zmalloc = magmaf_malloc( ptr, n*sizeof_complex16 )
     end function
 
-    integer(c_int) function magma_zmalloc_cpu( ptr, n )
+    integer(c_int) function magmaf_zmalloc_cpu( ptr, n )
         use iso_c_binding
         type(c_ptr),       target :: ptr  !! void**
         integer(c_size_t), value  :: n
         
-        magma_zmalloc_cpu = magma_malloc_cpu( ptr, n*sizeof_complex16 )
+        magmaf_zmalloc_cpu = magmaf_malloc_cpu( ptr, n*sizeof_complex16 )
     end function
 
-    integer(c_int) function magma_zmalloc_pinned( ptr, n )
+    integer(c_int) function magmaf_zmalloc_pinned( ptr, n )
         use iso_c_binding
         type(c_ptr),       target :: ptr  !! void**
         integer(c_size_t), value  :: n
         
-        magma_zmalloc_pinned = magma_malloc_pinned( ptr, n*sizeof_complex16 )
+        magmaf_zmalloc_pinned = magmaf_malloc_pinned( ptr, n*sizeof_complex16 )
     end function
 
     !! -------------------------------------------------------------------------
     !! set/get wrappers
-    subroutine magma_zsetmatrix( &
+    subroutine magmaf_zsetmatrix( &
         m, n, hA_src, lda, dB_dst, ldb, queue )
         use iso_c_binding
         integer(c_int),            value  :: m, n, lda, ldb
@@ -205,14 +205,14 @@ contains
         type(c_ptr),               value  :: dB_dst
         type(c_ptr),               value  :: queue
         
-        call magma_setmatrix_internal( &
+        call magmaf_setmatrix_internal( &
                 m, n, int(sizeof_complex16), c_loc(hA_src), lda, dB_dst, ldb, queue, &
                 "magma_zsetmatrix" // c_null_char, &
                 __FILE__ // c_null_char, &
                 __LINE__ )
     end subroutine
 
-    subroutine magma_zgetmatrix( &
+    subroutine magmaf_zgetmatrix( &
         m, n, dA_src, lda, hB_dst, ldb, queue )
         use iso_c_binding
         integer(c_int),            value  :: m, n, lda, ldb
@@ -220,7 +220,7 @@ contains
         complex(c_double_complex), target :: hB_dst(ldb,*)
         type(c_ptr),               value  :: queue
         
-        call magma_getmatrix_internal( &
+        call magmaf_getmatrix_internal( &
                 m, n, int(sizeof_complex16), dA_src, lda, c_loc(hB_dst), ldb, queue, &
                 "magma_zgetmatrix" // c_null_char, &
                 __FILE__ // c_null_char, &

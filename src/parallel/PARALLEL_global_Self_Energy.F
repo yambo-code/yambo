@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine PARALLEL_global_Self_Energy(E,Xk,q)
+subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
  !
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nqbz,nXkibz,nXkbz
@@ -15,7 +15,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use IO_m,          ONLY:io_COLLs
  use IO_int,        ONLY:IO_and_Messaging_switch
  use QP_m,          ONLY:QP_n_states,QP_nk
- use openmp,        ONLY:n_threads_SE,OPENMP_set_threads
+ use openmp,        ONLY:n_threads_SE,n_threads_X_SE,OPENMP_set_threads
  use parallel_m,    ONLY:HEAD_QP_cpu,HEAD_b_cpu,master_cpu,n_WF_bands_to_load,COMM_copy,&
 &                        PAR_Q_bz_range,PAR_Q_ibz_range,PAR_n_bands,PAR_build_index,ncpu,PAR_INDEX_copy
  ! COMMUNICATORS
@@ -56,6 +56,8 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q
+ character(*)         :: ENVIRONMENT
+
  !
  ! Work space
  !
@@ -311,6 +313,10 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  call IO_and_Messaging_switch("+output",CONDITION=master_cpu)
  !
- call OPENMP_set_threads(n_threads_in=n_threads_SE)
+ if ( trim(ENVIRONMENT)=="Self_Energy" ) then 
+   call OPENMP_set_threads(n_threads_in=n_threads_SE)
+ else if ( trim(ENVIRONMENT)=="X_Self_Energy" ) then 
+   call OPENMP_set_threads(n_threads_in=n_threads_X_SE)
+ endif
  !
 end subroutine PARALLEL_global_Self_Energy

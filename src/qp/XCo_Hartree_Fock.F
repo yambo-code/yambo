@@ -31,7 +31,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use SC,            ONLY:it_now
 #endif
  use timing_m,      ONLY:timing
- use openmp,        ONLY:OPENMP_update,master_thread,n_threads_SE
+ use openmp,        ONLY:OPENMP_update,master_thread,n_threads_X_SE
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:WF_load,QP_state_print
  use wrapper,       ONLY:Vstar_dot_VV_gpu
@@ -85,7 +85,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    ! WF distributed & load
    !=======================
    !
-   call PARALLEL_global_indexes(E,k,q,"Self_Energy")
+   call PARALLEL_global_indexes(E,k,q,"X_Self_Energy")
    !
    ! Final states (k-q,np)...
    call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
@@ -125,7 +125,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
 ! endif
 !
  n_lt_bands=count( PAR_IND_G_b%element_1D(:maxval(Sx_upper_band)) )
- n_lt_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)*n_lt_bands/n_threads_SE
+ n_lt_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)*&
+&           n_lt_bands/n_threads_X_SE
  if (n_lt_steps>0) call live_timing(trim(ch),n_lt_steps)
  !
  do i_qp=1,QP_n_states

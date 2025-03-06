@@ -75,8 +75,8 @@ module parallel_m
  !
  ! Logicals
  !
- logical            :: l_par_X_T,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_BZINDX,l_par_SE, &
-&                      l_par_RT,l_par_SC,l_par_NL,l_par_OSCLL
+ logical            :: l_par_X_T,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_BZINDX,&
+&                      l_par_SE,l_par_HF,l_par_RT,l_par_SC,l_par_NL,l_par_OSCLL
  !
  ! In a parallel runs, when some loops not involving all CPU's are parallelized it is usefull to keep 
  ! the operations local in the cpu world
@@ -533,7 +533,7 @@ module parallel_m
 #if !defined _io_lib
    character(lchlen) function PARALLEL_message(i_s)
      use stderr, ONLY:intc
-     use openmp, ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K, &
+     use openmp, ONLY:n_threads_X,n_threads_SE,n_threads_X_SE,n_threads_RT,n_threads_DIP,n_threads_K, &
 &                     n_threads_NL,n_threads_BZINDX,n_threads_OSCLL,n_threads
      integer :: i_s
      !
@@ -553,6 +553,7 @@ module parallel_m
        if (n_threads_BZINDX>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_BZINDX))//"(threads@BZINDX)"
        if (n_threads_DIP   >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_DIP))//"(threads@DIP)"
        if (n_threads_SE    >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_SE))//"(threads@SE)"
+       if (n_threads_X_SE  >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_X_SE))//"(threads@X_SE)"
        if (n_threads_RT    >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_RT))//"(threads@RT)"
        if (n_threads_K     >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_K))//"(threads@K)"
        if (n_threads_NL    >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_NL))//"(threads@NL)"
@@ -605,6 +606,8 @@ module parallel_m
      CPU_structure(10)%Short_Description="PH_SE"
      CPU_structure(11)%Long_Description="Oscillators"
      CPU_structure(11)%Short_Description="OSCLL"
+     CPU_structure(12)%Long_Description="X_Self_Energy"
+     CPU_structure(12)%Short_Description="X_SE"
    end subroutine
    !
    subroutine COMM_reset(COMM)

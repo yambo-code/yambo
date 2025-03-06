@@ -16,7 +16,6 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
  use electric,       ONLY:l_force_SndOrd
  use QP_m,           ONLY:QP_nk
  use hamiltonian,    ONLY:H_ref_bands,H_ref_nbands
- use wrapper,        ONLY:mm_cgemm
  use R_lattice,      ONLY:bz_samp,k_map
  use D_lattice,      ONLY:a
  use matrix_operate, ONLY:hermitian
@@ -33,7 +32,7 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
  ! Work Space
  !
  integer :: i1,i2,im,id,id_red
- integer :: ikbz,istep,max_step,nval
+ integer :: ikbz,istep,max_step
  complex(SP) :: Wop(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),2)
  complex(SP) :: V_tilde(en%nbf(i_sp),H_ref_bands(1):H_ref_bands(2),2)
  complex(SP) :: delta_V_tilde(en%nbf(i_sp),H_ref_bands(1):H_ref_bands(2))
@@ -42,7 +41,6 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
  Wk=cZERO
  !
  ikbz=Xk%k_table(ik,1)
- nval=en%nbf(i_sp)
  !
  do id_red=1,3  ! loop on reciprocal lattice
    !
@@ -68,23 +66,8 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
        delta_V_tilde=V_tilde(:,:,1)-V_tilde(:,:,2)
        !
        alpha=cI*real(k_map%max_kdir(id_red),SP)/(4._SP*pi*real(istep,SP))
-       !
-       call mm_cgemm('N','T',H_ref_nbands,H_ref_nbands,nval,alpha,V_bands(H_ref_bands(1):,:,ik),H_ref_nbands, &
-&	  delta_V_tilde(:,:),H_ref_nbands,cZERO,Wop(:,:,istep),H_ref_nbands) 
-       !		       
-!       !$omp parallel do default(shared), private(i2,i1), collapse(2)
-!       do i2=H_ref_bands(1),H_ref_bands(2)
-!         do i1=H_ref_bands(1),H_ref_bands(2)
-!           Wop(i1,i2,istep)=dot_product(V_bands(i2,:,ik),V_tilde(:,i1,1)-V_tilde(:,i1,2))
-!         enddo
-!       enddo
-!       !$omp end parallel do
-       !
-!       !$omp parallel do default(shared), private(i1)
-!       do i1=H_ref_bands(1),H_ref_bands(2)
-!         Wop(i1,H_ref_bands(1):,istep)=Wop(i1,H_ref_bands(1):,istep)*cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP))
-!       enddo
-!       !$omp end parallel do
+       ! 
+       Wop(:,:,istep)=alpha*matmul(delta_V_tilde,V_bands(H_ref_bands(1):,:,ik))
        !
      enddo
      !

@@ -16,7 +16,7 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
  use electric,       ONLY:l_force_SndOrd
  use QP_m,           ONLY:QP_nk
  use hamiltonian,    ONLY:H_ref_bands,H_ref_nbands
- use wrapper,        ONLY:mv_cgemv
+ use wrapper,        ONLY:mm_cgemm
  use R_lattice,      ONLY:bz_samp,k_map
  use D_lattice,      ONLY:a
  use matrix_operate, ONLY:hermitian
@@ -66,8 +66,8 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
        ! Eq. (C13) in PRB 69, 085106 [sum_sigma  di eq. (61) PRB 69, 085106 (2004)]
        !
        delta_V_tilde=V_tilde(:,:,1)-V_tilde(:,:,2)
-       call mv_cgemv('N',nval,H_ref_nbands,cONE,V_bands(H_ref_bands(1):H_ref_bands(2),:,ik),H_ref_nbands, &
-&		    delta_V_tilde(:,H_ref_bands(1):H_ref_bands(2)),nval,cZERO,Wop(:,:,1),H_ref_nbands) 
+       call mm_cgemm('N','T',H_ref_nbands,H_ref_nbands,nval,cONE,V_bands(H_ref_bands(1):,:,ik),H_ref_nbands, &
+&	  delta_V_tilde(:,H_ref_bands(1):),H_ref_nbands,cZERO,Wop(H_ref_bands(1):,H_ref_bands(1):,istep),H_ref_nbands) 
 !       !$omp parallel do default(shared), private(i2,i1), collapse(2)
 !       do i2=H_ref_bands(1),H_ref_bands(2)
 !         do i1=H_ref_bands(1),H_ref_bands(2)

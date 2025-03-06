@@ -50,7 +50,6 @@ subroutine DIPOLE_symmetrize(k)
  call PP_redux_wait(DIP_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
  ! Loop on k-points and application of symmetries to the dipole
- ! For the moment this subroutine does not work with k-parallelization!!!!
  !
  call msg('rs','Dipoles symmetrized with full symmetries of the system') 
  !

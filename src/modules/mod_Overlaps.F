@@ -22,13 +22,12 @@ module Overlaps_m
      use X_m,           ONLY:X_t
      use electrons,     ONLY:levels,n_sp_pol
      use R_lattice,     ONLY:nXkbz
-     use matrix_operate,ONLY:mat_c2r,mat_r2c
      !
      implicit none
      type(X_t)   ::X
      type(levels)::Xen
      integer     ::ID
-     complex(SP),  optional :: DIP_S(X%ib(2),X%ib(2),Xen%nk,6,n_sp_pol)
+     complex(SP),  optional :: DIP_S(X%ib(2),X%ib(2),6,Xen%nk,n_sp_pol)
      !
    end function io_Overlaps
      !

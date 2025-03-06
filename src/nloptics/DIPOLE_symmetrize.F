@@ -12,7 +12,7 @@ subroutine DIPOLE_symmetrize(k)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:n_sp_pol
  use D_lattice,      ONLY:kpoints_map,old_dl_sop,old_S_contains_TR
- use DIPOLES,        ONLY:DIP_iR
+ use DIPOLES,        ONLY:DIP_iR,DIP_S
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:REP,OP_RD_CL,DUMP
  use com,            ONLY:msg
@@ -72,6 +72,24 @@ subroutine DIPOLE_symmetrize(k)
    enddo
    !     
  enddo 
+ !
+ ! Overlaps symmetrization
+ !
+ do ik=1,k%nibz
+
+   ik_old=kpoints_map(1,ik)
+   is=kpoints_map(2,ik)
+   ! 
+   do i_sp=1,n_sp_pol
+   do ib2=1,NL_bands(2)
+   do ib1=1,NL_bands(2)
+     DIP_S(ib1,ib2,ik,1:3,i_sp)=matmul(old_dl_sop(:,:,is),DIP_S(ib1,ib2,ik_old,1:3,i_sp))
+     DIP_S(ib1,ib2,ik,4:6,i_sp)=matmul(old_dl_sop(:,:,is),DIP_S(ib1,ib2,ik_old,4:6,i_sp))
+   enddo
+   enddo
+   if(old_S_contains_TR(is)==1) DIP_S(:,:,ik,:,i_sp)=conjg(DIP_S(:,:,ik,:,i_sp))
+   enddo
+ enddo
  !
  YAMBO_FREE(kpoints_map)
  YAMBO_FREE(old_dl_sop)

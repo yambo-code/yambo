@@ -28,7 +28,7 @@ module Overlaps_m
      type(X_t)   ::X
      type(levels)::Xen
      integer     ::ID
-     complex(SP),  optional :: DIP_S(X%ib(2),X%ib(2),Xen%nk,3,n_sp_pol)
+     complex(SP),  optional :: DIP_S(X%ib(2),X%ib(2),Xen%nk,6,n_sp_pol)
      !
    end function io_Overlaps
      !

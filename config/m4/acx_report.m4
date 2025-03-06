@@ -118,19 +118,21 @@ if test "$internal_blacs" = "yes" ; then
 fi
 #
 PETSC_check="-"
+PETSC_info=""
 if test "$internal_petsc" = "yes" ; then
   if test "$compile_petsc" = "yes" ; then PETSC_check="C"; fi
   if test "$compile_petsc" = "no"  ; then PETSC_check="I"; fi
-  if ! test "$with_petsc_branch" = "none"; then PETSC_LIBS="$PETSC_LIBS (git branch $with_petsc_branch)"; fi
+  if ! test "$with_petsc_branch" = "none"; then PETSC_info="(git branch $with_petsc_branch)"; fi
 elif test "$enable_petsc" = "yes" ; then
   PETSC_check="E"
 fi
 #
 SLEPC_check="-"
+SLEPC_info=""
 if test "$internal_slepc" = "yes" ; then
   if test "$compile_slepc" = "yes" ; then SLEPC_check="C"; fi
   if test "$compile_slepc" = "no"  ; then SLEPC_check="I"; fi
-  if ! test "$with_slepc_branch" = "none"; then SLEPC_LIBS="$SLEPC_LIBS (git branch $with_slepc_branch)"; fi
+  if ! test "$with_slepc_branch" = "none"; then SLEPC_info="(git branch $with_slepc_branch)"; fi
 elif test "$enable_slepc" = "yes" ; then
   SLEPC_check="E"
 fi
@@ -224,6 +226,8 @@ AC_SUBST(BLACS_check)
 AC_SUBST(SLK_check)
 AC_SUBST(PETSC_check)
 AC_SUBST(SLEPC_check)
+AC_SUBST(PETSC_info)
+AC_SUBST(SLEPC_info)
 #
 AC_SUBST(YDB_check)
 AC_SUBST(YPY_check)

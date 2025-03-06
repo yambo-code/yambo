@@ -10,12 +10,13 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
  ! Build the Hermitian W operator eq. 62 and 63
  ! in PRB 69, 085106 (2004)
  !
- use pars,           ONLY:SP,cI,cZERO,pi
+ use pars,           ONLY:SP,cI,cONE,cZERO,pi
  use units,          ONLY:SPEED_OF_LIGHT
  use electrons,      ONLY:levels
  use electric,       ONLY:l_force_SndOrd
  use QP_m,           ONLY:QP_nk
- use hamiltonian,    ONLY:H_ref_bands
+ use hamiltonian,    ONLY:H_ref_bands,H_ref_nbands
+ use wrapper,        ONLY:mv_cgemv
  use R_lattice,      ONLY:bz_samp,k_map
  use D_lattice,      ONLY:a
  use matrix_operate, ONLY:hermitian
@@ -32,14 +33,16 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
  ! Work Space
  !
  integer :: i1,i2,im,id,id_red
- integer :: ikbz,istep,max_step
+ integer :: ikbz,istep,max_step,nval
  complex(SP) :: Wop(H_ref_bands(2),H_ref_bands(2),2)
  complex(SP) :: V_tilde(en%nbf(i_sp),H_ref_bands(2),2)
+ complex(SP) :: delta_V_tilde(en%nbf(i_sp),H_ref_bands(2))
  complex(SP) :: E_vec_pot(3)
  !
  Wk=cZERO
  !
  ikbz=Xk%k_table(ik,1)
+ nval=en%nbf(i_sp)
  !
  do id_red=1,3  ! loop on reciprocal lattice
    !
@@ -62,13 +65,16 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
        !
        ! Eq. (C13) in PRB 69, 085106 [sum_sigma  di eq. (61) PRB 69, 085106 (2004)]
        !
-       !$omp parallel do default(shared), private(i2,i1), collapse(2)
-       do i2=H_ref_bands(1),H_ref_bands(2)
-         do i1=H_ref_bands(1),H_ref_bands(2)
-           Wop(i1,i2,istep)=dot_product(V_bands(i2,:,ik),V_tilde(:,i1,1)-V_tilde(:,i1,2))
-         enddo
-       enddo
-       !$omp end parallel do
+       delta_V_tilde=V_tilde(:,:,1)-V_tilde(:,:,2)
+       call mv_cgemv('N',nval,H_ref_nbands,cONE,V_bands(H_ref_bands(1):H_ref_bands(2),:,ik),H_ref_nbands, &
+&		    delta_V_tilde(:,H_ref_bands(1):H_ref_bands(2)),nval,cZERO,Wop(:,:,1),H_ref_nbands) 
+!       !$omp parallel do default(shared), private(i2,i1), collapse(2)
+!       do i2=H_ref_bands(1),H_ref_bands(2)
+!         do i1=H_ref_bands(1),H_ref_bands(2)
+!           Wop(i1,i2,istep)=dot_product(V_bands(i2,:,ik),V_tilde(:,i1,1)-V_tilde(:,i1,2))
+!         enddo
+!       enddo
+!       !$omp end parallel do
        !
        !$omp parallel do default(shared), private(i1)
        do i1=H_ref_bands(1),H_ref_bands(2)

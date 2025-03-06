@@ -18,6 +18,7 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
  use hamiltonian,    ONLY:H_ref_bands,H_ref_nbands
  use R_lattice,      ONLY:bz_samp,k_map
  use D_lattice,      ONLY:a
+ use wrapper,        ONLY:M_by_M
  use matrix_operate, ONLY:hermitian
  !
  implicit none
@@ -36,6 +37,7 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
  complex(SP) :: Wop(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),2)
  complex(SP) :: V_tilde(en%nbf(i_sp),H_ref_bands(1):H_ref_bands(2),2)
  complex(SP) :: delta_V_tilde(en%nbf(i_sp),H_ref_bands(1):H_ref_bands(2))
+ complex(SP) :: V_tmp(H_ref_bands(1):H_ref_bands(2),en%nbf(i_sp))
  complex(SP) :: E_vec_pot(3),alpha
  !
  Wk=cZERO
@@ -67,7 +69,10 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
        !
        alpha=cI*real(k_map%max_kdir(id_red),SP)/(4._SP*pi*real(istep,SP))
        ! 
-       Wop(:,:,istep)=alpha*matmul(delta_V_tilde,V_bands(H_ref_bands(1):,:,ik))
+       V_tmp=conjg(V_bands(H_ref_bands(1):,:,ik))
+       !
+       call M_by_M('N','N',H_ref_nbands, H_ref_nbands,en%nbf(i_sp),alpha, &
+&           V_tmp,H_ref_nbands,delta_V_tilde,en%nbf(i_sp),cZERO,Wop(:,:,istep),H_ref_nbands)
        !
      enddo
      !

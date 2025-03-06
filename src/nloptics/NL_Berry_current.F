@@ -127,7 +127,7 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  ! 
 !$omp parallel do default(shared), private(i1)
  do id=1,3
-   NL_J(id)=-sum(NL_J_red(:)*a(:,id))/(4.0*pi)
+   NL_J(id)=sum(NL_J_red(:)*a(:,id))/(4.0*pi)
  enddo
 !$omp end parallel do
  !

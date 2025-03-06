@@ -76,7 +76,7 @@ subroutine Berry_polarization_EQ(P_Berry_Red,All_S_det,en,Xk,k_map)
      enddo
    enddo
    !
-   P_Berry_RED(id_in)=-P_Berry_RED(id_in)/real(Nperpend,SP)
+   P_Berry_RED(id_in)=P_Berry_RED(id_in)/real(Nperpend,SP)
    !
  enddo
  !

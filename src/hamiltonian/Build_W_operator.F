@@ -71,8 +71,9 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
        ! 
        V_tmp=conjg(V_bands(H_ref_bands(1):,:,ik))
        !
-       call M_by_M('N','N',H_ref_nbands, H_ref_nbands,en%nbf(i_sp),alpha, &
-&           V_tmp,H_ref_nbands,delta_V_tilde,en%nbf(i_sp),cZERO,Wop(:,:,istep),H_ref_nbands)
+       Wop(:,:,istep)=alpha*matmul(V_tmp(:,:),delta_V_tilde(:,:))
+       !
+       Wop(:,:,istep)=transpose(Wop(:,:,istep))
        !
      enddo
      !
@@ -81,7 +82,7 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
      ! <\phi_i | e^{iGr} | \phi_j >
      ! It works in principle but it requires big supercells
      !
-     Wop(H_ref_bands(1):,H_ref_bands(1):,:)=cZERO !DIP_S(H_ref_bands(1):,H_ref_bands(1):,id_red,ik,i_sp)*cI/(4._SP*pi)   
+     Wop(:,:,:)=cZERO !DIP_S(H_ref_bands(1):,H_ref_bands(1):,id_red,ik,i_sp)*cI/(4._SP*pi)   
      !
    endif    
    !
@@ -94,8 +95,7 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
      !
      !$omp parallel do default(shared), private(id)
      do id=1,3
-       Wk(id,H_ref_bands(1):,H_ref_bands(1):)=Wk(id,H_ref_bands(1):,H_ref_bands(1):)&
-       &                                       +Wop(H_ref_bands(1):,H_ref_bands(1):,1)*a(id_red,id)
+       Wk(id,:,:)=Wk(id,:,:)+Wop(:,:,1)*a(id_red,id)
      enddo
      !$omp end parallel do
      !
@@ -106,8 +106,7 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
      !
      !$omp parallel do default(shared), private(id)
      do id=1,3
-       Wk(id,H_ref_bands(1):,H_ref_bands(1):)=Wk(id,H_ref_bands(1):,H_ref_bands(1):)+&
-&               (4._SP*Wop(H_ref_bands(1):,H_ref_bands(1):,1)-Wop(H_ref_bands(1):,H_ref_bands(1):,2))/3._SP*a(id_red,id)
+       Wk(id,:,:)=Wk(id,:,:)+(4._SP*Wop(:,:,1)-Wop(:,:,2))/3._SP*a(id_red,id)
      enddo
      !$omp end parallel do
      !
@@ -120,9 +119,7 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
  !
  !$omp parallel do default(shared), private(id)
  do id=1,3
-   Wk(id,H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))=                     &
-   &     (Wk(id,H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))               &
-   &      +hermitian(Wk(id,H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))))
+   Wk(id,:,:)=(Wk(id,:,:)+hermitian(Wk(id,:,:)))
  enddo
  !$omp end parallel do
  !

@@ -83,11 +83,11 @@ subroutine DIPOLE_symmetrize(k)
    do i_sp=1,n_sp_pol
    do ib2=1,NL_bands(2)
    do ib1=1,NL_bands(2)
-     DIP_S(ib1,ib2,ik,1:3,i_sp)=matmul(old_dl_sop(:,:,is),DIP_S(ib1,ib2,ik_old,1:3,i_sp))
-     DIP_S(ib1,ib2,ik,4:6,i_sp)=matmul(old_dl_sop(:,:,is),DIP_S(ib1,ib2,ik_old,4:6,i_sp))
+!     DIP_S(ib1,ib2,1:3,ik,i_sp)=matmul(old_dl_sop(:,:,is),DIP_S(ib1,ib2,1:3,ik_old,i_sp))
+!     DIP_S(ib1,ib2,4:6,ik,i_sp)=matmul(old_dl_sop(:,:,is),DIP_S(ib1,ib2,4:6,ik_old,i_sp))
    enddo
    enddo
-   if(old_S_contains_TR(is)==1) DIP_S(:,:,ik,:,i_sp)=conjg(DIP_S(:,:,ik,:,i_sp))
+!   if(old_S_contains_TR(is)==1) DIP_S(:,:,:,ik,i_sp)=conjg(DIP_S(:,:,:,ik,i_sp))
    enddo
  enddo
  !

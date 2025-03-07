@@ -81,7 +81,7 @@ if test -d "$with_petsc_path" || test -d "$with_petsc_libdir" || test x"$with_pe
   try_PETSC_INCS="$IFLAG$try_petsc_incdir" ;
   try_PETSC_LIBS="-L$try_petsc_libdir -lpetsc" ;
   #
-  if test "$use_libdl"    = "yes"; then try_PETSC_LIBS="$try_PETSC_LIBS -ldl"   ; fi
+  if test "$use_libdl"    = "yes"; then try_PETSC_LIBS="$try_PETSC_LIBS -ldl -lstdc++"   ; fi
   #
   if test x"$with_petsc_libs" != "x" ; then try_PETSC_LIBS="$with_petsc_libs" ; fi
   if test x"$with_petsc_incs" != "x" ; then try_PETSC_INCS="$with_petsc_incs" ; fi
@@ -137,7 +137,7 @@ if test "x$enable_petsc" = "xyes" && test "x$petsc" = "xno" ; then
   fi
   PETSC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${build_precision}/include" ;
   #
-  if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl"   ; fi
+  if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl -lstdc++"   ; fi
   #
   petsc=yes
   if test -e "$PETSC_LIBS_DN" ; then

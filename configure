@@ -1077,7 +1077,7 @@ with_devxlib_path
 with_devxlib_libdir
 with_devxlib_includedir
 with_devxlib_branch
-enable_magma_linalg
+enable_magma
 with_magma_libs
 with_magma_incs
 with_magma_path
@@ -1763,7 +1763,7 @@ Optional Features:
                           The configure script will check CUDA installation
                           and report problems [default=yes]
   --enable-nvtx=<path>    Enable NVTX support [default=no]
-  --enable-magma-linalg   Enable suport for the diagonalization of BSE using
+  --enable-magma          Enable suport for the BSE diagonalization using
                           MAGMA. Default is no
 
 Optional Packages:
@@ -1856,7 +1856,7 @@ Optional Packages:
   --with-rocm-libdir=<path>     Path to the rocm lib directory
   --with-rocm-includedir=<path> Path to the rocm include directory
   --with-rocm-path=<path>       Path to rocm install directory
-  --with-mklgpu-libs=<libs>     Use librocm library <libs>
+  --with-mklgpu-libs=<libs>     Use the MKLGPU library <libs>
   --with-devxlib-libs=<libs>    Use devxlib libraries <libs>
   --with-devxlib-path=<path>    Path to devxlib install directory
   --with-devxlib-libdir=<path>  Path to the devxlib lib directory
@@ -15741,9 +15741,9 @@ LIBS="$acx_devxlib_save_LIBS"
 # MAGMA
 
 #
-# Check whether --enable-magma_linalg was given.
-if test "${enable_magma_linalg+set}" = set; then :
-  enableval=$enable_magma_linalg;
+# Check whether --enable-magma was given.
+if test "${enable_magma+set}" = set; then :
+  enableval=$enable_magma;
 fi
 
 #
@@ -15781,14 +15781,12 @@ fi
 #
 def_magma=""
 magma="no"
-enable_magma="no"
 internal_magma="no"
 compile_magma="no"
 compile_magma_fmodules="no"
 #
-if test x"$enable_magma_linalg" = "xyes"; then
-  enable_magma="yes";
-fi
+if test x"$enable_magma" = "x"; then enable_magma="no" ; fi
+#if test x"$enable_magma" = "xyes"; then enable_magma="yes"; fi
 #
 # MAGMA global options
 #
@@ -15816,8 +15814,8 @@ if test -d "$with_magma_path" || test -d "$with_magma_libdir" || test x"$with_ma
 $as_echo_n "checking for Magma using $with_magma_libs... " >&6; } ;
   elif test -d "$with_magma_libdir"      ; then  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Magma in $with_magma_libdir" >&5
 $as_echo_n "checking for Magma in $with_magma_libdir... " >&6; } ;
-  elif test -d "$with_magma_path"        ; then  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Magma in $with_magma_path" >&5
-$as_echo_n "checking for Magma in $with_magma_path... " >&6; } ;
+  elif test -d "$with_magma_path"        ; then  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Magma in $with_magma_path/lib" >&5
+$as_echo_n "checking for Magma in $with_magma_path/lib... " >&6; } ;
   fi
   #
   if test -d "$with_magma_path" ; then
@@ -15849,33 +15847,61 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
   FCFLAGS="$try_MAGMA_INCS $save_fcflags";
   LIBS="$try_MAGMA_LIBS $save_libs";
   #
+  # check for magma with fortran-interfaces
   cat > conftest.$ac_ext <<_ACEOF
       program main
 
-use magma
-implicit none
-integer :: lda
-!magma_devptr_t :: dA
+    use magma
+    implicit none
+    integer :: lda
+    !magma_devptr_t :: dA
       end
 _ACEOF
 if ac_fn_fc_try_compile "$LINENO"; then :
-  magma=yes
+  magmaf=yes
 else
-  magma=no
+  magmaf=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext;
   #
-  if test "x$magma" = "xyes"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; } ;
+  # check for c-style magma
+  cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+    ierr = magma_init();
+      end
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  magmac=yes
+else
+  magmac=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext;
+  #
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: Library: $magmac;  Fortran support: $magmaf" >&5
+$as_echo "Library: $magmac;  Fortran support: $magmaf" >&6; } ;
+  #
+  if test "x$magmaf" = "xyes"; then
+    #
     MAGMA_INCS="$try_MAGMA_INCS" ;
     MAGMA_LIBS="$try_MAGMA_LIBS" ;
+    magma=yes;
     compile_magma="no";
     internal_magma="no";
     def_magma="-D_MAGMA"
+    #
+  elif test "x$magmac" = "xyes"; then
+    #
+    MAGMA_LIBS="$try_MAGMA_LIBS" ;
+    MAGMA_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
+    magma=yes;
+    compile_magma="no";
+    compile_magma_fmodules="yes";
+    def_magma="-D_MAGMA"
+    #
   else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; } ;
+    #
+    magma=no;
     #
   fi
   #
@@ -15884,7 +15910,10 @@ $as_echo "no" >&6; } ;
   #
 fi
 #
-# TO BE FIXED: needs internal compilation support and paths have to be corrected with GPU_SUPPORT folder
+# TO BE FIXED: needs internal compilation support and paths
+#              have to be corrected with GPU_SUPPORT folder
+#
+# Internal compilation
 #
 if test "x$enable_magma" = "xyes" && test "x$magma" = "xno" ; then
   #
@@ -15923,10 +15952,7 @@ $as_echo "Compatible external Magma not found/specified. To be compiled." >&6; }
   fi
   #
 fi
-#
-# Check if fortran modules are available
-#
-if test -e "$MAGMA_INCS/mod_magma2_common.F" ; then   compile_magma_fmodules="no" ;  fi
+
 #
 # switch off internal magma compilation
 #

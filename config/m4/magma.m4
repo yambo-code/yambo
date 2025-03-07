@@ -23,7 +23,7 @@
 #
 AC_DEFUN([AC_MAGMA_SETUP],[
 #
-AC_ARG_ENABLE(magma_linalg,   AS_HELP_STRING([--enable-magma-linalg],[Enable suport for the diagonalization of BSE using MAGMA. Default is no]))
+AC_ARG_ENABLE(magma,   AS_HELP_STRING([--enable-magma],[Enable suport for the BSE diagonalization using MAGMA. Default is no]))
 #
 AC_ARG_WITH(magma_libs,AS_HELP_STRING([--with-magma-libs=<libs>],[Use Magma libraries <libs>],[32]))
 AC_ARG_WITH(magma_incs,AS_HELP_STRING([--with-magma-incs=<incs>],[Use Magma includes <incs>],[32]))
@@ -34,14 +34,12 @@ AC_ARG_WITH(magma_includedir,AS_HELP_STRING([--with-magma-includedir=<path>],[Pa
 #
 def_magma=""
 magma="no"
-enable_magma="no"
 internal_magma="no"
 compile_magma="no"
 compile_magma_fmodules="no"
 #
-if test x"$enable_magma_linalg" = "xyes"; then
-  enable_magma="yes";
-fi
+if test x"$enable_magma" = "x"; then enable_magma="no" ; fi
+#if test x"$enable_magma" = "xyes"; then enable_magma="yes"; fi
 #
 # MAGMA global options
 #
@@ -67,7 +65,7 @@ if test -d "$with_magma_path" || test -d "$with_magma_libdir" || test x"$with_ma
   #
   if   test   x"$with_magma_libs" != "x" ; then  AC_MSG_CHECKING([for Magma using $with_magma_libs]) ;
   elif test -d "$with_magma_libdir"      ; then  AC_MSG_CHECKING([for Magma in $with_magma_libdir]) ;
-  elif test -d "$with_magma_path"        ; then  AC_MSG_CHECKING([for Magma in $with_magma_path]) ;
+  elif test -d "$with_magma_path"        ; then  AC_MSG_CHECKING([for Magma in $with_magma_path/lib]) ;
   fi
   #
   if test -d "$with_magma_path" ; then 
@@ -95,22 +93,42 @@ if test -d "$with_magma_path" || test -d "$with_magma_libdir" || test x"$with_ma
   FCFLAGS="$try_MAGMA_INCS $save_fcflags";
   LIBS="$try_MAGMA_LIBS $save_libs";
   #
+  # check for magma with fortran-interfaces
   AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [
-use magma
-implicit none
-integer :: lda
-!magma_devptr_t :: dA]),
-       [magma=yes], [magma=no]);
+    use magma
+    implicit none
+    integer :: lda
+    !magma_devptr_t :: dA]),
+       [magmaf=yes], [magmaf=no]);
   #
-  if test "x$magma" = "xyes"; then
-    AC_MSG_RESULT([yes]) ;
+  # check for c-style magma
+  AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [
+    ierr = magma_init(); ]),
+       [magmac=yes], [magmac=no]);
+  #
+  AC_MSG_RESULT([Library: $magmac;  Fortran support: $magmaf]) ;
+  #
+  if test "x$magmaf" = "xyes"; then
+    #
     MAGMA_INCS="$try_MAGMA_INCS" ;
     MAGMA_LIBS="$try_MAGMA_LIBS" ;
+    magma=yes;
     compile_magma="no";
     internal_magma="no";
     def_magma="-D_MAGMA"
+    #
+  elif test "x$magmac" = "xyes"; then
+    #
+    MAGMA_LIBS="$try_MAGMA_LIBS" ;
+    MAGMA_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ; 
+    magma=yes;
+    compile_magma="no";
+    compile_magma_fmodules="yes";
+    def_magma="-D_MAGMA"
+    #
   else
-    AC_MSG_RESULT([no]) ;
+    #
+    magma=no;
     #
   fi
   # 
@@ -119,7 +137,10 @@ integer :: lda
   # 
 fi
 #
-# TO BE FIXED: needs internal compilation support and paths have to be corrected with GPU_SUPPORT folder
+# TO BE FIXED: needs internal compilation support and paths 
+#              have to be corrected with GPU_SUPPORT folder
+#
+# Internal compilation
 #
 if test "x$enable_magma" = "xyes" && test "x$magma" = "xno" ; then
   #
@@ -154,10 +175,7 @@ if test "x$enable_magma" = "xyes" && test "x$magma" = "xno" ; then
   fi
   #
 fi
-#
-# Check if fortran modules are available
-#
-if test -e "$MAGMA_INCS/mod_magma2_common.F" ; then   compile_magma_fmodules="no" ;  fi
+
 #
 # switch off internal magma compilation
 #

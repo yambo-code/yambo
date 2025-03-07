@@ -71,7 +71,8 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
        ! 
        V_tmp=conjg(V_bands(H_ref_bands(1):,:,ik))
        !
-       Wop(:,:,istep)=alpha*matmul(V_tmp(:,:),delta_V_tilde(:,:))
+       call M_by_M('N', 'N', H_ref_nbands, H_ref_nbands, en%nbf(i_sp),alpha, V_tmp, &
+&            size(V_tmp, 1), delta_V_tilde, size(delta_V_tilde, 1), cZERO, Wop(:,:,istep), H_ref_nbands)
        !
        Wop(:,:,istep)=transpose(Wop(:,:,istep))
        !

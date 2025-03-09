@@ -7,7 +7,7 @@
 #
 AC_DEFUN([AC_HAVE_YIOHDF5],[
 
-AC_ARG_ENABLE(yio_hdf5, AS_HELP_STRING([--enable-yio-hdf5],[Activate Yio with HDF5 without NetCDF. Default is no],[32]))
+AC_ARG_ENABLE(yio_hdf5, AS_HELP_STRING([--enable-yio-hdf5],[Activate Yio with HDF5 without NetCDF. Default is no],[]))
 
 enable_yio_hdf5="no"
 

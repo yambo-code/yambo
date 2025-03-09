@@ -98,6 +98,7 @@ lyaml       = @YAML_LIBS@
 iyaml       = @YAML_INCS@
 lfutile     = @FUTILE_LIBS@
 ifutile     = @FUTILE_INCS@
+yio_dir     = @YIO_DIR@
 letsf       = @ETSF_LIBS@
 ietsf       = @ETSF_INCS@
 mpipath     = @MPI_PATH@

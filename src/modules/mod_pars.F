@@ -7,7 +7,11 @@
 !
 module pars
  !
+#if defined _YIO_HDF5
  use hdf5
+#else
+ use netcdf
+#endif
  use iso_fortran_env, ONLY:int32,int64,real32,real64
  !
  implicit none
@@ -76,9 +80,17 @@ module pars
  ! NetCDF types
  !==============
 #if defined _DOUBLE
+#if defined _YIO_HDF5
  integer, parameter  :: nf90_SP = H5T_NATIVE_DOUBLE  
 #else
+ integer, parameter  :: nf90_SP = nf90_double
+#endif
+#else
+#if defined _YIO_HDF5
  integer, parameter  :: nf90_SP = H5T_NATIVE_FLOAT 
+#else
+ integer, parameter  :: nf90_SP = nf90_float
+#endif
 #endif
  !
  ! Equivalent to OneByteInt in NetCdf (normal integer is 4 byte)

@@ -19,7 +19,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  use BS,            ONLY:BS_blk,BSK_IO_mode,MAX_BSK_LIN_size,n_BS_blks_min,BS_K_dim,BSK_IO_sum_value
  use timing_m,      ONLY:timing
  use IO_m,          ONLY:io_unit,netcdf_call,nf90_sync,variable_exist,io_action,RD,WR,&
-&                        write_is_on,read_is_on,io_BS_K,YAMBO_CMPLX_NO_FILL
+&                        write_is_on,read_is_on,io_BS_K,YAMBO_CMPLX_NO_FILL,hdf5_call,H5Fflush_f
  use IO_int,        ONLY:io_variable_bulk
  !
  implicit none
@@ -217,8 +217,13 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  file_sync= i_block<=n_BS_blks_min .and. mod(i_block,max(1,n_BS_blks_min/20))==0 .and. index(BSK_IO_mode,"norestart")==0
  !
  if(write_is_on(ID).and.file_sync) then
+#if defined _YIO_HDF5 
+  call H5Fflush_f(io_unit(ID), H5F_SCOPE_GLOBAL_F, stat)
+  call hdf5_call(stat,ID)
+#else
    stat = nf90_sync(io_unit(ID))
    call netcdf_call(stat,ID)
+#endif
  endif
  !
  call timing('io_BS',OPR='stop')

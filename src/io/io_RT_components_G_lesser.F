@@ -19,6 +19,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
 &                         NE_i_time,RT_dyn_step,RT_step,i_MEM_now,i_MEM_prev,i_MEM_old, &
 &                         H_EQ,l_RT_RWA,RTibz,Ho_plus_sigma
  use netcdf,         ONLY:NF90_UNLIMITED
+ use hdf5,           ONLY:H5S_UNLIMITED_F
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_G_k_range
 #endif
@@ -51,7 +52,11 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  VAR_SZ(5)    = G_MEM_steps
  dim_names(5) ='G_MEM_steps'
  if (RT_do_IO("G_lesser_K_section")) then
+#if defined _YIO_HDF5
+   VAR_SZ(5)    = H5S_UNLIMITED_F 
+#else
    VAR_SZ(5)    = NF90_UNLIMITED
+#endif
    dim_names(5) ='G_IO_time_step'
  endif
  ! 

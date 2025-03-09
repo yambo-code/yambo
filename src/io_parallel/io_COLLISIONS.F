@@ -11,7 +11,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  use parallel_m,    ONLY:master_cpu
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use collision_ext, ONLY:COLLISIONS_element,COLLISIONS_group,LAST_COLL_sync,PAR_COLL_min,COLLISIONS_load_SP
- use IO_m,          ONLY:io_sec,io_status,IO_OUTDATED_DB,read_is_on,IO_mode,io_unit,&
+ use IO_m,          ONLY:io_sec,io_status,IO_OUTDATED_DB,read_is_on,IO_mode,io_unit,hdf5_call,H5Fflush_f,&
 &                        VERIFY,io_extension,write_is_on,nf90_sync,netcdf_call,YAMBO_DEF_CHUNK
  use IO_int,        ONLY:io_connect,io_header,io_elemental,ver_is_gt_or_eq,io_fragment, &
 &                        io_variable_bulk,def_variable_bulk,io_disconnect
@@ -132,8 +132,13 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  file_sync= i_coll<=LAST_COLL_sync .and. mod(i_coll,max(1,PAR_COLL_min/20))==0 .and. index(trim(db_name),"HXC")/=0
  !
  if(write_is_on(ID).and.file_sync.and.io3) then
-   stat = nf90_sync(io_unit(ID))
-   call netcdf_call(stat,ID)
+#if defined _YIO_HDF5
+  call H5Fflush_f(io_unit(ID), H5F_SCOPE_GLOBAL_F, stat)
+  call hdf5_call(stat,ID)
+#else
+  stat = nf90_sync(io_unit(ID))
+  call netcdf_call(stat,ID)
+#endif
  endif
 #endif
  !

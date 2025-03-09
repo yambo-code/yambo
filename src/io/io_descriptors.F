@@ -14,6 +14,7 @@ function io_descriptors(desc,name,ID,QUIET)
 &                         def_variable_bulk,io_variable_bulk
  use stderr,         ONLY:intc
  use netcdf,         ONLY:NF90_UNLIMITED
+ use hdf5,           ONLY:H5S_UNLIMITED_F
  !
  implicit none
  !
@@ -41,7 +42,11 @@ function io_descriptors(desc,name,ID,QUIET)
  endif
  !
  desc_size=n_descs_disk
+#if defined _YIO_HDF5
+ if (name=="TIME_STEP") desc_size=H5S_UNLIMITED_F
+#else
  if (name=="TIME_STEP") desc_size=NF90_UNLIMITED
+#endif
  !
  dim_name(1)=trim(name)//"_string_len"
  dim_name(2)=trim(name)//"_desc_size"

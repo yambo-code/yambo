@@ -13,6 +13,7 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_RESTART_info,UNLIMITED_ti
  use RT_output_m,    ONLY:RT_desc
  use RT_control,     ONLY:RT_IO_t,RT_do_IO
  use netcdf,         ONLY:NF90_UNLIMITED
+ use hdf5,           ONLY:H5S_UNLIMITED_F
  use real_time,      ONLY:MEM_pointer,G_MEM_steps,NE_i_time,i_MEM_now,i_MEM_prev,i_MEM_old,&
 &                         RT_dyn_step,RT_step
  use IO_m,           ONLY:write_is_on,read_is_on
@@ -69,7 +70,11 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_RESTART_info,UNLIMITED_ti
  if(TYP%first_IO(2).or.RT_do_IO("ANY_G").or.read_is_on(ID)) then
    dim_name="IO_TIME_n_points"
    if (UNLIMITED_time) then
+#if defined _YIO_HDF5
      call def_variable_bulk(ID,"IO_TIME_points",3,(/NF90_UNLIMITED/),SP,dim_name,silent=.true.,par_io_kind="collective")
+#else
+     call def_variable_bulk(ID,"IO_TIME_points",3,(/H5S_UNLIMITED_F/),SP,dim_name,silent=.true.,par_io_kind="collective")
+#endif
    else
      call def_variable_bulk(ID,"IO_TIME_points",3,(/G_MEM_steps/),   SP,dim_name,silent=.true.,par_io_kind="collective")
    endif

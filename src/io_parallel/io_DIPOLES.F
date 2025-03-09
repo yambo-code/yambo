@@ -15,7 +15,7 @@ integer function io_DIPOLES(Dip,ID)
  use electrons,     ONLY:n_spin,n_sp_pol
  use R_lattice,     ONLY:nXkibz
  use IO_m,          ONLY:io_sec,frag_DIP,io_DIP,read_is_on,io_extension,IO_NOT_ALLOWED, &
-&                        nf90_sync,io_unit,netcdf_call,io_PAR_cpu
+&                        nf90_sync,io_unit,netcdf_call,io_PAR_cpu,hdf5_call,H5Fflush_f
  use IO_int,        ONLY:io_connect,io_disconnect,io_variable_bulk,def_variable_bulk,io_header
  use DIPOLES,       ONLY:DIP_spin,DIP_orbital
  use electrons,     ONLY:n_spinor
@@ -76,8 +76,13 @@ integer function io_DIPOLES(Dip,ID)
  if (i_fragment==0)               goto 1
  if (i_fragment> n_sp_pol*nXkibz) then
    if(io_PAR_cpu(ID)==1) then
+#if defined _YIO_HDF5 
+     call H5Fflush_f(io_unit(ID), H5F_SCOPE_GLOBAL_F, stat)
+     call hdf5_call(stat,ID)
+#else
      stat = nf90_sync(io_unit(ID))
      call netcdf_call(stat,ID)
+#endif
    endif
    goto 1
  endif

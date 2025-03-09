@@ -10,8 +10,8 @@ integer function variables_BS_more(ID,mode)
  use pars,       ONLY:IP,SP,LP,schlen,LP_YIO
  use BS,         ONLY:BS_K_cutoff,BS_K_cutoff_done,BS_max_val,l_BSE_kernel_complete
  use IO_m,       ONLY:nf90_sync,io_unit,write_is_on,read_is_on,&
-&                     variable_exist,NF90_unlimited,netcdf_dim_size
- use IO_int,     ONLY:def_variable_elemental,io_variable_elemental,&
+&                     variable_exist,NF90_unlimited,netcdf_dim_size,hdf5_dim_size
+ use IO_int,     ONLY:def_variable_elemental,io_variable_elemental,H5Fflush_f,&
 &                     def_variable_bulk,io_variable_bulk
  use IO_m,       ONLY:io_status
  !
@@ -46,7 +46,11 @@ integer function variables_BS_more(ID,mode)
  if (io_var) then
    kernel_dim_name="N_COMPRESSED_KERNELS"
    call def_variable_bulk(ID,"BSE_KERNEL_CUTOFF",1,(/NF90_unlimited/),SP,kernel_dim_name)
+#if defined _YIO_HDF5
+   N_cutoff=hdf5_dim_size(ID,kernel_dim_name(1))
+#else
    N_cutoff=netcdf_dim_size(ID,kernel_dim_name(1))
+#endif
    if(write_is_on(ID)) then
      BS_K_cutoff_IO=BS_K_cutoff
      call  io_variable_bulk(ID,1,R1=BS_K_cutoff_IO,IPOS=(/N_cutoff+1/))
@@ -56,7 +60,11 @@ integer function variables_BS_more(ID,mode)
    endif
  endif
  !
+#if defined _YIO_HDF5
  if(write_is_on(ID)) stat = nf90_sync(io_unit(ID))
+#else
+ if(write_is_on(ID)) call H5Fflush_f(io_unit(ID), H5F_SCOPE_GLOBAL_F, stat)
+#endif
  !
  variables_BS_more=io_status(ID)
  !

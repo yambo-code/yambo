@@ -11,7 +11,8 @@ subroutine of_netcdf_shadow_real(i1,mesg,val,nval)
 #if defined _NC_OUTPUT
  use stderr,   ONLY:intc
  use com,      ONLY:of_nc_pos,of_nc_IDs,of_nc_var_names
- use netcdf,   ONLY:nf90_unlimited
+ use netcdf,   ONLY:NF90_UNLIMITED
+ use hdf5,     ONLY:H5S_UNLIMITED_F
  use IO_m,     ONLY:WR,NONE
  use IO_int,   ONLY:io_control,io_variable_bulk,def_variable_bulk
 #endif
@@ -40,7 +41,11 @@ subroutine of_netcdf_shadow_real(i1,mesg,val,nval)
    dim_names(1)='n_values'
    dim_names(2)='unlim'
    VAR_NAME=trim(of_nc_var_names(i1))//'_values'
-   VAR_SIZE=(/nval,nf90_unlimited/)
+#if defined _YIO_HDF5
+   VAR_SIZE=(/nval,H5S_UNLIMITED_F/)
+#else
+   VAR_SIZE=(/nval,NF90_UNLIMITED/)
+#endif
    VAR_POS =(/1,of_nc_pos(VAR_ID,i1)/)
  endif
  if(imsg> 0) then

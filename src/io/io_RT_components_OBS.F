@@ -13,6 +13,7 @@ subroutine io_RT_components_OBS(ID,what)
  use electrons,   ONLY:n_spin
  use real_time,   ONLY:l_NE_with_fields,NE_i_time
  use netcdf,      ONLY:NF90_UNLIMITED
+ use hdf5,        ONLY:H5S_UNLIMITED_F
  use RT_control,  ONLY:J_cache,P_cache,Ms_cache,Ml_cache,A_cache,&
 &                      CACHE_OBS_steps_now,OBS_RT_IO_t,RT_do_IO
  !
@@ -29,14 +30,22 @@ subroutine io_RT_components_OBS(ID,what)
  case('DEF')
    !
    if (RT_do_IO("JP")) then
+#if defined _YIO_HDF5
+     VAR_SZ(1:3)    = (/2,3,H5S_UNLIMITED_F/)
+#else
      VAR_SZ(1:3)    = (/2,3,NF90_UNLIMITED/)
+#endif
      dim_names(1:3) = [character(schlen) :: 'complex', 'xyz','time']
      call def_variable_bulk(ID,"Current",     4,VAR_SZ(1:3),SP,dim_names=dim_names(1:3),silent=.true.)
      call def_variable_bulk(ID,"Polarization",5,VAR_SZ(1:3),SP,dim_names=dim_names(1:3),silent=.true.)
    endif
    !
    if(n_spin>1.and.RT_do_IO("M")) then
+#if defined _YIO_HDF5
+     VAR_SZ    = (/2,3,3,H5S_UNLIMITED_F/)
+#else
      VAR_SZ    = (/2,3,3,NF90_UNLIMITED/)
+#endif
      dim_names = [character(schlen) :: 'complex', 'xyz','tot_c_v','time']
      call def_variable_bulk(ID,"Spin_Magnetization",6,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
      !
@@ -46,7 +55,11 @@ subroutine io_RT_components_OBS(ID,what)
    endif
    !
    if(l_NE_with_fields) then
+#if defined _YIO_HDF5
+     VAR_SZ    = (/2,3,3,H5S_UNLIMITED_F/)
+#else
      VAR_SZ    = (/2,3,3,NF90_UNLIMITED/)
+#endif
      dim_names = [character(schlen) :: 'complex', 'xyz','A_kind','time']
      call def_variable_bulk(ID,"A_tot",8,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
    endif

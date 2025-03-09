@@ -94,6 +94,10 @@ module IO_m
  integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
 #endif
  !
+ integer(HID_T) :: IO_HDF5_CREATE_MODE  ! Property list identifier
+ integer(HID_T) :: PAR_IO_HDF5_CREATE_MODE  ! Property list identifier
+ integer :: hdferr           ! HDF5 error code
+ !
 #if defined _PAR_IO && defined _HDF5_IO
  integer, parameter:: PAR_IO_CREATE_MODE=ior(nf90_mpiio,nf90_netcdf4)
  integer, parameter:: PAR_IO_WRITE_MODE =ior(nf90_mpiio,nf90_write)
@@ -129,6 +133,7 @@ module IO_m
  ! io_netcdf_var(ID,2:) is used for stored var-IDs by def/io_variable_bulk
  integer :: io_netcdf_var(max_io_units,max_io_vars_open) 
  logical :: io_resetable(max_io_units)
+ integer :: io_hdf5_var(max_io_units,max_io_vars_open) 
  character(lchlen)          :: io_file(max_io_units)
  character(lchlen)          :: io_folder(max_io_units)
  !
@@ -449,6 +454,59 @@ module IO_m
      end if
    end subroutine
    !
+   subroutine hdf5_call(status,ID,VAR,ID_VAR)
+           use hdf5
+    implicit none
+
+    integer, intent(in)           :: status       ! Status of the HDF5 operation
+    integer, intent(in)           :: ID           ! Identifier for the file or dataset
+    integer, intent(in), optional :: ID_VAR       ! Optional variable ID
+    character(*), intent(in), optional :: VAR     ! Optional variable name
+
+    character(len=256) :: msg                     ! Error message buffer
+    character(len=256) :: VARNAME, FILENAME       ! Variable name and file name buffers
+    integer            :: local_error, VARNUMBER  ! Local error code and variable number
+    integer(HID_T)     :: file_id, dataset_id     ! HDF5 file and dataset identifiers
+    integer(HSIZE_T)   :: dims(1)                 ! Dimensions for HDF5 datasets
+
+    ! Check if there is an error in the HDF5 operation
+    if (status /= 0) then
+        ! Get the filename associated with the ID
+        FILENAME = io_file(ID)
+        VARNAME = ' NOT DEFINED '
+
+        ! Handle the variable name
+        if (.not. present(VAR)) then
+            ! If ID_VAR is provided, use it to get the variable number
+            if (present(ID_VAR)) then
+                VARNUMBER = io_hdf5_var(ID, ID_VAR)
+            else
+                ! Otherwise, default to the first variable
+                VARNUMBER = io_hdf5_var(ID, 1)
+            end if
+
+            ! Get the name of the dataset (variable) in HDF5
+            local_error = h5dget_name_f(io_unit(ID), VARNUMBER, VARNAME)
+            if (local_error /= 0) VARNAME = ' NOT DEFINED '
+        end if
+
+        ! If VAR is provided, use it as the variable name
+        if (present(VAR)) VARNAME = VAR
+
+        ! Construct the error message based on the operation (read/write)
+        if (read_is_on(ID)) then
+            write(msg, '(6a)') ' Reading File ', trim(FILENAME), '; Variable ', &
+                                trim(VARNAME), '; ', 'HDF5 Error'
+        else if (write_is_on(ID)) then
+            write(msg, '(6a)') ' Writing File ', trim(FILENAME), '; Variable ', &
+                                trim(VARNAME), '; ', 'HDF5 Error'
+        end if
+
+        ! Call the error handling routine with the constructed message
+        call error(trim(msg))
+    endif
+   end subroutine
+   !
    integer function netcdf_dim_size(ID,DIMNAME)
      ! Returns the value of the specified dim of a variable
      integer,      intent(in)    :: ID
@@ -459,6 +517,44 @@ module IO_m
      if(nf90_err/=NF90_NOERR) return
      nf90_err=nf90_inquire_dimension(io_unit(ID),NF90_DIM_ID, name = dimname, len = netcdf_dim_size)
    end function
+   !
+   integer function hdf5_dim_size(file_id, dim_name)
+    use hdf5
+    implicit none
+    integer(HID_T), intent(in)    :: file_id       ! HDF5 file identifier
+    character(*), intent(inout)   :: dim_name      ! Name of the dimension
+    integer(HSIZE_T)              :: dim_size      ! Size of the dimension
+    integer(HID_T)                :: dataset_id    ! HDF5 dataset identifier
+    integer(HID_T)                :: dataspace_id  ! HDF5 dataspace identifier
+    integer                       :: status        ! HDF5 status code
+    integer                       :: rank          ! Rank of the dataset
+
+    ! Initialize the dimension size to 0
+    hdf5_dim_size = 0
+
+    ! Open the dataset
+    status = h5dopen_f(file_id, dim_name, dataset_id)
+    if (status /= 0) return
+
+    ! Get the dataspace of the dataset
+    status = h5dget_space_f(dataset_id, dataspace_id)
+    if (status /= 0) return
+
+    ! Get the rank (number of dimensions) of the dataset
+    status = h5sget_simple_extent_ndims_f(dataspace_id, rank)
+    if (status /= 0) return
+
+    ! Get the size of the first dimension
+    if (rank > 0) then
+        status = h5sget_simple_extent_dims_f(dataspace_id, dim_size, NULL)
+        if (status /= 0) return
+        hdf5_dim_size = int(dim_size)
+    end if
+
+    ! Close the dataspace and dataset
+    status = h5sclose_f(dataspace_id)
+    status = h5dclose_f(dataset_id)
+   end function hdf5_dim_size     
    !
    integer function netcdf_dim(ID,DIM,dim_name)
      ! Returns the ID of the netcdf dimension
@@ -474,6 +570,46 @@ module IO_m
      if (nf90_err/=NF90_NOERR) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
    end function
    !
+   integer function hdf5_dim(file_id, dim, dim_name)
+     use hdf5
+     implicit none
+     integer(HID_T), intent(in)    :: file_id       ! HDF5 file identifier
+     integer, intent(in)           :: dim           ! Dimension size
+     character(*), optional        :: dim_name      ! Optional name of the dimension
+     character(len=32)             :: dim_strng     ! Buffer for dimension name
+     integer(HID_T)                :: dataset_id    ! HDF5 dataset identifier
+     integer(HID_T)                :: dataspace_id  ! HDF5 dataspace identifier
+     integer                       :: status        ! HDF5 status code
+
+     ! Initialize the dimension ID to 0
+     hdf5_dim = 0
+
+     ! Generate the dimension name if not provided
+     if (.not. present(dim_name)) then
+        write(dim_strng, '(a,i10.10)') 'D_', dim
+     else
+         dim_strng = dim_name
+     end if
+
+    ! Try to open the dataset (dimension)
+    status = h5dopen_f(file_id, dim_strng, dataset_id)
+    if (status /= 0) then
+        ! If the dataset does not exist, create it
+        status = h5screate_simple_f(1, [dim], dataspace_id)
+        if (status /= 0) return
+
+        status = h5dcreate_f(file_id, dim_strng, H5T_NATIVE_INT, dataspace_id, dataset_id)
+        if (status /= 0) return
+
+        status = h5sclose_f(dataspace_id)
+        if (status /= 0) return
+     end if
+     ! Return the dataset ID
+     hdf5_dim = int(dataset_id)
+     ! Close the dataset
+      status = h5dclose_f(dataset_id)
+   end function hdf5_dim     
+   !
    logical function variable_exist(ID,var_name,var_ID)
      integer,           intent ( in) :: ID
      character(*),      intent ( in) :: var_name
@@ -488,6 +624,30 @@ module IO_m
      endif
    end function
    !
+   logical function variable_exist_hdf5(file_id, var_name, var_id)
+    use hdf5
+    implicit none
+    integer(HID_T), intent(in)           :: file_id    ! HDF5 file identifier
+    character(*), intent(in)             :: var_name   ! Name of the dataset (variable)
+    integer(HID_T), optional, intent(out) :: var_id    ! Optional dataset identifier
+    integer(HID_T)                       :: dataset_id ! HDF5 dataset identifier
+    integer                              :: status     ! HDF5 status code
+
+    ! Try to open the dataset
+    status = h5dopen_f(file_id, var_name, dataset_id)
+
+    ! Check if the dataset exists
+    if (status == 0) then
+        variable_exist_hdf5 = .TRUE.
+        if (present(var_id)) var_id = dataset_id
+        ! Close the dataset if it exists
+        status = h5dclose_f(dataset_id)
+    else
+        variable_exist_hdf5 = .FALSE.
+        if (present(var_id)) var_id = -1
+    endif
+   end function variable_exist_hdf5
+   !    
    subroutine deliver_IO_error_message(i_err,DB,STOP_it)
      !
      integer          :: i_err

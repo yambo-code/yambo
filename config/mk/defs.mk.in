@@ -7,3 +7,4 @@
 #
 ECHO       =@ECHO@
 IO_MODE    =io_@IO_MODE@
+YIO_DIR    =@YIO_DIR@

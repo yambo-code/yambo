@@ -1,123 +1,154 @@
 !
 ! License-Identifier: GPL
 !
-! Copyright (C) 2018 The Yambo Team
+! Copyright (C) 2025 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM HM DS
+! Authors (see AUTHORS file for details): AM HM DS CA
 !
-subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind,silent,chunksize)
- !
- use netcdf
- use com,        ONLY:fat_log
- use pars,       ONLY:SP,DP,IP,LP,schlen,nf90_SP,CR_YIO,LP_YIO,IP_YIO
- use parallel_m, ONLY:ncpu,mpi_comm_null
- use IO_m,       ONLY:write_is_on,read_is_on,io_unit,netcdf_call,io_netcdf_var,&
-&                     netcdf_dim,io_file,io_PAR_comm
- !
- implicit none
- !
- integer,      intent(in)  :: ID
- character(*), intent(in)  :: VAR
- integer,      intent(in)  :: VAR_ID
- integer,      intent(in)  :: VAR_SZ(:)
- integer,      intent(in)  :: VAR_KIND
- character(schlen), optional, intent(in) :: dim_names(:)
- character(*),      optional, intent(in) :: par_io_kind
- logical,           optional, intent(in) :: silent
- integer,           optional, intent(in) :: chunksize(:) ! Chunking parameter
- !
- ! Work Space
- !
- integer, allocatable :: var_dim(:),var_dim_db(:)
- integer              :: j1,dims_db,nf_error,netcdf_par_io_kind,netcdf_var_kind
- logical              :: silent_
+subroutine def_variable_bulk(ID, VAR, VAR_ID, VAR_SZ, VAR_KIND, dim_names, par_io_kind, silent, chunksize)
+  !
+  use hdf5
+  use com,        ONLY: fat_log
+  use pars,       ONLY: SP, DP, IP, LP, schlen, CR_YIO, LP_YIO, IP_YIO
+  use parallel_m, ONLY: ncpu, mpi_comm_null
+  use IO_m,       ONLY: write_is_on, read_is_on, io_unit, hdf5_call, io_hdf5_var, &
+                        hdf5_dim, io_file, io_PAR_comm
+  !
+  implicit none
+  !
+  integer,      intent(in)  :: ID
+  character(*), intent(in)  :: VAR
+  integer,      intent(in)  :: VAR_ID
+  integer,      intent(in)  :: VAR_SZ(:)
+  integer,      intent(in)  :: VAR_KIND
+  character(schlen), optional, intent(in) :: dim_names(:)
+  character(*),      optional, intent(in) :: par_io_kind
+  logical,           optional, intent(in) :: silent
+  integer,           optional, intent(in) :: chunksize(:) ! Chunking parameter
+  !
+  ! Work Space
+  !
+  integer(hid_t) :: file_id, dataset_id, dataspace_id, plist_id
+  integer(hsize_t), allocatable :: dims(:), chunk_dims(:)
+  integer :: hdferr, hdf5_par_io_kind, hdf5_var_kind
+  logical :: silent_
 #if defined _HDF5_COMPRESSION
- integer              :: shuffle,deflate,deflate_level
+  integer :: shuffle, deflate, deflate_level
 #endif
- !
- if(VAR_KIND==SP)     netcdf_var_kind=nf90_SP
- if(VAR_KIND==DP)     netcdf_var_kind=nf90_double
- if(VAR_KIND==IP_YIO) netcdf_var_kind=nf90_int
- if(VAR_KIND==LP_YIO) netcdf_var_kind=nf90_byte
- if(VAR_KIND==CR_YIO) netcdf_var_kind=nf90_char
- !
- silent_=.not.fat_log
- if(present(silent)) silent_=silent
- !
+  !
+  ! Convert VAR_KIND to HDF5 data type
+  if (VAR_KIND == SP)     hdf5_var_kind = H5T_NATIVE_REAL
+  if (VAR_KIND == DP)     hdf5_var_kind = H5T_NATIVE_DOUBLE
+  if (VAR_KIND == IP_YIO) hdf5_var_kind = H5T_NATIVE_INTEGER
+  if (VAR_KIND == LP_YIO) hdf5_var_kind = H5T_NATIVE_B8
+  if (VAR_KIND == CR_YIO) hdf5_var_kind = H5T_NATIVE_CHARACTER
+  !
+  silent_ = .not. fat_log
+  if (present(silent)) silent_ = silent
+  !
 #if defined _PAR_IO
- !
- ! Define par IO kind
- !
- if(present(par_io_kind).and.ncpu>1) then
-   if(trim(par_io_kind)=="independent") netcdf_par_io_kind=nf90_independent
-   if(trim(par_io_kind)=="collective")  netcdf_par_io_kind=nf90_collective
- endif
- !
+  !
+  ! Define parallel I/O kind
+  !
+  if (present(par_io_kind) .and. ncpu > 1) then
+    if (trim(par_io_kind) == "independent") hdf5_par_io_kind = H5FD_MPIO_INDEPENDENT_F
+    if (trim(par_io_kind) == "collective")  hdf5_par_io_kind = H5FD_MPIO_COLLECTIVE_F
+  endif
+  !
 #endif
- !
- if (write_is_on(ID)) then
-   !
-   call netcdf_call(nf90_redef(io_unit(ID)),ID,VAR=VAR)
-   allocate(var_dim(size(VAR_SZ)))
-   do j1=1,size(VAR_SZ)
-     if (present(dim_names)) then
-       var_dim(j1)=netcdf_dim(ID,VAR_SZ(j1),dim_names(j1))
-     else
-       var_dim(j1)=netcdf_dim(ID,VAR_SZ(j1))
-     endif
-   enddo
-   !
-   nf_error=nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID,VAR_ID))
-   !
-   if (nf_error==NF90_NOERR) then
-     allocate(var_dim_db(size(VAR_SZ)))
-     nf_error=nf90_inquire_variable(io_unit(ID),io_netcdf_var(ID,VAR_ID),ndims=dims_db,dimids=var_dim_db)
-     call netcdf_call(nf_error,ID,VAR=VAR)
-     if(any((/var_dim(:)/=var_dim_db(:)/))) &
-&        call error(' Trying to overwrite variable '//trim(VAR)//' in '//trim(io_file(ID))//' with wrong dimensions ')
-     if(.not.silent_) call warning(' Overwriting variable '//trim(VAR)//' in file '//trim(io_file(ID)))
-     deallocate(var_dim_db)
-   endif
-   !
-   if (nf_error/=NF90_NOERR) then
-     if(.not.silent_) call warning(' Re-defining variable '//trim(VAR)//' in file '//trim(io_file(ID)))
-     nf_error=nf90_def_var(io_unit(ID),VAR,netcdf_var_kind,var_dim,io_netcdf_var(ID,VAR_ID)) 
-     call netcdf_call(nf_error,ID,VAR=VAR)
+  !
+  file_id = io_unit(ID)
+  !
+  if (write_is_on(ID)) then
+    !
+    ! Create dataset
+    allocate(dims(size(VAR_SZ)))
+    do j1 = 1, size(VAR_SZ)
+      if (present(dim_names)) then
+        dims(j1) = hdf5_dim(ID, VAR_SZ(j1), dim_names(j1))
+      else
+        dims(j1) = hdf5_dim(ID, VAR_SZ(j1))
+      endif
+    enddo
+    !
+    call h5screate_simple_f(size(dims), dims, dataspace_id, hdferr)
+    call hdf5_call(hdferr, ID, VAR=VAR)
+    !
+    ! Check if dataset already exists
+    hdferr = h5dopen_f(file_id, VAR, dataset_id, hdferr)
+    if (hdferr >= 0) then
+      ! Dataset exists, check dimensions
+      integer(hsize_t), allocatable :: existing_dims(:)
+      integer :: ndims
+      call h5dget_space_f(dataset_id, dataspace_id, hdferr)
+      call h5sget_simple_extent_ndims_f(dataspace_id, ndims, hdferr)
+      allocate(existing_dims(ndims))
+      call h5sget_simple_extent_dims_f(dataspace_id, existing_dims, hdferr)
+      if (any(dims /= existing_dims)) then
+        call error(' Trying to overwrite variable '//trim(VAR)//' in '//trim(io_file(ID))//' with wrong dimensions ')
+      endif
+      if (.not. silent_) call warning(' Overwriting variable '//trim(VAR)//' in file '//trim(io_file(ID)))
+      deallocate(existing_dims)
+      call h5dclose_f(dataset_id, hdferr)
+    else
+      ! Dataset does not exist, create it
+      if (.not. silent_) call warning(' Re-defining variable '//trim(VAR)//' in file '//trim(io_file(ID)))
+      call h5dcreate_f(file_id, VAR, hdf5_var_kind, dataspace_id, dataset_id, hdferr)
+      call hdf5_call(hdferr, ID, VAR=VAR)
+      !
 #if defined _PAR_IO
-     if (present(par_io_kind).and.io_PAR_comm(ID)/=mpi_comm_null) then
-       nf_error=nf90_var_par_access(io_unit(ID), io_netcdf_var(ID,VAR_ID), netcdf_par_io_kind)
-       call netcdf_call(nf_error,ID,VAR=VAR)
-     endif
-     ! Add chunking to the variable. 
-     if (present(chunksize)) then
-       if (PRODUCT(chunksize)>0) then
-         ! Only chuck if all the dims are greater than 0
-         nf_error = nf90_def_var_chunking(io_unit(ID), io_netcdf_var(ID,VAR_ID), NF90_CHUNKED, chunksize)
-         call netcdf_call(nf_error,ID,VAR=VAR)
-       endif
-     endif
+      if (present(par_io_kind) .and. io_PAR_comm(ID) /= mpi_comm_null) then
+        call h5pcreate_f(H5P_DATASET_XFER_F, plist_id, hdferr)
+        call h5pset_dxpl_mpio_f(plist_id, hdf5_par_io_kind, hdferr)
+        call hdf5_call(hdferr, ID, VAR=VAR)
+      endif
+      !
+      ! Add chunking to the variable
+      if (present(chunksize)) then
+        if (product(chunksize) > 0) then
+          allocate(chunk_dims(size(chunksize)))
+          chunk_dims = chunksize
+          call h5pcreate_f(H5P_DATASET_CREATE_F, plist_id, hdferr)
+          call h5pset_chunk_f(plist_id, size(chunk_dims), chunk_dims, hdferr)
+          call hdf5_call(hdferr, ID, VAR=VAR)
+          deallocate(chunk_dims)
+        endif
+      endif
 #endif
-   endif
-   !
+      !
 #if defined _HDF5_COMPRESSION
-   shuffle=0
-   deflate=1
-   deflate_level=2
-   call netcdf_call(nf90_def_var_deflate(io_unit(ID),io_netcdf_var(ID,VAR_ID),shuffle,deflate,deflate_level),ID,VAR=VAR)
+      ! Enable compression
+      shuffle = 1
+      deflate = 1
+      deflate_level = 2
+      call h5pset_shuffle_f(plist_id, hdferr)
+      call h5pset_deflate_f(plist_id, deflate_level, hdferr)
+      call hdf5_call(hdferr, ID, VAR=VAR)
 #endif
-   !
-   call netcdf_call(nf90_enddef(io_unit(ID)),ID,VAR=VAR) 
-   deallocate(var_dim)
-   !
- else if (read_is_on(ID)) then
-   !
-   call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID,VAR_ID)),ID,VAR=VAR)
+      !
+      call h5dclose_f(dataset_id, hdferr)
+    endif
+    !
+    call h5sclose_f(dataspace_id, hdferr)
+    deallocate(dims)
+    !
+  else if (read_is_on(ID)) then
+    !
+    ! Open dataset for reading
+    call h5dopen_f(file_id, VAR, dataset_id, hdferr)
+    call hdf5_call(hdferr, ID, VAR=VAR)
+    call h5dclose_f(dataset_id, hdferr)
+    !
 #if defined _HDF5_COMPRESSION
-   call netcdf_call(nf90_inq_var_deflate(io_unit(ID),io_netcdf_var(ID,VAR_ID),shuffle,deflate,deflate_level),ID,VAR=VAR)
+    ! Check compression settings
+    call h5dget_create_plist_f(dataset_id, plist_id, hdferr)
+    call h5pget_shuffle_f(plist_id, shuffle, hdferr)
+    call h5pget_deflate_f(plist_id, deflate, deflate_level, hdferr)
+    call hdf5_call(hdferr, ID, VAR=VAR)
 #endif
-   !
- endif
- !
- return
- !
+    !
+  endif
+  !
+  return
+  !
 end subroutine def_variable_bulk

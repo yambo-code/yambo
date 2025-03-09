@@ -7,7 +7,6 @@
 !
 module pars
  !
- use netcdf
  use hdf5
  use iso_fortran_env, ONLY:int32,int64,real32,real64
  !

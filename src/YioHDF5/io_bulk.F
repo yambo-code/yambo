@@ -54,42 +54,42 @@ subroutine io_bulk(ID, VAR, VAR_SZ, I0, I1, I2, I3, I4, I5, &
   if (present(VAR) .and. present(VAR_SZ)) then
     if (write_is_on(ID)) then
       ! Create or open the HDF5 file
-      call h5fcreate_f(trim(io_file(ID)), H5F_ACC_TRUNC_F, file_id, ierr)
-      call hdf5_call(ierr, ID, VAR=VAR)
+!      call h5fcreate_f(trim(io_file(ID)), H5F_ACC_TRUNC_F, file_id, ierr)
+!      call hdf5_call(ierr, ID, VAR=VAR)
       !
       ! Create dimensions
       allocate(var_dim(size(VAR_SZ)))
       allocate(hdf5_dims(size(VAR_SZ)))
       do j1 = 1, size(VAR_SZ)
-        var_dim(j1) = hdf5_dim(ID, VAR_SZ(j1))
+!        var_dim(j1) = hdf5_dim(ID, VAR_SZ(j1))
         hdf5_dims(j1) = VAR_SZ(j1)
       end do
       !
       ! Create dataspace
-      call h5screate_simple_f(size(VAR_SZ), hdf5_dims, dspace_id, ierr)
-      call hdf5_call(ierr, ID, VAR=VAR)
+!      call h5screate_simple_f(size(VAR_SZ), hdf5_dims, dspace_id, ierr)
+!      call hdf5_call(ierr, ID, VAR=VAR)
       !
       ! Create dataset
-      call h5dcreate_f(file_id, VAR, H5T_NATIVE_FLOAT, dspace_id, dset_id, ierr)
-      call hdf5_call(ierr, ID, VAR=VAR)
+!      call h5dcreate_f(file_id, VAR, H5T_NATIVE_FLOAT, dspace_id, dset_id, ierr)
+!      call hdf5_call(ierr, ID, VAR=VAR)
       !
       ! Close resources
-      call h5sclose_f(dspace_id, ierr)
-      call h5dclose_f(dset_id, ierr)
-      call h5fclose_f(file_id, ierr)
+!      call h5sclose_f(dspace_id, ierr)
+!      call h5dclose_f(dset_id, ierr)
+!      call h5fclose_f(file_id, ierr)
       deallocate(var_dim, hdf5_dims)
     else if (read_is_on(ID)) then
       ! Open the HDF5 file
-      call h5fopen_f(trim(io_file(ID)), H5F_ACC_RDONLY_F, file_id, ierr)
-      call hdf5_call(ierr, ID, VAR=VAR)
+!      call h5fopen_f(trim(io_file(ID)), H5F_ACC_RDONLY_F, file_id, ierr)
+!      call hdf5_call(ierr, ID, VAR=VAR)
       !
       ! Open dataset
-      call h5dopen_f(file_id, VAR, dset_id, ierr)
-      call hdf5_call(ierr, ID, VAR=VAR)
+!      call h5dopen_f(file_id, VAR, dset_id, ierr)
+!      call hdf5_call(ierr, ID, VAR=VAR)
       !
       ! Close resources
-      call h5dclose_f(dset_id, ierr)
-      call h5fclose_f(file_id, ierr)
+!      call h5dclose_f(dset_id, ierr)
+!      call h5fclose_f(file_id, ierr)
     end if
     return
   end if
@@ -116,68 +116,68 @@ subroutine io_bulk(ID, VAR, VAR_SZ, I0, I1, I2, I3, I4, I5, &
   !
   if (present(L0)) then
     if (write_is_on(ID)) then
-      call h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, L0, (/1/), ierr)
+!      call h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, L0, (/1/), ierr)
     else if (read_is_on(ID)) then
-      call h5dread_f(dset_id, H5T_NATIVE_INTEGER, L0, (/1/), ierr)
+!      call h5dread_f(dset_id, H5T_NATIVE_INTEGER, L0, (/1/), ierr)
     end if
-    call hdf5_call(ierr, ID, VAR=VAR)
+!    call hdf5_call(ierr, ID, VAR=VAR)
   end if
   !
   ! Integer numbers / vectors / matrices
   !
   if (present(I0)) then
     if (write_is_on(ID)) then
-      call h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, I0, (/1/), ierr)
+!      call h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, I0, (/1/), ierr)
     else if (read_is_on(ID)) then
-      call h5dread_f(dset_id, H5T_NATIVE_INTEGER, I0, (/1/), ierr)
+!      call h5dread_f(dset_id, H5T_NATIVE_INTEGER, I0, (/1/), ierr)
     end if
-    call hdf5_call(ierr, ID, VAR=VAR)
+!    call hdf5_call(ierr, ID, VAR=VAR)
   end if
   !
   ! Real numbers / vectors / matrices
   !
   if (present(R0)) then
     if (write_is_on(ID)) then
-      call h5dwrite_f(dset_id, H5T_NATIVE_FLOAT, R0, (/1/), ierr)
+!      call h5dwrite_f(dset_id, H5T_NATIVE_FLOAT, R0, (/1/), ierr)
     else if (read_is_on(ID)) then
-      call h5dread_f(dset_id, H5T_NATIVE_FLOAT, R0, (/1/), ierr)
+!      call h5dread_f(dset_id, H5T_NATIVE_FLOAT, R0, (/1/), ierr)
     end if
-    call hdf5_call(ierr, ID, VAR=VAR)
+!    call hdf5_call(ierr, ID, VAR=VAR)
   end if
   !
   ! Double precision numbers / vectors / matrices
   !
   if (present(D0)) then
     if (write_is_on(ID)) then
-      call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, D0, (/1/), ierr)
+!      call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, D0, (/1/), ierr)
     else if (read_is_on(ID)) then
-      call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, D0, (/1/), ierr)
+!      call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, D0, (/1/), ierr)
     end if
-    call hdf5_call(ierr, ID, VAR=VAR)
+!    call hdf5_call(ierr, ID, VAR=VAR)
   end if
   !
   ! Complex numbers / vectors / matrices
   !
   if (present(C0)) then
-    call C_F_POINTER(C_LOC(C0), RC0, (/2/))
+!    call C_F_POINTER(C_LOC(C0), RC0, (/2/))
     if (write_is_on(ID)) then
-      call h5dwrite_f(dset_id, H5T_NATIVE_FLOAT, RC0, (/1/), (/2/), ierr)
+!      call h5dwrite_f(dset_id, H5T_NATIVE_FLOAT, RC0, (/1/), (/2/), ierr)
     else if (read_is_on(ID)) then
-      call h5dread_f(dset_id, H5T_NATIVE_FLOAT, RC0, (/1/), (/2/), ierr)
+!      call h5dread_f(dset_id, H5T_NATIVE_FLOAT, RC0, (/1/), (/2/), ierr)
     end if
-    call hdf5_call(ierr, ID, VAR=VAR)
+!    call hdf5_call(ierr, ID, VAR=VAR)
   end if
   !
   ! Double precision complex numbers / vectors / matrices
   !
   if (present(Z0)) then
-    call C_F_POINTER(C_LOC(Z0), RZ0, (/2/))
+!    call C_F_POINTER(C_LOC(Z0), RZ0, (/2/))
     if (write_is_on(ID)) then
-      call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, RZ0, (/1/), (/2/), ierr)
+!      call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, RZ0, (/1/), (/2/), ierr)
     else if (read_is_on(ID)) then
-      call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, RZ0, (/1/), (/2/), ierr)
+!      call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, RZ0, (/1/), (/2/), ierr)
     end if
-    call hdf5_call(ierr, ID, VAR=VAR)
+!    call hdf5_call(ierr, ID, VAR=VAR)
   end if
   !
   ! Close resources
@@ -185,7 +185,7 @@ subroutine io_bulk(ID, VAR, VAR_SZ, I0, I1, I2, I3, I4, I5, &
   if (allocated(isize_loc)) deallocate(isize_loc)
   !
   ! Finalize HDF5
-  call h5close_f(ierr)
-  call hdf5_call(ierr, ID, VAR=VAR)
+!  call h5close_f(ierr)
+!  call hdf5_call(ierr, ID, VAR=VAR)
   !
 end subroutine io_bulk

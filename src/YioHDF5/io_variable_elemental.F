@@ -73,7 +73,7 @@ subroutine io_variable_elemental(ID, VAR, CHECK, WARN, OP, &
   !
   i_err = 0
   VERIFY_ = (read_is_on(ID) .and. (io_mode(ID) == VERIFY .and. present(OP))) .or. &
-            (read_is_on(ID) .and. (CHECK_ .and. present(OP))
+            (read_is_on(ID) .and. (CHECK_ .and. present(OP)))
   !
   WARN_ = .false.
   if (present(WARN)) WARN_ = WARN
@@ -107,11 +107,11 @@ subroutine io_variable_elemental(ID, VAR, CHECK, WARN, OP, &
     i_db(1) = I0
     !
     dims = (/SZ/)
-    call h5dopen_f(file_id, VAR, dataset_id, hdferr)
+!    call h5dopen_f(file_id, VAR, dataset_id, hdferr)
     if (hdferr /= 0) call handle_error(hdferr)
     !
-    if (write_is_on(ID)) call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, i_db(1), dims, hdferr)
-    if (read_is_on(ID)) call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, i_db(1), dims, hdferr)
+!    if (write_is_on(ID)) call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, i_db(1), dims, hdferr)
+!    if (read_is_on(ID)) call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, i_db(1), dims, hdferr)
     !
     io_rec_pos(ID) = io_rec_pos(ID) + SZ
     call hdf5_call(hdferr, ID)
@@ -139,11 +139,11 @@ subroutine io_variable_elemental(ID, VAR, CHECK, WARN, OP, &
   i_db(1:SZ) = I1
   !
   dims = (/SZ/)
-  call h5dopen_f(file_id, VAR, dataset_id, hdferr)
+!  call h5dopen_f(file_id, VAR, dataset_id, hdferr)
   if (hdferr /= 0) call handle_error(hdferr)
   !
-  if (write_is_on(ID)) call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, i_db(1:SZ), dims, hdferr)
-  if (read_is_on(ID)) call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, i_db(1:SZ), dims, hdferr)
+!  if (write_is_on(ID)) call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, i_db(1:SZ), dims, hdferr)
+!  if (read_is_on(ID)) call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, i_db(1:SZ), dims, hdferr)
   !
   io_rec_pos(ID) = io_rec_pos(ID) + SZ
   call hdf5_call(hdferr, ID)
@@ -158,7 +158,7 @@ subroutine io_variable_elemental(ID, VAR, CHECK, WARN, OP, &
     call IO_desc_add(DESCRIPTOR, 'i', VAR, SZ=SZ, I=I1, ops=OP, check=CHECK_, term=TERMINATOR)
   endif
   !
-   call h5dclose_f(dataset_id, hdferr)
+!   call h5dclose_f(dataset_id, hdferr)
    if (hdferr /= 0) call handle_error(hdferr)
   !
   endif
@@ -174,8 +174,8 @@ subroutine io_variable_elemental(ID, VAR, CHECK, WARN, OP, &
   call h5dopen_f(file_id, VAR, dataset_id, hdferr)
   if (hdferr /= 0) call handle_error(hdferr)
   !
-  if (write_is_on(ID)) call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, r_db(1), dims, hdferr)
-  if (read_is_on(ID)) call h5dread_f(dataset_id, H5T_NATIVE_REAL, r_db(1), dims, hdferr)
+!  if (write_is_on(ID)) call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, r_db(1), dims, hdferr)
+!  if (read_is_on(ID)) call h5dread_f(dataset_id, H5T_NATIVE_REAL, r_db(1), dims, hdferr)
   !
   io_rec_pos(ID) = io_rec_pos(ID) + SZ
   call hdf5_call(hdferr, ID)
@@ -203,14 +203,14 @@ endif
   r_db(1:SZ) = R1
   !
   dims = (/SZ/)
-  call h5dopen_f(file_id, VAR, dataset_id, hdferr)
+!  call h5dopen_f(file_id, VAR, dataset_id, hdferr)
   if (hdferr /= 0) call handle_error(hdferr)
   !
-  if (write_is_on(ID)) call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, r_db(1:SZ), dims, hdferr)
-  if (read_is_on(ID)) call h5dread_f(dataset_id, H5T_NATIVE_REAL, r_db(1:SZ), dims, hdferr)
+!  if (write_is_on(ID)) call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, r_db(1:SZ), dims, hdferr)
+!  if (read_is_on(ID)) call h5dread_f(dataset_id, H5T_NATIVE_REAL, r_db(1:SZ), dims, hdferr)
   !
   io_rec_pos(ID) = io_rec_pos(ID) + SZ
-  call hdf5_call(hdferr, ID)
+!  call hdf5_call(hdferr, ID)
   !
   if (DUMP_) R1 = r_db(1:SZ)
   if (present(DB_R1)) DB_R1 = r_db(1:SZ)
@@ -222,7 +222,7 @@ endif
     call IO_desc_add(DESCRIPTOR, 'r', VAR, SZ=SZ, R=R1 * local_unit, ops=OP, check=CHECK_, term=TERMINATOR)
   endif
   !
-  call h5dclose_f(dataset_id, hdferr)
+!  call h5dclose_f(dataset_id, hdferr)
   if (hdferr /= 0) call handle_error(hdferr)
   !
 endif
@@ -235,11 +235,11 @@ endif
   d_db(1) = D0
   !
   dims = (/SZ/)
-  call h5dopen_f(file_id, VAR, dataset_id, hdferr)
+!  call h5dopen_f(file_id, VAR, dataset_id, hdferr)
   if (hdferr /= 0) call handle_error(hdferr)
   !
-  if (write_is_on(ID)) call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, d_db(1), dims, hdferr)
-  if (read_is_on(ID)) call h5dread_f(dataset_id, H5T_NATIVE_DOUBLE, d_db(1), dims, hdferr)
+!  if (write_is_on(ID)) call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, d_db(1), dims, hdferr)
+!  if (read_is_on(ID)) call h5dread_f(dataset_id, H5T_NATIVE_DOUBLE, d_db(1), dims, hdferr)
   !
   io_rec_pos(ID) = io_rec_pos(ID) + SZ
   call hdf5_call(hdferr, ID)
@@ -251,10 +251,10 @@ endif
   ! DESCRIPTOR
   !
   if (present(DESCRIPTOR)) then
-    call IO_desc_add(DESCRIPTOR, 'd', VAR, D=D0 * local_unit, ops=OP, check=CHECK_, term=TERMINATOR)
+!    call IO_desc_add(DESCRIPTOR, 'd', VAR, D=D0 * local_unit, ops=OP, check=CHECK_, term=TERMINATOR)
   endif
   !
-  call h5dclose_f(dataset_id, hdferr)
+!  call h5dclose_f(dataset_id, hdferr)
   if (hdferr /= 0) call handle_error(hdferr)
   !
 endif
@@ -268,14 +268,14 @@ endif
   call C_F_POINTER(C_LOC(c_db(1)), rc_db, (/2 * SZ/))
   !
   dims = (/2 * SZ/)
-  call h5dopen_f(file_id, VAR, dataset_id, hdferr)
+!  call h5dopen_f(file_id, VAR, dataset_id, hdferr)
   if (hdferr /= 0) call handle_error(hdferr)
   !
-  if (write_is_on(ID)) call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, rc_db(1:2 * SZ), dims, hdferr)
-  if (read_is_on(ID)) call h5dread_f(dataset_id, H5T_NATIVE_REAL, rc_db(1:2 * SZ), dims, hdferr)
+!  if (write_is_on(ID)) call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, rc_db(1:2 * SZ), dims, hdferr)
+!  if (read_is_on(ID)) call h5dread_f(dataset_id, H5T_NATIVE_REAL, rc_db(1:2 * SZ), dims, hdferr)
   !
   io_rec_pos(ID) = io_rec_pos(ID) + 2 * SZ
-  call hdf5_call(hdferr, ID)
+!  call hdf5_call(hdferr, ID)
   !
   if (DUMP_) C0 = cmplx(rc_db(1), rc_db(2))
   if (present(DB_C0)) DB_C0 = cmplx(rc_db(1), rc_db(2))
@@ -287,7 +287,7 @@ endif
     call IO_desc_add(DESCRIPTOR, 'c', VAR, C=C0 * local_unit, ops=OP, check=CHECK_, term=TERMINATOR)
   endif
   !
-  call h5dclose_f(dataset_id, hdferr)
+!  call h5dclose_f(dataset_id, hdferr)
   if (hdferr /= 0) call handle_error(hdferr)
   !
 endif
@@ -300,14 +300,14 @@ endif
   l_db(1) = log2int(L0)
   !
   dims = (/SZ/)
-  call h5dopen_f(file_id, VAR, dataset_id, hdferr)
+!  call h5dopen_f(file_id, VAR, dataset_id, hdferr)
   if (hdferr /= 0) call handle_error(hdferr)
   !
-  if (write_is_on(ID)) call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, l_db(1), dims, hdferr)
-  if (read_is_on(ID)) call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, l_db(1), dims, hdferr)
+!  if (write_is_on(ID)) call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, l_db(1), dims, hdferr)
+!  if (read_is_on(ID)) call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, l_db(1), dims, hdferr)
   !
   io_rec_pos(ID) = io_rec_pos(ID) + SZ
-  call hdf5_call(hdferr, ID)
+!  call hdf5_call(hdferr, ID)
   !
   if (DUMP_) L0 = int2log(l_db(1))
   if (present(DB_L0)) DB_L0 = int2log(l_db(1))
@@ -337,11 +337,11 @@ endif
   ch_db(1) = CH0
   !
   dims = (/SZ * schlen/)
-  call h5dopen_f(file_id, VAR, dataset_id, hdferr)
+!  call h5dopen_f(file_id, VAR, dataset_id, hdferr)
   if (hdferr /= 0) call handle_error(hdferr)
   !
-  if (write_is_on(ID)) call h5dwrite_f(dataset_id, H5T_NATIVE_CHARACTER, ch_db(1), dims, hdferr)
-  if (read_is_on(ID)) call h5dread_f(dataset_id, H5T_NATIVE_CHARACTER, ch_db(1), dims, hdferr)
+!  if (write_is_on(ID)) call h5dwrite_f(dataset_id, H5T_NATIVE_CHARACTER, ch_db(1), dims, hdferr)
+!  if (read_is_on(ID)) call h5dread_f(dataset_id, H5T_NATIVE_CHARACTER, ch_db(1), dims, hdferr)
   !
   io_rec_pos(ID) = io_rec_pos(ID) + SZ * schlen
   call hdf5_call(hdferr, ID)
@@ -363,12 +363,12 @@ endif
   !    
   ! Close the HDF5 file
   !
-  call h5fclose_f(file_id, hdferr)
+!  call h5fclose_f(file_id, hdferr)
   if (hdferr /= 0) call handle_error(hdferr)
   !
   ! Finalize HDF5
   !
-  call h5close_f(hdferr)
+!  call h5close_f(hdferr)
   if (hdferr /= 0) call handle_error(hdferr)
   !
   ! STATUS
@@ -391,6 +391,8 @@ endif
     if (present(L0)) call msg(msg_where, msg_, l_db(1) == 1, after_msg=TERMINATOR)
     if (present(CH0)) call msg(msg_where, msg_, trim(ch_db(1)), after_msg=TERMINATOR)
   endif
+  !
+  contains    
   !
   subroutine handle_error(hdferr)
     integer, intent(in) :: hdferr

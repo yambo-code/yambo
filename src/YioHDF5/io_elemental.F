@@ -140,8 +140,8 @@ subroutine io_elemental(ID, VAR, VAR_SZ, CHECK, WARN, OP, I0, DB_I0, I1, DB_I1, 
       if (present(DB_I0)) DB_I0 = I0
       if (present(VAR)) call msg(msg_where, com_compose_msg(" ", VAR), I0, after_msg=TERM_)
     else if (read_is_on(ID)) then
-      call h5dread_f(dset_id, H5T_NATIVE_INTEGER, i_db(1), (/io_rec_pos(ID)/), ierr)
-      call hdf5_call(ierr, ID)
+!      call h5dread_f(dset_id, H5T_NATIVE_INTEGER, i_db(1), (/io_rec_pos(ID)/), ierr)
+!      call hdf5_call(ierr, ID)
       if (DUMP_)          I0 = i_db(1)
       if (present(DB_I0)) DB_I0 = i_db(1)
       ch = ""

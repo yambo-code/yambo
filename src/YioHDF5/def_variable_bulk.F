@@ -71,35 +71,35 @@ subroutine def_variable_bulk(ID, VAR, VAR_ID, VAR_SZ, VAR_KIND, dim_names, par_i
       endif
     enddo
     !
-    call h5screate_simple_f(size(dims), dims, dataspace_id, hdferr)
-    call hdf5_call(hdferr, ID, VAR=VAR)
+!    call h5screate_simple_f(size(dims), dims, dataspace_id, hdferr)
+!    call hdf5_call(hdferr, ID, VAR=VAR)
     !
     ! Check if dataset already exists
-    hdferr = h5dopen_f(file_id, VAR, dataset_id, hdferr)
+!    hdferr = h5dopen_f(file_id, VAR, dataset_id, hdferr)
     if (hdferr >= 0) then
       ! Dataset exists, check dimensions
       integer(hsize_t), allocatable :: existing_dims(:)
       integer :: ndims
-      call h5dget_space_f(dataset_id, dataspace_id, hdferr)
-      call h5sget_simple_extent_ndims_f(dataspace_id, ndims, hdferr)
+!      call h5dget_space_f(dataset_id, dataspace_id, hdferr)
+!      call h5sget_simple_extent_ndims_f(dataspace_id, ndims, hdferr)
       allocate(existing_dims(ndims))
-      call h5sget_simple_extent_dims_f(dataspace_id, existing_dims, hdferr)
+!      call h5sget_simple_extent_dims_f(dataspace_id, existing_dims, hdferr)
       if (any(dims /= existing_dims)) then
         call error(' Trying to overwrite variable '//trim(VAR)//' in '//trim(io_file(ID))//' with wrong dimensions ')
       endif
       if (.not. silent_) call warning(' Overwriting variable '//trim(VAR)//' in file '//trim(io_file(ID)))
       deallocate(existing_dims)
-      call h5dclose_f(dataset_id, hdferr)
+!      call h5dclose_f(dataset_id, hdferr)
     else
       ! Dataset does not exist, create it
       if (.not. silent_) call warning(' Re-defining variable '//trim(VAR)//' in file '//trim(io_file(ID)))
-      call h5dcreate_f(file_id, VAR, hdf5_var_kind, dataspace_id, dataset_id, hdferr)
+!      call h5dcreate_f(file_id, VAR, hdf5_var_kind, dataspace_id, dataset_id, hdferr)
       call hdf5_call(hdferr, ID, VAR=VAR)
       !
 #if defined _PAR_IO
       if (present(par_io_kind) .and. io_PAR_comm(ID) /= mpi_comm_null) then
-        call h5pcreate_f(H5P_DATASET_XFER_F, plist_id, hdferr)
-        call h5pset_dxpl_mpio_f(plist_id, hdf5_par_io_kind, hdferr)
+!        call h5pcreate_f(H5P_DATASET_XFER_F, plist_id, hdferr)
+!        call h5pset_dxpl_mpio_f(plist_id, hdf5_par_io_kind, hdferr)
         call hdf5_call(hdferr, ID, VAR=VAR)
       endif
       !
@@ -108,8 +108,8 @@ subroutine def_variable_bulk(ID, VAR, VAR_ID, VAR_SZ, VAR_KIND, dim_names, par_i
         if (product(chunksize) > 0) then
           allocate(chunk_dims(size(chunksize)))
           chunk_dims = chunksize
-          call h5pcreate_f(H5P_DATASET_CREATE_F, plist_id, hdferr)
-          call h5pset_chunk_f(plist_id, size(chunk_dims), chunk_dims, hdferr)
+!          call h5pcreate_f(H5P_DATASET_CREATE_F, plist_id, hdferr)
+!          call h5pset_chunk_f(plist_id, size(chunk_dims), chunk_dims, hdferr)
           call hdf5_call(hdferr, ID, VAR=VAR)
           deallocate(chunk_dims)
         endif
@@ -121,30 +121,30 @@ subroutine def_variable_bulk(ID, VAR, VAR_ID, VAR_SZ, VAR_KIND, dim_names, par_i
       shuffle = 1
       deflate = 1
       deflate_level = 2
-      call h5pset_shuffle_f(plist_id, hdferr)
-      call h5pset_deflate_f(plist_id, deflate_level, hdferr)
-      call hdf5_call(hdferr, ID, VAR=VAR)
+!      call h5pset_shuffle_f(plist_id, hdferr)
+!      call h5pset_deflate_f(plist_id, deflate_level, hdferr)
+!      call hdf5_call(hdferr, ID, VAR=VAR)
 #endif
       !
-      call h5dclose_f(dataset_id, hdferr)
+!      call h5dclose_f(dataset_id, hdferr)
     endif
     !
-    call h5sclose_f(dataspace_id, hdferr)
+!    call h5sclose_f(dataspace_id, hdferr)
     deallocate(dims)
     !
   else if (read_is_on(ID)) then
     !
     ! Open dataset for reading
-    call h5dopen_f(file_id, VAR, dataset_id, hdferr)
-    call hdf5_call(hdferr, ID, VAR=VAR)
-    call h5dclose_f(dataset_id, hdferr)
+!    call h5dopen_f(file_id, VAR, dataset_id, hdferr)
+!    call hdf5_call(hdferr, ID, VAR=VAR)
+!    call h5dclose_f(dataset_id, hdferr)
     !
 #if defined _HDF5_COMPRESSION
     ! Check compression settings
-    call h5dget_create_plist_f(dataset_id, plist_id, hdferr)
-    call h5pget_shuffle_f(plist_id, shuffle, hdferr)
-    call h5pget_deflate_f(plist_id, deflate, deflate_level, hdferr)
-    call hdf5_call(hdferr, ID, VAR=VAR)
+!    call h5dget_create_plist_f(dataset_id, plist_id, hdferr)
+!    call h5pget_shuffle_f(plist_id, shuffle, hdferr)
+!    call h5pget_deflate_f(plist_id, deflate, deflate_level, hdferr)
+!    call hdf5_call(hdferr, ID, VAR=VAR)
 #endif
     !
   endif

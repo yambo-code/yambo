@@ -67,35 +67,35 @@ subroutine def_variable_elemental(ID, VAR, VAR_SZ, VAR_KIND, MENU, dim_names, pa
       ! Create dataset
       if (VAR_KIND == 0) then
         allocate(dims(2))
-        dims = [hdf5_dim(ID, schlen), hdf5_dim(ID, VAR_SZ)]
+!        dims = [hdf5_dim(ID, schlen), hdf5_dim(ID, VAR_SZ)]
       else
         allocate(dims(1))
-        dims = [hdf5_dim(ID, VAR_SZ)]
+!        dims = [hdf5_dim(ID, VAR_SZ)]
       endif
       !
-      call h5screate_simple_f(size(dims), dims, dataspace_id, hdferr)
-      call hdf5_call(hdferr, ID, VAR=VAR)
+!      call h5screate_simple_f(size(dims), dims, dataspace_id, hdferr)
+!      call hdf5_call(hdferr, ID, VAR=VAR)
       !
-      call h5dcreate_f(file_id, VAR, hdf5_var_kind, dataspace_id, dataset_id, hdferr)
-      call hdf5_call(hdferr, ID, VAR=VAR)
+!      call h5dcreate_f(file_id, VAR, hdf5_var_kind, dataspace_id, dataset_id, hdferr)
+!      call hdf5_call(hdferr, ID, VAR=VAR)
       !
-      call h5sclose_f(dataspace_id, hdferr)
-      call h5dclose_f(dataset_id, hdferr)
+!      call h5sclose_f(dataspace_id, hdferr)
+!      call h5dclose_f(dataset_id, hdferr)
       deallocate(dims)
       !
 #if defined _PAR_IO
       if (present(par_io_kind) .and. ncpu > 1) then
-        call h5pcreate_f(H5P_DATASET_XFER_F, plist_id, hdferr)
-        call h5pset_dxpl_mpio_f(plist_id, hdf5_par_io_kind, hdferr)
-        call hdf5_call(hdferr, ID, VAR=VAR)
+!        call h5pcreate_f(H5P_DATASET_XFER_F, plist_id, hdferr)
+!        call h5pset_dxpl_mpio_f(plist_id, hdf5_par_io_kind, hdferr)
+!        call hdf5_call(hdferr, ID, VAR=VAR)
       endif
 #endif
       !
     else if (read_is_on(ID)) then
       ! Open dataset
-      call h5dopen_f(file_id, VAR, dataset_id, hdferr)
-      call hdf5_call(hdferr, ID, VAR=VAR)
-      call h5dclose_f(dataset_id, hdferr)
+!      call h5dopen_f(file_id, VAR, dataset_id, hdferr)
+!      call hdf5_call(hdferr, ID, VAR=VAR)
+!      call h5dclose_f(dataset_id, hdferr)
     endif
     !
   endif

@@ -413,6 +413,8 @@ module IO_m
      !
    end function file_is_present
    !
+#if !defined _YIO_HDF5
+   !    
    logical function NETCDF_file_is_open(ID)
      integer, optional :: ID
      integer :: NC_ERR
@@ -422,6 +424,34 @@ module IO_m
      NETCDF_file_is_open=NC_ERR==NF90_NOERR
    end function
    !
+#else
+   !
+   logical function HDF5_file_is_open(file_id)
+     use hdf5
+     implicit none
+     integer(HID_T), optional :: file_id  ! HDF5 file identifier
+     integer :: error, obj_type
+     logical :: is_valid
+     !
+     HDF5_file_is_open = .false.
+     !
+     ! Return false if no file_id is provided
+     if (.not. present(file_id)) return
+     !
+     ! Check if the identifier is valid
+     call h5iis_valid_f(file_id, is_valid, error)
+     if (error /= 0 .or. .not. is_valid) return
+     !
+     ! Verify this is actually a file identifier
+     call h5iget_type_f(file_id, obj_type, error)
+     !
+     if (error == 0 .and. obj_type == H5I_FILE_F) then
+       HDF5_file_is_open = .true.
+     end if
+   end function HDF5_file_is_open
+   !
+#endif
+   !
    logical function PLAIN_file_is_open(filename)
      character(*) :: filename
      PLAIN_file_is_open=.FALSE.
@@ -429,6 +459,7 @@ module IO_m
      INQUIRE (FILE=trim(filename),OPENED=PLAIN_file_is_open)
    end function
    !
+#if !defined _YIO_HDF5
    subroutine netcdf_call(status,ID,VAR,ID_VAR)
      integer,      intent (in)           :: status
      integer,      intent (in)           :: ID
@@ -454,6 +485,8 @@ module IO_m
        call error(trim(msg))
      end if
    end subroutine
+   !    
+#else
    !
    subroutine hdf5_call(status,ID,VAR,ID_VAR)
            use hdf5
@@ -543,6 +576,10 @@ module IO_m
      !			  
    end
    !
+#endif
+   !
+#if !defined _YIO_HDF5
+   !			  
    integer function netcdf_dim_size(ID,DIMNAME)
      ! Returns the value of the specified dim of a variable
      integer,      intent(in)    :: ID
@@ -553,6 +590,8 @@ module IO_m
      if(nf90_err/=NF90_NOERR) return
      nf90_err=nf90_inquire_dimension(io_unit(ID),NF90_DIM_ID, name = dimname, len = netcdf_dim_size)
    end function
+   !
+#else
    !
    integer function hdf5_dim_size(file_id, dim_name)
     use hdf5
@@ -593,6 +632,10 @@ module IO_m
     call h5dclose_f(dataset_id, status)
    end function hdf5_dim_size     
    !
+#endif
+   !
+#if !defined _YIO_HDF5
+   !
    integer function netcdf_dim(ID,DIM,dim_name)
      ! Returns the ID of the netcdf dimension
      integer,intent(in)         :: ID,DIM
@@ -606,6 +649,8 @@ module IO_m
      nf90_err=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
      if (nf90_err/=NF90_NOERR) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
    end function
+   !
+#else
    !
    integer function hdf5_dim(file_id, dims, dim_name)
      use hdf5
@@ -647,6 +692,10 @@ module IO_m
      call h5dclose_f(dataset_id, status)
    end function hdf5_dim     
    !
+#endif
+   !
+#if !defined _YIO_HDF5
+   !
    logical function variable_exist(ID,var_name,var_ID)
      integer,           intent ( in) :: ID
      character(*),      intent ( in) :: var_name
@@ -660,6 +709,8 @@ module IO_m
        if(.not.variable_exist) var_ID=-1
      endif
    end function
+   !
+#else
    !
    logical function variable_exist_hdf5(file_id, var_name, var_id)
     use hdf5
@@ -684,7 +735,9 @@ module IO_m
         if (present(var_id)) var_id = -1
     endif
    end function variable_exist_hdf5
-   !    
+   !
+#endif	
+   !  
    subroutine deliver_IO_error_message(i_err,DB,STOP_it)
      !
      integer          :: i_err

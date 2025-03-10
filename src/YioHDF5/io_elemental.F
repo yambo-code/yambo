@@ -9,7 +9,7 @@ subroutine io_elemental(ID, VAR, VAR_SZ, CHECK, WARN, OP, I0, DB_I0, I1, DB_I1, 
                         R0, DB_R0, R1, DB_R1, D0, DB_D0, C0, DB_C0, CH0, DB_CH0, CH1, L0, DB_L0, UNIT, MENU, &
                         DESCRIPTOR, DO_NOT_DUMP, TERMINATOR)
   !
-  use pars,          ONLY: SP, DP, schlen, lchlen, DB_menu_length
+  use pars,          ONLY: SP, DP, schlen, lchlen, DB_menu_length,H5T_NATIVE_SP
   use iso_c_binding, ONLY: C_LOC, C_F_POINTER
   use hdf5
 #if !defined _io_lib
@@ -89,18 +89,18 @@ subroutine io_elemental(ID, VAR, VAR_SZ, CHECK, WARN, OP, I0, DB_I0, I1, DB_I1, 
         call hdf5_call(ierr, ID, VAR=VAR)
         !
         ! Create dimensions
-        allocate(hdf5_dims(size(VAR_SZ)))
-        hdf5_dims = VAR_SZ
+        allocate(hdf5_dims(1))
+        hdf5_dims(1) = VAR_SZ
         !
         ! Create dataspace
-        call h5screate_simple_f(size(VAR_SZ), hdf5_dims, dspace_id, ierr)
+        call h5screate_simple_f(1, hdf5_dims, dspace_id, ierr)
         call hdf5_call(ierr, ID, VAR=VAR)
         !
         ! Create dataset
         if (present(CH0) .or. present(CH1)) then
           call h5dcreate_f(file_id, VAR, H5T_NATIVE_CHARACTER, dspace_id, dset_id, ierr)
         else
-          call h5dcreate_f(file_id, VAR, H5T_NATIVE_FLOAT, dspace_id, dset_id, ierr)
+          call h5dcreate_f(file_id, VAR, H5T_NATIVE_SP, dspace_id, dset_id, ierr)
         endif
         call hdf5_call(ierr, ID, VAR=VAR)
         !
@@ -209,12 +209,12 @@ subroutine io_elemental(ID, VAR, VAR_SZ, CHECK, WARN, OP, I0, DB_I0, I1, DB_I1, 
   !
   if (present(R0)) then
     if (write_is_on(ID)) then
-      call h5dwrite_f(dset_id, H5T_NATIVE_FLOAT, R0, (/io_rec_pos(ID)/), ierr)
+      call h5dwrite_f(dset_id, H5T_NATIVE_SP, R0, (/io_rec_pos(ID)/), ierr)
       call hdf5_call(ierr, ID)
       if (present(DB_R0)) DB_R0 = R0
       if (present(VAR)) call msg(msg_where, com_compose_msg(" ", VAR), R0 * local_unit, after_msg=TERM_)
     else if (read_is_on(ID)) then
-      call h5dread_f(dset_id, H5T_NATIVE_FLOAT, r_db(1), (/io_rec_pos(ID)/), ierr)
+      call h5dread_f(dset_id, H5T_NATIVE_SP, r_db(1), (/io_rec_pos(ID)/), ierr)
       call hdf5_call(ierr, ID)
       if (DUMP_)          R0 = r_db(1)
       if (present(DB_R0)) DB_R0 = r_db(1)
@@ -246,12 +246,12 @@ subroutine io_elemental(ID, VAR, VAR_SZ, CHECK, WARN, OP, I0, DB_I0, I1, DB_I1, 
   !
   if (present(R1)) then
     if (write_is_on(ID)) then
-      call h5dwrite_f(dset_id, H5T_NATIVE_FLOAT, R1, (/io_rec_pos(ID)/), ierr)
+      call h5dwrite_f(dset_id, H5T_NATIVE_SP, R1, (/io_rec_pos(ID)/), ierr)
       call hdf5_call(ierr, ID)
       if (present(DB_R1)) DB_R1 = R1
       if (present(VAR)) call msg(msg_where, com_compose_msg(" ", VAR), R1 * local_unit, after_msg=TERM_)
     else if (read_is_on(ID)) then
-      call h5dread_f(dset_id, H5T_NATIVE_FLOAT, r_db(:size(R1)), (/io_rec_pos(ID)/), ierr)
+      call h5dread_f(dset_id, H5T_NATIVE_SP, r_db(:size(R1)), (/io_rec_pos(ID)/), ierr)
       call hdf5_call(ierr, ID)
       if (DUMP_)          R1 = r_db(:size(R1))
       if (present(DB_R1)) DB_R1 = r_db(:size(R1))
@@ -321,7 +321,7 @@ subroutine io_elemental(ID, VAR, VAR_SZ, CHECK, WARN, OP, I0, DB_I0, I1, DB_I1, 
   if (present(C0)) then
     if (write_is_on(ID)) then
       call C_F_POINTER(C_LOC(C0), RC0, (/2/))
-      call h5dwrite_f(dset_id, H5T_NATIVE_FLOAT, RC0, (/1/), (/2/), ierr)
+      call h5dwrite_f(dset_id, H5T_NATIVE_SP, RC0, (/1/), (/2/), ierr)
       call hdf5_call(ierr, ID)
       r_from_c(1, 1) = real(C0)
       r_from_c(2, 1) = aimag(C0)
@@ -329,7 +329,7 @@ subroutine io_elemental(ID, VAR, VAR_SZ, CHECK, WARN, OP, I0, DB_I0, I1, DB_I1, 
       if (present(VAR)) call msg(msg_where, com_compose_msg(" ", VAR), r_from_c(:, 1) * local_unit, after_msg=TERM_)
     else if (read_is_on(ID)) then
       call C_F_POINTER(C_LOC(c_db), RC0, (/2/))
-      call h5dread_f(dset_id, H5T_NATIVE_FLOAT, RC0, (/1/), (/2/), ierr)
+      call h5dread_f(dset_id, H5T_NATIVE_SP, RC0, (/1/), (/2/), ierr)
       call hdf5_call(ierr, ID)
       r_from_c(1, 1) = real(C0)
       r_from_c(2, 1) = aimag(C0)

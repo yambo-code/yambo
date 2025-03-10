@@ -9,11 +9,14 @@ subroutine io_disconnect(ID, FORCE)
   !
   use IO_m,       ONLY: hdf5_call, PLAIN_file_is_open, HDF5_file_is_open, io_unit, io_type, &
                         close_is_on, io_status, IO_file, io_resetable, io_reset
-  use hdf5,       ONLY: h5fclose_f
+  use hdf5,       ONLY: h5fclose_f,HID_T
   !
   implicit none
   !
-  integer           :: ID, ierr
+
+  integer	    :: ID
+  integer(HID_T)    :: ID8
+  integer           :: ierr
   logical, optional :: FORCE
   logical           :: I_OPEN
   !
@@ -34,7 +37,8 @@ subroutine io_disconnect(ID, FORCE)
     if (I_OPEN) close(unit=io_unit(ID))
   else
     ! HDF5 file
-    I_OPEN = HDF5_file_is_open(ID)
+    ID8=int8(ID)
+    I_OPEN = HDF5_file_is_open(ID8)
     if (I_OPEN) then
       call h5fclose_f(io_unit(ID), ierr)
       call hdf5_call(ierr, ID)

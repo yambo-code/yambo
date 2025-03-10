@@ -8,7 +8,11 @@
 module pars
  !
 #if defined _YIO_HDF5
- use hdf5
+#if defined _DOUBLE
+ use hdf5, h5t_native_SP => h5t_native_real
+#else
+ use hdf5, h5t_native_SP => h5t_native_double
+#endif
 #else
  use netcdf
 #endif
@@ -79,15 +83,9 @@ module pars
  !
  ! NetCDF types
  !==============
+#if !defined _YIO_HDF5
 #if defined _DOUBLE
-#if defined _YIO_HDF5
- integer, parameter  :: nf90_SP = H5T_NATIVE_DOUBLE  
-#else
  integer, parameter  :: nf90_SP = nf90_double
-#endif
-#else
-#if defined _YIO_HDF5
- integer, parameter  :: nf90_SP = H5T_NATIVE_FLOAT 
 #else
  integer, parameter  :: nf90_SP = nf90_float
 #endif

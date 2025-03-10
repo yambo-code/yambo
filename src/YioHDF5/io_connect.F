@@ -33,6 +33,8 @@ integer function io_connect(desc, subfolder, type, no_full_RESET, FORCE_READ_MOD
   ! Work Space
   !
   integer          :: i_jobstr
+  integer          :: hdferr
+  integer(HID_T)   :: plist_id
   character(lchlen):: alternative_file(num_of_alternative_locations), folder
   character(schlen):: subfolder_
   logical          :: file_found, full_RESET, par_IO, write_mode, read_mode

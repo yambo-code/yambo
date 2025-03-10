@@ -101,18 +101,18 @@ integer function io_connect(desc, subfolder, type, no_full_RESET, FORCE_READ_MOD
     !
     if ((io_action(ID) == OP_APP_CL .or. io_action(ID) == OP_APP) .and. file_exists(trim(io_file(ID)))) then
       !
-      if (.not. par_IO) then
-        call h5fopen_f(trim(io_file(ID)), H5F_ACC_RDWR_F, io_unit(ID), hdferr)
-        call hdf5_call(hdferr, ID)
-      endif
+!      if (.not. par_IO) then
+!        call h5fopen_f(trim(io_file(ID)), H5F_ACC_RDWR_F, io_unit(ID), hdferr)
+!        call hdf5_call(hdferr, ID)
+!      endif
 #if defined _PAR_IO && defined _HDF5_IO
-      if (par_IO) then
-        call h5pcreate_f(H5P_FILE_ACCESS_F, plist_id, hdferr)
-        call h5pset_fapl_mpio_f(plist_id, io_PAR_comm(ID), MPI_INFO_NULL, hdferr)
-        call h5fopen_f(trim(io_file(ID)), H5F_ACC_RDWR_F, io_unit(ID), hdferr, access_prp=plist_id)
-        call hdf5_call(hdferr, ID)
-        call h5pclose_f(plist_id, hdferr)
-      endif
+!      if (par_IO) then
+!        call h5pcreate_f(H5P_FILE_ACCESS_F, plist_id, hdferr)
+!        call h5pset_fapl_mpio_f(plist_id, io_PAR_comm(ID), MPI_INFO_NULL, hdferr)
+!        call h5fopen_f(trim(io_file(ID)), H5F_ACC_RDWR_F, io_unit(ID), hdferr, access_prp=plist_id)
+!        call hdf5_call(hdferr, ID)
+!        call h5pclose_f(plist_id, hdferr)
+!      endif
 #else
       if (par_IO) call error(' Parallel COMM present in io_connect, but yambo compiled with serial IO')
 #endif
@@ -120,16 +120,16 @@ integer function io_connect(desc, subfolder, type, no_full_RESET, FORCE_READ_MOD
     else
       !
       if (.not. par_IO) then
-        call h5fcreate_f(trim(io_file(ID)), H5F_ACC_TRUNC_F, io_unit(ID), hdferr)
-        call hdf5_call(hdferr, ID)
+!        call h5fcreate_f(trim(io_file(ID)), H5F_ACC_TRUNC_F, io_unit(ID), hdferr)
+!        call hdf5_call(hdferr, ID)
       endif
 #if defined _PAR_IO && defined _HDF5_IO
       if (par_IO) then
-        call h5pcreate_f(H5P_FILE_ACCESS_F, plist_id, hdferr)
-        call h5pset_fapl_mpio_f(plist_id, io_PAR_comm(ID), MPI_INFO_NULL, hdferr)
-        call h5fcreate_f(trim(io_file(ID)), H5F_ACC_TRUNC_F, io_unit(ID), hdferr, access_prp=plist_id)
-        call hdf5_call(hdferr, ID)
-        call h5pclose_f(plist_id, hdferr)
+!        call h5pcreate_f(H5P_FILE_ACCESS_F, plist_id, hdferr)
+!        call h5pset_fapl_mpio_f(plist_id, io_PAR_comm(ID), MPI_INFO_NULL, hdferr)
+!        call h5fcreate_f(trim(io_file(ID)), H5F_ACC_TRUNC_F, io_unit(ID), hdferr, access_prp=plist_id)
+!        call hdf5_call(hdferr, ID)
+!        call h5pclose_f(plist_id, hdferr)
       endif
 #else
       if (par_IO) call error(' Parallel COMM present in io_connect, but yambo compiled with serial IO')
@@ -172,8 +172,8 @@ integer function io_connect(desc, subfolder, type, no_full_RESET, FORCE_READ_MOD
     if (type == -2 .or. type == -4) then
       open(unit=io_unit(ID), file=trim(io_file(ID)), form='unformatted')
     else
-      call h5fopen_f(trim(io_file(ID)), H5F_ACC_RDONLY_F, io_unit(ID), hdferr)
-      call hdf5_call(hdferr, ID)
+!      call h5fopen_f(trim(io_file(ID)), H5F_ACC_RDONLY_F, io_unit(ID), hdferr)
+!      call hdf5_call(hdferr, ID)
     endif
     !
   endif

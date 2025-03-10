@@ -85,42 +85,42 @@ subroutine io_elemental(ID, VAR, VAR_SZ, CHECK, WARN, OP, I0, DB_I0, I1, DB_I1, 
       ch = STRING_pack(MODE_, trim(io_file(ID)), "]", repeat('-', max(DB_menu_length - len_trim(io_file(ID)) - 4, 1)))
       if (write_is_on(ID)) then
         ! Create or open the HDF5 file
-        call h5fopen_f(trim(io_file(ID)), H5F_ACC_RDWR_F, file_id, ierr)
-        call hdf5_call(ierr, ID, VAR=VAR)
+!        call h5fopen_f(trim(io_file(ID)), H5F_ACC_RDWR_F, file_id, ierr)
+!        call hdf5_call(ierr, ID, VAR=VAR)
         !
         ! Create dimensions
         allocate(hdf5_dims(1))
         hdf5_dims(1) = VAR_SZ
         !
         ! Create dataspace
-        call h5screate_simple_f(1, hdf5_dims, dspace_id, ierr)
-        call hdf5_call(ierr, ID, VAR=VAR)
+!        call h5screate_simple_f(1, hdf5_dims, dspace_id, ierr)
+!        call hdf5_call(ierr, ID, VAR=VAR)
         !
         ! Create dataset
         if (present(CH0) .or. present(CH1)) then
-          call h5dcreate_f(file_id, VAR, H5T_NATIVE_CHARACTER, dspace_id, dset_id, ierr)
+!          call h5dcreate_f(file_id, VAR, H5T_NATIVE_CHARACTER, dspace_id, dset_id, ierr)
         else
-          call h5dcreate_f(file_id, VAR, H5T_NATIVE_SP, dspace_id, dset_id, ierr)
+!          call h5dcreate_f(file_id, VAR, H5T_NATIVE_SP, dspace_id, dset_id, ierr)
         endif
-        call hdf5_call(ierr, ID, VAR=VAR)
+!        call hdf5_call(ierr, ID, VAR=VAR)
         !
         ! Close resources
-        call h5sclose_f(dspace_id, ierr)
-        call h5dclose_f(dset_id, ierr)
-        call h5fclose_f(file_id, ierr)
+!        call h5sclose_f(dspace_id, ierr)
+!        call h5dclose_f(dset_id, ierr)
+!        call h5fclose_f(file_id, ierr)
         deallocate(hdf5_dims)
       else if (read_is_on(ID)) then
         ! Open the HDF5 file
-        call h5fopen_f(trim(io_file(ID)), H5F_ACC_RDONLY_F, file_id, ierr)
-        call hdf5_call(ierr, ID, VAR=VAR)
+!        call h5fopen_f(trim(io_file(ID)), H5F_ACC_RDONLY_F, file_id, ierr)
+!        call hdf5_call(ierr, ID, VAR=VAR)
         !
         ! Open dataset
-        call h5dopen_f(file_id, VAR, dset_id, ierr)
-        call hdf5_call(ierr, ID, VAR=VAR)
+!        call h5dopen_f(file_id, VAR, dset_id, ierr)
+!        call hdf5_call(ierr, ID, VAR=VAR)
         !
         ! Close resources
-        call h5dclose_f(dset_id, ierr)
-        call h5fclose_f(file_id, ierr)
+!        call h5dclose_f(dset_id, ierr)
+!        call h5fclose_f(file_id, ierr)
       endif
     else
       write (ch, '(a,i6.6,2a,3(a,i2.2),a,i5.5,a)') '- S/N ', io_serial_number(ID), ' ', &
@@ -135,8 +135,8 @@ subroutine io_elemental(ID, VAR, VAR_SZ, CHECK, WARN, OP, I0, DB_I0, I1, DB_I1, 
   !
   if (present(I0)) then
     if (write_is_on(ID)) then
-      call h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, I0, (/io_rec_pos(ID)/), ierr)
-      call hdf5_call(ierr, ID)
+!      call h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, I0, (/io_rec_pos(ID)/), ierr)
+!      call hdf5_call(ierr, ID)
       if (present(DB_I0)) DB_I0 = I0
       if (present(VAR)) call msg(msg_where, com_compose_msg(" ", VAR), I0, after_msg=TERM_)
     else if (read_is_on(ID)) then
@@ -172,13 +172,13 @@ subroutine io_elemental(ID, VAR, VAR_SZ, CHECK, WARN, OP, I0, DB_I0, I1, DB_I1, 
   !
   if (present(I1)) then
     if (write_is_on(ID)) then
-      call h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, I1, (/io_rec_pos(ID)/), ierr)
-      call hdf5_call(ierr, ID)
+!      call h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, I1, (/io_rec_pos(ID)/), ierr)
+!      call hdf5_call(ierr, ID)
       if (present(DB_I1)) DB_I1 = I1
       if (present(VAR)) call msg(msg_where, com_compose_msg(" ", VAR), I1, after_msg=TERM_)
     else if (read_is_on(ID)) then
-      call h5dread_f(dset_id, H5T_NATIVE_INTEGER, i_db(:size(I1)), (/io_rec_pos(ID)/), ierr)
-      call hdf5_call(ierr, ID)
+!      call h5dread_f(dset_id, H5T_NATIVE_INTEGER, i_db(:size(I1)), (/io_rec_pos(ID)/), ierr)
+!      call hdf5_call(ierr, ID)
       if (DUMP_)          I1 = i_db(:size(I1))
       if (present(DB_I1)) DB_I1 = i_db(:size(I1))
       ch = ""
@@ -209,13 +209,13 @@ subroutine io_elemental(ID, VAR, VAR_SZ, CHECK, WARN, OP, I0, DB_I0, I1, DB_I1, 
   !
   if (present(R0)) then
     if (write_is_on(ID)) then
-      call h5dwrite_f(dset_id, H5T_NATIVE_SP, R0, (/io_rec_pos(ID)/), ierr)
-      call hdf5_call(ierr, ID)
+!      call h5dwrite_f(dset_id, H5T_NATIVE_SP, R0, (/io_rec_pos(ID)/), ierr)
+!      call hdf5_call(ierr, ID)
       if (present(DB_R0)) DB_R0 = R0
       if (present(VAR)) call msg(msg_where, com_compose_msg(" ", VAR), R0 * local_unit, after_msg=TERM_)
     else if (read_is_on(ID)) then
-      call h5dread_f(dset_id, H5T_NATIVE_SP, r_db(1), (/io_rec_pos(ID)/), ierr)
-      call hdf5_call(ierr, ID)
+!      call h5dread_f(dset_id, H5T_NATIVE_SP, r_db(1), (/io_rec_pos(ID)/), ierr)
+!      call hdf5_call(ierr, ID)
       if (DUMP_)          R0 = r_db(1)
       if (present(DB_R0)) DB_R0 = r_db(1)
       ch = ""
@@ -246,13 +246,13 @@ subroutine io_elemental(ID, VAR, VAR_SZ, CHECK, WARN, OP, I0, DB_I0, I1, DB_I1, 
   !
   if (present(R1)) then
     if (write_is_on(ID)) then
-      call h5dwrite_f(dset_id, H5T_NATIVE_SP, R1, (/io_rec_pos(ID)/), ierr)
-      call hdf5_call(ierr, ID)
+!      call h5dwrite_f(dset_id, H5T_NATIVE_SP, R1, (/io_rec_pos(ID)/), ierr)
+!      call hdf5_call(ierr, ID)
       if (present(DB_R1)) DB_R1 = R1
       if (present(VAR)) call msg(msg_where, com_compose_msg(" ", VAR), R1 * local_unit, after_msg=TERM_)
     else if (read_is_on(ID)) then
-      call h5dread_f(dset_id, H5T_NATIVE_SP, r_db(:size(R1)), (/io_rec_pos(ID)/), ierr)
-      call hdf5_call(ierr, ID)
+!      call h5dread_f(dset_id, H5T_NATIVE_SP, r_db(:size(R1)), (/io_rec_pos(ID)/), ierr)
+!      call hdf5_call(ierr, ID)
       if (DUMP_)          R1 = r_db(:size(R1))
       if (present(DB_R1)) DB_R1 = r_db(:size(R1))
       ch = ""
@@ -283,13 +283,13 @@ subroutine io_elemental(ID, VAR, VAR_SZ, CHECK, WARN, OP, I0, DB_I0, I1, DB_I1, 
   !
   if (present(D0)) then
     if (write_is_on(ID)) then
-      call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, D0, (/io_rec_pos(ID)/), ierr)
-      call hdf5_call(ierr, ID)
+!      call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, D0, (/io_rec_pos(ID)/), ierr)
+!      call hdf5_call(ierr, ID)
       if (present(DB_D0)) DB_D0 = D0
       if (present(VAR)) call msg(msg_where, com_compose_msg(" ", VAR), real(D0) * local_unit, after_msg=TERM_)
     else if (read_is_on(ID)) then
-      call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, r_db(1), (/io_rec_pos(ID)/), ierr)
-      call hdf5_call(ierr, ID)
+!      call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, r_db(1), (/io_rec_pos(ID)/), ierr)
+!      call hdf5_call(ierr, ID)
       if (DUMP_)          D0 = r_db(1)
       if (present(DB_D0)) DB_D0 = r_db(1)
       ch = ""
@@ -321,16 +321,16 @@ subroutine io_elemental(ID, VAR, VAR_SZ, CHECK, WARN, OP, I0, DB_I0, I1, DB_I1, 
   if (present(C0)) then
     if (write_is_on(ID)) then
       call C_F_POINTER(C_LOC(C0), RC0, (/2/))
-      call h5dwrite_f(dset_id, H5T_NATIVE_SP, RC0, (/1/), (/2/), ierr)
-      call hdf5_call(ierr, ID)
+!      call h5dwrite_f(dset_id, H5T_NATIVE_SP, RC0, (/1/), (/2/), ierr)
+!      call hdf5_call(ierr, ID)
       r_from_c(1, 1) = real(C0)
       r_from_c(2, 1) = aimag(C0)
       if (present(DB_C0)) DB_C0 = C0
       if (present(VAR)) call msg(msg_where, com_compose_msg(" ", VAR), r_from_c(:, 1) * local_unit, after_msg=TERM_)
     else if (read_is_on(ID)) then
       call C_F_POINTER(C_LOC(c_db), RC0, (/2/))
-      call h5dread_f(dset_id, H5T_NATIVE_SP, RC0, (/1/), (/2/), ierr)
-      call hdf5_call(ierr, ID)
+!      call h5dread_f(dset_id, H5T_NATIVE_SP, RC0, (/1/), (/2/), ierr)
+!      call hdf5_call(ierr, ID)
       r_from_c(1, 1) = real(C0)
       r_from_c(2, 1) = aimag(C0)
       if (DUMP_)          C0 = c_db
@@ -365,13 +365,13 @@ subroutine io_elemental(ID, VAR, VAR_SZ, CHECK, WARN, OP, I0, DB_I0, I1, DB_I1, 
     i_db(1) = 0
     if (L0) i_db(1) = 1
     if (write_is_on(ID)) then
-      call h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, i_db(1), (/io_rec_pos(ID)/), ierr)
-      call hdf5_call(ierr, ID)
+!      call h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, i_db(1), (/io_rec_pos(ID)/), ierr)
+!      call hdf5_call(ierr, ID)
       if (present(VAR)) call msg(msg_where, com_compose_msg(" ", VAR), i_db(1) == 1)
       if (present(DB_L0)) DB_L0 = i_db(1) == 1
     else if (read_is_on(ID)) then
-      call h5dread_f(dset_id, H5T_NATIVE_INTEGER, i_db(2), (/io_rec_pos(ID)/), ierr)
-      call hdf5_call(ierr, ID)
+!      call h5dread_f(dset_id, H5T_NATIVE_INTEGER, i_db(2), (/io_rec_pos(ID)/), ierr)
+!      call hdf5_call(ierr, ID)
       ch = ""
       if (present(DB_L0)) DB_L0 = i_db(2) == 1
       if (DUMP_)          L0 = i_db(2) == 1
@@ -403,13 +403,13 @@ subroutine io_elemental(ID, VAR, VAR_SZ, CHECK, WARN, OP, I0, DB_I0, I1, DB_I1, 
   if (present(CH0)) then
     if (write_is_on(ID)) then
       db_ch(1) = CH0
-      call h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, db_ch(:1), (/io_rec_pos(ID)/), ierr)
-      call hdf5_call(ierr, ID)
+!      call h5dwrite_f(dset_id, H5T_NATIVE_CHARACTER, db_ch(:1), (/io_rec_pos(ID)/), ierr)
+!      call hdf5_call(ierr, ID)
       if (present(DB_CH0))   DB_CH0 = CH0
       if (present(VAR)) call msg(msg_where, com_compose_msg(" ", VAR), trim(db_ch(1)))
     else if (read_is_on(ID)) then
-      call h5dread_f(dset_id, H5T_NATIVE_CHARACTER, db_ch(:1), (/io_rec_pos(ID)/), ierr)
-      call hdf5_call(ierr, ID)
+!      call h5dread_f(dset_id, H5T_NATIVE_CHARACTER, db_ch(:1), (/io_rec_pos(ID)/), ierr)
+!      call hdf5_call(ierr, ID)
       ch = ""
       if (DUMP_)             CH0 = db_ch(1)
       if (present(DB_CH0))   DB_CH0 = db_ch(1)

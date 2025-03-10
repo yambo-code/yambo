@@ -40,8 +40,8 @@ subroutine io_disconnect(ID, FORCE)
     ID8=int8(ID)
     I_OPEN = HDF5_file_is_open(ID8)
     if (I_OPEN) then
-      call h5fclose_f(io_unit(ID), ierr)
-      call hdf5_call(ierr, ID)
+!      call h5fclose_f(io_unit(ID), ierr)
+!      call hdf5_call(ierr, ID)
     end if
   end if
   !

@@ -11,9 +11,10 @@ integer function variables_BS_more(ID,mode)
  use BS,         ONLY:BS_K_cutoff,BS_K_cutoff_done,BS_max_val,l_BSE_kernel_complete
  use IO_m,       ONLY:nf90_sync,io_unit,write_is_on,read_is_on,&
 &                     variable_exist,NF90_unlimited,netcdf_dim_size,hdf5_dim_size
- use IO_int,     ONLY:def_variable_elemental,io_variable_elemental,H5Fflush_f,&
+ use IO_int,     ONLY:def_variable_elemental,io_variable_elemental,&
 &                     def_variable_bulk,io_variable_bulk
  use IO_m,       ONLY:io_status
+ use hdf5
  !
  implicit none
  !
@@ -61,9 +62,9 @@ integer function variables_BS_more(ID,mode)
  endif
  !
 #if defined _YIO_HDF5
- if(write_is_on(ID)) stat = nf90_sync(io_unit(ID))
-#else
  if(write_is_on(ID)) call H5Fflush_f(io_unit(ID), H5F_SCOPE_GLOBAL_F, stat)
+#else
+ if(write_is_on(ID)) stat = nf90_sync(io_unit(ID))
 #endif
  !
  variables_BS_more=io_status(ID)

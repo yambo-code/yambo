@@ -23,6 +23,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
 #if defined _PAR_IO
  use BS,            ONLY:BSK_IO_mode
 #endif
+ use hdf5
  !
  implicit none
  !

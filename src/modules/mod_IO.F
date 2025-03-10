@@ -12,6 +12,7 @@ module IO_m
  use C_driver,   ONLY:code_version,code_revision,code_GPL_revision
 #endif
  use netcdf
+ use hdf5
  !
  implicit none
  !
@@ -486,7 +487,7 @@ module IO_m
             end if
 
             ! Get the name of the dataset (variable) in HDF5
-            local_error = h5dget_name_f(io_unit(ID), VARNUMBER, VARNAME)
+      !      call h5dget_name_f(io_unit(ID), VARNUMBER, VARNAME, local_error)
             if (local_error /= 0) VARNAME = ' NOT DEFINED '
         end if
 
@@ -507,6 +508,41 @@ module IO_m
     endif
    end subroutine
    !
+   SUBROUTINE hdf5_inquire_variable(file_id, dataset_name, &
+                                  var_name, datatype, ndims, dims, natts, hdferr)
+     USE HDF5
+     IMPLICIT NONE
+     INTEGER(HID_T), INTENT(IN)  :: file_id         ! HDF5 file identifier
+     CHARACTER(LEN=*), INTENT(IN) :: dataset_name   ! Input dataset name
+     CHARACTER(LEN=*), INTENT(OUT) :: var_name      ! Output variable name
+     INTEGER(HID_T), INTENT(OUT) :: datatype        ! Datatype identifier
+     INTEGER, INTENT(OUT) :: ndims                  ! Number of dimensions
+     INTEGER(HSIZE_T), DIMENSION(:), ALLOCATABLE, INTENT(OUT) :: dims  ! Dimension sizes
+     INTEGER, INTENT(OUT) :: natts                  ! Number of attributes
+     INTEGER, INTENT(OUT) :: hdferr                 ! Error code
+
+     INTEGER(HID_T) :: dset_id, space_id
+     INTEGER(HSIZE_T), DIMENSION(:), ALLOCATABLE :: maxdims
+     INTEGER(HSIZE_T) :: name_len
+
+     ! Open the dataset
+     CALL H5Dopen_f(file_id, dataset_name, dset_id, hdferr)
+     IF (hdferr /= 0) RETURN
+   
+     ! Get variable name
+!     CALL H5Iget_name_f(dset_id, var_name, name_len, hdferr)
+     IF (hdferr /= 0) RETURN
+
+     ! Get datatype
+     CALL H5Dget_type_f(dset_id, datatype, hdferr)
+     IF (hdferr /= 0) RETURN
+
+     ! Get dataspace information
+     CALL H5Dget_space_f(dset_id, space_id, hdferr)
+     IF (hdferr /= 0) RETURN
+     !			  
+   end
+   !
    integer function netcdf_dim_size(ID,DIMNAME)
      ! Returns the value of the specified dim of a variable
      integer,      intent(in)    :: ID
@@ -523,7 +559,8 @@ module IO_m
     implicit none
     integer(HID_T), intent(in)    :: file_id       ! HDF5 file identifier
     character(*), intent(inout)   :: dim_name      ! Name of the dimension
-    integer(HSIZE_T)              :: dim_size      ! Size of the dimension
+    integer(HSIZE_T)              :: dim_size(1)   ! Size of the dimension
+    integer(HSIZE_T)		  :: max_dims(1)   ! Max size dimension
     integer(HID_T)                :: dataset_id    ! HDF5 dataset identifier
     integer(HID_T)                :: dataspace_id  ! HDF5 dataspace identifier
     integer                       :: status        ! HDF5 status code
@@ -533,27 +570,27 @@ module IO_m
     hdf5_dim_size = 0
 
     ! Open the dataset
-    status = h5dopen_f(file_id, dim_name, dataset_id)
+    call h5dopen_f(file_id, dim_name, dataset_id, status)
     if (status /= 0) return
 
     ! Get the dataspace of the dataset
-    status = h5dget_space_f(dataset_id, dataspace_id)
+    call h5dget_space_f(dataset_id, dataspace_id, status)
     if (status /= 0) return
 
     ! Get the rank (number of dimensions) of the dataset
-    status = h5sget_simple_extent_ndims_f(dataspace_id, rank)
+    call h5sget_simple_extent_ndims_f(dataspace_id, rank, status)
     if (status /= 0) return
 
     ! Get the size of the first dimension
     if (rank > 0) then
-        status = h5sget_simple_extent_dims_f(dataspace_id, dim_size, NULL)
+        call h5sget_simple_extent_dims_f(dataspace_id, dim_size, max_dims, status)
         if (status /= 0) return
-        hdf5_dim_size = int(dim_size)
+        hdf5_dim_size = int(dim_size(1))
     end if
 
     ! Close the dataspace and dataset
-    status = h5sclose_f(dataspace_id)
-    status = h5dclose_f(dataset_id)
+    call h5sclose_f(dataspace_id, status)
+    call h5dclose_f(dataset_id, status)
    end function hdf5_dim_size     
    !
    integer function netcdf_dim(ID,DIM,dim_name)
@@ -570,11 +607,11 @@ module IO_m
      if (nf90_err/=NF90_NOERR) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
    end function
    !
-   integer function hdf5_dim(file_id, dim, dim_name)
+   integer function hdf5_dim(file_id, dims, dim_name)
      use hdf5
      implicit none
-     integer(HID_T), intent(in)    :: file_id       ! HDF5 file identifier
-     integer, intent(in)           :: dim           ! Dimension size
+     integer(HID_T),   intent(in)  :: file_id       ! HDF5 file identifier
+     integer(HSIZE_T), intent(in)  :: dims(1)       ! Dimension size
      character(*), optional        :: dim_name      ! Optional name of the dimension
      character(len=32)             :: dim_strng     ! Buffer for dimension name
      integer(HID_T)                :: dataset_id    ! HDF5 dataset identifier
@@ -586,28 +623,28 @@ module IO_m
 
      ! Generate the dimension name if not provided
      if (.not. present(dim_name)) then
-        write(dim_strng, '(a,i10.10)') 'D_', dim
+        write(dim_strng, '(a,i10.10)') 'D_', dims
      else
          dim_strng = dim_name
      end if
 
     ! Try to open the dataset (dimension)
-    status = h5dopen_f(file_id, dim_strng, dataset_id)
+    call h5dopen_f(file_id, dim_strng, dataset_id, status)
     if (status /= 0) then
         ! If the dataset does not exist, create it
-        status = h5screate_simple_f(1, [dim], dataspace_id)
+        call h5screate_simple_f(1, (dims), dataspace_id, status)
         if (status /= 0) return
 
-        status = h5dcreate_f(file_id, dim_strng, H5T_NATIVE_INT, dataspace_id, dataset_id)
+        call h5dcreate_f(file_id, dim_strng, H5T_NATIVE_INTEGER, dataspace_id, dataset_id, status)
         if (status /= 0) return
 
-        status = h5sclose_f(dataspace_id)
+        call h5sclose_f(dataspace_id, status)
         if (status /= 0) return
      end if
      ! Return the dataset ID
      hdf5_dim = int(dataset_id)
      ! Close the dataset
-      status = h5dclose_f(dataset_id)
+     call h5dclose_f(dataset_id, status)
    end function hdf5_dim     
    !
    logical function variable_exist(ID,var_name,var_ID)
@@ -629,19 +666,19 @@ module IO_m
     implicit none
     integer(HID_T), intent(in)           :: file_id    ! HDF5 file identifier
     character(*), intent(in)             :: var_name   ! Name of the dataset (variable)
-    integer(HID_T), optional, intent(out) :: var_id    ! Optional dataset identifier
+    integer(HID_T), optional, intent(out):: var_id     ! Optional dataset identifier
     integer(HID_T)                       :: dataset_id ! HDF5 dataset identifier
     integer                              :: status     ! HDF5 status code
 
     ! Try to open the dataset
-    status = h5dopen_f(file_id, var_name, dataset_id)
+    call h5dopen_f(file_id, var_name, dataset_id, status)
 
     ! Check if the dataset exists
     if (status == 0) then
         variable_exist_hdf5 = .TRUE.
         if (present(var_id)) var_id = dataset_id
         ! Close the dataset if it exists
-        status = h5dclose_f(dataset_id)
+        call h5dclose_f(dataset_id, status)
     else
         variable_exist_hdf5 = .FALSE.
         if (present(var_id)) var_id = -1

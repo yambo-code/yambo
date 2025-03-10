@@ -115,7 +115,11 @@ function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING,ALT_
  if (present(subfolder).and.type>=0) ch(1)=trim(ch(1))//"/"//trim(subfolder)
  !
  get_name=trim(ch(1))//"/"//trim(ch(2))
+#if defined _YIO_HDF5
+ if (type/=3) get_name=trim(ch(1))//"/h"//trim(ch(2))
+#else
  if (type/=3) get_name=trim(ch(1))//"/n"//trim(ch(2))
+#endif
  !
 end function get_name
 !

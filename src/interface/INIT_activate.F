@@ -76,8 +76,8 @@ subroutine INIT_activate()
  endif
  !
  if ( l_HF_and_locXC .and. .not.(l_sc_run.or.l_eval_collisions.or.l_phel_corr) ) then
-   call CPU_activate("X_SE")
-   call initactivate(1,'X_SE_Threads')
+   call CPU_activate("SX")
+   call initactivate(1,'SX_Threads')
  endif
  if ( (l_gw0.or.l_cohsex.or.l_life) .and. .not.(l_sc_run.or.l_eval_collisions.or.l_phel_corr) ) then
    call CPU_activate("SE")

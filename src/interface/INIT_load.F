@@ -94,7 +94,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,E_kpq_sh_fact,gkkp_db
 #endif
 #if defined _OPENMP
- use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_X_SE,n_threads_RT,n_threads_DIP,n_threads_K,&
+ use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_SX,n_threads_RT,n_threads_DIP,n_threads_K,&
 &                        n_threads_NL,n_threads_OSCLL
 #endif
 #if defined _SCALAPACK
@@ -216,7 +216,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'X_Threads',       '[OPENMP/X] Number of threads for response functions',n_threads_X)
  call it(defs,'DIP_Threads',     '[OPENMP/X] Number of threads for dipoles',n_threads_DIP)
  call it(defs,'OSCLL_Threads',   '[OPENMP/X] Number of threads for Oscillators',n_threads_OSCLL)
- call it(defs,'X_SE_Threads',    '[OPENMP/HF] Number of threads for the X self-energy',n_threads_X_SE)
+ call it(defs,'SX_Threads',      '[OPENMP/HF] Number of threads for the X self-energy',n_threads_SX)
  call it(defs,'SE_Threads',      '[OPENMP/GW] Number of threads for self-energy',n_threads_SE)
  call it(defs,'RT_Threads',      '[OPENMP/RT] Number of threads for real-time',n_threads_RT)
  call it(defs,'NL_Threads',      '[OPENMP/NL] Number of threads for nl-optics',n_threads_NL)
@@ -797,7 +797,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        if (i_s==9) possible_fields='(k) '        ! BZ
        if (i_s==10)possible_fields='(q,k,b) '    ! PH_SE
        if (i_s==11)possible_fields='(k,b) '      ! OSCLL
-       if (i_s==12)possible_fields='(q,g,qp,b)'  ! X_SE
+       if (i_s==12)possible_fields='(q,g,qp,b)'  ! SX
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
        !

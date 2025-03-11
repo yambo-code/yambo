@@ -15,7 +15,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
  use IO_m,          ONLY:io_COLLs
  use IO_int,        ONLY:IO_and_Messaging_switch
  use QP_m,          ONLY:QP_n_states,QP_nk
- use openmp,        ONLY:n_threads_SE,n_threads_X_SE,OPENMP_set_threads
+ use openmp,        ONLY:n_threads_SE,n_threads_SX,OPENMP_set_threads
  use parallel_m,    ONLY:HEAD_QP_cpu,HEAD_b_cpu,master_cpu,n_WF_bands_to_load,COMM_copy,&
 &                        PAR_Q_bz_range,PAR_Q_ibz_range,PAR_n_bands,PAR_build_index,ncpu,PAR_INDEX_copy
  ! COMMUNICATORS
@@ -315,8 +315,8 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
  !
  if ( trim(ENVIRONMENT)=="Self_Energy" ) then 
    call OPENMP_set_threads(n_threads_in=n_threads_SE)
- else if ( trim(ENVIRONMENT)=="X_Self_Energy" ) then 
-   call OPENMP_set_threads(n_threads_in=n_threads_X_SE)
+ else if ( trim(ENVIRONMENT)=="Sigma_X" ) then 
+   call OPENMP_set_threads(n_threads_in=n_threads_SX)
  endif
  !
 end subroutine PARALLEL_global_Self_Energy

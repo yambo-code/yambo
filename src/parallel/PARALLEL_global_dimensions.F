@@ -131,7 +131,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !
  ! Generic Bands
  !---------------
- if (ENVIRONMENT=="Self_Energy"                     ) then
+ if ((ENVIRONMENT=="Self_Energy").or(ENVIRONMENT=="X_Self_Energy")) then
    if (l_HF_and_locXC)                               PAR_n_bands=(/1,maxval((/E%nbm(:),QP_nb/))/)
    if ((l_gw0.or.l_life).and..not.computing_Fock)    PAR_n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
    if (.not.computing_Fock)                          PAR_n_bands(1)=QP_n_G_bands(1)

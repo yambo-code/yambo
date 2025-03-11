@@ -114,7 +114,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
  YAMBO_ALLOC(PAR_QP_index,(QP_n_states))
  PAR_QP_index=0
  call PAR_build_index(PAR_IND_QP,QP_n_states,PAR_QP_index,PAR_nQP)
- call PARALLEL_live_message("QPs",ENVIRONMENT="Self_Energy",&
+ call PARALLEL_live_message("QPs",ENVIRONMENT=ENVIRONMENT,&
 &                           LOADED=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1),TOTAL=QP_n_states,&
 &                           NCPU=PAR_COM_QP_INDEX%n_CPU)
  !
@@ -132,7 +132,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
    call PARALLEL_index(PAR_IND_Q_ibz,(/PAR_Q_ibz_range(2)/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
    PAR_IND_Q_ibz_ID=PAR_COM_Q_INDEX%CPU_id
    PAR_nQ_ibz=PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)
-   call PARALLEL_live_message("Q("//trim(WHAT)//")",ENVIRONMENT="Self_Energy",&
+   call PARALLEL_live_message("Q("//trim(WHAT)//")",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1),TOTAL=PAR_Q_ibz_range(2),&
 &                             NCPU=PAR_COM_Q_INDEX%n_CPU)
    !
@@ -144,7 +144,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
    call PARALLEL_index(PAR_IND_Q_bz,(/PAR_Q_bz_range(2)/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
    PAR_IND_Q_bz_ID=PAR_COM_Q_INDEX%CPU_id
    PAR_nQ_bz=PAR_IND_Q_bz%n_of_elements(PAR_IND_Q_bz_ID+1)
-   call PARALLEL_live_message("Q("//trim(WHAT)//")",ENVIRONMENT="Self_Energy",&
+   call PARALLEL_live_message("Q("//trim(WHAT)//")",ENVIRONMENT=ENVIRONMENT,&
 &                              LOADED=PAR_IND_Q_bz%n_of_elements(PAR_IND_Q_bz_ID+1),TOTAL=PAR_Q_bz_range(2),&
 &                              NCPU=PAR_COM_Q_INDEX%n_CPU)
    !
@@ -219,7 +219,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
  !
  HEAD_b_cpu=PAR_COM_G_b_index%CPU_id==0
  !
- call PARALLEL_live_message("G bands",ENVIRONMENT="Self_Energy",&
+ call PARALLEL_live_message("G bands",ENVIRONMENT=ENVIRONMENT,&
 &                           LOADED=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1),&
 &                           TOTAL=PAR_n_bands(2)-PAR_n_bands(1)+1,NCPU=PAR_COM_G_b_INDEX%n_CPU)
  !
@@ -245,12 +245,12 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
    nb_mat=(COLL_bands(2)-COLL_bands(1)+1)**2
    call PARALLEL_MATRIX_distribute(PAR_COM_G_b_INDEX,PAR_IND_Bp_mat,COLL_bands,PAR_n_elements=PAR_n_Bp_mat_elements)
    !
-   call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT="Self_Energy",&
+   call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_n_Bp_mat_elements,TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
    !
    call PARALLEL_index(PAR_IND_G_k,(/QP_nk/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
    !
-   call PARALLEL_live_message("k-q",ENVIRONMENT="Self_Energy",LOADED=count( PAR_IND_G_k%element_1D ),&
+   call PARALLEL_live_message("k-q",ENVIRONMENT=ENVIRONMENT,LOADED=count( PAR_IND_G_k%element_1D ),&
 &                             TOTAL=QP_nk)
    !
  endif

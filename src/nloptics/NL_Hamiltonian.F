@@ -11,7 +11,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !
  !   H_k=Ho_k+U_k+ V_k^H-V_k^H[rho_ref]+V_xc[rho]
  !                                        
- use pars,           ONLY:SP,cZERO,pi,cONE
+ use pars,           ONLY:SP,DP,cZERO,pi,cONE
  use units,          ONLY:SPEED_OF_LIGHT
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:levels,n_sp_pol
@@ -41,9 +41,9 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !
  type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k,q
- real(SP),      intent(in)    :: Time
+ real(DP),      intent(in)    :: Time
  type(X_t),     intent(in)    :: X
- complex(SP),   intent(in)    :: V_bands(NL_bands(2),maxval(E%nbf),QP_nk,n_sp_pol)
+ complex(DP),   intent(in)    :: V_bands(NL_bands(2),maxval(E%nbf),QP_nk,n_sp_pol)
  integer,       intent(in)    :: i_time
  !
  ! Working Space

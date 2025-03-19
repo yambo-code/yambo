@@ -7,7 +7,7 @@
 !
 subroutine NL_driver(E,X,Xw,k,q,Dip)
  !
- use pars,           ONLY:pi,SP,cZERO,cONE,schlen
+ use pars,           ONLY:pi,SP,DP,cZERO,cONE,schlen
  use vec_operate,    ONLY:axis_rotation
  use com,            ONLY:msg
  use drivers,        ONLY:l_use_Hxc_collisions
@@ -55,7 +55,8 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  integer           :: i_f,i1,i_sp_pol,wf_ng_save,io_err,ik,ik_mem
  character(schlen) :: l_message
  logical           :: l_dynamics_is_over
- real(SP)          :: Time,angle
+ real(SP)          :: angle
+ real(DP)          :: Time
  !
  ! In Non-Linear NL_bands always equal to RT_bands
  ! ==============================================
@@ -286,7 +287,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
      !
      NE_i_time=NE_i_time+1
      !
-     Time=real(NE_i_time-1,SP)*RT_step
+     Time=real(NE_i_time-1,DP)*RT_step
      !
      call NL_Hamiltonian(E,k,q,X(1),Time,NE_i_time,V_bands)
      !

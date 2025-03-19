@@ -19,7 +19,7 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  !
  ! \rho(i1,i2,ik) = \sum_{iv}^{N_v}  V*(i2,iv,ik) V(i1,iv,ik)
  !
- use pars,           ONLY:SP,cI,cZERO
+ use pars,           ONLY:DP,cI,cZERO
  use electrons,      ONLY:levels,spin_occ,n_sp_pol
  use nl_optics,      ONLY:NL_bands
  use wrapper_omp,    ONLY:Vstar_dot_V_omp
@@ -33,8 +33,8 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  implicit none
  !
  type(levels), intent(in)  :: en
- complex(SP),  intent(in)  :: V_bands(NL_bands(2),maxval(en%nbf),QP_nk,n_sp_pol)
- complex(SP),  intent(out) :: dG(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk)
+ complex(DP),  intent(in)  :: V_bands(NL_bands(2),maxval(en%nbf),QP_nk,n_sp_pol)
+ complex(DP),  intent(out) :: dG(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk)
  !
  ! Work Space
  !

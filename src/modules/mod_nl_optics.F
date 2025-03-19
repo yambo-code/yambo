@@ -8,7 +8,7 @@
 module nl_optics
  !
  use descriptors,     ONLY:IO_desc
- use pars,            ONLY:SP,schlen,lchlen
+ use pars,            ONLY:SP,DP,schlen,lchlen
  use electrons,       ONLY:levels
  use real_time,       ONLY:NE_steps
  !
@@ -26,13 +26,13 @@ module nl_optics
  ! Calculated from the string-averaged discretized geometric phase
  ! see ref. PRB 47, 1651 (1993), or from DIPOLES
  !
- complex(SP)    :: NL_P(6)  ! NL_P(1:3) Berry Pol, NL_P(4:6) Dip Pol
- complex(SP)    :: NL_initial_P(6) ! in principle it can be different from zero
+ complex(DP)    :: NL_P(6)  ! NL_P(1:3) Berry Pol, NL_P(4:6) Dip Pol
+ complex(DP)    :: NL_initial_P(6) ! in principle it can be different from zero
  !
  ! Current
  !
- complex(SP)    :: NL_J(6)
- complex(SP)    :: NL_initial_J(6)
+ complex(DP)    :: NL_J(6)
+ complex(DP)    :: NL_initial_J(6)
  !
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time
  !
@@ -40,8 +40,8 @@ module nl_optics
  !
  ! Initial Energies and Damping
  !------------
- complex(SP), allocatable :: I_relax(:,:,:,:,:)
- real(SP),    allocatable :: E_full(:,:,:)
+ complex(DP), allocatable :: I_relax(:,:,:,:,:)
+ real(DP),    allocatable :: E_full(:,:,:)
  !
  ! For TDDFT, V_xc_0 stores the V_xc at equilibrium
  !
@@ -54,10 +54,10 @@ module nl_optics
  ! WFs and Density
  !
  ! Bands in terms of Kohn-Sham orbitals
- complex(SP), allocatable :: V_bands(:,:,:,:)  ! time-dependent valence bands
+ complex(DP), allocatable :: V_bands(:,:,:,:)  ! time-dependent valence bands
  ! 
  ! Time-dependent Valence bands in real-space
- complex(SP), allocatable :: VAL_BANDS(:,:,:,:)
+ complex(DP), allocatable :: VAL_BANDS(:,:,:,:)
  !
  real(SP),    allocatable :: full_rho(:)       ! density of all bands from 1:SC_bands(2)
  !
@@ -151,10 +151,10 @@ module nl_optics
  !
  ! IO variables
  !
- real(SP),     allocatable :: NL_P_t(:,:)
- real(SP),     allocatable :: NL_J_t(:,:)
- complex(SP),  allocatable :: E_tot_t(:,:),E_ext_t(:,:), E_ks_t(:,:),V_bands_t(:,:,:,:,:)
- complex(SP)               :: E_tot(3),E_ext(3),E_ks(3)
+ real(DP),     allocatable :: NL_P_t(:,:)
+ real(DP),     allocatable :: NL_J_t(:,:)
+ complex(DP),  allocatable :: E_tot_t(:,:),E_ext_t(:,:), E_ks_t(:,:),V_bands_t(:,:,:,:,:)
+ complex(DP)               :: E_tot(3),E_ext(3),E_ks(3)
  logical,      allocatable :: runs_done(:)
  type(IO_desc)             :: NL_desc
  !

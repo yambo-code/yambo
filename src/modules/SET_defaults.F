@@ -103,7 +103,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
 #if defined _NL
  use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,NL_initial_versor,     &
-&                     NL_verb_name,NL_bands,NL_desc,n_angles,NL_rot_axis
+&                     NL_verb_name,NL_bands,NL_desc,n_angles,NL_rot_axis,max_angle
  use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _SC
@@ -688,6 +688,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NL_er         =(/-1._SP,-1._SP/)/HA2EV
  n_frequencies =0
  n_angles      =0
+ max_angle     =360.0
  NL_rot_axis   =(/0._SP,0._SP,0._SP/)
  NL_initial_versor=(/0._SP,0._SP,0._SP/)
  NL_damping    =0.2_SP/HA2EV

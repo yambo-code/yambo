@@ -29,8 +29,8 @@ subroutine NL_initialize(E,k)
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM,  &
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity,LSEX,&
 &                         l_eval_CURRENT,l_pump_and_probe,DephMult,l_velocity_IPA,n_angles,l_test_OSCLL,LHF,eval_OSCLL,  &
-&                         NL_ang_step,n_runs,NL_rot_axis,loop_on_frequencies,loop_on_angles,NL_initial_versor
- use electric,       ONLY:l_force_SndOrd,l_P_periodic
+&                         NL_ang_step,n_runs,NL_rot_axis,loop_on_frequencies,loop_on_angles,NL_initial_versor,max_angle
+ use electric,       ONLY:l_force_SndOrd,l_P_periodic,l_res_symms
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  !
@@ -55,6 +55,7 @@ subroutine NL_initialize(E,k)
  call parser('FrPolPerdic' ,         l_P_periodic)
  call parser('TestOSCLL',            l_test_OSCLL)
  call parser('NoComprCOLL',          l_no_compress_COLL)
+ call parser('UseSymm',              l_res_symms)
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
  if(l_P_periodic)  call msg('sr','[NL] Enforce periodicity of the polarization repect to Efield')
@@ -422,7 +423,7 @@ subroutine NL_initialize(E,k)
  !
  if(n_angles>=1) then
    ! loop on angles
-   NL_ang_step=2.0*pi/real(n_angles,SP)
+   NL_ang_step=(max_angle/360.0*2.0*pi)/real(n_angles,SP)
    if(all(abs(NL_rot_axis)<epsilon(1.))) call error("Null rotation axis!!! ")
    NL_rot_axis=normalize_v(NL_rot_axis)
    n_runs=n_angles
@@ -496,6 +497,7 @@ subroutine NL_initialize(E,k)
  call msg( 'sr','Frequencies steps          ',n_frequencies)
  call msg( 'r', 'Frequency   step           ',NL_estep*HA2EV)
  call msg( 'sr','Number of angles           ',n_angles)
+ call msg( 'sr','Max angle (degree)         ',max_angle)
  call msg( 'r', 'Rotation axis              ',NL_rot_axis)
  call msg( 'r', 'Use Dipoles                ',l_use_DIPOLES)
  call msg( 'r', 'Induced Field              ',l_RT_induced_field)

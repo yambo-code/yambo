@@ -66,7 +66,9 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  isave     = 0
  n_poles   = sum(bare_grid_N(1:i_cg-1))
  Z_        = cONE
+ !DEV_ACC kernels
  Xo_res    = cZERO
+ !DEV_ACC end kernels
  call devxlib_memset_d(Xo_res,cZERO)
  !
  ngrho     = Xo_scatt%ngrho

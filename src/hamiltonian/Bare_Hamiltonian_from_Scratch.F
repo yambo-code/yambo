@@ -178,8 +178,8 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
 #endif
  !
  if(l_compute_rho) then
-   call el_density_and_current(E,Xk,rho=rho_n,bands=H_ref_bands)
-   if(n_spin>1) call el_magnetization(E,Xk,magn_n,bands=H_ref_bands)
+   call el_density_and_current(E,Xk,rho=rho_n)
+   if(n_spin>1) call el_magnetization(E,Xk,magn_n)
  endif
  !
  ! - V_hartree

@@ -177,6 +177,10 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
  endif
 #endif
  !
+ !DV: I changed the call to the density avoiding to specify the bands otherwise
+ !the calculation of the density is not correct as only the bands included in
+ !the QPkrange are considered
+ !
  if(l_compute_rho) then
    call el_density_and_current(E,Xk,rho=rho_n)
    if(n_spin>1) call el_magnetization(E,Xk,magn_n)

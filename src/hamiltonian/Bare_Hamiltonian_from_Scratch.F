@@ -121,8 +121,10 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
  !
  ! DS: if WFs are distributed, also becp needs to be distributed in memory
  ! See commented line in PP_compute_becp 
- ! This would require to add an "if( indixe(ik) ) cycle in the final loop
- ! of this subroutine, plus e final PP_redux
+ ! This would require to add an "if( index(ik) ) cycle in the final loop
+ ! of this subroutine, plus a final PP_redux
+ ! FP: if WFs are distributed, special care should be given to 'b' parallelism
+ ! in SE_ROLEs and call to V_real_space_to_H (PP_redux may be enough)
  l_distribute_wfs=.false.
  ! 
  if (l_distribute_wfs) then
@@ -205,6 +207,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
  !
  !=======================================================================================================
  !
+ write (*,*) 'WF%c bounds on i_wf: ',lbound(WF%c, 3),ubound(WF%c, 3)
  do i_sp_pol=1,n_sp_pol
    !
    do ik=1,QP_nk
@@ -227,6 +230,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
          ! ==================================================================
          i_wf1 = WF%index(ib1,ik,i_sp_pol)
          i_wf2 = WF%index(ib2,ik,i_sp_pol)
+         !if ( i_wf1==0 .or. i_wf2==0 ) cycle ! avoid silent slicing of unbound indices
          !
          !
          Hext_loc(ib1,ib2) = Hext_loc(ib1,ib2) + &

@@ -109,34 +109,30 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip,run_type)
  !
  if (pp_is_uspp) call error("[PPs] USPP not implemented for bare Hamiltonian reconstruction")
  !
- ! Parallel indexes
- !=======================
- call PARALLEL_global_indexes(E,k,q,"Self_Energy")
- ! 
- ! WF distributed & load
- !=======================
-! l_distribute_wfs=.true.
-!#if defined _SC
-! l_distribute_wfs=.not.l_sc_run
-!#endif
+ ! WF distribution
+ !
+ ! For a G0W0 run, we need to reset WF distribution inherited from
+ ! exchange self-energy
+ if (run_type=='G0W0') call PARALLEL_WF_distribute(CLEAN_UP=.true.)
  !
  ! DS: if WFs are distributed, also becp needs to be distributed in memory
  ! See commented line in PP_compute_becp 
  ! This would require to add an "if( index(ik) ) cycle in the final loop
  ! of this subroutine, plus a final PP_redux
  l_distribute_wfs=.false.
+ !l_distribute_wfs=.true.
+!#if defined _SC
+ !l_distribute_wfs=.not.l_sc_run
+!#endif
  ! 
  if (l_distribute_wfs) then
-   ! Final states (k-q,np)...
+   !
+   call PARALLEL_global_indexes(E,k,q,"Self_Energy")
    call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
-   ! Initial states (k,n \in QP)...
    call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
    call PARALLEL_WF_index( )
+   !
  endif
- !
- ! For a G0W0 run, we need to reset WF distribution inherited from
- ! exchange self-energy
- if (run_type=='G0W0') call PARALLEL_WF_distribute(CLEAN_UP=.true.)
  !
  ! Read dipoles
  !

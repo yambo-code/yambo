@@ -17,7 +17,6 @@ subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
  use hamiltonian,    ONLY:H_ref_bands
  use timing_m,       ONLY:timing
 #if defined _SC
- use pseudo,         ONLY:l_use_p2_Vloc_becp
  use drivers,        ONLY:l_sc_run
  use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
 #endif
@@ -101,17 +100,12 @@ subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
  do ib=H_ref_bands(1),H_ref_bands(2)
    do ibp=ib,H_ref_bands(2)
    !
-   if (.not.l_use_p2_Vloc_becp) then
-     if (.not.PAR_IND_local(ib,ibp)) cycle
-   endif
+   if (.not.PAR_IND_local(ib,ibp)) cycle
    !
    ! <i_wf|V_mat|i_wfp>
    !
    i_wf  =WF%index(ib ,ik,i_sp_pol)
    i_wfp =WF%index(ibp,ik,i_sp_pol)
-   if (l_use_p2_Vloc_becp) then
-     if (i_wf==0 .or. i_wfp==0) cycle
-   endif
    !
    c_ws=cZERO
    do i_spinor=1,n_spinor

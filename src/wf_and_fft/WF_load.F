@@ -30,6 +30,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  ! Load and (eventually) FFTs the wavefunctions
  !
  use iso_fortran_env
+ use parallel_m,    ONLY:myid
  use pars,          ONLY:SP,DP,schlen,cZERO_DP
  use com,           ONLY:msg,core_io_path,fat_log
  use stderr,        ONLY:intc
@@ -137,6 +138,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  call check_bounds(WF_buffer,buffer_is_ok)
  !
  buffer_is_ok=.FALSE.
+ !
+ if (allocated(states_to_load)) then
+   write (100+myid,*) "MYID", myid, count(states_to_load(:,:,:) .eqv. .true.)
+ endif 
  !
  if (allocated(states_to_load)) then
    !

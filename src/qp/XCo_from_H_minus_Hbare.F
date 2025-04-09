@@ -85,7 +85,7 @@ subroutine XCo_from_H_minus_Hbare(E,Xk,k,q,Dip)
  !
  ! Here we get Hzero in H space and V_Hartree_sc in real space
  !
- call Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
+ call Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip,'G0W0')
  !
  ! PARALLEL EFFICIENCY FOR THE FOLLOWING LOOPS NEED TO BE CHECKED!
  ! (may include call to V_real_space_to_H in QP loop but seems wasteful)

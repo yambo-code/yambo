@@ -27,6 +27,7 @@ lib/archive/git.list
 *.class
 *.dll
 *.o
+*.o_to_save
 *.a
 *.so
 *.mod

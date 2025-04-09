@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
+subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip,run_type)
  !
  use pars,           ONLY:DP,SP,cZERO,schlen,lchlen
  use electrons,      ONLY:levels,n_sp_pol,n_spin,l_spin_orbit,spin_occ,n_spinor
@@ -33,7 +33,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_QP,&
 &                        PAR_IND_QP_ID,PAR_IND_Q_ibz,PAR_IND_G_b,&
-&                        PAR_IND_Q_ibz_ID,n_WF_bands_to_load
+&                        PAR_IND_Q_ibz_ID,n_WF_bands_to_load,myid
  use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp,nkibz,qindx_S
  use D_lattice,      ONLY:DL_vol
@@ -65,6 +65,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
  type(levels)             :: E ! This is so far not needed by the subroutine 
  type(bz_samp)            :: Xk,k,q
  type(DIPOLE_t)           :: Dip
+ character(*),optional,intent(in) :: run_type
  !
  ! Work space
  !
@@ -134,6 +135,10 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
    call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
    call PARALLEL_WF_index( )
  endif
+ !
+ ! For a G0W0 run, we need to reset WF distribution inherited from
+ ! exchange self-energy
+ if (run_type=='G0W0') call PARALLEL_WF_distribute(CLEAN_UP=.true.)
  !
  ! Read dipoles
  !
@@ -207,7 +212,6 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
  !
  !=======================================================================================================
  !
- write (*,*) 'WF%c bounds on i_wf: ',lbound(WF%c, 3),ubound(WF%c, 3)
  do i_sp_pol=1,n_sp_pol
    !
    do ik=1,QP_nk
@@ -222,6 +226,10 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip)
      !
      do ib1=H_ref_bands(1),H_ref_bands(2)
        do ib2=H_ref_bands(1),H_ref_bands(2)
+         !
+         ! In case of a standard G0W0 run, we only need
+         ! the diagonal part of the self-energy
+         if (run_type=='G0W0'.and.ib2/=ib1) cycle
          !
          !
          ! Calculate the local part of Hext ...

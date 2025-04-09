@@ -39,6 +39,7 @@ subroutine XCo_from_H_minus_Hbare(E,Xk,k,q,Dip)
  use timing_m,      ONLY:timing
  use FFT_m,         ONLY:fft_size
  use parser_m,      ONLY:parser
+ use parallel_m,    ONLY:ncpu,PARALLEL_CPU_role,PARALLEL_CPU_used
  !
 #include<y_memory.h>
  !
@@ -48,12 +49,24 @@ subroutine XCo_from_H_minus_Hbare(E,Xk,k,q,Dip)
  !
  ! Work Space
  !
- integer     ::i1,ib,ibp,ik,i_sp_pol
+ integer     ::i1,ib,ibp,ik,i_sp_pol,i_role
  !
  ! Debug
  !
  complex(SP), allocatable :: Vh_test(:,:,:,:)
  logical ::l_write_Vxc
+ !
+ ! FP 15/11/23: MPI q-tasks lead to problems with DIPOLE_IO of P_square in
+ ! Bare_Hamiltonian_from_Scracth (to be fixed)
+#if defined _MPI
+ if (ncpu/=1) then
+   do i_role=1,size(PARALLEL_CPU_role)
+     if (trim(PARALLEL_CPU_role(i_role))=='q'.and.PARALLEL_CPU_used(i_role)/=1) then
+       call error("[PARALLEL] Turn off MPI tasks over 'q' for Hbare reconstruction")
+     endif
+   enddo
+ endif
+#endif 
  !
  call parser('WriteVxc',l_write_Vxc) ! only for testing purposes
  !
@@ -86,9 +99,6 @@ subroutine XCo_from_H_minus_Hbare(E,Xk,k,q,Dip)
  ! Here we get Hzero in H space and V_Hartree_sc in real space
  !
  call Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip,'G0W0')
- !
- ! PARALLEL EFFICIENCY FOR THE FOLLOWING LOOPS NEED TO BE CHECKED!
- ! (may include call to V_real_space_to_H in QP loop but seems wasteful)
  !
  ! First we get Hzero => Hzero+Vhartree in H space
  !

@@ -111,7 +111,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip,run_type)
  !
  ! Parallel indexes
  !=======================
- call PARALLEL_global_indexes(E,k,q,"Self_Energy")
+! call PARALLEL_global_indexes(E,k,q,"Self_Energy")
  ! 
  ! WF distributed & load
  !=======================

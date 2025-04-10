@@ -109,16 +109,6 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,q,Dip,run_type)
  !
  if (pp_is_uspp) call error("[PPs] USPP not implemented for bare Hamiltonian reconstruction")
  !
- ! Parallel indexes
- !=======================
-! call PARALLEL_global_indexes(E,k,q,"Self_Energy")
- ! 
- ! WF distributed & load
- !=======================
- l_distribute_wfs=.true.
-#if defined _SC
- l_distribute_wfs=.not.l_sc_run
-#endif
  ! WF distribution
  !
  ! For a G0W0 run, we need to reset WF distribution inherited from

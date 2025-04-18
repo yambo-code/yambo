@@ -5,6 +5,15 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
+!> @brief Calculate current using the Souza-Iniguez-Vanderbilt formulation
+!!
+!! @param[in]       V_bands			time-dependent valence bands
+!! @param[in]       k_map			k-points map in the BZ
+!! @param[in]       Xk				k-points indexes
+!! @param[in]       en				energies array
+!!
+!! @param[out]      NL_J			current vector
+!
 subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  !
  ! Evalute current using Eq. D1 of Souza et al. 

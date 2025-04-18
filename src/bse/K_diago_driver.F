@@ -127,9 +127,7 @@ subroutine K_diago_driver(iq,W,X_static)
  l_kerr_rgt=l_BS_kerr      .or.l_BS_dichroism
  !
  l_diago     = index(BSS_mode,'o')/=0 ! old diago
-#if defined _SLEPC && !defined _NL
  l_slepc     = index(BSS_mode,'s')/=0
-#endif
  l_ydiago    = index(BSS_mode,'d')/=0 
  !
  if(l_diago) Solver="Diago"

@@ -485,7 +485,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_slepc_maxit=0
  BSS_slepc_ncv=0
  BSS_slepc_mpd=0
- BSS_slepc_tol=1E-6_SP
+ BSS_slepc_tol=1E-5_SP
  BSS_slepc_pseudo_herm=.FALSE.
 #endif
  !

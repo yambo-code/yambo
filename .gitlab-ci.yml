@@ -14,4 +14,3 @@ create-pages:
     - apt-get install -qq build-essential git gcc gfortran libopenblas-dev
       libfftw3-dev libopenmpi-dev
     - ./configure
-    - make core -j

@@ -5,7 +5,7 @@ variables:
 create-pages:
   pages:
     # The folder that contains the files to be exposed at the Page URL
-    publish: public
+    publish: doc
   rules:
     # This ensures that only pushes to the default branch will trigger
     # a pages deploy
@@ -19,4 +19,3 @@ create-pages:
     - apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
     - apt-get install -qq build-essential git gcc gfortran cmake libopenblas-dev libfftw3-dev libopenmpi-dev
     - ./configure
-    - mkdir public

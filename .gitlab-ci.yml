@@ -3,7 +3,7 @@ image: ubuntu:20.04
 variables:
   DEBIAN_FRONTEND: "noninteractive"
 create-pages:
-pages:
+  pages:
   # The folder that contains the files to be exposed at the Page URL
   publish: public
   rules:

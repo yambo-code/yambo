@@ -7,9 +7,10 @@ create-pages:
   rules:
     # This ensures that only pushes to the default branch will trigger
     # a pages deploy
-    - if: $CI_COMMIT_REF_NAME == develop # $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_REF_NAME == "develop" 
+    # $CI_DEFAULT_BRANCH
   # Functions that should be executed before the build script is run
+  # libopenblas-dev libfftw3-dev libopenmpi-dev
   script:
-    - apt-get install -qq build-essential git gcc gfortran libopenblas-dev
-      libfftw3-dev libopenmpi-dev
+    - apt-get install -qq build-essential git gcc gfortran libopenmpi-dev
     - ./configure

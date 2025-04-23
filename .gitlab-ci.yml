@@ -4,8 +4,8 @@ variables:
   DEBIAN_FRONTEND: "noninteractive"
 create-pages:
   pages:
-  # The folder that contains the files to be exposed at the Page URL
-  publish: public
+    # The folder that contains the files to be exposed at the Page URL
+    publish: public
   rules:
     # This ensures that only pushes to the default branch will trigger
     # a pages deploy

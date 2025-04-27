@@ -7,10 +7,9 @@ create-pages:
     # The folder that contains the files to be exposed at the Page URL
     publish: doc
   rules:
-    # This ensures that only pushes to the default branch will trigger
-    # a pages deploy
+    # This ensures that only pushes to the default branch ($CI_DEFAULT_BRANCH) will trigger a pages deploy
     - if: $CI_COMMIT_REF_NAME == "develop" 
-    # $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_REF_NAME == "master" 
   # Functions that should be executed before the build script is run 
   script:
     - apt-get -qq update

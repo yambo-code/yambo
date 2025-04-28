@@ -77,7 +77,7 @@ subroutine K_diago_driver(iq,W,X_static)
  character(1)     :: sec
  character(10)    :: Solver
  ! Ydiago varibles
- integer, target  :: neigs_range(2)
+ integer, target  :: neigs_range(2),BSS_n_eig_save
  real(SP), target :: eigvals_range(2)
  !
  ! Slepc specific
@@ -165,6 +165,9 @@ subroutine K_diago_driver(iq,W,X_static)
  !====================
  if (.not.BSS_write_eig_2_db) call parser('WRbsWF',BSS_write_eig_2_db)
  call parser('BSSPertWidth',BSS_perturbative_width)
+ !
+ ! This is needed in case BS_res_ares_n_mat>1
+ BSS_n_eig_save=BSS_n_eig
  !
  do i_BS_mat=1,BS_res_ares_n_mat
    !
@@ -674,14 +677,9 @@ subroutine K_diago_driver(iq,W,X_static)
          call warning('N_eigen < 1. Calculating only 1% of the eigenvalues.')
        endif
        !
-       if (BSS_n_eig>BS_H_dim) then
-         call warning('N_eigen > BS_H_dim. Calculating 10% of the eigenvalues.')
-         BSS_n_eig = nint(BS_H_dim*0.1)
-       endif
-       !
-       if (BSS_n_eig>BS_K_dim(1) .and. BSS_slepc_pseudo_herm) then
-         call warning('N_eigen > BS_K_dim and pseudo-hermitian case. Calculating 10% of the eigenvalues.')
-         BSS_n_eig = nint(BS_K_dim(1)*0.1)
+       if (BSS_n_eig>BS_mat_dim) then
+         call warning('N_eigen > BS_mat_dim. Calculating 10% of the eigenvalues.')
+         BSS_n_eig = nint(BS_mat_dim*0.1)
        endif
        !
      endif
@@ -692,7 +690,7 @@ subroutine K_diago_driver(iq,W,X_static)
      if(l_ydiago) then
        !
        ! In case of ydiago, BSS_n_eig will be overwritten after the solver is called 
-       if( BSS_n_eig==0 ) BSS_n_eig = BS_mat_dim
+       if( BSS_n_eig_save==0 ) BSS_n_eig = BS_mat_dim
        !
        neigs_range  = 0
        eigvals_range= -1._SP

@@ -50,49 +50,60 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  ! Workspace
  !
  lwork=-1
- lrwork=-1
- liwork=-1
  allocate(WS%v_cmplx(1))
- allocate(WS%v_real(1))
- allocate(WS%v_int(1))
+ !
+ lrwork=max(1,3*n-2)
+#if defined _MAGMA
+ lrwork=1
+#endif
+ !
+ allocate(WS%v_real(lrwork))
  !
 #if defined _MAGMA
-   !
-   if (.not.magma_init_done) then
-     call msg('sr','Initializing magma library in geev')
-     call magma_setup()
-   endif
-   !   
-   call magmaf_xheevd_m(1,'v','u', n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,&
-&                       lrwork,WS%v_int,liwork,WS%i_fail)
+ !
+ lrwork=-1
+ liwork=-1
+ allocate(WS%v_int(1))
+ !
+ if (.not.magma_init_done) then
+   call msg('sr','Initializing magma library in geev')
+   call magma_setup()
+ endif
+ !   
+ call magmaf_xheevd_m(1,'v','u', n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,&
+ &                       lrwork,WS%v_int,liwork,WS%i_fail)
 #else
-   call la_xheev('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
+ call la_xheev('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
 #endif
  !
  if(WS%i_fail /=0 ) call LINEAR_ALGEBRA_error(' _XHEEV_ ','WS%v_cmplx size query failed')
  !
- !
  lwork=nint(real(WS%v_cmplx(1)))
- lrwork=nint(WS%v_real(1))
- liwork=WS%v_int(1)
  deallocate(WS%v_cmplx)
- deallocate(WS%v_real)
- deallocate(WS%v_int)
  !
  if(.not.(l_nl_optics.or.l_real_time)) then
    YAMBO_ALLOC(WS%v_cmplx,(lwork))
+ else
+   allocate(WS%v_cmplx(lwork))
+ endif
+ !
+#if defined _MAGMA
+ !
+ lrwork=nint(WS%v_real(1))
+ deallocate(WS%v_real)
+ liwork=WS%v_int(1)
+ deallocate(WS%v_int)
+ !
+ if(.not.(l_nl_optics.or.l_real_time)) then
    YAMBO_ALLOC(WS%v_real,(lrwork))
    YAMBO_ALLOC(WS%v_int,(liwork))
  else
-   allocate(WS%v_cmplx(lwork))
    allocate(WS%v_real(lrwork))
    allocate(WS%v_int(liwork))
  endif
-
  !   
  ! use magma (if available)
  !   
-#if defined _MAGMA
  ! 
  call magmaf_xheevd_m(1,'v','u',n, M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,&
 &                     lrwork,WS%v_int,liwork,WS%i_fail)

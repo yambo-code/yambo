@@ -7,6 +7,20 @@
 !
 subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  !
+ ! This subroutine computes the non local part of the pseudo potential V^nl using the KB form factors.
+ ! If l_equilibrium=.true. it returns V^nl_{nmk}= <nk | V^nl(r,r') | mk>
+ ! If l_equilibrium=.false. it returns V^nl_{nmk}(A)= <nk | V^nl(r,r') exp(i\int_r^r'A(x) dx) | mk>
+ !
+ ! This is used in (i) yambo_sc in presence of a magnetic field, and 
+ !                 (ii) yambo_rt when switching to the velocity gauge
+ ! See also:
+ ! (i)  eq(10) in Phys. Rev. Lett. 91, 196401 (2003), last term
+ ! (ii) eq.(32) in Phys. Chem. Chem. Phys. 17, 31371 (2015)
+ !
+ ! In the future this subroutine should be compared and eventually interated /
+ ! merged with the new coding done by FP in the subroutine Bare_Hamiltonina_from_scratch
+ ! (presently under development), which is able to construct both V^nl and V^loc
+ !
  use pars,          ONLY:SP,cZERO
  use drivers,       ONLY:l_sc_magnetic,l_real_time
  use electrons,     ONLY:levels,n_spinor,n_sp_pol,spin

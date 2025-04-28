@@ -77,7 +77,7 @@ subroutine K_diago_driver(iq,W,X_static)
  character(1)     :: sec
  character(10)    :: Solver
  ! Ydiago varibles
- integer, target  :: neigs_range(2)
+ integer, target  :: neigs_range(2),BSS_n_eig_save
  real(SP), target :: eigvals_range(2)
  !
  ! Slepc specific
@@ -130,6 +130,17 @@ subroutine K_diago_driver(iq,W,X_static)
  l_slepc     = index(BSS_mode,'s')/=0
  l_ydiago    = index(BSS_mode,'d')/=0 
  !
+#if defined _NL
+ if (l_ydiago) then
+   ! The issue is present if yambo was configured in single precision
+   ! If the coufingure was done in double precision, the issue is not present
+   ! However, at this stage, it is not possible to know how the user configured yambo
+   call warning("non-linear optics forces DP compilation and breaks Ydiago library interface in SP")
+   l_ydiago = .false.
+   l_diago  = .true.
+ endif
+#endif
+ !
  if(l_diago) Solver="Diago"
 #if defined _SLEPC && !defined _NL
  if(l_slepc) Solver="Slepc"
@@ -154,6 +165,9 @@ subroutine K_diago_driver(iq,W,X_static)
  !====================
  if (.not.BSS_write_eig_2_db) call parser('WRbsWF',BSS_write_eig_2_db)
  call parser('BSSPertWidth',BSS_perturbative_width)
+ !
+ ! This is needed in case BS_res_ares_n_mat>1
+ BSS_n_eig_save=BSS_n_eig
  !
  do i_BS_mat=1,BS_res_ares_n_mat
    !
@@ -217,7 +231,7 @@ subroutine K_diago_driver(iq,W,X_static)
            ! 2.1. Nest matrix uses pseudo-hermitian structure of BSE, only for the coupling case
            call K_stored_in_a_nest_matrix(i_BS_mat,iq,slepc_mat)
          else
-           ! 2.2. Single PETSc matrix, for resonant case or coupling
+           ! 2.2. Single PETSc matrix, for resonant case or non-hermitian coupling
            call K_stored_in_a_slepc_matrix(i_BS_mat,iq,slepc_mat)
          endif
        endif        
@@ -663,14 +677,9 @@ subroutine K_diago_driver(iq,W,X_static)
          call warning('N_eigen < 1. Calculating only 1% of the eigenvalues.')
        endif
        !
-       if (BSS_n_eig>BS_H_dim) then
-         call warning('N_eigen > BS_H_dim. Calculating 10% of the eigenvalues.')
-         BSS_n_eig = nint(BS_H_dim*0.1)
-       endif
-       !
-       if (BSS_n_eig>BS_K_dim(1) .and. BSS_slepc_pseudo_herm) then
-         call warning('N_eigen > BS_K_dim and pseudo-hermitian case. Calculating 10% of the eigenvalues.')
-         BSS_n_eig = nint(BS_K_dim(1)*0.1)
+       if (BSS_n_eig>BS_mat_dim) then
+         call warning('N_eigen > BS_mat_dim. Calculating 10% of the eigenvalues.')
+         BSS_n_eig = nint(BS_mat_dim*0.1)
        endif
        !
      endif
@@ -681,7 +690,7 @@ subroutine K_diago_driver(iq,W,X_static)
      if(l_ydiago) then
        !
        ! In case of ydiago, BSS_n_eig will be overwritten after the solver is called 
-       if( BSS_n_eig==0 ) BSS_n_eig = BS_mat_dim
+       if( BSS_n_eig_save==0 ) BSS_n_eig = BS_mat_dim
        !
        neigs_range  = 0
        eigvals_range= -1._SP

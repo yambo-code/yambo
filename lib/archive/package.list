@@ -1,7 +1,7 @@
 #
 # Libs list
 #
-EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff etsf_io libxc lapack blacs scalapack elpa petsc slepc fftw fftqe ydiago devxlib
+EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff etsf_io libxc lapack blacs scalapack elpa magma petsc slepc fftw fftqe ydiago devxlib
 #
 # storing options
 #
@@ -15,6 +15,7 @@ keep_lapack=no
 keep_blacs=no
 keep_scalapack=no
 keep_elpa=no
+keep_magma=no
 keep_petsc=no
 keep_slepc=no
 keep_fftw=no
@@ -38,6 +39,7 @@ version_blacs=missing
 version_scalapack=2.2.1
 #version_elpa=release_2024_05_001   # This was neeeded for gitlab
 version_elpa=2024.05.001
+version_magma=2.8.0
 version_slepc=3.22.2
 version_petsc=3.22.2
 version_fftw=3.3.10
@@ -59,6 +61,7 @@ pkgname_lapack=lapack-$(version_lapack)
 pkgname_blacs=blacs
 pkgname_scalapack=scalapack-$(version_scalapack)
 pkgname_elpa=elpa-$(version_elpa)
+pkgname_magma=magma-$(version_magma)
 pkgname_slepc=slepc-$(version_slepc)
 pkgname_petsc=petsc-$(version_petsc)
 pkgname_fftw=fftw-$(version_fftw)
@@ -79,6 +82,7 @@ tarball_libxc=$(pkgname_libxc).tar.gz
 tarball_lapack=v$(version_lapack).tar.gz
 tarball_scalapack=v$(version_scalapack).tar.gz
 tarball_elpa=$(pkgname_elpa).tar.gz
+tarball_magma=$(pkgname_magma).tar.gz
 tarball_blacs=$(pkgname_blacs).tar.gz
 tarball_slepc=slepc-v$(version_slepc).tar.gz
 tarball_petsc=petsc-v$(version_petsc).tar.gz
@@ -111,6 +115,7 @@ url_libxc=https://gitlab.com/libxc/libxc/-/archive/$(version_libxc)/$(tarball_li
 #
 url_fftw=https://fftw.org/$(tarball_fftw)
 url_elpa=https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/$(version_elpa)/$(tarball_elpa)
+url_magma=https://icl.utk.edu/projectsfiles/magma/downloads/$(tarball_magma)
 #
 # Internal URL's
 #

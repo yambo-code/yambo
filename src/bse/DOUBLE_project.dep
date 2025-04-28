@@ -23,7 +23,6 @@
  K_diago_response_functions.o
  K_diago_right_residuals.o
  K_diagonal.o
- K_diagonalize.o
  K_dipoles.o
  K_dot_product.o
  K_driver.o
@@ -41,10 +40,10 @@
  K_kernel.o
  K_multiply_by_V.o
  K_multiply_by_V_slepc.o
+ K_multiply_by_V_slepc_nest.o
  K_multiply_by_V_transpose.o
  K_multiply_by_V_transpose_slepc.o
  K_observables.o
- K_residuals.o
  K_restart.o
  K_screened_interaction.o
  K_shell_matrix.o
@@ -54,4 +53,5 @@
  K_stored_in_a_slepc_matrix.o
  PL_diago_residual.o
  PL_via_perturbative_inversion.o
+ YDIAGO_driver.o
 

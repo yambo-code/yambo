@@ -79,7 +79,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  endif
 
  !
- ! Decide which to use among LK or SLK
+ ! Decide which LA lib to use
  !
  lib_in_use=USE_LK
 #if defined _SCALAPACK 

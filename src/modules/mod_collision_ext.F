@@ -18,8 +18,8 @@ module collision_ext
  !
  integer :: COLL_bands(2)
  integer :: COLL_ID
- integer :: LAST_COLL_sync
- integer :: PAR_COLL_min
+ integer :: LAST_COLL_sync = 0
+ integer :: PAR_COLL_min   = 0
  !
  ! Cut off on exchange matrix elements
  ! Sx_cutoff=0 all, (Sx_cutoff>1 or Sx_cutoff<0)=none

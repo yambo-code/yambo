@@ -50,10 +50,10 @@ subroutine scatter_Bamp_using_the_gradient(isc,which)
  call WF_apply_symm(isc%os,isc%WF_symm_o)
  !
  ! \grad <ib ik_is i_sp|
- if (which=="i") call eval_Gradient(isc%WF_symm_i,WF_der,n_spinor,"wave")
+ if (which=="i") call eval_Gradient_wf(isc%WF_symm_i,WF_der)
  !
  ! \grad | ob ok_os o_sp>   
- if (which=="o") call eval_Gradient(isc%WF_symm_o,WF_der,n_spinor,"wave")
+ if (which=="o") call eval_Gradient_wf(isc%WF_symm_o,WF_der)
  !
  ! Chartesian components of the gradient loop
  !

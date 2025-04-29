@@ -11,7 +11,7 @@ subroutine K_fill_block_cyclic(i_BS_mat, diago_mat)
   !  K = |                       |
   !      | (-cI*K_c^*)  (-K_r^*) |
   !
-  use pars,           ONLY:cI,cONE
+  use pars,           ONLY:cI,cONE,cZERO
   use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling,&
   &                        BS_res_ares_n_mat,l_BS_ares_from_res
   use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width, &
@@ -25,6 +25,10 @@ subroutine K_fill_block_cyclic(i_BS_mat, diago_mat)
   !
   integer, intent(in)               :: i_BS_mat
   type(c_ptr), intent(in)           :: diago_mat
+  !
+  ! Workspace
+  !
+  logical                           :: l_mat_allocated
   integer                           :: i_c,i_r,i_Tk,i_Tp,i_B,H_shift(2)
   complex(YDIAGO_CMPLX)             :: Mij,Mij_star
   integer(YDIAGO_INT)               :: H_pos(2),SL_K_dim(2),SL_H_dim
@@ -97,6 +101,7 @@ subroutine K_fill_block_cyclic(i_BS_mat, diago_mat)
   error_diago = initiateSetQueue(diago_mat, nelements)
   if (error_diago /= 0) call error("Initiating set Queue failed")
   !
+  !
   ! // fill the elements
   do i_B=1,n_BS_blks
     !
@@ -104,6 +109,8 @@ subroutine K_fill_block_cyclic(i_BS_mat, diago_mat)
     i_Tp  =BS_blk(i_B)%iT_p
     !
     if (i_BS_mat/=BS_blk(i_B)%ira_k .and. BS_res_ares_n_mat==2) cycle
+    !
+    l_mat_allocated = allocated(BS_blk(i_B)%mat)
     !
     H_shift=0
     if(BS_blk(i_B)%mode=="C") H_shift(2)=BS_K_dim(1)
@@ -122,8 +129,13 @@ subroutine K_fill_block_cyclic(i_BS_mat, diago_mat)
         if (H_pos(1)+H_shift(1)>H_pos(2)+H_shift(2)) cycle
         if (l_BS_ares_from_res.and.H_pos(1)>H_pos(2)) cycle
         !
-        Mij     =      BS_blk(i_B)%mat(i_r,i_c)
-        Mij_star= real(BS_blk(i_B)%mat(i_r,i_c))-cI*aimag(BS_blk(i_B)%mat(i_r,i_c))
+        if (l_mat_allocated) then
+          Mij     =      BS_blk(i_B)%mat(i_r,i_c)
+          Mij_star= real(BS_blk(i_B)%mat(i_r,i_c))-cI*aimag(BS_blk(i_B)%mat(i_r,i_c))
+        else
+          Mij     =cZERO
+          Mij_star=cZERO
+        endif
         !
         ! Add energies to the diagonal
         !

@@ -27,7 +27,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use units,          ONLY:HA2EV
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
 &                         BS_res_ares_n_mat,l_BS_optics,l_BS_dichroism,l_BS_ares_from_res !,BS_Blocks_symmetrize_K,&
- use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode, BSS_resize, &
+ use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,BSS_resize,BSS_n_eig_Input, &
 &                         BSS_write_eig_2_db,BSS_eh_W,BSS_n_eig,BS_E,BSS_slepc_pseudo_herm,write_bs_ev_par,&
 &                         BSS_ydiago_solver,BSS_first_eig,BSS_target_E,BSS_trange_E,BSS_er,BSS_slepc_precondition
  use X_m,            ONLY:X_t,X_OUTPUT_driver
@@ -71,13 +71,13 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  ! Work Space
  !
- integer          :: i_BS_mat,Input_n_eig, BS_mat_dim, neigs_this_cpu, neig_shift, elpa_solver = 2
+ integer          :: i_BS_mat,BSS_n_eig_before_solver, BS_mat_dim, neigs_this_cpu, neig_shift, elpa_solver = 2
  logical          :: K_is_not_hermitian,l_diago,l_slepc,l_dip_more,l_target_erange,l_neig_input, &
  &                   l_ydiago,l_kerr_lft,l_kerr_rgt,l_abs_res
  character(1)     :: sec
  character(10)    :: Solver
  ! Ydiago varibles
- integer, target  :: neigs_range(2),BSS_n_eig_save
+ integer, target  :: neigs_range(2)
  real(SP), target :: eigvals_range(2)
  !
  ! Slepc specific
@@ -165,9 +165,6 @@ subroutine K_diago_driver(iq,W,X_static)
  !====================
  if (.not.BSS_write_eig_2_db) call parser('WRbsWF',BSS_write_eig_2_db)
  call parser('BSSPertWidth',BSS_perturbative_width)
- !
- ! This is needed in case BS_res_ares_n_mat>1
- BSS_n_eig_save=BSS_n_eig
  !
  do i_BS_mat=1,BS_res_ares_n_mat
    !
@@ -308,7 +305,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if (l_slepc) then
        ! BSS_n_eig could be lowered by MATRIX_slepc
-       if (Input_n_eig>BSS_n_eig) call K_slepc_resize_variables()
+       if (BSS_n_eig_before_solver>BSS_n_eig) call K_slepc_resize_variables()
        ! Destroy the matrix
        call MatDestroy(slepc_mat,ierr)
      endif
@@ -318,7 +315,8 @@ subroutine K_diago_driver(iq,W,X_static)
      if (l_diago) call live_timing( )
      !
      if (l_ydiago) then
-       if (Input_n_eig>BSS_n_eig) call K_ydiago_resize_variables()
+       ! BSS_n_eig could be lowered by YDIAGO_driver
+       if (BSS_n_eig_before_solver>BSS_n_eig) call K_ydiago_resize_variables()
      endif
      !
      ! Compute residuals
@@ -598,7 +596,6 @@ subroutine K_diago_driver(iq,W,X_static)
        BSS_slepc_pseudo_herm = .false. 
        call warning('Preconditioning not supported in pseudo-hermitian case. Switching to non-hermitian diagonalization')
      endif
-
      !
      if (l_ydiago) then
        !
@@ -669,6 +666,8 @@ subroutine K_diago_driver(iq,W,X_static)
      ! Number of states to be computed
      !=================================
      !
+     BSS_n_eig=BSS_n_eig_Input
+     !
      if (l_slepc) then
        !
        if (BSS_n_eig<1) then
@@ -690,7 +689,7 @@ subroutine K_diago_driver(iq,W,X_static)
      if(l_ydiago) then
        !
        ! In case of ydiago, BSS_n_eig will be overwritten after the solver is called 
-       if( BSS_n_eig_save==0 ) BSS_n_eig = BS_mat_dim
+       if( BSS_n_eig==0 ) BSS_n_eig = BS_mat_dim
        !
        neigs_range  = 0
        eigvals_range= -1._SP
@@ -717,7 +716,7 @@ subroutine K_diago_driver(iq,W,X_static)
        !
      endif
      !
-     Input_n_eig=BSS_n_eig
+     BSS_n_eig_before_solver=BSS_n_eig
      !
      ! For backward compatibitly I set  
      neig_shift = 0

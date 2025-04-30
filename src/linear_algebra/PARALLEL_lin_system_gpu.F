@@ -60,10 +60,10 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
  integer(IPL) :: h_bytes_trf, h_bytes_trs
  integer(IPL) :: d_bytes_trf, d_bytes_trs
 
- integer(IPL), allocatable DEV_ATTR :: DEV_VAR(ipiv)(:)
- integer,      allocatable DEV_ATTR :: DEV_VAR(info)(:)
+ integer(IPL), allocatable DEV_ATTR :: DEV_VAR(d_ipiv)(:)
+ integer,      allocatable DEV_ATTR :: DEV_VAR(d_info)(:)
 
- integer :: info(2)
+ integer :: h_info(2)
 
  integer :: ierr
 
@@ -116,17 +116,17 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
 
  if(ierr/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverMpCreateMatrixDesc failed')
 
- YAMBO_ALLOC_GPU(DEV_VAR(ipiv),(A%BLCnrows + A%BLCnrows))
- YAMBO_ALLOC_GPU(DEV_VAR(info),(2))
- DEV_VAR(info) = 0
+ YAMBO_ALLOC_GPU(DEV_VAR(d_ipiv),(A%BLCnrows + A%BLCnrows))
+ YAMBO_ALLOC_GPU(DEV_VAR(d_info),(2))
+ DEV_VAR(d_info) = 0
  !
- !DEV_ACC_DEBUG data present( A%blc, B%blc, ipiv )
- !DEV_ACC host_data use_device( A%blc, B%blc, ipiv )
+ !DEV_ACC_DEBUG data present( A%blc, B%blc, d_ipiv )
+ !DEV_ACC host_data use_device( A%blc, B%blc, d_ipiv )
  !
  ! query and allocating workspaces
  !
  ierr = cusolverMpGetrf_buffersize(A%cusolvermp_h, &
-        n, nrhs, DEV_VAR(A%blc)(:,:,A%I), one, one, A%desc_mp, DEV_VAR(ipiv), &
+        n, nrhs, DEV_VAR(A%blc)(:,:,A%I), one, one, A%desc_mp, DEV_VAR(d_ipiv), &
 #if defined _DOUBLE
         CUDADATATYPE(CUDA_C_64F), &
 #else
@@ -141,7 +141,7 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
 
  ierr = cusolverMpGetrs_buffersize(A%cusolvermp_h, CUBLAS_OP_N, &
         n, nrhs, &
-        DEV_VAR(A%blc)(:,:,A%I), one, one, A%desc_mp, DEV_VAR(ipiv), &
+        DEV_VAR(A%blc)(:,:,A%I), one, one, A%desc_mp, DEV_VAR(d_ipiv), &
         DEV_VAR(B%blc)(:,:,B%I), one, one, B%desc_mp, &
 #if defined _DOUBLE
         CUDADATATYPE(CUDA_C_64F), &
@@ -165,12 +165,12 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
  YAMBO_ALLOC_GPU(d_work_trs,(d_bytes_trs/c_sizeof(c_value)))
  !
  !DEV_ACC_DEBUG data present(A%blc, B%blc)
- !DEV_ACC host_data use_device(A%blc, B%blc, ipiv, d_work_trf, d_work_trs, info)
+ !DEV_ACC host_data use_device(A%blc, B%blc, d_ipiv, d_work_trf, d_work_trs, d_info)
  !
  call timing("getrf-getrs",OPR='start')
 
  ierr = cusolverMpGetrf(A%cusolvermp_h, &
-        n, nrhs, DEV_VAR(A%blc)(:,:,A%I), one, one, A%desc_mp, DEV_VAR(ipiv), &
+        n, nrhs, DEV_VAR(A%blc)(:,:,A%I), one, one, A%desc_mp, DEV_VAR(d_ipiv), &
 #if defined _DOUBLE
         CUDADATATYPE(CUDA_C_64F), &
 #else
@@ -178,7 +178,7 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
 #endif
         d_work_trf, d_bytes_trf, &
         h_work_trf, h_bytes_trf, &
-        DEV_VAR(info)(1))
+        DEV_VAR(d_info)(1))
 
  if(ierr/=CUSOLVER_STATUS_SUCCESS) then
    write(error_msg,"(A,I1") "cusolverMpGetrf launch failed with error ", ierr
@@ -188,7 +188,7 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
  !ierr = cal_stream_sync(A%comm_mp, stream_d)
 
  ierr = cusolverMpGetrs(A%cusolvermp_h, CUBLAS_OP_N, &
-        n, nrhs, DEV_VAR(A%blc)(:,:,A%I), one, one, A%desc_mp, DEV_VAR(ipiv), &
+        n, nrhs, DEV_VAR(A%blc)(:,:,A%I), one, one, A%desc_mp, DEV_VAR(d_ipiv), &
         DEV_VAR(B%blc)(:,:,B%I), one, one, B%desc_mp, &
 #if defined _DOUBLE
         CUDADATATYPE(CUDA_C_64F), &
@@ -197,7 +197,7 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
 #endif
         d_work_trs, d_bytes_trs, &
         h_work_trs, h_bytes_trs, &
-        DEV_VAR(info)(2))
+        DEV_VAR(d_info)(2))
 
  if(ierr/=CUSOLVER_STATUS_SUCCESS) then
    write(error_msg,"(A,I1") "cusolverMpGetrs launch failed with error ", ierr
@@ -209,15 +209,15 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
  !DEV_ACC end host_data
  !DEV_ACC_DEBUG end data
  !
- call devxlib_memcpy_d2h(info,DEV_VAR(info))
+ call devxlib_memcpy_d2h(h_info,DEV_VAR(d_info))
 
- if(info(1)/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverMpGetrf failed')
- if(info(2)/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverMpGetrs failed')
+ if(h_info(1)/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverMpGetrf failed')
+ if(h_info(2)/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverMpGetrs failed')
 
  ! free resources
 
- YAMBO_FREE_GPU(DEV_VAR(ipiv))
- YAMBO_FREE_GPU(DEV_VAR(info))
+ YAMBO_FREE_GPU(DEV_VAR(d_ipiv))
+ YAMBO_FREE_GPU(DEV_VAR(d_info))
 
  YAMBO_FREE(h_work_trf)
  YAMBO_FREE(h_work_trs)

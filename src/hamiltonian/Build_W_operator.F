@@ -120,9 +120,7 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
  !
  !$omp parallel do default(shared), private(id)
  do id=1,3
-   Wk(id,H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))=                     &
-   &     (Wk(id,H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))               &
-   &      +hermitian(Wk(id,H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))))
+   Wk(id,:,:)=(Wk(id,:,:)+hermitian(Wk(id,:,:)))
  enddo
  !$omp end parallel do
  !

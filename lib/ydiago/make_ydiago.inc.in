@@ -13,7 +13,7 @@ AR               = @AR@
 CPP              = @CPP@ 
 
 CFLAGS       	 = -O3 #@CFLAGS@  #-g -fsanitize=address -fno-omit-frame-pointer 
-YAMBO_FLAGS   	 = @def_mpi@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_gpu@ @def_elpa@
+YAMBO_FLAGS   	 = @def_mpi@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @ydiago_opt@
 ELPA_INC         = @ELPA_INCS@ @LIBCUDA_INCS@ @GPU_INCS@ @LIBROCM_INCS@
 
 #
@@ -60,6 +60,6 @@ RANLIB           = echo
 # libraries
 
 #
-#LIBS             = $(extlibs_prefix)/$(fc_kind)/$(f90)/lib/libydiago.a
+#LIBS             = $(extlibs_prefix)/$(fc_kind)/$(f90)/$(ydiago_gpu_support)/lib/libydiago.a
 LIBS             = ./libydiago.a
 IFLAGS           = -I./ -I../ -I../include

@@ -124,6 +124,12 @@ if test "$internal_blacs" = "yes" ; then
   if test "$compile_blacs" = "no" ; then BLACS_check="I"; fi
 fi
 #
+if test x"$with_ydiago_branch" = "xnone"; then
+ YDIAGO_check="I"; 
+else
+ YDIAGO_check="G"; 
+fi
+#
 PETSC_check="-"
 PETSC_info=""
 if test "$internal_petsc" = "yes" ; then
@@ -240,6 +246,7 @@ AC_SUBST(LAPACK_check)
 AC_SUBST(BLACS_check)
 AC_SUBST(SLK_check)
 AC_SUBST(ELPA_check)
+AC_SUBST(YDIAGO_check)
 AC_SUBST(PETSC_check)
 AC_SUBST(SLEPC_check)
 AC_SUBST(PETSC_info)
@@ -257,9 +264,11 @@ AC_SUBST(MPI_info)
 #
 # STRIPE [LIB] from paths
 #
-ACX_STRIPE_SUBPATH2($YDIAGO_LIBS,"LIB")
+ACX_STRIPE_SUBPATH($YDIAGO_LIBS,"LIB")
+#ACX_STRIPE_SUBPATH2($YDIAGO_LIBS,"LIB")
 YDIAGO_LIBS_R=$STRIPE
-ACX_STRIPE_SUBPATH2($YDIAGO_INCS,"INC")
+ACX_STRIPE_SUBPATH($YDIAGO_INCS,"INC")
+#ACX_STRIPE_SUBPATH2($YDIAGO_INCS,"INC")
 YDIAGO_INCS_R=$STRIPE
 AC_SUBST(YDIAGO_LIBS_R)
 AC_SUBST(YDIAGO_INCS_R)

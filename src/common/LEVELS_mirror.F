@@ -35,7 +35,7 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
  type(levels)   ::E
  type(DIPOLE_t) ::Dip
  type(X_t)      ::X(5) 
- logical        ::l_USER_field(16)
+ logical        ::l_USER_field(16),dip_bands_defined
  !
  integer :: i1,SCATT_bands(2),DIP_bands(2)
  !
@@ -113,31 +113,26 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
    ! Bands (Dipoles)
    !----------------
    DIP_bands=-1
+   dip_bands_defined=.false.
    ! Start from input if present
-   if( l_USER_field(6) )         DIP_bands=Dip%ib
+   if( l_USER_field(6) )  call def_dip_bands(Dip%ib)
    !
    ! Test scatt bands
-   if( all((/SCATT_bands/=-1/) ) ) DIP_bands=SCATT_bands
-   DIP_bands(1)=min(DIP_bands(1),Dip%ib(1))
-   DIP_bands(2)=max(DIP_bands(2),Dip%ib(2))
+   if( all((/SCATT_bands/=-1/) ) ) call def_dip_bands(SCATT_bands)
    !
    ! Test other fields
    do i1=1,5
      if(.not.(l_USER_field(i1))) cycle
-     DIP_bands=X(i1)%ib
+     call def_dip_bands(X(i1)%ib)
    enddo
-   DIP_bands(1)=min(DIP_bands(1),Dip%ib(1))
-   DIP_bands(2)=max(DIP_bands(2),Dip%ib(2))
    !
-   if( l_USER_field(7) ) DIP_bands=BS_bands
+   if( l_USER_field(7) ) call def_dip_bands(BS_bands)
 #if defined _RT || defined _QED || defined _NL
-   if( l_USER_field(8) ) DIP_bands=RT_bands
+   if( l_USER_field(8) ) call def_dip_bands(RT_bands)
 #endif
 #if defined _NL
-   if( l_USER_field(10)) DIP_bands=NL_bands
+   if( l_USER_field(10)) call def_dip_bands(NL_bands)
 #endif
-   DIP_bands(1)=min(DIP_bands(1),Dip%ib(1))
-   DIP_bands(2)=max(DIP_bands(2),Dip%ib(2))
    !
    ! Any negative bands?
    !---------------------
@@ -163,5 +158,16 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
      if (bands(2)>0) bands(2)=min(bands(2),E%nb)
      if (bands(2)<0) bands(2)=E%nb
    end subroutine
+   !
+   subroutine def_dip_bands(bands_in)
+       integer, intent(in)    :: bands_in(2)
+       if (dip_bands_defined) then
+          DIP_bands(1)=min(DIP_bands(1),bands_in(1))
+          DIP_bands(2)=max(DIP_bands(2),bands_in(2))
+       else
+          dip_bands_defined=.true.
+          DIP_bands=bands_in
+       endif
+   end subroutine def_dip_bands
    !
 end subroutine

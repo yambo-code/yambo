@@ -34,7 +34,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_W_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
-&                     cutoff_presets,k_map,qindx_S_max_Go,RIMW_type
+&                     cutoff_presets,k_map,qindx_S_max_Go,RIMW_type,eps_env
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn
  use parallel_m, ONLY:ncpu,CPU_str_reset,CREATE_hosts_COMM
  use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
@@ -273,6 +273,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  k_map%q_step  =-1
  k_map%max_kdir= 0
  qindx_S_max_Go=-1
+ eps_env=1._SP
  !
  ! RIM
  !

@@ -39,6 +39,11 @@ module BS
  character(schlen) :: BSK_mode
  character(schlen) :: BSK_IO_mode
  !
+ ! Kind of response function
+ !===========================
+ logical :: l_BS_fix_holes
+ logical :: l_BS_fix_elecs
+ !
  ! Dipoles tracing 
  !=================
  logical :: l_BS_trace
@@ -67,6 +72,7 @@ module BS
  integer :: BS_IO_dim(2,4)
  integer :: MAX_BSK_LIN_size
  integer :: BS_bands(2)
+ integer :: BS_core_bands(4)
  integer :: BS_q(2)
  integer :: BS_iq_now
  integer :: BS_identifier

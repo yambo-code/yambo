@@ -232,9 +232,10 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  !
  use pars,         ONLY:SP
  use stderr,       ONLY:intc
+ use parser_m,     ONLY:parser
  use BS,           ONLY:BS_K_dim,BS_H_dim,BS_nT_at_k,BS_K_coupling,   &
 &                       l_BS_ares_from_res,BS_res_ares_n_mat,BS_bands,&
-&                       BS_n_eh_spaces
+&                       BS_n_eh_spaces,BS_core_bands,l_BS_fix_holes,l_BS_fix_elecs
  use DIPOLES,      ONLY:DIPOLE_t
  use electrons,    ONLY:levels,n_sp_pol
  use com,          ONLY:msg
@@ -272,6 +273,21 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  !
  V_bands=(/BS_bands(1),maxval(Ken%nbm)/)
  C_bands=(/minval(Ken%nbf)+1,BS_bands(2)/)
+ !
+ call parser('BSEHoleBands', l_BS_fix_holes)
+ call parser('BSEElecBands', l_BS_fix_elecs)
+ if (l_BS_fix_holes.and.all(BS_core_bands(1:2)/=0)) then
+   if (BS_core_bands(1)<V_bands(1) .or. BS_core_bands(2)>V_bands(2)) &
+   &  call error(" BSECoreBands range must fit in BSEbands range for holes")
+   V_bands=(/BS_core_bands(1),BS_core_bands(2)/)
+ endif
+ !
+ if (l_BS_fix_elecs.and.all(BS_core_bands(3:4)/=0)) then
+   if (BS_core_bands(3)<C_bands(1) .or. BS_core_bands(4)>C_bands(2)) &
+   &  call error(" BSECoreBands range must fit in BSEbands range for elecs")
+   C_bands=(/BS_core_bands(3),BS_core_bands(4)/)
+ endif
+ !
 #if defined _RT
  ! Bands range. In the _RT case %nbf and %nbm turn metallic when carriers are used.
  if (l_rt_carriers_in_use.and.EQ_Transitions) then

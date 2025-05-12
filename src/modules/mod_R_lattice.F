@@ -177,6 +177,10 @@ module R_lattice
  logical                 :: cut_is_slab
  integer                 :: idir(3)
  !
+ ! Environment effectice screening
+ !
+ real(SP)                :: eps_env
+ !
  ! BZ map by direction
  !
  type(bz_map) :: k_map

@@ -227,6 +227,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
    do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_g)
+     if (trim(OBS)=="jdos")        V0(i_g)%fragment(:,i_ColFG) = 1._SP
      if (trim(OBS)=="optics")      V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
      if (trim(OBS)=="kerr")        V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(2,:,1)
      if (trim(OBS)=="dichroism")   V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_dic(1,:,1)

@@ -40,6 +40,7 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
  use cusolvermp
 #endif
  use gpu_m,          ONLY:device_id,stream_d
+ use devxlib,        ONLY:devxlib_memset_d
  !
 #include<dev_defs.h>
 #include<y_memory.h>
@@ -59,6 +60,8 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
 
  integer(IPL) :: h_bytes_trf, h_bytes_trs
  integer(IPL) :: d_bytes_trf, d_bytes_trs
+
+ integer(kind=cuda_stream_kind) :: stream
 
  integer(IPL), allocatable DEV_ATTR :: DEV_VAR(d_ipiv)(:)
  integer,      allocatable DEV_ATTR :: DEV_VAR(d_info)(:)
@@ -88,9 +91,10 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
  ierr = cal_comm_create_mpi(SLK_ORTHO%COMM, SLK_ORTHO%task, SLK_ORTHO%n_CPU, device_id, A%comm_mp)
 
  ierr = cudaSetDevice(device_id)
+ ierr = cudaStreamCreate(stream) ! TODO
 
  ! initialize the cuSOLVERMp environment
- ierr = cusolverMpCreate(A%cusolvermp_h, device_id, stream_d)
+ ierr = cusolverMpCreate(A%cusolvermp_h, device_id, stream)
 
  ierr = cusolverMpCreateDeviceGrid(A%cusolvermp_h, A%grid_mp, A%comm_mp, SLK_ORTHO%grid(1), SLK_ORTHO%grid(2), CUSOLVERMP_GRID_MAPPING_ROW_MAJOR)
 
@@ -119,6 +123,8 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
  YAMBO_ALLOC_GPU(DEV_VAR(d_ipiv),(A%BLCnrows + A%BLCnrows))
  YAMBO_ALLOC_GPU(DEV_VAR(d_info),(2))
  DEV_VAR(d_info) = 0
+ h_info = 0
+ call devxlib_memset_d(DEV_VAR(d_info),0)
  !
  !DEV_ACC_DEBUG data present( A%blc, B%blc, d_ipiv )
  !DEV_ACC host_data use_device( A%blc, B%blc, d_ipiv )
@@ -185,7 +191,7 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
    call LINEAR_ALGEBRA_error(subname,error_msg)
  endif
 
- !ierr = cal_stream_sync(A%comm_mp, stream_d)
+ !ierr = cal_stream_sync(A%comm_mp, stream)
 
  ierr = cusolverMpGetrs(A%cusolvermp_h, CUBLAS_OP_N, &
         n, nrhs, DEV_VAR(A%blc)(:,:,A%I), one, one, A%desc_mp, DEV_VAR(d_ipiv), &
@@ -209,6 +215,7 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
  !DEV_ACC end host_data
  !DEV_ACC_DEBUG end data
  !
+
  call devxlib_memcpy_d2h(h_info,DEV_VAR(d_info))
 
  if(h_info(1)/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverMpGetrf failed')
@@ -226,7 +233,6 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
  YAMBO_FREE_GPU(d_work_trs)
 
  ! release cuSOLVERMp resources
-
  ! destroying cuSOLVERMp matrix descriptors
  ierr = cusolverMpDestroyMatrixDesc(A%desc_mp)
 

@@ -36,7 +36,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        BS_n_g_W,BS_n_g_exch,BS_n_g_fxc,BSE_L_kind,BS_K_cutoff,BSK_IO_mode,BSE_dipole_geometry
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,BSS_target_E,BSS_trange_E,&
 &                        BSS_dr,BSS_er,BSS_E_dir,BSS_Q_dir,BSS_damp_reference,BSS_inversion_mode,&
-&                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig,BSS_first_eig,Haydock_iterMAX,BSS_ydiago_solver
+&                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig_Input,BSS_first_eig,Haydock_iterMAX,BSS_ydiago_solver
 #if defined _SLEPC && !defined _NL
  use BS_solvers,    ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_maxit,&
  &                       BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_mpd,BSS_slepc_matrix_format
@@ -326,7 +326,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs')
- call it(defs,'BSSNEig',       '[SLEPC/DIAGO] Number of eigenvalues to compute',BSS_n_eig)
+ call it(defs,'BSSNEig',       '[SLEPC/DIAGO] Number of eigenvalues to compute',BSS_n_eig_Input)
  call it(defs,'BSSFirstEig',  '[DIAGO] Index of the first eigenvalues to compute',BSS_first_eig,verb_level=V_resp)
  call it(defs,'BSSEnRange',   '[DIAGO] Target energy to find eigenvalues',BSS_trange_E,E_unit,verb_level=V_resp)
 #if defined _SLEPC && !defined _NL

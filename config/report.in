@@ -72,7 +72,7 @@
 #
 # > OTHERs: @DEVXLIB_info@
 #
-# [@ydiago_check@] Ydiago    : @YDIAGO_LIBS_R@
+# [@YDIAGO_check@] Ydiago    : @YDIAGO_LIBS_R@
 #                 @YDIAGO_INCS_R@
 # [@LIBXC_check@] LibXC     : @LIBXC_LIBS_R@
 #                 @LIBXC_INCS_R@

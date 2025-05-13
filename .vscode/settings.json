@@ -33,15 +33,18 @@
       "_HDF5_LIB": "",
       "_HDF5_IO": "",
       "_MPI": "",
-      "YAMBO_ALLOC(A,x)": "allocate(A x)"
+      "YAMBO_ALLOC(A,x)": "allocate(A x)",
     },
-  
+    "fortran.fortls.executable": "/home/reho0001/.local/bin/fortls",
     // Optional formatter
     "fortran.formatting.formatter": "fprettify",
     "fortran.formatting.fprettifyExecutable": "/usr/bin/fprettify",
   
     // Enable verbose logging
     "fortran.logging.level": "Debug",
-    "fortran.experimental.keepInitDiagnostics": false
+    "fortran.experimental.keepInitDiagnostics": false,
+    //This is needed if fortls is installed via pipx
+    "terminal.integrated.env.linux": {
+      "PATH": "${env:HOME}/.local/bin:${env:PATH}"
+    }
   }
-  

@@ -35,7 +35,6 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
  use gpu_m
 #if defined _CUDA
  use mpi
- use cudafor
  use cublas,         ONLY:CUBLAS_OP_N
  use cusolvermp
 #endif
@@ -87,8 +86,6 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
  !
  ! create communicator handle with MPI communicator
  ierr = cal_comm_create_mpi(SLK_ORTHO%COMM, SLK_ORTHO%task, SLK_ORTHO%n_CPU, device_id, A%comm_mp)
-
- ierr = cudaSetDevice(device_id)
 
  ! initialize the cuSOLVERMp environment
  ierr = cusolverMpCreate(A%cusolvermp_h, device_id, async_d)

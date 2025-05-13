@@ -11,14 +11,14 @@
 #include <sys/time.h>
 
 #if defined _irix || defined _ultrix || defined _dec_alpha
-void cclock_ (cpu)
+void cclock_(cpu)
 #elif defined _T3E || defined _T3Efhi
-void CCLOCK (cpu)         /* Apparently MUST be uppercase for Cray */
+void CCLOCK(cpu) /* Apparently MUST be uppercase for Cray */
 #else
-void cclock (cpu)         /* OK for ibm, hp with sppuxOS, ... */
+void cclock(cpu) /* OK for ibm, hp with sppuxOS, ... */
 #endif
 
-double* cpu;
+    double* cpu;
 {
- *cpu = ((double) clock()) / CLOCKS_PER_SEC;
+    *cpu = ((double)clock()) / CLOCKS_PER_SEC;
 }

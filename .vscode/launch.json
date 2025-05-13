@@ -5,8 +5,8 @@
         "name": "Debug Yambo",
         "type": "cppdbg",
         "request": "launch",
-        "program": "/home/reho0001/codes/lumen/bin/yambo", // Adjust to your Yambo binary path
-        "args": [],
+        "program": "/root/codes/lumen/bin/yambo", // Adjust to your Yambo binary path
+        "args": ["-F", "02_COHSEX", "-J", "debug_run", "-C", "debug_run", "-I", "debug_run"], // Adjust to your Yambo files 
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
         "environment": [],
@@ -22,5 +22,4 @@
         ]
       }
     ]
-  }
-  
+  } 

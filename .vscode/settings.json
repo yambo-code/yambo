@@ -35,7 +35,8 @@
       "_MPI": "",
       "YAMBO_ALLOC(A,x)": "allocate(A x)",
     },
-    "fortran.fortls.executable": "/home/reho0001/.local/bin/fortls",
+    "fortran.fortls.path": "/home/reho0001/.local/bin/fortls",
+    
     // Optional formatter
     "fortran.formatting.formatter": "fprettify",
     "fortran.formatting.fprettifyExecutable": "/usr/bin/fprettify",

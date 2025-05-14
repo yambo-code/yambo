@@ -8,6 +8,7 @@
 AC_DEFUN([ACX_VERSION],
 [
 cat << EOF > include/version/version.h
+#pragma once
 #define YAMBO_VERSION $SVERSION
 #define YAMBO_SUBVERSION $SSUBVERSION
 #define YAMBO_PATCHLEVEL $SPATCHLEVEL

@@ -197,7 +197,7 @@ contains
      !
      density_cmplx(:,1)=density(:)
      !
-     call eval_Gradient(density_cmplx,d_density,1,"density")
+     call eval_Gradient_rho_pot(density_cmplx,d_density)
      !
      alpha_ = 0._SP
      do ir = 1, fft_size

@@ -148,7 +148,7 @@ subroutine INIT_activate()
  !
  !Col CUTOFF 
  !
- if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTRadius CUTCylLen CUTwsGvec CUTCol_test')
+ if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTRadius CUTCylLen CUTwsGvec CUTCol_test EpsEnv')
  !
  !XX
  !
@@ -262,7 +262,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
-   call initactivate(1,'BSEQptR BSEBands BSKCut BSKIOmode BSEEhEny BSehWind NoDiagSC')
+   call initactivate(1,'BSEQptR BSEBands BSEHoleBands BSEElecBands BSKCut BSKIOmode BSEEhEny BSehWind NoDiagSC')
    !
 #if defined _RT
    call initactivate(1,'RTOccMode ForceEqTrans')
@@ -571,10 +571,10 @@ subroutine INIT_activate()
 #if defined _NL
  if (l_nl_optics) then
    call initactivate(1,'FFTGvecs NLBands NLverbosity NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
-   call initactivate(1,'TestOSCLL')
-   if(.not.l_nl_p_and_p) call initactivate(1,'NLEnRange NLEnSteps NLrotaxis NLAngSteps')
-   call initactivate(1,'NLDamping RADLifeTime UseDipoles FrSndOrd NoComprCOLL EvalCurrent InducedField FrPolPerdic') 
-   call initactivate(1,'TestOSCLL Gauge RADLifeTime HARRLvcs EXXRLvcs CORRLvcs') 
+   call initactivate(1,'TestOSCLL UseSymm')
+   if(.not.l_nl_p_and_p) call initactivate(1,'NLEnRange NLEnSteps NLrotaxis NLAngSteps NLMaxAng')
+   call initactivate(1,'NLDamping RADLifeTime UseDipoles FrSndOrd NoComprCOLL COLLCut EvalCurrent InducedField') 
+   call initactivate(1,'FrPolPerdic TestOSCLL Gauge RADLifeTime HARRLvcs EXXRLvcs CORRLvcs') 
    call init_QP_ctl_switch('G')
  endif
  !

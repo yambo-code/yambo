@@ -20,7 +20,10 @@ subroutine symmetries_driver(E,Xk)
  use stderr,              ONLY:intc
  use LIVE_t,              ONLY:live_timing
  use interfaces,          ONLY:WF_load,WF_free,el_magnetization
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:REP,OP_WR_CL,VERIFY
  use parser_m,            ONLY:parser
+ use D_lattice,           ONLY:kpoints_map,old_nsym,old_dl_sop,old_S_contains_TR
  !
 #include<y_memory.h>
  !
@@ -30,14 +33,12 @@ subroutine symmetries_driver(E,Xk)
  ! Work Space
  !
  type(bz_samp)         :: Xk_save
- integer,allocatable   :: kpoints_map(:,:)
  ! 
- integer               :: old_nsym
- real(SP)              :: old_dl_sop(3,3,nsym)
  integer               :: old_sop_inv(nsym)
- logical               :: S_contains_TR(nsym),l_keep_k_grid
+ logical               :: l_keep_k_grid
  !
- integer               :: old_nkpt
+ integer               :: old_nkpt,ID,io_old_SYMMs
+ integer, external     :: io_full_SYMMs
  !
 #if defined _YPP_ELPH
  character(lchlen)  :: filename,infile,outfile,in_path
@@ -45,6 +46,9 @@ subroutine symmetries_driver(E,Xk)
  integer            :: iq,ID_gkkp,io_err
 #endif
  !
+ YAMBO_ALLOC(old_dl_sop,(3,3,nsym))
+ YAMBO_ALLOC(old_S_contains_TR,(nsym))
+ !     
  if (core_io_path==more_io_path) more_io_path=trim(core_io_path)//"/FixSymm"
  !
  call parser('KeepKGrid',l_keep_k_grid)
@@ -75,7 +79,7 @@ subroutine symmetries_driver(E,Xk)
  ! Expansion of default k-points
  call k_ibz2bz(Xk,'i',.false.)
  !
- call fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
+ call fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,old_S_contains_TR)
  !
  if(old_nsym==nsym) then
    call msg('s','Symmetries did not change. Program terminaned.')
@@ -119,13 +123,18 @@ subroutine symmetries_driver(E,Xk)
  endif
  !
  ! Energies and Wave-functions
- call fix_WFs_and_E(E,Xk,Xk_save,kpoints_map,old_nsym,S_contains_TR)
+ call fix_WFs_and_E(E,Xk,Xk_save,kpoints_map,old_nsym,old_S_contains_TR)
  !
  ! Rotate KB or Vnl
- call fix_PPs(E,Xk,Xk_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
+ call fix_PPs(E,Xk,Xk_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,old_S_contains_TR)
  !
  ! Rotate atomic projections
- call fix_ATOMPROJs(E,Xk,Xk_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
+ call fix_ATOMPROJs(E,Xk,Xk_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,old_S_contains_TR)
+ !
+ ! Savel old symmetries on file
+ ! ============================
+ call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+ io_old_SYMMs=io_full_SYMMs(Xk,ID)
  !
 #if defined _YPP_ELPH
  !

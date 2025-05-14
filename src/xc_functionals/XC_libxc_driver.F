@@ -199,8 +199,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      YAMBO_ALLOC(spin_rho_SP_cmplx,(fft_size))
      do is1 = 1,n_spin
        spin_rho_SP_cmplx(:)=cmplx(spin_rho_SP(:,is1),0.0_SP,kind=SP)
-       call eval_Gradient(spin_rho_SP_cmplx,drho_cmplx,1,"density")
-       drho(:,is1,:)=real(drho_cmplx)
+       call eval_Gradient_rho_pot(spin_rho_SP_cmplx,drho_cmplx)
+       drho(:,is1,:)=real(drho_cmplx,kind=SP)
      end do
      YAMBO_FREE(drho_cmplx)
      YAMBO_FREE(spin_rho_SP_cmplx)

@@ -7,7 +7,7 @@
 !
 subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  !
- use pars,                ONLY:SP,lchlen
+ use pars,                ONLY:LP,SP,lchlen
  use com,                 ONLY:msg,core_io_path,more_io_path
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:OP_WR_CL,NONE,OP_APP_CL,OP_WR,OP_RD,VERIFY,&
@@ -37,7 +37,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  integer,intent(in)       :: old_nsym
  real(SP),intent(in)      :: old_dl_sop(3,3,old_nsym)
  integer,intent(in)       :: old_sop_inv(old_nsym)
- logical,intent(in)       :: S_contains_TR(old_nsym)
+ integer(LP),intent(in)   :: S_contains_TR(old_nsym)
  !
  ! Work space
  !
@@ -396,7 +396,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        forall(ib=1:E%nb,ibm=1:maxval(E%nbm),i_spin=1:n_sp_pol) &
   &          Vnl(:,ib,ibm,ik,i_spin) = matmul( old_dl_sop(:,:,is), Vnl_store(:,ib,ibm,ik_save,i_spin) ) 
        ! Vnl is invariant under T-rev as iR and p ??
-       if ( S_contains_TR(is) ) Vnl(:,:,:,ik,:)=conjg( Vnl(:,:,:,ik,:) )
+       if ( S_contains_TR(is) ==1 ) Vnl(:,:,:,ik,:)=conjg( Vnl(:,:,:,ik,:) )
        !
        call live_timing(steps=1)
        !

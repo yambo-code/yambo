@@ -124,6 +124,12 @@ if test "$internal_blacs" = "yes" ; then
   if test "$compile_blacs" = "no" ; then BLACS_check="I"; fi
 fi
 #
+if test x"$with_ydiago_branch" = "xnone"; then
+ YDIAGO_check="I"; 
+else
+ YDIAGO_check="G"; 
+fi
+#
 PETSC_check="-"
 PETSC_info=""
 if test "$internal_petsc" = "yes" ; then
@@ -148,6 +154,14 @@ LIBXC_check="E"
 if test "$internal_libxc" = "yes" ; then
   if test "$compile_libxc" = "yes"; then LIBXC_check="C"; fi
   if test "$compile_libxc" = "no" ; then LIBXC_check="I"; fi
+fi
+#
+MAGMA_check="-"
+if test "$internal_magma" = "yes" ; then
+  if test "$compile_magma" = "yes" ; then MAGMA_check="C"; fi
+  if test "$compile_magma" = "no"  ; then MAGMA_check="I"; fi
+elif test "$enable_magma" = "yes" ; then
+  MAGMA_check="E"
 fi
 #
 DEVXLIB_check="E"
@@ -232,6 +246,7 @@ AC_SUBST(LAPACK_check)
 AC_SUBST(BLACS_check)
 AC_SUBST(SLK_check)
 AC_SUBST(ELPA_check)
+AC_SUBST(YDIAGO_check)
 AC_SUBST(PETSC_check)
 AC_SUBST(SLEPC_check)
 AC_SUBST(PETSC_info)
@@ -241,6 +256,7 @@ AC_SUBST(YDB_check)
 AC_SUBST(YPY_check)
 #
 AC_SUBST(LIBXC_check)
+AC_SUBST(MAGMA_check)
 AC_SUBST(DEVXLIB_check)
 AC_SUBST(LIBCUDA_check)
 AC_SUBST(MPI_check)
@@ -248,9 +264,11 @@ AC_SUBST(MPI_info)
 #
 # STRIPE [LIB] from paths
 #
-ACX_STRIPE_SUBPATH2($YDIAGO_LIBS,"LIB")
+ACX_STRIPE_SUBPATH($YDIAGO_LIBS,"LIB")
+#ACX_STRIPE_SUBPATH2($YDIAGO_LIBS,"LIB")
 YDIAGO_LIBS_R=$STRIPE
-ACX_STRIPE_SUBPATH2($YDIAGO_INCS,"INC")
+ACX_STRIPE_SUBPATH($YDIAGO_INCS,"INC")
+#ACX_STRIPE_SUBPATH2($YDIAGO_INCS,"INC")
 YDIAGO_INCS_R=$STRIPE
 AC_SUBST(YDIAGO_LIBS_R)
 AC_SUBST(YDIAGO_INCS_R)
@@ -339,6 +357,13 @@ ELPA_INCS_R=$STRIPE
 AC_SUBST(ELPA_LIBS_R)
 AC_SUBST(ELPA_INCS_R)
 #
+ACX_STRIPE_SUBPATH($MAGMA_LIBS,"LIB")
+MAGMA_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($MAGMA_INCS,"INC")
+MAGMA_INCS_R=$STRIPE
+AC_SUBST(MAGMA_LIBS_R)
+AC_SUBST(MAGMA_INCS_R)
+#
 ACX_STRIPE_SUBPATH($BLACS_LIBS,"LIB")
 BLACS_LIBS_R=$STRIPE
 ACX_STRIPE_SUBPATH($BLACS_INCS,"INC")
@@ -359,6 +384,13 @@ ACX_STRIPE_SUBPATH($SLEPC_INCS,"INC")
 SLEPC_INCS_R=$STRIPE
 AC_SUBST(SLEPC_LIBS_R)
 AC_SUBST(SLEPC_INCS_R)
+#
+ACX_STRIPE_SUBPATH($MAGMA_LIBS,"LIB")
+MAGMA_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($MAGMA_INCS,"INC")
+MAGMA_INCS_R=$STRIPE
+AC_SUBST(MAGMA_LIBS_R)
+AC_SUBST(MAGMA_INCS_R)
 #
 ACX_STRIPE_SUBPATH($LIBXC_LIBS,"LIB")
 LIBXC_LIBS_R=$STRIPE

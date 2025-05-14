@@ -52,6 +52,7 @@ lblas       = @BLAS_LIBS@
 llapack     = @LAPACK_LIBS@
 lblaspetsc  = @BLAS_PETSC_LIBS@
 llapackpetsc= @LAPACK_PETSC_LIBS@
+petsc_flgs  = @PETSC_FLAGS@
 lblacs      = @BLACS_LIBS@
 lscalapack  = @SCALAPACK_LIBS@
 lelpa       = @ELPA_LIBS@
@@ -93,6 +94,7 @@ drocmlib    = @LIBROCM_PATH@
 devxlib_flgs= @DEVXLIB_FLAGS@
 devxlib_clib= @DEVXLIB_CUDALIBS@
 gpu_support = @GPU_SUPPORT@
+ydiago_gpu_support = @YDIAGO_GPU_SUPPORT@
 lfft        = @FFT_LIBS@
 ifft        = @FFT_INCS@
 liotk       = @IOTK_LIBS@
@@ -105,6 +107,8 @@ letsf       = @ETSF_LIBS@
 ietsf       = @ETSF_INCS@
 lydiago     = @YDIAGO_LIBS@
 iydiago     = @YDIAGO_INCS@
+lmagma      = @MAGMA_LIBS@
+imagma      = @MAGMA_INCS@
 mpipath     = @MPI_PATH@
 #
 # VPATH

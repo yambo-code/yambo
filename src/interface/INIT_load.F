@@ -30,13 +30,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,molecule_position,Bose_Temp
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,RIM_W_ng,rimw_type,&
-&                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
+&                        bz_samp,RIM_ng,RIM_epsm1,eps_env,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
- use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
+ use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_core_bands,&
 &                        BS_n_g_W,BS_n_g_exch,BS_n_g_fxc,BSE_L_kind,BS_K_cutoff,BSK_IO_mode,BSE_dipole_geometry
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,BSS_target_E,BSS_trange_E,&
 &                        BSS_dr,BSS_er,BSS_E_dir,BSS_Q_dir,BSS_damp_reference,BSS_inversion_mode,&
-&                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig,BSS_first_eig,Haydock_iterMAX,BSS_ydiago_solver
+&                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig_Input,BSS_first_eig,Haydock_iterMAX,BSS_ydiago_solver
 #if defined _SLEPC && !defined _NL
  use BS_solvers,    ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_maxit,&
  &                       BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_mpd,BSS_slepc_matrix_format
@@ -81,7 +81,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _NL
  use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha, &
-&                        NL_verb_name,n_angles,NL_rot_axis 
+&                        NL_verb_name,n_angles,NL_rot_axis,max_angle 
 #endif 
 #if defined _NL | defined _SC
  use fields,        ONLY:Efield
@@ -223,13 +223,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! Parallel Setup
  !
 #if defined _OPENMP
- call it(defs,'K_Threads',       '[OPENMP/BSK] Number of threads for response functions',n_threads_K)
- call it(defs,'X_Threads',       '[OPENMP/X] Number of threads for response functions',n_threads_X)
- call it(defs,'DIP_Threads',     '[OPENMP/X] Number of threads for dipoles',n_threads_DIP)
- call it(defs,'OSCLL_Threads',    '[OPENMP/X] Number of threads for Oscillators',n_threads_OSCLL)
- call it(defs,'SE_Threads',      '[OPENMP/GW] Number of threads for self-energy',n_threads_SE)
- call it(defs,'RT_Threads',      '[OPENMP/RT] Number of threads for real-time',n_threads_RT)
- call it(defs,'NL_Threads',      '[OPENMP/NL] Number of threads for nl-optics',n_threads_NL)
+ call it(defs,'K_Threads',       '[OPENMP/BSK] Number of threads for response functions',n_threads_K,verb_level=V_parallel)
+ call it(defs,'X_Threads',       '[OPENMP/X] Number of threads for response functions',n_threads_X,verb_level=V_parallel)
+ call it(defs,'DIP_Threads',     '[OPENMP/X] Number of threads for dipoles',n_threads_DIP,verb_level=V_parallel)
+ call it(defs,'OSCLL_Threads',    '[OPENMP/X] Number of threads for Oscillators',n_threads_OSCLL,verb_level=V_parallel)
+ call it(defs,'SE_Threads',      '[OPENMP/GW] Number of threads for self-energy',n_threads_SE,verb_level=V_parallel)
+ call it(defs,'RT_Threads',      '[OPENMP/RT] Number of threads for real-time',n_threads_RT,verb_level=V_parallel)
+ call it(defs,'NL_Threads',      '[OPENMP/NL] Number of threads for nl-optics',n_threads_NL,verb_level=V_parallel)
 #endif
 #if defined _MPI 
  call it(defs,'NLogCPUs',     '[PARALLEL] Live-timing CPU`s (0 for all)',n_log_CPUs,verb_level=V_parallel)
@@ -303,6 +303,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSEmod',  '[BSE] resonant/retarded/coupling',BSE_mode,case="a")
  call it(defs,'Lkind',   '[BSE,X] bar(default)/full/tilde',BSE_L_kind,verb_level=V_resp)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
+ call it(defs,'BSEHoleBands','[BSK] Bands range for Hole. If set, other bands are ignored in the hole channel',&
+&                                                                                            BS_core_bands(1:2),verb_level=V_resp)
+ call it(defs,'BSEElecBands','[BSK] Bands range for Electrons. If set other bands are ignored in the electrons channel',&
+&                                                                                            BS_core_bands(3:4),verb_level=V_resp)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSENGfxc','[BSK] Fxc components', BS_n_g_fxc,G_unit,verb_level=V_resp)
@@ -337,7 +341,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs')
- call it(defs,'BSSNEig',       '[SLEPC/DIAGO] Number of eigenvalues to compute',BSS_n_eig)
+ call it(defs,'BSSNEig',       '[SLEPC/DIAGO] Number of eigenvalues to compute',BSS_n_eig_Input)
  call it(defs,'BSSFirstEig',  '[DIAGO] Index of the first eigenvalues to compute',BSS_first_eig,verb_level=V_resp)
  call it(defs,'BSSEnRange',   '[DIAGO] Target energy to find eigenvalues',BSS_trange_E,E_unit,verb_level=V_resp)
 #if defined _SLEPC && !defined _NL
@@ -351,7 +355,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSSSlepcNCV',   '[SLEPC] Dimension of the subspace',BSS_slepc_ncv,verb_level=V_resp)
  call it(defs,'BSSSlepcMPD',   '[SLEPC] Maximum allowed dimention',BSS_slepc_mpd,verb_level=V_resp)
  call it(defs,'BSSSlepcTol',   '[SLEPC] Tolerance for the iterative solver',BSS_slepc_tol,verb_level=V_resp)
- call it(defs,'BSSSlepcMatrixFormat','[SLEPC] Matrix type (shell|explicit|explicit-debug)',&
+ call it(defs,'BSSSlepcMatrixFormat','[SLEPC] Matrix type (shell|explicit)',&
  &                                                BSS_slepc_matrix_format,verb_level=V_resp)
 #endif
 #if !defined _SC
@@ -411,6 +415,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! CUTOFF
  !
+ call it(defs,'EpsEnv',   '[COL] Static Inverse dielectric matrix of enviroment',eps_env,verb_level=V_RL)
  call it(defs,'CUTGeo',   '[CUT] Coulomb Cutoff geometry: box/cylinder/sphere/ws/slab X/Y/Z/XY..',cut_geometry)
  call it(defs,'CUTBox',   '[CUT] [au] Box sides',box_length)
  call it(defs,'CUTRadius','[CUT] [au] Sphere/Cylinder radius',cyl_ph_radius)
@@ -542,12 +547,15 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'NLDamping',    '[NL] Damping (or dephasing)',NL_damping,unit=E_unit)
  call it(defs,'NLEnRange',    '[NL] Energy range (for loop on frequencies NLEnSteps/=0',NL_er,E_unit)
  call it(defs,'NLAngSteps',   '[NL] Angular steps (if NLAngSteps/=0 field versor will be ignored)',n_angles)
+ call it(defs,'NLMaxAng',     '[NL] Max angle in degree (default 360 degree)',max_angle)
  call it(defs,'NLrotaxis',    '[NL] Rotation axis (for the loop on angles NLAngSteps/=0)',NL_rot_axis)
  call it(defs,'NLEnSteps',    '[NL] Energy steps for the loop on frequencies',n_frequencies)
  call it('f',defs,'UseDipoles','[NL] Use Covariant Dipoles (just for test purpose)',verb_level=V_nl_optics)
  call it('f',defs,'TestOSCLL','[NL] Test Oscillators vs Full Collisions [for testing purposes]',verb_level=V_nl_optics)
  call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_nl_optics)
  call it('f',defs,'NoComprCOLL','[NL] Load collisions in double-precision and do not remove small elements (default false)',&
+&  verb_level=V_nl_optics)
+ call it('f',defs,'UseSymm','[NL] Use full-symms for dipoles and residual-symms for polar/current (def false)', &
 &  verb_level=V_nl_optics)
  call it('f',defs,'EvalCurrent','[NL] Evaluate the current')
  !

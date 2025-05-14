@@ -28,22 +28,11 @@ int main(int argc, char *argv[])
     */
     yambo_seed_struct y;
     tool_struct tool;
-    struct options_struct *options =
-        calloc(n_options, sizeof(*options));  //[n_options];
+    struct options_struct *options = calloc(n_options, sizeof(*options));
     if (!options)
     {
-#if defined _MPI
-        if (use_mpi == 1)
-        {
-            MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
-        }
-        else
-        {
-            exit(EXIT_FAILURE);
-        }
-#else
+        printf("Failed to allocate options buffer.\n");
         exit(EXIT_FAILURE);
-#endif
     }
     /*
      TOOL & Version initialization

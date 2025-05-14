@@ -135,7 +135,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
        deallocate(V_xc_mat)
      endif
      allocate(V_scf_grad(fft_size,3))
-     call eval_Gradient(V_scf,V_scf_grad,1,"potential")
+     call eval_Gradient_rho_pot(V_scf,V_scf_grad)
      deallocate(V_scf)
      !
    endif

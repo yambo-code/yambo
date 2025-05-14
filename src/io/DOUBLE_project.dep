@@ -38,6 +38,7 @@
  io_WF_phases.o
  io_X.o
  io_descriptors.o
+ io_full_SYMMs.o
  io_gFsq.o
  io_header.o
  io_out_of_date.o

@@ -5,6 +5,13 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
+!> @brief Calculate the density matrix variation \Delta \rho_{ij}
+!!
+!! @param[in]       V_bands                     time-dependent valence bands
+!! @param[in]       en                          energies array
+!!
+!! @param[out]      dG                          \Delta G-lesser diagonal part = -i\rho
+!
 subroutine NL_build_dG_lesser(en,V_bands,dG) 
  !
  ! Construct dG = G_lesser(t) - G_lesser(t=0) 

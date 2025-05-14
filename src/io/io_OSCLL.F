@@ -53,10 +53,10 @@ integer function io_OSCLL(q,ID)
    !
    ! Variable for the Oscillators
    !
-   call def_variable_elemental(ID,"ng_oscll",1,IP_YIO,0)
+   call def_variable_elemental(ID,"ng_oscll",VAR_SZ=1,VAR_KIND=IP_YIO,MENU=0)
    call io_variable_elemental(ID,VAR="RL vectors in oscillators",I0=ng_oscll,CHECK=.true.,OP=(/"=="/))
    !
-   call def_variable_elemental(ID,"COLL_bands",2,IP_YIO,0)
+   call def_variable_elemental(ID,"COLL_bands",VAR_SZ=2,VAR_KIND=IP_YIO,MENU=0)
    call io_variable_elemental(ID,VAR="Oscillators bands range",I1=COLL_bands,CHECK=.true.,OP=(/"==","=="/))
    !
    io_OSCLL=io_status(ID)

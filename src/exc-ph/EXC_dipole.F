@@ -102,7 +102,7 @@ subroutine EXC_dipole(Xk,E,q,X)
    ! Recalculate the residuals
    !
    i_BS_mat=1
-   call K_diago_right_residuals("opt1", i_BS_mat,BS_E_in,BS_R_right,BS_mat)
+   call K_diago_R_res("opt1", i_BS_mat,BS_E_in,BS_R_right,BS_mat)
    !call K_diago_hermitian_residuals(i_BS_mat,BS_E_in,BS_R_left,BS_R_right)
    BS_R_left =conjg(BS_R_right)
    !

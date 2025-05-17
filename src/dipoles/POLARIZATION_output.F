@@ -5,7 +5,12 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
-subroutine POLARIZATION_output(Xen,Xk,Dip)
+!> @brief Calculate and print total polarization = electronic + ionic
+!!
+!! @param[in]       Xen                         KS energies
+!! @param[in]       Xk                          k-points sampling
+!!
+subroutine POLARIZATION_output(Xen,Xk)
  ! 
  ! Print the intrisic Polarization of the system
  !
@@ -22,7 +27,6 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
  implicit none
  type(levels)  ::Xen
  type(bz_samp) ::Xk
- type(DIPOLE_t)::Dip
  ! 
  ! Work Space
  !

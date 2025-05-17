@@ -4,6 +4,17 @@
 ! Copyright (C) 2019 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): MG CA
+!
+!> @brief Calculate polarization in terms of geometric Berry phase
+!!
+!! @param[in]       All_S_det                   Overlaps determinants
+!! @param[in]       en                          KS energies
+!! @param[in]       Xk                          k-points sampling
+!! @param[in]       k_map                       k-points map
+!! @param[in]       l_P_periodic                force periodicity of pol. respect to the field
+!!
+!! @param[out]      P_Berry_Red                 Polarization in reduce cord.
+!
 !                  
 subroutine Berry_polarization_EQ(P_Berry_Red,All_S_det,en,Xk,k_map)
  !
@@ -12,7 +23,7 @@ subroutine Berry_polarization_EQ(P_Berry_Red,All_S_det,en,Xk,k_map)
  ! Berry phase is in reduced (crystalline) coordinates
  ! 
  ! Reference:
- ! R.D. King-Smith and D. Vanderbilt, "Theory of polarization of          
+ ! R.D. King-Smith and D. Vanderbilt, "Theory of polarization of        
  ! crystaline solids", Phys Rev B 47, 1651 (1993).      
  !
  use pars,           ONLY:DP,SP,cZERO,pi,cONE

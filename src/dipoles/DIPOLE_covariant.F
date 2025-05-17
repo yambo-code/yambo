@@ -195,7 +195,7 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
  call live_timing()
  !
 #if defined _NL
- if (l_eval_polarization) call POLARIZATION_output(Xen,Xk,Dip)
+ if (l_eval_polarization) call POLARIZATION_output(Xen,Xk)
 #endif
  !
  if (any(direction_is_todo)) then

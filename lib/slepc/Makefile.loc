@@ -41,6 +41,10 @@ configure: uncompress
          echo "unset SLEPC_DIR;" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
          unset PETSC_DIR; \
          unset SLEPC_DIR; \
+         echo "PETSC_DIR=$(LIBPATH)" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
+         echo "SLEPC_DIR=$(PWD)/$(PACKAGE)" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
+         PETSC_DIR=$(LIBPATH) \
+         SLEPC_DIR=$(PWD)/$(PACKAGE) \
          echo "python3 ./configure $(CONFFLAGS)" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
          python3 ./configure $(CONFFLAGS) >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
          cd - ; \

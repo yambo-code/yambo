@@ -16,7 +16,7 @@ TARBALL=$(tarball_slepc)
 include ../config/external_libs_commons.mk
 include ../config/external_libs_defs.mk
 #
-CONFFLAGS=--prefix="$(LIBPATH)"
+CONFFLAGS=--prefix=$(LIBPATH)
 #
 # MAIN target
 #

@@ -15426,16 +15426,6 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
       as_fn_error $? "You do not have the cudafor module. Are you using a PGI/NVIDIA compiler?" "$LINENO" 5
    fi
    #
-   if ! test x"$enable_nvtx" = "xno" ; then
-     #
-     if test x"$enable_nvtx" = "xyes" ; then
-        def_gpu="$def_gpu -D_NVTX"
-        GPU_FLAGS="$GPU_FLAGS -lnvToolsExt"
-     elif ! test x"$enable_nvtx" = "x" ; then
-        def_gpu="$def_gpu -D_NVTX"
-        GPU_FLAGS="$GPU_FLAGS -L$enable_nvtx/lib64 -lnvToolsExt"
-     fi
-   fi
 fi
 #
 # Openacc
@@ -15492,6 +15482,18 @@ if test x"$enable_openmp5" != "xno" ; then
    #
 fi
 #
+
+# NVTX
+if ! test x"$enable_nvtx" = "xno" ; then
+  #
+  if test x"$enable_nvtx" = "xyes" ; then
+     def_gpu="$def_gpu -D_NVTX"
+     GPU_FLAGS="$GPU_FLAGS -lnvToolsExt"
+  elif ! test x"$enable_nvtx" = "x" ; then
+     def_gpu="$def_gpu -D_NVTX"
+     GPU_FLAGS="$GPU_FLAGS -L$enable_nvtx/lib64 -lnvToolsExt"
+  fi
+fi
 
 # cuSOLVERMp
 if test x"$enable_cusolvermp" != "xno" ; then

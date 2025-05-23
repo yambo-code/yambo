@@ -7,7 +7,7 @@
 !
 #include<dev_defs.h>
 !
-subroutine DIPOLE_shifted_grids_old(Xen,Xk,Dip)
+subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  !
  ! Using the wfc at the k,k-q points to construct <r>
  !
@@ -371,10 +371,10 @@ subroutine DIPOLE_shifted_grids_old(Xen,Xk,Dip)
      return
    end subroutine set_parms
    !
-end subroutine DIPOLE_shifted_grids_old
+end subroutine DIPOLE_shifted_grids
 !
 !
-subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
+subroutine DIPOLE_shifted_grids_as_derk(Xen,Xk,Dip)
   !
   ! Using the wfc at the k,k-q points to construct <r>
   !
@@ -721,4 +721,4 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
       return
     end subroutine set_parms
     !
- end subroutine DIPOLE_shifted_grids
+ end subroutine DIPOLE_shifted_grids_as_derk

@@ -19,6 +19,22 @@
 ! SPULSE:   E(t)=((T-T_0)**2 - sigma**2)**2/sigma**4*cos(w t)
 ! PHHG:     E(t)=sin^2(\pi*(T-T_0)/sigma)*cos( w * t) 
 ! QSFIELD:  see below
+!
+! Linear frequency chirp: 
+! - expression coded
+!    s_sigma_chirp=sigma**2/(2.*(sigma**4+chirp**4))
+!    c_sigma_chirp=chirp**2/(2.*(sigma**4+chirp**4))
+!    sigma_eff=sqrt((sigma**4+chirp**4)/sigma**2)=sqrt(1./(2.*s_sigma_chirp))
+!
+!    sin(omega*(T-T0)+c_sigma_chirp*(T-T_0)**2) * exp(-(T-T_0)**2/(2.*sigma_eff**2) )
+!   = [ exp( cI*(omega*(T-T0))*exp( cI*c_sigma_chirp*(T-T_0)**2) 
+!      -exp(-cI*(omega*(T-T0))*exp(-cI*c_sigma_chirp*(T-T_0)**2) ]
+!      * exp(-(T-T_0)**2 * s_sigma_chirp ) / 2.
+!   = [ exp( cI*(omega*(T-T0))* exp( (s_sigma_chirp+cI*c_sigma_chirp) *(T-T_0)**2)
+!     - exp(-cI*(omega*(T-T0))* exp( (s_sigma_chirp-cI*c_sigma_chirp) *(T-T_0)**2) ]
+!
+! - possible expression https://www.rp-photonics.com/chirp.html
+!
 !      
 function small_a(T,dt,E_field,order,envelop_only)
   !
@@ -169,7 +185,7 @@ function small_a(T,dt,E_field,order,envelop_only)
       WtimesT=W_field*(Tloc-T_0)+fr_shift(i_field)
       ! each frequency has a different initial phase
       if(l_multi_phase) WtimesT=WtimesT+(i_fr-1)/real(n_freqs-1,SP)*(fr_shift(mod(i_field,2)+1)-fr_shift(i_field))
-      if(chirp>0._SP) WtimesT=WtimesT+c_sigma_chirp*(Tloc-T_0)**2._SP
+      if(chirp>0._SP) WtimesT=WtimesT+c_sigma_chirp*(Tloc-T_0)**2
       !
       W_field=field_frequency(E_field,i_fr)
       W_field_m1=1._SP/W_field

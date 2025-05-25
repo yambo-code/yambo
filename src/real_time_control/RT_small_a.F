@@ -176,6 +176,7 @@ function small_a(T,dt,E_field,order,envelop_only)
     do i_fr=1,n_freqs
       !
       W_field=field_frequency(E_field,i_fr)
+      W_field_m1=1._SP/W_field
       if(W_field> 0._SP) W_field_m1=1._SP/W_field
       if(W_field==0._SP) W_field_m1=0._SP
       der_fac=W_field+2._SP*c_sigma_chirp*(Tloc-T_0)
@@ -186,10 +187,6 @@ function small_a(T,dt,E_field,order,envelop_only)
       ! each frequency has a different initial phase
       if(l_multi_phase) WtimesT=WtimesT+(i_fr-1)/real(n_freqs-1,SP)*(fr_shift(mod(i_field,2)+1)-fr_shift(i_field))
       if(chirp>0._SP) WtimesT=WtimesT+c_sigma_chirp*(Tloc-T_0)**2
-      !
-      W_field=field_frequency(E_field,i_fr)
-      W_field_m1=1._SP/W_field
-      WtimesT=W_field*(T-T_0)+fr_shift(i_field)
       !
       if (envelop_only_) then
         f0t=cONE ; f1t=cONE

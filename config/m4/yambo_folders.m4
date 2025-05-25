@@ -111,9 +111,9 @@ if ! test -d "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}";           then mkdi
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/lib";       then mkdir    "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/lib";        fi
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/include";   then mkdir    "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/include";    fi
 #
-if ! test -d "$extlibs_path/${FCKIND}/${FC}/${YDIAGO_GPU_SUPPORT}";           then mkdir    "$extlibs_path/${FCKIND}/${FC}/${YDIAGO_GPU_SUPPORT}";            fi
-if ! test -d "$extlibs_path/${FCKIND}/${FC}/${YDIAGO_GPU_SUPPORT}/lib";       then mkdir    "$extlibs_path/${FCKIND}/${FC}/${YDIAGO_GPU_SUPPORT}/lib";        fi
-if ! test -d "$extlibs_path/${FCKIND}/${FC}/${YDIAGO_GPU_SUPPORT}/include";   then mkdir    "$extlibs_path/${FCKIND}/${FC}/${YDIAGO_GPU_SUPPORT}/include";    fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/${LDIAGO_GPU_SUPPORT}";           then mkdir    "$extlibs_path/${FCKIND}/${FC}/${LDIAGO_GPU_SUPPORT}";            fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/${LDIAGO_GPU_SUPPORT}/lib";       then mkdir    "$extlibs_path/${FCKIND}/${FC}/${LDIAGO_GPU_SUPPORT}/lib";        fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/${LDIAGO_GPU_SUPPORT}/include";   then mkdir    "$extlibs_path/${FCKIND}/${FC}/${LDIAGO_GPU_SUPPORT}/include";    fi
 #
 if  test -d "$extlibs_path/${FCKIND}/${FC}" ; then
  BIN_LIBRARIES=$extlibs_path/${FCKIND}/${FC}/bin/* ;

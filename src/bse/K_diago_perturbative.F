@@ -104,7 +104,7 @@ subroutine K_diago_perturbative(pert_dim, what, i_BS_mat, &
  !
  if (BS_K_coupling .and. associated(BS_Overlap)) then 
     !
-    ! NM : If you use Ydiago solver, you should never see this because, Ydiago outputs 
+    ! NM : If you use Ldiago solver, you should never see this because, Ldiago outputs 
     ! left and right eigenvectors with overlap = null() i.e identity.
     call error(" BS pertubative residuals not implemented in case of Overlap matrix")
  endif

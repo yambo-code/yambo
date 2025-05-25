@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): NM
 !
-subroutine YDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
+subroutine LDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
     & neigs_this_cpu, neig_shift, neigs_range, eigvals_range, &
     & BS_VL, BS_overlap, solver_type, elpasolver)
   !
@@ -30,7 +30,7 @@ subroutine YDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
   use openmp,         ONLY:n_threads_K
   use LIVE_t,         ONLY:live_timing
   use com,            ONLY:msg
-  use ydiago_interface
+  use ldiago_interface
   !
   implicit none
   !
@@ -421,4 +421,4 @@ endif
   neigs_this_cpu = evec_fac*neigs_this_cpu
   neig_shift     = evec_fac*neig_shift
   !
-end subroutine YDIAGO_driver 
+end subroutine LDIAGO_driver 

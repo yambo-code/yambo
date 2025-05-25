@@ -19,21 +19,23 @@
 ! SPULSE:   E(t)=((T-T_0)**2 - sigma**2)**2/sigma**4*cos(w t)
 ! PHHG:     E(t)=sin^2(\pi*(T-T_0)/sigma)*cos( w * t) 
 ! QSFIELD:  see below
+! FROMFILE: shape of the electric field from file
 !
-! Linear frequency chirp: 
-! - expression coded
+! Linear frequency chirp coded for QSSIN pulse: 
+! (see also https://www.rp-photonics.com/chirp.html)
+!
 !    s_sigma_chirp=sigma**2/(2.*(sigma**4+chirp**4))
 !    c_sigma_chirp=chirp**2/(2.*(sigma**4+chirp**4))
 !    sigma_eff=sqrt((sigma**4+chirp**4)/sigma**2)=sqrt(1./(2.*s_sigma_chirp))
 !
 !    sin(omega*(T-T0)+c_sigma_chirp*(T-T_0)**2) * exp(-(T-T_0)**2/(2.*sigma_eff**2) )
+!
 !   = [ exp( cI*(omega*(T-T0))*exp( cI*c_sigma_chirp*(T-T_0)**2) 
 !      -exp(-cI*(omega*(T-T0))*exp(-cI*c_sigma_chirp*(T-T_0)**2) ]
 !      * exp(-(T-T_0)**2 * s_sigma_chirp ) / 2.
+!
 !   = [ exp( cI*(omega*(T-T0))* exp( (s_sigma_chirp+cI*c_sigma_chirp) *(T-T_0)**2)
 !     - exp(-cI*(omega*(T-T0))* exp( (s_sigma_chirp-cI*c_sigma_chirp) *(T-T_0)**2) ]
-!
-! - possible expression https://www.rp-photonics.com/chirp.html
 !
 !      
 function small_a(T,dt,E_field,order,envelop_only)
@@ -253,6 +255,7 @@ function small_a(T,dt,E_field,order,envelop_only)
         if (order> 0 ) f_now=0._SP
         !
       case('PHHG')
+        if (chirp>0._SP) call error("chirp not implemented with "//trim(field_defs(1)))
         sarg=pi*(T-T_0)/sigma     
         WT  =W_field*T
         if(T-T_0<=0.0.or.T-T_0>=sigma.and.order>0) then
@@ -302,7 +305,7 @@ function small_a(T,dt,E_field,order,envelop_only)
         if (order==0 ) f_now=                      f1t          *EXPf
         if (order==1 ) f_now=( der_fac*f0t-(T-T_0)*f1t/sigma**2)*EXPf
         if (order==2 ) f_now=(-der_fac*f1t-f1t/sigma**2                           &
-                       &             -der_fac*(T-T_0)*f1t/sigma**2                    &
+                       &             -der_fac*(T-T_0)*f1t/sigma**2                &
                        &             -(T-T_0)*(der_fac*f0t-(T-T_0)*f1t/sigma**2)/sigma**2)*EXPf
         f_now=f_now/der_fac
         !
@@ -314,24 +317,24 @@ function small_a(T,dt,E_field,order,envelop_only)
           if (order==1 ) f_now=       (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4 *f0t
           if (order==2 ) f_now=(4._SP*(T-T_0 + sigma)    *(T-T_0 -sigma)**2/sigma**4)*f0t &
           &                   -(1._SP*(T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4)*W_field*f1t
-           endif
-           !
-         case('SPULSE')
-           if (chirp>0._SP) call error("chirp not implemented with "//trim(field_defs(1)))
-           T_0=sigma
-           W_0=W_field
-           f_now=cZERO
-           if(abs((T-T_0))< sigma) then
-             if (order==0 ) f_now=(4.0*W_0*(T-T_0)*f0t*(-sigma**2*W_0**2+W_0**2*(T-T_0)**2-6.0)   &
-             &+f1t*(sigma**4*W_0**4-2.0*sigma**2*W_0**2*(W_0**2*(T-T_0)**2-2.0)+W_0**4*(T-T_0)**4-12.0* &
-             & W_0**2*(T -T_0)**2+24))/W_0**5/sigma**4+                                                 &
-             &   ((4.0*W_0*sigma*f0t*(-sigma**2*W_0**2+W_0**2*sigma**2-6.0)                             &
-             &+f1t*(sigma**4*W_0**4-2.0*sigma**2*W_0**2*(W_0**2*sigma**2-2.0)+W_0**4*sigma**4-12.0*     &
-             &               W_0**2*sigma**2+24))/W_0**5/sigma**4)                                                             
-             if (order==1 ) f_now=((T-T_0)**2 - sigma**2)**2/sigma**4*f0t
-             if (order==2 ) f_now=(2._SP*(T-T_0 + sigma)    *(T-T_0 -sigma)**2/sigma**4                 &
-             &                          +2._SP*(T-T_0 + sigma)**2 *(T-T_0 -sigma)   /sigma**4 )    *f0t &
-             &                          -      (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4  *W_0*f1t
+        endif
+        !
+      case('SPULSE')
+        if (chirp>0._SP) call error("chirp not implemented with "//trim(field_defs(1)))
+        T_0=sigma
+        W_0=W_field
+        f_now=cZERO
+        if(abs((T-T_0))< sigma) then
+          if (order==0 ) f_now=(4.0*W_0*(T-T_0)*f0t*(-sigma**2*W_0**2+W_0**2*(T-T_0)**2-6.0)   &
+          &+f1t*(sigma**4*W_0**4-2.0*sigma**2*W_0**2*(W_0**2*(T-T_0)**2-2.0)+W_0**4*(T-T_0)**4-12.0* &
+          & W_0**2*(T -T_0)**2+24))/W_0**5/sigma**4+                                                 &
+          &   ((4.0*W_0*sigma*f0t*(-sigma**2*W_0**2+W_0**2*sigma**2-6.0)                             &
+          &+f1t*(sigma**4*W_0**4-2.0*sigma**2*W_0**2*(W_0**2*sigma**2-2.0)+W_0**4*sigma**4-12.0*     &
+          &               W_0**2*sigma**2+24))/W_0**5/sigma**4) 
+          if (order==1 ) f_now=((T-T_0)**2 - sigma**2)**2/sigma**4*f0t
+          if (order==2 ) f_now=(2._SP*(T-T_0 + sigma)    *(T-T_0 -sigma)**2/sigma**4                 &
+          &                          +2._SP*(T-T_0 + sigma)**2 *(T-T_0 -sigma)   /sigma**4 )    *f0t &
+          &                          -      (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4  *W_0*f1t
         endif
       end select
       !

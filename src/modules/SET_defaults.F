@@ -47,7 +47,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,BSS_P_dir,BSS_E_dir,BSS_Q_dir,BSS_first_eig,&
 &                     Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,BSS_n_eig,BSS_n_eig_Input,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,BSS_target_E,&
-&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH,BSS_desc,BSS_ydiago_solver,BSS_trange_E,&
+&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH,BSS_desc,BSS_ldiago_solver,BSS_trange_E,&
 &                     BSS_kernel_IO_on_the_fly,BSS_kernel_stored_size,BSS_kernel_last_stored_block
  use descriptors,ONLY:IO_desc_reset
 #if defined _SLEPC && !defined _NL
@@ -439,9 +439,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BS_K_cutoff=0.0000_SP
  BSS_mode=' '
  BSS_inversion_mode='pf'
- BSS_ydiago_solver='s'
+ BSS_ldiago_solver='s'
 #if defined _ELPA
- BSS_ydiago_solver='e'
+ BSS_ldiago_solver='e'
 #endif
  BSS_er=(/0._SP,10._SP/)/HA2EV
  BSS_dr=0.1_SP/HA2EV

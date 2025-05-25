@@ -38,7 +38,7 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  complex(SP), pointer, optional,   intent(in)  :: BS_Overlap(:,:)
  !
  ! If BS_Overlap is null(), then it is treated as a identity matrix
- ! Incase Ydiago solver is used, BS_Overlap is always null()
+ ! Incase Ldiago solver is used, BS_Overlap is always null()
  !
  ! Workspace
  !
@@ -130,7 +130,7 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  !
  call live_timing()
  !
- ! Incase of Ydiago solver Overlap is always identity.
+ ! Incase of Ldiago solver Overlap is always identity.
  !
  if (trim(scheme)=="hermitian")  return
  !

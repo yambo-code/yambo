@@ -111,7 +111,7 @@ module interfaces
      !
    end subroutine
    !
-  subroutine YDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
+  subroutine LDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
     & neigs_this_cpu, neig_shift, neigs_range, eigvals_range, &
     & BS_VL, BS_overlap, solver_type, elpasolver)
     use pars,           ONLY:SP
@@ -127,7 +127,7 @@ module interfaces
     character, optional                :: solver_type
     integer,  optional                 :: elpasolver
     complex(SP),pointer,optional       :: BS_overlap(:,:)
-  end subroutine YDIAGO_driver
+  end subroutine LDIAGO_driver
 
    subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
      use pars,           ONLY:SP

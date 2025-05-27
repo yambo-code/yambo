@@ -1,0 +1,20 @@
+# The Docker image that will be used to build your app
+image: ubuntu:20.04
+variables:
+  DEBIAN_FRONTEND: "noninteractive"
+create-pages:
+  pages:
+    # The folder that contains the files to be exposed at the Page URL
+    publish: doc
+  rules:
+    # This ensures that only pushes to the default branch ($CI_DEFAULT_BRANCH) will trigger a pages deploy
+    - if: $CI_COMMIT_REF_NAME == "develop" 
+    - if: $CI_COMMIT_REF_NAME == "master" 
+  # Functions that should be executed before the build script is run 
+  script:
+    - apt-get -qq update
+    - apt-get -qq install apt-transport-https ca-certificates gnupg software-properties-common wget
+    - wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
+    - apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
+    - apt-get install -qq build-essential git gcc gfortran cmake libopenblas-dev libfftw3-dev libopenmpi-dev
+    - ./configure

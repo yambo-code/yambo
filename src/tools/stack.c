@@ -6,16 +6,16 @@
   or http://www.gnu.org/copyleft/gpl.txt .
 */
 
-#include <wrapper.h>
 #include <sys/resource.h>
+#include <wrapper.h>
 
-void C_FUNC(remove_stack_limit,REMOVE_STACK_LIMIT) (void) {
- 
-struct rlimit rlim = { RLIM_INFINITY, RLIM_INFINITY };
+void C_FUNC(remove_stack_limit, REMOVE_STACK_LIMIT)(void)
+{
+    struct rlimit rlim = {RLIM_INFINITY, RLIM_INFINITY};
 
-if ( setrlimit(RLIMIT_STACK, &rlim) == -1 ) {
-  /* perror("Cannot set stack size to infinity");
-     exit(1); */
-}
-
+    if (setrlimit(RLIMIT_STACK, &rlim) == -1)
+    {
+        /* perror("Cannot set stack size to infinity");
+           exit(1); */
+    }
 }

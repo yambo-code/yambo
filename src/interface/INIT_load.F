@@ -30,13 +30,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use wave_func,     ONLY:wf_ng,rho_map_thresh
  use D_lattice,     ONLY:Tel,non_periodic_directions,molecule_position,Bose_Temp
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,RIM_W_ng,rimw_type,&
-&                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
+&                        bz_samp,RIM_ng,RIM_epsm1,eps_env,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
- use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
+ use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_core_bands,&
 &                        BS_n_g_W,BS_n_g_exch,BS_n_g_fxc,BSE_L_kind,BS_K_cutoff,BSK_IO_mode,BSE_dipole_geometry
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,BSS_target_E,BSS_trange_E,&
 &                        BSS_dr,BSS_er,BSS_E_dir,BSS_Q_dir,BSS_damp_reference,BSS_inversion_mode,&
-&                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig,BSS_first_eig,Haydock_iterMAX,BSS_ydiago_solver
+&                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig_Input,BSS_first_eig,Haydock_iterMAX,BSS_ldiago_solver
 #if defined _SLEPC && !defined _NL
  use BS_solvers,    ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_maxit,&
  &                       BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_mpd,BSS_slepc_matrix_format
@@ -292,6 +292,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSEmod',  '[BSE] resonant/retarded/coupling',BSE_mode,case="a")
  call it(defs,'Lkind',   '[BSE,X] bar(default)/full/tilde',BSE_L_kind,verb_level=V_resp)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
+ call it(defs,'BSEHoleBands','[BSK] Bands range for Hole. If set, other bands are ignored in the hole channel',&
+&                                                                                            BS_core_bands(1:2),verb_level=V_resp)
+ call it(defs,'BSEElecBands','[BSK] Bands range for Electrons. If set other bands are ignored in the electrons channel',&
+&                                                                                            BS_core_bands(3:4),verb_level=V_resp)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSENGfxc','[BSK] Fxc components', BS_n_g_fxc,G_unit,verb_level=V_resp)
@@ -307,7 +311,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSSmod',    '[BSS] (h)aydock/(d)iagonalization/(s)lepc/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
  call it(defs,'BSEprop',   '[BSS] Can be any among abs/jdos/kerr/asymm/anHAll/magn/dich/photolum/esrt',BSE_prop)
  call it(defs,'BSEdips',   '[BSS] Can be "trace/none" or "xy/xz/yz" to define off-diagonal rotation plane',BSE_dipole_geometry)
- call it(defs,'BSSydiaLib','[BSS] Library used with ydiago solver `(s)calapack/(e)lpa`',BSS_ydiago_solver)
+ call it(defs,'BSSldiaLib','[BSS] Library used with ldiago solver `(s)calapack/(e)lpa`',BSS_ldiago_solver)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)
  call it(defs,'BSSInvPFratio','[BSS] Inversion solver. Ratio between the number of frequencies solved pert/full',&
 &             K_INV_EPS%PERT_FULL_ratio)
@@ -327,7 +331,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs')
- call it(defs,'BSSNEig',       '[SLEPC/DIAGO] Number of eigenvalues to compute',BSS_n_eig)
+ call it(defs,'BSSNEig',       '[SLEPC/DIAGO] Number of eigenvalues to compute',BSS_n_eig_Input)
  call it(defs,'BSSFirstEig',  '[DIAGO] Index of the first eigenvalues to compute',BSS_first_eig,verb_level=V_resp)
  call it(defs,'BSSEnRange',   '[DIAGO] Target energy to find eigenvalues',BSS_trange_E,E_unit,verb_level=V_resp)
 #if defined _SLEPC && !defined _NL
@@ -401,6 +405,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! CUTOFF
  !
+ call it(defs,'EpsEnv',   '[COL] Static Inverse dielectric matrix of enviroment',eps_env,verb_level=V_RL)
  call it(defs,'CUTGeo',   '[CUT] Coulomb Cutoff geometry: box/cylinder/sphere/ws/slab X/Y/Z/XY..',cut_geometry)
  call it(defs,'CUTBox',   '[CUT] [au] Box sides',box_length)
  call it(defs,'CUTRadius','[CUT] [au] Sphere/Cylinder radius',cyl_ph_radius)

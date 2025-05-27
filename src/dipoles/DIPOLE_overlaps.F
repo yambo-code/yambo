@@ -7,6 +7,8 @@
 !      
 !> @brief Calculate overlaps between wave-function <\psi_k | \psi_{k+q} > for q = 1,2
 !
+!! @param[it]       Xk                  k-points sampling for the xhi
+!! @param[it]       Dip                 Dip dipoles range
 !! @param[out]      DIP_S               Overlap matrices
 !
 #include<dev_defs.h>

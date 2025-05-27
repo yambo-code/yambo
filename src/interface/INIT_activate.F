@@ -147,7 +147,7 @@ subroutine INIT_activate()
  !
  !Col CUTOFF 
  !
- if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTRadius CUTCylLen CUTwsGvec CUTCol_test')
+ if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTRadius CUTCylLen CUTwsGvec CUTCol_test EpsEnv')
  !
  !XX
  !
@@ -261,7 +261,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
-   call initactivate(1,'BSEQptR BSEBands BSKCut BSKIOmode BSEEhEny BSehWind NoDiagSC')
+   call initactivate(1,'BSEQptR BSEBands BSEHoleBands BSEElecBands BSKCut BSKIOmode BSEEhEny BSehWind NoDiagSC')
    !
 #if defined _RT
    call initactivate(1,'RTOccMode ForceEqTrans')
@@ -285,7 +285,7 @@ subroutine INIT_activate()
    !
    if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSEPSInvTrs BSSInvPFratio BSSInvKdiag')
    if (index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.index(BSS_mode,'o')/=0)  call initactivate(1,'WRbsWF BSSPertWidth')
-   if (index(BSS_mode,'d')/=0)  call initactivate(1,'BSSydiaLib BSSNEig BSSEnRange BSSFirstEig')
+   if (index(BSS_mode,'d')/=0)  call initactivate(1,'BSSldiaLib BSSNEig BSSEnRange BSSFirstEig')
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer BSHayItrIO BSHayItrMAX')
    if (index(BSS_mode,'s')/=0)  then
      call initactivate(1,'BSSNEig BSSEnTarget BSSSlepcApproach BSSSlepcPrecondition BSSSlepcExtraction')

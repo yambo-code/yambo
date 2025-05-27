@@ -73,8 +73,8 @@
 #
 # > OTHERs: @DEVXLIB_info@
 #
-# [@ydiago_check@] Ydiago    : @YDIAGO_LIBS_R@
-#                 @YDIAGO_INCS_R@
+# [@LDIAGO_check@] Ldiago    : @LDIAGO_LIBS_R@
+#                 @LDIAGO_INCS_R@
 # [@LIBXC_check@] LibXC     : @LIBXC_LIBS_R@
 #                 @LIBXC_INCS_R@
 # [@DEVXLIB_check@] DevXlib   : @DEVXLIB_LIBS_R@

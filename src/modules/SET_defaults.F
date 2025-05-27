@@ -34,7 +34,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_W_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
-&                     cutoff_presets,k_map,qindx_S_max_Go,RIMW_type
+&                     cutoff_presets,k_map,qindx_S_max_Go,RIMW_type,eps_env
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn
  use parallel_m, ONLY:ncpu,CPU_str_reset,CREATE_hosts_COMM
  use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
@@ -45,9 +45,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,frag_WF
  use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,BSS_P_dir,BSS_E_dir,BSS_Q_dir,BSS_first_eig,&
-&                     Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,BSS_n_eig,&
+&                     Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,BSS_n_eig,BSS_n_eig_Input,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,BSS_target_E,&
-&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH,BSS_desc,BSS_ydiago_solver,BSS_trange_E,&
+&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH,BSS_desc,BSS_ldiago_solver,BSS_trange_E,&
 &                     BSS_kernel_IO_on_the_fly,BSS_kernel_stored_size,BSS_kernel_last_stored_block
  use descriptors,ONLY:IO_desc_reset
 #if defined _SLEPC && !defined _NL
@@ -273,6 +273,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  k_map%q_step  =-1
  k_map%max_kdir= 0
  qindx_S_max_Go=-1
+ eps_env=1._SP
  !
  ! RIM
  !
@@ -443,9 +444,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BS_K_cutoff=0.0000_SP
  BSS_mode=' '
  BSS_inversion_mode='pf'
- BSS_ydiago_solver='s'
+ BSS_ldiago_solver='s'
 #if defined _ELPA
- BSS_ydiago_solver='e'
+ BSS_ldiago_solver='e'
 #endif
  BSS_er=(/0._SP,10._SP/)/HA2EV
  BSS_dr=0.1_SP/HA2EV
@@ -474,6 +475,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  K_INV_EPS%max_treshold=40._SP
  BSS_n_freqs=100
  BSS_n_eig=0
+ BSS_n_eig_Input=0
  BSS_first_eig=1
  BSS_target_E=0._SP
  BSS_trange_E=-1._SP/HA2EV

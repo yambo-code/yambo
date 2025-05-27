@@ -35,7 +35,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
  !                G(t),H[G(t)],dt/2        --> G1(t+dt/2)
  !                G(t),H[G1(t+dt/2)],dt/2  --> G2(t+dt/2)
  !                G(t),H[G2(t+dt/2)),dt    --> G3(t+dt)
- !                G(t),H[G3(t+dt)),dtcccc  --> G4(t+dt)
+ !                G(t),H[G3(t+dt)),dt      --> G4(t+dt)
  !                      G(t+dt)=G1(t+dt)/6+G2(t+dt)/3+G3(t+dt)/3+G2(t+dt)/6
  !
  !  In addition the IP oscillations and dephasing are "analytically integrated out"

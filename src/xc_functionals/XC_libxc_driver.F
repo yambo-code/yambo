@@ -277,15 +277,15 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          endif
        case(2)
          if( l_BS_magnons .or. n_spinor==2 ) then
-	   ! This is needed by XC_eval_lda_kernel to construct F_xc for magnons with n_sp_pol=2
+           ! This is needed by XC_eval_lda_kernel to construct F_xc for magnons with n_sp_pol=2
            call xc_f03_lda_vxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), v1rho(1,1))
            ! V_xc is needed for F_xc_mat in Build_Fxc_mat.F with n_spinor=2, 
-	   ! In the magnons case, I could use it also for F_xc_mat with n_sp_pol==2,
+           ! In the magnons case, I could use it also for F_xc_mat with n_sp_pol==2,
            ! avoiding the call to XC_eval_lda_kernel
            ! Howerver but the latter is more precise, since it works with DP quantities
            forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(v1rho(i2,i1),SP)
          endif
-	 ! Needed to build Fxc unless in magnons case with n_sp_pol==2
+         ! Needed to build Fxc unless in magnons case with n_sp_pol==2
          if( .not.( l_BS_magnons.and.n_sp_pol==2) ) &
          & call xc_f03_lda_fxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), v2rho2(1,1))
          ! Yambo internal for Kxc
@@ -319,18 +319,18 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
        case(2)
          if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) call error(' Fxc not coded for GAU-PBEP')
          if( l_BS_magnons .or. n_spinor==2 ) then
-	   ! This is in needed by XC_eval_gga_kernel to construct F_xc for magnons with n_sp_pol=2
-	   ! For now only v1rho is used by XC_eval_lda_kernel  
+           ! This is in needed by XC_eval_gga_kernel to construct F_xc for magnons with n_sp_pol=2
+           ! For now only v1rho is used by XC_eval_lda_kernel  
            call xc_f03_gga_vxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), v1rho(1,1), v1sigma(1,1))
            ! V_xc is needed for F_xc_mat in Build_Fxc_mat.F with n_spinor=2, 
-	   ! However the GGA potential does not give good results, so below I use the LDA expression 
-	   ! In the magnons case, I could use it also for F_xc_mat with n_sp_pol==2,
+           ! However the GGA potential does not give good results, so below I use the LDA expression 
+           ! In the magnons case, I could use it also for F_xc_mat with n_sp_pol==2,
            ! avoiding the call to XC_eval_gga_kernel
            ! Howerver but the latter is more precise, since it works with DP quantities
            !call XC_eval_gga_potential(v1rho,v1sigma,drho,V_xc)
            forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(v1rho(i2,i1),SP)
          endif
-	 ! Needed to build Fxc unless in magnons case with n_sp_pol==2
+         ! Needed to build Fxc unless in magnons case with n_sp_pol==2
          if( .not.(l_BS_magnons.and.n_sp_pol==2) ) &
          & call xc_f03_gga_fxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), v2rho2(1,1), v2rhosigma(1,1), v2sigma2(1,1))
          ! Yambo internal for Kxc (for now it is just a wrapperr to lda_kernel)

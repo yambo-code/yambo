@@ -24,8 +24,8 @@ char *running_libraries()
     strcpy(strings[i_str], "Serial");
 #endif
 #if defined _GAMMA_ONLY
- i_str++;
- strcpy(strings[i_str], "GAMMA_ONLY");
+    i_str++;
+    strcpy(strings[i_str], "GAMMA_ONLY");
 #endif
 #if defined _GPU
     i_str++;

@@ -730,7 +730,6 @@ CUDA_check
 MEM_profile_check
 TIME_profile_check
 KEEP_OBJS_check
-GAMMA_ONLY_check
 DP_check
 internal_magma
 compile_magma_fmodules
@@ -955,8 +954,6 @@ MKMF_PREFIX
 def_memory_profile
 def_uspp
 def_time_profile
-def_gamma_only
-enable_gamma_only
 build_precision
 def_dp
 enable_dp
@@ -1016,7 +1013,6 @@ enable_keep_objects
 enable_keep_src
 enable_keep_extlibs
 enable_dp
-enable_gamma_only
 enable_time_profile
 enable_uspp
 enable_memory_profile
@@ -1782,7 +1778,6 @@ Optional Features:
   --enable-keep-src       Keep preprocessed.f90 file. Default is yes.
   --enable-keep-extlibs   Keep downloaded packages as tar.gz . Default is yes.
   --enable-dp             Double-precision build. Default is no.
-  --enable-gamma-only     Gamma only build. Default is no.
   --enable-time-profile   Extended timing profile of specific sections.
                           Default is yes.
   --enable-uspp           Enable Ultrasoft PP support
@@ -3562,20 +3557,6 @@ if test x"$enable_dp" = "xno" ; then def_dp="";          build_precision="single
 if test x"$enable_dp" = "xyes"; then def_dp="-D_DOUBLE"; build_precision="double"; fi
 if test x"$build_precision" = "x"; then as_fn_error $? "Non correct specification of compilation precision" "$LINENO" 5; fi
 
-
-
-#
-# ============================================================================
-# VERSION for gamma only case
-# Check whether --enable-gamma_only was given.
-if test ${enable_gamma_only+y}
-then :
-  enableval=$enable_gamma_only;
-fi
-
-def_gamma_only=""
-if test x"$enable_gamma_only" = "x";    then enable_gamma_only="no";   fi
-if test x"$enable_gamma_only" = "xyes"; then def_gamma_only="-D_GAMMA_ONLY";  fi
 
 
 #
@@ -16666,8 +16647,8 @@ else
   LDIAGO_GPU_SUPPORT="no_gpu"
 fi
 
-LDIAGO_LIBS="${extlibs_path}/${FCKIND}/${FC}/${LDIAGO_GPU_SUPPORT}/lib/libldiago.a"
-LDIAGO_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/${LDIAGO_GPU_SUPPORT}/include/"
+LDIAGO_LIBS="${extlibs_path}/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/lib/libldiago.a"
+LDIAGO_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/include/"
 #LDIAGO_LIBS="${compdir}/lib/libldiago.a"
 #LDIAGO_INCS="$IFLAG${compdir}/include/"
 
@@ -17156,9 +17137,6 @@ fi
 DP_check="-"
 if test "$enable_dp" = "yes" ; then DP_check="X"; fi
 #
-GAMMA_ONLY_check="-"
-if test "$enable_gamma_only" = "yes" ; then GAMMA_ONLY_check="X"; fi
-#
 KEEP_OBJS_check="-"
 if test "$enable_keep_objects" = "yes" ; then KEEP_OBJS_check="X"; fi
 #
@@ -17366,7 +17344,6 @@ if test "$hdf5" = "yes" ; then
   fi
 fi
 #
-
 
 
 
@@ -19351,9 +19328,10 @@ if ! test -d "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}";           then mkdi
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/lib";       then mkdir    "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/lib";        fi
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/include";   then mkdir    "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/include";    fi
 #
-if ! test -d "$extlibs_path/${FCKIND}/${FC}/${LDIAGO_GPU_SUPPORT}";           then mkdir    "$extlibs_path/${FCKIND}/${FC}/${LDIAGO_GPU_SUPPORT}";            fi
-if ! test -d "$extlibs_path/${FCKIND}/${FC}/${LDIAGO_GPU_SUPPORT}/lib";       then mkdir    "$extlibs_path/${FCKIND}/${FC}/${LDIAGO_GPU_SUPPORT}/lib";        fi
-if ! test -d "$extlibs_path/${FCKIND}/${FC}/${LDIAGO_GPU_SUPPORT}/include";   then mkdir    "$extlibs_path/${FCKIND}/${FC}/${LDIAGO_GPU_SUPPORT}/include";    fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/diago";                                 then mkdir    "$extlibs_path/${FCKIND}/${FC}/diago";                                  fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}";           then mkdir    "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}";            fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/lib";       then mkdir    "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/lib";        fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/include";   then mkdir    "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/include";    fi
 #
 if  test -d "$extlibs_path/${FCKIND}/${FC}" ; then
  BIN_LIBRARIES=$extlibs_path/${FCKIND}/${FC}/bin/* ;

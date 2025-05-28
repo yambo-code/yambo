@@ -21,8 +21,8 @@ else
   LDIAGO_GPU_SUPPORT="no_gpu"
 fi
 
-LDIAGO_LIBS="${extlibs_path}/${FCKIND}/${FC}/${LDIAGO_GPU_SUPPORT}/lib/libldiago.a"
-LDIAGO_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/${LDIAGO_GPU_SUPPORT}/include/"
+LDIAGO_LIBS="${extlibs_path}/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/lib/libldiago.a"
+LDIAGO_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/include/"
 #LDIAGO_LIBS="${compdir}/lib/libldiago.a"
 #LDIAGO_INCS="$IFLAG${compdir}/include/"
 

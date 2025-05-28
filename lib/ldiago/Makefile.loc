@@ -47,7 +47,7 @@ install: uncompress configure compile
 	 echo "cp ${compdir}/lib/ldiago/$(PACKAGE)/src/libdiago.a $(LIBPATH)/lib/libldiago.a" >> ${compdir}/log/install_$(PACKAGE).log ; \
 	 echo "cp ${compdir}/lib/ldiago/$(PACKAGE)/src/ldiago_interface.mod $(LIBPATH)/include/" >> ${compdir}/log/install_$(PACKAGE).log ; \
 	 echo "chmod +x $(LIBPATH)/lib/libldiago.a" >> ${compdir}/log/install_$(PACKAGE).log ; \
-	 cp ${compdir}/lib/ldiago/$(PACKAGE)/src/libldiago.a $(LIBPATH)/lib/ ;\
+	 cp ${compdir}/lib/ldiago/$(PACKAGE)/src/libdiago.a $(LIBPATH)/lib/libldiago.a ;\
 	 cp ${compdir}/lib/ldiago/$(PACKAGE)/src/ldiago_interface.mod $(LIBPATH)/include/ ;\
 	 chmod +x $(LIBPATH)/lib/libldiago.a ; \
 	 touch ${compdir}/config/stamps_and_lists/libldiago.a.stamp;\

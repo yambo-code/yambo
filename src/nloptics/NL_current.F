@@ -21,7 +21,6 @@ subroutine NL_current(k,E,V_input,NL_J)
  use fields,         ONLY:A_ext
  use X_m,            ONLY:global_gauge
  use DIPOLES,        ONLY:DIP_v
- use real_time,      ONLY:l_velocity_gauge_diam
  use nl_optics,      ONLY:NL_bands,l_use_DIPOLES
  use QP_m,           ONLY:QP_nk
  use NL_interfaces,  ONLY:NL_average_operator
@@ -53,16 +52,23 @@ subroutine NL_current(k,E,V_input,NL_J)
  !
  if(trim(global_gauge)=='velocity') then
    !
+   ! The diamagnetic term is needed to obtain a gauge invariant current
+   ! However the below definition of nel_effect would be exact
+   ! only in the limit NL_bands(2) --> \infty
    nel_effect=nel-(NL_bands(1)-1)*spin_occ
    !
    ! Velocity gauge I must use the correct definition of the J operator
    !
-   if(l_velocity_gauge_diam) NL_J(4:6)=NL_J(4:6)+A_ext%vecpot(:)*real(nel_effect,SP)/(2._SP*SPEED_OF_LIGHT)
-   !
    ! In velocity gauge J(1:3) is the full current
    ! while J(4:6) is the current without the diamagnetic term
    !
+   NL_J(1:3)=NL_J(4:6)+A_ext%vecpot(:)*real(nel_effect,SP)/(2._SP*SPEED_OF_LIGHT)
+   !
  else
+   !
+   ! In length gauge J(1:3) is the berry current
+   ! while J(4:6) is the dipoles current
+   ! There is no diamagnetic term here, since A(t)=0 in this gauge
    !
    if(l_use_DIPOLES) then
      NL_J(1:3)=NL_J(4:6)

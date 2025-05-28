@@ -32,7 +32,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
 &                         HF,SEX,NL_bands,NL_nbands,NL_alloc_k_distributed,NL_J_t,n_runs,loop_on_frequencies, &
 &                         l_pump_and_probe,eval_OSCLL,l_test_OSCLL,LSEX,LHF,Sigma_SEX_EQ,Wk_EQ
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,NE_time,RT_nbands,RT_bands, &
-                          eval_DFT,eval_HARTREE,RT_P,RT_ind_J
+                          eval_DFT,eval_HARTREE,RT_P,RT_ind_J,l_velocity_gauge_diam
  use RT_control,     ONLY:RT_NAN_found
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -336,7 +336,8 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
      if (l_pump_and_probe) then
        !
        RT_P    =real(NL_P(1:3),SP)
-       RT_ind_J=real(NL_J(1:3),SP)
+       if (     l_velocity_gauge_diam) RT_ind_J=real(NL_J(1:3),SP)
+       if (.not.l_velocity_gauge_diam) RT_ind_J=real(NL_J(4:6),SP)
        !
        ! Carriers number
        !================

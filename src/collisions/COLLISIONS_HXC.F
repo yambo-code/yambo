@@ -30,7 +30,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw,IO_BS_err,ID_BS)
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_HXC_local,COLLISIONS_HXC_MB,&
 &                        COLL_bands,HXC_COLL_element,HXC_collisions,COH_COLL_element,COH_collisions,&
-&                        COLLISIONS_HXC_use_TDDFT,LAST_COLL_sync,PAR_COLL_min,COLLISIONS_CV_only
+&                        COLLISIONS_HXC_use_TDDFT,PAR_COLL_min,COLLISIONS_CV_only
  use timing_m,      ONLY:timing
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx,QP_ng_Sc
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
@@ -231,39 +231,33 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw,IO_BS_err,ID_BS)
  first_coll=-1
  last_coll =0
  !
- do i_loop=1,2
-   if (allocated(HXC_collisions%PAR_IND%element_1D)) then
-     PAR_NC_local=0
-     do i_coll=1,HXC_collisions%N
-       if (.not.HXC_collisions%PAR_IND%element_1D(i_coll)) cycle
-       last_coll=i_coll
-       if (allocated(HXC_collisions%IO_status)) then
-         if (HXC_collisions%IO_status(i_coll)/=-1) cycle
-       endif
-       if (first_coll==-1) first_coll=i_coll
-       PAR_NC_local=PAR_NC_local+1
-       if (i_loop==2.and.PAR_NC_local<=PAR_COLL_min) LAST_COLL_sync=i_coll
-     enddo
-   else if (allocated(COH_collisions%PAR_IND%element_1D)) then
-     PAR_NC_local=0
-     do i_coll=1,COH_collisions%N
-       if (.not.COH_collisions%PAR_IND%element_1D(i_coll)) cycle
-       last_coll=i_coll
-       if (allocated(COH_collisions%IO_status)) then
-         if (COH_collisions%IO_status(i_coll)/=-1) cycle
-       endif
-       if (first_coll==-1) first_coll=i_coll
-       PAR_NC_local=PAR_NC_local+1
-       if (i_loop==2.and.PAR_NC_local<=PAR_COLL_min) LAST_COLL_sync=i_coll
-     enddo
-   endif
-   if(i_loop==1) then
-     TMP_VEC=0
-     TMP_VEC(myid+1)=PAR_NC_local
-     call PP_redux_wait(TMP_VEC)
-     PAR_COLL_min=minval(TMP_VEC)
-   endif
- enddo
+ if (allocated(HXC_collisions%PAR_IND%element_1D)) then
+   PAR_NC_local=0
+   do i_coll=1,HXC_collisions%N
+     if (.not.HXC_collisions%PAR_IND%element_1D(i_coll)) cycle
+     last_coll=i_coll
+     if (allocated(HXC_collisions%IO_status)) then
+       if (HXC_collisions%IO_status(i_coll)/=-1) cycle
+     endif
+     if (first_coll==-1) first_coll=i_coll
+     PAR_NC_local=PAR_NC_local+1
+   enddo
+ else if (allocated(COH_collisions%PAR_IND%element_1D)) then
+   PAR_NC_local=0
+   do i_coll=1,COH_collisions%N
+     if (.not.COH_collisions%PAR_IND%element_1D(i_coll)) cycle
+     last_coll=i_coll
+     if (allocated(COH_collisions%IO_status)) then
+       if (COH_collisions%IO_status(i_coll)/=-1) cycle
+     endif
+     if (first_coll==-1) first_coll=i_coll
+     PAR_NC_local=PAR_NC_local+1
+   enddo
+ endif
+ TMP_VEC=0
+ TMP_VEC(myid+1)=PAR_NC_local
+ call PP_redux_wait(TMP_VEC)
+ PAR_COLL_min=minval(TMP_VEC)
  !
  n_steps=0
  if (COLLISIONS_HXC_local)                      n_steps=n_steps+PAR_NC_local*K%nibz*PAR_n_Bp_mat_elements*n_sp_pol

@@ -20,7 +20,6 @@ module collision_ext
  integer :: COLL_hole_bands(2)
  integer :: COLL_elec_bands(2)
  integer :: COLL_ID
- integer :: LAST_COLL_sync = 0
  integer :: PAR_COLL_min   = 0
  !
  ! Cut off on exchange matrix elements

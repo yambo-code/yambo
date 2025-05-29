@@ -10,7 +10,7 @@ integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll_)
  use pars,          ONLY:schlen,IP,SP,DP,IP_YIO,CR_YIO
  use parallel_m,    ONLY:master_cpu
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
- use collision_ext, ONLY:COLLISIONS_element,COLLISIONS_group,LAST_COLL_sync,PAR_COLL_min,&
+ use collision_ext, ONLY:COLLISIONS_element,COLLISIONS_group,PAR_COLL_min,&
 &                        COLLISIONS_CV_only,COLLISIONS_FEW_only,COLLISIONS_load_SP
  use IO_m,          ONLY:io_sec,io_status,IO_OUTDATED_DB,read_is_on,IO_mode,io_unit,&
 &                        VERIFY,io_extension,write_is_on,nf90_sync,netcdf_call,YAMBO_DEF_CHUNK
@@ -36,7 +36,7 @@ integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll_)
  !
  character(1)      :: TMP_VAR(1)
  character(schlen) :: db_name
- integer           :: i_coll,i_coll_mem,stat,COLL_chunksize(3),N(3)
+ integer           :: i_coll,i_coll_mem,sync_step,stat,COLL_chunksize(3),N(3)
  logical           :: def1,def2,io2,io3,io4,file_sync
  !
  call timing('io_COLLISIONS',OPR='start')
@@ -142,9 +142,11 @@ integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll_)
  !
 #if defined _RT
  if (write_is_on(ID).and.io3 .and. index(trim(db_name),"HXC")/=0) then
-   ! nf90_sync is performed up to LAST_COLL_sync and at steps of 5% of bse kernel
-   i_coll_mem=COLL_grp%PAR_map(i_coll)
-   file_sync= (i_coll<=LAST_COLL_sync .and. mod(i_coll_mem,max(1,PAR_COLL_min/20))==0) .or. i_coll==LAST_COLL_sync
+   !
+   ! nf90_sync is performed up to PAR_COLL_min and at steps of 5% of bse kernel
+   i_coll_mem = COLL_grp%PAR_map(i_coll)
+   sync_step  = max(1,PAR_COLL_min/20)
+   file_sync= (i_coll_mem<PAR_COLL_min .and. mod(i_coll_mem,sync_step)==0) .or. i_coll_mem==PAR_COLL_min
    !
    if(file_sync) then
      stat = nf90_sync(io_unit(ID))

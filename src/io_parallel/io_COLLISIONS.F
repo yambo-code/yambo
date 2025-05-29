@@ -34,7 +34,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
  character(1)      :: TMP_VAR(1)
  character(schlen) :: db_name
- integer           :: i_coll,i_coll,stat,COLL_chunksize(3)
+ integer           :: i_coll,i_coll_mem,stat,COLL_chunksize(3)
  logical           :: def1,def2,io2,io3,io4,file_sync
  !
  call timing('io_COLLISIONS',OPR='start')
@@ -130,7 +130,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
 #if defined _RT
  if (write_is_on(ID).and.io3 .and. index(trim(db_name),"HXC")/=0) then
    ! nf90_sync is performed up to LAST_COLL_sync and at steps of 5% of bse kernel
-   i_coll_mem=COLL_grp%PAR_map(i_coll)
+   i_coll_mem=COLL%PAR_map(i_coll)
    file_sync= (i_coll<=LAST_COLL_sync .and. mod(i_coll_mem,max(1,PAR_COLL_min/20))==0) .or. i_coll==LAST_COLL_sync
    !
    if(file_sync) then

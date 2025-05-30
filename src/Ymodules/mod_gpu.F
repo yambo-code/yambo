@@ -297,13 +297,9 @@ contains
     !
 #endif
     !
-#ifndef _CUSOLVERMP
-    !
     ! basic LinAlg functionalities of devxlib
     !
     call dev_linalg_setup()
-    !
-#endif
     !
   end subroutine gpu_setup
   !
@@ -313,10 +309,9 @@ contains
     integer :: istat
     istat = cublasInit()
     if(istat/=0) call error('cublasInit failed')
-#ifndef _CUSOLVERMP
+
     istat = cusolverDnCreate(cusolv_h)
     if(istat/=CUSOLVER_STATUS_SUCCESS) call error('cusolverDnCreate failed')
-#endif
 #endif
     gpu_linalg_init=.true.
   end subroutine

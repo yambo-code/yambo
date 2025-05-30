@@ -464,8 +464,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw,IO_BS_err,ID_BS)
            if ( (i_np> n_met_bands(ip_sp)  .and. i_mp> n_met_bands(ip_sp) ) ) cycle
            if ( (i_np<=n_full_bands(ip_sp) .and. i_mp<=n_full_bands(ip_sp)) ) cycle
            !
-           if ( .not. PAR_IND_Bp_mat%element_1D( B_mat_index(i_np,i_mp,COLL_bands) ) .and. &
-&               .not. PAR_IND_Bp_mat%element_1D( B_mat_index(i_mp,i_np,COLL_bands) )         ) cycle
+           if ( .not. PAR_IND_Bp_mat%element_1D(B_mat_index(i_np,i_mp,COLL_bands) ) ) cycle
            !
            !i_p_bz_bse=BS_K_io_map(k%k_table(i_p,i_p_s))
            i_p_bz_bse=BS_K_io_map(i_p_bz)
@@ -476,11 +475,11 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw,IO_BS_err,ID_BS)
            if (i_BSE==0.or.j_BSE==0) then
              n_skip_colls=n_skip_colls+1
              !DEBUG<
-	           !if(j_BSE==0) write(*,*) "Transition ignored ",i_p_bz_bse,i_mp,i_np,i_sp
+             !if(j_BSE==0) write(*,*) "Transition ignored ",i_p_bz_bse,i_mp,i_np,i_sp
              !DEBUG>
              cycle
-	         else
-	           n_incl_colls=n_incl_colls+1
+           else
+             n_incl_colls=n_incl_colls+1
            endif
            !
            if (i_BSE<=BS_K_dim(1) .and. j_BSE<=BS_K_dim(1)) then

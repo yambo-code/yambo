@@ -16,6 +16,7 @@ subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
  !                 =conjg(BSS_dipoles(j))*BS_V_right(j,i)
  !
  use pars,           ONLY:SP,cZERO
+ use stderr,         ONLY:intc
  use wrapper_omp,    ONLY:V_dot_V_omp
  use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset,ncpu
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
@@ -38,7 +39,7 @@ subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
  !
  type(PP_indexes)     :: px
  integer                  :: i1, i_lambda, neig_total, SL_H_dim, res_range(2), &
- &                           n_steps, step_shift, res_shift, i_res
+ &                           n_steps, step_shift, res_shift, i_res, n_size
  logical                  :: velocity_correction,l_duplicate_mem_par
  !
  complex(SP), allocatable :: tmp_res(:), BS_R_tmp(:) 
@@ -49,8 +50,15 @@ subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
  !
  neig_total = size(BS_E)
  !
- if (size(BS_R_right)       /= neig_total)     call error("Size mismatch between eigvals and R.residuals.")
- if (size(BS_V_right,dim=2) /= neigs_this_cpu) call error("Size mismatch between eigvecs and R.residuals.")
+ n_size=size(BS_R_right)
+ if (n_size /= neig_total) &
+ &  call error("Different size for energ. ("//trim(intc(neig_total))//")"// &
+ &             " and Rres. ("//trim(intc(n_size))//"), mode= "//trim(mode))
+ !
+ n_size=size(BS_V_right,dim=2)
+ if (n_size /= neigs_this_cpu) &
+ &  call error("Different size for eigen. ("//trim(intc(neig_total))//")"// &
+ &             " and Rres. ("//trim(intc(n_size))//"), mode= "//trim(mode))
  !
  velocity_correction=(index(mode,"opt")>0).and.(trim(global_gauge)=="velocity")
  !

@@ -27,7 +27,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use units,          ONLY:HA2EV
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
 &                         BS_res_ares_n_mat,l_BS_optics,l_BS_dichroism,l_BS_ares_from_res !,BS_Blocks_symmetrize_K,&
- use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,BSS_resize,BSS_n_eig_Input, &
+ use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,BSS_resize_only,BSS_resize_and_save,BSS_n_eig_Input, &
 &                         BSS_write_eig_2_db,BSS_eh_W,BSS_n_eig,BS_E,BSS_slepc_pseudo_herm,write_bs_ev_par,&
 &                         BSS_ldiago_solver,BSS_first_eig,BSS_target_E,BSS_trange_E,BSS_er,BSS_slepc_precondition
  use X_m,            ONLY:X_t,X_OUTPUT_driver
@@ -115,8 +115,7 @@ subroutine K_diago_driver(iq,W,X_static)
  complex(SP),pointer     :: BS_R_right_magn(:,:) => null()
  !
  ! Temporary pointer 
- complex(SP),pointer     :: tmp_res_ptrR(:)     => null()
- complex(SP),pointer     :: tmp_res_ptrL(:)     => null()
+ complex(SP),pointer     :: tmp_res_ptr(:)      => null()
  !
  ! I/O
  integer                 :: io_err,ID
@@ -301,6 +300,9 @@ subroutine K_diago_driver(iq,W,X_static)
        !
      endif
      !
+     ! Here we are resizing all the residuals which have not been used yet.
+     ! We could just allocated them here.
+     !
 #if defined _SLEPC && !defined _NL
      !
      if (l_slepc) then
@@ -316,12 +318,12 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if (l_ldiago) then
        ! BSS_n_eig could be lowered by LDIAGO_driver
-       if (BSS_n_eig_before_solver>BSS_n_eig) call K_ldiago_resize_variables()
+       if (BSS_n_eig_before_solver/=BSS_n_eig) call K_ldiago_resize_variables()
      endif
      !
      ! Compute residuals
      !
-     YAMBO_ALLOC_P(tmp_res_ptrR,(BSS_n_eig))
+     YAMBO_ALLOC_P(tmp_res_ptr,(BSS_n_eig))
      !
      ! Construct the residuals of epsilon
      !====================================
@@ -333,18 +335,18 @@ subroutine K_diago_driver(iq,W,X_static)
      endif
      !
      if(l_BS_dichroism) then
-       call K_diago_R_res("dic1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptrR,BS_V_right)
-       BS_R_right_dich(:,1) = tmp_res_ptrR
-       call K_diago_R_res("dic2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptrR,BS_V_right)
-       BS_R_right_dich(:,2) = tmp_res_ptrR
+       call K_diago_R_res("dic1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_right)
+       BS_R_right_dich(:,1) = tmp_res_ptr
+       call K_diago_R_res("dic2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_right)
+       BS_R_right_dich(:,2) = tmp_res_ptr
      endif
      !
      if(l_BS_magnons) then
-       call K_diago_R_res("mag1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptrR,BS_V_right)
-       BS_R_right_magn(:,1) = tmp_res_ptrR
+       call K_diago_R_res("mag1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_right)
+       BS_R_right_magn(:,1) = tmp_res_ptr
        if(n_spinor==2) then
-         call K_diago_R_res("mag2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptrR,BS_V_right)
-         BS_R_right_magn(:,2) = tmp_res_ptrR
+         call K_diago_R_res("mag2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_right)
+         BS_R_right_magn(:,2) = tmp_res_ptr
        endif
      endif
      !
@@ -361,11 +363,11 @@ subroutine K_diago_driver(iq,W,X_static)
        endif
        !
        if(l_BS_magnons) then
-         call K_diago_L_res("mag1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptrR,BS_V_left,BS_overlap)
-         BS_R_left_magn(:,1) = tmp_res_ptrR
+         call K_diago_L_res("mag1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_left,BS_overlap)
+         BS_R_left_magn(:,1) = tmp_res_ptr
          if(n_spinor==2) then
-           call K_diago_L_res("mag2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptrR,BS_V_left,BS_overlap)
-           BS_R_left_magn(:,2) = tmp_res_ptrR
+           call K_diago_L_res("mag2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_left,BS_overlap)
+           BS_R_left_magn(:,2) = tmp_res_ptr
          endif
        endif
        !
@@ -378,7 +380,7 @@ subroutine K_diago_driver(iq,W,X_static)
        !
      endif
      !
-     YAMBO_FREE_P(tmp_res_ptrR)
+     YAMBO_FREE_P(tmp_res_ptr)
      !
      ! DS: this also should be changed according to the general structure
      if(l_BS_photolum) then
@@ -524,18 +526,18 @@ subroutine K_diago_driver(iq,W,X_static)
    subroutine K_ldiago_resize_variables()
     !
     ! We need to realloc as sizes can change.
-    if(allocated(BS_corrections)) call BSS_resize(BS_corrections)
-    if(associated(BS_E_SOC_corr)) call BSS_resize(BS_E_SOC_corr)
+    if(allocated(BS_corrections)) call BSS_resize_only(BS_corrections)
+    if(associated(BS_E_SOC_corr)) call BSS_resize_only(BS_E_SOC_corr)
     !
-    if(associated(BS_R_left_abs) )  call BSS_resize(BS_R_left_abs)
-    if(associated(BS_R_right_abs))  call BSS_resize(BS_R_right_abs)
+    if(associated(BS_R_left_abs) )  call BSS_resize_only(BS_R_left_abs)
+    if(associated(BS_R_right_abs))  call BSS_resize_only(BS_R_right_abs)
     !
-    if(associated(BS_R_left_kerr) ) call BSS_resize(BS_R_left_kerr)
-    if(associated(BS_R_right_kerr)) call BSS_resize(BS_R_right_kerr)
-    if(associated(BS_R_right_dich)) call BSS_resize(BS_R_right_dich)
-    if(associated(BS_R_left_magn) ) call BSS_resize(BS_R_left_magn)
-    if(associated(BS_R_right_magn)) call BSS_resize(BS_R_right_magn)
-    if(associated(BS_R_PL)        ) call BSS_resize(BS_R_PL)
+    if(associated(BS_R_left_kerr) ) call BSS_resize_only(BS_R_left_kerr)
+    if(associated(BS_R_right_kerr)) call BSS_resize_only(BS_R_right_kerr)
+    if(associated(BS_R_right_dich)) call BSS_resize_only(BS_R_right_dich)
+    if(associated(BS_R_left_magn) ) call BSS_resize_only(BS_R_left_magn)
+    if(associated(BS_R_right_magn)) call BSS_resize_only(BS_R_right_magn)
+    if(associated(BS_R_PL)        ) call BSS_resize_only(BS_R_PL)
     !
    end subroutine K_ldiago_resize_variables
    !
@@ -544,26 +546,26 @@ subroutine K_diago_driver(iq,W,X_static)
    subroutine K_slepc_resize_variables()
      !
      call warning(" resizing alla variables whose size depends on BSS_n_eig ")
-     if(allocated(BS_E))          call BSS_resize(BS_E)
+     if(allocated(BS_E))          call BSS_resize_and_save(BS_E)
      !
-     if(allocated(BS_corrections)) call BSS_resize(BS_corrections)
-     if(associated(BS_E_SOC_corr)) call BSS_resize(BS_E_SOC_corr)
+     if(allocated(BS_corrections)) call BSS_resize_only(BS_corrections)
+     if(associated(BS_E_SOC_corr)) call BSS_resize_only(BS_E_SOC_corr)
      !
-     if(associated(BS_R_left_abs) )  call BSS_resize(BS_R_left_abs)
-     if(associated(BS_R_right_abs))  call BSS_resize(BS_R_right_abs)
+     if(associated(BS_R_left_abs) )  call BSS_resize_only(BS_R_left_abs)
+     if(associated(BS_R_right_abs))  call BSS_resize_only(BS_R_right_abs)
      !
-     if(associated(BS_R_left_kerr) ) call BSS_resize(BS_R_left_kerr)
-     if(associated(BS_R_right_kerr)) call BSS_resize(BS_R_right_kerr)
-     if(associated(BS_R_right_dich)) call BSS_resize(BS_R_right_dich)
-     if(associated(BS_R_left_magn) ) call BSS_resize(BS_R_left_magn)
-     if(associated(BS_R_right_magn)) call BSS_resize(BS_R_right_magn)
-     if(associated(BS_R_PL)        ) call BSS_resize(BS_R_PL)
+     if(associated(BS_R_left_kerr) ) call BSS_resize_only(BS_R_left_kerr)
+     if(associated(BS_R_right_kerr)) call BSS_resize_only(BS_R_right_kerr)
+     if(associated(BS_R_right_dich)) call BSS_resize_only(BS_R_right_dich)
+     if(associated(BS_R_left_magn) ) call BSS_resize_only(BS_R_left_magn)
+     if(associated(BS_R_right_magn)) call BSS_resize_only(BS_R_right_magn)
+     if(associated(BS_R_PL)        ) call BSS_resize_only(BS_R_PL)
      !
-     if(allocated(BS_V_left))   call BSS_resize(BS_V_left)
-     if(allocated(BS_V_right))  call BSS_resize(BS_V_right)
-     if(associated(BS_overlap)) call BSS_resize(BS_overlap,.true.)
+     if(allocated(BS_V_left))   call BSS_resize_and_save(BS_V_left)
+     if(allocated(BS_V_right))  call BSS_resize_and_save(BS_V_right)
+     if(associated(BS_overlap)) call BSS_resize_only(BS_overlap,.true.)
      !
-     if(allocated(BS_E_real))   call BSS_resize(BS_E_real)
+     if(allocated(BS_E_real))   call BSS_resize_and_save(BS_E_real)
      !
    end subroutine
    !

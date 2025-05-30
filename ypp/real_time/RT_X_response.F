@@ -36,6 +36,11 @@ subroutine RT_X_response(en,k,q)
  !=======================================
  call STRING_split(Efield(1)%ef_name,probe_defs,n_non_empty_strings=Ndefs)
  !
+ if ( trim(probe_defs(1))=='FROM_FILE') then
+   call RT_load_field_from_file_init(trim(probe_defs(2)))
+   call RT_load_field_from_file(trim(probe_defs(2)),1)
+ endif
+ !
  l_RT_LRR_real_field= all( (/ N_pumps<=1, N_probes==1, X_order==1/) )
  !
  l_RT_SHG_qssin     = all( (/ trim(probe_defs(1))=="QSSIN" , N_pumps==0, N_probes==1, X_order==2/) )

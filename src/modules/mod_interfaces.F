@@ -299,16 +299,16 @@ module interfaces
      type(tddft_wf_t), target, intent(inout) :: tddft_wf
    end function TDDFT_ALDA_eh_space_R_kernel
    !
-   subroutine WF_shift_kpoint_gpu(b_to_shift,nb_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k_out)
+   subroutine WF_shift_kpoint(b_to_shift,nb_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
      use pars,          ONLY:SP
      use electrons,     ONLY:n_spinor
      use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
      use R_lattice,     ONLY:bz_samp
-     integer,       intent(in) :: wf_shift(3),ikbz,i_sp_pol,b_to_shift(2),nb_to_shift
+     integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2),nb_to_shift
      type(bz_samp), intent(in) :: Xk
      complex(SP),   intent(in)  DEV_ATTR :: WF_k_in (wf_ng_1st_BZ,n_spinor,nb_to_shift)
      complex(SP),   intent(out) DEV_ATTR :: WF_k_out(wf_ng_overlaps,n_spinor,nb_to_shift)
-   end subroutine WF_shift_kpoint_gpu
+   end subroutine WF_shift_kpoint
    !
    subroutine WF_symm_kpoint(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
      use pars,          ONLY:SP 

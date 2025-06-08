@@ -97,7 +97,17 @@ module parallel_int
      integer, optional:: PAR_index(:,:)
      integer, optional:: PAR_ID
      integer, optional:: PAR_n_elements
-   end subroutine
+   end subroutine PARALLEL_MATRIX_distribute
+   !
+   subroutine PARALLEL_MATRIX_distribute_cv(COMM,PAR_IND,nb1,nb2,PAR_index,PAR_ID,PAR_n_elements)
+     use parallel_m,    ONLY:yMPI_comm,PP_indexes
+     type(yMPI_comm)   :: COMM
+     type(PP_indexes) :: PAR_IND
+     integer          :: nb1(2),nb2(2)
+     integer, optional:: PAR_index(:,:)
+     integer, optional:: PAR_ID
+     integer, optional:: PAR_n_elements
+   end subroutine PARALLEL_MATRIX_distribute_cv
    !
    subroutine PARALLEL_WF_index(COMM)
      use parallel_m,      ONLY:yMPI_comm

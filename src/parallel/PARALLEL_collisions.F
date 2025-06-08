@@ -128,10 +128,11 @@ subroutine PARALLEL_collisions( k, COLL_grp )
  !
  use drivers,       ONLY:l_eval_collisions
  use parallel_int,  ONLY:PARALLEL_live_message,PARALLEL_check_phase_space
- use collision_ext, ONLY:COLLISIONS_group,COLL_bands
+ use collision_ext, ONLY:COLLISIONS_group,COLL_bands,COLLISIONS_CV_only
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q_bz,PAR_IND_QP,&
 &                        l_par_RT,l_par_SE,l_par_SC,l_par_NL
- use hamiltonian,   ONLY:B_mat_index
+ use hamiltonian,   ONLY:B_mat_index,B_mat_index_cv
+ use electrons,     ONLY:n_met_bands,n_full_bands
  use R_lattice,     ONLY:bz_samp,qindx_S,nqbz
  !
 #include<y_memory.h>
@@ -141,7 +142,8 @@ subroutine PARALLEL_collisions( k, COLL_grp )
  !
  ! Work Space
  !
- integer :: i_coll,i_k,ib1,ib2,NC_tot,i_q,i_p,i_p_bz
+ integer :: i_coll,i_k,ib1,ib2,NC_tot,i_q,i_p,i_p_bz, &
+ &          blim1(2),blim2(2),nb_cv,i1
  !
  if ( COLL_grp%N == 0 ) return
  !
@@ -157,6 +159,12 @@ subroutine PARALLEL_collisions( k, COLL_grp )
  COLL_grp%PAR_map=0
  NC_tot=0
  !
+ if (COLLISIONS_CV_only) then
+   blim1=(/COLL_bands(1),maxval(n_met_bands)/)
+   blim2=(/minval(n_full_bands),COLL_bands(2)/)
+   nb_cv=(blim1(2)-blim1(1)+1)*(blim2(2)-blim2(1)+1)
+ endif
+ !
  do i_coll=1,COLL_grp%N
    !
    ib1 = COLL_grp%state(i_coll,1)
@@ -166,7 +174,15 @@ subroutine PARALLEL_collisions( k, COLL_grp )
    !
    if (l_par_RT) then
      if (.not.PAR_IND_Xk_ibz%element_1D(i_k)) cycle
-     if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,COLL_bands) ) ) cycle
+     if (COLLISIONS_CV_only) then
+       if (ib1> blim1(2) .and. ib2> blim1(2) ) cycle
+       if (ib1< blim1(1) .and. ib2< blim2(1) ) cycle
+       if (ib1<ib2) i1=B_mat_index_cv(ib1,ib2,blim1,blim2)
+       if (ib1>ib2) i1=B_mat_index_cv(ib2,ib1,blim2,blim1)!+nb_cv
+     else
+       i1=B_mat_index(ib1,ib2,COLL_bands)
+     endif
+     if (.not.PAR_IND_B_mat%element_1D( i1 ) ) cycle
    endif
    !
    if (l_par_NL) then

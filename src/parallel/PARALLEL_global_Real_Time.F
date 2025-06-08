@@ -89,12 +89,12 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_WF_k)
  PAR_IND_WF_b_ID=PAR_COM_WF_b_INDEX%CPU_id
  !
- call PARALLEL_index(PAR_IND_B_mat_ordered,(/ UP_matrix_index(1,RT_bands(2)-RT_bands(1)+1)-1 /),&
+ call PARALLEL_index(PAR_IND_B_mat_ordered,(/ UP_matrix_index(1,RT_bands(2)-RT_bands(1)+1) /),&
 &                    COMM=PAR_COM_WF_b_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
  !
  call PARALLEL_live_message("Bands Matrix (ordered)",ENVIRONMENT="Real_Time",&
 &                           LOADED=PAR_IND_B_mat_ordered%n_of_elements(PAR_IND_WF_b_ID+1),&
-&                           TOTAL=UP_matrix_index(1,RT_bands(2)-RT_bands(1)+1)-1,&
+&                           TOTAL=UP_matrix_index(1,RT_bands(2)-RT_bands(1)+1),&
 &                           NCPU=PAR_COM_WF_b_INDEX%n_CPU)
  !
  YAMBO_ALLOC(PAR_IND_WF_b%n_of_elements,(PAR_COM_WF_b_INDEX%n_CPU))
@@ -104,7 +104,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  do ib1=RT_bands(1),RT_bands(2)
    do ib2=ib1,RT_bands(2)
-     if (PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1)-1 )) then
+     if (PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1) )) then
        if (.not.PAR_IND_WF_b%element_1D(ib1)) then
          PAR_IND_WF_b%element_1D(ib1)=.TRUE.
          PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)+1

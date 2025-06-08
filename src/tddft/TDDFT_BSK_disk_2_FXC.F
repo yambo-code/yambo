@@ -100,7 +100,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
      !
      ACTION=RD
      if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL
-     call io_control(ACTION=ACTION,COM=NONE,SEC=(/UP_matrix_index(ik1,ik2)/),ID=ID)
+     call io_control(ACTION=ACTION,COM=NONE,SEC=(/UP_matrix_index(ik1,ik2)+1/),ID=ID)
      io_BS_err=io_BS(iq,X_static,ID)
      !
      if (BS_res_K_exchange) then

@@ -27,7 +27,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,eval_dG, & 
-&                         NL_bands,VAL_BANDS,NL_P,l_pump_and_probe,LSEX,LHF,Wk_EQ
+&                         NL_bands,VAL_BANDS,NL_P,LSEX,LHF,Wk_EQ
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_Xk_ibz_index
  use wrapper_omp,    ONLY:M_plus_alpha_M_omp
@@ -89,7 +89,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !
  ! Evaluate the G_lesser for current/polarization and collisions
  ! ======================================================
- if(eval_dG.or.l_pump_and_probe) call NL_build_dG_lesser(E,V_bands,dG_lesser(:,:,:,:,1))
+ if(eval_dG) call NL_build_dG_lesser(E,V_bands,dG_lesser(:,:,:,:,1))
  !
  ! Evaluate the Polarization 
  ! ===================================================================

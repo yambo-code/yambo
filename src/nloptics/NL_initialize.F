@@ -201,6 +201,7 @@ subroutine NL_initialize(E,k)
  !
  if(all(NL_er<0._SP).and.n_angles==0) then
    l_pump_and_probe=.true.
+   eval_dG=.true.
    l_NE_with_fields=.true.
    call msg('s', '[NL] Variables NLEnSteps,NLEnRange,NLAngSteps,NLrotaxis, are ignored ')
    call msg('sr','[NL] Pump and probe configuration: verbosity set to high')

@@ -197,7 +197,7 @@ module nl_optics
        YAMBO_ALLOC(RT_Vnl_xc,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_sp_pol))
      endif          
      !
-     if(eval_dG.or.l_pump_and_probe) then
+     if(eval_dG) then
        YAMBO_ALLOC(dG_lesser,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_sp_pol,1))
      endif
      !
@@ -282,7 +282,7 @@ module nl_optics
      if(l_use_Hxc_collisions) then
        YAMBO_FREE(RT_Vnl_xc)
      endif
-     if(eval_dG.or.l_pump_and_probe) then
+     if(eval_dG) then
        YAMBO_FREE(dG_lesser)
      endif
      !

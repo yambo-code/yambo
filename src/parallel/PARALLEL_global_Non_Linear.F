@@ -11,6 +11,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q)
  use R_lattice,     ONLY:bz_samp
  use collision_ext, ONLY:HXC_collisions
  use nl_optics,     ONLY:NL_bands
+ use RT_control,    ONLY:SAVE_G_history
  use IO_int,        ONLY:IO_and_Messaging_switch
  use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use parallel_m,    ONLY:ncpu,COMM_copy,PAR_build_index,PAR_INDEX_copy
@@ -23,7 +24,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q)
  ! INDEX
  use parallel_m,    ONLY:PAR_freqs_index,PAR_Xk_ibz_index,PAR_Xk_bz_index,PAR_QP_index
  ! DIMENSIONS
- use parallel_m,    ONLY:PAR_n_freqs,PAR_nQP,PAR_Xk_nbz,PAR_Xk_nibz
+ use parallel_m,    ONLY:PAR_n_freqs,PAR_nQP,PAR_Xk_nbz,PAR_Xk_nibz,PAR_G_k_range
  ! ID's
  use parallel_m,    ONLY:PAR_IND_freqs_ID,PAR_IND_Q_ibz_ID,PAR_IND_WF_k_ID,&
 &                        PAR_IND_Xk_bz_ID,PAR_IND_Xk_ibz_ID
@@ -38,7 +39,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q)
  !
  ! Work space
  !
- integer      ::  i_qp,ib1,ib2,i_k
+ integer      ::  i_qp,ib1,ib2,i_k,nk_G_IO
  !
  CALL PARALLEL_structure(2,(/"w ","k "/))
  !
@@ -67,7 +68,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q)
  !
  ! K-points
  !
- call PARALLEL_index(PAR_IND_Xk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX)
+ call PARALLEL_index(PAR_IND_Xk_ibz,(/Xk%nibz/),CONSECUTIVE=SAVE_G_history,COMM=PAR_COM_Xk_ibz_INDEX)
  PAR_IND_Xk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id
  PAR_Xk_nibz=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)
  !
@@ -82,7 +83,15 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q)
  call PARALLEL_distribute_BZk_using_IBZk(PAR_COM_Xk_ibz_INDEX,Xk,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
 &                                                       PAR_IND_Xk_bz, PAR_IND_Xk_bz_ID,&
 &                                                       PAR_Xk_bz_index,PAR_Xk_nbz)
-
+ !
+ nk_G_IO=0
+ PAR_G_k_range=0
+ do i_k = 1, Xk%nibz
+   if (.not.PAR_IND_Xk_ibz%element_1D(i_k) ) cycle
+   if (nk_G_IO==0) PAR_G_k_range=i_k
+   if (nk_G_IO >0) PAR_G_k_range(2)=i_k
+   nk_G_IO=nk_G_IO+1
+ enddo
  !
  ! Overlap indeces for WF distribution
  !

@@ -8,6 +8,7 @@
 module RT_occupations
  !
  use pars,           ONLY:SP,rZERO,schlen
+ use electrons,      ONLY:n_sp_pol
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt,&
 &                         l_phel_scatt,l_phel_corr
  !
@@ -18,9 +19,9 @@ module RT_occupations
    logical                  :: active
    integer                  :: D1(2)
    integer                  :: D2
-   real(SP),    allocatable :: N(:,:)
-   real(SP),    allocatable :: N_ref(:,:)
-   real(SP),    allocatable :: dN(:,:)
+   real(SP),    allocatable :: N(:,:,:)
+   real(SP),    allocatable :: N_ref(:,:,:)
+   real(SP),    allocatable :: dN(:,:,:)
  end type RT_occupation
  !
  type(RT_occupation) :: RT_el_occ,RT_ho_occ,RT_ph_occ,RT_life_occ
@@ -84,12 +85,12 @@ module RT_occupations
      OCC%D1=D1
      OCC%D2=D2
      if (KIND=="electrons".or.KIND=="life") then
-       YAMBO_ALLOC(OCC%dN,(D1(1):D1(2),D2))
+       YAMBO_ALLOC(OCC%dN,(D1(1):D1(2),D2,n_sp_pol))
        OCC%dN=rZERO
      endif
      if (KIND=="electrons".or.KIND=="holes".or.KIND=="phonons") then
-       YAMBO_ALLOC(OCC%N,(D1(1):D1(2),D2))
-       YAMBO_ALLOC(OCC%N_ref,(D1(1):D1(2),D2))
+       YAMBO_ALLOC(OCC%N,(D1(1):D1(2),D2,n_sp_pol))
+       YAMBO_ALLOC(OCC%N_ref,(D1(1):D1(2),D2,n_sp_pol))
        OCC%N=rZERO
        OCC%N_ref=rZERO
      endif

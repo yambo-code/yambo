@@ -126,6 +126,8 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        !
        ! Matrix core
        !
+       ! Sm1(k,k-dk)_{n,m} =sum_{i,j} V^\dag(k)_(n,i) S^\dag(k-dk,k)_{i,j} V(k-dk)_(j,n)
+       !
        !$omp parallel do default(shared), private(i2,vtmp)
        do i2=H_ref_bands(1),en%nbf(i_sp)
          call M_by_V('C',H_ref_bands(2),DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),V_bands(:,i2,ikm_ibz),vtmp)

@@ -14,7 +14,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use IO_m,        ONLY:io_DIP
  use R_lattice,   ONLY:bz_samp
  use electrons,   ONLY:levels,n_sp_pol
- use DIPOLES,     ONLY:DIPOLE_t,covariant_obs
+ use DIPOLES,     ONLY:DIPOLE_t,covariant_obs,der_k_obs
  use IO_int,      ONLY:io_control
  use IO_m,        ONLY:manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
 &                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
@@ -35,11 +35,9 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  ! Work space
  !
- logical           :: write_header,     read_header,     check,reading,writing,&
-&                     write_header_ovlp,read_header_ovlp,l_project_dipoles,IO_do_it
- integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,IO_MODE,ik_mem,ik,i_sp_pol,i_fragment,iv,ic,max_count,i_count
+ logical           :: write_header,read_header,check,reading,writing,l_project_dipoles,IO_do_it
+ integer           :: ID,IO_ACTION,IO_ACT_NOW,IO_MODE,ik_mem,ik,i_sp_pol,i_fragment,iv,ic,max_count,i_count
  integer, external :: io_DIPOLES
- integer, external :: io_Overlaps
 #if !defined _PAR_IO
  type(PP_indexes)  :: IO_par_index
 #endif
@@ -60,32 +58,22 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  call PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
  !
  ID=0
- ID_S=0
  io_err=0
  !
  write_header  =  (master_cpu.and.writing)
  read_header   =  .not.write_header 
- !
- write_header_ovlp  =write_header.and.len_trim(covariant_obs)>0
- read_header_ovlp   = read_header.and.len_trim(covariant_obs)>0
  !
  if(write_header) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
    io_err=io_DIPOLES(Dip,ID)
  endif
  !
- if(write_header_ovlp) then
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
-   io_err=io_err+io_Overlaps(Dip,ID_S)
- endif
-
- !
  ! To fix problems with asynchronous I/O 
  !
  call PP_wait(COMM=PAR_K_scheme%comm_world)
  !
  IO_MODE=VERIFY
- if((read_header.or.read_header_ovlp).and.writing) IO_MODE=DUMP
+ if(read_header.and.writing) IO_MODE=DUMP
  !
  if(read_header) then
    !
@@ -101,10 +89,6 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    do while(io_err/=0)
      call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=IO_MODE,ID=ID)
      io_err=io_DIPOLES(Dip,ID)
-     if(read_header_ovlp) then
-       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=IO_MODE,ID=ID_S)
-       io_err=io_err+io_Overlaps(Dip,ID_S)
-     endif
      if(io_err/=0) call sleep(1)
      i_count=i_count+1
      if((i_count==max_count).and.io_err/=0) then
@@ -169,55 +153,6 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/2+Xk%nibz*n_sp_pol/),ID=ID)
  io_err=io_DIPOLES(Dip,ID)
 #endif
- !
- ! OVERLAPS I/O
- !==============
- !
- if(len_trim(covariant_obs)>0) then
-   !
-#if !defined _PAR_IO
-   ! IO parallel indexes needed below by manage_action
-   !---------------------
-   call PP_indexes_reset(IO_par_index)
-   allocate(IO_par_index%element_1D(n_sp_pol*Xk%nbz))
-   IO_par_index%element_1D=.FALSE.
-   do i_sp_pol=1,n_sp_pol
-     do ik=1,Xk%nbz
-       i_fragment=ik+(i_sp_pol-1)*Xk%nbz
-       if ( .not.PAR_K_scheme%IND_bz%element_1D(ik)) cycle
-       IO_par_index%element_1D(i_fragment)=.TRUE.
-     enddo
-   enddo
-#endif
-   !
-#if defined _PAR_IO
-   IO_ACT_NOW=manage_action(IO_ACTION,0,0,2)
-   call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/0/),ID=ID_S,COMM=PAR_K_scheme%COM_ibz_index,DO_IT=IO_do_it)
-   io_err=io_Overlaps(Dip,ID_S)
-   IO_ACT_NOW=manage_action(IO_ACTION,1,0,2)
-#endif
-   do i_sp_pol=1,n_sp_pol
-     do ik=1,Xk%nbz
-       i_fragment=ik+(i_sp_pol-1)*Xk%nbz
-       if (.not.PAR_K_scheme%IND_bz%element_1D(ik).and.writing) cycle
-#if !defined _PAR_IO
-       if (.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0 .and.writing) cycle
-       if (writing) IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nbz*n_sp_pol,IO_par_index)
-       if (reading) IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nbz*n_sp_pol)
-#endif
-       call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID_S)
-       io_err=io_Overlaps(Dip,ID_S)
-       if (io_err/=0.and.IO_do_it) then
-         call error(" OVERLAPS I/O error when (i_sp_pol,ik)= ("//trim(intc(i_sp_pol))//","//trim(intc(ik))//")")
-       endif
-     enddo
-   enddo
-#if defined _PAR_IO
-   IO_ACT_NOW=manage_action(IO_ACTION,2,0,2)
-   call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/2+Xk%nbz*n_sp_pol/),ID=ID_S)
-   io_err=io_Overlaps(Dip,ID_S)
-#endif
- endif
  !
  call PP_wait(COMM=PAR_K_scheme%comm_world)
  !
@@ -287,8 +222,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
                den=Ev_m_Ec_QP
              endif
              !
-             if (abs(den)<=Dip%Energy_treshold) DIP_v(:,ic,iv,ik_mem,i_sp_pol)=cZERO
-             if (abs(den)> Dip%Energy_treshold) DIP_v(:,ic,iv,ik_mem,i_sp_pol)=DIP_v(:,ic,iv,ik_mem,i_sp_pol)*(num/den)
+             if (abs(den)<=Dip%Energy_threshold) DIP_v(:,ic,iv,ik_mem,i_sp_pol)=cZERO
+             if (abs(den)> Dip%Energy_threshold) DIP_v(:,ic,iv,ik_mem,i_sp_pol)=DIP_v(:,ic,iv,ik_mem,i_sp_pol)*(num/den)
              !
            enddo
          enddo

@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
+subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,i_sp_pol,deltaT)
  !
  ! The propagation of the scattering part is done in terms of electrons and holes occupations.
  ! The lifetimes used (computed by RT_relaxation) are all constructed in terms of f_e and f_h
@@ -32,7 +32,7 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
  ! Here remember that the occupations stored in the module are always equal to dG_inp
  ! 
  use pars,           ONLY:SP,cI,rZERO
- use electrons,      ONLY:spin_occ
+ use electrons,      ONLY:spin_occ,n_sp_pol
  use real_time,      ONLY:RT_bands,RTibz,l_RT_include_eq_scatt,RT_is_statically_dephased,&
 &                         RT_is_dynamically_dephased,RT_Deph_Matrix,G_lesser_reference
  use RT_occupations, ONLY:RT_el_occ,RT_ho_occ,l_RT_relax_time_approx,RT_RTA_E_occ_infty,RT_RTA_H_occ_infty
@@ -43,7 +43,7 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
  complex(SP), intent(in)    :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP), intent(in)    :: dG_inp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP), intent(inout) :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- integer,     intent(in)    :: ik
+ integer,     intent(in)    :: ik,i_sp_pol
  real(SP),    intent(in)    :: deltaT
  !
  integer     :: ib
@@ -52,18 +52,20 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  if( .not. RT_is_dynamically_dephased) return
  !
+ if (n_sp_pol==2) call error("RT_Scattering step not fully ported for n_sp_pol=2")
+ !
  do ib=RT_bands(1),RT_bands(2)
    !
    ! 1=electrons
    ! 2=holes
    !
-   f_(1)=RT_el_occ%N(ib,ik)
-   f_(2)=RT_ho_occ%N(ib,ik)
+   f_(1)=RT_el_occ%N(ib,ik,i_sp_pol)
+   f_(2)=RT_ho_occ%N(ib,ik,i_sp_pol)
    !
-   f0(1)=         aimag(G_lesser_reference(ib,ib,ik))
-   f0(2)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
-   df(1)= RT_el_occ%dN(ib,ik)
-   df(2)=-RT_el_occ%dN(ib,ik)
+   f0(1)=         aimag(G_lesser_reference(ib,ib,ik,i_sp_pol))
+   f0(2)=spin_occ-aimag(G_lesser_reference(ib,ib,ik,i_sp_pol))
+   df(1)= RT_el_occ%dN(ib,ik,i_sp_pol)
+   df(2)=-RT_el_occ%dN(ib,ik,i_sp_pol)
    !
    ! The GAMMA0 term could be moved inside RT_apply_RWA.F
    ! For the moment I keep it here, together with the rest of the relaxation term
@@ -111,8 +113,8 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
      !  f_inf(2)= GAMMA_(1)/GAMMA__TOT*spin_occ
      !endif
      !if( GAMMA__TOT<=0._SP  ) then
-     !  f_inf(1)=         aimag(G_lesser_reference(ib,ib,ik))
-     !  f_inf(2)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
+     !  f_inf(1)=         aimag(G_lesser_reference(ib,ib,ik,i_sp_pol))
+     !  f_inf(2)=spin_occ-aimag(G_lesser_reference(ib,ib,ik,i_sp_pol))
      !endif
      !df_out(:) = -deltaT*(GAMMA0_TOT*df(:) + GAMMA0_TOT*(f0(:)-f_inf(:)) + &
      !&                    dGAMMA_TOT*df(:) + dGAMMA_TOT*(f0(:)-f_inf(:)) )

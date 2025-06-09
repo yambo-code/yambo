@@ -22,11 +22,11 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use X_m,            ONLY:global_gauge,X_t
  use fields,         ONLY:A_ext,A_tot,Efield
  use real_time,      ONLY:eval_DFT,eval_HARTREE,l_RT_induced_Field,rho_reference,&
-&                         Ho_plus_Sigma,RT_Vnl_xc,RT_nbands         
+&                         Ho_plus_Sigma,RT_Vnl_xc,RT_nbands,dG_lesser
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
-&                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG, & 
+&                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,eval_dG, & 
 &                         NL_bands,VAL_BANDS,NL_P,LSEX,LHF,Wk_EQ
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_Xk_ibz_index
@@ -89,7 +89,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !
  ! Evaluate the G_lesser for current/polarization and collisions
  ! ======================================================
- if(eval_dG)              call NL_build_dG_lesser(E,V_bands,dG)
+ if(eval_dG) call NL_build_dG_lesser(E,V_bands,dG_lesser(:,:,:,:,1))
  !
  ! Evaluate the Polarization 
  ! ===================================================================
@@ -117,7 +117,9 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !
  call RT_Ext_fields_sum(A_ext,Time)
  !
- A_tot=A_ext
+ A_tot%vecpot    =A_ext%vecpot    
+ A_tot%vecpot_vel=A_ext%vecpot_vel
+ A_tot%vecpot_acc=A_ext%vecpot_acc
  !
  E_ext=-A_ext%vecpot_vel/SPEED_OF_LIGHT
  !
@@ -163,9 +165,9 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
     !
  endif
  !
- ! Calculate collisions
- ! =======================================
- if(l_use_Hxc_collisions) call COLLISIONS_compose_nl(dG)
+ ! Calculate collisions if doing TD-SEX or TD-HF
+ ! =============================================
+ if(l_use_Hxc_collisions) call COLLISIONS_compose_nl(dG_lesser(:,:,:,:,1))
  !
  ! Build the Hamiltonian
  ! =====================
@@ -230,7 +232,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
      !
    endif                                                         
    !
-!   if(Correlation==LSEX.or.Correlation==LHF) call OSCLL_compose_nl(dG,H_nl_sc,k,q,E,ik,i_sp_pol)
+!   if(Correlation==LSEX.or.Correlation==LHF) call OSCLL_compose_nl(dG_lesser(:,:,:,:,1),H_nl_sc,k,q,E,ik,i_sp_pol)
    if(Correlation==LSEX.or.Correlation==LHF) call OSCLL_compose_vbands(V_bands,H_nl_sc,k,q,E,ik,i_sp_pol)
    !
    if(l_use_Hxc_collisions) then

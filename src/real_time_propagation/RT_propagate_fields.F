@@ -24,14 +24,15 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
  !    the induced current is included in the dynamics ( RT_propagate_fields )
  ! 
  use pars,           ONLY:SP,pi
+ use electrons,      ONLY:spin_occ
  use units,          ONLY:SPEED_OF_LIGHT
- use electrons,      ONLY:levels,nel
+ use electrons,      ONLY:levels,nel,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:global_gauge
  use parallel_m,     ONLY:PAR_G_k_range
  use real_time,      ONLY:RT_ind_J_prev,RT_ind_J,RT_P_prev,RT_P,RT_dyn_step,   &
 &                         l_RT_induced_field,Integrator_step,Integrator_nsteps,&
-&                         RT_bands
+&                         RT_bands,l_velocity_gauge_diam
  use fields,         ONLY:gauge_field,A_ind,A_ext,A_vecpot_reset,compute_intensity,compute_envelop
  !
  implicit none
@@ -41,10 +42,11 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
  real(SP),             intent(in) :: T,T_step
  type(gauge_field),    intent(in) :: A_old
  type(gauge_field),   intent(out) :: A_new
- complex(SP),          intent(in) :: G_inp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
+ complex(SP),  intent(in) :: G_inp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2),n_sp_pol)
  !
  ! Work space
  !
+ integer           :: nel_effect
  type(gauge_field) :: A_ind_old
  type(gauge_field) :: A_ind_new
  type(gauge_field) :: A_null
@@ -99,7 +101,10 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
      !
      ! Update the current replacing the null vector potential with the real one
      !
-     RT_ind_J=RT_ind_J+(A_ind_new%vecpot(:)+A_ext%vecpot(:))*real(nel,SP)/(2._SP*SPEED_OF_LIGHT)
+     if(l_velocity_gauge_diam) then
+       nel_effect=nel-(RT_bands(1)-1)*spin_occ
+       RT_ind_J=RT_ind_J+(A_ind_new%vecpot(:)+A_ext%vecpot(:))*real(nel_effect,SP)/(2._SP*SPEED_OF_LIGHT)
+     endif
      A_ind_new%vecpot_acc =                        real(RT_ind_J)     *4._SP*pi*SPEED_OF_LIGHT
    endif
    !

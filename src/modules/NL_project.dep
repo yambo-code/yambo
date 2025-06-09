@@ -1,4 +1,5 @@
  SET_defaults.o
+ SET_logicals.o
  mod_BS_solvers.o
  mod_H_interfaces.o
  mod_NL_interfaces.o

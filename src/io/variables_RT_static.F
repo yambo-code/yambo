@@ -55,16 +55,18 @@ integer function variables_RT_static(ID)
  !
  ! ELPH_vars
  !
-#if defined _ELPH 
- call def_variable_elemental(ID,VAR="ELPH_vars",VAR_SZ=5,VAR_KIND=IP_YIO,MENU=0) 
- call io_variable_elemental(ID,L0=l_elph_scatt,&
-&   VAR=" [E-P] Electron-phonon", CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
- call io_variable_elemental(ID,L0=l_RT_iterative_ELPH_lifetimes,&
-&   VAR=" [E-P] Iterative time evolution   ", CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
- call io_variable_elemental(ID, &
-&   VAR=" [E-P] Branches",I1=elph_branches,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=RT_desc)
- call io_variable_elemental(ID, &
-&   VAR=" [E-P] GF`s Memory steps",I0=G_MEM_steps,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
+#if defined _ELPH
+ if ( write_is_on(ID) .or. variable_exist(ID,"ELPH_vars") ) then
+   call def_variable_elemental(ID,VAR="ELPH_vars",VAR_SZ=5,VAR_KIND=IP_YIO,MENU=0) 
+   call io_variable_elemental(ID,L0=l_elph_scatt,&
+&     VAR=" [E-P] Electron-phonon", CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
+   call io_variable_elemental(ID,L0=l_RT_iterative_ELPH_lifetimes,&
+&     VAR=" [E-P] Iterative time evolution   ", CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
+   call io_variable_elemental(ID, &
+&     VAR=" [E-P] Branches",I1=elph_branches,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=RT_desc)
+   call io_variable_elemental(ID, &
+&     VAR=" [E-P] GF`s Memory steps",I0=G_MEM_steps,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
+ endif
 #endif
  !
  ! E-E_vars
@@ -157,12 +159,13 @@ integer function variables_RT_static(ID)
        call def_variable_elemental(ID,VAR="FIELD_POL"//trim(intc(i1)),VAR_SZ=1,VAR_KIND=0,MENU=0)
        call io_variable_elemental(ID,CH0=Efield(i1)%ef_pol,VAR=' [FIELDs] Polarization',DESCRIPTOR=RT_desc)
        !
-       call def_variable_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=13,VAR_KIND=SP,MENU=0)
+       call def_variable_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=14,VAR_KIND=SP,MENU=0)
        call io_variable_elemental(ID,R1=Efield(i1)%versor,VAR=" [FIELDs] Versor",DESCRIPTOR=RT_desc)
        call io_variable_elemental(ID,R1=Efield(i1)%versor_circ,VAR=" [FIELDs] Versor_circ",DESCRIPTOR=RT_desc)
        call io_variable_elemental(ID,VAR=" [FIELDs] Intensity",R0=Efield(i1)%intensity,&
 &                                 DESCRIPTOR=RT_desc,UNIT=AU2KWCMm2,TERMINATOR="[kWCMm2]")
-       call io_variable_elemental(ID,VAR=" [FIELDs] Damping",R0=Efield(i1)%width,DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
+       call io_variable_elemental(ID,VAR=" [FIELDs] Width    ",R0=Efield(i1)%width,DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
+       call io_variable_elemental(ID,VAR=" [FIELDs] Chirp    ",R0=Efield(i1)%chirp,DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
        call io_variable_elemental(ID,VAR=" [FIELDs] Frequency range",R1=Efield(i1)%frequency,&
 &                                 DESCRIPTOR=RT_desc,UNIT=HA2EV,TERMINATOR="[eV]")
        call io_variable_elemental(ID,VAR=" [FIELDs] Frequency steps",I0=Efield(i1)%n_frequencies,DESCRIPTOR=RT_desc)

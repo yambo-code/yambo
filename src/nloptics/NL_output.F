@@ -30,26 +30,26 @@ subroutine NL_output(i_time,i_run)
  !
  if(NL_verbosity==VERB_LOW) return
  !
- file_name(1)='external_potential_F'//intc(i_run)
- file_name(2)='polarization_F'//intc(i_run)
- file_name(3)='e_total_F'//intc(i_run)
- file_name(4)='current_F'//intc(i_run)
+ file_name(1)='NL_ext_pot_F'//intc(i_run)
+ file_name(2)='NL_pol_F'//intc(i_run)
+ file_name(3)='NL_Etot_F'//intc(i_run)
+ file_name(4)='NL_curr_F'//intc(i_run)
  !
  n_files=1
- short_file_name(n_files)='external_potential'
+ short_file_name(n_files)='NL_ext_pot'
  n_headings(n_files)=10
  !
  n_files=n_files+1
- short_file_name(n_files)='polarization'
+ short_file_name(n_files)='NL_pol'
  n_headings(n_files)=7
  !
  n_files=n_files+1
- short_file_name(n_files)='e_total'
+ short_file_name(n_files)='NL_Etot'
  n_headings(n_files)=4
  !
  if(l_eval_CURRENT) then
    n_files=n_files+1
-   short_file_name(n_files)='current'
+   short_file_name(n_files)='NL_curr'
    n_headings(n_files)=7
  endif
  !

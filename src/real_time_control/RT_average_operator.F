@@ -26,7 +26,7 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
  !
  type(bz_samp), intent(in) :: k
  type(levels),  intent(in) :: en
- complex(SP),   intent(in) :: G(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
+ complex(SP),   intent(in) :: G(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2),n_sp_pol)
  integer,       intent(in) :: nK_mem,N_V
  !
  ! Optionals
@@ -107,7 +107,7 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
            if(N_V> 1) Hk(i_cmp,:,:)=Hk_vec_tmp(i_cmp,:,:)
          endif 
          !
-         VALUE_tmp(i_cmp)=VALUE_tmp(i_cmp)-cI*Vstar_dot_V_omp(RT_bands2,Hk(i_cmp,:,:),G(:,:,ik))*RTibz%weights(ik)
+         VALUE_tmp(i_cmp)=VALUE_tmp(i_cmp)-cI*Vstar_dot_V_omp(RT_bands2,Hk(i_cmp,:,:),G(:,:,ik,i_sp_pol))*RTibz%weights(ik)
          !
        enddo
        !

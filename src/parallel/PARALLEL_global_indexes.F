@@ -108,7 +108,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
      Do_dip_limits=.not.Dip_limits_pre_defined
    endif
    if (Do_dip_limits) then
-     if (Dip%bands_ordered.or.Dip%Energy_treshold<0._SP) then
+     if (Dip%bands_ordered.or.Dip%Energy_threshold<0._SP) then
        Dip%ib_lim(1)=maxval(E%nbm)
        Dip%ib_lim(2)=minval(E%nbf)+1
        if (l_X_terminator) Dip%ib_lim(2)=Dip%ib(1)

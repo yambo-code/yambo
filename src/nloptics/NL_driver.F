@@ -55,7 +55,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  ! 
  ! Work Space
  !
- integer           :: i_f,i1,i_sp_pol,wf_ng_save,io_err,nw,ik,ik_mem
+ integer           :: i_f,i1,i_sp_pol,wf_ng_save,io_err,ik,ik_mem
  character(schlen) :: l_message
  logical           :: l_dynamics_is_over
  real(SP)          :: OBSERVABLES(25),Time,angle
@@ -282,9 +282,8 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  else
    call error("Wrong input: use pump-probe mode 'yambo_nl -u p' or set a number of frequencie/angles with 'yambo_nl -u n'")
  endif
- nw=PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1)
  if(.not.l_pump_and_probe) NE_i_time=0
- call live_timing(l_message,nw*(NE_steps-NE_i_time))
+ call live_timing(l_message,n_runs*(NE_steps-NE_i_time))
  !
  do i_f=1,n_runs
    !

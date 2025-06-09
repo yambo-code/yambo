@@ -42,7 +42,7 @@ integer function variables_ELPH(ID,what)
  !
  PARS_size=6
  if (     ver_is_gt_or_eq(ID,revision=18920)) PARS_size=7
- if (     ver_is_gt_or_eq(ID,revision=20495)) PARS_size=8
+ if (     ver_is_gt_or_eq(ID,revision=21400)) PARS_size=8
  call def_variable_elemental(ID,"PARS",PARS_size,SP,0)
  !
  call io_variable_elemental(ID,VAR="[ELPH] Phonon modes",I0=ph_modes,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
@@ -59,7 +59,7 @@ integer function variables_ELPH(ID,what)
 &                               CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
  endif
  !
- if (ver_is_gt_or_eq(ID,revision=20495)) then
+ if (ver_is_gt_or_eq(ID,revision=21400)) then
    call io_variable_elemental(ID,VAR="[ELPH] Debye-Waller interaction",L0=l_GKKP_DW, &
 &                             CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
  else

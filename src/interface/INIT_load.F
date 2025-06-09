@@ -27,7 +27,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        QP_G_er,QP_G_ir,QP_G_dr,QP_Sc_steps,QP_G_solver,&
 &                        QP_dSc_delta,QP_G_Zoom_treshold,GF_energy_range_mode
  use LIVE_t,        ONLY:nhash
- use wave_func,     ONLY:wf_ng
+ use wave_func,     ONLY:wf_ng,WF_load_mode
  use D_lattice,     ONLY:Tel,non_periodic_directions,molecule_position,Bose_Temp
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,RIM_W_ng,rimw_type,&
 &                        bz_samp,RIM_ng,RIM_epsm1,eps_env,RIM_id_epsm1_reference,&
@@ -52,7 +52,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _SC || defined _RT || defined _QED
  use hamiltonian,   ONLY:H_potential
- use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands
+ use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands,COLL_hole_bands,COLL_elec_bands
 #endif
  use QP_m,          ONLY:SC_E_threshold
 #if defined _SC
@@ -64,24 +64,23 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _RT
  use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,Gless_RESTART_RT_IO_t,     &
-&                        CACHE_OBS_INTERVAL_time_INPUT,RT_BSE_Occ_Mode,Gless_RT_IO_t
- use stderr,        ONLY:intc
+&                        CACHE_OBS_INTERVAL_time_INPUT,RT_BSE_Occ_Mode,Gless_RT_IO_t,Vbands_RT_IO_t
  use RT_occupations,ONLY:RT_RTA_temp,RT_RTA_chem
  use RT_lifetimes,  ONLY:RT_life_extrap_times_INPUT
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
-&                        NE_tot_time,RT_bands,RT_deph_range,                     &
+&                        NE_tot_time,RT_bands,RT_hole_bands,RT_elec_bands,RT_deph_range,    &
 &                        RT_ave_dephasing,RT_eh_en,RT_scatt_tresh,Gr_kind,       &
 &                        NE_MEM_treshold,NE_time_step_update_jump_INPUT,         &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
 &                        NE_initial_time_step_update,NE_step_update_treshold,    &
 &                        RT_MAX_step,RAD_magnification,  &
 &                        RT_deph_deg_thresh,RT_step_manual_prefactor,NE_time_step_update_manual
- use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
+ use fields,        ONLY:n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
 #if defined _NL
  use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha, &
-&                        NL_verb_name,n_angles,NL_rot_axis,max_angle 
+&                        NL_verb_name,n_angles,NL_rot_axis,NL_hole_bands,NL_elec_bands,max_angle
 #endif 
 #if defined _NL | defined _SC
  use fields,        ONLY:Efield
@@ -232,6 +231,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'DBsFRAGpm', &
 &             '[IO] Space-separated list of +DB to FRAG and -DB to NOT FRAG. DB=(DIP,X,W,HF,COLLS,K,BS,QINDX,RT,ELPH,SC,ALL)',&
 &             DBs_FRAG_control_string,verb_level=V_io)
+ call it(defs,"WF_load_mode",'[WF-IO] Default distribution mode ("all"/"on-the-fly")',&
+&            WF_load_mode,verb_level=V_io)
  !
  ! S_xc
  !
@@ -425,6 +426,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! Real Time dynamics
  !
  call it(defs,'RTBands',    '[RT] Bands',RT_bands)
+ call it(defs,'RTHoleBands','[RT] Active Bands range in valence',RT_hole_bands,Verb_level=V_real_time)
+ call it(defs,'RTElecBands','[RT] Active Bands range in conduct',RT_elec_bands,Verb_level=V_real_time)
  !
  ! This call is a temporary fix due to the multiple definition of energy ranges.
  ! The call is needed to align the different values based on the USER definition.
@@ -455,11 +458,16 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/EXPn/INV" "SIMPLE/RK2/RK4/HEUN" "RWA") ',&
 &              Integrator_name)
  !
+#if defined _NL
+ IO_times=(/CARR_RT_IO_t%INTERVAL_time_INPUT,Vbands_RT_IO_t%INTERVAL_time_INPUT,OUTPUT_RT_IO_t%INTERVAL_time_INPUT/)
+#elif defined _RT
  IO_times=(/CARR_RT_IO_t%INTERVAL_time_INPUT,Gless_RESTART_RT_IO_t%INTERVAL_time_INPUT,OUTPUT_RT_IO_t%INTERVAL_time_INPUT/)
- call it(defs,'IOtime',      '[RT] Time between two consecutive I/O (CARRIERs - GF - OUTPUT)',IO_times,unit=Time_unit(1))
+#endif
+ call it(defs,'IOtime',      '[RT] Time between two consecutive I/O (CARRIERs - GF/WF - OUTPUT)',IO_times,unit=Time_unit(1))
  CARR_RT_IO_t%INTERVAL_time_INPUT             =IO_times(1)
  Gless_RESTART_RT_IO_t%INTERVAL_time_INPUT    =IO_times(2)
  Gless_RT_IO_t%INTERVAL_time_INPUT            =IO_times(2)
+ Vbands_RT_IO_t%INTERVAL_time_INPUT           =IO_times(2)
  OUTPUT_RT_IO_t%INTERVAL_time_INPUT           =IO_times(3)
  !
  IO_times(1:2)=(/CACHE_OBS_INTERVAL_time_INPUT,OBS_RT_IO_t%INTERVAL_time_INPUT/)
@@ -476,6 +484,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'RTEvalEnergy',  '[RT] Energy variation computed on the fly',Verb_level=V_real_time)
  call it('f',defs,'RTEvalEntropy', '[RT] Entropy variation computed on the fly',Verb_level=V_real_time)
  call it('f',defs,'SaveGhistory',  '[RT] Save the history of the green function',Verb_level=V_real_time)
+ call it('f',defs,'RTgradk',       '[RT] Compute the term grad_k(rho).E',Verb_level=V_real_time)
  !
  ! ... updates ...
  call it('f',defs,'RTUpdateSOC',     '[RT] Update the SOC interaction',Verb_level=V_real_time)
@@ -528,6 +537,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! Non-linear Optics
  !
  call it(defs,'NLBands',      '[NL] Bands range',NL_bands)
+ call it(defs,'NLHoleBands',  '[NL] Active Bands range in valence',NL_hole_bands,Verb_level=V_nl_optics)
+ call it(defs,'NLElecBands',  '[NL] Active Bands range in conduct',NL_elec_bands,Verb_level=V_nl_optics)
  call it(defs,'NLverbosity',  '[NL] Verbosity level (low | high)',NL_verb_name) 
  call it(defs,'NLstep',       '[NL] Time step length',RT_step,unit=Time_unit(1),Verb_level=V_nl_optics)
  call it(defs,'NLtime',       '[NL] Simulation Time',NE_tot_time,unit=Time_unit(1))
@@ -548,6 +559,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'UseSymm','[NL] Use full-symms for dipoles and residual-symms for polar/current (def false)', &
 &  verb_level=V_nl_optics)
  call it('f',defs,'EvalCurrent','[NL] Evaluate the current')
+ call it('f',defs,'SaveVbhistory',  '[RT] Save the history of the wave-functions function',Verb_level=V_nl_optics)
  !
 #endif
  !
@@ -557,7 +569,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  if (initmode==4.and..not.infile_editing) n_ext_fields=0
  do i_field=1,n_ext_fields_max
-   call Afield(i_field)
+   call Afield(defs,i_field)
  enddo
  !
 #endif
@@ -652,9 +664,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'DipBands',       '[DIP] Bands range for dipoles',Dip%ib,verb_level=V_resp)
  call it(defs,'DipQpts',        '[DIP] Qpts range for dipoles',Dip%iq,verb_level=V_resp)
- call it(defs,'DipoleEtresh',   '[DIP] Treshold in the definition of R=P/deltaE',Dip%Energy_treshold,&
+ call it(defs,'DipoleEtresh',   '[DIP] Treshold in the definition of R=P/deltaE',Dip%Energy_threshold,&
 &                                                                               verb_level=V_resp,unit=E_unit)
- call it(defs,'DipApproach',    '[DIP] [G-space v/R-space x/Covariant/Shifted grids]',Dip%approach,verb_level=V_resp)
+ call it(defs,'DipApproach',    '[DIP] [G-space v/R-space x/Covariant/Shifted grids/derk]',Dip%approach,verb_level=V_resp)
  call it(defs,'DipComputed',    '[DIP] [default R P V; extra P2 Spin Orb]',Dip%computed,verb_level=V_resp)
  call it(defs,'ShiftedPaths',   '[DIP] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
  call it('f',defs,'DipPDirect', '[DIP] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
@@ -716,9 +728,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! SC and RT common
  !
  call it(defs,'COLLBands',   '[COLL] Bands for the collisions',COLL_bands)
+ call it(defs,'COLLHoleBands','[COLL] Active Bands range in valence',COLL_hole_bands,Verb_level=V_sc)
+ call it(defs,'COLLElecBands','[COLL] Active Bands range in conduct',COLL_elec_bands,Verb_level=V_sc)
  !
- call it(defs,'HXC_Potential', '[SC] SC HXC Potential',H_potential,protect=.FALSE.,case="A")
- call it(defs,'COLLCut',    '[SC,RT] Cutoff on the collisions, 0=full(default =0.0005)',COLLISIONS_cutoff,verb_level=V_sc)
+ call it(defs,'HXC_Potential',  '[SC] SC HXC Potential',H_potential,protect=.FALSE.,case="A")
+ call it(defs,'COLLCut',        '[SC,RT] Cutoff on the collisions, 0=full 1=none (default =0.0005)',&
+ &                                                                   COLLISIONS_cutoff,verb_level=V_sc)
+ call it('f',defs,'COLLBseMem', '[SC,RT] Minimize memory use in bse kernel conversion',verb_level=V_sc)
  !
 #endif
  !
@@ -736,54 +752,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  endif
  ! 
  contains 
-   !
-#if defined _RT || defined _NL
-   !
-   subroutine Afield(i_field)
-     use units,    ONLY  :AU2KWCMm2
-     use parser_m, ONLY  : parser
-     character(10)      :: name
-     integer            :: i_field
-     logical            :: is_def
-     !
-     name='Field'//trim(intc(i_field))
-     !
-     call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
-&            Efield(i_field)%frequency,unit=E_unit)
-     call it(defs,trim(name)//'_NFreqs',            '[RT '//trim(name)//'] Frequency',&
-&            Efield(i_field)%n_frequencies)
-     call it(defs,trim(name)//'_DFreq',           '[RT '//trim(name)//'] Frequency step',&
-&            Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
-     call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
-&            Efield(i_field)%intensity,unit=I_unit)
-     call it(defs,trim(name)//'_Width',           '[RT '//trim(name)//'] Width',&
-&            Efield(i_field)%width,unit=Time_unit(1))
-     call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (overwrite width if set)',&
-&            Efield(i_field)%FWHM,unit=Time_unit(1),verb_level=V_real_time)
-     call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|SOFTSIN| see more on src/modules/mod_fields.F)',&
-&            Efield(i_field)%ef_name)
-     call it(defs,trim(name)//'_pol',             '[RT '//trim(name)//'] Pol(linear|circular)',&
-&            Efield(i_field)%ef_pol)
-     call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Versor',&
-&            Efield(i_field)%versor)
-     call it(defs,trim(name)//'_Dir_circ',        '[RT '//trim(name)//'] Versor_circ',&
-&            Efield(i_field)%versor_circ,verb_level=V_real_time)
-     call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
-&            Efield(i_field)%t_initial,unit=Time_unit(1))
-     !
-     if (initmode==4.and..not.infile_editing) then
-       !
-       call parser(trim(name)//'_FWHM',is_def)
-       if (     is_def) Efield(i_field)%width=Efield(i_field)%FWHM/(2._SP*sqrt(2._SP*log(2._SP)))
-       if (.not.is_def) Efield(i_field)%FWHM=Efield(i_field)%width*(2._SP*sqrt(2._SP*log(2._SP)))
-       !
-       if (trim(Efield(i_field)%ef_name)/='none') n_ext_fields=n_ext_fields+1
-       !
-     endif
-     !
-   end subroutine
-   !
-#endif
    !
 #if defined _MPI 
    !

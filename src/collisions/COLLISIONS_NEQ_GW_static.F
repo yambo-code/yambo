@@ -193,9 +193,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
      ! Spins
      !
      i_k_sp  = GW_NEQ_collisions%state(i_coll1,4)
-     i_p_sp  = i_k_sp
      i_kmq_sp= i_k_sp
-     i_pmq_sp= i_k_sp
      !
      isc%is  =(/i_n ,i_k,i_k_s,i_k_sp/)
      isc%os  =(/i_np,i_kmq,i_kmq_s,i_kmq_sp/)
@@ -209,6 +207,8 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
        i_m     = GW_NEQ_collisions%state(i_coll2,1)
        i_mp    = GW_NEQ_collisions%state(i_coll2,2)
        i_p     = GW_NEQ_collisions%state(i_coll2,3)
+       i_p_sp  = GW_NEQ_collisions%state(i_coll2,4)
+       i_pmq_sp= i_k_sp
        !
        do i_p_star=1,k%nstar(i_p)
          !
@@ -260,13 +260,13 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
          !
          if (io_COLLs) then
            !
-           GW_NEQ_COLL_element(1)%v3_r(i_J,1,iqbz)=&
-&             GW_NEQ_COLL_element(1)%v3_r(i_J,1,iqbz)                 +abs(pre_factor)**2
+           GW_NEQ_COLL_element(1)%v3_r(i_J,1,iqbz,i_p_sp)=&
+&             GW_NEQ_COLL_element(1)%v3_r(i_J,1,iqbz,i_p_sp)                 +abs(pre_factor)**2
            !
          else
            !
-           GW_NEQ_COLL_element(i_coll1_mem)%v3_r(i_J_mem,1,i_q_mem)=&
-&             GW_NEQ_COLL_element(i_coll1_mem)%v3_r(i_J_mem,1,i_q_mem)+abs(pre_factor)**2
+           GW_NEQ_COLL_element(i_coll1_mem)%v3_r(i_J_mem,1,i_q_mem,i_p_sp)=&
+&             GW_NEQ_COLL_element(i_coll1_mem)%v3_r(i_J_mem,1,i_q_mem,i_p_sp)+abs(pre_factor)**2
            !
          endif
          !

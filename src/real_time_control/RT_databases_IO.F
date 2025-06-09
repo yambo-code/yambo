@@ -8,24 +8,24 @@
 subroutine RT_databases_IO(E,DO_IT)
  !
  use electrons,      ONLY:n_spin,levels
- use RT_control,     ONLY:RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,&
+ use RT_control,     ONLY:RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,Vbands_RT_IO_t,&
 &                         Gless_RESTART_RT_IO_t,CARR_RT_IO_t,CACHE_OBS_steps_now,CACHE_OBS_steps,    &
 &                         SAVE_G_history,NE_i_start_time,CACHE_OBS_last_point,Gless_RT_IO_t,RT_DB_ID,&
-&                         RT_return_db_ID,RT_DB_name
+&                         RT_return_db_ID,RT_DB_name,SAVE_Vb_history
 #if defined _ELPH_ITERATIVE
  use RT_lifetimes,   ONLY:l_RT_iterative_ELPH_lifetimes
 #endif
  use real_time,      ONLY:NE_i_time,NE_steps,RT_nk,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,&
 &                         l_NE_with_fields,RT_step,RT_dyn_step,NE_time,RT_carriers,G_MEM_steps
  use IO_int,         ONLY:io_control,IO_and_Messaging_switch
- use IO_m,           ONLY:manage_action,NONE,io_GF,io_CARRIERs,io_OBSERVABLES,OP_APP_CL,OP_WR_CL,&
+ use IO_m,           ONLY:manage_action,NONE,io_GF,io_CARRIERs,io_OBSERVABLES,io_V_bands,OP_APP_CL,OP_WR_CL,&
 &                         OP_IF_START_APP_CL_IF_END,WR_CL_IF_END,OP_APP,WR_CL,WR,OP_APP,OP_WR
  use parallel_m,     ONLY:PAR_G_k_range,myid,HEAD_k_cpu
  use parallel_int,   ONLY:PP_wait,PP_redux_wait,PP_bcast
  use timing_m,       ONLY:timing
  use fields,         ONLY:A_tot
 #if defined _PAR_IO
- use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX
+ use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,master_cpu
 #else
  use real_time,      ONLY:RTibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,ncpu,myid
@@ -47,7 +47,7 @@ subroutine RT_databases_IO(E,DO_IT)
  !
  ! ... G_lesser
  !
- integer           :: ik,G_IO_steps,io_G,i_cpu,i_G_db,i_G_k_db,i_G_RES_db,i_G_RES_k_db
+ integer           :: ik,G_IO_steps,io_G,io_Vb,i_cpu,i_G_db,i_G_k_db,i_G_RES_db,i_G_RES_k_db,idb_Vb,idb_Vb_k
 #if defined _ELPH_ITERATIVE
  integer           :: io_THETA
 #endif
@@ -253,8 +253,56 @@ subroutine RT_databases_IO(E,DO_IT)
    !
  endif
  !
+#if defined _NL
+ !
+ ! V_bands
+ !====================
+ if (io_V_bands) then
+   !
+#if !defined _PAR_IO
+   call error(" Vbands restart not coded for serial I/O")
+#endif
+   !
+   idb_Vb     =RT_return_db_ID("V_bands")
+   idb_Vb_k   =RT_return_db_ID("V_bands_K_section")
+   !
+   ! Serial SECTION 1 
+   !
+   if(NE_i_time==NE_i_start_time) then
+     if (NE_i_time==1) IO_ACT=OP_WR_CL
+     if (NE_i_time> 1) IO_ACT=OP_APP_CL
+     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1/),ID=RT_DB_ID(idb_Vb))
+     io_Vb=io_RT_components("V_bands",RT_DB_ID(idb_Vb))
+   endif
+   !
+   if (RT_do_it('Vb').or.DO_IT) then
+     !
+     if (.not.SAVE_Vb_history) Vbands_RT_IO_t%N=1
+     if (     SAVE_Vb_history) Vbands_RT_IO_t%N=Vbands_RT_IO_t%N+1
+     Vbands_RT_IO_t%Time(Vbands_RT_IO_t%N)=NE_time
+     !
+     IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,NE_i_time,NE_i_start_time,NE_steps)
+     !
+     ! SERIAL SECTION 2 
+     !
+     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2/),ID=RT_DB_ID(idb_Vb))
+     io_Vb=io_RT_components("V_bands",RT_DB_ID(idb_Vb))
+     !
+     ! (PARALLEL) k-SECTION 3
+     !
+     !call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/3/),ID=RT_DB_ID(idb_Vb_k),COMM=PAR_COM_Xk_ibz_INDEX,DO_IT=HEAD_k_CPU)
+     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/3/),ID=RT_DB_ID(idb_Vb_k))
+     io_Vb=io_RT_components("V_bands_K_section",RT_DB_ID(idb_Vb_k))
+     !
+   endif
+   !
+ endif
+ !
+#endif
+ !
  if (RT_do_it('OBS').or.DO_IT ) call PP_bcast( OBS_RT_IO_t%last_point,0)
  if (RT_do_it('CARR').or.DO_IT) call PP_bcast(CARR_RT_IO_t%last_point,0)
+ if (RT_do_it('Vb').or.DO_IT)   call PP_bcast(Vbands_RT_IO_t%last_point,0)
  if (RT_do_it('G').or.DO_IT)    call PP_bcast(Gless_RESTART_RT_IO_t%last_point,0)
  if (RT_do_it('G').or.DO_IT)    call PP_bcast(Gless_RT_IO_t%last_point,0)
  !

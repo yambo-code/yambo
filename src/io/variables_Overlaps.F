@@ -23,16 +23,8 @@ integer function variables_Overlaps(Dip,ID)
  !
  call IO_desc_reset(DIP_desc)
  !
- call def_variable_elemental(ID,"Bands",2,IP_YIO,0)
- call io_variable_elemental(ID,DB_I1=Dip%db_ib,VAR="DIP band range",I1=Dip%ib,CHECK=.true.,OP=(/">=","<="/),&
-&                           DESCRIPTOR=DIP_desc)
- !
- call def_variable_elemental(ID,"Bands_limits",2,IP_YIO,0)
- call io_variable_elemental(ID,DB_I1=Dip%db_ib_lim,VAR="DIP band range limits",I1=Dip%ib_lim,CHECK=.true.,OP=(/"<=",">="/),&
-&                           DESCRIPTOR=DIP_desc)
- !
- call def_variable_elemental(ID,"Bands_ordered",1,LP_YIO,0)
- call io_variable_elemental(ID,VAR="Bands ordered",L0=Dip%bands_ordered,CHECK=.true.,OP=(/">="/),&
+ call def_variable_elemental(ID,"Bands",1,IP_YIO,0)
+ call io_variable_elemental(ID,DB_I0=Dip%db_ib(2),VAR="DIP nbands",I0=Dip%ib(2),CHECK=.true.,OP=(/"<="/),&
 &                           DESCRIPTOR=DIP_desc)
  !
  call def_variable_elemental(ID,"NG",1,IP_YIO,0)

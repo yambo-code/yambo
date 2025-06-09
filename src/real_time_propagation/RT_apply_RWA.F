@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
+subroutine RT_apply_RWA(ik,i_sp,E,k,dT,dTp,dG_out,dG_in)
  !
  use pars,           ONLY:SP,cONE
  use electrons,      ONLY:levels
@@ -15,7 +15,7 @@ subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
  !
  implicit none
  !
- integer,      intent(in)     :: ik
+ integer,      intent(in)     :: ik,i_sp
  type(levels), intent(in)     :: E
  type(bz_samp),intent(in)     :: k
  real(SP),     intent(in)     :: dT,dTp
@@ -44,7 +44,7 @@ subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
      if (NE_time<RT_deph_range(1).and.RT_deph_range(1)>0._SP) sumGAMMA=0._SP
      if (NE_time>RT_deph_range(2).and.RT_deph_range(2)>0._SP) sumGAMMA=0._SP
      !
-     deltaE=RT_levels%E(i_n,ik,1)-RT_levels%E(i_np,ik,1)
+     deltaE=RT_levels%E(i_n,ik,i_sp)-RT_levels%E(i_np,ik,i_sp)
      !
      if (l_RT_EXP) then
        !
@@ -88,7 +88,7 @@ subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
    ! It is higly non satisfactory that
    !     Gamma_neq[f_eq] /= Gamma_eq                              (1)
    ! This explains the need for the special definition
-   !    sumGAMMA=abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik,1))           (2)
+   !    sumGAMMA=abs(E%W(i_n,ik,i_sp))+abs(E%W(i_np,ik,i_sp))           (2)
    ! instead of
    !    sumGAMMA=sum(REF_lifetime(i_n,ik,:))                     (3)
    ! with i_n=i_np.

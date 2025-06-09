@@ -20,7 +20,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OSCLL_compose_collision(k,q,i_n,i_m,i_k,COLL) 
+subroutine OSCLL_compose_collision(k,q,i_n,i_m,i_k,i_sp,COLL) 
  !
  ! This subroutine use long-range part of the Screened exchange
  ! and the oscillators to reconstruct the collisions
@@ -30,6 +30,7 @@ subroutine OSCLL_compose_collision(k,q,i_n,i_m,i_k,COLL)
  use nl_optics,      ONLY:NL_bands,Correlation,LSEX,LHF
  use collision_ext,  ONLY:OSCLL,W,ng_oscll
  use QP_m,           ONLY:QP_nk
+ use electrons,      ONLY:n_sp_pol
  use R_lattice,      ONLY:bz_samp,qindx_S
  use parallel_m,     ONLY:PAR_Xk_ibz_index
  use wrapper,        ONLY:V_dot_V,M_by_V
@@ -42,7 +43,7 @@ subroutine OSCLL_compose_collision(k,q,i_n,i_m,i_k,COLL)
  type(bz_samp), intent(in)  :: k,q
  !
  ! Collision indexes
- integer,       intent(in)  :: i_n,i_m,i_k
+ integer,       intent(in)  :: i_n,i_m,i_k,i_sp
  !
  ! Work Space
  !
@@ -53,7 +54,7 @@ subroutine OSCLL_compose_collision(k,q,i_n,i_m,i_k,COLL)
  !
  ! Collisions output
  !
- complex(SP), intent(out) :: COLL(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk)
+ complex(SP), intent(out) :: COLL(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_sp_pol)
  !
 #if defined _TIMING
  call timing('OSCLL compose',OPR='start')
@@ -76,8 +77,8 @@ subroutine OSCLL_compose_collision(k,q,i_n,i_m,i_k,COLL)
        do ig2=1,ng_oscll
 !$OMP WORKSHARE	 
 	 forall(ibp=NL_bands(1):NL_bands(2),ib=NL_bands(1):NL_bands(2)) 
-           COLL(ib,ibp,i_kmq)=COLL(ib,ibp,i_kmq)+OSCLL(i_n,ib ,ik_mem,iqbz,ig2)*conjg(OSCLL(i_m,ibp,ik_mem,iqbz,ig1)) &
-& 			      *W(iqbz,ig2,ig1) 
+           COLL(ib,ibp,i_kmq,i_sp)=COLL(ib,ibp,i_kmq,i_sp)+OSCLL(i_n,ib ,ik_mem,i_sp,iqbz,ig2)* &
+           &                            conjg(OSCLL(i_m,ibp,ik_mem,i_sp,iqbz,ig1))*W(iqbz,ig2,ig1) 
          end forall
 !$OMP END WORKSHARE 
        enddo
@@ -87,8 +88,8 @@ subroutine OSCLL_compose_collision(k,q,i_n,i_m,i_k,COLL)
     do ig1=1,ng_oscll
 !$OMP WORKSHARE	 
       forall(ibp=NL_bands(1):NL_bands(2),ib=NL_bands(1):NL_bands(2)) 
-        COLL(ib,ibp,i_kmq)=COLL(ib,ibp,i_kmq)+OSCLL(i_n,ib ,ik_mem,iqbz,ig1)*conjg(OSCLL(i_m,ibp,ik_mem,iqbz,ig1)) &
-& 			      *W(iqbz,ig1,ig1) 
+        COLL(ib,ibp,i_kmq,i_sp)=COLL(ib,ibp,i_kmq,i_sp)+OSCLL(i_n,ib,ik_mem,i_sp,iqbz,ig1)* &
+        &                          conjg(OSCLL(i_m,ibp,ik_mem,i_sp,iqbz,ig1))*W(iqbz,ig1,ig1) 
       end forall
 !$OMP END WORKSHARE 
     enddo

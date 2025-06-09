@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): CA DS
 !
-subroutine RT_EXP_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
+subroutine RT_EXP_step_accurate(dG_old,dG_inp,dG_out,ik,i_sp_pol,deltaT)
  !
  ! The EXP integrator is better than the EULER integrator if Ho_plus_Sigma
  ! changes in time more slowly that G
@@ -19,7 +19,7 @@ subroutine RT_EXP_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  implicit none
  !
- integer,     intent(in)  :: ik
+ integer,     intent(in)  :: ik,i_sp_pol
  real(SP),    intent(in)  :: deltaT
  complex(SP), intent(in)  :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP), intent(in)  :: dG_inp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -34,12 +34,12 @@ subroutine RT_EXP_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  dG_out=cZERO
  !
- G_comm=dG_inp+G_lesser_reference(:,:,ik)
+ G_comm=dG_inp+G_lesser_reference(:,:,ik,i_sp_pol)
  !
  do i_order=1,Integrator_exp_order
    !
-   call M_by_M_omp('n','n',RT_nbands,-cI*deltaT*Ho_plus_Sigma(:,:,ik,1)/real(i_order,SP),G_comm,U1_k)
-   call M_by_M_omp('n','n',RT_nbands,G_comm,+cI*deltaT*Ho_plus_Sigma(:,:,ik,1)/real(i_order,SP),U2_k)
+   call M_by_M_omp('n','n',RT_nbands,-cI*deltaT*Ho_plus_Sigma(:,:,ik,i_sp_pol)/real(i_order,SP),G_comm,U1_k)
+   call M_by_M_omp('n','n',RT_nbands,G_comm,+cI*deltaT*Ho_plus_Sigma(:,:,ik,i_sp_pol)/real(i_order,SP),U2_k)
    !
    ! dG_out = G(T0+dt) -G(T0)=  U1(T0)+U2(T0) 
    !

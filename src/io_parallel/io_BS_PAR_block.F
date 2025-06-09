@@ -14,7 +14,6 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  ! Each block has a status variables indicating if the matrix element was already calculated
  !
  use pars,          ONLY:IP,IPL,SP,schlen,max_io_vars_open
- use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use stderr,        ONLY:STRING_split
  use BS,            ONLY:BS_blk,BSK_IO_mode,MAX_BSK_LIN_size,n_BS_blks_min,BS_K_dim,BSK_IO_sum_value
  use timing_m,      ONLY:timing
@@ -33,7 +32,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  integer, parameter :: n_max_tot_vars=6  ! see io_BS_PAR_init
  !
  character(schlen)   :: BSK_IO_local,BSK_IO_split(3)
- logical             :: lwrite(3),file_sync
+ logical             :: lwrite(3),file_sync,do_table,do_energ
  integer             :: x1,x2,VAR_IDs(2),ID_table,ID_energ,stat,ID_now(2)
  integer             :: n2,i1,i2,idx1,idx2,imax,i_rep(2),ilast
  integer(IPL)        :: idx
@@ -206,10 +205,13 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  end select
  !
  if ((x1==x2.or.BS_blk(i_block)%size(2)==BS_K_dim(1)) .and. .not.trim(mode)=="matonly") then
-   if (  write_is_on(ID) .or. variable_exist(ID,"BS_TABLE") ) then
+   ! logicals for back compatibility
+   do_table=variable_exist(ID,"BS_TABLE").or.write_is_on(ID)
+   do_energ=variable_exist(ID,"BS_EH_ENERGIES").or.write_is_on(ID)
+   if ( do_table .or. do_energ ) then
      if (BS_blk(i_block)%mode=="C" .or. BS_blk(i_block)%mode=="A") x1=x1+BS_K_dim(1)
-     call io_variable_bulk(ID, ID_energ,  R1=BS_blk(i_block)%E,     IPOS=(/x1/) )
-     call io_variable_bulk(ID, ID_table,  I2=BS_blk(i_block)%table, IPOS=(/1,x1/) )
+     if(do_table) call io_variable_bulk(ID, ID_energ,  R1=BS_blk(i_block)%E,     IPOS=(/x1/) )
+     if(do_energ) call io_variable_bulk(ID, ID_table,  I2=BS_blk(i_block)%table, IPOS=(/1,x1/) )
    endif
  endif
  !
@@ -224,3 +226,66 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  call timing('io_BS',OPR='stop')
  !
 end subroutine
+!
+!
+subroutine read_BS_PAR_collisions(iq,i_block,ID)
+ !
+ use BS,            ONLY:BS_blk
+ use timing_m,      ONLY:timing
+ use IO_int,        ONLY:io_variable_bulk
+ !
+ implicit none
+ !
+ integer,      intent(in) :: ID
+ integer,      intent(in) :: iq,i_block
+ !
+ ! Work Space
+ !
+ integer             :: x1,x2,y1,y2,VAR_IDs(2)
+ !
+ !
+ ! Get the type of block that we want to write 
+ !
+ select case(BS_blk(i_block)%mode)
+ case("R")
+   VAR_IDs=(/1,2/)
+ case("C")
+   VAR_IDs=(/3,4/)
+ case("A")
+   VAR_IDs=(/5,6/)
+ end select
+ !
+ ! Get lower bound coordinates in 2D matrix
+ x1=BS_blk(i_block)%coordinate(1)
+ x2=BS_blk(i_block)%coordinate(2)
+ !
+ y1=BS_blk(i_block)%poordinate(1)
+ y2=BS_blk(i_block)%poordinate(2)
+ !
+ call timing('read_BS_coll_row',OPR='start')
+ call io_variable_bulk(ID, VAR_IDs(1),  C2=BS_blk(i_block)%mat , IPOS=(/1,x1,x2/) )
+ call timing('read_BS_coll_row',OPR='stop')
+ call timing('read_BS_coll_col',OPR='start')
+ call io_variable_bulk(ID, VAR_IDs(1),  C2=BS_blk(i_block)%tam , IPOS=(/1,y1,y2/) )
+ call timing('read_BS_coll_col',OPR='stop')
+ !
+end subroutine read_BS_PAR_collisions
+!
+!
+subroutine read_BS_table(iq,ID)
+ !
+ use pars,          ONLY:max_io_vars_open
+ use IO_int,        ONLY:io_variable_bulk
+ use BS,            ONLY:BS_blk,BS_K_dim
+ !
+ implicit none
+ !
+ integer, intent(in) :: iq,ID
+ !
+ integer :: ID_table
+ !
+ ID_table=max_io_vars_open
+ call io_variable_bulk(ID, ID_table,  I2=BS_blk(1)%table, IPOS=(/1,1/) )
+ call io_variable_bulk(ID, ID_table,  I2=BS_blk(2)%table, IPOS=(/1,BS_K_dim(1)+1/) )
+ !
+end subroutine read_BS_table

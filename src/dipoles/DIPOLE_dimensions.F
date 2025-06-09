@@ -37,7 +37,7 @@ subroutine DIPOLE_dimensions(Xen,Dip,bands,q0)
  !
  ! Set up band limits
  !
- if (Dip%bands_ordered.or.Dip%Energy_treshold<0._SP) then
+ if (Dip%bands_ordered.or.Dip%Energy_threshold<0._SP) then
    Dip%ib_lim(1)=maxval(Xen%nbm)
    Dip%ib_lim(2)=minval(Xen%nbf)+1
    if (l_X_terminator) Dip%ib_lim(2)=Dip%ib(1)

@@ -33,6 +33,7 @@ module YPP_real_time
  logical  :: l_NL_exc
  logical  :: l_RT_abs
  logical  :: l_RT_pol
+ logical  :: l_RT_fields
  !
  ! RT post-processing (kind)
  !
@@ -121,6 +122,10 @@ module YPP_real_time
  ! (RT) Pol
  !
  character(schlen)        :: RT_pol_mode="slice"
+ !
+ ! (RT) Fields
+ !
+ real(SP)                 :: ypp_chirp=0._SP
  !
  type RT_ctl
    real(SP) :: delta_W             =0._SP   ! delta W

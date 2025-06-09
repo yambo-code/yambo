@@ -27,5 +27,6 @@
  RT_output.o
  RT_output_INIT.o
  RT_output_and_IO_driver.o
+ RT_small_a.o
  RT_update_TIME_CONF_descriptions.o
 

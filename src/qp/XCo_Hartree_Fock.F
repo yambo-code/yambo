@@ -53,7 +53,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  complex(SP), pointer DEV_ATTR     :: isc_rhotw_p(:), iscp_rhotw_p(:)
  !
  integer                  :: iq,iq_ibz,is_ibz,ib,ibp,jb,i_qp
- integer                  :: ik,ikp,iGp,i_sp_pol  ! QP list
+ integer                  :: ik,ikp,ikp_Go,ikp_s,ikp_bz,i_sp_pol
  integer                  :: Sx_lower_band,Sx_upper_band(2),n_lt_bands,n_lt_steps
  integer                  :: ig_first,ig_last
  complex(DP)              :: DP_Sx, DP_Sx_l
@@ -152,7 +152,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !  !!! num_threads(n_outthr)
    !DEV_OMP parallel default(shared), &
    !DEV_OMP          private(isc,iscp,gamp_p,isc_rhotw_p,iscp_rhotw_p,&
-   !DEV_OMP &                iq,iq_ibz,is_ibz,ikp,iGp,jb,DP_Sx_l), reduction(+:DP_sx)
+   !DEV_OMP &                iq,iq_ibz,is_ibz,ikp_Go,ikp_s,ikp_bz,jb,DP_Sx_l), reduction(+:DP_sx)
    !
    call OPENMP_update(master_thread)
    !
@@ -203,14 +203,17 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      ! m   =QP_table(i_qp,2)
      ! k   =QP_table(i_qp,3)
      !
-     ikp=k%sstar(qindx_S(ik,iq,1),1)
-     iGp=k%sstar(qindx_S(ik,iq,1),2)
+     ikp_Go=qindx_S(ik,iq,2)
+     ikp_bz=qindx_S(ik,iq,1)
      !
-     isc%is =(/ib, ik , 1 ,i_sp_pol/)
-     isc%os(2:)=(/ ikp,iGp,i_sp_pol/)
-     iscp%is=(/ibp,ik , 1 ,i_sp_pol/)
+     ikp  =k%sstar(ikp_bz,1)
+     ikp_s=k%sstar(ikp_bz,2)
      !
-     isc%qs(1)=qindx_S(ik,iq,2)
+     isc%is =(/ib, ik , 1   ,i_sp_pol/)
+     isc%os(2:)=(/ ikp,ikp_s,i_sp_pol/)
+     iscp%is=(/ibp,ik , 1   ,i_sp_pol/)
+     !
+     isc%qs(1)=ikp_Go
      iscp%qs=isc%qs
      !
      if (pp_is_uspp) then

@@ -15,8 +15,7 @@ integer function variables_NL(ID)
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx
  use real_time,     ONLY:Integrator_name,NE_steps,RT_step,l_RT_induced_field,RT_bands,RAD_LifeTime
  use electric,      ONLY:l_force_SndOrd
- use fields,        ONLY:n_ext_fields
- use fields,        ONLY:Efield
+ use fields,        ONLY:n_ext_fields,Efield
  use IO_m,          ONLY:io_status
  use IO_int,        ONLY:io_variable_elemental,def_variable_elemental,ver_is_gt_or_eq
  use descriptors,   ONLY:IO_desc_reset

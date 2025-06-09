@@ -23,7 +23,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
  use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
- use electrons,      ONLY:nel,levels,n_spin,Spin_magn,Orbital_magn,Itinerant_magn
+ use electrons,      ONLY:nel,levels,n_spin,n_sp_pol,spin_occ,Spin_magn,Orbital_magn,Itinerant_magn
  use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_bands,&
 &                         RT_P,RT_spin_magn,RT_orbt_magn,RT_P_prev,G_lesser_reference,NE_i_time,&
 &                         RT_dyn_step,l_P_integrating_J,l_velocity_gauge_diam,integrator_step
@@ -37,13 +37,14 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
  !
  type(bz_samp),     intent(in) :: k
  type(levels),      intent(in) :: E
- complex(SP),       intent(in) :: G_input(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
  type(gauge_field), intent(in) :: A_input
- real(SP),          intent(in) :: Ncarr(3)
+ real(SP),     intent(in) :: Ncarr(3)
+ complex(SP),  intent(in) :: G_input(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2),n_sp_pol)
  !
  ! Work Space
  !
  complex(SP)         :: RT_M_tmp(3)
+ integer             :: nel_effect
  !
  if ( .not. l_NE_dynamics ) return
  !
@@ -64,7 +65,13 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
  !               (it will be computed from the current in the velocity gauge)
  !               The proper value is set in RT_propagate_fields
  !
- if(l_velocity_gauge_diam) RT_ind_J(:)=RT_ind_J(:)+A_input%vecpot(:)*real(nel,SP)/(2._SP*SPEED_OF_LIGHT)
+ if(l_velocity_gauge_diam) then
+   ! The diamagnetic term is needed to obtain a gauge invariant current
+   ! However the below definition of nel_effect would be exact
+   ! only in the limit RT_bands(2) --> \infty
+   nel_effect=nel-(RT_bands(1)-1)*spin_occ
+   RT_ind_J(:)=RT_ind_J(:)+A_input%vecpot(:)*real(nel_effect,SP)/(2._SP*SPEED_OF_LIGHT)
+ endif
  !
  RT_ind_J=RT_ind_J/DL_vol
  !

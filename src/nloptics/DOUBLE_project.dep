@@ -10,6 +10,7 @@
  NL_average_operator.o
  NL_build_dG_lesser.o
  NL_build_valence_bands.o
+ NL_carriers_number.o
  NL_current.o
  NL_damping.o
  NL_databases_IO.o

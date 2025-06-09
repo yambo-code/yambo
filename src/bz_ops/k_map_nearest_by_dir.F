@@ -67,7 +67,7 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  if(dshift>zero_dfl) then
    write(dump_ch,'(a,3f12.6)') " Shifted grid: ",k_shift
    call msg("sr",dump_ch)
-   call error(' Shifted grids not implemented yet in covariant dipoles ')
+   call warning('Yambo_nl works only with a single-shift k-point grid! ')
  else
    k_shift=0._SP
  endif

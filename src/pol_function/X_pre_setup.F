@@ -7,7 +7,7 @@
 !
 subroutine X_pre_setup(Xen,Xk,X)
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,lchlen
  use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,l_X_terminator,X_use_lin_sys,&
 &                        X_use_gpu,Chi_linalg_mode,X_ng,l_write_disk_Xo
  use electrons,     ONLY:levels,n_sp_pol
@@ -30,6 +30,8 @@ subroutine X_pre_setup(Xen,Xk,X)
  ! Work Space
  !
  real(SP), external :: G2E
+ integer            :: Xng_tmp
+ character(lchlen)  :: mesg
  !
  if (X%ib(1)<0) X%ib(1)=1
  if (X%ib(2)<0) X%ib(2)=1
@@ -59,10 +61,16 @@ subroutine X_pre_setup(Xen,Xk,X)
  ! response function is accessed in G-G' mode. Here I ensure that all G-G' are in the
  ! range provided externally
  !
+ if (l_cohsex) call parser("UseEbands",COHSEX_use_empties)
+ !
  if ((l_cohsex.and..not.COHSEX_use_empties).or.l_X_terminator) then
-     X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
-     call warning(' Response block size reduced to '//intc(X%ng) &
-&     //'RL ('//intc(int(1000.*G2E(X%ng)))//'mHa)')
+   Xng_tmp=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
+   if (Xng_tmp/=X%ng) then
+     mesg=' Response block size reduced from '//intc(X%ng)//' to '//intc(Xng_tmp) //'RL'
+     mesg=trim(mesg)//' ('//intc(int(1000.*G2E(X%ng)))//' -->'//intc(int(1000.*G2E(Xng_tmp)))//' mHa)'
+     call warning(trim(mesg))
+     X%ng=Xng_tmp
+   endif
  endif
  !
  ! Fxc Checks

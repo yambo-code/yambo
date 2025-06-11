@@ -208,7 +208,7 @@ void options_ypp(struct options_struct *options, int *i_opt)
     options[*i_opt].section = "Real-Time";
     strcpy(options[*i_opt].long_desc[0],
            "<string>=(X)response,(a)bsorption,(o)ccupations,(l)ifetimes,(d)"
-           "ensity,(p)olariazion,(g)reen-function");
+           "ensity,(p)olarization,(f)ields,(g)reen-function");
     strcpy(options[*i_opt].long_desc[1], " ");
     strcpy(options[*i_opt].long_desc[2],
            "(X) response calculates the response via the time-resolved "
@@ -220,6 +220,8 @@ void options_ypp(struct options_struct *options, int *i_opt)
            "(p) polarization evaluates the k-resolved components of the "
            "time-dependent polarization");
     strcpy(options[*i_opt].long_desc[5],
+	   "(f) generate and manupulate fields file");
+    strcpy(options[*i_opt].long_desc[6],
            "(g) evaluates the two-times Green`s function");
     *i_opt = *i_opt + 1;
     options[*i_opt].short_desc = "TD plot control";

@@ -8,7 +8,7 @@
 subroutine PARALLEL_global_Response_T_transitions(Xk)
  !
  use R_lattice,     ONLY:bz_samp,nXkibz
- use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_n_eh_spaces
+ use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_n_eh_spaces,l_BSE_kernel_full
  use IO_int,        ONLY:IO_and_Messaging_switch
  use parallel_int,  ONLY:PARALLEL_index,PARALLEL_live_message
  use parallel_m,    ONLY:PAR_n_c_bands,PAR_n_v_bands,PP_indexes_reset,master_cpu
@@ -70,7 +70,7 @@ subroutine PARALLEL_global_Response_T_transitions(Xk)
  call PP_indexes_reset(PAR_IND_T_ordered)
  !
  call PARALLEL_index(PAR_IND_T_ordered,(/BS_nT_grps,BS_nT_grps/),COMM=PAR_COM_T_INDEX,&
-&                    MASK=PAR_IND_T_groups%element_1D,ORDERED=.TRUE.,NO_EMPTIES=.FALSE.)
+&                    MASK=PAR_IND_T_groups%element_1D,ORDERED=.not.l_BSE_kernel_full,NO_EMPTIES=.FALSE.)
  !
  call PARALLEL_live_message("(e/h)->(e/h)' Transitions (ordered)",ENVIRONMENT="Response_T_space",&
 &                           LOADED=PAR_IND_T_ordered%n_of_elements(PAR_COM_T_INDEX%CPU_id+1),&

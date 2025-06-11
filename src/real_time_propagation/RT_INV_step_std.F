@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): CA DS
 !
-subroutine RT_INV_step_std(dG_old,dG_inp,dG_out,ik,deltaT)
+subroutine RT_INV_step_std(dG_old,dG_inp,dG_out,ik,i_sp_pol,deltaT)
  !
  use pars,           ONLY:SP,cI
  use wrapper_omp,    ONLY:M_by_M_omp
@@ -16,7 +16,7 @@ subroutine RT_INV_step_std(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  implicit none
  !
- integer,     intent(in)  :: ik
+ integer,     intent(in)  :: ik,i_sp_pol
  real(SP),    intent(in)  :: deltaT
  complex(SP), intent(in)  :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP), intent(in)  :: dG_inp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -40,7 +40,7 @@ subroutine RT_INV_step_std(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  ! Taylor expansion
  !
- H_k=cI*deltaT/2._SP*Ho_plus_Sigma(:,:,ik,1)
+ H_k=cI*deltaT/2._SP*Ho_plus_Sigma(:,:,ik,i_sp_pol)
  !
  if(l_use_lin_sys) then
    !
@@ -95,11 +95,11 @@ subroutine RT_INV_step_std(dG_old,dG_inp,dG_out,ik,deltaT)
    call M_by_M_omp('n','n',RT_nbands,T1_k,dG_old,M1_tmp)
    call M_by_M_omp('n','n',RT_nbands,M1_tmp,T2_k,dG_out)
    !
-   call M_by_M_omp('n','n',RT_nbands,T1_km1,G_lesser_reference(:,:,ik),M1_tmp)
-   call M_by_M_omp('n','n',RT_nbands,G_lesser_reference(:,:,ik),T2_km1,M2_tmp)
+   call M_by_M_omp('n','n',RT_nbands,T1_km1,G_lesser_reference(:,:,ik,i_sp_pol),M1_tmp)
+   call M_by_M_omp('n','n',RT_nbands,G_lesser_reference(:,:,ik,i_sp_pol),T2_km1,M2_tmp)
    dG_out=dG_out+(M1_tmp+M2_tmp)
    !
-   call M_by_M_omp('n','n',RT_nbands,T1_km1,G_lesser_reference(:,:,ik),M2_tmp)
+   call M_by_M_omp('n','n',RT_nbands,T1_km1,G_lesser_reference(:,:,ik,i_sp_pol),M2_tmp)
    call M_by_M_omp('n','n',RT_nbands,M2_tmp,T2_km1,M1_tmp)
    dG_out=dG_out+M1_tmp-dG_old
    !
@@ -107,9 +107,9 @@ subroutine RT_INV_step_std(dG_old,dG_inp,dG_out,ik,deltaT)
    !
    ! dG_out = G(T0+dt) -G(T0) = U1(T;dt) G(T0) U2(T;-dt) - G(T0)
    !
-   call M_by_M_omp('n','n',RT_nbands,T1_k,dG_old+G_lesser_reference(:,:,ik),M1_tmp)
+   call M_by_M_omp('n','n',RT_nbands,T1_k,dG_old+G_lesser_reference(:,:,ik,i_sp_pol),M1_tmp)
    call M_by_M_omp('n','n',RT_nbands,M1_tmp,T2_k,dG_out)
-   dG_out=dG_out-dG_old-G_lesser_reference(:,:,ik)
+   dG_out=dG_out-dG_old-G_lesser_reference(:,:,ik,i_sp_pol)
    !
  endif
  !

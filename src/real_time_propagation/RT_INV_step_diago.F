@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): CA DS
 !
-subroutine RT_INV_step_diago(dG_old,dG_inp,dG_out,ik,deltaT)
+subroutine RT_INV_step_diago(dG_old,dG_inp,dG_out,ik,i_sp_pol,deltaT)
  !
  ! G(T+dt)-G(T)=-idt/2[H,G(T+dt)+G(T)]-idt[H,G0]
  !
@@ -27,7 +27,7 @@ subroutine RT_INV_step_diago(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  implicit none
  !
- integer,     intent(in)  :: ik
+ integer,     intent(in)  :: ik,i_sp_pol
  real(SP),    intent(in)  :: deltaT
  complex(SP), intent(in)  :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP), intent(in)  :: dG_inp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -46,15 +46,15 @@ subroutine RT_INV_step_diago(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  logical     :: l_use_superindex=.true.
  !
- H1_k=-cI*2*deltaT*Ho_plus_Sigma(:,:,ik,1)
- H2_k=+cI*2*deltaT*Ho_plus_Sigma(:,:,ik,1)
+ H1_k=-cI*2*deltaT*Ho_plus_Sigma(:,:,ik,i_sp_pol)
+ H2_k=+cI*2*deltaT*Ho_plus_Sigma(:,:,ik,i_sp_pol)
  !
- call M_by_M_omp('n','n',RT_nbands,H1_k,G_lesser_reference(:,:,ik),M1_tmp)
- call M_by_M_omp('n','n',RT_nbands,G_lesser_reference(:,:,ik),H2_k,M2_tmp)
+ call M_by_M_omp('n','n',RT_nbands,H1_k,G_lesser_reference(:,:,ik,i_sp_pol),M1_tmp)
+ call M_by_M_omp('n','n',RT_nbands,G_lesser_reference(:,:,ik,i_sp_pol),H2_k,M2_tmp)
  G_com=M1_tmp+M2_tmp
  !
- H1_k=I1_matrix-cI*deltaT*Ho_plus_Sigma(:,:,ik,1)
- H2_k=I1_matrix+cI*deltaT*Ho_plus_Sigma(:,:,ik,1)
+ H1_k=I1_matrix-cI*deltaT*Ho_plus_Sigma(:,:,ik,i_sp_pol)
+ H2_k=I1_matrix+cI*deltaT*Ho_plus_Sigma(:,:,ik,i_sp_pol)
  !
  call M_by_M_omp('n','n',RT_nbands,H1_k,dG_old,M1_tmp)
  call M_by_M_omp('n','n',RT_nbands,dG_old,H2_k,M2_tmp)
@@ -62,12 +62,12 @@ subroutine RT_INV_step_diago(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  ! Diagonalize U_k
  !
- U_k=Ho_plus_Sigma(:,:,ik,1)
+ U_k=Ho_plus_Sigma(:,:,ik,i_sp_pol)
  call SERIAL_HERMITIAN_diagonalization(RT_nbands,U_k,En)
  !
  ! Implementation works, and it is much faster than before
  ! However it is not sensitive
- !U_k=cmplx(Ho_plus_Sigma(:,:,ik,1),kind=DP)
+ !U_k=cmplx(Ho_plus_Sigma(:,:,ik,i_sp_pol),kind=DP)
  !call ZHEEV('V','U',RT_nbands,U_k,RT_nbands,En,v_cmplx,lwork,v_real,i_fail)
  !
  ! Rotate G_com in the new basis set

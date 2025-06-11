@@ -10,21 +10,22 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
  ! HF(qp_state) = - (0.,1.) * \sum_{n,n',q} Collisions(n,n',q,qp_state) x G_sex/coh(n,n',k-q)
  ! 
  use pars,             ONLY:SP,cZERO,cI
+ use electrons,        ONLY:n_sp_pol
  use drivers,          ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_sc_hartree
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Sc,QP_Vnl_xc
  use collision_ext,    ONLY:COH_COLL_element,HXC_COLL_element,COLL_bands,HXC_collisions,&
-&                           COH_collisions,COLLISIONS_have_HARTREE
+&                           COH_collisions,COLLISIONS_have_HARTREE,COLLISIONS_CV_only
  use parallel_m,       ONLY:PAR_IND_QP,HEAD_b_cpu,PAR_IND_G_k
  use parallel_int,     ONLY:PP_redux_wait
  use timing_m,         ONLY:timing
  implicit none
  !
- complex(SP), intent(in)   :: G_sex(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),QP_nk)
- complex(SP), intent(in)   :: G_coh(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),QP_nk)
+ complex(SP), intent(in)   :: G_sex(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),QP_nk,n_sp_pol)
+ complex(SP), intent(in)   :: G_coh(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),QP_nk,n_sp_pol)
  !
  ! Work Space
  !
- integer           :: i_qp,ib,ibp,i_kmq,ic1,ic2,i_coll_mem
+ integer           :: i_qp,ib,ibp,i_kmq,ic1,ic2,i_coll_mem,i_sp
  logical           :: l_sex
  !
  if(.not.l_sc_fock.and..not.l_sc_coh.and..not.l_sc_sex.and..not.l_sc_exx.and.&
@@ -36,6 +37,8 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
  ! Here all contributions are packed in QP_Vnl_xc
  !
  if (.not.allocated(QP_Vnl_xc))  allocate(QP_Vnl_xc(QP_n_states))
+ !
+ if (COLLISIONS_CV_only) call error(" cannot use cv only collisions in yambo_sc")
  !
  l_sex    =l_sc_sex.or.l_sc_fock.or.(l_sc_hartree.and.COLLISIONS_have_HARTREE)
  QP_Vnl_xc=cZERO
@@ -55,14 +58,15 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
    ic1=1
    ic2=1
    !
+   do i_sp=1,n_sp_pol
    do i_kmq=1,QP_nk
      !
      if (.not.PAR_IND_G_k%element_1D(i_kmq)) then 
        if (l_sc_coh) then
-         ic1=ic1+count(COH_COLL_element(i_coll_mem)%table(COLL_bands(1):QP_nb,COLL_bands(1):QP_nb,i_kmq)=='t')
+         ic1=ic1+count(COH_COLL_element(i_coll_mem)%table(COLL_bands(1):QP_nb,COLL_bands(1):QP_nb,i_kmq,i_sp)=='t')
        endif
        if (l_sex) then
-         ic2=ic2+count(HXC_COLL_element(i_coll_mem)%table(COLL_bands(1):QP_nb,COLL_bands(1):QP_nb,i_kmq)=='t')
+         ic2=ic2+count(HXC_COLL_element(i_coll_mem)%table(COLL_bands(1):QP_nb,COLL_bands(1):QP_nb,i_kmq,i_sp)=='t')
        endif
        cycle
      endif
@@ -73,8 +77,8 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
          ! COH part
          !
          if (l_sc_coh) then
-           if (COH_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)=='t') then
-             QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*COH_COLL_element(i_coll_mem)%v_c(ic1)*G_coh(ib,ibp,i_kmq)
+           if (COH_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq,i_sp)=='t') then
+             QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*COH_COLL_element(i_coll_mem)%v_c(ic1)*G_coh(ib,ibp,i_kmq,i_sp)
              ic1=ic1+1
            endif
          endif
@@ -82,8 +86,8 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
          ! SEX/HF/HARTREE parts
          !
          if (l_sex) then
-           if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)=='t') then
-             QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*HXC_COLL_element(i_coll_mem)%v_c(ic2)*G_sex(ib,ibp,i_kmq)
+           if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq,i_sp)=='t') then
+             QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*HXC_COLL_element(i_coll_mem)%v_c(ic2)*G_sex(ib,ibp,i_kmq,i_sp)
              ic2=ic2+1
            endif
          endif
@@ -91,6 +95,7 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
        enddo
      enddo
      !
+   enddo
    enddo
  enddo
  !

@@ -29,7 +29,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
  !
  character(schlen)  :: db_name,ch_tmp,dim_names(3,n_max_vars),BSK_IO_local,BSK_IO_split(3)
  character(lchlen)  :: ch(n_max_vars,max_io_vars_open-1)
- logical           :: def_var, io_var
+ logical           :: def_var, io_var, do_table, do_energ
  integer(IPL)      :: BS_lin_size
  integer           :: n_vars, i1,i2, i_rep,i_var, BSK_n_dims,n_replica
  integer           :: chunksize(3)
@@ -181,12 +181,18 @@ integer function io_BS_PAR_init(iq,ID,mode)
    enddo
  enddo
  !
- if( (trim(mode)=="full" .or. trim(mode)=="compressed_mat") .and. &
- &    ( write_is_on(ID) .or. variable_exist(ID,"BS_TABLE"))  ) then
-  dim_names(1,1)="BS_H_dim"
-  call def_variable_bulk(ID,"BS_EH_ENERGIES",max_io_vars_open-1,[BS_H_dim],SP_YIO,dim_names(1:1,1),par_io_kind='independent')
-  dim_names(1:2,1)=[character(schlen) :: "n_transition_variables","BS_H_dim"]
-   call def_variable_bulk(ID,"BS_TABLE",max_io_vars_open,[5,BS_H_dim],IP_YIO,dim_names(1:2,1),par_io_kind='independent')
+ if( (trim(mode)=="full" .or. trim(mode)=="compressed_mat") ) then
+   ! logicals for back compatibility
+   do_table=variable_exist(ID,"BS_TABLE").or.write_is_on(ID)
+   do_energ=variable_exist(ID,"BS_EH_ENERGIES").or.write_is_on(ID)
+   if ( do_energ ) then
+     dim_names(1,1)="BS_H_dim"
+     call def_variable_bulk(ID,"BS_EH_ENERGIES",max_io_vars_open-1,[BS_H_dim],SP_YIO,dim_names(1:1,1),par_io_kind='independent')
+   endif
+   if ( do_table ) then
+     dim_names(1:2,1)=[character(schlen) :: "n_transition_variables","BS_H_dim"]
+     call def_variable_bulk(ID,"BS_TABLE",max_io_vars_open,[5,BS_H_dim],IP_YIO,dim_names(1:2,1),par_io_kind='independent')
+   endif
  endif
  !
 end function io_BS_PAR_init

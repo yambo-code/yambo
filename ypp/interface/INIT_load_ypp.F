@@ -28,11 +28,12 @@ subroutine INIT_ypp_load(defs)
  use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
  use YPPm,          ONLY:Nel_fac
- use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,Rho_deph,&
+ use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,Rho_deph,ypp_chirp,&
 &                        Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,X_kind,Eh_pumped_pair_energy,&
 &                        Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr,TRabsWHAT,TRabsDIP_plane,&
 &                        TRabsMODE,TRabsDIP_dir,TRabs_Eeh_treshold,Pump_path,RT_pol_mode
  use real_time,     ONLY:RT_bands
+ use fields,        ONLY:n_ext_fields
 #endif
 #if defined _YPP_SC
  use YPPm,          ONLY:V_value
@@ -105,6 +106,7 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'RToccupations','[R] Analize time-dependent occupations')
  call it('r',defs,'RTlifetimes',  '[R] Analize time-dependent lifetimes')
  call it('r',defs,'RTpol',        '[R] Analize time-dependent polarization')
+ call it('r',defs,'RTfields',     '[R] Analize time-dependent fields')
  call it('r',defs,'RTdeltaRho',   '[R] Analize the density')
  call it('r',defs,'RTGtwotimes',  '[R] Construct G</G>/G(r)/G(a)/A(t,tp) from rho within GKBA')
  !
@@ -378,7 +380,10 @@ subroutine INIT_ypp_load(defs)
  call it('f',defs,'SkipOBS_IO','Do not dump on file the RT observables (P(t),J(t),D(t)...)')
  call it('f',defs,'RmAsymLim','Remove Asymptotic limit from P or J',verb_level=V_real_time) 
  !
- call it('f',defs,'STD_style','Print occupations using the standard style',verb_level=V_real_time) 
+ call it('f',defs,'STD_style','Print occupations using the standard style',verb_level=V_real_time)
+ ! 
+ call it(defs,'ChirpFac','Prefactor for linear chirping in frequency space',ypp_chirp,unit=Time_unit(1))
+ call Afield(defs,1)
  !
 #endif
  !

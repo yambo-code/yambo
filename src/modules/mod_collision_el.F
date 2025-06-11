@@ -155,6 +155,7 @@ module collision_el
          !
        endif
        ggw%ngrho=NG
+       ggw%iqref=0
      endif
      !
      ! GAMP

@@ -9,9 +9,9 @@ integer function io_NL(what,ID)
  !
  use pars,          ONLY:schlen,SP,IP,CR_YIO,IP_YIO
  use units,         ONLY:HA2EV, AU2KWCMm2, AUT2FS
- use nl_optics,     ONLY:E_tot_t,E_ext_t,E_ks_t,NL_P_t, &
-&                        n_frequencies,NL_J_t
- use real_time,     ONLY:NE_steps
+ use nl_optics,     ONLY:E_tot_t,E_ext_t,E_ks_t,NL_P_t,NL_J_t, &
+&                        n_frequencies,l_pump_and_probe
+ use real_time,     ONLY:NE_steps,RT_step
  use fields,        ONLY:n_ext_fields
  use RT_control,    ONLY:OBS_RT_IO_t
  use fields,        ONLY:Efield
@@ -35,7 +35,8 @@ integer function io_NL(what,ID)
  !
  integer              :: i_fragment,ID_frag
  character(schlen)    :: VAR_name
- integer              :: i_Prb
+ integer              :: i_Prb,i_time,N_IO,last_point_IO
+ real(SP)             :: Time_IO(NE_steps)
  !
 #if defined _TIMING
  call timing('io_NL',OPR='start')
@@ -60,18 +61,27 @@ integer function io_NL(what,ID)
    ! Time variable (just for compatibility reasons)
    !
    if(write_is_on(ID)) then
-     OBS_RT_IO_t%N         =NE_steps
-     OBS_RT_IO_t%last_point=NE_steps
+     N_IO         =NE_steps
+     last_point_IO=NE_steps
+     do i_time=1,NE_steps
+       Time_IO(i_time)=real(i_time-1,SP)*RT_step
+     enddo
    endif
    !
    call io_elemental(ID,VAR="IO_TIME_N_points",VAR_SZ=1,MENU=0) 
-   call io_elemental(ID,I0=OBS_RT_IO_t%N)
+   call io_elemental(ID,I0=N_IO)
    call io_elemental(ID,VAR="IO_TIME_LAST_POINT",VAR_SZ=1,MENU=0) 
-   call io_elemental(ID,I0=OBS_RT_IO_t%last_point)
+   call io_elemental(ID,I0=last_point_IO)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   if(read_is_on(ID).and..not.allocated(OBS_RT_IO_t%Time)) allocate(OBS_RT_IO_t%Time(NE_steps))
-   call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/OBS_RT_IO_t%N/))
-   call io_bulk(ID,R1=OBS_RT_IO_t%Time)
+   call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/N_IO/))
+   call io_bulk(ID,R1=Time_IO)
+   !
+   if(read_is_on(ID)) then
+     OBS_RT_IO_t%N         =N_IO
+     OBS_RT_IO_t%last_point=last_point_IO
+     if(.not.allocated(OBS_RT_IO_t%Time)) allocate(OBS_RT_IO_t%Time(NE_steps))
+     OBS_RT_IO_t%Time=Time_IO
+   endif
    !
    if (io_NL/=0) goto 1
    !
@@ -133,6 +143,8 @@ integer function io_NL(what,ID)
 &         R0=Efield(i_Prb)%t_initial,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS)
 
  enddo
+ !
+ call def_variable_elemental(ID,VAR="",VAR_SZ=0,VAR_KIND=CR_YIO,MENU=1) 
  !
  ! Polarization
  ! 

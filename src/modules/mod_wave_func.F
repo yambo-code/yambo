@@ -7,7 +7,7 @@
 !
 module wave_func
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,schlen
  use devxlib,        ONLY:devxlib_mapped
  use gpu_m,          ONLY:have_gpu
  !
@@ -39,6 +39,7 @@ module wave_func
  ! Real components ?
  !
  logical                :: real_wavefunctions
+ character(schlen)      :: WF_load_mode="all"   ! "all"/"on-the-fly"/"on-the-fly-kq"
  !
  ! Bands block size
  !

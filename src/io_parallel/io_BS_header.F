@@ -11,6 +11,7 @@ integer function io_BS_header(iq,X,ID,mode)
  !
  use parallel_int,  ONLY:PP_wait
  use com,           ONLY:msg
+ use drivers,       ONLY:l_eval_collisions
  use pars,          ONLY:schlen,lchlen
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
@@ -68,8 +69,12 @@ integer function io_BS_header(iq,X,ID,mode)
  !
  ! Check if the file already contains data and it is consistent
  !
- io_BS_header=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,&
+ if (l_eval_collisions) then
+   io_BS_header=io_header(ID,R_LATT=.true.,WF=.true.,CUTOFF=.true.)
+ else
+   io_BS_header=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,&
 &                       IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",CUTOFF=.true.,FRAG=frag_BS_K)
+ endif
  !
  io_BS_header=variables_BS(ID,iq,local_desc,.TRUE.,X=X)
  !

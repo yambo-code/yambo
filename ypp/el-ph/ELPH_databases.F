@@ -42,6 +42,7 @@ subroutine ELPH_databases(k,E,q)
  character(schlen)  ::what,db_name
  integer, external  ::ELPH_databases_IO_elemental,io_ELPH
  logical, external  ::file_exists
+ logical            ::l_no_store_dw
  real(SP)           ::v(3)
  type(GKKP_me)      ::GKKP_save,GKKP_bare_save
  !
@@ -230,9 +231,11 @@ subroutine ELPH_databases(k,E,q)
  call msg('s',':: Bands (loading)       :',elph_bands)
  call msg('s',':: Branches              :',DB_ph_modes)
  call msg('s',':: Uniform sampling      :',elph_use_q_grid)
- if(l_gkkp_expand_only_k) call msg('s',':: Q-points in the BZ     :',l_gkkp_expand_only_k)
+ call msg('s',':: Q-points in the BZ    :',l_gkkp_expand_only_k)
  call msg('s',':: Symmetry expanded     :',l_gkkp_expand)
- if(l_gkkp_expand) call msg('s',':: Use qindx_B to expand gkkp     :',l_use_qindxB)
+ call msg('s',':: El-Ph contains DW     :',l_GKKP_hosts_DW)
+ call msg('s',':: El-Ph has bare dV     :',l_GKKP_hosts_bare_dV)
+ call msg('s',':: Use qindx_B           :',l_use_qindxB)
  call msg('s',':: Debye Energy          :',PH_W_debye*HA2EV*1000.,"[meV]")
  !
  !...alloc...

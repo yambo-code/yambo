@@ -14,7 +14,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  use QP_m,           ONLY: QP_ng_SH,QP_ng_Sx 
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_sp_pol
- use collision_ext,  ONLY:COLLISIONS_CV_only,HXC_collisions 
+ use collision_ext,  ONLY:COLLISIONS_CV_only,COLLISIONS_FEW_only,HXC_collisions 
  use X_m,            ONLY:global_gauge,X_t
  use DIPOLES,        ONLY:DIPOLE_t,DIP_S
  use ALLOC,          ONLY:DIPOLE_ALLOC_elemental,DIPOLE_ALLOC_global
@@ -31,7 +31,9 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,runs_done,n_runs_todo,l_eval_CURRENT,NL_rot_axis,&
 &                         HF,SEX,NL_bands,NL_nbands,NL_alloc_k_distributed,NL_J_t,n_runs,loop_on_frequencies, &
 &                         l_pump_and_probe,eval_OSCLL,l_test_OSCLL,LSEX,LHF,Sigma_SEX_EQ,Wk_EQ
- use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT,eval_HARTREE
+ use real_time,      ONLY:RT_step,NE_steps,NE_i_time,NE_time,RT_nbands,RT_bands, &
+                          eval_DFT,eval_HARTREE,RT_P,RT_ind_J,l_velocity_gauge_diam
+ use RT_control,     ONLY:RT_NAN_found
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,PAR_Xk_ibz_index
@@ -56,7 +58,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  integer           :: i_f,i1,i_sp_pol,wf_ng_save,io_err,ik,ik_mem
  character(schlen) :: l_message
  logical           :: l_dynamics_is_over
- real(SP)          :: Time,angle
+ real(SP)          :: OBSERVABLES(25),Time,angle
  !
  ! In Non-Linear NL_bands always equal to RT_bands
  ! ==============================================
@@ -98,7 +100,9 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  ! ========================================
  call DIPOLE_dimensions(E,Dip,NL_bands,(/0._SP,0._SP,0._SP/))
  call DIPOLE_IO(k,E,Dip,'read ',io_err,'NL')
- if(io_err/=0) call error("Error in DIPOLES! ")
+ if(io_err/=0) call error("Error in Dipoles I/O")
+ call OVERLAPS_IO(k,E,Dip,'read',io_err,'NL')
+ if(io_err/=0) call error("Error in Overlaps I/O")
  !
  ! Symmetrize dipoles if old-symmetries are present
  ! =================================================
@@ -118,13 +122,9 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  endif
  !
  call DIPOLE_ALLOC_elemental('P_square')
- if(l_use_DIPOLES) then
-   call DIPOLE_ALLOC_elemental('DIP_S')
- else
-   if(.not.l_eval_CURRENT) then
-     call DIPOLE_ALLOC_elemental('DIP_v')
-   endif
- endif
+ ! Deallocate what is not needed
+ if(l_use_DIPOLES) call DIPOLE_ALLOC_elemental('DIP_S')
+ if(.not.l_eval_CURRENT) call DIPOLE_ALLOC_elemental('DIP_v')
  !
  ! WFs loading
  !=============
@@ -169,6 +169,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
    if(l_use_Hxc_collisions.and..not.COLLISIONS_have_HARTREE) eval_HARTREE=.TRUE.
    !     
    if(COLLISIONS_CV_only) call msg('rs','Collisions contains C<->V ONLY scatterings')
+   if(COLLISIONS_FEW_only) call msg('rs','Collisions contains ONLY selected scatterings')
    !
  endif
  !
@@ -256,6 +257,16 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  ! =====================================
  if(n_runs_todo==0) return
  !
+ if (l_pump_and_probe) then
+   !
+   ! Initialize output files
+   !==========================
+   call RT_output_INIT( )
+   !
+   call RT_output_and_IO_driver('open',E,k,OBSERVABLES)
+   !
+ endif
+ !
  ! Initialize IO
  ! ==================
  call NL_databases_IO(0,'write')
@@ -271,7 +282,8 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  else
    call error("Wrong input: use pump-probe mode 'yambo_nl -u p' or set a number of frequencie/angles with 'yambo_nl -u n'")
  endif
- call live_timing(l_message,PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1)*NE_steps)
+ if(.not.l_pump_and_probe) NE_i_time=0
+ call live_timing(l_message,n_runs*(NE_steps-NE_i_time))
  !
  do i_f=1,n_runs
    !
@@ -282,12 +294,16 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
      cycle
    endif
    !
-   ! Re-initialization
-   ! ================
-   V_bands=cZERO
-   do i_sp_pol=1,n_sp_pol
-     forall(i1=1:E%nbf(n_sp_pol)) V_bands(i1,i1,:,i_sp_pol)=cONE
-   enddo
+   if (.not.l_pump_and_probe) then
+     !
+     ! Re-initialization
+     ! ================
+     V_bands=cZERO
+     do i_sp_pol=1,n_sp_pol
+       forall(i1=1:E%nbf(n_sp_pol)) V_bands(i1,i1,:,i_sp_pol)=cONE
+     enddo
+     !
+   endif
    !
    ! Update Efield
    ! ================
@@ -299,15 +315,14 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
    !
    l_dynamics_is_over=.false.
    !
-   NE_i_time=0
+   if(.not.l_pump_and_probe) NE_i_time=0
    !
    do while(.not.l_dynamics_is_over)
      !
      NE_i_time=NE_i_time+1
+     NE_time=real(NE_i_time-1,SP)*RT_step
      !
-     Time=real(NE_i_time-1,SP)*RT_step
-     !
-     call NL_Hamiltonian(E,k,q,X(1),Time,NE_i_time,V_bands)
+     call NL_Hamiltonian(E,k,q,X(1),NE_time,NE_i_time,V_bands)
      !
      ! I evaluate current after the Hamiltonian because I need
      ! time-dependent overlaps Sm1_plus, and Sm1_mins
@@ -315,6 +330,22 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
      if(l_eval_CURRENT) then
        call NL_current(k,E,V_bands,NL_J)
        NL_J=NL_J-NL_initial_J
+     endif
+     ! 
+     if (l_pump_and_probe) then
+       !
+       RT_P    =real(NL_P(1:3),SP)
+       if (     l_velocity_gauge_diam) RT_ind_J=real(NL_J(1:3),SP)
+       if (.not.l_velocity_gauge_diam) RT_ind_J=real(NL_J(4:6),SP)
+       !
+       ! Carriers number
+       !================
+       call NL_carriers_number(E,k,OBSERVABLES(1:3))
+       !
+       ! Write DBs and output
+       !=====================
+       call RT_output_and_IO_driver('write',E,k,OBSERVABLES)
+       !
      endif
      !
      ! Store Variables
@@ -325,15 +356,19 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
      E_tot_t(NE_i_time,:)=E_tot
      E_ks_t (NE_i_time,:)=E_ks
      !
-     call NL_output(NE_i_time,i_f) 
+     call NL_output(NE_i_time,i_f)
      !
      call NL_Integrator(E,k,q,X(1),Integrator,NE_i_time,V_bands)
      !
      call live_timing(steps=1)
      !
-     l_dynamics_is_over= (NE_i_time>=NE_steps) .or. stop_now(.false.)
+     l_dynamics_is_over= (NE_i_time>=NE_steps) .or. stop_now(.false.) .or. RT_NAN_found
      !
    enddo
+   !
+   if (l_pump_and_probe) then
+     call RT_output_and_IO_driver('close',E,k,OBSERVABLES)
+   endif
    !
    call NL_databases_IO(i_f,'write')
    !

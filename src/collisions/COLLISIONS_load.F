@@ -16,6 +16,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use LIVE_t,          ONLY:live_timing
  use QP_m,            ONLY:QP_QED_ng
  use R_lattice,       ONLY:nqbz
+ use electrons,       ONLY:n_sp_pol
  use plasma,          ONLY:N_plasma_poles_global
  use hamiltonian,     ONLY:H_kind
  use global_XC,       ONLY:H_SE_FOCK,H_SE_COH,H_SE_SEX,QP_SE_GW_NEQ,H_SE_HARTREE
@@ -36,7 +37,10 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 &                          GW_NEQ_COLL_element
 #endif
  !
- ! Define io_COLLs_header to handle either serial or parallel I/O
+ ! Inside collisions.h, io_COLLs_header is defined as either
+ ! - io_COLLISIONS        (serial I/O) or
+ ! - io_COLLISIONS_header (parallel I/O case)
+ !
 #include<collisions.h>
  !
  implicit none
@@ -168,7 +172,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      type(COLLISIONS_group) :: COLL
      integer :: iqbz,i_J,ic,i_coll,&
-&               i_coll_mem,i_q_mem,i_J_mem,i_b,i_g
+&               i_coll_mem,i_q_mem,i_J_mem,i_b,i_g,i_sp
      logical :: l_COH,l_HXC,l_NGW,l_QED,l_NGW_init,l_QED_init
      !
      call live_timing(trim(COLL%name)//' collisions I/O',COLL%PAR_N)
@@ -285,6 +289,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
          !
          ic=0
          !
+         do i_sp=1,n_sp_pol
          do iqbz=1,nqbz
            !
            i_q_mem=PAR_Q_bz_index(iqbz)
@@ -299,17 +304,18 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
                ic=ic+1
                if (.not.PAR_IND_Plasma%element_1D(i_J)) cycle
                i_J_mem  =PAR_PLASMA_index(i_J)
-               GW_NEQ_COLL_element(i_coll_mem)%v3_r(i_J_mem,1,i_q_mem)=GW_NEQ_COLL_element(1)%v_r(ic)
+               GW_NEQ_COLL_element(i_coll_mem)%v3_r(i_J_mem,1,i_q_mem,i_sp)=GW_NEQ_COLL_element(1)%v_r(ic)
              enddo
            else
              do i_b=COLL_bands(1),COLL_bands(2)
                do i_g=1,QP_QED_ng
                  ic=ic+1
-                 P_COLL_element(i_coll_mem)%v3_r(i_g,i_b,iqbz)=P_COLL_element(1)%v_r(ic)
+                 P_COLL_element(i_coll_mem)%v3_r(i_g,i_b,iqbz,i_sp)=P_COLL_element(1)%v_r(ic)
                enddo
              enddo
            endif
            !
+         enddo
          enddo
        endif
 #endif

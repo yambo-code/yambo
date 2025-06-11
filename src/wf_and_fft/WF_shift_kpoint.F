@@ -10,7 +10,7 @@
 subroutine WF_shift_kpoint_gpu(b_to_shift,nb_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k_out)
  !
  use pars,          ONLY: SP,cZERO
- use electrons,     ONLY: n_spinor,n_sp_pol
+ use electrons,     ONLY: n_spinor
  use R_lattice,     ONLY: k_map,bz_samp
  use R_lattice,     ONLY: DEV_VAR(G_m_G)
  use wave_func,     ONLY: wf_ng_1st_BZ,wf_ng_overlaps

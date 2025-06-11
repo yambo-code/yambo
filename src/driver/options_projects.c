@@ -38,8 +38,10 @@ void options_projects(struct options_struct *options, int *i_opt)
     strcpy(options[*i_opt].long_desc[11], "GS      => <string>=gs");
     strcpy(options[*i_opt].long_desc[12],
            "CVONLY  => <string>=cvonly (compute only cv collisions)");
-    strcpy(options[*i_opt].long_desc[13], " ");
-    strcpy(options[*i_opt].long_desc[14],
+    strcpy(options[*i_opt].long_desc[13],
+           "KBSE    => <string>=kbse   (compute collisions from bse)");
+    strcpy(options[*i_opt].long_desc[14], " ");
+    strcpy(options[*i_opt].long_desc[15],
            "Potentials can be combined. Example: use hf for Hartree-Fock");
     options[*i_opt].long_opt = "potential";
     options[*i_opt].short_opt = 'v';

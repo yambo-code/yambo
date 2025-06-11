@@ -49,6 +49,7 @@ module real_time
  logical          :: l_P_integrating_J
  logical          :: l_velocity_gauge_corr
  logical          :: l_velocity_gauge_diam
+ logical          :: l_length_grad_k
  !
  ! Specific flag for when Yambo libraries are called to perform TRabs via YPP
  !
@@ -75,6 +76,7 @@ module real_time
  !
  integer  :: NE_i_time=1 ! = NE_time/RT_step+1
  integer  :: NE_steps    ! Still relative to RT_step
+ integer  :: NE_i_last_field
  !
  ! Lifetimes Extrapolation Time status
  !
@@ -133,6 +135,8 @@ module real_time
  !
  integer                 :: RT_nk
  integer                 :: RT_bands(2)
+ integer                 :: RT_elec_bands(2)
+ integer                 :: RT_hole_bands(2)
  integer                 :: RT_nbands
  !
  ! Equilibrium V_xc and V_hartree in real space
@@ -182,9 +186,10 @@ module real_time
  !
  ! GFs
  !-----
- complex(SP), allocatable :: G_lesser(:,:,:,:)          ! Band, Band, K, Time
- complex(SP), allocatable :: dG_lesser(:,:,:,:)
- complex(SP), allocatable :: G_lesser_reference(:,:,:)  ! Band, Band, K
+ complex(SP), allocatable :: G_lesser(:,:,:,:,:)          ! Band, Band, K, Spin, Time
+ complex(SP), allocatable :: dG_lesser(:,:,:,:,:)
+ complex(SP), allocatable :: dG_avg(:,:,:,:)
+ complex(SP), allocatable :: G_lesser_reference(:,:,:,:)  ! Band, Band, K, Spin
  complex(SP), allocatable :: I1_matrix(:,:)
  !
  ! RT_Hamiltonian
@@ -192,6 +197,7 @@ module real_time
  !
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
  complex(SP), allocatable :: H_EQ(:,:,:,:)
+ complex(SP), allocatable :: H_field(:,:,:,:)
  complex(SP), allocatable :: H_pseudo_eq(:,:,:,:)
  complex(SP), allocatable :: RT_Vnl_xc(:,:,:,:)
  !
@@ -210,6 +216,7 @@ module real_time
  logical  :: l_RT_RWA
  logical  :: l_RT_ACC
  logical  :: l_RT_PERT
+ logical  :: l_RT_FRES
  logical  :: l_RT_DIAG
  !
  logical  :: l_RT_SIMPLE

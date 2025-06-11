@@ -10,6 +10,7 @@ subroutine io_RT_components_Reference(ID)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elph_scatt
  use R_lattice,      ONLY:nqbz
+ use electrons,      ONLY:n_sp_pol
  use IO_m,           ONLY:read_is_on
  use IO_int,         ONLY:def_variable_bulk,io_variable_bulk
  use RT_lifetimes,   ONLY:RT_lifetime,RT_EE_REF_life,RT_EP_emit_REF_life,RT_EP_abs_REF_life,&
@@ -60,8 +61,8 @@ subroutine io_RT_components_Reference(ID)
  !
  if (allocated(G_lesser_reference)) then
    !
-   call def_variable_bulk(ID,"G_lesser_reference",4,(/2,RT_nbands,RT_nbands,RT_nk/),SP)
-   call  io_variable_bulk(ID,4,C3=G_lesser_reference)
+   call def_variable_bulk(ID,"G_lesser_reference",4,(/2,RT_nbands,RT_nbands,RT_nk,n_sp_pol/),SP)
+   call  io_variable_bulk(ID,4,C4=G_lesser_reference)
    !
  endif
  !

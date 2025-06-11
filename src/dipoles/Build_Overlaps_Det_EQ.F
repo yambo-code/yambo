@@ -50,7 +50,7 @@ subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Sm1_plus,Sm1_minus,S_det)
        !
        nb=Xen%nbm(i_sp_pol)
        !
-       ! Overlap S(k, k-dk)
+       ! Overlap S(k, k-dk)=S^\dag(k-dk,k)
        !
        S_val=hermitian(DIP_S(1:nb,1:nb,id+(istep-1)*3,ikm,i_sp_pol))
        call SERIAL_inversion(nb,S_val,det,.false.)

@@ -567,7 +567,7 @@ subroutine INIT_activate()
    if(.not.l_nl_p_and_p) call initactivate(1,'NLEnRange NLEnSteps NLrotaxis NLAngSteps NLMaxAng')
    if(     l_nl_p_and_p) call initactivate(1,'IOtime IOCachetime SaveVbhistory')
    call initactivate(1,'NLDamping RADLifeTime UseDipoles FrSndOrd NoComprCOLL COLLCut EvalCurrent InducedField') 
-   call initactivate(1,'FrPolPerdic TestOSCLL Gauge RADLifeTime HARRLvcs EXXRLvcs CORRLvcs') 
+   call initactivate(1,'TestOSCLL Gauge RADLifeTime HARRLvcs EXXRLvcs CORRLvcs') 
    call init_QP_ctl_switch('G')
    !
    do i1=1,n_ext_fields

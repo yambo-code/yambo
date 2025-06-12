@@ -43,7 +43,7 @@ subroutine Vgrad_real_space_to_H(ik,H,WF,V_grad)
  do ib=H_ref_bands(1),H_ref_bands(2)
    do ibp=ib,H_ref_bands(2)
    !
-   if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 )) cycle
+   if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1) )) cycle
    !
    ! <i_wf|V|ip_wf>
    !

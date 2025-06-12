@@ -32,6 +32,7 @@ module pars
  !
  !...RT
  integer, parameter :: n_ext_fields_max=4
+ integer, parameter :: n_fields_defs_max=6
  !
  !...Input file analyze
  integer, parameter :: n_max_DB_IO_off_fields=20
@@ -95,7 +96,7 @@ module pars
  ! STRINGs
  !=========
  integer, parameter  :: schlen=100
- integer, parameter  :: lchlen=300
+ integer, parameter  :: lchlen=500
  integer, parameter  :: msg_len=50
  integer, parameter  :: DB_menu_length=30+msg_len
  !

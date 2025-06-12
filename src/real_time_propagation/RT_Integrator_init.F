@@ -10,7 +10,7 @@ subroutine RT_Integrator_init()
  use pars,           ONLY:SP,cONE,cZERO
  use com,            ONLY:msg
  use stderr,         ONLY:intc
- use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV,            &
+ use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV,l_RT_FRES,  &
 &                         l_RT_RWA,l_RT_ACC,l_RT_DIAG,l_RT_PERT,   &
 &                         l_RT_HEUN,l_RT_RK2,l_RT_RK4,l_RT_SIMPLE, &
 &                         Integrator_name,integrator_exp_order,    &
@@ -61,8 +61,11 @@ subroutine RT_Integrator_init()
  l_RT_DIAG=  l_RT_INV                 .and. &
 &           index(Integrator_name,'DIAG' )/=0.or.index(Integrator_name,'diag' )/=0
  !
- l_RT_PERT= (l_RT_EULER.and.l_RT_RWA) .and. &
-&           index(Integrator_name,'PERT'  )/=0.or.index(Integrator_name,'pert' )/=0
+ l_RT_PERT=  l_RT_EULER               .and. &
+&           index(Integrator_name,'PERT' )/=0.or.index(Integrator_name,'pert' )/=0
+ !
+ l_RT_FRES=  l_RT_PERT               .and. &
+&           index(Integrator_name,'FRES' )/=0.or.index(Integrator_name,'fres' )/=0
  !
  ! d) Reset integrator name
  !
@@ -80,6 +83,7 @@ subroutine RT_Integrator_init()
  if (l_RT_ACC   ) Integrator_name = trim(Integrator_name)//" + ACC"
  if (l_RT_DIAG  ) Integrator_name = trim(Integrator_name)//" + DIAG"
  if (l_RT_PERT  ) Integrator_name = trim(Integrator_name)//" + PERT"
+ if (l_RT_FRES  ) Integrator_name = trim(Integrator_name)//" + FRES"
  !
  call msg('s','Integrator '//trim(Integrator_name))
  !

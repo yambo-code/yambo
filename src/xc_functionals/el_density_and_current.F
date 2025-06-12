@@ -163,7 +163,7 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,c
        if(present(bands)) then
          f_occ=0._SP
          do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
-           f_occ=f_occ+RT_el_occ%dN(ib,ik_RT)*RTibz%weights(ik_RT)
+           f_occ=f_occ+RT_el_occ%dN(ib,ik_RT,i_sp_pol)*RTibz%weights(ik_RT)
          enddo
        endif
 #endif

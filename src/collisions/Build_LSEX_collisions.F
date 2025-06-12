@@ -9,7 +9,7 @@ subroutine Build_LSEX_collisions(k,q,i_qp,COLL)
  !
  ! This subroutine calculate the long-range part of the Screened exchange
  !
- use electrons,      ONLY:n_sp_pol
+ use electrons,      ONLY:n_sp_pol,spin
  use pars,           ONLY:SP,cI,cZERO
  use collision_ext,  ONLY:OSCLL,W,ng_oscll,COLL_bands
  use QP_m,           ONLY:QP_table,QP_nk,QP_n_states
@@ -26,17 +26,18 @@ subroutine Build_LSEX_collisions(k,q,i_qp,COLL)
  integer :: i_np,iqbz,i_kmq ! self-energy internal indexes
  integer :: ig1,ig2
  integer :: i_n,i_m
- integer :: i_k
+ integer :: i_k,i_sp
  !
  ! Collisions output
  !
- complex(SP), intent(out) :: COLL(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),QP_nk)
+ complex(SP), intent(out) :: COLL(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),QP_nk,n_sp_pol)
  !
  ! Coll indexes
  !
  i_n=QP_table(i_qp,1)
  i_m=QP_table(i_qp,2)
  i_k=QP_table(i_qp,3)
+ i_sp=spin(QP_table(i_qp,:))
  !
  ! Build Collisions from the Oscillators
  !
@@ -45,7 +46,7 @@ subroutine Build_LSEX_collisions(k,q,i_qp,COLL)
  do i_mp=COLL_bands(1),COLL_bands(2)
     do i_np=COLL_bands(1),COLL_bands(2)
       !
-      COLL(i_np,i_mp,:)=cZERO
+      COLL(i_np,i_mp,:,i_sp)=cZERO
       ! 
       do iqbz=1,q%nbz
          i_kmq   = k%sstar(qindx_S(i_k,iqbz,1),1)
@@ -54,8 +55,8 @@ subroutine Build_LSEX_collisions(k,q,i_qp,COLL)
          !
          do ig1=1,ng_oscll
            do ig2=1,ng_oscll
-             COLL(i_np,i_mp,i_kmq)=COLL(i_np,i_mp,i_kmq)+OSCLL(i_n,i_np,i_k,iqbz,ig2) &
-&                                                 *conjg(OSCLL(i_m,i_mp,i_k,iqbz,ig1))*W(iqbz,ig2,ig1) 
+             COLL(i_np,i_mp,i_kmq,i_sp)=COLL(i_np,i_mp,i_kmq,i_sp)+OSCLL(i_n,i_np,i_k,i_sp,iqbz,ig2) &
+&                                                 *conjg(OSCLL(i_m,i_mp,i_k,i_sp,iqbz,ig1))*W(iqbz,ig2,ig1) 
             enddo
          enddo
          !

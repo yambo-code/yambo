@@ -24,7 +24,7 @@ subroutine RT_Fluence_and_PI_kind(En,i_field)
  type(gauge_field) :: A
  !
  logical      :: l_print_rabi
- integer      :: it0,it,last_it_evaluated,NE_i_time_save
+ integer      :: it0,itmax,it,last_it_evaluated,NE_i_time_save
  real(SP)     :: I(NE_steps),Omega(NE_steps),T(NE_steps)
  !
  real(SP),external :: RIntegrate,RT_Rabi_frequency
@@ -58,12 +58,21 @@ subroutine RT_Fluence_and_PI_kind(En,i_field)
  Efield(i_field)%pi_kind=0._SP
  !
  it0=Efield(i_field)%t_initial_indx
+ itmax=nint(Efield(i_field)%width/RT_step)
+ !
+ if ( index(Efield(i_field)%ef_name,'QSSIN')>0   .or.  &
+    & index(Efield(i_field)%ef_name,'QSFIELD')>0 .or.  &
+    & index(Efield(i_field)%ef_name,'GAUSS')>0 ) then
+   itmax=10*itmax
+ else
+   itmax=itmax+10
+ endif
  !
  do it=it0,NE_steps
    !
    T(it)=it*RT_step
    !
-   if ((it-it0)>6*nint(Efield(i_field)%width/RT_step)) exit
+   if ((it-it0)>itmax) exit
    !
    NE_i_time=it
    !

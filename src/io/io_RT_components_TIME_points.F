@@ -66,12 +66,14 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_RESTART_info,UNLIMITED_ti
  !
  IPOS=TYP%N-VAR_SZ+1
  IO_LIM=(/TYP%N-VAR_SZ+1,TYP%N/)
- if(TYP%first_IO(2).or.RT_do_IO("ANY_G").or.read_is_on(ID)) then
+ if(TYP%first_IO(2).or.RT_do_IO("ANY_G").or.RT_do_IO("ANY_Vb").or.read_is_on(ID)) then
    dim_name="IO_TIME_n_points"
    if (UNLIMITED_time) then
      call def_variable_bulk(ID,"IO_TIME_points",3,(/NF90_UNLIMITED/),SP,dim_name,silent=.true.,par_io_kind="collective")
-   else
+   else if (RT_do_IO("ANY_G")) then
      call def_variable_bulk(ID,"IO_TIME_points",3,(/G_MEM_steps/),   SP,dim_name,silent=.true.,par_io_kind="collective")
+   else if (RT_do_IO("ANY_Vb")) then
+     call def_variable_bulk(ID,"IO_TIME_points",3,(/1/),             SP,dim_name,silent=.true.,par_io_kind="collective")
    endif
  endif
  !

@@ -47,9 +47,9 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
        !
 #if defined _GPU_LOC
        ! dev2dev
-       call devxlib_memcpy_d2d(WF_k_out(:,:,ibl),DEV_VAR(WF%c)(:,:,iwf))
+       call devxlib_memcpy_d2d(WF_k_out(:wf_ng,:,ibl),DEV_VAR(WF%c)(:,:,iwf))
 #else
-       WF_k_out(:,:,ibl)=WF_p(:,:,iwf)
+       WF_k_out(:wf_ng,:,ibl)=WF_p(:,:,iwf)
 #endif
        !
      enddo

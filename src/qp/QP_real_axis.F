@@ -270,7 +270,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  call elemental_collision_alloc(scattering_prime,NG=X%ng,TITLE="GW")
  !
  QP_Sc=cZERO
- scattering_main%iqref=0
  !
  ! Main Loop
  !===========

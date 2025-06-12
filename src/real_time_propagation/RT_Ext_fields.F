@@ -26,10 +26,12 @@ subroutine RT_Ext_fields(A,time,i_f)
  !    the induced current is included in the dynamics ( RT_propagate_fields )
  !
  use pars,           ONLY:SP
- use units,          ONLY:SPEED_OF_LIGHT
+ use units,          ONLY:SPEED_OF_LIGHT,FS2AUT
  use real_time,      ONLY:RT_dyn_step,NE_i_time
  use functions,      ONLY:theta_function
- use fields,         ONLY:Efield,small_a,gauge_field,compute_intensity,compute_envelop,A_vecpot_reset
+ use fields_int,     ONLY:small_a
+ use fields,         ONLY:Efield,gauge_field,A_vecpot_reset,&
+&                         compute_envelop,compute_intensity
  !
  implicit none
  !
@@ -39,16 +41,26 @@ subroutine RT_Ext_fields(A,time,i_f)
  ! 
  ! Work Space
  !
+ ! DEBUG <
+ logical     :: l_print_to_file
+ ! DEBUG >
  integer     :: ikind
  real(SP)    :: Field_time,A_coeff
  complex(SP) :: A_of_t(2),E_of_t(2),J_of_t(2),theta,delta,signf
  !
  Field_time=time-Efield(i_f)%t_initial
  !
- if (Efield(i_f)%ef_name=="none" .or. Efield(i_f)%t_initial_indx>(NE_i_time+2) ) then
+ if (Efield(i_f)%ef_name=="none" .or. NE_i_time<Efield(i_f)%t_initial_indx-2 .or. &
+&    (index(Efield(i_f)%ef_name,"FROM_FILE")>0 .and. NE_i_time>Efield(i_f)%t_final_indx+2) ) then
    call A_vecpot_reset(A)
    return
  endif
+ !
+ ! DEBUG <
+ inquire ( unit=99+i_f,opened=l_print_to_file)
+ if (l_print_to_file) l_print_to_file=Efield(i_f)%t_final_indx>=NE_i_time-2
+ if (l_print_to_file.and.Efield(i_f)%t_initial_indx<4) call error('writing field to file requires initial index>3')
+ ! DEBUG >
  !
  theta=theta_function(Field_time,RT_dyn_step,0)
  delta=theta_function(Field_time,RT_dyn_step,1)
@@ -56,9 +68,16 @@ subroutine RT_Ext_fields(A,time,i_f)
  !
  do ikind=1,2
    !
-   A_of_t=small_a(Field_time,Efield(i_f),0,envelop_only=(ikind==1))
-   E_of_t=small_a(Field_time,Efield(i_f),1,envelop_only=(ikind==1))
-   J_of_t=small_a(Field_time,Efield(i_f),2,envelop_only=(ikind==1))
+   A_of_t=small_a(Field_time,RT_dyn_step,Efield(i_f),0,envelop_only=(ikind==1))
+   E_of_t=small_a(Field_time,RT_dyn_step,Efield(i_f),1,envelop_only=(ikind==1))
+   J_of_t=small_a(Field_time,RT_dyn_step,Efield(i_f),2,envelop_only=(ikind==1))
+   !
+   ! DEBUG <
+   if (ikind==2.and.l_print_to_file) then
+     write(99+i_f,*) Field_time/FS2AUT,real(A_of_t(1),SP),real(E_of_t(1),SP),real(J_of_t(1),SP),&
+                     real(A_of_t(2),SP),real(E_of_t(2),SP),real(J_of_t(2),SP)
+   endif
+   ! DEBUG >
    !
    select case(Efield(i_f)%ef_pol)
    case("linear")

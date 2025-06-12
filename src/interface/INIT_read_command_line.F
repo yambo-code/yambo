@@ -337,6 +337,7 @@ subroutine INIT_read_command_line(rstr,init_)
        V_is_defined=INIT_read_command_line_potentials(V_string,"f")
        V_is_defined=INIT_read_command_line_potentials(V_string,"h")
        V_is_defined=INIT_read_command_line_potentials(V_string,"cvonly")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"kbse")
        !
      endif
 #endif
@@ -357,6 +358,7 @@ subroutine INIT_read_command_line(rstr,init_)
        V_is_defined=INIT_read_command_line_potentials(V_string,"f")
        V_is_defined=INIT_read_command_line_potentials(V_string,"h")
        V_is_defined=INIT_read_command_line_potentials(V_string,"cvonly")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"kbse")
        !
      endif
 #endif
@@ -426,8 +428,9 @@ subroutine INIT_read_command_line(rstr,init_)
      ! COLLISIONS
      !
      if (runlevel_is_on('collisions')) then
-       if ( l_elel_scatt.or.trim(H_potential)=='COH+SEX'.or.&
-&               trim(H_potential)=='COH'.or.trim(H_potential)=='SEX' ) call initactivate(1,'em1s')
+       if ( l_elel_scatt.or.index(H_potential,'SEX')>0 .or.&
+&                           index(H_potential,'COH')>0 ) call initactivate( 1,'em1s')
+       if ( index(H_potential,'KBSE')>0 )                call initactivate(-1,'em1s') 
      endif
      !
 #endif

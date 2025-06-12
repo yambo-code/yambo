@@ -26,6 +26,7 @@
  RT_damp_it.o
  RT_density.o
  RT_dos_time_plot.o
+ RT_fields.o
  RT_manual_excitation.o
  RT_occ_bands_interpolation.o
  RT_occ_time_plot.o

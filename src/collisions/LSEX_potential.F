@@ -60,7 +60,7 @@ subroutine LSEX_potential(q,X,Xw)
  if(Correlation==LSEX) then
    call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID)
    io_err=io_X(X,Xw,ID)
-   if (io_err<0) call error('Incomplete and/or broken tatic diel. fun. database')
+   if (io_err<0) call error('Incomplete and/or broken static diel. fun. database')
  endif
  !
  YAMBO_ALLOC(W,(q%nbz,ng_oscll,ng_oscll))

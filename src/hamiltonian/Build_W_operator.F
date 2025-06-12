@@ -34,11 +34,12 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
  !
  integer :: i1,i2,im,id,id_red
  integer :: ikbz,istep,max_step
+ !
  complex(SP) :: Wop(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),2)
  complex(SP) :: V_tilde(en%nbf(i_sp),H_ref_bands(1):H_ref_bands(2),2)
  complex(SP) :: delta_V_tilde(en%nbf(i_sp),H_ref_bands(1):H_ref_bands(2))
  complex(SP) :: V_tmp(H_ref_bands(1):H_ref_bands(2),en%nbf(i_sp))
- complex(SP) :: E_vec_pot(3),alpha
+ complex(SP) :: alpha
  !
  Wk=cZERO
  !

@@ -63,15 +63,24 @@ fi
 if [ "$DIR_restored" == "yes" ] ; then
  source ./sbin/compilation/verbosity.sh "check_updated_locks.sh: $dir has been restored"
 fi
+
+
+if [[ "$unmatched" == *"DOUBLE"* ]]; then
+ # in this case I already recompile the whole
+ # source, no need to check for other locks
+ unmatched="DOUBLE";
+fi
 #
 # tag new objects to be compiled
 #
+files_done=""
 for lock in $unmatched
 do
  #
  if test -f "$dir/${lock}_project.dep"; then
   deps=`cat $dir/${lock}_project.dep`
   for dep_file in $deps; do
+   if [[ "$files_done" == *"$dep_file"* ]]; then continue; fi
    source ./sbin/compilation/verbosity.sh "check_updated_locks.sh: $dep_file must be recompiled"
    source ./sbin/compilation/name_me.sh $dir/$dep_file "no_search"
    if [ ! "$DIR_restored" == "yes" ] ; then
@@ -81,6 +90,7 @@ do
     source ./sbin/compilation/object_remove.sh "remove" "locks"
     continue;
    fi
+   files_done="$file $files_done"
    source ./sbin/compilation/check_object_childs.sh "locks"
   done
  fi

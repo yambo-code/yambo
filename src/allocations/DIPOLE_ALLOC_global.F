@@ -25,7 +25,6 @@ subroutine DIPOLE_ALLOC_global(D,NK)
    call DIPOLE_ALLOC_elemental('DIP_orbital')
    call DIPOLE_ALLOC_elemental('DIP_spin')
    call DIPOLE_ALLOC_elemental('DIP_P_spinor')
-   call DIPOLE_ALLOC_elemental('DIP_S')
    call DIPOLE_ALLOC_elemental('P_square') 
    return
  endif

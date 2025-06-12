@@ -12,14 +12,15 @@
 subroutine RT_X_LRR_real_field(en)
  !
  use YPP_real_time,  ONLY:RT_conf,Use_FFT,l_force_min_damp,RT_time,Pol,Curr,ElField,&
-&                         OBS_el_free,X_kind,N_pumps
+&                         OBS_el_free,X_kind,N_pumps,l_skip_OBS_IO
  use pars,           ONLY:SP,pi,cI,cZERO,schlen
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
  use vec_operate,    ONLY:v_norm
  use RT_control,     ONLY:RT_output
  use real_time,      ONLY:l_RT_induced_field
- use fields,         ONLY:Efield,small_a_frequency,small_a
+ use fields,         ONLY:Efield
+ use fields_int,     ONLY:small_a_frequency,small_a
  use com,            ONLY:of_open_close,msg
  use functions,      ONLY:theta_function
  use parser_m,       ONLY:parser
@@ -30,10 +31,10 @@ subroutine RT_X_LRR_real_field(en)
  !
  ! Work Space
  !
- integer      :: i_t,i_w,i_p_dir,iE_err,i_Probe,i_field,n_fields,NW
+ integer      :: i_t,i_w,i_p_dir,iE_err,i_Probe,i_field,n_fields,n_freqs,NW
  logical      :: l_rm_asympt_limit
  real(SP)     :: W_reached,Field_time,outdata(6),E_ver(3,3),Fac
- complex(SP)  :: OBS_proj,OBS_vec(3),E_w_SP(3),Field,E_of_t(2),A_of_t(2),theta,delta,Field_freq
+ complex(SP)  :: OBS_proj,OBS_vec(3),E_w_SP(3),Field,E_ver_cmplx(3,3),E_of_t(2),A_of_t(2),theta,delta,Field_freq
  complex(SP), allocatable :: EELS(:,:),EPS(:,:)
  !
 #if defined _YPP_NL
@@ -46,17 +47,10 @@ subroutine RT_X_LRR_real_field(en)
  call parser('RmAsymLim',l_rm_asympt_limit)
  !
  i_Probe=1
- if(trim(Efield(i_Probe)%ef_pol)=="linear"  ) n_fields=1
+ n_freqs=1
+ n_fields=1
  if(trim(Efield(i_Probe)%ef_pol)=="circular") n_fields=2
- !
- ! Pump removal (if any)
- !-----------------------
- if (N_pumps==1) then
-   do i_t=1,RT_conf%T_n_steps
-     Curr(i_Probe)%F_t(i_t,:)=Curr(i_Probe)%F_t(i_t,:)-Curr(i_Probe+1)%F_t(i_t,:)
-     Pol(i_Probe)%F_t(i_t,:)=Pol(i_Probe)%F_t(i_t,:)-Pol(i_Probe+1)%F_t(i_t,:)
-   enddo
- endif
+ if(    Efield(i_Probe)%n_frequencies > 1   ) n_freqs=Efield(i_Probe)%n_frequencies
  !
  ! 1D FFT setup
  !--------------
@@ -88,10 +82,13 @@ subroutine RT_X_LRR_real_field(en)
  do i_t=1,RT_conf%T_n_steps
    !
    Field_time=RT_time(i_t)-Efield(i_Probe)%t_initial
-   A_of_t =small_a(Field_time,Efield(i_Probe),0)
-   E_of_t =small_a(Field_time,Efield(i_Probe),1)
-   theta  =theta_function(Field_time,RT_time(2)-RT_time(1),0)
-   delta  =theta_function(Field_time,RT_time(2)-RT_time(1),1)
+   !
+   if (index(Efield(i_Probe)%ef_name,"FROM_FILE")>0 .and. i_t>Efield(i_Probe)%t_final_indx+2) cycle
+   !
+   A_of_t =small_a(Field_time,RT_conf%delta_T,Efield(i_Probe),0)
+   E_of_t =small_a(Field_time,RT_conf%delta_T,Efield(i_Probe),1)
+   theta  =theta_function(Field_time,RT_conf%delta_T,0)
+   delta  =theta_function(Field_time,RT_conf%delta_T,1)
    !
    do i_field=1,n_fields
      Fac=Efield(i_Probe)%amplitude
@@ -104,12 +101,12 @@ subroutine RT_X_LRR_real_field(en)
  ! ... FT
  !--------
  !
- call RT_OBSERVABLES_damp_and_write(ElField,RT_conf,.TRUE.)
+ call RT_OBSERVABLES_damp_and_write(ElField,RT_conf,(l_skip_OBS_IO.or.N_pumps==0))
  !
  !... Analytic ...
  !
  iE_err=-1
- if (n_fields==1.and.trim(X_kind)=="rhorho") then
+ if (n_fields==1.and.n_freqs==1.and.trim(X_kind)=="rhorho") then
    do i_w = 1, RT_conf%W_n_steps
      !
      if(trim(RT_conf%damping) /= "NONE")                      Field_freq=ElField%W(i_w)-cI*RT_conf%damp_factor
@@ -222,13 +219,15 @@ subroutine RT_X_LRR_real_field(en)
      E_ver(:,1)=abs(E_w_SP/v_norm(abs(E_w_SP)))
    endif
    !
+   E_ver_cmplx=cmplx(E_ver,kind=SP)
+   !
    do i_p_dir=1,3
      !
      if(trim(X_kind)=="rhorho") OBS_vec=cmplx( Pol(1)%F_w(i_w,:),kind=SP)
      if(trim(X_kind)=="jj")     OBS_vec=cmplx(Curr(1)%F_w(i_w,:),kind=SP)/ElField%W(i_w)**2
      !
-     OBS_proj=dot_product(E_ver(:,i_p_dir),OBS_vec)
-     if(Efield(i_Probe)%ef_pol=="circular") Field=dot_product(E_ver(:,i_p_dir),E_w_SP )
+     OBS_proj=dot_product(E_ver_cmplx(:,i_p_dir),OBS_vec)
+     if(Efield(i_Probe)%ef_pol=="circular") Field=dot_product(E_ver_cmplx(:,i_p_dir),E_w_SP )
      !
      if(     l_RT_induced_field) EELS(i_w,i_p_dir) = 4._SP*pi*OBS_proj/Field
      if(.not.l_RT_induced_field) EPS( i_w,i_p_dir) = 4._SP*pi*OBS_proj/Field

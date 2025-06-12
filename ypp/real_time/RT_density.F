@@ -11,7 +11,7 @@ subroutine RT_density(en,kpt,qpt)
  use units,          ONLY:FS2AUT
  use R_lattice,      ONLY:bz_samp
  use FFT_m,          ONLY:fft_size,fft_dim
- use electrons,      ONLY:levels,n_spin
+ use electrons,      ONLY:levels,n_spin,n_sp_pol
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc,real2ch
  use com,            ONLY:msg,of_open_close
@@ -41,7 +41,7 @@ subroutine RT_density(en,kpt,qpt)
  ! Allocs
  !
  real(SP), allocatable    :: drho(:),delta_magn(:,:)
- complex(SP), allocatable :: G_loc(:,:,:)
+ complex(SP), allocatable :: G_loc(:,:,:,:)
  !
  integer, external     :: io_RT_components
  !
@@ -65,12 +65,12 @@ subroutine RT_density(en,kpt,qpt)
  !
  if(load_G_history) then
    ch_ws(1)="Computing the density from the G lesser"
-   YAMBO_ALLOC(G_loc,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
+   YAMBO_ALLOC(G_loc,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
    G_loc=cZERO
-   YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,1))
+   YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol,1))
    dG_lesser=cZERO
    if(include_eq_occ) then
-     YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
+     YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
      G_lesser_reference=cZERO
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),ID=ID) 
      io_err=io_RT_components('REFERENCE',ID)
@@ -117,19 +117,11 @@ subroutine RT_density(en,kpt,qpt)
      !
      call gimme_a_G_Time_Point(i_T)
      !
-#if defined _PAR_IO
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),ID=ID)
      io_err=io_RT_components('G_lesser_K_section',ID)
-#else
-     do ik = 1, RT_nk 
-       IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,1,RT_nk)
-       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=ID)
-       io_err=io_RT_components('G_lesser_K_section',ID)
-     enddo
-#endif
      !
-     if(     include_eq_occ) G_loc=dG_lesser(:,:,:,1)+G_lesser_reference
-     if(.not.include_eq_occ) G_loc=dG_lesser(:,:,:,1)
+     if(     include_eq_occ) G_loc=dG_lesser(:,:,:,:,1)+G_lesser_reference
+     if(.not.include_eq_occ) G_loc=dG_lesser(:,:,:,:,1)
      !
      call el_density_matrix(G_loc,en,kpt,drho,RT_bands(1))
      !

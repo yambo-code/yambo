@@ -32,7 +32,7 @@ subroutine RT_driver(E,X,k,q,Dip)
 &                         NE_steps,RT_step,G_lesser,RT_bands,&
 &                         NE_i_time,eval_energy,rho_reference,magn_reference,RT_nk, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_RT_is_WFfree,&
-&                         dG_lesser,NE_tot_time,&
+&                         dG_lesser,NE_tot_time,l_length_grad_k,&
 &                         i_MEM_prev,i_MEM_now,RT_is_dynamically_dephased,&
 &                         l_RT_update_Energies,l_NE_with_fields,l_update_SOC,l_velocity_gauge_corr
  use plasma,          ONLY:PLASMA_free,EH_gas
@@ -121,6 +121,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  call DIPOLE_dimensions(E,Dip,RT_bands,(/0._SP,0._SP,0._SP/))
  call DIPOLE_IO(k,E,Dip,'read ',io_err,'RT')
+ if(io_err/=0) call error("Error in Dipoles I/O")
  !
  ! In dipole_driver the IO is k-dictated. Here I want only the master to write
  !
@@ -130,7 +131,12 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  call section('=','Initialization')
  !#################################
- call RT_initialize(E,k,q)
+ call RT_initialize(E,k,q,Dip)
+ !
+ if (l_length_grad_k) then
+   call OVERLAPS_IO(k,E,Dip,'read',io_err,'RT')
+   if(io_err/=0) call error("Error in Overlaps I/O")
+ endif
  !
  ! Dipoles & WF dimensions
  !=========================
@@ -269,7 +275,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
    !
    ! Calculate the RT Hamiltonian Ho_plus_Sigma
    !============================================
-   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_now),A_tot,E,k)
+   call RT_Hamiltonian(dG_lesser(:,:,:,:,i_MEM_now),A_tot,E,k)
    !
    ! Rotation in the Coherent Hamiltonian basis
    !============================================
@@ -277,7 +283,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
-   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_now),OBSERVABLES)
+   call RT_Observables(E,k,dG_lesser(:,:,:,:,i_MEM_now),OBSERVABLES)
    !
    ! Calculate all relaxation and dissipation terms
    !===============================================
@@ -307,7 +313,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
    !
    ! Integration
    !=============
-   call RT_Integrator(G_lesser(:,:,:,i_MEM_now),dG_lesser(:,:,:,i_MEM_now),dG_lesser(:,:,:,i_MEM_prev),A_tot,A_tot,E,k,q)
+   call RT_Integrator(G_lesser(:,:,:,:,i_MEM_now),dG_lesser(:,:,:,:,i_MEM_now),dG_lesser(:,:,:,:,i_MEM_prev),A_tot,A_tot,E,k,q)
    !
  enddo
  !
@@ -335,7 +341,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
    !
    subroutine RT_timing(steps)
      !
-     integer :: steps
+     integer, intent(in) :: steps
      !
      if (steps==0) then
        !
@@ -359,7 +365,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
        if (NE_i_time>LT_pump_steps+1.and.LT_pump) then
          LT_pump=.FALSE.
          call live_timing( )
-         call live_timing('[RT] Dynamics (pump-free region) ',NE_steps-LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP)
+         call live_timing('[RT] Dynamics (pump-free region) ',NE_steps-max(LT_pump_steps,NE_i_start_time)+1,DEPTH=0.01_SP)
        endif
        call live_timing(steps=steps)
        !

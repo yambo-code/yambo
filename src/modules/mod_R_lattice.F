@@ -139,6 +139,7 @@ module R_lattice
  integer :: RIM_ng
  integer :: RIM_id_epsm1_reference
  integer :: RIM_n_rand_pts
+ integer :: RIM_sphe_n_rand_pts
  logical :: RIM_is_diagonal
  real(SP):: RIM_RL_vol
  real(SP):: RIM_epsm1(3)

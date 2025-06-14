@@ -171,7 +171,7 @@ subroutine K_diago_driver(iq,W,X_static)
    if(.not.BS_K_coupling) BS_mat_dim = BS_K_dim(i_BS_mat)
    if(     BS_K_coupling) BS_mat_dim = BS_H_dim
    !
-   ! call BSS_n_eig_init()
+   call BSS_n_eig_init()
    !
    ! Allocation (BS_R and BS_E)
    !===========================
@@ -571,7 +571,7 @@ subroutine K_diago_driver(iq,W,X_static)
    !
    subroutine K_local_init()
      ! 
-     call BSS_n_eig_init()
+     BSS_n_eig=BSS_n_eig_Input
      !
      !
      K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)

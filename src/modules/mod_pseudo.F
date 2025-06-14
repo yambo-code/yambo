@@ -64,10 +64,6 @@ module pseudo
  integer,     allocatable:: qe_atoms_map(:,:)
  type(bec_type), allocatable:: becp(:,:)
  !
- ! PW (OLD)
- !=========
- complex(SP), allocatable :: Vnl(:,:,:,:,:)
- !
  contains
    !
    ! Abinit (OLD)

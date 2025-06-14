@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2021 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 !
 subroutine K_driver_init(what,iq,Ken,Xk)
  !
@@ -13,12 +13,12 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match,STRING_split
- use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix_format,BSS_uses_DbGd,BSS_uses_FKE,BSS_ydiago_solver,&
+ use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix_format,BSS_uses_DbGd,BSS_uses_FKE,BSS_ldiago_solver,&
 &                       BSS_slepc_pseudo_herm,BSS_slepc_double_grp,run_Slepc,BSS_mode,BSS_first_eig,&
 &                       l_abs_prop_chi_bse,l_eels_can_be_computed,l_eels_from_inversion,&
 &                       BSS_kernel_IO_on_the_fly,BSS_kernel_stored_size,BSS_slepc_approach
  use BS,           ONLY:BSE_L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
-&                       BS_perturbative_SOC,l_BS_magnons,l_BS_photolum,BSK_IO_mode,&
+&                       BS_perturbative_SOC,l_BS_magnons,l_BS_photolum,BSK_IO_mode,l_BSE_kernel_full,&
 &                       BS_cpl_K_exchange,BS_n_g_exch,BS_res_K_exchange,BS_K_coupling,BS_res_ares_n_mat,&
 &                       BS_n_eh_spaces,l_BS_ares_from_res,BS_bands,BS_K_anti_resonant
  use TDDFT,        ONLY:FXC_is_retarded,FXC_n_g_corr,l_Fxc_from_Vxc
@@ -26,7 +26,10 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use D_lattice,    ONLY:i_time_rev,i_space_inv,l_3D
 #if defined _RT
  use drivers,      ONLY:l_rt_carriers_in_use
- use RT_control,   ONLY:NEQ_Kernel,EQ_Transitions,EQ_NoOcc,NEQ_Residuals,RT_BSE_Occ_Mode
+ use RT_control,   ONLY:NEQ_Kernel,EQ_Transitions,EQ_NoOcc,ALL_NoOcc,NEQ_Residuals,RT_BSE_Occ_Mode
+#endif
+#if defined _CUDA
+ use TDDFT,        ONLY:FXC_mode
 #endif
 #if defined _CUDA
  use TDDFT,        ONLY:FXC_mode
@@ -144,15 +147,20 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !-----------------------------
  ! Developer options. Without the code works in default mode
  ! With the user can switch to experimental coding
- call parser('ImposeAsym',l_flag)
- if (l_flag)        l_BS_ares_from_res=.FALSE.
+ call parser('ImposeFullBSE',l_BSE_kernel_full)
+ call parser('ImposeAsymBSE',l_flag)
+
+ ! In the resonat only case l_BSE_ares_from_res=.true.
+ ! This is needed to switch off all the lines related to the excplicit calculation of the ARES part
+ ! (see io_BS_PAR_init for example)
  !
- if (iq/=1.and.i_time_rev==0.and.i_space_inv==0 )  l_BS_ares_from_res=.FALSE.
- if (l_BS_photolum)                                l_BS_ares_from_res=.FALSE.
- if (l_BS_magnons.and.n_sp_pol==2)                 l_BS_ares_from_res=.FALSE.
- ! The next line is to switch off sections of the code due to the calculation
- ! of the ARES part without checking the BSE_mode (see io_BS_PAR_init for example)
- if (trim(BSE_mode)=="resonant")                   l_BS_ares_from_res=.TRUE.
+ ! In all other cases the code checks what to do
+ if (.not.trim(BSE_mode)=="resonant") then
+   if (l_flag)                                       l_BS_ares_from_res=.FALSE.
+   if (iq/=1.and.i_time_rev==0.and.i_space_inv==0 )  l_BS_ares_from_res=.FALSE.
+   if (l_BS_photolum)                                l_BS_ares_from_res=.FALSE.
+   if (l_BS_magnons.and.n_sp_pol==2)                 l_BS_ares_from_res=.FALSE.
+ endif
  !
  ! I need ARES and I cannot get it from RES
  ! 
@@ -240,6 +248,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  NEQ_Residuals=STRING_match(RT_BSE_Occ_Mode,"r").and.allocated(Ken%fo)
  call parser('ForceEqTrans',EQ_Transitions)
  call parser('ForceEqNoOcc',EQ_NoOcc)
+ call parser('ForceAllNoOcc',ALL_NoOcc)
 #endif
  !
  ! SLEPC
@@ -280,7 +289,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  endif
  !
 #if defined _ELPA
- if ( index(BSS_mode,'d')/=0 .and. BSS_ydiago_solver=='e' .and. BSS_first_eig>1) then
+ if ( index(BSS_mode,'d')/=0 .and. BSS_ldiago_solver=='e' .and. BSS_first_eig>1) then
    call warning('ELPA does not support BSS_First_eig>1')
    BSS_first_eig=1
  endif

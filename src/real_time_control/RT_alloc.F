@@ -22,10 +22,10 @@ subroutine RT_alloc(en,what)
 &                         RT_RTA_H_occ_infty,l_RT_relax_time_approx
  use RT_lifetimes,   ONLY:RT_EL_lifetimes_alloc,RT_PH_lifetimes_alloc
  use real_time,      ONLY:RT_levels,RT_is_dynamically_dephased,&
-&                         Ho_plus_Sigma,H_EQ,H_pseudo_eq,RT_Vnl_xc,HARTREE0,XC0,G_lesser_reference,&
+&                         Ho_plus_Sigma,H_EQ,H_field,H_pseudo_eq,RT_Vnl_xc,HARTREE0,XC0,G_lesser_reference,&
 &                         dG_lesser,G_lesser,MEM_pointer,G_MEM_steps,REF_V_xc_sc,REF_V_hartree_sc,rho_reference,&
 &                         magn_reference,RT_bands,RT_nk,l_RT_is_WFfree,l_RT_rotate_DM,&
-&                         l_velocity_gauge_corr
+&                         l_velocity_gauge_corr,dG_avg
  !
 #include<y_memory.h>
  !
@@ -72,13 +72,17 @@ subroutine RT_alloc(en,what)
    !
    YAMBO_ALLOC(H_EQ,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nk(1):nk(2),n_sp_pol))
    !
+   YAMBO_ALLOC(H_field,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nk(1):nk(2),n_sp_pol))
+   !
    if (l_velocity_gauge_corr) then
      YAMBO_ALLOC(H_pseudo_eq,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
    endif
    !
    if(l_use_Hxc_collisions) then
      YAMBO_ALLOC(RT_Vnl_xc,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     RT_Vnl_xc=(0._SP,0._SP)
+     RT_Vnl_xc=cZERO
+     YAMBO_ALLOC(dG_avg,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
+     dG_avg=cZERO
    endif
    !
    YAMBO_ALLOC(HARTREE0,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
@@ -88,9 +92,9 @@ subroutine RT_alloc(en,what)
    XC0=cZERO
    !
    ! G's ...
-   YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
-   YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nk(1):nk(2),G_MEM_steps))
-   YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nk(1):nk(2),G_MEM_steps))
+   YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+   YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nk(1):nk(2),n_sp_pol,G_MEM_steps))
+   YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nk(1):nk(2),n_sp_pol,G_MEM_steps))
    G_lesser_reference=cZERO
    dG_lesser         =cZERO
    G_lesser          =cZERO

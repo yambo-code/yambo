@@ -55,7 +55,7 @@ integer function io_RT_components(what,ID)
  use IO_m,           ONLY:io_sec,read_is_on,write_is_on,io_file
  use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step,RT_carriers,RT_nbands,G_MEM_steps
  use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,Gless_RESTART_RT_IO_t,OBS_RT_IO_t,CACHE_OBS_steps_now,&
-&                         CACHE_OBS_steps,RT_DB_file_name,Gless_RT_IO_t,&
+&                         Vbands_RT_IO_t,CACHE_OBS_steps,RT_DB_file_name,Gless_RT_IO_t,SAVE_Vb_history,&
 &                         RT_DB_name,RT_define_the_IO_DB_identifier,RT_do_IO,RT_current_DB_identifier,RT_return_db_ID
 #if defined _PAR_IO
 #endif
@@ -73,7 +73,7 @@ integer function io_RT_components(what,ID)
  !
  ! Work Space
  character(schlen)     ::db_name
- integer               ::ik,db_kind,T_size,G_IO_steps,ID_frag
+ integer               ::ik,db_kind,T_size,G_IO_steps
  logical               ::loading_carr_before_neq
  integer, external     ::variables_RT_dynamic
  !
@@ -99,7 +99,7 @@ integer function io_RT_components(what,ID)
  !
  ! ACTION
  !========
- if (RT_do_IO("ANY_G")) then 
+ if (RT_do_IO("ANY_G").or.RT_do_IO("ANY_Vb")) then 
    io_RT_components=io_connect(desc="RT_"//trim(RT_DB_name(RT_current_DB_identifier)),type=db_kind,ID=ID)
    if (io_RT_components/=0) goto 1
  else
@@ -150,6 +150,8 @@ integer function io_RT_components(what,ID)
      if (io_RT_components/=0) goto 1
    endif
    !
+   if (RT_do_IO("V_bands"))           call io_RT_components_TIME_points(ID,T_size,.FALSE.,SAVE_Vb_history,Vbands_RT_IO_t)
+   !
    if (RT_do_IO("G_lesser"))          call io_RT_components_TIME_points(ID,T_size,.FALSE.,.TRUE.,Gless_RT_IO_t)
    !
    if (RT_do_IO("G_lesser_RESTART"))  call io_RT_components_TIME_points(ID,T_size,.FALSE.,.FALSE.,Gless_RESTART_RT_IO_t)
@@ -164,15 +166,6 @@ integer function io_RT_components(what,ID)
  !
  ! 3rd SECTION
  !=============
- if (RT_do_IO("K_SECTION")) then
-#if defined _PAR_IO
-   ID_frag=ID
-#else
-   ! === deal with K-fragments ===
-   ik = max(1,maxval(io_sec(ID,:))-2)
-   call io_fragment(ID,ID_frag,i_fragment=ik)
-#endif
- endif
  !
 #if defined _ELPH_ITERATIVE
  !
@@ -182,15 +175,23 @@ integer function io_RT_components(what,ID)
    !
    ! This should be replaced by call THETA_IO
    !
-   call def_variable_bulk(ID_frag,"RT_THETA_K"//trim(intc(ik)),4,(/2,2*nqbz*ph_modes,RT_nbands,RT_nbands/),SP)
-   call  io_variable_bulk(ID_frag,4,C3=THETA_matrix(:,:,:,ik))
+   call def_variable_bulk(ID,"RT_THETA_K"//trim(intc(ik)),4,(/2,2*nqbz*ph_modes,RT_nbands,RT_nbands/),SP)
+   call  io_variable_bulk(ID,4,C3=THETA_matrix(:,:,:,ik))
  endif
  !
 #endif
  !
  ! Lesser Green Function
  !=======================
- if (RT_do_IO("ANY_G")) call io_RT_components_G_lesser(ID_frag,T_size)
+ if (RT_do_IO("ANY_G")) call io_RT_components_G_lesser(ID,T_size)
+ !
+#if defined _NL
+ !
+ ! Vbands
+ !========
+ if (RT_do_IO("ANY_Vb")) call io_RT_components_V_bands(ID,T_size)
+ !
+#endif
  !
  ! Carrier components
  !====================
@@ -212,9 +213,6 @@ integer function io_RT_components(what,ID)
  !
  ! End
  !=====
-#if !defined _PAR_IO
- if (RT_do_IO("K_SECTION")) call io_fragment_disconnect(ID,ID_frag)
-#endif
 1 call io_disconnect(ID=ID)
  call timing('io_RT_components',OPR='stop')
  !

@@ -9,7 +9,7 @@ subroutine INIT_activate()
  !
  use BS_solvers,     ONLY:BSS_mode
  use QP_m,           ONLY:QP_solver,COHSEX_use_empties
- use stderr,         ONLY:intc,STRING_match
+ use stderr,         ONLY:STRING_match
  use global_XC,      ONLY:WF_exx_fraction,WF_exx_screening
  use drivers,        ONLY:l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bss,&
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,l_rim_w,&
@@ -147,7 +147,7 @@ subroutine INIT_activate()
  !
  !Col CUTOFF 
  !
- if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTRadius CUTCylLen CUTwsGvec CUTCol_test')
+ if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTRadius CUTCylLen CUTwsGvec CUTCol_test EpsEnv')
  !
  !XX
  !
@@ -223,8 +223,8 @@ subroutine INIT_activate()
    call initactivate(1,'BSENGexx ALLGexx')
    call initactivate(1,'Qdirection QShiftOrder')
    !
-   if(l_td_hf.or.l_td_sex) call initactivate(1,'BSENGBlk')
-   if(l_td_sex)            call initactivate(1,'WehDiag WehCpl')
+   if(l_td_hf.or.l_td_sex) call initactivate(1,'BSENGBlk WehCpl')
+   if(l_td_sex)            call initactivate(1,'WehDiag')
    if(l_alda_fxc) then
      call initactivate(1,'BSENGfxc FxcLibxc FxcMode UseNLCC')
      if( (WF_exx_fraction>0.) .or. (WF_exx_screening>0.) ) call initactivate(1,'BSENGBlk WehDiag WehCpl')
@@ -261,7 +261,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
-   call initactivate(1,'BSEQptR BSEBands BSKCut BSKIOmode BSEEhEny BSehWind NoDiagSC')
+   call initactivate(1,'BSEQptR BSEBands BSEHoleBands BSEElecBands BSKCut BSKIOmode BSEEhEny BSehWind NoDiagSC')
    !
 #if defined _RT
    call initactivate(1,'RTOccMode ForceEqTrans')
@@ -285,7 +285,7 @@ subroutine INIT_activate()
    !
    if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSEPSInvTrs BSSInvPFratio BSSInvKdiag')
    if (index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.index(BSS_mode,'o')/=0)  call initactivate(1,'WRbsWF BSSPertWidth')
-   if (index(BSS_mode,'d')/=0)  call initactivate(1,'BSSydiaLib BSSNEig BSSEnRange BSSFirstEig')
+   if (index(BSS_mode,'d')/=0)  call initactivate(1,'BSSldiaLib BSSNEig BSSEnRange BSSFirstEig')
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer BSHayItrIO BSHayItrMAX')
    if (index(BSS_mode,'s')/=0)  then
      call initactivate(1,'BSSNEig BSSEnTarget BSSSlepcApproach BSSSlepcPrecondition BSSSlepcExtraction')
@@ -366,7 +366,7 @@ subroutine INIT_activate()
 #if defined _QED
    if (l_elphoton_corr) then
      if (l_gw0) then
-       call initactivate(1,'FFTGvecs RandQpts QEDRLvcs GbndRnge GDamping dScStep DysSolver') 
+       call initactivate(1,'FFTGvecs RandQptsSphe QEDRLvcs GbndRnge GDamping dScStep DysSolver') 
        if (trim(QP_solver)=="g") then
          call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
        else
@@ -379,20 +379,24 @@ subroutine INIT_activate()
    endif
 #endif
    !
+   if (l_HF_and_locXC.or.l_elel_corr) then
+     call INIT_QP_ctl_switch('G')
+#if defined _RT
+     call INIT_RT_ctl_switch('G')
+#endif
+   endif
+   !
    if (l_elel_corr) then
      !
      call INIT_QP_ctl_switch('X')
-     call INIT_QP_ctl_switch('G')
-     !
 #if defined _RT
      call INIT_RT_ctl_switch('X')
-     call INIT_RT_ctl_switch('G')
 #endif
      !
      call initactivate(1,'BoseCut ShiftedPaths')
      !
      if (l_gw0) then
-       if (.not.l_cohsex.or.COHSEX_use_empties) call initactivate(1,'GbndRnge') 
+       if ((.not.l_cohsex).or.COHSEX_use_empties) call initactivate(1,'GbndRnge') 
        if (.not.l_cohsex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
        if (.not.l_cohsex) call initactivate(1,'dScStep') 
        if (.not.l_elphoton_corr) then
@@ -435,7 +439,7 @@ subroutine INIT_activate()
    if (l_elph_corr) then
      call INIT_QP_ctl_switch('G')
      call initactivate(1,'DysSolver')
-     call initactivate(1,'GphBRnge FANdEtresh DWdEtresh ElPhModes GDamping dScStep ExtendOut ElPhRndNq RandQpts')
+     call initactivate(1,'GphBRnge FANdEtresh DWdEtresh ElPhModes GDamping dScStep ExtendOut ElPhRndNq RandQptsSphe')
      call initactivate(1,'GkkpDB WRgFsq NewtDchk OnMassShell')
    endif
    if (trim(QP_solver)=="g".and.l_elph_corr) then
@@ -464,7 +468,7 @@ subroutine INIT_activate()
  !
  ! Collisions
  !
- if (l_eval_collisions) call initactivate( 0,'COLLBands')
+ if (l_eval_collisions) call initactivate( 0,'COLLBands COLLHoleBands COLLElecBands COLLBseMem')
  !
  if ( (l_eval_collisions.or.l_real_time).and.l_elel_scatt ) call initactivate(1,'PlasmaPerc')
  !
@@ -531,16 +535,16 @@ subroutine INIT_activate()
    call INIT_RT_ctl_switch('G')
    !
    call initactivate(1,'RTskipImposeN RTeeImposeE InducedField')
-   call initactivate(1,'Gauge VelGaugeCorr VelGaugeDiam PfromJ RTUpdateSOC RTUpdateE SaveGhistory')
+   call initactivate(1,'Gauge VelGaugeCorr VelGaugeNoDiam PfromJ RTgradk RTUpdateSOC RTUpdateE SaveGhistory')
    call initactivate(1,'RTEqScatt RTImpForMet RTzeroTempRef RTskipPHabs RTEvalEnergy RTEvalEntropy')
    call initactivate(1,'dTupdateTime dTupdateTimeSet dTupdateJump dTupdateTresh dT_MAX dT_SET')
    if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) then
      call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp RelaxTimeApprox RTAtemp RTAchem LifeFitTemp')
    endif
-   if (l_elph_scatt) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
+   if (l_elph_scatt) call initactivate(1,'MemTresh RandQptsSphe RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'EERimPerc')
    !
-   call initactivate(1,'RTBands Integrator GrKind TwoAlph RTehEny ScattTresh')
+   call initactivate(1,'RTBands RTHoleBands RTElecBands Integrator GrKind TwoAlph RTehEny ScattTresh')
    call initactivate(1,'RADLifeTime RADmagnific PhLifeTime DephCVonly DephEThresh DephTRange')
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh SPINprojected')
    call initactivate(1,'IOtime IOCachetime')
@@ -558,17 +562,19 @@ subroutine INIT_activate()
  !
 #if defined _NL
  if (l_nl_optics) then
-   call initactivate(1,'FFTGvecs NLBands NLverbosity NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
-   call initactivate(1,'TestOSCLL UseSymm')
+   call initactivate(1,'FFTGvecs NLBands NLHoleBands NLElecBands NLverbosity NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
+   call initactivate(1,'TestOSCLL UseSymm VelGaugeNoDiam')
    if(.not.l_nl_p_and_p) call initactivate(1,'NLEnRange NLEnSteps NLrotaxis NLAngSteps NLMaxAng')
+   if(     l_nl_p_and_p) call initactivate(1,'IOtime IOCachetime SaveVbhistory')
    call initactivate(1,'NLDamping RADLifeTime UseDipoles FrSndOrd NoComprCOLL COLLCut EvalCurrent InducedField') 
    call initactivate(1,'FrPolPerdic TestOSCLL Gauge RADLifeTime HARRLvcs EXXRLvcs CORRLvcs') 
    call init_QP_ctl_switch('G')
+   !
+   do i1=1,n_ext_fields
+     call Afield_activate(i1)
+   enddo
+   !
  endif
- !
- do i1=1,n_ext_fields
-   call Afield_activate(i1)
- enddo
  !
 #endif
  !
@@ -591,26 +597,6 @@ subroutine INIT_activate()
  !
  contains
    !
-#if defined _RT || defined _NL
-   !
-   subroutine Afield_activate(i1)
-     integer     ::i1
-     character(6)::field
-     field='Field'//trim(intc(i1))
-     call initactivate(1,field//'_Freq')
-     call initactivate(1,field//'_NFreqs')
-     call initactivate(1,field//'_DFreq')
-     call initactivate(1,field//'_Int')
-     call initactivate(1,field//'_Width')
-     call initactivate(1,field//'_FWHM')
-     call initactivate(1,field//'_kind')
-     call initactivate(1,field//'_pol')
-     call initactivate(1,field//'_Dir')
-     call initactivate(1,field//'_Dir_circ')
-     call initactivate(1,field//'_Tstart')
-   end subroutine
-   !
-#endif
    !
    subroutine CPU_activate(what)
      character(*) :: what 

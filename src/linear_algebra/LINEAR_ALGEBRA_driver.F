@@ -205,9 +205,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    !
    if (idriver==SVD_INV) then
      if (present(M_slk)) then
-       call SERIAL_SVD_inversion(N,M_slk%blc(:,:,M_slk%I),SVD_digits)
+       call SERIAL_SVD(N,M_slk%blc(:,:,M_slk%I),'inv',SVD_digits)
      else
-       call SERIAL_SVD_inversion(N,M,SVD_digits)
+       call SERIAL_SVD(N,M,'inv',SVD_digits)
      endif
    endif
    !

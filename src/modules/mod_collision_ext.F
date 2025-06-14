@@ -17,8 +17,9 @@ module collision_ext
  implicit none
  !
  integer :: COLL_bands(2)
+ integer :: COLL_hole_bands(2)
+ integer :: COLL_elec_bands(2)
  integer :: COLL_ID
- integer :: LAST_COLL_sync = 0
  integer :: PAR_COLL_min   = 0
  !
  ! Cut off on exchange matrix elements
@@ -33,6 +34,8 @@ module collision_ext
  logical :: COLLISIONS_HXC_MB=.FALSE.
  logical :: COLLISIONS_HXC_use_TDDFT=.FALSE.
  logical :: COLLISIONS_CV_only=.FALSE.
+ logical :: COLLISIONS_FEW_only=.FALSE.
+ logical :: COLLISIONS_from_BSE=.FALSE.
  logical :: COLLISIONS_load_SP=.FALSE.  ! Force loading of collision in single precision
  logical :: COLLISIONS_compr  =.FALSE. ! If parallel-io is used collisions in memory are compressed
  !
@@ -51,16 +54,16 @@ module collision_ext
  type COLLISIONS_element
    integer               :: I=0         ! State Index 
    integer               :: N=0         ! Linear Dimension
-   character,      allocatable  :: table(:,:,:)
+   character,      allocatable  :: table(:,:,:,:)
    complex(SP),  allocatable  :: v_c(:)      
    complex(SP6), allocatable  :: v_c_SP(:)    ! SEX and HF only in single precision
-   complex(SP), allocatable  :: v3_c(:,:,:)
+   complex(SP), allocatable  :: v3_c(:,:,:,:)
    real(SP)   , allocatable  :: v_r(:)       ! GW NEQ collisions
-   real(SP)   , allocatable  :: v3_r(:,:,:)
+   real(SP)   , allocatable  :: v3_r(:,:,:,:)
  end type
  !
  type COLLISIONS_group
-   integer               :: D(3,2)=0    ! Dimension (v3 of corresponding COLLISIONS_element)
+   integer               :: D(3,4)=0    ! Dimension (v3 of corresponding COLLISIONS_element)
    character(schlen)     :: name="none"
    integer               :: kind=0
    integer               :: N=0         ! # of collisions (dimension of linked COLLISIONS_element)
@@ -96,8 +99,8 @@ module collision_ext
  ! ====================================
  integer :: ng_oscll                  ! number of G-vectors in the Oscillators
  complex(SP), allocatable :: W(:,:,:) ! screened interaction
- complex(SP), allocatable :: OSCLL(:,:,:,:,:) ! Oscillators
- complex(SP), allocatable :: OSCLL_k(:,:,:,:) ! Oscillators in k, just for the evaluation
+ complex(SP), allocatable :: OSCLL(:,:,:,:,:,:) ! Oscillators
+ complex(SP), allocatable :: OSCLL_k(:,:,:,:)   ! Oscillators in (i_sp_pol,ik), just for the evaluation
  !
  contains
    !

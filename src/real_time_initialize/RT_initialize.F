@@ -5,14 +5,14 @@
 !
 ! Authors (see AUTHORS file for details):
 !
-subroutine RT_initialize(E,k,q)
+subroutine RT_initialize(E,k,q,Dip)
  !
  use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_hartree,l_use_Hxc_collisions,&
 &                         l_sc_is_libDFT,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_rt_carriers_in_use,l_phel_scatt
 #if defined _PHEL
  use drivers,        ONLY:l_phel_scatt
 #endif
- use pars,           ONLY:SP,pi,schlen
+ use pars,           ONLY:SP,pi,schlen,n_fields_defs_max
  use stderr,         ONLY:STRING_split
  use units,          ONLY:HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,AUT2FS
  use stderr,         ONLY:intc
@@ -20,6 +20,7 @@ subroutine RT_initialize(E,k,q)
  use QP_CTL_m,       ONLY:QP_ctl_user
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
+ use DIPOLES,        ONLY:DIPOLE_t
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:levels
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
@@ -30,7 +31,7 @@ subroutine RT_initialize(E,k,q)
 &                         Life_MEM_steps,l_RT_lifetimes_Tfit,l_RT_skip_ph_abs_lifetimes,l_RT_iterative_ELPH_lifetimes
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,Gr_kind,       &
-&                         RAD_LifeTime,Phase_LifeTime,         &
+&                         RAD_LifeTime,Phase_LifeTime,l_length_grad_k,NE_i_last_field,        &
 &                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_FineGd,DbGd_EE_Nk_table,    &
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_impose_E,DbGd_EE_percent,     &
 &                         l_RT_update_Energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
@@ -53,13 +54,14 @@ subroutine RT_initialize(E,k,q)
 #include<y_memory.h>
  !
  type(levels), intent(inout) :: E
- type(bz_samp),intent(in)    :: q,k
+ type(bz_samp),   intent(in) :: q,k
+ type(DIPOLE_t),  intent(in) :: Dip
  !
  ! Work space
  !
- integer                  :: i1,N_T_samplings,ik,NK_cpu(PAR_COM_Xk_ibz_INDEX%n_CPU)
- character(schlen)        :: MSG_ch,field_defs(3)
- real(SP)                 :: T_memory
+ integer                  :: i1,i_defs,N_T_samplings,ik,NK_cpu(PAR_COM_Xk_ibz_INDEX%n_CPU)
+ character(schlen)        :: MSG_ch,field_defs(n_fields_defs_max)
+ real(SP)                 :: T_memory,sigma_eff,U_pond
  logical                  :: l_Full_RT_T_evolution,l_skip_it,l_velocity_gauge_tmp
  real(SP), parameter      :: thresh=1.E-5_SP
 #if defined _RT_SCATT
@@ -98,6 +100,7 @@ subroutine RT_initialize(E,k,q)
  call parser('RTzeroTempRef',        l_RT_eq_is_zero_temp)
  call parser('RTEqScatt',            l_RT_include_eq_scatt)
  call parser('RTskipPHabs',          l_RT_skip_ph_abs_lifetimes)
+ call parser('RTgradk',              l_length_grad_k)
  !
  if (.not.l_RT_skip_ph_abs_lifetimes) l_RT_skip_ph_abs_lifetimes=.not.(Bose_Temp>0..or.l_phel_scatt)
  !
@@ -126,6 +129,8 @@ subroutine RT_initialize(E,k,q)
    PAR_G_k_range(1)=RTibz%k_range(PAR_G_k_range(1),1)
    PAR_G_k_range(2)=RTibz%k_range(PAR_G_k_range(2),2)
  endif
+ !
+ if (l_length_grad_k .and. .not.allocated(k%k_table))  call k_build_up_BZ_tables(k)
  !
  ! Integrator FLAGS
  !==================
@@ -220,38 +225,50 @@ subroutine RT_initialize(E,k,q)
  !
  l_NE_with_fields=.false.
  !
+ ! Initial check for fields defined from file
+ do i1=1,n_ext_fields
+   Efield(i1)%ef_name=trim(Efield(i1)%ef_name)
+   call STRING_split(Efield(i1)%ef_name,field_defs)
+   if ( field_defs(1)/='FROM_FILE') cycle
+   call RT_load_field_from_file_init(field_defs(2))
+ enddo
+ !
+ NE_i_last_field=0
+ !
  do i1=1,n_ext_fields
    !
    Efield(i1)%ef_name=trim(Efield(i1)%ef_name)
    !
    MSG_ch="Field#"//trim(intc(i1))//" "//trim(Efield(i1)%ef_name)
    !
-   if(trim(Efield(i1)%ef_name)/='none') then
+   call STRING_split(Efield(i1)%ef_name,field_defs)
+   !
+   if(trim(field_defs(1))=='none') cycle
      !
-     if (.not.field_is_ok( Efield(i1)) ) call error(trim(MSG_ch)//' not supported or polarization is wrong')
+     if (.not.field_is_ok( Efield(i1) ) ) call error(trim(MSG_ch)//' not supported or polarization is wrong')
      !
      l_NE_with_fields=.true.
      !
-     call STRING_split(Efield(i1)%ef_name,field_defs)
-     !
-     if(field_defs(1)/='DELTA'.and.Efield(i1)%frequency(1)==0._SP) &
+     if( (field_defs(1)/='DELTA'.and.field_defs(1)/='GAUSS'.and.       &
+&         field_defs(1)/='RECT' .and.field_defs(1)/='FROM_FILE')       &
+&       .and. Efield(i1)%frequency(1)==0._SP)                          &
 &      call error(trim(MSG_ch)//" field has zero frequency.")
      !
      if(Efield(i1)%intensity==0._SP) &
 &      call warning(trim(MSG_ch)//" field has zero intensity.")
      !
-     if( all( abs(Efield(i1)%versor(:))<epsilon(1.) ) ) &
+     if( all( abs(Efield(i1)%versor(:))<epsilon(1._SP) ) ) &
 &      call error(trim(MSG_ch)//" field has undefined direction.")
      !
      if ( ((field_defs(1)=='QSSIN') .or. (field_defs(1)=='GAUSS') .or. (field_defs(1)=='PULSE')) &
-&        .and. Efield(i1)%width<epsilon(1.)  ) &
+&        .and. Efield(i1)%width<epsilon(1._SP)  ) &
 &      call error(trim(MSG_ch)//" field has undefined duration.")
      !
      Efield(i1)%versor   =normalize_v(Efield(i1)%versor)
      Efield(i1)%amplitude=Efield_strength(Efield(i1)%intensity,'AU')
-     !
+     ! t_initial_indx cannot be 1, a previous time step is always needed
+     ! see definition of "step_case" in function "theta_function" in src/modules/mod_functions.F
      Efield(i1)%t_initial_indx=max(nint(Efield(i1)%t_initial/RT_step)+1,2)
-     !
      Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx-1)*RT_step
      !
      call Check_symmetries(Efield(i1)%versor,"electric")
@@ -259,16 +276,28 @@ subroutine RT_initialize(E,k,q)
      if ( field_defs(1)=='DELTA' ) then
        Efield(i1)%t_final_indx=Efield(i1)%t_initial_indx+2
        Efield(i1)%t_final=RT_step*(Efield(i1)%t_final_indx-1)
-     else if ( (field_defs(1)=='QSSIN') .or. (field_defs(1)=='QSFIEL') .or. &
-     &         (field_defs(1)=='GAUSS') .or.                                     &
+     else if ( (field_defs(1)=='QSSIN') .or. (field_defs(1)=='QSFIELD') .or. &
+     &         (field_defs(1)=='GAUSS') .or.                                 &
+     &         (field_defs(1)=='RECT')  .or. (field_defs(1)=='RECTSIN') .or. &
      &         (field_defs(1)=='PULSE') .or. (field_defs(1)=='SPULSE')      ) then
+       ! This is a first evaluation of the total fluence
+       ! The time dependent fluence is evaluated during the dynamics
        call RT_Fluence_and_PI_kind(E,i1)
+     else if ( field_defs(1)=='FROM_FILE') then
+       call RT_load_field_from_file(field_defs(2),i1)
      else
        Efield(i1)%t_final_indx=    NE_steps
        Efield(i1)%t_final=RT_step*(NE_steps-1)
      endif
      !
-   endif
+     ! DEBUG <
+     do i_defs=1,n_fields_defs_max
+       if ( field_defs(i_defs)/="PRINT_TO_FILE" ) cycle
+       call RT_print_field_to_file_init(i1)
+     enddo
+     ! DEBUG >
+     !
+   NE_i_last_field=max(NE_i_last_field,Efield(i1)%t_final_indx)
    !
  enddo
  !
@@ -454,14 +483,20 @@ subroutine RT_initialize(E,k,q)
 &                  2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/),'[eV/fs]')
      call msg('r', trim(MSG_ch)//' elemental oscillation       ',EtoT(E=Efield(i1)%frequency(2)-&
 &                                                                       Efield(i1)%frequency(1))*AUT2FS,'[fs]')
-     call msg('r', trim(MSG_ch)//' width                       ',Efield(i1)%width*AUT2FS,'[fs]')
+     sigma_eff=sqrt((Efield(i1)%width**4+Efield(i1)%chirp**4)/Efield(i1)%width**2)
+     call msg('r', trim(MSG_ch)//' Fourier limited width       ',Efield(i1)%width*AUT2FS,'[fs]')
+     call msg('r', trim(MSG_ch)//' Real time  width            ',sigma_eff*AUT2FS,'[fs]')
      call msg('r', trim(MSG_ch)//' start time                  ',Efield(i1)%t_initial*AUT2FS,'[fs]')
      call msg('r', trim(MSG_ch)//' energy steps                ',Efield(i1)%n_frequencies)
      call msg('r', trim(MSG_ch)//' electric field              ',Efield(i1)%amplitude*AU2VMm1,'[V/m]')
      call msg('r', trim(MSG_ch)//' max intensity               ',Efield(i1)%intensity*AU2KWCMm2,'[kW/cm^2]')
      !
+     U_pond=Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency(1)**2
+     call msg('r', trim(MSG_ch)//' ponderomotive energy        ',U_pond*HA2EV,'[eV/mu]')
+     call msg('r', trim(MSG_ch)//' Adiabatic parameter         ',U_pond/Efield(i1)%frequency(1),'[1/mu]')
+     !
      if( (field_defs(1)=='QSSIN') .or. (field_defs(1)=='GAUSS') .or. (field_defs(1)=='DELTA') ) then
-       call msg('r', trim(MSG_ch)//' max fluence                 ',Efield(i1)%fluence,'[nJ/cm^2]')
+       call msg('r', trim(MSG_ch)//' max fluence                 ',Efield(i1)%fluence*AU2KWCMm2,'[nJ/cm^2]')
        call msg('r', trim(MSG_ch)//' area at selected Rabi trans.',Efield(i1)%pi_kind )
        call msg('r', trim(MSG_ch)//' final time                  ',Efield(i1)%t_final*AUT2FS,'[fs]')
        call msg('r', trim(MSG_ch)//' half maximum full width     ',Efield(i1)%width*2.*sqrt(2.*log(2.))*AUT2FS,'[fs]')

@@ -8,15 +8,16 @@
 subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  use drivers,       ONLY:l_eval_collisions
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,n_met_bands,n_full_bands
  use R_lattice,     ONLY:bz_samp
  use IO_int,        ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_RT,OPENMP_set_threads
  use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,&
-&                        PARALLEL_live_message,PARALLEL_MATRIX_distribute
- use collision_ext, ONLY:COH_collisions,HXC_collisions,GW_NEQ_collisions
+&                        PARALLEL_live_message,PARALLEL_MATRIX_distribute,&
+&                        PARALLEL_MATRIX_distribute_cv
+ use collision_ext, ONLY:COH_collisions,HXC_collisions,GW_NEQ_collisions,COLLISIONS_CV_only
  use matrix_operate,ONLY:UP_matrix_index
- use hamiltonian,   ONLY:B_mat_index
+ use hamiltonian,   ONLY:B_mat_index,B_mat_index_cv
  use real_time,     ONLY:RT_bands,l_RT_uses_E_FineGd
  use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,HEAD_q_cpu,COMM_copy,PAR_INDEX_copy,&
 &                        PAR_build_index,PP_indexes_reset
@@ -42,7 +43,8 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  ! Work space
  !
- integer              :: ib1,ib2,ik,nk_G_IO,nk_SERIAL,i_shift
+ integer              :: ib1,ib2,ik,nk_G_IO,nk_SERIAL,i_shift,&
+ &                       blim1(2),blim2(2)
  logical              :: CONSECUTIVE
  !
  CALL PARALLEL_structure(4,(/"k ","b ","q ","qp"/))
@@ -89,12 +91,12 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_WF_k)
  PAR_IND_WF_b_ID=PAR_COM_WF_b_INDEX%CPU_id
  !
- call PARALLEL_index(PAR_IND_B_mat_ordered,(/ UP_matrix_index(1,RT_bands(2)-RT_bands(1)+1)-1 /),&
+ call PARALLEL_index(PAR_IND_B_mat_ordered,(/ UP_matrix_index(1,RT_bands(2)-RT_bands(1)+1) /),&
 &                    COMM=PAR_COM_WF_b_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
  !
  call PARALLEL_live_message("Bands Matrix (ordered)",ENVIRONMENT="Real_Time",&
 &                           LOADED=PAR_IND_B_mat_ordered%n_of_elements(PAR_IND_WF_b_ID+1),&
-&                           TOTAL=UP_matrix_index(1,RT_bands(2)-RT_bands(1)+1)-1,&
+&                           TOTAL=UP_matrix_index(1,RT_bands(2)-RT_bands(1)+1),&
 &                           NCPU=PAR_COM_WF_b_INDEX%n_CPU)
  !
  YAMBO_ALLOC(PAR_IND_WF_b%n_of_elements,(PAR_COM_WF_b_INDEX%n_CPU))
@@ -104,7 +106,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  do ib1=RT_bands(1),RT_bands(2)
    do ib2=ib1,RT_bands(2)
-     if (PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1)-1 )) then
+     if (PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1) )) then
        if (.not.PAR_IND_WF_b%element_1D(ib1)) then
          PAR_IND_WF_b%element_1D(ib1)=.TRUE.
          PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)+1
@@ -148,7 +150,13 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
    !
  endif
  !
- call PARALLEL_MATRIX_distribute(PAR_COM_G_b_INDEX,PAR_IND_B_mat,RT_bands)
+ if (COLLISIONS_CV_only) then
+   blim1=(/RT_bands(1),maxval(n_met_bands)/)
+   blim2=(/minval(n_full_bands),RT_bands(2)/)
+   call PARALLEL_MATRIX_distribute_cv(PAR_COM_G_b_INDEX,PAR_IND_B_mat,blim1,blim2)
+ else
+   call PARALLEL_MATRIX_distribute(PAR_COM_G_b_INDEX,PAR_IND_B_mat,RT_bands)
+ endif
  !
  call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
  PAR_IND_DIPk_ibz_ID=PAR_IND_Xk_ibz_ID
@@ -156,14 +164,24 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  call PAR_build_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
  YAMBO_ALLOC(PAR_Xk_ibz_index,(Xk%nibz))
  call PAR_build_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
- do ib1=RT_bands(1),RT_bands(2)
-   do ib2=RT_bands(1),RT_bands(2)
-     if (PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,RT_bands) ) ) then
-        PAR_IND_WF_b%element_1D(ib1)=.TRUE.
-        PAR_IND_WF_b%element_1D(ib2)=.TRUE.
-     endif
+ !
+ if (COLLISIONS_CV_only) then
+   do ib1=blim1(1),blim1(2)
+     do ib2=blim2(1),blim2(2)
+       if (.not.PAR_IND_B_mat%element_1D( B_mat_index_cv(ib1,ib2,blim1,blim2) ) ) cycle
+       PAR_IND_WF_b%element_1D(ib1)=.TRUE.
+       PAR_IND_WF_b%element_1D(ib2)=.TRUE.
+     enddo
    enddo
- enddo
+ else
+   do ib1=RT_bands(1),RT_bands(2)
+     do ib2=RT_bands(1),RT_bands(2)
+       if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,RT_bands) ) ) cycle
+       PAR_IND_WF_b%element_1D(ib1)=.TRUE.
+       PAR_IND_WF_b%element_1D(ib2)=.TRUE.
+     enddo
+   enddo
+ endif
  !
  nk_G_IO=0
  PAR_G_k_range=0

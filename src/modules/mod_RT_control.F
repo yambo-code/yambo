@@ -19,7 +19,7 @@ module RT_control
  integer                  :: CACHE_OBS_steps
  integer                  :: CACHE_OBS_steps_now 
  !
- integer,parameter :: N_RT_databases=11 
+ integer,parameter :: N_RT_databases=13 
  integer           :: RT_DB_ID(N_RT_databases)= 0
  integer           :: RT_current_DB_identifier ! \in [1,...] pointing to the DB under I/O
  character(lchlen) :: RT_DB_file_name(N_RT_databases) = " "
@@ -29,12 +29,14 @@ module RT_control
                                                      "none                      ",&
                                                      "OBSERVABLES               ",&
                                                      "G_lesser_RESTART          ",&
-                                                     "G_lesser                  ",&
+                                                     "G_lesser_RESTART_K_section",&
                                                      "carriers                  ",&
                                                      "THETA                     ",&
                                                      "REFERENCE                 ",&
-                                                     "G_lesser_RESTART_K_section",&
-                                                     "G_lesser_K_section        "/)
+                                                     "G_lesser                  ",&
+                                                     "G_lesser_K_section        ",&
+                                                     "V_bands                   ",&
+                                                     "V_bands_K_section         "/)
  integer                  :: NE_i_start_time    = 1   ! restart point
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
  !                                                    ! the last evaluated point
@@ -59,9 +61,11 @@ module RT_control
  type(RT_IO_t),save  :: OUTPUT_RT_IO_t
  type(RT_IO_t),save  :: Gless_RESTART_RT_IO_t
  type(RT_IO_t),save  :: Gless_RT_IO_t
+ type(RT_IO_t),save  :: Vbands_RT_IO_t
  !
  ! G_lesser I/O
  logical                  :: SAVE_G_history
+ logical                  :: SAVE_Vb_history
  !
  ! J, P and M (spin) cache 
  !
@@ -77,6 +81,7 @@ module RT_control
  logical                 :: NEQ_Residuals=.FALSE.
  logical                 :: EQ_Transitions=.TRUE.
  logical                 :: EQ_NoOcc=.FALSE.
+ logical                 :: ALL_NoOcc=.FALSE.
  integer,      parameter :: N_RT_ctl_controls=3
  character(schlen)       :: RT_BSE_Occ_Mode="K"
  character(schlen)       :: RT_ctl_db(N_RT_ctl_controls)
@@ -132,12 +137,14 @@ module RT_control
      if (what=="M") RT_return_db_ID=4
      if (what=="OBSERVABLES") RT_return_db_ID=4
      if (what=="G_lesser_RESTART") RT_return_db_ID=5
-     if (what=="G_lesser") RT_return_db_ID=6
+     if (what=="G_lesser_RESTART_K_section") RT_return_db_ID=6
      if (what=="carriers") RT_return_db_ID=7
      if (what=="THETA") RT_return_db_ID=8
      if (what=="REFERENCE") RT_return_db_ID=9
-     if (what=="G_lesser_RESTART_K_section") RT_return_db_ID=10
+     if (what=="G_lesser") RT_return_db_ID=10
      if (what=="G_lesser_K_section") RT_return_db_ID=11
+     if (what=="V_bands") RT_return_db_ID=12
+     if (what=="V_bands_K_section") RT_return_db_ID=13
    end function
    !
    logical function RT_do_IO(what)
@@ -156,18 +163,22 @@ module RT_control
      if (what=="REFERENCE".and.RT_current_DB_identifier==9) RT_do_IO=.TRUE.
      !
      if (what=="DYN_VARS".and.(RT_current_DB_identifier>=4.and.RT_current_DB_identifier<=8)) RT_do_IO=.TRUE.
-     if (what=="DYN_VARS".and.(RT_current_DB_identifier==10.or.RT_current_DB_identifier==11)) RT_do_IO=.TRUE.
+     if (what=="DYN_VARS".and.(RT_current_DB_identifier>=10)                               ) RT_do_IO=.TRUE.
      if (what=="K_SECTION".and.(RT_current_DB_identifier==5.or.RT_current_DB_identifier==6&
-&                               .or.RT_current_DB_identifier==8.or.RT_current_DB_identifier==10&
-&                               .or.RT_current_DB_identifier==11)) RT_do_IO=.TRUE.
+&                               .or.RT_current_DB_identifier==8.or.RT_current_DB_identifier>=10)) RT_do_IO=.TRUE.
      !
      if (what=="ANY_G".and.(RT_current_DB_identifier==5.or.RT_current_DB_identifier==6)) RT_do_IO=.TRUE.
      if (what=="ANY_G".and.(RT_current_DB_identifier==10.or.RT_current_DB_identifier==11)) RT_do_IO=.TRUE.
-     if (what=="ANY_K_section".and.(RT_current_DB_identifier==10.or.RT_current_DB_identifier==11)) RT_do_IO=.TRUE.
+     if (what=="ANY_K_section".and.(RT_current_DB_identifier==6.or.RT_current_DB_identifier==11)) RT_do_IO=.TRUE.
      if (what=="G_lesser_RESTART".and.RT_current_DB_identifier==5) RT_do_IO=.TRUE.
-     if (what=="G_lesser".and.        RT_current_DB_identifier==6) RT_do_IO=.TRUE.
-     if (what=="G_lesser_RESTART_K_section".and.RT_current_DB_identifier==10) RT_do_IO=.TRUE.
+     if (what=="G_lesser_RESTART_K_section".and.RT_current_DB_identifier==6) RT_do_IO=.TRUE.
+     if (what=="G_lesser".and.        RT_current_DB_identifier==10) RT_do_IO=.TRUE.
      if (what=="G_lesser_K_section".and.        RT_current_DB_identifier==11) RT_do_IO=.TRUE.
+     !
+     if (what=="ANY_Vb".and.(RT_current_DB_identifier==12.or.RT_current_DB_identifier==13)) RT_do_IO=.TRUE.
+     if (what=="ANY_K_section".and.      RT_current_DB_identifier==13) RT_do_IO=.TRUE.
+     if (what=="V_bands".and.            RT_current_DB_identifier==12) RT_do_IO=.TRUE.
+     if (what=="V_bands_K_section".and.  RT_current_DB_identifier==13) RT_do_IO=.TRUE.
      !
    end function
    !
@@ -178,12 +189,14 @@ module RT_control
           (what=="M" .or.what=="OBSERVABLES") .or. &
           (what=="D" .or.what=="OBSERVABLES") ) RT_current_DB_identifier=4
      if (what=="G_lesser_RESTART")              RT_current_DB_identifier=5
-     if (what=="G_lesser")  RT_current_DB_identifier=6
+     if (what=="G_lesser_RESTART_K_section")    RT_current_DB_identifier=6
      if (what=="carriers")  RT_current_DB_identifier=7
      if (what=="THETA")     RT_current_DB_identifier=8
      if (what=="REFERENCE") RT_current_DB_identifier=9
-     if (what=="G_lesser_RESTART_K_section")     RT_current_DB_identifier=10
+     if (what=="G_lesser")  RT_current_DB_identifier=10
      if (what=="G_lesser_K_section")             RT_current_DB_identifier=11
+     if (what=="V_bands")                        RT_current_DB_identifier=12
+     if (what=="V_bands_K_section")             RT_current_DB_identifier=13
    end subroutine
    !
    subroutine RT_control_alloc(what)
@@ -231,6 +244,9 @@ module RT_control
          Gless_RT_IO_t%Time=rZERO
        endif
        !
+       YAMBO_ALLOC(Vbands_RT_IO_t%Time,(NE_steps))
+       Vbands_RT_IO_t%Time=rZERO
+       !
      endif
      !
    end subroutine RT_control_alloc
@@ -250,6 +266,7 @@ module RT_control
        YAMBO_FREE(OBS_RT_IO_t%Time)
        YAMBO_FREE(CARR_RT_IO_t%Time)
        YAMBO_FREE(Gless_RESTART_RT_IO_t%Time)
+       YAMBO_FREE(Vbands_RT_IO_t%Time)
      endif
      !
    end subroutine RT_control_free

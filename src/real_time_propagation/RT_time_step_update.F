@@ -19,7 +19,7 @@ subroutine RT_time_step_update( E )
  use RT_control,     ONLY:TIME_adjust
  use RT_output_m,    ONLY:TIME_STEP_desc
  use com,            ONLY:msg
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,n_sp_pol
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use parallel_int,   ONLY:PP_redux_wait
  use interfaces,     ONLY:DESC_write
@@ -32,7 +32,7 @@ subroutine RT_time_step_update( E )
  ! Work Space 
  ! 
  logical           :: l_Update_Time_Step_Manual
- integer           :: ib,ibp,ik,nT_updated,i_desc_ref
+ integer           :: ib,ibp,ik,i_sp_pol,nT_updated,i_desc_ref
  complex(SP)       :: dG_dT_max(2),dG_dT(2),ERROR,dG(3)
  real(SP)          :: dT_now,dT_previous,dT_next
 #if defined _RT_SCATT
@@ -54,18 +54,20 @@ subroutine RT_time_step_update( E )
  !
  if(l_update_time_step_manual) then
    !
+   do i_sp_pol=1,n_sp_pol
    do ik=1,RT_nk
      !
      if( .not.PAR_IND_Xk_ibz%element_1D(RTibz%k_map(ik)) ) cycle
      do ib=RT_bands(1),E%nbf(1)
        do ibp=E%nbf(1)+1,RT_bands(2)
-         dG_lesser(ib,ibp,ik,:)=cZERO
-         dG_lesser(ibp,ib,ik,:)=cZERO
-          G_lesser(ib,ibp,ik,:)=cZERO
-          G_lesser(ibp,ib,ik,:)=cZERO
+         dG_lesser(ib,ibp,ik,i_sp_pol,:)=cZERO
+         dG_lesser(ibp,ib,ik,i_sp_pol,:)=cZERO
+          G_lesser(ib,ibp,ik,i_sp_pol,:)=cZERO
+          G_lesser(ibp,ib,ik,i_sp_pol,:)=cZERO
        enddo
      enddo
      !
+   enddo
    enddo
    !
    dT_next=dT_now*RT_step_manual_prefactor
@@ -77,22 +79,24 @@ subroutine RT_time_step_update( E )
    dG_dT_max   =cZERO
    dG          =cZERO
    !
+   do i_sp_pol=1,n_sp_pol
    do ik=1,RT_nk
      !
      if( .not.PAR_IND_Xk_ibz%element_1D(RTibz%k_map(ik)) ) cycle
      !
      do ib=RT_bands(1),RT_bands(2)
        do ibp=RT_bands(1),RT_bands(2)
-         dG_dT(1)=(dG_lesser(ib,ibp,ik,i_MEM_prev)-dG_lesser(ib,ibp,ik,i_MEM_old))/dT_previous
-         dG_dT(2)=(dG_lesser(ib,ibp,ik,i_MEM_now)-dG_lesser(ib,ibp,ik,i_MEM_prev))/dT_now
+         dG_dT(1)=(dG_lesser(ib,ibp,ik,i_sp_pol,i_MEM_prev)-dG_lesser(ib,ibp,ik,i_sp_pol,i_MEM_old))/dT_previous
+         dG_dT(2)=(dG_lesser(ib,ibp,ik,i_sp_pol,i_MEM_now)-dG_lesser(ib,ibp,ik,i_sp_pol,i_MEM_prev))/dT_now
          if ( abs(dG_dT(2)) >  abs(dG_dT_max(2)) ) then
-           dG(1)=dG_lesser(ib,ibp,ik,i_MEM_old)
-           dG(2)=dG_lesser(ib,ibp,ik,i_MEM_prev)
-           dG(3)=dG_lesser(ib,ibp,ik,i_MEM_now)
+           dG(1)=dG_lesser(ib,ibp,ik,i_sp_pol,i_MEM_old)
+           dG(2)=dG_lesser(ib,ibp,ik,i_sp_pol,i_MEM_prev)
+           dG(3)=dG_lesser(ib,ibp,ik,i_sp_pol,i_MEM_now)
            dG_dT_max=dG_dT
          endif
        enddo
      enddo
+   enddo
    enddo
    !
    call PP_redux_wait(dG,COMM=PAR_COM_Xk_ibz_INDEX%COMM)

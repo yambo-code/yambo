@@ -49,4 +49,47 @@ subroutine PARALLEL_MATRIX_distribute(COMM,PAR_IND,nb,PAR_index,PAR_ID,PAR_n_ele
    PAR_n_elements=PAR_IND%n_of_elements(COMM%CPU_id+1)
  endif
  !
-end subroutine
+end subroutine PARALLEL_MATRIX_distribute
+!
+!
+subroutine PARALLEL_MATRIX_distribute_cv(COMM,PAR_IND,nb1,nb2,PAR_index,PAR_ID,PAR_n_elements)
+ !
+ use parallel_m,    ONLY:yMPI_comm,PP_indexes
+ use parallel_int,  ONLY:PARALLEL_index
+ use hamiltonian,   ONLY:B_mat_index_cv
+ !
+ implicit none
+ !
+ type(yMPI_comm)   :: COMM
+ type(PP_indexes) :: PAR_IND
+ integer          :: nb1(2),nb2(2)
+ !
+ integer, optional:: PAR_index(:,:)
+ integer, optional:: PAR_ID
+ integer, optional:: PAR_n_elements
+ !
+ ! Work space
+ !
+ integer        :: ib1,ib2,Nel
+ !
+ call PARALLEL_index(PAR_IND,(/ (nb1(2)-nb1(1)+1)*(nb2(2)-nb2(1)+1) /),COMM=COMM,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+ !
+ if (present(PAR_ID)) PAR_ID=COMM%CPU_id
+ !
+ if (present(PAR_index)) then
+   Nel=PAR_IND%n_of_elements(COMM%CPU_id+1)
+   PAR_index=0
+   Nel=0
+   do ib1=nb1(1),nb1(2)
+     do ib2=nb2(1),nb2(2)
+       if (PAR_IND%element_1D( B_mat_index_cv(ib1,ib2,nb1,nb2) ) ) then
+         Nel=Nel+1
+         PAR_index(ib1,ib2)=Nel
+       endif
+     enddo
+   enddo
+ endif
+ !
+ if (present(PAR_n_elements)) PAR_n_elements=PAR_IND%n_of_elements(COMM%CPU_id+1)
+ !
+end subroutine PARALLEL_MATRIX_distribute_cv

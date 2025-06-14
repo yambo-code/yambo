@@ -11,7 +11,7 @@ subroutine RT_IO_type_time_steps(what)
  use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,Gless_RESTART_RT_IO_t,OUTPUT_RT_IO_t,&
 &                         SETUP_RT_IO_type,CACHE_OBS_INTERVAL_time_INPUT,TIME_adjust,&
 &                         CACHE_OBS_INTERVAL_time,CACHE_OBS_steps,RT_control_free,&
-&                         RT_control_alloc,Gless_RT_IO_t,SAVE_G_history
+&                         RT_control_alloc,Vbands_RT_IO_T,Gless_RT_IO_t,SAVE_G_history
  ! 
  implicit none
  !
@@ -22,6 +22,7 @@ subroutine RT_IO_type_time_steps(what)
    call SETUP_RT_IO_type(CARR_RT_IO_t,who="CARR",what=what)
    call SETUP_RT_IO_type(OUTPUT_RT_IO_t,who="OUTPUT",what=what)
    call SETUP_RT_IO_type(Gless_RESTART_RT_IO_t,who="GF",what=what)
+   call SETUP_RT_IO_type(Vbands_RT_IO_t,who="Vb",what=what)
    call SETUP_RT_IO_type(OBS_RT_IO_t,who="OBS",what=what)
    if (SAVE_G_history) call SETUP_RT_IO_type(Gless_RT_IO_t,who="GF_history",what=what)
    !

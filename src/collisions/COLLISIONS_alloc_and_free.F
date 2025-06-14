@@ -10,10 +10,12 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  use pars,           ONLY:cZERO,rZERO,DP,SP
  use plasma,         ONLY:N_plasma_poles_global
  use R_lattice,      ONLY:nqbz,nkibz
+ use electrons,      ONLY:n_met_bands,n_full_bands,n_sp_pol
  use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ_bz
  use collision_ext,  ONLY:COLLISIONS_element,COH_COLL_element,HXC_COLL_element,GW_NEQ_COLL_element,&
-&                         COLL_bands,COLLISIONS_load_SP,&
-&                         GW_NEQ_collisions,COH_collisions,HXC_collisions,P_collisions,COLLISIONS_group
+&                         COLL_bands,COLLISIONS_load_SP,COLLISIONS_CV_only,COLLISIONS_FEW_only,&
+&                         GW_NEQ_collisions,COH_collisions,HXC_collisions,P_collisions,COLLISIONS_group,&
+&                         COLL_hole_bands,COLL_elec_bands
 #if defined _QED
  use QP_m,           ONLY:QP_QED_ng
  use collision_ext,  ONLY:P_COLL_element
@@ -26,7 +28,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
  ! Work Space
  !
- integer :: D(3,2),COLL_range(2),J,K,mem_size(5),size_
+ integer :: D(3,4),COLL_range(2),J,K,mem_size(5),size_
  logical :: l_COH,l_HXC,l_GW_NEQ,l_v3,l_v1,l_table,l_all,l_alloc,&
 &           l_clean,l_collision,l_distribute,l_Momentum,l_complex,l_real
  !
@@ -68,10 +70,12 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  l_clean     =index(actions,"clean")>0
  l_distribute=index(actions,"distribute")>0
  !
+ D=0
+ !
  if (l_COH) then
-   D(1,:)=COLL_bands
-   D(2,:)=COLL_bands
-   D(3,:)=(/1,nkibz/)
+   D(1,1:2)=COLL_bands
+   D(2,1:2)=COLL_bands
+   D(3,1:2)=(/1,nkibz/)
    if (l_collision.and.l_alloc) then
      allocate(COH_COLL_element(size_))
      COH_COLL_element%N=size_
@@ -86,9 +90,36 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  endif
  !
  if (l_HXC) then
-   D(1,:)=COLL_bands
-   D(2,:)=COLL_bands
-   D(3,:)=(/1,nkibz/)
+   ! These numbers are used in:
+   ! (i) src/io_parallel/io_COLLISIONS.F (all components of D in case CV_only)
+   !     * COLLISIONS_CV_only case
+   !       ! This one only defines the I/O dimension. The factor 2 on the kpts
+   !       ! exist because, for each k, there is the cv and the vc block
+   !       N(1)=(COLL_grp%D(3,2)-COLL_grp%D(3,1)+1)*2  ! 2*Nk
+   !       N(2)=COLL_grp%D(2,2)-COLL_grp%D(2,3)        ! Nc
+   !       N(3)=COLL_grp%D(1,4)-COLL_grp%D(1,1)+1      ! Nv
+   !     * General case
+   !       N(1)=(COLL_grp%D(3,2)-COLL_grp%D(3,1)+1)*2  ! 2*Nk
+   !       N(2)=COLL_grp%D(2,2)-COLL_grp%D(2,1)        ! Nc
+   !       N(3)=COLL_grp%D(1,2)-COLL_grp%D(1,1)+1      ! Nv
+   ! (ii) src/collisions/COLLISIONS_linearize_and_IO.F (only components D(1:3,:))
+   !     do i3=COLL_grp%D(3,1),COLL_grp%D(3,2)       ! ik
+   !       do i2=COLL_grp%D(2,1),COLL_grp%D(2,2)     ! ib1
+   !         do i1=COLL_grp%D(1,1),COLL_grp%D(1,2)   ! ib2
+   D(1,1:2)=COLL_bands
+   D(2,1:2)=COLL_bands
+   D(3,1:2)=(/1,nkibz/)
+   D(:,3:4)=-1 ! unused
+   if (COLLISIONS_CV_only) then
+     D(1,3)=-1 ! unused
+     D(2,3)=minval(n_full_bands) ! lower bound for conduction
+     D(1,4)=maxval(n_met_bands)  ! upper bound for valence
+     D(2,4)=-1 ! unused
+   endif
+   if (COLLISIONS_FEW_only) then
+     D(1,3:4)=COLL_hole_bands  ! update upper (and lower) bound for valence
+     D(2,3:4)=COLL_elec_bands  ! update lower (and upper) bound for conduction
+   endif
    if (l_collision.and.l_alloc) then
      allocate(HXC_COLL_element(size_))
      HXC_COLL_element%N=size_
@@ -105,9 +136,9 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
 #if defined _QED
  !
  if (l_Momentum) then
-   D(1,:)=(/1,QP_QED_ng/)
-   D(2,:)=COLL_bands
-   D(3,:)=(/1,nqbz/)
+   D(1,1:2)=(/1,QP_QED_ng/)
+   D(2,1:2)=COLL_bands
+   D(3,1:2)=(/1,nqbz/)
    if (l_collision.and.l_alloc) then
      allocate(P_COLL_element(size_))
      P_COLL_element%N=size_
@@ -124,12 +155,12 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
 #endif
  !
  if (l_GW_NEQ) then
-   D(1,:)=(/1,N_plasma_poles_global/)
-   D(2,:)=(/1,1/)
-   D(3,:)=(/1,nqbz/)
+   D(1,1:2)=(/1,N_plasma_poles_global/)
+   D(2,1:2)=(/1,1/)
+   D(3,1:2)=(/1,nqbz/)
    if (l_distribute.and.(l_v3.or.l_table)) then
-     D(1,:)=(/1,PAR_nPlasma/)
-     D(3,:)=(/1,PAR_nQ_bz/)
+     D(1,1:2)=(/1,PAR_nPlasma/)
+     D(3,1:2)=(/1,PAR_nQ_bz/)
    endif
    if (l_collision.and.l_alloc) then
      allocate(GW_NEQ_COLL_element(size_))
@@ -146,9 +177,9 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
  contains
    !
-   subroutine local_alloc_and_free(COLL,COLL_grp)
+   subroutine local_alloc_and_free(COLL_element,COLL_grp)
      type(COLLISIONS_group)   :: COLL_grp
-     type(COLLISIONS_element) :: COLL(COLL_grp%N)
+     type(COLLISIONS_element) :: COLL_element(COLL_grp%N)
      if(COLL_grp%N==0) return
      mem_size=0
      do J=COLL_range(1),COLL_range(2)
@@ -157,64 +188,64 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
        ! allocated. This is because J runs on the parallel components and not on the real ones.
        !
        do K=1,COLL_grp%N
-         if (COLL_grp%PAR_map(K)==J) COLL(J)%I=K
+         if (COLL_grp%PAR_map(K)==J) COLL_element(J)%I=K
        enddo
        !
        if (l_alloc.and.(l_v3.or.l_all)) then
          if(l_real) then
-           YAMBO_ALLOC(COLL(J)%v3_r,(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
-           COLL(J)%v3_r=rZERO
-           mem_size(1)=mem_size(1)+size(COLL(J)%v3_r)
+           YAMBO_ALLOC(COLL_element(J)%v3_r,(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2),n_sp_pol))
+           COLL_element(J)%v3_r=rZERO
+           mem_size(1)=mem_size(1)+size(COLL_element(J)%v3_r)
          endif
          if(l_complex) then
-           YAMBO_ALLOC(COLL(J)%v3_c,(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
-           COLL(J)%v3_c=cZERO
-           mem_size(2)=mem_size(2)+size(COLL(J)%v3_c)
+           YAMBO_ALLOC(COLL_element(J)%v3_c,(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2),n_sp_pol))
+           COLL_element(J)%v3_c=cZERO
+           mem_size(2)=mem_size(2)+size(COLL_element(J)%v3_c)
          endif
          COLL_grp%D=D
        endif
        if (l_clean.and.(l_v3.or.l_all)) then
-         if (l_real   .and.allocated(COLL(J)%v3_r)) then
-           YAMBO_FREE(COLL(J)%v3_r)
+         if (l_real   .and.allocated(COLL_element(J)%v3_r)) then
+           YAMBO_FREE(COLL_element(J)%v3_r)
          endif
-         if (l_complex.and.allocated(COLL(J)%v3_c)) then
-            YAMBO_FREE(COLL(J)%v3_c)
+         if (l_complex.and.allocated(COLL_element(J)%v3_c)) then
+            YAMBO_FREE(COLL_element(J)%v3_c)
          endif
        endif
        if (l_alloc.and.(l_v1.or.l_all)) then
          if(l_real) then
-           YAMBO_ALLOC(COLL(J)%v_r,(COLL(J)%N))
-           COLL(J)%v_r=rZERO
-           mem_size(3)=mem_size(3)+size(COLL(J)%v_r)
+           YAMBO_ALLOC(COLL_element(J)%v_r,(COLL_element(J)%N))
+           COLL_element(J)%v_r=rZERO
+           mem_size(3)=mem_size(3)+size(COLL_element(J)%v_r)
          endif
          if(l_complex) then
-           YAMBO_ALLOC(COLL(J)%v_c,(COLL(J)%N))
-           COLL(J)%v_c=cZERO
-           mem_size(4)=mem_size(4)+size(COLL(J)%v_c)
+           YAMBO_ALLOC(COLL_element(J)%v_c,(COLL_element(J)%N))
+           COLL_element(J)%v_c=cZERO
+           mem_size(4)=mem_size(4)+size(COLL_element(J)%v_c)
            if(SP==DP.and.COLLISIONS_load_SP) then
-             YAMBO_ALLOC(COLL(J)%v_c_SP,(COLL(J)%N))
-             COLL(J)%v_c_SP=cZERO
-             mem_size(4)=mem_size(4)+size(COLL(J)%v_c_SP)
+             YAMBO_ALLOC(COLL_element(J)%v_c_SP,(COLL_element(J)%N))
+             COLL_element(J)%v_c_SP=cZERO
+             mem_size(4)=mem_size(4)+size(COLL_element(J)%v_c_SP)
            endif
          endif
        endif
        if (l_clean.and.(l_v1.or.l_all)) then
-         YAMBO_FREE(COLL(J)%v_c)
-         if(SP==DP.and.allocated(COLL(J)%v_c_SP)) then
-            YAMBO_FREE(COLL(J)%v_c_SP)
+         YAMBO_FREE(COLL_element(J)%v_c)
+         if(SP==DP.and.allocated(COLL_element(J)%v_c_SP)) then
+            YAMBO_FREE(COLL_element(J)%v_c_SP)
          endif
-         YAMBO_FREE(COLL(J)%v_r)
+         YAMBO_FREE(COLL_element(J)%v_r)
        endif
        if (l_alloc.and.(l_table.or.l_all)) then
-         !AMBO_ALLOC(COLL(J)%table,(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
-         allocate(COLL(J)%table(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
-         COLL(J)%table='f'
+         !AMBO_ALLOC(COLL_element(J)%table,(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
+         allocate(COLL_element(J)%table(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2),n_sp_pol))
+         COLL_element(J)%table='f'
          COLL_grp%D=D
-         mem_size(5)=mem_size(5)+size(COLL(J)%table)
+         mem_size(5)=mem_size(5)+size(COLL_element(J)%table)
        endif
        if (l_clean.and.(l_table.or.l_all)) then
-         !AMBO_FREE(COLL(J)%table)
-         deallocate(COLL(J)%table)
+         !AMBO_FREE(COLL_element(J)%table)
+         deallocate(COLL_element(J)%table)
        endif
      enddo
      !

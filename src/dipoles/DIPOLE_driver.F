@@ -22,17 +22,21 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  ! 4) covariant approach    --> computes <nk|r|mk> in reciprocal space as <nk|partial_k|mk>
  !                              takes into account the phases. symmetries not yet implemented 
  !                              and then <v> as <r>*DeltaE
+ ! 4) der_k approach        --> computes <nk|r|mk> in reciprocal space as <nk|partial_k|mk>
+ !                              takes into account the phases. symmetries not yet implemented 
+ !                              and then <v> as <r>*DeltaE
  !
- ! Note that <P> is ALWAYS calculated using the g_space approach
+ ! Note that <P/v> are ALWAYS calculated using the g_space approach
  !
  use drivers,        ONLY:l_optics
  use pars,           ONLY:SP,schlen
  use electrons,      ONLY:levels,n_sp_pol
  use IO_m,           ONLY:io_DIP
  use R_lattice,      ONLY:bz_samp
- use DIPOLES,        ONLY:DIPOLE_t,DIP_iR,x_space_obs,g_space_obs,covariant_obs,shifted_grids_obs,&
-&                         Vnl_commutator_warning,DIP_P,DIP_v,DIP_spin,DIP_orbital,P_square
- use ALLOC,          ONLY:DIPOLE_ALLOC_global
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_v,DIP_spin,DIP_orbital,P_square,&
+&                         x_space_obs,g_space_obs,covariant_obs,der_k_obs,shifted_grids_obs,&
+&                         Vnl_commutator_warning,eval_OVERLAPS,l_force_SndOrd
+ use ALLOC,          ONLY:DIPOLE_ALLOC_global,DIPOLE_ALLOC_elemental
  use IO_int,         ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_A2A,&
 &                         PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
@@ -51,7 +55,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  ! Work Space
  !
- integer           :: ik,io_err
+ integer           :: ik,io_err,io_err_Overlaps
  character(schlen) :: msg
  logical           :: l_warning,direction_is_todo(3)
  !
@@ -77,9 +81,15 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  io_err=-1
  call DIPOLE_IO(Xk,Xen,Dip,'check',io_err,'DIP')
  !
+ io_err_Overlaps=-1
+ if (eval_OVERLAPS) then
+   call OVERLAPS_IO(Xk,Xen,Dip,'check',io_err_Overlaps,'DIP')
+   if (io_err_Overlaps==0)  call OVERLAPS_IO(Xk,Xen,Dip,'read',io_err_Overlaps,'DIP')
+ endif
+ !
  ! In case dipoles were not found/ok then I need to compute them
  !==============================================================
- if (io_err/=0) then
+ if (io_err/=0 .or. (eval_Overlaps.and.io_err_Overlaps/=0) ) then
    !
    ! I/O privilegies: temporarly switch it on
    !
@@ -95,15 +105,33 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    !
    call PARALLEL_WF_index(COMM=PAR_COM_DIPk_ibz_A2A)
    !
+ endif
+ !
+ ! Overlaps (DIP_S)
+ !
+ if (eval_Overlaps.and.io_err_Overlaps/=0) then
+   !
+   ! Notice that DIP_S is defined in the BZ
+   !
+   call DIPOLE_ALLOC_elemental('DIP_S',(/Dip%ib(2),Dip%ib(2),6,Xk%nbz/))
+   !
+   call DIPOLE_overlaps(Xk,Dip)
+   !
+ endif
+ !
+ if (io_err/=0) then
+   !
+   ! <R>, <V>, <P>, <P_spinor>, <P^2>
+   !
    ! Allocation
    !
    call DIPOLE_ALLOC_global(Dip,PAR_DIPk_nibz)
    !
-   ! <R>, <V>, <P>, <P_spinor>, <P^2> S_overlap
-   !
    if (len_trim(shifted_grids_obs)>0)              call DIPOLE_shifted_grids(Xen,Xk,Dip)
    !
    if (len_trim(covariant_obs)>0)                  call DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
+   !
+   if (len_trim(der_k_obs)>0)                      call DIPOLE_build_der_k(Xen,Xk,Dip,direction_is_todo)
    !
    if (len_trim(x_space_obs)>0)                    call DIPOLE_x_real_space(Xen,Xk,Dip,direction_is_todo)
    !
@@ -124,6 +152,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    ! If the calculation of the dipoles is very short the I/O is switched off
    !
    call DIPOLE_IO(Xk,Xen,Dip,'write',io_err,'DIP')
+   !
+   if (eval_Overlaps.and.io_err_Overlaps/=0)        call OVERLAPS_IO(Xk,Xen,Dip,'write',io_err_Overlaps,'DIP')
    !
    ! I/O privilegies: RESTORE to previous values
    !
@@ -161,6 +191,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  if (.not.io_DIP) return
  !
+ ! Overlaps
+ call DIPOLE_ALLOC_elemental('DIP_S')
+ !
+ ! Dipoles
  call DIPOLE_ALLOC_global()
  !
  contains

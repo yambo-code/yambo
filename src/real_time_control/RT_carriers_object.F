@@ -53,6 +53,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      i_b    =RT%table(i_RT,1)
      i_k    =RT%table(i_RT,2)
      i_k_RT =RT%table(i_RT,3)
+     i_spin =RT%table(i_RT,4)
      call RT_lifetime_to_RT_obj(WHAT,i_b,i_k_RT,i_RT,RT_EH_life,RT_EH_ref_life,RT%GAMMA_EH)
      call RT_lifetime_to_RT_obj(WHAT,i_b,i_k_RT,i_RT,RT_EE_life,RT_EE_ref_life,RT%GAMMA_EE)
      call RT_lifetime_to_RT_obj(WHAT,i_b,i_k_RT,i_RT,RT_EP_emit_life,RT_EP_emit_ref_life,RT%GAMMA_EP_emit)
@@ -68,7 +69,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
      RT%nk=RT_nk
      RT%nb=RT_bands
-     RT%nstates=RT_nk*(RT_bands(2)-RT_bands(1)+1)
+     RT%nstates=RT_nk*(RT_bands(2)-RT_bands(1)+1)*n_sp_pol
      !
      call RT_obj_alloc(RT)
      !
@@ -115,8 +116,8 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        ! Occupations & Energies
        !
-       if (allocated(RT_el_occ%dN)) RT_el_occ%dN(i_b,i_k_RT)      =RT%OCC_el%dN(i_RT)
-       if (allocated(RT_levels%E) ) RT_levels%E(i_b,i_k_RT,i_spin)=RT%delta_E(i_RT)+RT%E_bare(i_RT)
+       if (allocated(RT_el_occ%dN)) RT_el_occ%dN(i_b,i_k_RT,i_spin)=RT%OCC_el%dN(i_RT)
+       if (allocated(RT_levels%E) ) RT_levels%E(i_b,i_k_RT,i_spin) =RT%delta_E(i_RT)+RT%E_bare(i_RT)
        !
      enddo
      !
@@ -131,7 +132,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        ! Occupations & Energies
        !
-       RT%OCC_el%dN(i_RT)=RT_el_occ%dN(i_b,i_k_RT)
+       RT%OCC_el%dN(i_RT)=RT_el_occ%dN(i_b,i_k_RT,i_spin)
        RT%delta_E(i_RT)  =RT_levels%E(i_b,i_k_RT,i_spin)-RT%E_bare(i_RT)
        !
        f_occ =RT%OCC_el%N_ref(i_RT)/spin_occ

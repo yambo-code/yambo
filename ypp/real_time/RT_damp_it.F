@@ -8,6 +8,7 @@
 subroutine RT_damp_it(damp_type,damp_factor,ft,lda)
  !
  use YPP_real_time,  ONLY:RT_time,RT_conf
+ use units,          ONLY:FS2AUT
  use pars,           ONLY:SP,DP
  use fields,         ONLY:Efield
  !
@@ -28,7 +29,7 @@ subroutine RT_damp_it(damp_type,damp_factor,ft,lda)
  !
  select case ( trim(damp_type) )
    case("LORENTZIAN")  
-     forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = exp(-abs((RT_time(i_t)-T_ref)*damp_factor))
+     forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = exp(-(RT_time(i_t)-T_ref)*damp_factor)
    case("GAUSSIAN") 
      forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = exp(-(RT_time(i_t)-T_ref)**2*damp_factor**2)
    case("NONE") 
@@ -38,7 +39,10 @@ subroutine RT_damp_it(damp_type,damp_factor,ft,lda)
      return
  end select
  !
- forall(i_t=1:RT_conf%T_n_steps)  ft(i_t,:)=ft(i_t,:)*damp_function(i_t)
+ do i_t=1,RT_conf%T_n_steps
+  if( (RT_time(i_t)-T_ref)<0._SP) cycle
+  ft(i_t,:)=ft(i_t,:)*damp_function(i_t)
+ enddo
  !
 end subroutine RT_damp_it
 

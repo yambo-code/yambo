@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine PARALLEL_collisions( k, COLL )
+subroutine PARALLEL_collisions( k, COLL_grp )
  !
  ! SC
  !====
@@ -128,45 +128,61 @@ subroutine PARALLEL_collisions( k, COLL )
  !
  use drivers,       ONLY:l_eval_collisions
  use parallel_int,  ONLY:PARALLEL_live_message,PARALLEL_check_phase_space
- use collision_ext, ONLY:COLLISIONS_group,COLL_bands
+ use collision_ext, ONLY:COLLISIONS_group,COLL_bands,COLLISIONS_CV_only
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q_bz,PAR_IND_QP,&
 &                        l_par_RT,l_par_SE,l_par_SC,l_par_NL
- use hamiltonian,   ONLY:B_mat_index
+ use hamiltonian,   ONLY:B_mat_index,B_mat_index_cv
+ use electrons,     ONLY:n_met_bands,n_full_bands
  use R_lattice,     ONLY:bz_samp,qindx_S,nqbz
  !
 #include<y_memory.h>
  !
  type(bz_samp)          :: k
- type(COLLISIONS_group) :: COLL
+ type(COLLISIONS_group) :: COLL_grp
  !
  ! Work Space
  !
- integer :: i_coll,i_k,ib1,ib2,NC_tot,i_q,i_p,i_p_bz
+ integer :: i_coll,i_k,ib1,ib2,NC_tot,i_q,i_p,i_p_bz, &
+ &          blim1(2),blim2(2),nb_cv,i1
  !
- if ( COLL%N == 0 ) return
+ if ( COLL_grp%N == 0 ) return
  !
- YAMBO_ALLOC(COLL%PAR_map,(COLL%N))
- YAMBO_ALLOC(COLL%PAR_IND%element_1D,(COLL%N))
+ YAMBO_ALLOC(COLL_grp%PAR_map,(COLL_grp%N))
+ YAMBO_ALLOC(COLL_grp%PAR_IND%element_1D,(COLL_grp%N))
  !
  if (.not.allocated(PAR_IND_G_k%element_1D).and.l_eval_collisions ) then
    YAMBO_ALLOC(PAR_IND_G_k%element_1D,(k%nibz))
    PAR_IND_G_k%element_1D=.FALSE.
  endif
- COLL%PAR_IND%element_1D=.FALSE.
- COLL%PAR_N=0
- COLL%PAR_map=0
+ COLL_grp%PAR_IND%element_1D=.FALSE.
+ COLL_grp%PAR_N=0
+ COLL_grp%PAR_map=0
  NC_tot=0
  !
- do i_coll=1,COLL%N
+ if (COLLISIONS_CV_only) then
+   blim1=(/COLL_bands(1),maxval(n_met_bands)/)
+   blim2=(/minval(n_full_bands),COLL_bands(2)/)
+   nb_cv=(blim1(2)-blim1(1)+1)*(blim2(2)-blim2(1)+1)
+ endif
+ !
+ do i_coll=1,COLL_grp%N
    !
-   ib1 = COLL%state(i_coll,1)
-   ib2 = COLL%state(i_coll,2)
-   i_k = COLL%state(i_coll,3)
+   ib1 = COLL_grp%state(i_coll,1)
+   ib2 = COLL_grp%state(i_coll,2)
+   i_k = COLL_grp%state(i_coll,3)
    NC_tot=NC_tot+1
    !
    if (l_par_RT) then
      if (.not.PAR_IND_Xk_ibz%element_1D(i_k)) cycle
-     if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,COLL_bands) ) ) cycle
+     if (COLLISIONS_CV_only) then
+       if (ib1> blim1(2) .and. ib2> blim1(2) ) cycle
+       if (ib1< blim1(1) .and. ib2< blim2(1) ) cycle
+       if (ib1<ib2) i1=B_mat_index_cv(ib1,ib2,blim1,blim2)
+       if (ib1>ib2) i1=B_mat_index_cv(ib2,ib1,blim2,blim1)!+nb_cv
+     else
+       i1=B_mat_index(ib1,ib2,COLL_bands)
+     endif
+     if (.not.PAR_IND_B_mat%element_1D( i1 ) ) cycle
    endif
    !
    if (l_par_NL) then
@@ -178,9 +194,9 @@ subroutine PARALLEL_collisions( k, COLL )
      if (.not.PAR_IND_QP%element_1D(i_coll)) cycle
    endif
    !
-   COLL%PAR_N=COLL%PAR_N+1
-   COLL%PAR_map(i_coll)=COLL%PAR_N
-   COLL%PAR_IND%element_1D(i_coll)=.TRUE.
+   COLL_grp%PAR_N=COLL_grp%PAR_N+1
+   COLL_grp%PAR_map(i_coll)=COLL_grp%PAR_N
+   COLL_grp%PAR_IND%element_1D(i_coll)=.TRUE.
    !
    if (l_eval_collisions) then
      !
@@ -203,22 +219,22 @@ subroutine PARALLEL_collisions( k, COLL )
    !
  enddo
  !
- call PARALLEL_live_message(trim(COLL%name)//" Number of Collisions",LOADED=COLL%PAR_N,TOTAL=NC_tot)
+ call PARALLEL_live_message(trim(COLL_grp%name)//" Number of Collisions",LOADED=COLL_grp%PAR_N,TOTAL=NC_tot)
  !
- call PARALLEL_check_phase_space(COLL%PAR_N,MSG=trim(COLL%name)//" COLLISIONS")
+ call PARALLEL_check_phase_space(COLL_grp%PAR_N,MSG=trim(COLL_grp%name)//" COLLISIONS")
  !
 end subroutine PARALLEL_collisions
 !
 !
-subroutine PARALLEL_collisions_reset(COLL)
+subroutine PARALLEL_collisions_reset(COLL_grp)
  !
  use collision_ext, ONLY:COLLISIONS_group
  !
 #include<y_memory.h>
  !
- type(COLLISIONS_group), intent(inout) :: COLL
+ type(COLLISIONS_group), intent(inout) :: COLL_grp
  !
- YAMBO_FREE(COLL%PAR_map)
- YAMBO_FREE(COLL%PAR_IND%element_1D)
+ YAMBO_FREE(COLL_grp%PAR_map)
+ YAMBO_FREE(COLL_grp%PAR_IND%element_1D)
  !
 end subroutine PARALLEL_collisions_reset

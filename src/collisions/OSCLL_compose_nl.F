@@ -15,6 +15,7 @@ subroutine OSCLL_compose_nl(dG,H_nl_sc,k,q,E,i_k,i_sp_pol)
  use nl_optics,      ONLY:NL_bands,NL_nbands
  use collision_ext,  ONLY:ng_oscll,OSCLL,W
  use QP_m,           ONLY:QP_nk
+ use electrons,      ONLY:n_sp_pol
  use R_lattice,      ONLY:bz_samp,qindx_S,nXkibz
  use wrapper_omp,    ONLY:V_dot_V
  use parallel_m,     ONLY:PAR_Xk_ibz_index
@@ -28,11 +29,11 @@ subroutine OSCLL_compose_nl(dG,H_nl_sc,k,q,E,i_k,i_sp_pol)
  integer,     intent(in)    :: i_k,i_sp_pol
  type(bz_samp), intent(in)  :: k,q
  type(levels),  intent(in)  :: E
- complex(SP),  intent(in)   :: dG(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk)
+ complex(SP),  intent(in)   :: dG(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_sp_pol)
  !
  ! Work Space
  !
- complex(SP) :: COLL(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk)
+ complex(SP) :: COLL(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_sp_pol)
 #if defined _DOUBLE
  complex(SP), external :: ZDOTU
 #else
@@ -47,12 +48,12 @@ subroutine OSCLL_compose_nl(dG,H_nl_sc,k,q,E,i_k,i_sp_pol)
  do i_n=NL_bands(1),NL_bands(2)
    do i_m=i_n,NL_bands(2)
     !
-    call OSCLL_compose_collision(k,q,i_n,i_m,i_k,COLL)
+    call OSCLL_compose_collision(k,q,i_n,i_m,i_k,i_sp_pol,COLL)
     !
 #if defined _DOUBLE
-        H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)-cI*ZDOTU(NL_nbands**2*QP_nk,COLL,1,dG,1)
+        H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)-cI*ZDOTU(NL_nbands**2*QP_nk*n_sp_pol,COLL,1,dG,1)
 #else
-        H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)-cI*CDOTU(NL_nbands**2*QP_nk,COLL,1,dG,1)
+        H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)-cI*CDOTU(NL_nbands**2*QP_nk*n_sp_pol,COLL,1,dG,1)
 #endif
     !
    enddo

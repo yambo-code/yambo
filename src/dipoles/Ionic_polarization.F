@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !                  
+!> @brief Calculate ionic contribution to the polariation
+!
+!! @param[it]       en                  KS energies
+!! @param[out]      I_Berry_RED         Ionic polarization in reduced coord.
+!
 subroutine Ionic_polarization(I_Berry_RED,en)
  !
  ! Calculate polarization due to ions

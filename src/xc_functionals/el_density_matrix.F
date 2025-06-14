@@ -85,7 +85,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
        do ib2=ib1,RT_bands(2)
          !
 #if !defined _YPP_RT
-         if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1)-1 )) cycle
+         if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1) )) cycle
 #endif
          !
          f_occ=cZERO

@@ -19,14 +19,14 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
  use SC,            ONLY:SC_bands
 #endif
 #if defined _RT || defined _QED || defined _NL
- use real_time,     ONLY:RT_bands
+ use real_time,     ONLY:RT_bands,RT_hole_bands,RT_elec_bands
 #endif
 #if defined _SC || defined _RT || defined _QED || defined _NL
- use collision_ext, ONLY:COLL_bands
- use hamiltonian,   ONLY:H_ref_bands
+ use collision_ext, ONLY:COLL_bands,COLL_hole_bands,COLL_elec_bands
+ use hamiltonian,   ONLY:H_ref_bands,H_ref_hole_bands,H_ref_elec_bands
 #endif
 #if defined _NL
- use nl_optics,      ONLY:NL_bands
+ use nl_optics,      ONLY:NL_bands,NL_hole_bands,NL_elec_bands
 #endif
  !
  implicit none
@@ -35,9 +35,9 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
  type(levels)   ::E
  type(DIPOLE_t) ::Dip
  type(X_t)      ::X(5) 
- logical        ::l_USER_field(16)
+ logical        ::l_USER_field(16),dip_bands_defined
  !
- integer :: i1,SCATT_bands(2),DIP_bands(2)
+ integer :: i1,SCATT_bands(2),SCATT_hole_bands(2),SCATT_elec_bands(2),DIP_bands(2)
  !
  if (STRING_same(what,"USER_fields")) then
    !
@@ -81,17 +81,27 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
    ! Bands (Electronic levels)
    !---------------------------
    SCATT_bands=-1
+   SCATT_hole_bands=-1
+   SCATT_elec_bands=-1
    do i1=8,12
      if(.not.(l_USER_field(i1))) cycle
      !
 #if defined _RT || defined _QED || defined _NL
-     if(i1==8) SCATT_bands=RT_bands
+     if(i1==8) then
+       SCATT_bands=RT_bands
+       SCATT_hole_bands=RT_hole_bands
+       SCATT_elec_bands=RT_elec_bands
+     endif
 #endif
 #if defined _SC
      if(i1==9) SCATT_bands=SC_bands
 #endif
 #if defined _NL
-     if(i1==10) SCATT_bands=NL_bands
+     if(i1==10) then
+       SCATT_bands=NL_bands
+       SCATT_hole_bands=NL_hole_bands
+       SCATT_elec_bands=NL_elec_bands
+     endif
 #endif
 #if defined _SC 
      if(i1==11) then
@@ -102,7 +112,11 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
 #if defined _RT || defined _QED || defined _NL
      if(i1==11) then
        RT_bands   =COLL_bands
+       RT_hole_bands   =COLL_hole_bands
+       RT_elec_bands   =COLL_elec_bands
        SCATT_bands=COLL_bands
+       SCATT_hole_bands=COLL_hole_bands
+       SCATT_elec_bands=COLL_elec_bands
      endif
 #endif
 #if defined _QED
@@ -113,32 +127,41 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
    ! Bands (Dipoles)
    !----------------
    DIP_bands=-1
-   do i1=1,6
+   dip_bands_defined=.false.
+   ! Start from input if present
+   if( l_USER_field(6) )  call def_dip_bands(Dip%ib)
+   !
+   ! Test scatt bands
+   if( all((/SCATT_bands/=-1/) ) ) call def_dip_bands(SCATT_bands)
+   !
+   ! Test other fields
+   do i1=1,5
      if(.not.(l_USER_field(i1))) cycle
-     if(i1< 6) DIP_bands=X(i1)%ib
-     if(i1==6) DIP_bands=Dip%ib
+     call def_dip_bands(X(i1)%ib)
    enddo
-   if (all((/DIP_bands<0/))) then
-     if(     l_USER_field(7) ) DIP_bands=BS_bands
-     if(.not.l_USER_field(7) ) DIP_bands=SCATT_bands
+   !
+   if( l_USER_field(7) ) call def_dip_bands(BS_bands)
 #if defined _RT || defined _QED || defined _NL
-     if(     l_USER_field(8) ) DIP_bands=RT_bands
+   if( l_USER_field(8) ) call def_dip_bands(RT_bands)
 #endif
 #if defined _NL
-     if(     l_USER_field(10)) DIP_bands=NL_bands
+   if( l_USER_field(10)) call def_dip_bands(NL_bands)
 #endif
-   endif
    !
    ! Any negative bands?
    !---------------------
    call fix_me(SCATT_bands)
    call fix_me(DIP_bands)
    !
-   ! Now MIRROR in related bands ranges!
+   ! Now MIRROR in related bands ranges
    !------------------------------------
 #if defined _SC || defined _RT || defined _QED || defined _NL
    COLL_bands =SCATT_bands
+   COLL_hole_bands =SCATT_hole_bands
+   COLL_elec_bands =SCATT_elec_bands
    H_ref_bands=SCATT_bands     
+   H_ref_hole_bands=SCATT_hole_bands     
+   H_ref_elec_bands=SCATT_elec_bands     
 #endif
    Dip%ib=DIP_bands
    !
@@ -153,5 +176,16 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
      if (bands(2)>0) bands(2)=min(bands(2),E%nb)
      if (bands(2)<0) bands(2)=E%nb
    end subroutine
+   !
+   subroutine def_dip_bands(bands_in)
+       integer, intent(in)    :: bands_in(2)
+       if (dip_bands_defined) then
+          DIP_bands(1)=min(DIP_bands(1),bands_in(1))
+          DIP_bands(2)=max(DIP_bands(2),bands_in(2))
+       else
+          dip_bands_defined=.true.
+          DIP_bands=bands_in
+       endif
+   end subroutine def_dip_bands
    !
 end subroutine

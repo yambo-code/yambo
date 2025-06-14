@@ -8,7 +8,8 @@
 integer function variables_BS_more(ID,mode)
  !
  use pars,       ONLY:IP,SP,LP,schlen,LP_YIO
- use BS,         ONLY:BS_K_cutoff,BS_K_cutoff_done,BS_max_val,l_BSE_kernel_complete
+ use BS,         ONLY:BS_K_cutoff,BS_K_cutoff_done,BS_max_val,l_BSE_kernel_complete,&
+&                     BS_kpt_bz,BS_kpt_ibz
  use IO_m,       ONLY:nf90_sync,io_unit,write_is_on,read_is_on,&
 &                     variable_exist,NF90_unlimited,netcdf_dim_size
  use IO_int,     ONLY:def_variable_elemental,io_variable_elemental,&
@@ -23,7 +24,7 @@ integer function variables_BS_more(ID,mode)
  integer           :: N_cutoff,stat
  logical           :: io_var
  real(SP)          :: BS_K_cutoff_IO(1)
- character(schlen) :: kernel_dim_name(1)
+ character(schlen) :: kernel_dim_name(1),kpt_dim_names(2)
  !
  variables_BS_more=0
  !
@@ -54,6 +55,20 @@ integer function variables_BS_more(ID,mode)
      allocate(BS_K_cutoff_done(N_cutoff))
      call  io_variable_bulk(ID,1,R1=BS_K_cutoff_done)
    endif
+ endif
+ !
+ if(write_is_on(ID)) io_var=trim(mode)=="start"
+ if( read_is_on(ID)) io_var=trim(mode)=="start".and.variable_exist(ID,"BS_K_BZ")
+ if (io_var) then
+   kpt_dim_names=[character(schlen) :: "xyz","n_kpt_bz"]
+   call def_variable_bulk(ID,"BS_K_BZ",2,shape(BS_kpt_bz),SP,kpt_dim_names)
+   call io_variable_bulk(ID,2,R2=BS_kpt_bz)
+ endif
+ if( read_is_on(ID)) io_var=trim(mode)=="start".and.variable_exist(ID,"BS_K_IBZ")
+ if (io_var) then
+   kpt_dim_names=[character(schlen) :: "xyz","n_kpt_ibz"]
+   call def_variable_bulk(ID,"BS_K_IBZ",2,shape(BS_kpt_ibz),SP,kpt_dim_names)
+   call io_variable_bulk(ID,2,R2=BS_kpt_ibz)
  endif
  !
  if(write_is_on(ID)) stat = nf90_sync(io_unit(ID))

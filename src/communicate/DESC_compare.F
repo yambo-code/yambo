@@ -39,14 +39,29 @@ subroutine DESC_compare(D1,D2,i_err,exclude,only)
      do i_v=1,D1%size(i_d)
        if (D1%kind(i_d)=='i'.and.D1%ival(i_v,i_d)/=D2%ival(i_v,i_dp)) i_err=(/i_d,i_dp/)
        if (D1%kind(i_d)=='r'.and.D1%rval(i_v,i_d)/=D2%rval(i_v,i_dp)) i_err=(/i_d,i_dp/)
+       ! DEBUG <
+       !if (D1%kind(i_d)=='i'.and.D1%ival(i_v,i_d)/=D2%ival(i_v,i_dp)) write(*,*) D1%ival(i_v,i_d),D2%ival(i_v,i_dp)
+       !if (D1%kind(i_d)=='r'.and.D1%rval(i_v,i_d)/=D2%rval(i_v,i_dp)) write(*,*) D1%rval(i_v,i_d),D2%rval(i_v,i_dp)
+       ! DEBUG >
      enddo
      if (D1%kind(i_d)=='d'.and.real(D1%dval(i_d))/=real(D2%dval(i_dp))) i_err=(/i_d,i_dp/)
+     ! DEBUG <
+     !if (D1%kind(i_d)=='d'.and.real(D1%dval(i_d))/=real(D2%dval(i_dp))) write(*,*) real(D1%dval(i_d)),real(D2%dval(i_dp))
+     ! DEBUG >
      if (D1%kind(i_d)=='c') then
        if (real(D1%cval(i_d)) /= real(D2%cval(i_dp))) i_err=(/i_d,i_dp/)
        if (aimag(D1%cval(i_d))/=aimag(D2%cval(i_dp))) i_err=(/i_d,i_dp/)
+       ! DEBUG <
+       !if (real(D1%cval(i_d)) /= real(D2%cval(i_dp))) write(*,*) real(D1%cval(i_d)),real(D2%cval(i_dp))
+       !if (aimag(D1%cval(i_d))/=aimag(D2%cval(i_dp))) write(*,*) aimag(D1%cval(i_d)),aimag(D2%cval(i_dp))
+       ! DEBUG >
      endif
      if (D1%kind(i_d)=='s'.and..not.STRING_same(D1%sval(i_d),D2%sval(i_dp))) i_err=(/i_d,i_dp/)
      if (D1%kind(i_d)=='l'.and.D1%lval(i_d).neqv.D2%lval(i_dp)) i_err=(/i_d,i_dp/)
+     ! DEBUG >
+     !if (D1%kind(i_d)=='s'.and..not.STRING_same(D1%sval(i_d),D2%sval(i_dp))) write(*,*) trim(D1%sval(i_d)),trim(D2%sval(i_dp))
+     !if (D1%kind(i_d)=='l'.and.D1%lval(i_d).neqv.D2%lval(i_dp)) write(*,*) D1%lval(i_d),D2%lval(i_dp)
+     ! DEBUG <
    enddo
  enddo
  !

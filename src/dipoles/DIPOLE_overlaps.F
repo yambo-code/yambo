@@ -7,6 +7,8 @@
 !      
 !> @brief Calculate overlaps between wave-function <\psi_k | \psi_{k+q} > for q = 1,2
 !
+!! @param[it]       Xk                  k-points sampling for the xhi
+!! @param[it]       Dip                 Dip dipoles range
 !! @param[out]      DIP_S               Overlap matrices
 !
 #include<dev_defs.h>
@@ -16,9 +18,10 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use pars,              ONLY:SP,cZERO,pi
  use LIVE_t,            ONLY:live_timing
  use R_lattice,         ONLY:k_map,bz_samp,WF_shifts,G_m_G
- use wave_func,         ONLY:WF
+ use wave_func,         ONLY:WF,WF_load_mode
  use vec_operate,       ONLY:k_periodic_idx
  use DIPOLES,           ONLY:DIPOLE_t,DIP_S
+ use ALLOC,             ONLY:DIPOLE_ALLOC_elemental
  use electrons,         ONLY:n_spinor,n_sp_pol
  use wrapper,           ONLY:Vstar_dot_V_gpu
  use wave_func,         ONLY:wf_ng_1st_BZ,wf_ng_overlaps,wf_ng
@@ -26,7 +29,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
 &                            PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,           &
 &                            PAR_IND_OVLPk_ibz,PAR_COM_DIPk_ibz_INDEX
  use parallel_int,      ONLY:PP_redux_wait,PARALLEL_WF_index,PARALLEL_WF_distribute
- use interfaces,        ONLY:WF_shift_kpoint_gpu,eval_G_minus_G,WF_load,WF_free
+ use interfaces,        ONLY:WF_shift_kpoint,eval_G_minus_G,WF_load,WF_free
  use gpu_m,             ONLY:have_gpu
  use timing_m,          ONLY:timing
  !
@@ -50,6 +53,11 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  logical           :: USE_shifted_wf
  !
  call timing("DIPOLE_overlaps",OPR="start")
+ !
+ if(.not.allocated(k_map%k_map_dir)) call k_map_nearest_by_dir(Xk,k_map)
+ if(.not.allocated(Xk%k_table))      call k_build_up_BZ_tables(Xk)
+ !
+ DIP_S=cZERO
  !
  call k_find_smallest_g0(g0_idx,g0_length)
  iG0=max(maxval(g0_idx(:,1)),maxval(g0_idx(:,2)))
@@ -76,6 +84,9 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  call PARALLEL_WF_index( )
  !
+ if (trim(WF_load_mode)=="all") call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Overlaps')
+
+ !
  YAMBO_ALLOC_GPU(WF_symm,   (wf_ng_1st_BZ,n_spinor,1))
  YAMBO_ALLOC_GPU(WF_ikp,    (wf_ng_overlaps,n_spinor,1))
  YAMBO_ALLOC_GPU(WF_ik,     (wf_ng_overlaps,n_spinor,Dip%ib(2)))
@@ -97,8 +108,10 @@ subroutine DIPOLE_overlaps(Xk,Dip)
      ik = Xk%sstar(ikbz,1)
      is = Xk%sstar(ikbz,2)
      !
-     call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/ik,ik/),(/i_sp_pol,i_sp_pol/),&
-     &            space='G',title='-Oscill/G space/Overlaps',quiet=.true.)
+     if (trim(WF_load_mode)=="on-the-fly") then
+       call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/ik,ik/),(/i_sp_pol,i_sp_pol/),&
+       &            space='G',title='-Oscill/G space/Overlaps',quiet=.true.)
+     endif
      !
      do ib=1,Dip%ib(2)
        !
@@ -106,13 +119,13 @@ subroutine DIPOLE_overlaps(Xk,Dip)
        !
        WF_tmp=>WF_ik(:,:,ib:ib)
        !  
-       call WF_shift_kpoint_gpu((/ib,ib/),1,ikbz,i_sp_pol,WF_shifts(ikbz,:),Xk,WF_symm,WF_tmp)
+       call WF_shift_kpoint((/ib,ib/),1,ikbz,WF_shifts(ikbz,:),Xk,WF_symm,WF_tmp)
        !
        nullify(WF_tmp)
        !
      enddo
      !
-     call WF_free(WF)
+     if (trim(WF_load_mode)=="on-the-fly") call WF_free(WF)
      !
      do id=1,3  ! Loop on the three crystal directions in the BZ
        !
@@ -136,8 +149,10 @@ subroutine DIPOLE_overlaps(Xk,Dip)
          ikp = Xk%sstar(ikbzp,1)
          isp = Xk%sstar(ikbzp,2)
          !
-         call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/ikp,ikp/),(/i_sp_pol,i_sp_pol/),&
-         &              space='G',title='-Oscill/G space/Overlaps',quiet=.true.)
+         if (trim(WF_load_mode)=="on-the-fly") then
+           call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/ikp,ikp/),(/i_sp_pol,i_sp_pol/),&
+           &              space='G',title='-Oscill/G space/Overlaps',quiet=.true.)
+         endif
          !
          ! Shift the wave-function by a G-vector if the neighbor is out of the BZ (USE_shifed_wf=.true.)
          shift=WF_shifts(ikbzp,:)
@@ -157,8 +172,11 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            ! 
            ! see also comments in src/bz_ops/k_map_nearest_by_dir.F 
            ! 
+           ! WF_shifts==1 --> kpt(id) < 0
            if(WF_shifts(ikbzp,id)==1) shift(id)=1
+           ! WF_shifts==0 --> 0 < kpt(id) < 1
            if(WF_shifts(ikbzp,id)==0) shift(id)=1
+           ! WF_shifts==-1 --> kpt(id) > 1
            if(WF_shifts(ikbzp,id)==-1) shift(id)=0
            !
          endif
@@ -167,7 +185,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            if(.not.PAR_IND_CON_BANDS_OVLP%element_1D(ibp)) cycle
            !
            call WF_symm_kpoint_gpu((/ibp,ibp/),ikbzp,i_sp_pol,Xk,WF_symm)
-           call WF_shift_kpoint_gpu((/ibp,ibp/),1,ikbzp,i_sp_pol,shift,Xk,WF_symm,WF_ikp)
+           call WF_shift_kpoint((/ibp,ibp/),1,ikbzp,shift,Xk,WF_symm,WF_ikp)
            !
            do ib=1,Dip%ib(2)
              if(.not.PAR_IND_VAL_BANDS_OVLP%element_1D(ib)) cycle
@@ -176,7 +194,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            enddo ! ibp
          enddo ! ib
          !
-         call WF_free(WF)
+         if (trim(WF_load_mode)=="on-the-fly") call WF_free(WF)
          !
        enddo ! istep
      enddo ! idir
@@ -210,7 +228,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  YAMBO_FREE(WF_ik)
  YAMBO_FREE(WF_ikp)
  !
- call WF_free(WF)
+ if (trim(WF_load_mode)=="all") call WF_free(WF)
  !
  call timing("DIPOLE_overlaps",OPR="stop")
  !

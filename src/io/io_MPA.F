@@ -13,7 +13,7 @@ integer function io_MPA(X,Xw,ID)
  use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_header,io_fragment,&
 &                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental
  use IO_m,          ONLY:io_sec,io_com,io_status,read_is_on,write_is_on,&
-&                        io_MULTIPOLE,IO_NOT_ALLOWED,io_extension,&
+&                        io_MULTIPOLE,IO_NOT_ALLOWED,io_extension,NONE,&
 &                        frag_MULTIPOLE,IO_NO_DATABASE,io_mode,DUMP,frag_RESPONSE
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
@@ -101,6 +101,7 @@ integer function io_MPA(X,Xw,ID)
    !            must go through the definitions of the variables although only one is writing
    !
    io_com_save=io_com(ID_frag)
+   if (iq>2) io_com(ID_frag)=NONE
    call def_variable_elemental(ID_frag,trim(ch),sec_size,SP,1,par_io_kind='independent')
    !
    call io_variable_elemental(ID_frag,  VAR=" :: Current Q-pt index     :",I0=iq)

@@ -18,7 +18,7 @@ fftw-dl:
 fftqe-dl: 
 	@LIB2DO="fftqe"; $(get_external_libraries)
 yaml-dl: 
-	@LIB2DO="fftqe"; $(get_external_libraries)
+	@LIB2DO="yaml"; $(get_external_libraries)
 futile-dl: 
 	@LIB2DO="futile"; $(get_external_libraries)
 iotk-dl: 

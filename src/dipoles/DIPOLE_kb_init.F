@@ -23,7 +23,7 @@ subroutine DIPOLE_kb_init(Xen,Dip,io_err,ID)
  type(levels),  intent(in)    :: Xen
  type(DIPOLE_t),intent(inout) :: Dip
  !
- integer                      :: io_err(3)
+ integer                      :: io_err(2)
  integer                      :: ID
  !
  real(SP)                     :: j,mj
@@ -136,7 +136,6 @@ subroutine DIPOLE_kb_init(Xen,Dip,io_err,ID)
  !
  io_err(1)=io_KB_abinit_err
  io_err(2)=io_KB_pwscf_err
- io_err(3)=-1
  !
  if ( pp_kbv_dim>0 ) call msg('s','[x,Vnl] computed using '//trim(intc(pp_kbv_dim))//' projectors')
  if ( pp_kbv_dim>50) call warning(' [x,Vnl] slows the Dipoles computation. To neglect it rename the ns.kb_pp file')

@@ -28,8 +28,6 @@ module electric
  !
  ! Polarization
  !
- logical :: l_P_periodic ! Enforce periodicity in the polarization
- !
  logical  :: l_res_symms=.FALSE.  ! Do not use resisual symmetries (default False)
  !
  contains

@@ -570,6 +570,9 @@ subroutine K_diago_driver(iq,W,X_static)
 #endif
    !
    subroutine K_local_init()
+     ! 
+     BSS_n_eig=BSS_n_eig_Input
+     !
      !
      K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
      !

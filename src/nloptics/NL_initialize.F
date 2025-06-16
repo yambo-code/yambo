@@ -34,7 +34,7 @@ subroutine NL_initialize(E,k)
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity,LSEX,&
 &                         l_eval_CURRENT,l_pump_and_probe,DephMult,l_velocity_IPA,n_angles,l_test_OSCLL,LHF,eval_OSCLL,  &
 &                         NL_ang_step,n_runs,NL_rot_axis,loop_on_frequencies,loop_on_angles,NL_initial_versor,max_angle
- use electric,       ONLY:l_force_SndOrd,l_P_periodic,l_res_symms
+ use electric,       ONLY:l_force_SndOrd,l_res_symms
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  !
@@ -57,7 +57,6 @@ subroutine NL_initialize(E,k)
  call parser('FrSndOrd',             l_force_SndOrd)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('EvalCurrent' ,         l_eval_CURRENT)
- call parser('FrPolPerdic' ,         l_P_periodic)
  call parser('TestOSCLL',            l_test_OSCLL)
  call parser('NoComprCOLL',          l_no_compress_COLL)
  call parser('UseSymm',              l_res_symms)
@@ -77,7 +76,6 @@ subroutine NL_initialize(E,k)
  endif
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
- if(l_P_periodic)  call msg('sr','[NL] Enforce periodicity of the polarization repect to Efield')
  !
  ! Velocity gauge mode
  ! =======================================
@@ -529,6 +527,5 @@ subroutine NL_initialize(E,k)
  call msg( 'r', 'Induced Field              ',l_RT_induced_field)
  call msg( 'r', 'Force Snd Order Dipoles    ',l_force_SndOrd)
  call msg( 'r', 'Evaluate Current           ',l_eval_CURRENT)
- call msg( 'r', 'Enforce periodic pol.      ',l_P_periodic)
  !
 end subroutine NL_initialize

@@ -80,6 +80,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  complex(SP),allocatable, target          :: Xo_res(:,:)
  complex(SP),allocatable, target DEV_ATTR :: Xo_res_d(:,:)
  complex(SP),allocatable DEV_ATTR :: work(:)
+ complex(SP),allocatable DEV_ATTR :: rhotw_mp(:,:)
  complex(SP),pointer     DEV_ATTR :: Xo_res_p(:,:)
  complex(SP),pointer     DEV_ATTR :: X_par_p(:,:,:)
  complex(SP),pointer     DEV_ATTR :: X_par_lowtri_p(:,:,:)
@@ -88,6 +89,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  integer, external    :: X_eh_setup
  type(elemental_collision), target :: Xo_scatt
+
  !
  ! Defaults & Setups
  !===================
@@ -224,7 +226,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  !DEV_OMP parallel num_threads(n_out_threads) default(shared), &
  !DEV_OMP &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_res_p,Xo_scatt,ig_col,&
- !DEV_OMP &        ig1,ig_row_transp,iw,mutexid,work,lwork,&
+ !DEV_OMP &        ig1,ig_row_transp,iw,mutexid,work,lwork,rhotw_mp,&
  !DEV_OMP &        X_rows1_l,X_rows2_l,X_nrows_l,X_cols_transp)
  !
  call OPENMP_update(master_thread)
@@ -247,6 +249,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  if (l_X_terminator) lwork=2*ngrho
  !
  YAMBO_ALLOC_GPU(work,(lwork))
+ YAMBO_ALLOC_GPU( rhotw_mp,(X_par%rows(1):X_par%rows(2),maxval(bare_grid_N)) )
  !
  call elemental_collision_free(Xo_scatt)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
@@ -260,7 +263,8 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
      if(.not.Drude_pole) cycle
      if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
      !
-     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res_p,Xo_scatt,work,lwork)
+     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res_p,Xo_scatt,&
+&                             work,lwork,rhotw_mp,size(rhotw_mp,2))
      !
      ! AF:
      ! ctmp is allocated as ctmp(1,1) to be compliant with devxlib interfaces
@@ -301,7 +305,8 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
    !
    ! 1) First compute the residuals
    !================================
-   call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res_p,Xo_scatt,work,lwork)
+   call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res_p,Xo_scatt,&
+&                           work,lwork,rhotw_mp,size(rhotw_mp,2))
    !
    ! 2) Then the frequency dependent term
    !=======================================
@@ -463,6 +468,8 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  YAMBO_FREE(Xo_res)
  YAMBO_FREE_GPU(work)
  YAMBO_FREE(work)
+ YAMBO_FREE_GPU(rhotw_mp)
+ YAMBO_FREE(rhotw_mp)
  call elemental_collision_free(Xo_scatt)
  !
  !DEV_OMP end parallel

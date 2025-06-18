@@ -33,9 +33,13 @@ subroutine PARALLEL_lin_system_gpu(A,B,n,nrhs)
  use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing
  use gpu_m
-#if defined _CUDA
+#if defined _MPI
  use mpi
+#endif
+#if defined _CUDA
  use cublas,         ONLY:CUBLAS_OP_N
+#endif
+#if defined _CUSOLVERMP
  use cusolvermp
 #endif
  use gpu_m,          ONLY:device_id,async_d

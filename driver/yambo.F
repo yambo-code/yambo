@@ -16,8 +16,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_mpa,l_bss,l_bse,l_em1d,l_X,&
-&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_phel_corr,&
-&                        l_gpu_test,l_slk_test
+&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_gpu_test,&
+&                        l_slk_test
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
 #endif
@@ -145,6 +145,11 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call section('*','') 
  !
+ ! Check USER band selection degeneracy breaking
+ !===============================================
+ !
+ call LEVELS_respect_degenerations(en,Dip,X)
+ !
  ! QP and RT CORRECTIONS
  !=======================
  !
@@ -184,11 +189,10 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  endif
  !
  launch_me=l_em1s.or.(l_em1d.and..not.l_life).or.l_ppa.or.l_X.or.l_mpa
-
  !
  if (l_nl_optics.and.launch_me) call error('Please run the calculation of em1s/d/x in a separate run')
  !
- if (launch_me) i_err=X_dielectric_matrix(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
+ if (launch_me) i_err=X_dielectric_matrix(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.FALSE.,.FALSE.)
  if (launch_me) call mem_manager_report
  !
  ! HARTREE-FOCK AND VXC

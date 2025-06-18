@@ -20,23 +20,22 @@ subroutine K_blocks( )
  !end type BS_block
  !
  use pars,         ONLY:cZERO,SP,IP,IPL
- use parallel_m,   ONLY:PAR_IND_T_ordered,myid,ncpu,PAR_COM_HOST
- use parallel_int, ONLY:PP_wait,PP_redux_wait,PARALLEL_live_message
+ use parallel_m,   ONLY:PAR_IND_T_ordered,myid,ncpu
+ use parallel_int, ONLY:PP_redux_wait,PARALLEL_live_message
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
 &                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim,n_BS_blks_min,&
 &                       BS_n_eh_spaces,BS_res_ares_n_mat,BS_IO_dim,l_BS_ares_from_res
  use com,          ONLY:msg
  !
-#include<y_memory.h>
+#include<parallel_memory.h>
  !
- ! YAMBO_PAR_ALLOC
- !
- integer(IPL) :: HOST_SIZE(1),TMP_SIZE,LOCAL_SIZE(1)
  complex(SP), allocatable :: BS_MAT(:)
  !
  ! Work Space
  !
- integer      :: i_T,j_T,i_T_start,j_T_start,i_block,diag_size,iB,i_res_ares,j_res_ares,n_new_blocks,n_BS_blks_CPUs(ncpu)
+ integer(IPL) :: TMP_SIZE
+ integer      :: i_T,j_T,i_T_start,j_T_start,i_block,diag_size,iB
+ integer      :: i_res_ares,j_res_ares,n_new_blocks,n_BS_blks_CPUs(ncpu)
  integer(IPL) :: local_steps
  real(SP)     :: N_Ts_total,N_Ts_local
  !

@@ -24,7 +24,6 @@ integer function variables_X(ID,local_desc,X,EM1S_NOSOC)
  ! Work Space
  !
  integer             ::sec_size,tmp_ib(2)
- logical             ::local_long_gauge
  character(schlen)   ::X_label,VAR_NAME
  !
  call IO_desc_reset(local_desc)
@@ -89,10 +88,6 @@ integer function variables_X(ID,local_desc,X,EM1S_NOSOC)
 &     VAR="RL vectors in the sum",I0=X%ngostnts,WARN=.true.,OP=(/"<="/),DESCRIPTOR=local_desc)
  call io_variable_elemental(ID,&
 &     VAR="[r,Vnl] included",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
- !
- if (.not.ver_is_gt_or_eq(ID,(/3,0,9/)).and.read_is_on(ID)) then
-   call io_variable_elemental(ID,VAR="Longitudinal Gauge",L0=local_long_gauge,DESCRIPTOR=local_desc)
- endif
  !
  call io_variable_elemental(ID,&
 &     VAR="Field direction",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/),DESCRIPTOR=local_desc)

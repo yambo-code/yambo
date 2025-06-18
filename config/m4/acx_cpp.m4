@@ -17,7 +17,7 @@ case "${CPP}" in
    ;;
  *gcc* )
    case "${host}" in
-     *86*apple* )
+     *86*apple* | *arm*apple* )
        if test -z "$CPPFLAGS"; then CPPFLAGS="-P -D_apple"; fi
        ;;
      * )
@@ -37,7 +37,7 @@ case "${CPP}" in
          ;;
      esac
      ;;
-     *86*apple* )
+     *86*apple* | *arm*apple* )
        if test -z "$CPPFLAGS"; then CPPFLAGS="-P -traditional -D_apple"; fi
        ;;
      powerpc64*linux* )

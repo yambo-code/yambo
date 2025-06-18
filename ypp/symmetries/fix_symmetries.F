@@ -39,10 +39,9 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  ! Dummies
  !
  integer                :: i1,i2
- integer                :: is,n_syms_to_check
- logical                :: reject_symmetry,found_symm
+ integer                :: is
+ logical                :: reject_symmetry
  real(SP)               :: v1(3),v2(3)
- real(SP)               :: symm_to_check(3,3,2)
  !
  use_E_field=.FALSE.
  use_B_field=.FALSE.

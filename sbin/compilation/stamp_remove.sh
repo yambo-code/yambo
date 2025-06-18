@@ -11,9 +11,9 @@ if [ $1 == "goal" ] && [ ! -z $goal ] ; then stamp=$compdir/config/stamps_and_li
 if [ $1 == "target.a" ] && [ ! -z $target ] ; then stamp=$compdir/config/stamps_and_lists/${target}.a.stamp ; fi
 if [ $1 == "lib" ] && [ ! -z $llib ] ; then
  if [[ "$file_src" == *"/ypp/$llib"* ]]  ; then
-  stamp=$compdir/config/stamps_and_lists/lib_ypp_${llib}.a.stamp;
+  stamp=$compdir/config/stamps_and_lists/lib_YPP_${llib}.a.stamp;
  else
-  stamp=$compdir/config/stamps_and_lists/lib${llib}.a.stamp;
+  stamp=$compdir/config/stamps_and_lists/lib_Y_${llib}.a.stamp;
  fi
 fi
 if [ $1 == "exe" ] ; then stamp=`find $compdir/config/stamps_and_lists/ -name "compiling*"  | sed "s/compiling_//"`; fi

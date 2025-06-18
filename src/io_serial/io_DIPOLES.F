@@ -8,20 +8,15 @@
 integer function io_DIPOLES(Dip,ID)
  !
  use pars,          ONLY:schlen
- use DIPOLES,       ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_v,DIP_alloc
- use electrons,     ONLY:n_spin
- use R_lattice,     ONLY:nXkibz
- use IO_m,          ONLY:io_sec,frag_DIP,io_DIP,read_is_on,io_extension,&
-&                        IO_NOT_ALLOWED,frag_DIP
- use IO_int,        ONLY:io_connect,io_disconnect,io_bulk,io_header,io_fragment
- use DIPOLES,       ONLY:DIP_spin,DIP_orbital,&
-&                        compute_Orb_dipoles,compute_Spin_dipoles
- use electrons,     ONLY:n_spinor
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_v,DIP_spin,DIP_orbital,P_square
 #if defined _RT
  use DIPOLES,       ONLY:DIP_P_spinor
 #endif
- use DIPOLES,       ONLY:P_square,compute_P2_dipoles
- use BS,            ONLY:l_BS_dichroism
+ use electrons,     ONLY:n_spin,n_spinor
+ use R_lattice,     ONLY:nXkibz
+ use IO_m,          ONLY:io_sec,frag_DIP,io_DIP,read_is_on,io_extension,IO_NOT_ALLOWED,frag_DIP
+ use IO_int,        ONLY:io_connect,io_disconnect,io_bulk,io_header,io_fragment
+ use stderr,        ONLY:STRING_match
  use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
  !
@@ -95,25 +90,7 @@ integer function io_DIPOLES(Dip,ID)
  P2_size(2:3)=DIP_size(3:4)
  P2_ipos(2:3)=DIP_ipos(3:4)
  !
- if (read_is_on(ID)) then
-   call DIP_alloc('DIP_iR',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
-   call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
-   call DIP_alloc('DIP_v' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
-   !
-   if (compute_Orb_dipoles) &
-   & call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz,2/))
-   if (compute_Spin_dipoles) &
-   & call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
-#if defined _RT 
-   if (compute_Spin_dipoles.and.n_spinor==2) &
-   & call DIP_alloc('DIP_P_spinor',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
-#endif
-   if (compute_P2_dipoles) call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
-   if (l_BS_dichroism) then
-     call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz,1/))
-   endif  
-   !
- endif
+ if (read_is_on(ID)) call DIPOLE_ALLOC_global(Dip,PAR_K_scheme%nibz)
  !
  ! Fragmentation
  !
@@ -137,13 +114,17 @@ integer function io_DIPOLES(Dip,ID)
  call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=DIP_size)
  call io_bulk(ID_frag,C3=DIP_v(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
  !
- if (compute_Orb_dipoles) then
+ if (STRING_match(Dip%computed,"M_it")) then
    !
    ! Itinerant magnetization
    !
    write (VAR_name,'(3(a,i4.4))') 'DIP_itinerant_k_',ik,'_spin_',i_sp_pol
    call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=DIP_size)
    call io_bulk(ID_frag,C3=DIP_orbital(:,:,:,ik_mem,i_sp_pol,2),IPOS=DIP_ipos)
+   !
+ endif
+ !
+ if (STRING_match(Dip%computed,"M_orb")) then
    !
    ! Orbital magnetization
    !
@@ -153,7 +134,7 @@ integer function io_DIPOLES(Dip,ID)
    !
  endif
  !
- if (compute_Spin_dipoles) then 
+ if (STRING_match(Dip%computed,"M_spin")) then
    !
    ! Spin magntization
    !
@@ -164,22 +145,19 @@ integer function io_DIPOLES(Dip,ID)
  endif
  !
 #if defined _RT
- if (compute_Spin_dipoles) then
+ if (STRING_match(Dip%computed,"P_spinor")) then
    !
-   if (n_spinor==2) then
-     !
-     ! P_Spinor
-     !
-     write (VAR_name,'(a,i4.4)') 'DIP_P_spinor_k_',ik
-     call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=Pspinor_size)
-     call io_bulk(ID_frag,C5=DIP_P_spinor(:,:,:,:,:,ik_mem),IPOS=Pspinor_ipos)
-     !
-   endif
+   ! P_Spinor
+   !
+   write (VAR_name,'(a,i4.4)') 'DIP_P_spinor_k_',ik
+   call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=Pspinor_size)
+   call io_bulk(ID_frag,C5=DIP_P_spinor(:,:,:,:,:,ik_mem),IPOS=Pspinor_ipos)
+   !
    !
  endif
 #endif
  !
- if (compute_P2_dipoles) then
+ if (STRING_match(Dip%computed,"P2")) then
    !
    ! P2
    !
@@ -189,7 +167,7 @@ integer function io_DIPOLES(Dip,ID)
    !
  endif
  !
- if (l_BS_dichroism) then
+ if (STRING_match(Dip%computed,"M_CD_orb")) then
    !
    ! Orbital magnetization
    !

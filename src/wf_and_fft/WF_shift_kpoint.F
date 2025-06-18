@@ -65,16 +65,16 @@ subroutine WF_shift_kpoint_gpu(b_to_shift,nb_to_shift,ikbz,i_sp_pol,wf_shift,Xk,
      !DEV_OMP parallel do default(shared), private(i_sp_pol,i_b,i_spinor,ig,igp),collapse(3)
      !
      do i_b=i_b1,i_b2
-     do i_spinor=1,n_spinor
-     do ig=1,wf_ng_1st_BZ
-       !
-       if(WF_tmp(ig,1,i_b1)==cZERO) cycle
-       !
-       igp=DEV_VAR(G_m_G)(ig,g0_idx_val)
-       WF_k_out(igp,i_spinor,i_b)=WF_tmp(ig,i_spinor,i_b)
-       !
-     enddo
-     enddo
+       do i_spinor=1,n_spinor
+         do ig=1,wf_ng_1st_BZ
+           !
+           if(WF_tmp(ig,1,i_b1)==cZERO) cycle
+           !
+           igp=DEV_VAR(G_m_G)(ig,g0_idx_val)
+           WF_k_out(igp,i_spinor,i_b)=WF_tmp(ig,i_spinor,i_b)
+           !
+         enddo
+       enddo
      enddo
      !
      !DEV_OMP end parallel do

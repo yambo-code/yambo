@@ -13,6 +13,7 @@ subroutine Dipole_spin_magnetization(Xen,Xk,dip)
  use drivers,             ONLY:l_sc_run
  use interfaces,          ONLY:WF_load,WF_free
  use LIVE_t,              ONLY:live_timing
+ use timing_m,            ONLY:timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol,n_spin
  use R_lattice,           ONLY:bz_samp
  use DIPOLES,             ONLY:DIP_spin,DIPOLE_t
@@ -31,10 +32,12 @@ subroutine Dipole_spin_magnetization(Xen,Xk,dip)
  !
  ! Work Space
  !
- integer                      :: ik,ic_wf(n_sp_pol),iv_wf(n_sp_pol),ic,iv,n_LT_steps,ik_mem,&
-&                                i_sp_wf(2)
+ integer                      :: ik,ic_wf(n_sp_pol),iv_wf(n_sp_pol),ic,iv,n_LT_steps,ik_mem
+ logical                      :: LT_msg=.FALSE.
  !
- if(n_spin==1) return
+ if (n_spin==1) return
+ !
+ call timing("DIPOLE_spin_M",OPR="start")
  !
  ! Parallelization Mask 
  !======================
@@ -43,8 +46,6 @@ subroutine Dipole_spin_magnetization(Xen,Xk,dip)
  n_LT_steps=PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
 &           PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
 &           PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
- !
- if (n_LT_steps>0) call live_timing('Dipoles: spin',n_LT_steps)
  !
  ! Main loop over k in IBZ
  !
@@ -58,6 +59,11 @@ subroutine Dipole_spin_magnetization(Xen,Xk,dip)
    !
    call WF_load(WF,0,1,Dip%ib,(/ik,ik/),space='R',title='-Spin oscillators/R space',&
 &               force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+   !
+   if (.not.LT_msg) then
+     if (n_LT_steps>0) call live_timing('Spin magnetiziation',n_LT_steps)
+     LT_msg=.TRUE.
+   endif
    !
    do iv=Dip%ib(1),Dip%ib_lim(1) 
      !
@@ -122,5 +128,7 @@ subroutine Dipole_spin_magnetization(Xen,Xk,dip)
  enddo        ! k-points loop
  !
  call live_timing()
+ !
+ call timing("DIPOLE_spin_M",OPR="stop")
  !
 end subroutine Dipole_spin_magnetization

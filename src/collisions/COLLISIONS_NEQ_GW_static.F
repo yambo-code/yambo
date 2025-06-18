@@ -24,7 +24,8 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use timing_m,      ONLY:timing
  use IO_int,        ONLY:io_control,Io_and_Messaging_switch
  use IO_m,          ONLY:OP_RD_CL,REP,VERIFY,NONE,io_COLLs
- use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t
+ use ALLOC,         ONLY:X_ALLOC_elemental
+ use X_m,           ONLY:X_mat,X_t
  use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,qindx_C,bz_samp

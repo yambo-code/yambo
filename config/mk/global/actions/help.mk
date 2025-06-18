@@ -5,7 +5,7 @@
 #
 # Authors (see AUTHORS file for details): AM
 #
-CLEANING_COMPONENTS=bin int-libs driver Ydrive src ypp interfaces conf dep
+CLEANING_COMPONENTS=bin int-libs driver src ypp interfaces conf dep
 help:
 	@$(ECHO)  "\n\n * * * Yambo Makefile help * * * \n" ;
 	@$(ECHO)  "Interfaces: " ;
@@ -32,7 +32,7 @@ help:
 	@$(ECHO)  " The cleaning procedure of yambo is divided in several modules: $(CLEANING_COMPONENTS)"
 	@$(ECHO)  " Each of these module can be called by using"
 	@$(ECHO)  " make clean what=<MODULE> \n"
-	@$(ECHO)  " make clean               =  remove all modules except int-libs, ext-libs, Ydriver, dependencies and configure files."
+	@$(ECHO)  " make clean               =  remove all modules except int-libs, ext-libs, dependencies and configure files."
 	@$(ECHO)  " make clean_all           =  remove all modules. Complete cleaning."
 	@$(ECHO)  " make reset               =  clean  + int-libs."
 	@$(ECHO)  "\n";

@@ -13,7 +13,8 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
 &                        RIM_W_is_diagonal,RIM_W,RIM_W_d,f_coeff,idir,RIM_W_E,&
 &                        RIM_id_epsm1_reference,RIM_epsm1,RIM_qpg
  use vec_operate,   ONLY:c2a,v_norm
- use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t
+ use ALLOC,         ONLY:X_ALLOC_elemental
+ use X_m,           ONLY:X_mat,X_t
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:OP_RD_CL,NONE,RD_CL,OP_RD,RD_CL_IF_END,OP_WR_CL,&
 &                        deliver_IO_error_message,manage_action,REP,VERIFY

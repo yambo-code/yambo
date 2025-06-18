@@ -74,7 +74,7 @@ netcdf_flag = @NETCDFFLAGS@
 lhdf5       = @HDF5_LIBS@
 ihdf5       = @HDF5_INCS@
 hdf5_opt    = @HDF5_OPT@
-hdf5_mode   = @HDF5_MODE@		# ( production | clean | debug )
+hdf5_mode   = @HDF5_MODE@ # ( production | clean | debug )
 io_lib_ver  = @IO_LIB_VER@
 llibxc      = @LIBXC_LIBS@
 ilibxc      = @LIBXC_INCS@
@@ -99,7 +99,6 @@ lfutile     = @FUTILE_LIBS@
 ifutile     = @FUTILE_INCS@
 letsf       = @ETSF_LIBS@
 ietsf       = @ETSF_INCS@
-idriver     = @DRIVER_INCS@
 mpipath     = @MPI_PATH@
 #
 # VPATH

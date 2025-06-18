@@ -19,6 +19,7 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
 &                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
+ use timing_m,           ONLY:timing
  !
  implicit none
  !
@@ -32,11 +33,13 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
  real(SP)                     :: Eb,Ev,Ec
  complex(SP)                  :: DIP_pos(3,2),DIP_tmp(3)
  !
+ call timing("DIPOLE_orbital_M",OPR="start")
+ !
  n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
 &                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
  !
- if (n_LT_steps>0) call live_timing('Dipoles: orbital magnetization',n_LT_steps)
+ if (n_LT_steps>0) call live_timing('Orbital magnetization',n_LT_steps)
  !
  ! Main loop over k in IBZ
  !
@@ -96,5 +99,7 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
  enddo          ! k-points
  !
  call live_timing()
+ !
+ call timing("DIPOLE_orbital_M",OPR="stop")
  !
 end subroutine Dipole_orbital_magnetization

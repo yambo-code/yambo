@@ -9,7 +9,7 @@ subroutine NL_output(i_time,i_run)
  !
  use pars,         ONLY:SP,schlen,pi
  use units,        ONLY:FS2AUT,HA2EV,SPEED_OF_LIGHT
- use fields,       ONLY:A_tot,A_ext,Efield
+ use fields,       ONLY:A_tot,A_ext
  use com,          ONLY:msg,of_open_close
  use stderr,       ONLY:intc
  use real_time,    ONLY:NE_steps,RT_step

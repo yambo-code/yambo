@@ -10,6 +10,7 @@
  SERIAL_diagonalization.o
  SERIAL_inversion.o
  SERIAL_lin_system.o
+ SERIAL_lin_system_gpu.o
  SLK_ORTHO_group.o
  SLK_ORTHO_init.o
  SLK_setup.o

@@ -52,9 +52,6 @@ if [[ -z $new ]] && [[ -z $missing ]]; then
  return
 fi
 #
-# Ydriver is to be recompiled anyway as the library name depends on the executable and cannot be saved
-if [[ "$target" == *"_Ydriver_"* ]] ; then DIR_is_to_recompile=1; fi
-#
 source ./sbin/compilation/verbosity.sh "locks"
 #
 # Save & Restore

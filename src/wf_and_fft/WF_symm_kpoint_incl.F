@@ -31,6 +31,7 @@
 #else
 #  include<dev_defs_nogpu.h>
 #  undef _GPU_LOC
+#  undef  DEV_SUB
 #  define DEV_SUB(x)        CAT(x,_gpu)
 #  include"WF_symm_kpoint.F"
 #  include<dev_undefs.h>

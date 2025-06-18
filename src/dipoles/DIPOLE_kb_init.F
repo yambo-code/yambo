@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
-subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
+subroutine DIPOLE_kb_init(Xen,Dip,io_err,ID)
  !
  use pars,                ONLY:SP,pi
  use stderr,              ONLY:intc
@@ -159,5 +159,5 @@ subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
      !
    end function
    !
-end subroutine
+end subroutine DIPOLE_kb_init
 

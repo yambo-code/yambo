@@ -8,7 +8,8 @@
 subroutine X_ALLOC_global(WHAT,W)
  !
  use pars,          ONLY:cZERO
- use X_m,           ONLY:X_ALLOC_elemental,Resp_ii,Resp_ij,Epsilon_ii,Epsilon_ij,&
+ use ALLOC,         ONLY:X_ALLOC_elemental
+ use X_m,           ONLY:Resp_ii,Resp_ij,Epsilon_ii,Epsilon_ij,&
 &                        Alpha,Joint_DOS,X_magnons,X_dichroism,EEL,X_do_obs
  use frequency,     ONLY:w_samp
  use drivers,       ONLY:l_optics

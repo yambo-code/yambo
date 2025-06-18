@@ -37,7 +37,7 @@ $cpp $cppflags $precomp_flags objects.c  > no_pj.mk
 #
 # Projects 
 #==========
-for PJ in _SC _RT _RT_SCATT _ELPH _ELPH_ITERATIVE _PHEL _NL _QED _YPP_ELPH _YPP_RT _YPP_NL _YPP_SC _yambo _ypp _a2y _p2y _c2y _DOUBLE _MODELS
+for PJ in _SC _RT _RT_SCATT _ELPH _NL _QED _YPP_ELPH _YPP_RT _YPP_NL _YPP_SC _yambo _ypp _a2y _p2y _c2y _DOUBLE
 do
  #
  $cpp $cppflags $precomp_flags -D$PJ objects.c  > $PJ.mk

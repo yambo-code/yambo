@@ -8,21 +8,13 @@
 # Functions
 #===========
 #
-# Driver
-#--------
-define driver
- $(PREFIX)(echo "$(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(srcdir)/lib/yambo/Ydriver/src/driver/driver.c" >> $(STDLOG) )
- $(PREFIX)(eval $(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(srcdir)/lib/yambo/Ydriver/src/driver/driver.c >> $(STDLOG) 2>&1  )
-endef
-#
 # Linking
 #---------
 define link
- $(PREFIX)(echo "$(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs)" >> $(STDLOG)  ;\
- eval $(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs) >> $(STDLOG) 2>&1;\
+ $(PREFIX)(echo "$(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) $(objs) $(libs)" >> $(STDLOG)  ;\
+ eval $(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) $(objs) $(libs) >> $(STDLOG) 2>&1;\
  $(ECHO) "\t[$(wdir)] $(target) (link)";\
  if test -f $(target); then \
-   rm driver.o \
    rm -f $(compdir)/config/stamps_and_lists/compiling_$(target).stamp; \
    touch $(compdir)/config/stamps_and_lists/$(target).stamp; \
  fi )

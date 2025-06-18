@@ -14,6 +14,7 @@
  G_rot_grid.o
  HyperbolicSecant_FT.o
  Kramers_Kronig.o
+ LEVELS_mirror.o
  LEVELS_respect_degenerations.o
  Laplace_transform.o
  Lorentzian_FT.o
@@ -27,18 +28,10 @@
  QPartilize.o
  RIntegrate.o
  crystal_lattice.o
- deviceXlib_mod.o
- device_auxfunc.o
- device_auxfunc_interf.h.o
- device_auxfunc_mod.o
- device_fbuff.o
- device_fbuff_interf.h.o
- device_fbuff_mod.o
- device_memcpy.o
- device_memcpy_interf.h.o
- device_memcpy_mod.o
  eval_G_minus_G.o
  eval_Gradient.o
+ eval_Gradient_cpu.o
+ eval_Gradient_gpu.o
  f_build_ext.o
  spline_fit.o
 

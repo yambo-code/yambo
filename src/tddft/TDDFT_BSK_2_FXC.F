@@ -14,7 +14,6 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_eh_E,BSS_eh_W
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_K_diagonal,F_xc_gspace,&
 &                        FXC_is_retarded,io_BS_Fxc
- use DIPOLES,       ONLY:DIP_rotated
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_index 
  use D_lattice,     ONLY:DL_vol
@@ -23,7 +22,9 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  use IO_m,          ONLY:OP_RD_CL,OP_RD,RD_CL,&
 &                        NONE,OP_WR_CL,REP,VERIFY
  use frequency,     ONLY:w_samp
+ !
 #include<y_memory.h>
+ !
  type(w_samp) ::W
  integer      ::ik1,ik2,O_x_dim,iq
  complex(SP)  ::O1x(FXC_n_g_corr,O_x_dim),O2x(FXC_n_g_corr,O_x_dim)
@@ -48,7 +49,7 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  ! Dipoles for non analytical term
  !
  type(bz_samp)         :: kpt
- complex(SP)           :: DIP_projected,field_dir(3)
+ complex(SP)           :: DIP_projected,field_dir(3),DIP(3)
  !
  ! Fxc procedure
  !
@@ -81,7 +82,8 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
      iv=BSS_eh_table(i1,2)
      ic=BSS_eh_table(i1,3)
      i_sp=spin(BSS_eh_table(i1,:))
-     DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ik,i_sp,"Dip_iR",kpt))
+     call DIPOLE_rotate(ic,iv,ik,i_sp,"Dip_iR",kpt,DIP)
+     DIP_projected=dot_product(field_dir,DIP)
      O1x(1,i1-blk_pos(1))=-conjg(DIP_projected)/bare_qpg(iq,1)
    enddo
    if (ik1/=ik2) then
@@ -90,7 +92,8 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
        iv=BSS_eh_table(i1,2)
        ic=BSS_eh_table(i1,3)
        i_sp=spin(BSS_eh_table(i1,:))
-       DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ik,i_sp,"Dip_iR",kpt))
+       call DIPOLE_rotate(ic,iv,ik,i_sp,"Dip_iR",kpt,DIP)
+       DIP_projected=dot_product(field_dir,DIP)
        O2x(1,i1-blk_pos(2))=-conjg(DIP_projected)/bare_qpg(iq,1)
      enddo
    else

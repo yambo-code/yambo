@@ -34,7 +34,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  ! Work Space
  !
  logical             ::res_corr_disk,res_exch_disk,cpl_disk,&
-&                      cpl_corr_disk,cpl_exch_disk,td_hf_disk,local_long_gauge
+&                      cpl_corr_disk,cpl_exch_disk,td_hf_disk
  !
  variables_BS=0
  !
@@ -133,9 +133,6 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
      call def_variable_elemental(ID,"BS_W_DIP_rVnl",1,LP_YIO,0)
      call io_variable_elemental(ID,&
 &         VAR="[W] [r,Vnl] included",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/),DESCRIPTOR=desc)
-     !
-     call def_variable_elemental(ID,"BS_W_DIP_rVnl",1,LP_YIO,0)
-     call io_variable_elemental(ID,VAR="[W] Longitudinal Gauge",L0=local_long_gauge,DESCRIPTOR=desc)
      !
      call def_variable_elemental(ID,"BS_W_q_dir",3,SP,0)
      call io_variable_elemental(ID,VAR="[W] Field direction",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/),DESCRIPTOR=desc)

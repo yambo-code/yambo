@@ -155,7 +155,7 @@ subroutine k_find_smallest_g0(g0_idx,g0_length)
  !
  ! Find the smallest G0 in each direction
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP
  use vec_operate,    ONLY:c2a
  use R_lattice,      ONLY:g_vec,ng_closed
  use com,            ONLY:msg                                                                                   
@@ -170,7 +170,6 @@ subroutine k_find_smallest_g0(g0_idx,g0_length)
  ! Work Space
  !
  integer :: id,i1
- character(schlen)  :: dump_ch
  real(SP)           :: g0(3)
  !
  do id=1,3
@@ -203,10 +202,8 @@ subroutine k_find_smallest_g0(g0_idx,g0_length)
    !
  enddo
  !
- write(dump_ch,'(a,3i3)') " Index g0 smallest positive vectors in each direction: ",g0_idx(:,1)
- call msg("s",dump_ch)
- write(dump_ch,'(a,3i3)') " Index g0 smallest negative vectors in each direction: ",g0_idx(:,2)
- call msg("s",dump_ch)
+ call msg("r"," Smallest g0 vector in each direction: positive",g0_idx(:,1))
+ call msg("r","                                       negative",g0_idx(:,2))
  !
 end subroutine k_find_smallest_g0
 

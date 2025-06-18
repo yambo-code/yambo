@@ -23,7 +23,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
  use electrons,      ONLY:levels,nel
  use D_lattice,      ONLY:DL_vol
  use com,            ONLY:msg
- use X_m,            ONLY:X_t,X_ALLOC_elemental,X_mat
+ use ALLOC,          ONLY:X_ALLOC_elemental
+ use X_m,            ONLY:X_t,X_mat
  use QP_m,           ONLY:QP_nb,QP_nk,QP_n_states,QP_table,QP_state,QP_Vnl_xc,QP_Vxc
  use collision_el,   ONLY:elemental_collision,elemental_collision_free
  use IO_int,         ONLY:io_control
@@ -174,7 +175,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
      Xw%dr=(/freq(1),freq(ACFDT_n_freqs)/)
      YAMBO_ALLOC(Xw%p,(ACFDT_n_freqs))
      Xw%p(:)=(0.,1.)*freq(:)
-     i_err=X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,iqibz>1)
+     i_err=X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,iqibz>1,.TRUE.)
      if (i_err==0) exit
    enddo
    !

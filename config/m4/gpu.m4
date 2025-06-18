@@ -187,6 +187,7 @@ if test x"$with_rocm_incs" != x"" ; then  LIBROCM_INCS="$with_rocm_incs" ; fi
 if test x"$with_mklgpu_libs" != x"" ; then MKLGPU_LIBS="$with_mklgpu_libs" ; fi
 
 # Cuda Fortran
+PETSC_FLAGS=" "
 if test x"$enable_cuda_fortran" != "xno" ; then
    #
    def_gpu="-D_GPU -D_CUDA -D_CUDAF"
@@ -306,6 +307,7 @@ AC_SUBST(GPU_LIBS)
 AC_SUBST(GPU_INCS)
 AC_SUBST(DEVXLIB_FLAGS)
 AC_SUBST(DEVXLIB_CUDALIBS)
+AC_SUBST(PETSC_FLAGS)
 AC_SUBST(LIBROCM_LIBS)
 AC_SUBST(LIBROCM_INCS)
 AC_SUBST(LIBROCM_PATH)

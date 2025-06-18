@@ -100,9 +100,16 @@ integer function io_COLLISIONS_header(ID,COLL)
    if (V_kind_disk>=H_SE_HARTREE) SIZE_=SIZE_+1
    if (V_kind_disk==             H_SE_FOCK.or.V_kind_disk==             H_SE_SEX.or.&
 &        V_kind_disk==H_SE_HARTREE+H_SE_FOCK.or.V_kind_disk==H_SE_HARTREE+H_SE_SEX     ) SIZE_=SIZE_+1
+   if (ver_is_gt_or_eq(ID,revision=24115)) then
+     SIZE_ = SIZE_-1
+     ! COLLISIONS_cutoff is always zero in io_parallel
+   endif
+
    call io_elemental(ID,VAR="HXC_PARAMETERS",VAR_SZ=SIZE_,MENU=0)
-   call io_elemental(ID,R0=COLLISIONS_cutoff,&
+   if (.not.ver_is_gt_or_eq(ID,revision=24115)) then
+     call io_elemental(ID,R0=COLLISIONS_cutoff,&
 &         VAR='Collisions Cutoff                 ',WARN=.true.,OP=(/"=="/))
+   endif
    !
    if (V_kind_disk>=H_SE_HARTREE) then
      call io_elemental(ID,I0=QP_ng_SH,&

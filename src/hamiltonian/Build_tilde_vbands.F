@@ -29,15 +29,15 @@ subroutine Build_tilde_vbands(en,Xk,ikbz,i_sp,istep,id_red,V_bands,V_tilde)
  integer,      intent(in)      :: istep
  integer,      intent(in)      :: id_red
  complex(SP),  intent(in)      :: V_bands(H_ref_bands(2),en%nbf(i_sp),QP_nk)
- complex(SP),  intent(out)     :: V_tilde(en%nbf(i_sp),H_ref_bands(2),2)
+ complex(SP),  intent(out)     :: V_tilde(en%nbf(i_sp),H_ref_bands(1):H_ref_bands(2),2)
  !
  ! Work Space
  !
- integer :: i2,iv1,im,idx(3),id,ikp,ikm
- integer :: ikm_ibz,ikp_ibz
- complex(SP) :: tmp_Vp(H_ref_bands(2),en%nbf(i_sp)),tmp_Vm(H_ref_bands(2),en%nbf(i_sp))
+ integer :: i2,iv1,im,idx(3),id,ikp,ikm,ikm_ibz,ikp_ibz,nbf
+ complex(SP) :: tmp_Vp(H_ref_bands(1):H_ref_bands(2),en%nbf(i_sp)),tmp_Vm(H_ref_bands(1):H_ref_bands(2),en%nbf(i_sp))
  !
  V_tilde=cZERO
+ nbf=en%nbf(i_sp)
  !
  if(k_map%max_kdir(id_red)==1) return
  !
@@ -70,13 +70,13 @@ subroutine Build_tilde_vbands(en,Xk,ikbz,i_sp,istep,id_red,V_bands,V_tilde)
  !
  ! i,j indexes on all bands CMR basis
  !
- call M_by_M_omp('N','N',H_ref_nbands,en%nbf(i_sp),H_ref_bands(2),cONE,  &
+ call M_by_M_omp('N','N',H_ref_nbands,nbf,H_ref_bands(2),cONE,  &
 &  DIP_S(H_ref_bands(1):,:,id_red+(istep-1)*3,ikbz,i_sp),H_ref_nbands, &
-&  V_bands(:,:en%nbf(i_sp),ikp_ibz),H_ref_bands(2),cZERO,tmp_Vp(H_ref_bands(1):,:en%nbf(i_sp)),H_ref_nbands)
+&  V_bands(:,:nbf,ikp_ibz),H_ref_bands(2),cZERO,tmp_Vp(H_ref_bands(1):,:en%nbf(i_sp)),H_ref_nbands)
  !
- call M_by_M_omp('C','N',H_ref_nbands,en%nbf(i_sp),H_ref_bands(2),cONE,  &
+ call M_by_M_omp('C','N',H_ref_nbands,nbf,H_ref_bands(2),cONE,  &
 &  DIP_S(:,H_ref_bands(1):,id_red+(istep-1)*3,ikm ,i_sp),H_ref_bands(2), &
-&  V_bands(:,:en%nbf(i_sp),ikm_ibz),H_ref_bands(2),cZERO,tmp_Vm(H_ref_bands(1):,:en%nbf(i_sp)),H_ref_nbands)
+&  V_bands(:,:nbf,ikm_ibz),H_ref_bands(2),cZERO,tmp_Vm(H_ref_bands(1):,:en%nbf(i_sp)),H_ref_nbands)
  !
  ! Eq. (53) in PRB 69, 085106 (2004), derived in appendix (C), see eq. C(11)
  !
@@ -85,9 +85,9 @@ subroutine Build_tilde_vbands(en,Xk,ikbz,i_sp,istep,id_red,V_bands,V_tilde)
  ! 
 !$omp parallel do default(shared), private(i2,iv1), collapse(2)
  do i2=H_ref_bands(1),H_ref_bands(2)
-   do iv1=1,en%nbf(i_sp)
-     V_tilde(iv1,i2,1)=sum( Sm1_plus(:en%nbf(i_sp),iv1,id_red+(istep-1)*3,ikbz,i_sp)*tmp_Vp(i2,:en%nbf(i_sp)))
-     V_tilde(iv1,i2,2)=sum(Sm1_minus(:en%nbf(i_sp),iv1,id_red+(istep-1)*3,ikbz,i_sp)*tmp_Vm(i2,:en%nbf(i_sp)))
+   do iv1=1,nbf
+     V_tilde(iv1,i2,1)=sum( Sm1_plus(:nbf,iv1,id_red+(istep-1)*3,ikbz,i_sp)*tmp_Vp(i2,:nbf))
+     V_tilde(iv1,i2,2)=sum(Sm1_minus(:nbf,iv1,id_red+(istep-1)*3,ikbz,i_sp)*tmp_Vm(i2,:nbf))
    enddo
  enddo
 !$omp end parallel do

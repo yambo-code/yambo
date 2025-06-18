@@ -150,7 +150,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            !    the k+q => case WF_shifts==0
            ! 2) the orignal points ikbz that corresponds to (k+q) was 
            !    shifted in the opposite direction the two
-           !    shifts cancel out and I get shift==0 ==> WF_shifts==2
+           !    shifts cancel out and I get shift==0 ==> WF_shifts==-1
            ! 3) the orignal points ibbz that corresponds to (k+q) was
            !    already shifted in the right direction I keep this shift
            !    case WF_shifts==1    
@@ -159,7 +159,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            ! 
            if(WF_shifts(ikbzp,id)==1) shift(id)=1
            if(WF_shifts(ikbzp,id)==0) shift(id)=1
-           if(WF_shifts(ikbzp,id)==2) shift(id)=0
+           if(WF_shifts(ikbzp,id)==-1) shift(id)=0
            !
          endif
          !

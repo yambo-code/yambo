@@ -52,8 +52,8 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
 #endif
- use gpu_m,         ONLY:have_gpu
- use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_memcpy_d2h,devxlib_memcpy_h2d
+ use gpu_m,         ONLY:have_gpu,have_openacc,have_ompgpu
+ use devxlib,       ONLY:devxlib_memcpy_d2h
  use timing_m,      ONLY:timing
  !
 #include<dev_defs.h>
@@ -331,7 +331,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
      !
      GreenF_iw=GreenF(iw)
      !
-     !DEV_ACC parallel loop collapse(2)
+     !DEV_ACC parallel loop collapse(2) async
      !DEV_CUF kernel do(2) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:X_par_p,Xo_res_p)
      !DEV_OMPGPU teams loop collapse(2)
@@ -377,7 +377,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
        !
        if (PAR_COM_RL_INDEX_n_CPU>1) then
          !
-         !DEV_ACC parallel loop collapse(2) 
+         !DEV_ACC parallel loop collapse(2) async
          !DEV_CUF kernel do(2)
          !DEV_OMPGPU target map(present,alloc:X_par_lowtri_p,Xo_res_p)
          !DEV_OMPGPU teams loop collapse(2)
@@ -396,7 +396,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
          !
        else
          !
-         !DEV_ACC parallel loop collapse(2) 
+         !DEV_ACC parallel loop collapse(2) async
          !DEV_CUF kernel do(2)
          !DEV_OMPGPU target map(present,alloc:X_par_p,Xo_res_p)
          !DEV_OMPGPU teams loop collapse(2)
@@ -459,9 +459,14 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! CLEAN
  !=======
+#ifdef _GPU
  YAMBO_FREE_GPU(DEV_VAR(Xo_res))
+#endif
  YAMBO_FREE(Xo_res)
+ !
+#ifdef _GPU
  YAMBO_FREE_GPU(work)
+#endif
  YAMBO_FREE(work)
  call elemental_collision_free(Xo_scatt)
  !

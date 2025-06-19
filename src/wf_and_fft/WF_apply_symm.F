@@ -41,7 +41,7 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
  if(isc(3)==idt_index) then
    !
    ! dev2dev copy
-#ifdef _GPU_LOC   
+#ifdef _GPU   
    call devxlib_memcpy_d2d(WF_symm,DEV_VAR(WF%c)(:,:,i_wf))
 #else
    WF_symm=WF%c(:,:,i_wf)
@@ -87,7 +87,7 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
  !
  ! take care of time reversal if needed
  !
-#ifdef _GPU_LOC
+#ifdef _GPU
  if(isc(3)>nsym/(i_time_rev+1)) call devxlib_conjg_d(WF_symm)
 #else
  if(isc(3)>nsym/(i_time_rev+1)) WF_symm=conjg(WF_symm)

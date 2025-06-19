@@ -34,9 +34,7 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  use pars,          ONLY:DP
  use devxlib_environment
  use devxlib_async
-#if defined _CUDA
  use cufft_m
-#endif
 #if defined _OPENACC
  use openacc
 #endif
@@ -59,30 +57,28 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  !
  if (cufft_plan==0) then
    !
+   istat = cufftPlan3d( cufft_plan, n(3), n(2), n(1), CUFFT_Z2Z )
+   !
 #ifdef _OPENACC
-   ! 2022-02-02 DS and AF TO BE FIXED
+   !
 # if defined _PGI || defined _NV
-   !istat = cufftSetStream( cufft_plan, acc_get_cuda_stream(acc_async_sync) )
+   !
    istat = cufftSetStream( cufft_plan, acc_get_cuda_stream(acc_async_noval) )
    ! The following lines, in place of the one above,
-   ! is needed to compile with gfortran
+   ! are needed to compile with gfortran
    ! However they give an error with nvfortran
-# else
+   !
    istat = cufftSetStream( cufft_plan, devxlib_async2stream(acc_async_noval) )
    !istat = cufftSetStream( cufft_plan, stream_default )
 # endif
-   !istat = gpu_devsync()
+   !
 #endif
-   istat = cufftPlan3d( cufft_plan, n(3), n(2), n(1), CUFFT_Z2Z )
    !
  endif
  !
-#ifdef _OPENACC
- ! 2022-02-02 DS and AF TO BE FIXED
- !DEV_ACC wait(acc_async_noval)
- !istat = cudaStreamSynchronize(acc_get_cuda_stream(acc_async_noval))
- istat = gpu_devsync()
-#endif
+!#ifdef _OPENACC
+! !DEV_ACC wait(acc_async_noval)
+!#endif
  !
  !DEV_ACC_DEBUG data present(c_d)
  !DEV_ACC host_data use_device(c_d)
@@ -90,11 +86,9 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  !DEV_ACC end host_data
  !DEV_ACC_DEBUG end data
  !
-#ifdef _OPENACC
- !DEV_ACC wait(acc_async_noval)
- !istat = cudaStreamSynchronize(acc_get_cuda_stream(acc_async_noval))
- istat = gpu_devsync()
-#endif
+!#ifdef _OPENACC
+! !DEV_ACC wait(acc_async_noval)
+!#endif
  !
 end subroutine fft_3d_cuda
 

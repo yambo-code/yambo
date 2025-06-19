@@ -112,6 +112,9 @@ module collision_el
 &                                       CPU_ONLY,GRADIENT,TITLE)
      use electrons,      ONLY:n_spinor
      use FFT_m,          ONLY:fft_size
+     use gpu_m,          ONLY:have_gpu
+     implicit none
+     !
      type(elemental_collision), target ::ggw
      integer,         OPTIONAL :: NG
      integer,         OPTIONAL :: GAMP_NG(2)

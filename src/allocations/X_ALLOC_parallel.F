@@ -45,10 +45,11 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
    call MATRIX_init( "X"  , X_par, NG, NW )
  endif
  !
+ !DEV_ACC enter data copyin(X_par)
+ !
  X_rows = X_par%rows
- !DEV_ACC update device(X_rows)
  X_cols = X_par%cols
- !DEV_ACC update device(X_cols)
+ X_lower_triangle_matrix_in_use=.FALSE.
  !
  if (l_XUP.and..not.X_FILL_UP_matrix_only.and.X_par%INTER_comm%n_CPU>1) then
    !
@@ -61,6 +62,8 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
    X_par_lower_triangle%cols =X_par%rows
    X_par_lower_triangle%nrows=X_par%ncols
    X_par_lower_triangle%ncols=X_par%nrows
+   !
+   !DEV_ACC enter data copyin(X_par_lower_triangle)
    !
    YAMBO_ALLOC(X_par_lower_triangle%blc,(X_par%cols(1):X_par%cols(2),X_par%rows(1):X_par%rows(2),NW))
    X_par_lower_triangle%blc=cZERO

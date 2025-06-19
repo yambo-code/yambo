@@ -146,7 +146,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
        sop_inv_l=sop_inv(is)
        !
        !DEV_ACC_DEBUG data present(g_rot,rhotw_save,Xo_scatt_rhotw_p)
-       !DEV_ACC parallel loop private(ig2)
+       !DEV_ACC parallel loop private(ig2) async
        !DEV_CUF kernel do(1) <<<*,*>>>
        !DEV_OMPGPU target map(present,alloc:g_rot,rhotw_save,Xo_scatt_rhotw_p)
        !DEV_OMPGPU teams loop private(ig2)
@@ -181,7 +181,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      !
      !
      !DEV_ACC_DEBUG data present(Xo_scatt_rhotw_p)
-     !DEV_ACC serial
+     !DEV_ACC serial async
      !DEV_OMPGPU target map(present,alloc:Xo_scatt_rhotw_p)
      !
      if(iv/=ic) Xo_scatt_rhotw_p(1)=    -conjg(DIP_projected)
@@ -211,7 +211,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
 #ifdef _GPU
    !
    !DEV_ACC_DEBUG data present(Xo_res,Xo_scatt_rhotw_p)
-   !DEV_ACC parallel loop collapse(2)
+   !DEV_ACC parallel loop collapse(2) async
    !DEV_CUF kernel do(2) <<<*,*>>>
    !DEV_OMPGPU target map(present,alloc:Xo_res,Xo_scatt_rhotw_p)
    !DEV_OMPGPU teams loop collapse(2)
@@ -251,7 +251,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      !
      if (X%ng==1) then
        !DEV_ACC_DEBUG data present(Xo_scatt_rhotw_p)
-       !DEV_ACC serial
+       !DEV_ACC serial async
        !DEV_OMPGPU target map(present,alloc:Xo_scatt_rhotw_p)
        Xo_scatt_rhotw_p(1)=cONE 
        !DEV_OMPGPU end target
@@ -268,7 +268,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      sop_inv_l=sop_inv(is)
      !
      !DEV_ACC_DEBUG data present(g_rot,rhotw_save,Xo_scatt_rhotw_p)
-     !DEV_ACC parallel loop private(ig1,ig2)
+     !DEV_ACC parallel loop private(ig1,ig2) async
      !DEV_CUF kernel do(1) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:g_rot,rhotw_save,Xo_scatt_rhotw_p)
      !DEV_OMPGPU teams loop private(ig1,ig2)
@@ -286,7 +286,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      !
 #ifdef _GPU
      !DEV_ACC_DEBUG data present(Xo_res,Xo_scatt_rhotw_p,G_m_G)
-     !DEV_ACC parallel loop collapse(2)
+     !DEV_ACC parallel loop collapse(2) async
      !DEV_CUF kernel do(2) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:Xo_res,Xo_scatt_rhotw_p,G_m_G)
      !DEV_OMPGPU teams loop collapse(2)
@@ -315,7 +315,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  !
  if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) then
     !DEV_ACC_DEBUG data present(Xo_res)
-    !DEV_ACC serial
+    !DEV_ACC serial async
     !DEV_OMPGPU target map(present,alloc:Xo_res)
     ctmp=Xo_res(1,1)
     Xo_res(1,1)=ctmp/real(drude_n_states,SP)

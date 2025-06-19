@@ -110,10 +110,12 @@ module matrix
        YAMBO_ALLOC(M_out%blc,(M_out%rows(1):M_out%rows(2),M_out%cols(1):M_out%cols(2),NW))
        M_out%blc=cZERO
      endif
-     if (have_gpu.and.devxlib_mapped(DEV_VAR(M_in%blc))) then
+#ifdef _GPU
+     if (devxlib_mapped(DEV_VAR(M_in%blc))) then
        YAMBO_ALLOC_GPU(DEV_VAR(M_out%blc),(M_out%rows(1):M_out%rows(2),M_out%cols(1):M_out%cols(2),NW))
-       call devxlib_memset_d(DEV_VAR(M_out%blc),cZERO)
+       call devxlib_memset_d(DEV_VAR(M_out%blc),val=cZERO)
      endif
+#endif
      !
    end subroutine 
    !

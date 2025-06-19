@@ -97,7 +97,7 @@ subroutine LDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
       neig_tmp=neigs_range(2)-neigs_range(1)+1
       neigs_range_y(1) = neigs_range(1) 
       neigs_range_y(2) = neigs_range(2) 
-      ! DS: I need to divide by 2 the nnumber of requested eigenv in the
+      ! DS: I need to divide by 2 the number of requested eigenv in the
       ! coupling case, otherwise dimensions do not match
       if (BS_K_coupling) neigs_range_y(2) = neigs_range_y(1) + neig_tmp/2-1
       neigs_range_tmp = c_loc(neigs_range_y)
@@ -266,8 +266,6 @@ endif
     !
     ! Elpa always gives full spectrum
     neig_found = SL_H_dim/2 ! Only +ve eigenvalues computes and rest are retreived
-    if (solver_type_aux .eq. 's' .and. present(neigs_range)) then
-    endif
     !
     if (solver_type_aux .eq. 'e') then
 #if defined _ELPA

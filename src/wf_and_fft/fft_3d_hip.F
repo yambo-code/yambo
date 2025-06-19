@@ -59,7 +59,9 @@ subroutine fft_3d_hip(c_d,n,fft_sign,hipfft_plan)
 !   !istat = gpu_devsync()
 !#endif
    !
+#ifdef _HIP
    istat = hipfftPlan3d( hipfft_plan, n(3), n(2), n(1), HIPFFT_Z2Z)
+#endif
    !
  endif
  !
@@ -74,7 +76,9 @@ subroutine fft_3d_hip(c_d,n,fft_sign,hipfft_plan)
  !DEV_ACC host_data use_device(c_d)
  !DEV_OMPGPU target data use_device_ptr(c_d)
  !
+#ifdef _HIP
  istat = hipfftExecZ2Z( hipfft_plan, c_loc(c_d), c_loc(c_d), i_sign )
+#endif
  !
  !DEV_OMPGPU end target data
  !DEV_ACC end host_data

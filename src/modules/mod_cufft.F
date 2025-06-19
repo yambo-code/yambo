@@ -64,7 +64,7 @@ module cufft_m
         bind(C, name="cufftSetStream")
       use iso_c_binding
       implicit none
-      integer(c_int) :: plan
+      integer(c_int),value :: plan
       integer(c_intptr_t),value :: stream
     end function cufftSetStream
     

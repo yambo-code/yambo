@@ -111,7 +111,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    call devxlib_memset_d(DEV_VAR(ivec_GmG),val=-1)
    !
    !DEV_ACC_DEBUG data present(g_vec_rot,fft_g_table)
-   !DEV_ACC parallel loop collapse(2)
+   !DEV_ACC parallel loop collapse(2) async
    !DEV_CUF kernel do(2)
    !DEV_OMPGPU target map(present,alloc:g_vec_rot,fft_g_table)
    !DEV_OMPGPU teams loop collapse(2) private(iv_1,iv_2,iv_3,temp_1,temp_2,temp_3)

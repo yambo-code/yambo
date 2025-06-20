@@ -25,7 +25,6 @@ module wrapper
  use cudafor,          only:c_devloc
 #endif
  !
- use devxlib_cublas
  use devxlib_linalg,   only: M_by_M_gpu=>devxlib_xGEMM_gpu,devxlib_xGEMM_gpu,devxlib_xGEMV_gpu,&
 &                            devxlib_xAXPY_gpu,devxlib_xDOT_gpu,devxlib_xDOTC_gpu,devxlib_xDOTU_gpu
  !

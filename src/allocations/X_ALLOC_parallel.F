@@ -10,8 +10,7 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
  use pars,          ONLY:cZERO
  use parallel_m,    ONLY:COMM_copy,PAR_COM_RL_INDEX,PAR_COM_RL_A2A
  use matrix,        ONLY:MATRIX_reset,PAR_matrix
- use X_m,           ONLY:X_par_lower_triangle,X_rows,X_cols,&
-&                        X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
+ use X_m,           ONLY:X_rows,X_cols
  use parallel_int,  ONLY:PARALLEL_live_message
  use gpu_m,         ONLY:have_gpu
  use devxlib,       ONLY:devxlib_memset_d
@@ -49,30 +48,6 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
  !DEV_ACC update device(X_rows)
  X_cols = X_par%cols
  !DEV_ACC update device(X_cols)
- !
- if (l_XUP.and..not.X_FILL_UP_matrix_only.and.X_par%INTER_comm%n_CPU>1) then
-   !
-   call MATRIX_reset(X_par_lower_triangle)
-   !DEV_ACC enter data copyin(X_par_lower_triangle)
-   !
-   X_lower_triangle_matrix_in_use=.TRUE.
-   X_par_lower_triangle%kind ="XDN"
-   X_par_lower_triangle%rows =X_par%cols
-   X_par_lower_triangle%cols =X_par%rows
-   X_par_lower_triangle%nrows=X_par%ncols
-   X_par_lower_triangle%ncols=X_par%nrows
-   !
-   YAMBO_ALLOC(X_par_lower_triangle%blc,(X_par%cols(1):X_par%cols(2),X_par%rows(1):X_par%rows(2),NW))
-   X_par_lower_triangle%blc=cZERO
-   !
-   if (have_gpu.and..not.l_CPU_ONLY) then
-     YAMBO_ALLOC_GPU(DEV_VAR(X_par_lower_triangle%blc),(X_par%cols(1):X_par%cols(2),X_par%rows(1):X_par%rows(2),NW))
-     call devxlib_memset_d(DEV_VAR(X_par_lower_triangle%blc),cZERO)
-   endif
-   !
-   call COMM_copy(PAR_COM_RL_A2A,   X_par_lower_triangle%INTRA_comm)
-   call COMM_copy(PAR_COM_RL_INDEX, X_par_lower_triangle%INTER_comm)
- endif
  !
  YAMBO_ALLOC(X_par%blc,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),NW))
  X_par%blc=cZERO

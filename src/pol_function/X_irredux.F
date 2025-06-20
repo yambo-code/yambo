@@ -53,7 +53,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  use SC,            ONLY:it_now
 #endif
  use gpu_m,         ONLY:have_gpu,have_openacc,have_ompgpu
- use devxlib,       ONLY:devxlib_memcpy_d2h
+ use devxlib,       ONLY:devxlib_memcpy_d2h,devxlib_memcpy_h2d
  use timing_m,      ONLY:timing
  use units,         ONLY:HA2EV
  !

@@ -79,10 +79,10 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
 
  complex(SP),allocatable, target DEV_ATTR :: Xo_res(:,:)
  complex(SP),allocatable DEV_ATTR :: work(:)
- complex(SP),allocatable DEV_ATTR :: rhotw_mp(:,:)
+ complex(SP),allocatable DEV_ATTR :: rhotw_mp_R(:,:), rhotw_mp_C(:,:)
  complex(SP),pointer     DEV_ATTR :: X_par_p(:,:,:)
  complex(SP)          :: GreenF_iw
- integer              :: lda,lwork,PAR_COM_RL_INDEX_n_CPU
+ integer              :: lwork,ntx
  !
  integer, external    :: X_eh_setup
  type(elemental_collision), target :: Xo_scatt
@@ -99,11 +99,6 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  X_cols1=X_par%cols(1)
  X_cols2=X_par%cols(2)
  !
- PAR_COM_RL_INDEX_n_CPU=PAR_COM_RL_INDEX%n_CPU
- !
-! if (PAR_COM_RL_INDEX_n_CPU> 1) lda=size(X_par_lower_triangle%blc(:,1,1))
-! if (PAR_COM_RL_INDEX_n_CPU==1) lda=size(X_par%blc(:,1,1))
- lda=size(X_par%blc(:,1,1))
  !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
  !=======================================================
@@ -231,18 +226,14 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  !DEV_OMP parallel num_threads(n_out_threads) default(shared), &
  !DEV_OMP &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,&
- !DEV_OMP &        ig1,ig2,iw,mutexid,work,lwork,rhotw_mp)
+ !DEV_OMP &        ig1,ig2,iw,mutexid,work,lwork,rhotw_mp_R,rhotw_mp_C,ntx)
  !
  call OPENMP_update(master_thread)
  !
  ! memory estimate and local alloc
  !=================================
  !
- if (have_gpu) then
-   YAMBO_ALLOC_GPU(Xo_res,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
- else
-   YAMBO_ALLOC(Xo_res,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
- endif
+ YAMBO_ALLOC_GPU(Xo_res,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
 
  !
  ! workspace used in X_irredux_residuals
@@ -250,9 +241,11 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  lwork=ngrho
  if (l_X_terminator) lwork=2*ngrho
- !
  YAMBO_ALLOC_GPU( work,(lwork))
- YAMBO_ALLOC_GPU( rhotw_mp,(X_par%rows(1):X_par%rows(2),maxval(bare_grid_N)) )
+ !
+ ntx=maxval(bare_grid_N)
+ YAMBO_ALLOC_GPU( rhotw_mp_R,(X_par%rows(1):X_par%rows(2),ntx) )
+ YAMBO_ALLOC_GPU( rhotw_mp_C,(X_par%cols(1):X_par%cols(2),ntx) )
  !
  call elemental_collision_free(Xo_scatt)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
@@ -261,13 +254,14 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  ! Drude term
  !
  if (iq==1.and.master_thread.and.drude_n_states>0) then
+   !
    do i_cg = 1,coarse_grid_N
      Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
      if(.not.Drude_pole) cycle
      if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
      !
      call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,&
-&                             work,lwork,rhotw_mp,size(rhotw_mp,2))
+&                             work,lwork,rhotw_mp_R,rhotw_mp_C,ntx)
      !
      ! AF:
      ! ctmp is allocated as ctmp(1,1) to be compliant with devxlib interfaces
@@ -309,7 +303,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
    ! 1) First compute the residuals
    !================================
    call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,&
-&                           work,lwork,rhotw_mp,size(rhotw_mp,2))
+&                           work,lwork,rhotw_mp_R,rhotw_mp_C,ntx)
    !
    ! 2) Then the frequency dependent term
    !=======================================
@@ -384,12 +378,14 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! CLEAN
  !=======
- YAMBO_FREE_GPU(DEV_VAR(Xo_res))
+ YAMBO_FREE_GPU(Xo_res)
  YAMBO_FREE(Xo_res)
  YAMBO_FREE_GPU(work)
  YAMBO_FREE(work)
- YAMBO_FREE_GPU(rhotw_mp)
- YAMBO_FREE(rhotw_mp)
+ YAMBO_FREE_GPU(rhotw_mp_R)
+ YAMBO_FREE(rhotw_mp_R)
+ YAMBO_FREE_GPU(rhotw_mp_C)
+ YAMBO_FREE(rhotw_mp_C)
  call elemental_collision_free(Xo_scatt)
  !
  !DEV_OMP end parallel

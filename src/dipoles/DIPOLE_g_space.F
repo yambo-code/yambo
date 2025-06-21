@@ -43,7 +43,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
  !
  logical                      :: l_use_comm,l_check
  logical, allocatable         :: element_1D_spin(:)
- integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,pp_dim_yambo,pp_dim_atom,&
+ integer                      :: ik,ic_wf,iv_wf,i_wf,n_wf,ic,iv,ib,ifrag,pp_dim_yambo,pp_dim_atom,&
 &                                i_sp_pol,N_elements_todo,ik_mem,ic_min,is,ia,pp_range(2),npp,npp_tab
  complex(SP), allocatable          :: kbv(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: kbv_d(:,:,:,:)
@@ -177,6 +177,9 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
      !
      if (l_use_comm) then
        !
+       call timing('DIPOLE_g_space_proj',OPR='start')
+       !
+       n_wf=size(WF%c,3)
        npp=0
        npp_tab=0
        pp_range(2)=0
@@ -207,13 +210,15 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
              !
              i_wf=WF%index(ib,ik,i_sp_pol)
              !
-             call DIPOLE_kb_project(pp_range,Dip%ib,ib,i_wf,wf_ncx,size(WF%c,3),npp,&
+             call DIPOLE_kb_project(pp_range,Dip%ib,ib,i_wf,wf_ncx,n_wf,npp,&
              &                      pp_dim_atom,pp_dim_yambo,DEV_VAR(WF%c),DEV_VAR(kbv),XX)
              !
            enddo
            !
          enddo
        enddo
+       !
+       call timing('DIPOLE_g_space_proj',OPR='stop')
        !
      endif
      !

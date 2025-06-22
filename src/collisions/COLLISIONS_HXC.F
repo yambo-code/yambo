@@ -20,7 +20,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use tddft,         ONLY:tddft_wf_t
  use xc_functionals,ONLY:F_xc,V_xc,F_xc_mat,magn,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional
- use parallel_int,  ONLY:PP_redux_wait
+ use parallel_int,  ONLY:PP_redux_wait,PP_wait
  use parallel_m,    ONLY:PAR_IND_Q_bz,MPI_COMM_NULL,ncpu,myid,COMM_copy,yMPI_COMM,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,PAR_COM_QP_INDEX,PAR_COM_Q_INDEX,&
 &                        PAR_IND_Bp_mat,PAR_nQ_bz,PAR_COM_G_b_A2A,PAR_COM_G_b_index_global
@@ -211,6 +211,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  PAR_COLL_min=0
  !
  first_coll=-1
+ last_coll =0
  !
  do i_loop=1,2
    if (allocated(HXC_collisions%PAR_IND%element_1D)) then

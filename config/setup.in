@@ -52,6 +52,7 @@ lblas       = @BLAS_LIBS@
 llapack     = @LAPACK_LIBS@
 lblaspetsc  = @BLAS_PETSC_LIBS@
 llapackpetsc= @LAPACK_PETSC_LIBS@
+petsc_flgs  = @PETSC_FLAGS@
 lblacs      = @BLACS_LIBS@
 lscalapack  = @SCALAPACK_LIBS@
 lslepc      = @SLEPC_LIBS@

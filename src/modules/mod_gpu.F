@@ -253,7 +253,7 @@ contains
 #   if defined _PGI || defined _NV
     ! AF: In principle, this val should be acc_async_noval
     !     For some reasons (uninit vars ?) it doesn't work otherwise
-    stream_default=acc_get_cuda_stream(acc_async_sync)                                                                                                                                 
+    stream_default=acc_get_cuda_stream(acc_async_sync)
     async_default=acc_get_cuda_stream(acc_async_sync)
 #   else
     ! The following 2 lines, in place of the 2 above,

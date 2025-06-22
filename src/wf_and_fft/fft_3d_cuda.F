@@ -64,12 +64,14 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
 # if defined _PGI || defined _NV
    !
    istat = cufftSetStream( cufft_plan, acc_get_cuda_stream(acc_async_noval) )
+   !
+# else
    ! The following lines, in place of the one above,
    ! are needed to compile with gfortran
    ! However they give an error with nvfortran
    !
    istat = cufftSetStream( cufft_plan, devxlib_async2stream(acc_async_noval) )
-   !istat = cufftSetStream( cufft_plan, stream_default )
+   !
 # endif
    !
 #endif

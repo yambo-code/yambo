@@ -39,6 +39,7 @@
  K_kernel.o
  K_multiply_by_V.o
  K_multiply_by_V_slepc.o
+ K_multiply_by_V_slepc_nest.o
  K_multiply_by_V_transpose.o
  K_multiply_by_V_transpose_slepc.o
  K_observables.o

@@ -28,6 +28,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,&
  use R_lattice,     ONLY:qindx_X,bz_samp,q0_def_norm
  use vec_operate,   ONLY:v_norm
  use collision_el,  ONLY:elemental_collision
+ use parallel_m,    ONLY:PAR_COM_RL_INDEX
  use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_conjg_d,devxlib_memset_d,&
 &                        devxlib_xGEMM_gpu
  !
@@ -210,8 +211,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,&
    !     Later on, we multiply rhotw_mp*rhotw_mp^dag to build 
    !     the whole residue matrix (both upper and lower parts)
    !
-#ifdef _GPU
-   !   
    !DEV_ACC_DEBUG data present(rhotw_mp_R,Xo_scatt_rhotw_p)
    !DEV_ACC parallel loop async
    !DEV_CUF kernel do <<<*,*>>>
@@ -223,26 +222,20 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,&
    !DEV_OMPGPU end target
    !DEV_ACC_DEBUG end data
    !
-   !DEV_ACC_DEBUG data present(rhotw_mp_C,Xo_scatt_rhotw_p)
-   !DEV_ACC parallel loop async
-   !DEV_CUF kernel do <<<*,*>>>
-   !DEV_OMPGPU target map(present,alloc:rhotw_mp_C,Xo_scatt_rhotw_p)
-   !DEV_OMPGPU teams loop
-   do ig1=X_cols(1),X_cols(2)
-     rhotw_mp_C(ig1,i_bg) = sqrt(Z_eh_occ) * conjg(Xo_scatt_rhotw_p(ig1))
-   enddo
-   !DEV_OMPGPU end target
-   !DEV_ACC_DEBUG end data
-   !   
-#else
-   !
-   rhotw_mp_R(X_rows(1):X_rows(2),i_bg) = sqrt(Z_eh_occ) * &
-&                                         conjg(Xo_scatt_rhotw_p(X_rows(1):X_rows(2)))
-   rhotw_mp_C(X_cols(1):X_cols(2),i_bg) = sqrt(Z_eh_occ) * &
-&                                         conjg(Xo_scatt_rhotw_p(X_cols(1):X_cols(2)))
-   !
-#endif
-
+   if (PAR_COM_RL_INDEX%n_CPU>1) then
+     !
+     !DEV_ACC_DEBUG data present(rhotw_mp_C,Xo_scatt_rhotw_p)
+     !DEV_ACC parallel loop async
+     !DEV_CUF kernel do <<<*,*>>>
+     !DEV_OMPGPU target map(present,alloc:rhotw_mp_C,Xo_scatt_rhotw_p)
+     !DEV_OMPGPU teams loop
+     do ig1=X_cols(1),X_cols(2)
+       rhotw_mp_C(ig1,i_bg) = sqrt(Z_eh_occ) * conjg(Xo_scatt_rhotw_p(ig1))
+     enddo
+     !DEV_OMPGPU end target
+     !DEV_ACC_DEBUG end data
+     !
+   endif
 
    !
    ! add terminator specific corrections
@@ -318,10 +311,22 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,&
  nt = bare_grid_N(i_cg)
  !
  ! mm_cgemm_gpu
- call devxlib_xGEMM_gpu('N','C',X_rows(2)-X_rows(1)+1, X_cols(2)-X_cols(1)+1, nt, cONE, &
-&                       rhotw_mp_R, X_rows(2)-X_rows(1)+1, &
-&                       rhotw_mp_C, X_cols(2)-X_cols(1)+1, &
-&                       cONE, Xo_res, X_rows(2)-X_rows(1)+1 )
+ !
+ if (PAR_COM_RL_INDEX%n_CPU>1) then
+   !
+   call devxlib_xGEMM_gpu('N','C',X_rows(2)-X_rows(1)+1, X_cols(2)-X_cols(1)+1, nt, cONE, &
+&                         rhotw_mp_R, X_rows(2)-X_rows(1)+1, &
+&                         rhotw_mp_C, X_cols(2)-X_cols(1)+1, &
+&                         cONE, Xo_res, X_rows(2)-X_rows(1)+1 )
+   !
+ else
+   !
+   call devxlib_xGEMM_gpu('N','C',X_rows(2)-X_rows(1)+1, X_cols(2)-X_cols(1)+1, nt, cONE, &
+&                         rhotw_mp_R, X_rows(2)-X_rows(1)+1, &
+&                         rhotw_mp_R, X_cols(2)-X_cols(1)+1, &
+&                         cONE, Xo_res, X_rows(2)-X_rows(1)+1 )
+   !
+ endif
  !
  ! finalize
  !

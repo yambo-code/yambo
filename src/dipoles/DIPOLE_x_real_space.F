@@ -11,18 +11,19 @@
 !
 subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
  !
- use drivers,            ONLY:l_sc_run
- use pars,               ONLY:SP,cI,cZERO
- use D_lattice,          ONLY:x_cc,molecule_position,a
- use wave_func,          ONLY:WF
- use interfaces,         ONLY:WF_load,WF_free
- use wrapper_omp,        ONLY:Vstar_dot_V_omp
- use FFT_m,              ONLY:fft_size
- use R_lattice,          ONLY:bz_samp
- use electrons,          ONLY:levels,n_sp_pol,n_spinor
- use DIPOLES,            ONLY:DIPOLE_t,DIP_iR,DIP_v
- use X_m,                ONLY:l_X_terminator
- use LIVE_t,             ONLY:live_timing
+ use drivers,             ONLY:l_sc_run
+ use pars,                ONLY:SP,cI,cZERO
+ use D_lattice,           ONLY:x_cc,molecule_position,a
+ use wave_func,           ONLY:WF
+ use interfaces,          ONLY:WF_load,WF_free
+ use wrapper_omp,         ONLY:Vstar_dot_V_omp
+ use FFT_m,               ONLY:fft_size
+ use R_lattice,           ONLY:bz_samp
+ use electrons,           ONLY:levels,n_sp_pol,n_spinor
+ use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,DIP_v,x_space_obs
+ use X_m,                 ONLY:l_X_terminator
+ use LIVE_t,              ONLY:live_timing
+ use timing_m,            ONLY:timing
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
 &                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
@@ -42,6 +43,9 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
 &                                ic_wf,iv_wf,idir,n_LT_steps
  real(SP)                     :: Ev_m_Ec_KS,x_center(3)
  complex(SP)                  :: DIP_tmp(3,Dip%ib_lim(2):Dip%ib(2),Dip%ib(1):Dip%ib_lim(1))
+ logical                      :: LT_msg=.FALSE.
+ !
+ call timing('DIPOLE_x_space',OPR='start')
  !
  if(.not.Dip%force_v_g_space) Dip%Vnl_included=.true.
  ! 
@@ -49,16 +53,11 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
  !
  YAMBO_ALLOC(x_cc,(fft_size,3,1))
  !
- x_center(1)=molecule_position(1)*a(1,1)
- x_center(2)=molecule_position(2)*a(2,2)
- x_center(3)=molecule_position(3)*a(3,3)
- call load_cc(.false.,x_center,1)
+ call load_cc(.false.,molecule_position,1)
  !
  n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
 &                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
- !
- if (n_LT_steps>0) call live_timing('Dipoles in real space',n_LT_steps)
  !
  do i_sp_pol=1,n_sp_pol
    !
@@ -72,6 +71,9 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
      ik_mem=PAR_DIPk_ibz_index(ik)
      !
      DIP_tmp=cZERO
+     !
+     if (n_LT_steps>0.and..not.LT_msg) call live_timing(trim(x_space_obs)//" [x-space]",n_LT_steps)
+     LT_msg=.TRUE.
      !
      do iv=Dip%ib(1),Dip%ib_lim(1) 
        !
@@ -143,6 +145,8 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
  enddo
  !
  call live_timing()
+ !
+ call timing('DIPOLE_x_space',OPR='stop')
  !
  YAMBO_FREE(x_cc)
  !

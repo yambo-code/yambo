@@ -1,0 +1,7 @@
+ magma.o
+ magma_cfortran.o
+ magma_dfortran.o
+ magma_param.o
+ magma_sfortran.o
+ magma_zfortran.o
+

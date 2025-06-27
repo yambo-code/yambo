@@ -23,4 +23,4 @@ MAIN     = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RT_PROJ) $(NL_PROJ)
 ALL      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RT_PROJ) $(NL_PROJ)
 BROKEN   =
 SCRIPTS  = ydb.pl
-EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RT_PROJ) $(GPL) $(NL_PROJ) $(BROKEN) $(SCRIPTS)
+EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RT_PROJ) $(NL_PROJ) $(BROKEN) $(SCRIPTS)

@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2016 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM CA
+! Authors (see AUTHORS file for details): AM CA DS
 !
 subroutine RT_1D_Fourier_Transform(mode,FT,RT,I_sign)
  !
@@ -44,7 +44,7 @@ subroutine RT_1D_Fourier_Transform(mode,FT,RT,I_sign)
  !===================
  if (mode=="T2W") then
    !
-   if (l_live_timing) call live_timing('FT@'//trim(FT%title)//'',RT%W_n_steps*FT%N)
+   if (l_live_timing) call live_timing('FT-'//mode//'@'//trim(FT%title)//'',RT%W_n_steps*FT%N)
    !
    FT%F_w=cZERO_DP
    !
@@ -90,7 +90,7 @@ subroutine RT_1D_Fourier_Transform(mode,FT,RT,I_sign)
    !
    FT%F_t=cZERO_DP
    !
-   if (l_live_timing) call live_timing('FT'//trim(FT%title)//'',RT%T_n_steps*FT%N)
+   if (l_live_timing) call live_timing('FT-'//mode//'@'//trim(FT%title)//'',RT%T_n_steps*FT%N)
    do i_c=1,FT%N
      do i_t = 1, RT%T_n_steps
        do i_w = 1, RT%W_n_steps
@@ -104,4 +104,46 @@ subroutine RT_1D_Fourier_Transform(mode,FT,RT,I_sign)
  endif
  !
 end subroutine RT_1D_Fourier_Transform
-
+!
+!
+subroutine RT_1D_Fourier_Chirp(FT,RT)
+ !
+ ! This subroutine adds a chirp in frequency space
+ !
+ use fields,         ONLY:Efield
+ use YPP_real_time,  ONLY:RT_time,Use_FFT,OBS_el,RT_ctl,ypp_chirp
+ use pars,           ONLY:DP,cI,cZERO_DP,pi
+ use LIVE_t,         ONLY:live_timing
+ !
+ implicit none
+ !
+ type(OBS_el),intent(inout)::FT
+ type(RT_ctl),intent(in)   ::RT
+ !
+ ! Work Space 
+ !
+ integer    :: i_w,i_t,i_c
+ logical    :: l_live_timing
+ complex(DP):: chirp_phase(RT%W_n_steps),dw
+ !
+ l_live_timing=len_trim(FT%title)>0
+ !
+ FT%F_t=cZERO_DP
+ dw=(FT%W(2)-FT%W(1))
+ do i_w = 1, RT%W_n_steps
+   chirp_phase(i_w)=exp(-cI*ypp_chirp**2*(FT%W(i_w)-Efield(1)%frequency(1))**2)
+ enddo
+ !
+ if (l_live_timing) call live_timing('FT-CHIRP@'//trim(FT%title)//'',RT%T_n_steps*FT%N)
+ do i_c=1,FT%N
+   do i_t = 1, RT%T_n_steps
+     do i_w = 1, RT%W_n_steps
+       FT%F_t(i_t,i_c) = FT%F_t(i_t,i_c)+FT%F_w(i_w,i_c)*chirp_phase(i_w)*exp(-cI*FT%W(i_w)*RT_time(i_t))
+     enddo
+     if (l_live_timing) call live_timing(steps=1)
+   enddo
+ enddo
+ FT%F_t=FT%F_t*dw/pi
+ if (l_live_timing) call live_timing()
+ !
+end subroutine RT_1D_Fourier_Chirp

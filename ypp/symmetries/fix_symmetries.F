@@ -11,7 +11,7 @@
 !
 subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  !
- use pars,                ONLY:SP
+ use pars,                ONLY:LP,SP
  use com,                 ONLY:msg
  use parser_m,            ONLY:parser
  use matrix_operate,      ONLY:m3det
@@ -30,7 +30,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  integer, intent(out)   :: old_nsym
  real(SP),intent(out)   :: old_dl_sop(3,3,nsym)
  integer, intent(out)   :: old_sop_inv(nsym)
- logical, intent(out)   :: S_contains_TR(nsym)
+ integer(LP), intent(out)   :: S_contains_TR(nsym)
  !
  ! Work space
  !
@@ -45,10 +45,9 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  ! Dummies
  !
  integer                :: i1,i2
- integer                :: is,n_syms_to_check
- logical                :: reject_symmetry,found_symm
+ integer                :: is
+ logical                :: reject_symmetry
  real(SP)               :: v1(3),v2(3)
- real(SP)               :: symm_to_check(3,3,2)
  !
  use_E_field=.FALSE.
  use_B_field=.FALSE.
@@ -100,7 +99,10 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  !
  ! Time-reversal related Symmetries
  !
- forall (is=1:nsym) S_contains_TR(is)=is>nsym/(1+i_time_rev)
+ S_contains_TR=0
+ do is=1,nsym
+  if(is>nsym/(1+i_time_rev)) S_contains_TR(is)=1
+ enddo
  !
  spatial_nsym=nsym/(1+i_time_rev)
  !

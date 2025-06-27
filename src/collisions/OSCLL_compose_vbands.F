@@ -77,7 +77,7 @@ subroutine OSCLL_compose_vbands(V_input,H_nl_sc,k,q,E,i_k,i_sp_pol)
  !
 !$OMP WORKSHARE
 forall(iv=1:E%nbf(i_sp_pol),iqbz=1:q%nbz,i_n=NL_bands(1):NL_bands(2),ig1=1:ng_oscll)
-   OSCLL_val(iv,i_n,ig1,iqbz)=sum(OSCLL(i_n,:,ik_mem,iqbz,ig1)*V_kmq(NL_bands(1):,iv,iqbz))
+   OSCLL_val(iv,i_n,ig1,iqbz)=sum(OSCLL(i_n,:,ik_mem,i_sp_pol,iqbz,ig1)*V_kmq(NL_bands(1):,iv,iqbz))
  end forall
 !$OMP END WORKSHARE
  !

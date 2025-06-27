@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2018 The Yambo Team
 !
-! Authors (see AUTHORS file for details): DSDV
+! Authors (see AUTHORS file for details): DS DV
 !
 ! headers
 !
@@ -133,7 +133,7 @@ subroutine p2y_atmproj(filename,k)
      enddo
      !
      !DEBUG <
-     !write(*,*) indx
+     !write(*,*) "nproj= ",indx
      !DEBUG >
      !
    end subroutine fill_atomic_table

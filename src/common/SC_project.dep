@@ -1,2 +1,4 @@
+ LEVELS_mirror.o
+ LEVELS_respect_degenerations.o
  OCCUPATIONS_Fermi.o
 

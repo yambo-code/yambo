@@ -1,0 +1,67 @@
+#
+#===============================
+# Yambo package
+#===============================
+#
+include ../../config/setup
+include ../archive/package.list
+#
+LIBNAME=libldiago.a
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/diago/$(ldiago_gpu_support)
+#LIBPATH=$(compdir)
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
+PACKAGE=$(pkgname_Ldiago)
+#
+include ../config/external_libs_commons.mk
+include ../config/external_libs_defs.mk
+#
+#
+# MAIN target
+#
+all: $(LIBRARY)
+#
+uncompress:
+	@$(uncompress)
+
+configure: uncompress
+	@if ! test -e configured.stamp; then \
+	 rm -f ${compdir}/log/config_$(PACKAGE).log; \
+	 echo "\t[$(PACKAGE)] configuration"; \
+	 if test -e ${compdir}/lib/ldiago/make_ldiago.inc ; then \
+	   echo "cp ${compdir}/lib/ldiago/make_ldiago.inc ${compdir}/lib/ldiago/$(PACKAGE)/src/make.inc" >> ${compdir}/log/config_$(PACKAGE).log ; \
+	   cp ${compdir}/lib/ldiago/make_ldiago.inc ${compdir}/lib/ldiago/$(PACKAGE)/src/make.inc ; \
+	 fi ; \
+	 touch configured.stamp;\
+	fi
+#
+compile: uncompress configure
+	@if ! test -e compiled.stamp ; then \
+	  cd ${compdir}/lib/ldiago/$(PACKAGE)/src ; make ; \
+	  cd ${compdir}/lib/ldiago/ ; touch compiled.stamp; \
+	fi
+
+install: uncompress configure compile
+	@if ! test -e installed.stamp ; then \
+	 echo "\t[$(PACKAGE)] installation"; \
+	 echo "cp ${compdir}/lib/ldiago/$(PACKAGE)/src/libdiago.a $(LIBPATH)/lib/libldiago.a" >> ${compdir}/log/install_$(PACKAGE).log ; \
+	 echo "cp ${compdir}/lib/ldiago/$(PACKAGE)/src/ldiago_interface.mod $(LIBPATH)/include/" >> ${compdir}/log/install_$(PACKAGE).log ; \
+	 echo "chmod +x $(LIBPATH)/lib/libldiago.a" >> ${compdir}/log/install_$(PACKAGE).log ; \
+	 cp ${compdir}/lib/ldiago/$(PACKAGE)/src/libdiago.a $(LIBPATH)/lib/libldiago.a ;\
+	 cp ${compdir}/lib/ldiago/$(PACKAGE)/src/ldiago_interface.mod $(LIBPATH)/include/ ;\
+	 chmod +x $(LIBPATH)/lib/libldiago.a ; \
+	 touch ${compdir}/config/stamps_and_lists/libldiago.a.stamp;\
+	 echo ldiago_interface >> ${compdir}/src/bse/modules.list;\
+	 touch installed.stamp;\
+	fi
+#
+$(LIBRARY): uncompress configure compile install
+#
+# cleaning
+#
+clean:
+	@$(clean_the_lib)
+#
+clean_all: clean
+	@$(rm_the_lib)
+#

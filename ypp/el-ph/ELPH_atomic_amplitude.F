@@ -14,7 +14,7 @@ subroutine ELPH_atomic_amplitude(q)
  use pars,                ONLY:SP
  use units,               ONLY:BO2ANG,pi
  use com,                 ONLY:msg
- use R_lattice,           ONLY:bz_samp,RL_vol,RIM_n_rand_pts
+ use R_lattice,           ONLY:bz_samp,RL_vol,RIM_sphe_n_rand_pts
  use D_lattice,           ONLY:n_atoms
  use ELPH,                ONLY:ph_modes,PH_freqs_sq,elph_nQ,elph_use_q_grid,&
 &                              PH_pol_vector,PH_qpt
@@ -23,7 +23,7 @@ subroutine ELPH_atomic_amplitude(q)
  use stderr,              ONLY:intc
  use functions,           ONLY:bose_f
  use interfaces,          ONLY:LINEAR_ALGEBRA_driver
- use ELPH_intfcs,         ONLY:ELPH_alloc
+ use ALLOC,               ONLY:ELPH_alloc
  use linear_algebra,      ONLY:DIAGO,USE_LK
  use stderr,              ONLY:intc
  !
@@ -68,11 +68,11 @@ subroutine ELPH_atomic_amplitude(q)
  !
  YAMBO_ALLOC(q_weight,(nq_to_sum))
  !
- RIM_n_rand_pts=100000
+ RIM_sphe_n_rand_pts=100000
  if (elph_use_q_grid) then
    q_weight=q%weights
  else
-   if (RIM_n_rand_pts>0) call msg('s','Using RIM with '//trim(intc(RIM_n_rand_pts))//' point')
+   if (RIM_sphe_n_rand_pts>0) call msg('s','Using RIM with '//trim(intc(RIM_sphe_n_rand_pts))//' point')
    call rim_spherical(nq_to_sum,PH_qpt(1:nq_to_sum,1:3),q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),2,.TRUE.)
  endif
  !

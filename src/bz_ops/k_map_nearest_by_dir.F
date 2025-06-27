@@ -73,7 +73,7 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  if(dshift>zero_dfl) then
    write(dump_ch,'(a,3f12.6)') " Shifted grid: ",k_shift
    call msg("sr",dump_ch)
-   call error(' Shifted grids not implemented yet in covariant dipoles ')
+   call warning('Yambo_nl works only with a single-shift k-point grid! ')
  else
    k_shift=0._SP
  endif
@@ -161,7 +161,7 @@ subroutine k_find_smallest_g0(g0_idx,g0_length)
  !
  ! Find the smallest G0 in each direction
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP
  use vec_operate,    ONLY:c2a
  use R_lattice,      ONLY:g_vec,ng_closed
  use com,            ONLY:msg                                                                                   
@@ -176,7 +176,6 @@ subroutine k_find_smallest_g0(g0_idx,g0_length)
  ! Work Space
  !
  integer :: id,i1
- character(schlen)  :: dump_ch
  real(SP)           :: g0(3)
  !
  do id=1,3
@@ -209,14 +208,21 @@ subroutine k_find_smallest_g0(g0_idx,g0_length)
    !
  enddo
  !
- write(dump_ch,'(a,3i3)') " Index g0 smallest positive vectors in each direction: ",g0_idx(:,1)
- call msg("s",dump_ch)
- write(dump_ch,'(a,3i3)') " Index g0 smallest negative vectors in each direction: ",g0_idx(:,2)
- call msg("s",dump_ch)
+ call msg("r"," Smallest g0 vector in each direction: positive",g0_idx(:,1))
+ call msg("r","                                       negative",g0_idx(:,2))
  !
 end subroutine k_find_smallest_g0
 
 subroutine check_shifts(Xk,WF_shifts)
+ !
+ ! I want all k-points between 0 and 1 (same notation of QE with Berry)
+ ! therefore I check if they are outside of this range:
+ !
+ ! *) If a k-point is negative I assign a positive shift WF_shifts=1
+ !    to the WF to bring it in the correct BZ
+ ! *) If a k-point is larger than 1 I assign a negative shift WF_shifts=-1
+ !    to bring in the BZ
+ ! *) If a k-point is already between 0-1 I do not need to shift it
  !
  use pars,                ONLY:SP
  use R_lattice,           ONLY:bz_samp
@@ -238,7 +244,7 @@ subroutine check_shifts(Xk,WF_shifts)
      if(Xk%ptbz(ik,id)<-EPS) then
         WF_shifts(ik,id)=1
      elseif(Xk%ptbz(ik,id)>1._SP-EPS) then
-        WF_shifts(ik,id)=2
+        WF_shifts(ik,id)=-1
      endif
    enddo
  enddo

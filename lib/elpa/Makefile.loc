@@ -1,0 +1,68 @@
+#
+#===============================
+# Yambo package
+#===============================
+#
+include ../../config/setup
+include ../archive/package.list
+
+LIBNAME=libelpa.a
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${gpu_support}
+LIBPATH_SLK=$(libs_prefix)/$(fc_kind)/${fc}
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
+PACKAGE=$(pkgname_elpa)
+TARBALL=$(tarball_elpa)
+#
+include ../config/external_libs_commons.mk
+include ../config/external_libs_defs.mk
+#
+# Configure flags
+#
+CONFFLAGS=--prefix=$(LIBPATH) \
+	  --disable-avx512-kernels --disable-shared \
+	  --disable-c-tests --disable-cpp-tests --disable-fortran-tests \
+	  CPP="$(cpp)" CPPFLAGS="${impi}" \
+	  CC="$(cc)" \
+	  CFLAGS="$(cflags)" \
+	  FC="$(fc)" \
+	  FCFLAGS="$(fcflags)" \
+	  LDFLAGS="-L$(LIBPATH_SLK)/lib" \
+	  LIBS="$(lmpi)"
+
+ifeq ($(gpu_support),cudaf)
+  CONFFLAGS:=$(CONFFLAGS) \
+	  --enable-nvidia-gpu-kernels \
+	  --with-cuda-path="$(dcudalib)" \
+	  --with-NVIDIA-GPU-compute-capability="sm_$(cudacc)"
+endif
+
+#
+all: $(LIBRARY)
+#
+uncompress:
+	@$(get_the_lib)
+	@$(uncompress)
+
+configure: uncompress
+	@$(configure)
+
+compile: uncompress configure
+	@$(call compile)
+
+install: uncompress configure compile
+	@$(call install_via_make,elpa)
+	@if test -d $(LIBPATH)/include/$(PACKAGE) && ! test -e $(LIBPATH)/include/elpa ; then \
+	  cd $(LIBPATH)/include ; ln -s $(PACKAGE)/* ./ ; \
+	fi
+
+$(LIBRARY): uncompress configure compile install
+#
+# cleaning
+#
+clean:
+	@$(call clean_the_lib,clean)
+
+clean_all: clean
+	@$(rm_the_lib)
+#

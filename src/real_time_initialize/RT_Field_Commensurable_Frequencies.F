@@ -14,7 +14,7 @@ subroutine RT_Field_Commensurable_Frequencies()
  ! Moreover to extract the Fourier coefficients I need to integrate over aa Time range
  ! equal to 2*pi/deltaW. This must be not larger then NE_tot_time 
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP,schlen,n_fields_defs_max
  use stderr,         ONLY:STRING_split
  use fields,         ONLY:Efield,n_ext_fields,EtoT
  use real_time,      ONLY:NE_tot_time
@@ -24,7 +24,7 @@ subroutine RT_Field_Commensurable_Frequencies()
  integer  :: i_master_field,i_f,i_Pump,i_Probe
  real(SP) :: W_step,T_treshold,T_step
  real(SP), parameter :: treshold=0.8
- character(schlen) ::pump_defs(3),probe_defs(3)
+ character(schlen)   :: pump_defs(n_fields_defs_max),probe_defs(n_fields_defs_max)
  !
  if (n_ext_fields<2) return
  !

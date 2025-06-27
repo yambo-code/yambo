@@ -23,7 +23,8 @@ subroutine LSEX_potential(q,X,Xw)
  use electrons,           ONLY:levels,spin_occ
  use collision_el,        ONLY:elemental_collision,elemental_collision_free, &
 &                              elemental_collision_alloc
- use X_m,                 ONLY:X_mat,X_ALLOC_elemental,X_t
+ use X_m,                 ONLY:X_mat,X_t
+ use ALLOC,               ONLY:X_ALLOC_elemental
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,manage_action, &
 &                              deliver_IO_error_message         
@@ -65,7 +66,7 @@ subroutine LSEX_potential(q,X,Xw)
  if(Correlation==LSEX) then
    call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID)
    io_err=io_X(X,Xw,ID)
-   if (io_err<0) call error('Incomplete and/or broken tatic diel. fun. database')
+   if (io_err<0) call error('Incomplete and/or broken static diel. fun. database')
  endif
  !
  YAMBO_ALLOC(W,(q%nbz,ng_oscll,ng_oscll))

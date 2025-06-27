@@ -42,7 +42,8 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use SC,              ONLY:it_now
  use IO_int,          ONLY:io_control
  use IO_m,            ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_IF_START_RD_CL_IF_END
- use X_m,             ONLY:X_ALLOC_elemental,X_mat,X_t
+ use ALLOC,           ONLY:X_ALLOC_elemental
+ use X_m,             ONLY:X_mat,X_t
  !
  ! I/O
  !
@@ -72,10 +73,6 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  call elemental_collision_free(isc)
  call PP_indexes_reset(px)
  !
- isc%ngrho=maxval(G_m_G)
- isc%iqref=0
- !
- !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=io_X(X,Xw,ID)
  if (io_err<0) call error('Incomplete and/or broken static diel. fun. database')
@@ -84,6 +81,10 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  YAMBO_ALLOC(PPaR_ws,(X%ng,X%ng))
  YAMBO_ALLOC(PPaR,(X%ng,X%ng))
  !
+ ! 2022/06/30 DS:
+ ! should it be NG=maxval(G_m_G)? In the old version of the code,
+ !   isc%ngrho=maxval(G_m_G)
+ ! was set few lines before. However the call to elemental owrites it
  call elemental_collision_alloc(isc,TITLE="OEP_SigmaCSX",NG=X%ng,GAMP_NG=(/X%ng,X%ng/))
  YAMBO_ALLOC(local_u,(fft_size))
  YAMBO_ALLOC(u,(X%ng))

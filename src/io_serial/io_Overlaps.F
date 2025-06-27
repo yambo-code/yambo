@@ -8,7 +8,8 @@
 integer function io_Overlaps(Dip,ID)
  !
  use pars,          ONLY:schlen
- use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_S
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_S
+ use ALLOC,         ONLY:DIPOLE_ALLOC_elemental
  use R_lattice,     ONLY:nXkbz
  use IO_int,        ONLY:io_connect,io_disconnect,io_fragment,io_header,io_bulk
  use IO_m,          ONLY:io_sec,frag_DIP,read_is_on,io_extension,&
@@ -63,7 +64,7 @@ integer function io_Overlaps(Dip,ID)
  !
  ik_mem=ik 
  !
- if (read_is_on(ID)) call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,nXkbz/))
+ if (read_is_on(ID)) call DIPOLE_ALLOC_elemental('DIP_S',(/Dip%ib(2),Dip%ib(2),6,nXkbz/))
  !
  ! Fragmentation
  !

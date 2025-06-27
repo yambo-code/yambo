@@ -15,8 +15,8 @@ subroutine ELPH_databases(k,E,q)
  use pars,                ONLY:schlen,SP
  use stderr,              ONLY:intc
  use electrons,           ONLY:levels
- use ELPH_intfcs,         ONLY:ELPH_alloc
- use ELPH,                ONLY:elph_use_q_grid,ph_modes,elph_nb,elph_nQ,GKKP,GKKP_bare,PH_W_debye,&
+ use ALLOC,               ONLY:ELPH_alloc
+ use ELPH,                ONLY:elph_use_q_grid,ph_modes,elph_nb,elph_nQ,GKKP,GKKP_bare,PH_W_debye,l_GKKP_DW,&
 &                              PH_freqs_sq,PH_qpt,PH_pol_vector,GKKP_me,elph_nk_bz,PH_kpt_bz,l_GKKP_hosts_bare_dV
  use com,                 ONLY:msg
  use D_lattice,           ONLY:nsym,sop_tab
@@ -45,6 +45,7 @@ subroutine ELPH_databases(k,E,q)
  character(schlen)  ::what
  integer, external  ::ELPH_databases_IO_elemental,io_ELPH,io_QINDX,qindx_B_init
  logical, external  ::file_exists
+ logical            ::l_no_store_dw
  real(SP)           ::v(3)
  type(GKKP_me)      ::GKKP_save,GKKP_bare_save
  !
@@ -54,7 +55,10 @@ subroutine ELPH_databases(k,E,q)
  !=================
  call parser('GkkpReadBare',l_GKKP_hosts_bare_dV)
  call parser('GkkpExpand',l_gkkp_expand)
+ call parser('GkkpNoDW',l_no_store_dw)
  call parser('UseQindxB',l_use_qindxB)
+ !
+ if(l_no_store_dw) l_GKKP_DW=.FALSE.
  !
  if(l_gkkp_expand) then
    !      
@@ -234,6 +238,7 @@ subroutine ELPH_databases(k,E,q)
  call msg('s',':: Branches              :',DB_ph_modes)
  call msg('s',':: Uniform sampling      :',elph_use_q_grid)
  call msg('s',':: Symmetry expanded     :',l_gkkp_expand)
+ call msg('s',':: El-Ph contains DW     :',l_GKKP_DW)
  if(l_gkkp_expand) call msg('s',':: Use qindx_B to expand gkkp     :',l_use_qindxB)
  call msg('s',':: Debye Energy          :',PH_W_debye*HA2EV*1000.,"[meV]")
  !

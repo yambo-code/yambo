@@ -9,7 +9,7 @@ subroutine NL_output(i_time,i_run)
  !
  use pars,         ONLY:SP,schlen,pi
  use units,        ONLY:FS2AUT,HA2EV,SPEED_OF_LIGHT
- use fields,       ONLY:A_tot,A_ext,Efield
+ use fields,       ONLY:A_tot,A_ext
  use com,          ONLY:msg,of_open_close
  use stderr,       ONLY:intc
  use real_time,    ONLY:NE_steps,RT_step
@@ -30,26 +30,26 @@ subroutine NL_output(i_time,i_run)
  !
  if(NL_verbosity==VERB_LOW) return
  !
- file_name(1)='external_potential_F'//intc(i_run)
- file_name(2)='polarization_F'//intc(i_run)
- file_name(3)='e_total_F'//intc(i_run)
- file_name(4)='current_F'//intc(i_run)
+ file_name(1)='NL_ext_pot_F'//intc(i_run)
+ file_name(2)='NL_pol_F'//intc(i_run)
+ file_name(3)='NL_Etot_F'//intc(i_run)
+ file_name(4)='NL_curr_F'//intc(i_run)
  !
  n_files=1
- short_file_name(n_files)='external_potential'
+ short_file_name(n_files)='NL_ext_pot'
  n_headings(n_files)=10
  !
  n_files=n_files+1
- short_file_name(n_files)='polarization'
+ short_file_name(n_files)='NL_pol'
  n_headings(n_files)=7
  !
  n_files=n_files+1
- short_file_name(n_files)='e_total'
+ short_file_name(n_files)='NL_Etot'
  n_headings(n_files)=4
  !
  if(l_eval_CURRENT) then
    n_files=n_files+1
-   short_file_name(n_files)='current'
+   short_file_name(n_files)='NL_curr'
    n_headings(n_files)=7
  endif
  !
@@ -74,22 +74,22 @@ subroutine NL_output(i_time,i_run)
    !
    do i_f=1,n_files
      call of_open_close(trim(file_name(i_f)),'ot')
-     call DESC_write('o '//trim(short_file_name(i_f)),'#',NL_desc)
-     call msg('o '//trim(short_file_name(i_f)),'#')
+     call DESC_write('o '//trim(file_name(i_f)),'#',NL_desc)
+     call msg('o '//trim(file_name(i_f)),'#')
      if(l_pump_and_probe) then
-       call msg('o '//trim(short_file_name(i_f)),'# Pump and probe mode')
+       call msg('o '//trim(file_name(i_f)),'# Pump and probe mode')
      else if(loop_on_frequencies) then
-       call msg('o '//trim(short_file_name(i_f)),'# Frequency number    ',i_run,INDENT=0)
-       call msg('o '//trim(short_file_name(i_f)),'# Frequency value [ev]',&
+       call msg('o '//trim(file_name(i_f)),'# Frequency number    ',i_run,INDENT=0)
+       call msg('o '//trim(file_name(i_f)),'# Frequency value [ev]',&
 &            (NL_er(1)+real((i_run-1),SP)*NL_estep)*HA2EV,INDENT=0)
      else if(loop_on_angles) then
-       call msg('o '//trim(short_file_name(i_f)),'# Angle number        ',i_run,INDENT=0)
-       angle=2.0*pi/real(n_angles,SP)*(i_f-1.0)
-       call msg('o '//trim(short_file_name(i_f)),'# Angle value [grad]  ',angle,INDENT=0)
+       call msg('o '//trim(file_name(i_f)),'# Angle number        ',i_run,INDENT=0)
+       angle=2.0*pi/real(n_angles,SP)*(i_run-1.0)
+       call msg('o '//trim(file_name(i_f)),'# Angle value [grad]  ',angle,INDENT=0)
      endif
-     call msg('o '//trim(short_file_name(i_f)),'#')
-     call msg('o '//trim(short_file_name(i_f)),'#',headings(i_f,1:n_headings(i_f)),INDENT=0,USE_TABS=.TRUE.)
-     call msg('o '//trim(short_file_name(i_f)),'#')
+     call msg('o '//trim(file_name(i_f)),'#')
+     call msg('o '//trim(file_name(i_f)),'#',headings(i_f,1:n_headings(i_f)),INDENT=0,USE_TABS=.TRUE.)
+     call msg('o '//trim(file_name(i_f)),'#')
    enddo
    !
  endif

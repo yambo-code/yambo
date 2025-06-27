@@ -11,12 +11,16 @@
 !
 integer function io_COLLISIONS_header(ID,COLL)
  !
- use pars,          ONLY:schlen,IP,IP_YIO
+ use pars,          ONLY:schlen,IP,IP_YIO,LP_YIO
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands,COLLISIONS_group,COLLISIONS_CV_only
- use IO_m,          ONLY:io_status,IO_OUTDATED_DB,read_is_on
+ use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands,COLLISIONS_group,&
+&                        COLLISIONS_CV_only,COLLISIONS_FEW_only,&
+&                        COLL_hole_bands,COLL_elec_bands
+ use IO_m,          ONLY:variable_exist,write_is_on,io_status,IO_OUTDATED_DB,read_is_on
  use IO_int,        ONLY:io_connect,io_header,io_elemental,ver_is_gt_or_eq, &
-&                        io_variable_bulk,def_variable_bulk,io_disconnect
+&                        io_variable_bulk,def_variable_bulk,io_disconnect,  &
+&                        def_variable_elemental,&
+&                        io_variable_elemental
  use global_XC,     ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED,&
 &                        H_SE_FOCK,H_SE_COH,H_SE_SEX,H_SE_HARTREE
  use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
@@ -60,7 +64,7 @@ integer function io_COLLISIONS_header(ID,COLL)
  if (COLL%kind==QP_SE_GW_NEQ) SIZE_=SIZE_+3
  if (COLL%kind==QP_SE_GW_QED) SIZE_=SIZE_+2
  if (ver_is_gt_or_eq(ID,revision=21128)) then
-   SIZE_ = SIZE_+1
+   SIZE_ = SIZE_+2
  endif
  call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=SIZE_,MENU=0)
  !
@@ -98,6 +102,19 @@ integer function io_COLLISIONS_header(ID,COLL)
  endif
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
+ if (variable_exist(ID,'COLLISIONS_FEW_only').or.write_is_on(ID)) then
+   call def_variable_elemental(ID,VAR="FEW_only_scattering",VAR_SZ=1,VAR_KIND=LP_YIO,MENU=0)
+   call  io_variable_elemental(ID,L0=COLLISIONS_FEW_only,VAR='FEW only scattering    ',WARN=.true.,OP=(/"=="/))
+   call def_variable_elemental(ID,VAR="COLL_hole_bands",VAR_SZ=2,VAR_KIND=IP_YIO,MENU=0)
+   call  io_variable_elemental(ID,I1=COLL_hole_bands,    VAR='COLL bands holes       ',WARN=.true.,OP=(/"==","=="/))
+   call def_variable_elemental(ID,VAR="COLL_elec_bands",VAR_SZ=2,VAR_KIND=IP_YIO,MENU=0)
+   call  io_variable_elemental(ID,I1=COLL_elec_bands,    VAR='COLL bands elecs       ',WARN=.true.,OP=(/"==","=="/))
+ else
+   COLLISIONS_FEW_only=.false.
+   COLL_hole_bands=-1
+   COLL_elec_bands=-1
+ endif
+ !
  if(COLL%kind==H_SE_HARTREE.or.COLL%kind==H_SE_FOCK.or.COLL%kind==H_SE_SEX.or.COLL%kind>=H_SE_HARTREE) then
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -106,9 +123,16 @@ integer function io_COLLISIONS_header(ID,COLL)
    if (V_kind_disk>=H_SE_HARTREE) SIZE_=SIZE_+1
    if (V_kind_disk==             H_SE_FOCK.or.V_kind_disk==             H_SE_SEX.or.&
 &        V_kind_disk==H_SE_HARTREE+H_SE_FOCK.or.V_kind_disk==H_SE_HARTREE+H_SE_SEX     ) SIZE_=SIZE_+1
+   if (ver_is_gt_or_eq(ID,revision=24115)) then
+     SIZE_ = SIZE_-1
+     ! COLLISIONS_cutoff is always zero in io_parallel
+   endif
+
    call io_elemental(ID,VAR="HXC_PARAMETERS",VAR_SZ=SIZE_,MENU=0)
-   call io_elemental(ID,R0=COLLISIONS_cutoff,&
-&         VAR='Collisions Cutoff                 ',CHECK=.true.,OP=(/"=="/))
+   if (.not.ver_is_gt_or_eq(ID,revision=24115)) then
+     call io_elemental(ID,R0=COLLISIONS_cutoff,&
+&         VAR='Collisions Cutoff                 ',WARN=.true.,OP=(/"=="/))
+   endif
    !
    if (V_kind_disk>=H_SE_HARTREE) then
      call io_elemental(ID,I0=QP_ng_SH,&

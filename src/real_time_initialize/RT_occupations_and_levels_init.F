@@ -95,8 +95,8 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
        k_FG%pt(ik_RT,:)       = kpt
        !
        ! .. occ
-       RT_el_occ%N_ref(ib,ik_RT) = f_occ_ref(1)
-       RT_ho_occ%N_ref(ib,ik_RT) = spin_occ-f_occ_ref(1)
+       RT_el_occ%N_ref(ib,ik_RT,:) = f_occ_ref(:)
+       RT_ho_occ%N_ref(ib,ik_RT,:) = spin_occ-f_occ_ref(:)
        !
        if (l_RT_relax_time_approx) then
          RT_RTA_E_occ_infty(ib,ik_FG)= Fermi_fnc(  Energy(1)-E%E_CBm(1)-RT_RTA_chem(1) ,RT_RTA_temp(1))*spin_occ
@@ -107,13 +107,13 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
        if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
 #endif
        !
-       RT_el_occ%dN(ib,ik_RT)   = f_occ(1)-f_occ_ref(1)
-       RT_el_occ%N(ib,ik_RT)    = f_occ(1)
-       RT_ho_occ%N(ib,ik_RT)    = spin_occ-f_occ(1)
+       RT_el_occ%dN(ib,ik_RT,:)   = f_occ(:)-f_occ_ref(:)
+       RT_el_occ%N(ib,ik_RT,:)    = f_occ(:)
+       RT_ho_occ%N(ib,ik_RT,:)    = spin_occ-f_occ(:)
        !
        if (.not.RT_is_dynamically_dephased) cycle
        !
-       RT_life_occ%dN(ib,ik_RT) = f_occ(1)-f_occ_ref(1)
+       RT_life_occ%dN(ib,ik_RT,:) = f_occ(:)-f_occ_ref(:)
        !
      enddo
    enddo

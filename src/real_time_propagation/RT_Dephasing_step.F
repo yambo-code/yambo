@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
-subroutine RT_Dephasing_step(dG_out,dG_in,ik,deltaT)
+subroutine RT_Dephasing_step(dG_out,dG_in,ik,i_sp,deltaT)
  !
  use pars,           ONLY:SP
  use real_time,      ONLY:RT_is_statically_dephased,RT_Deph_Matrix,RT_deph_range,&
@@ -13,10 +13,10 @@ subroutine RT_Dephasing_step(dG_out,dG_in,ik,deltaT)
  !
  implicit none
  !
- complex(SP), intent(out) :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- complex(SP), intent(in)  :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- integer,     intent(in)  :: ik
- real(SP),    intent(in)  :: deltaT
+ complex(SP), intent(inout) :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP), intent(in)    :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ integer,     intent(in)    :: ik,i_sp
+ real(SP),    intent(in)    :: deltaT
  !
  ! Note that dG_in is ONLY the coherent part of the equation. It must be added
  ! to dG_out if we are not using the EXP integrator. This is done here or in RT_apply_RWA

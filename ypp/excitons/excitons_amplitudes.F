@@ -16,7 +16,8 @@ subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
  use YPPm,           ONLY:EXCITON_weight_treshold,EXCITONS_user_indexes,EXCITONS_n_user_states,DIPs,&
 &                         DIPs_direction,l_dipoles,BSiq
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BSS_desc,BSS_n_eig
- use DIPOLES,        ONLY:DIP_rotated,DIP_alloc,DIPOLES_reset
+ use DIPOLES,        ONLY:DIPOLES_reset
+ use ALLOC,          ONLY:DIPOLE_ALLOC_global
  use BS,             ONLY:BS_H_dim,BS_bands,BSqpts
  use com,            ONLY:msg
  use vec_operate,    ONLY:sort,v_norm
@@ -38,7 +39,7 @@ subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
  integer, parameter   :: amp_steps=1000
  integer              :: amp_n_trans
  real(SP)             :: amp_range(2),amp_damping,amp_I(amp_steps),amp_trans(BS_H_dim,2)
- complex(SP)          :: amp_E(amp_steps) 
+ complex(SP)          :: amp_E(amp_steps),DIP(3)
  !
  call section('=','Amplitude and weights')
  !========================================
@@ -89,7 +90,8 @@ subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
        if (.not.PAR_IND_DIPk_ibz%element_1D(ikibz)) cycle
        if (.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
        if (.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
-       dip_factor=abs(dot_product(DIPs_direction,DIP_rotated(ic,iv,ikbz,i_spin,"DIP_iR",Xk)))**2.
+       call DIPOLE_rotate(ic,iv,ikbz,i_spin,"DIP_iR",Xk,DIP)
+       dip_factor=abs(dot_product(DIPs_direction,DIP))**2.
      endif
      !
      do i_l=BS_E_degs(i_l_grp),BS_E_degs(i_l_grp)+n_lambda_deg-1
@@ -206,9 +208,7 @@ subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
  enddo
  !
  if (l_dipoles) then
-   call DIP_alloc('DIP_iR')
-   call DIP_alloc('DIP_P')
-   call DIP_alloc('DIP_v')
+   call DIPOLE_ALLOC_global( )
    call DIPOLES_reset(DIPs)
  endif
  !

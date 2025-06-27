@@ -131,6 +131,7 @@ subroutine OSCLL_eval(q,k,en)
  !
  COLL_nbands=COLL_bands(2)-COLL_bands(1)+1
  !
+ do i_sp_pol=1,n_sp_pol
  do i_k=1,QP_nk
    !
    if (.not.PAR_IND_Xk_ibz%element_1D(i_k)) cycle
@@ -155,10 +156,8 @@ subroutine OSCLL_eval(q,k,en)
      i_kmq   = k%sstar(qindx_S(i_k,iqbz,1),1)
      i_kmq_s = k%sstar(qindx_S(i_k,iqbz,1),2)
      !
-     !  Spin-Polarization not supported!!
-     ! 
-     i_k_sp  = 1
-     i_kmq_sp= 1
+     i_k_sp  = i_sp_pol
+     i_kmq_sp= i_sp_pol
      !
      ! Load only two k-points 
      !	   
@@ -199,6 +198,7 @@ subroutine OSCLL_eval(q,k,en)
    !
    call live_timing(steps=1)
    !
+ enddo
  enddo
  !
  call IO_and_Messaging_switch("RESTORE")

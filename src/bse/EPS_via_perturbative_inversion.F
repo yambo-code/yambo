@@ -44,6 +44,8 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
  complex(SP) ::R_x_D_nm1(n,m),R_x_D_n(n,m),delta_f,fo
  !
  EPS_via_perturbative_inversion=0
+ R_x_D_nm1=cZERO
+ R_x_D_n  =cZERO
  !
  ! IP part
  !

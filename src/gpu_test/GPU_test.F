@@ -1,5 +1,6 @@
 
 
+#include <dev_defs.h>
 
 subroutine GPU_test(N)
   use iso_c_binding

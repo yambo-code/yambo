@@ -1,4 +1,5 @@
 
+#include <dev_defs.h>
 
 !================================
 subroutine saxpy_cpu(N, a, x, y) 

@@ -314,9 +314,9 @@ contains
  subroutine get_atoms
    use D_lattice,   ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species, &
 &                        atom_pos, Z_species,atomic_number,atom_mass,atoms_map
- use y_memory_alloc
- !
- implicit none
+   use y_memory_alloc
+   !
+   implicit none
    !
    ! Work Space
    !
@@ -553,9 +553,9 @@ contains
    use R_lattice,   ONLY:bz_samp
    use D_lattice,   ONLY:alat
    use vec_operate, ONLY:v_is_zero 
- use y_memory_alloc
- !
- implicit none
+   use y_memory_alloc
+   !
+   implicit none
    !
    type(bz_samp) :: k
    !
@@ -624,9 +624,9 @@ contains
    use pars,        only: pi
    use R_lattice,   ONLY: b, ng_vec, g_vec
    use D_lattice,   ONLY: alat
- use y_memory_alloc
- !
- implicit none
+   use y_memory_alloc
+   !
+   implicit none
    !
    YAMBO_ALLOC(g_vec,(ng_vec,3)) ! The YAMBO array
    !

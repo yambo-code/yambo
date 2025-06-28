@@ -32,8 +32,7 @@ subroutine LSEX_potential(q,X,Xw)
  use collision_ext,       ONLY:ng_oscll
  use stderr,              ONLY:intc
  use parallel_int,        ONLY:PP_wait
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -20,8 +20,7 @@ module collision_el
  use parallel_m,  ONLY:PP_indexes
  use qe_pseudo_m, ONLY:bec_type,deallocate_bec_type
  use gpu_m,       ONLY:have_gpu
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

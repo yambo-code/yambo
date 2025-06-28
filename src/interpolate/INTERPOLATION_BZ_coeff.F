@@ -28,8 +28,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  use LIVE_t,            ONLY:live_timing
  use parallel_m,        ONLY:PP_indexes,PP_indexes_reset,myid,PAR_build_index,ncpu
  use parallel_int,      ONLY:PP_redux_wait,PARALLEL_index 
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

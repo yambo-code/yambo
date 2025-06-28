@@ -16,8 +16,7 @@ module interpolate_tools
 &                       l_INTERP_W,NN_nk_exact,NN_nk_border,NN_MAX_real_nearest,NN_n_of_nearest,l_INTERP_Z,&
 &                       INTERPOLATE_msg_fmt,OUT_k_nk,INTERP_FineGd
  use electrons,    ONLY:n_sp_pol
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !  

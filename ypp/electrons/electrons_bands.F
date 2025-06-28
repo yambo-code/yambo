@@ -36,8 +36,7 @@ subroutine electrons_bands(Xk,Xen)
 #if defined _YPP_SC
  use SC,             ONLY:SC_neq_kind
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

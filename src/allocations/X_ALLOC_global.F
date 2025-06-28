@@ -19,8 +19,7 @@ subroutine X_ALLOC_global(WHAT,W)
  use drivers,       ONLY:l_optics
  use BS_solvers,    ONLY:B_Hall
  use PHOTOLUM,      ONLY:PL,PL_init
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

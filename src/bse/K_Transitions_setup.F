@@ -42,8 +42,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:EQ_Transitions,EQ_NoOcc
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !
@@ -252,8 +251,7 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:EQ_Transitions,ALL_NoOcc
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

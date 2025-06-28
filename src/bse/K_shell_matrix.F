@@ -34,8 +34,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  use slepceps
  use petscmatdef
  use slepcepsdef
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

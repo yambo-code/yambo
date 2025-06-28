@@ -28,8 +28,7 @@ subroutine PARALLEL_global_Response_T_base(Xk)
  use parallel_m,    ONLY:PAR_Kk_nibz,PAR_Xk_nbz,PAR_Xk_nibz
  ! ID's
  use parallel_m,    ONLY:PAR_IND_Kk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

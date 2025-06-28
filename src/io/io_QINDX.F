@@ -33,8 +33,7 @@ integer function io_QINDX(Xk,q,io_db)
 &                         ver_is_gt_or_eq,io_fragment,def_variable_bulk,io_variable_bulk
  use timing_m,       ONLY:timing
  use parallel_m,     ONLY:PAR_K_scheme
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

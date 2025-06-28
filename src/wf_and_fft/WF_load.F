@@ -60,8 +60,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use gpu_m,         ONLY:have_gpu, gpu_devsync, gpu_getstat
  use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memcpy_d2d,&
                          devxlib_allocated,devxlib_memset_d
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

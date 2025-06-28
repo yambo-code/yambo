@@ -17,8 +17,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  use com,            ONLY:msg
  use real_time,      ONLY:RT_step
  use RT_control,     ONLY:TIME_adjust,RT_IO_t
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

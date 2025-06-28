@@ -36,8 +36,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use timing_m,      ONLY:timing
  use vec_operate,   ONLY:v_rotate,cross_product
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

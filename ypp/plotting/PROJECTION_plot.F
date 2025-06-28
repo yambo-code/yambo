@@ -23,8 +23,7 @@ subroutine PROJECTION_plot( what, N, Ns, bands, W, TIME, OBS_K, OBS_B)
 &                         l_PROJECT_plane,PROJECT_plane_X,PROJECT_plane_Y,PROJECT_steps
  use interpolate,    ONLY:GRID_k
  use stderr,         ONLY:intc,real2ch,STRING_remove
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

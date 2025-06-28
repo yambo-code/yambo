@@ -19,8 +19,7 @@ module real_time
  use RT_lifetimes,   ONLY:RT_obj_lifetime,RT_obj_lifetime_alloc,RT_obj_lifetime_free
  use RT_occupations, ONLY:RT_obj_occupation,RT_obj_occupation_alloc,RT_obj_occupation_free
  use electrons,      ONLY:E_fine_grid
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

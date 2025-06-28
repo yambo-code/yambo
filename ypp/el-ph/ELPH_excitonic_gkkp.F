@@ -27,8 +27,7 @@ subroutine ELPH_excitonic_gkkp(Xk)
  use com,                 ONLY:msg,of_open_close
  use stderr,              ONLY:intc
  use YPPm,                ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

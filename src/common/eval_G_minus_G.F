@@ -27,8 +27,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  use R_lattice,    ONLY:G_m_G,DEV_VAR(G_m_G),G_m_G_maxval,g_vec,ng_in_shell,n_g_shells,E_of_shell
  use gpu_m,        ONLY:have_gpu
  use timing_m,     ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

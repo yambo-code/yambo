@@ -20,8 +20,7 @@ integer function io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
  use IO_m,             ONLY:io_sec,frag_WF
  use IO_int,           ONLY:io_connect,io_disconnect,io_fragment, &
 &                           io_elemental,io_bulk,io_header
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

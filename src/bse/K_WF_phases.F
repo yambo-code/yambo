@@ -39,8 +39,7 @@ subroutine K_WF_phases(Xk)
  use electrons,     ONLY:n_sp_pol,n_spinor
  use interfaces,    ONLY:WF_apply_symm
  use timing_m,      ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

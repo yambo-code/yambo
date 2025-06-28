@@ -27,7 +27,7 @@ subroutine eval_GradOperator()
  use FFT_m,     ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
  use D_lattice, ONLY:R_m_R,Grad_R
  use R_lattice, ONLY:ng_vec,g_vec
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -31,8 +31,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use TDDFT,         ONLY:F_xc_gspace,FXC_K_diagonal
  use interfaces,    ONLY:WF_load,WF_free,WF_load
  use matrix,        ONLY:MATRIX_reset
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

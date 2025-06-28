@@ -20,8 +20,7 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
 &                              SPECIAL_k,n_SPECIAL_k_MAX,CIRCUIT_k,SPECIAL_k_label,&
 &                              n_SPECIAL_k_MAX,CIRCUIT_k_label,CIRCUIT_k_norm,CIRCUIT_made_of_SPECIAL_k
  use stderr,              ONLY:STRING_split,STRING_same,intc
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

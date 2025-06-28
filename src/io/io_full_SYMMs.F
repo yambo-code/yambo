@@ -21,8 +21,7 @@ integer function io_full_SYMMs(k,ID)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

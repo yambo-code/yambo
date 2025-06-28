@@ -46,8 +46,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use X_m,             ONLY:X_mat,X_t
  !
  ! I/O
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  complex(SP),intent(inout)  :: U_csx(nkibz,maxval(n_met_bands),fft_size)

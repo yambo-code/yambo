@@ -16,7 +16,7 @@ subroutine FREQUENCIES_setup(W)
  use pars,          ONLY:SP,cI
  use frequency,     ONLY:w_samp
  use parser_m,      ONLY:parser
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

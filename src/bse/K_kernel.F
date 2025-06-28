@@ -56,8 +56,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use MAGNONS,       ONLY:BSS_MAGN_free
  use PHOTOLUM,      ONLY:BSS_PL_free
  use parser_m,      ONLY:parser
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

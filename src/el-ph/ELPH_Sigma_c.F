@@ -50,8 +50,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 #if defined _RT
  use RT_control,    ONLY:RT_apply
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

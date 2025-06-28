@@ -20,8 +20,7 @@ module linear_algebra
  use magma,            ONLY: magmaf_init,magmaf_queue_create,&
 &                            magmaf_cgeev_m,magmaf_zgeev_m,MagmaVec
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

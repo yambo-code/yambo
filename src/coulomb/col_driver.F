@@ -50,8 +50,7 @@ subroutine col_driver(bare_NG,q)
  use wave_func,     ONLY:wf_ng
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,REP,VERIFY
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

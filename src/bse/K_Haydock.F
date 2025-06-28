@@ -34,8 +34,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
  use timing_m,       ONLY:timing
  use descriptors,    ONLY:IO_desc_add
  use R_lattice,      ONLY:bz_samp
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -26,8 +26,7 @@ subroutine NL_ypp_driver(en,k)
  use stderr,         ONLY:intc,real2ch
  use RT_control,     ONLY:OBS_RT_IO_t
  use LIVE_t,         ONLY:live_timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

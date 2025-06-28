@@ -16,8 +16,7 @@ real(SP) function Eliashberg_Dos_Func(iq,im,ph_en, ph_broad, PH_E, q)
  use R_lattice,           ONLY:bz_samp
  use functions,           ONLY:Fermi_fnc_derivative
  use ELPH,                ONLY:PH_freqs_sq,use_PH_DbGd
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

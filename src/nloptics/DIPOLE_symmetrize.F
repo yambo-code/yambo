@@ -22,7 +22,7 @@ subroutine DIPOLE_symmetrize(k)
  use com,            ONLY:msg
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
  use parallel_int,   ONLY:PP_redux_wait
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !     

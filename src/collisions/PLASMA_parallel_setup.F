@@ -15,8 +15,7 @@ subroutine PLASMA_parallel_setup(EH_gas)
 &                        PAR_nPlasma
  use parallel_int,  ONLY:PARALLEL_live_message,PARALLEL_index
  use plasma,        ONLY:plasma_gas
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

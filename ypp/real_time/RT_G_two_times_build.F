@@ -30,8 +30,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
 &                         RT_dyn_step,G_MEM_steps,Ho_plus_Sigma,H_EQ,I1_matrix,RTibz
  use YPP_real_time,  ONLY:RT_time,RT_conf,GreenF_T_and_W,Rho_deph
  use LIVE_t,         ONLY:live_timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

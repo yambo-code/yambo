@@ -13,8 +13,7 @@ module hamiltonian
  !
  use pars,       ONLY:SP,schlen
  use electrons,  ONLY:levels
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

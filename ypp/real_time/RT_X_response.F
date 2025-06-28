@@ -22,8 +22,7 @@ subroutine RT_X_response(en,k,q)
  use electrons,      ONLY:levels
  use fields,         ONLY:Efield
  use parser_m,       ONLY:parser
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

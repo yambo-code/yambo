@@ -53,7 +53,7 @@ subroutine k_expand(k)
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:rl_sop,bz_samp
  use zeros,          ONLY:k_rlu_zero
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

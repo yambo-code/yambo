@@ -40,8 +40,7 @@ subroutine fft_3d_hip(c_d,n,fft_sign,hipfft_plan)
  use gpu_m,                only: gpu_devsync
  use devxlib_environment
  use hipfft_m
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

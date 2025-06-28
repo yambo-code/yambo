@@ -35,8 +35,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use R_lattice,     ONLY:qindx_S,qindx_C,bz_samp
  use D_lattice,     ONLY:DL_vol
  use wrapper,       ONLY:M_by_V
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

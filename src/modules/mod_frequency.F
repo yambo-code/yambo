@@ -13,8 +13,7 @@ module frequency
  !
  use pars,  ONLY:SP
  use units, ONLY:HA2EV
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

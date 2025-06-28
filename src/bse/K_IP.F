@@ -36,8 +36,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use BS_solvers,    ONLY:B_Hall
  use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
  use units,         ONLY:SPEED_OF_LIGHT
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

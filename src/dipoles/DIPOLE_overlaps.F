@@ -36,8 +36,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use interfaces,        ONLY:WF_shift_kpoint,eval_G_minus_G,WF_load,WF_free
  use gpu_m,             ONLY:have_gpu
  use timing_m,          ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

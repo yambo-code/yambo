@@ -21,8 +21,7 @@ subroutine DIPOLE_kb_init(Xen,Dip,io_err,ID)
  use D_lattice,           ONLY:n_atomic_species,n_atoms_species
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table, &
 &                              pp_factor,pp_n_l_max
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

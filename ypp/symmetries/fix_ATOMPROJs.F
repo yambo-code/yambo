@@ -22,8 +22,7 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
  use R_lattice,           ONLY:bz_samp
  use electrons,           ONLY:levels
  use atom_proj
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

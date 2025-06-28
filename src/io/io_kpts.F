@@ -23,7 +23,7 @@ integer function io_kpts(k,Xk,q,io_db)
 &                         io_variable_elemental,def_variable_elemental,io_header,&
 &                         def_variable_bulk,io_variable_bulk
  use timing_m,       ONLY:timing
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

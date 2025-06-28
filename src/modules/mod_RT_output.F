@@ -16,8 +16,7 @@ module RT_output_m
  use units,      ONLY:FS2AUT
  use global_XC,  ONLY:QP_SE_NONE
  use descriptors,ONLY:IO_desc
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

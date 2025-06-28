@@ -21,8 +21,7 @@ subroutine QP_DBs_initialize()
  use units,     ONLY:HA2EV
  use YPPm,      ONLY:l_QP_DBs_create_and_modify,n_QP_dbs,&
 &                    QP_user_corrections,QP_db_input_control,l_QP_DBs_manipulate
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  ! 

@@ -13,8 +13,7 @@ subroutine NL_exc_driver(en,k)
  !
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -41,8 +41,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  use stderr,          ONLY:intc
  !
  ! I/O
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  real(SP),    intent(out):: Vkli(fft_size)

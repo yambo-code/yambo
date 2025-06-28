@@ -19,8 +19,7 @@ subroutine io_RT_components_OBS(ID,what)
  use netcdf,      ONLY:NF90_UNLIMITED
  use RT_control,  ONLY:J_cache,P_cache,Ms_cache,Ml_cache,A_cache,&
 &                      CACHE_OBS_steps_now,OBS_RT_IO_t,RT_do_IO
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

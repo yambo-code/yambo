@@ -33,8 +33,7 @@ subroutine fft_free()
  use FFT_m,    ONLY:mklgpu_desc
 #  endif
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

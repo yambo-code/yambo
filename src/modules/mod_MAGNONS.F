@@ -13,8 +13,7 @@ module MAGNONS
  !
  use pars,       ONLY:SP
  use BS,         ONLY:l_BS_magnons
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

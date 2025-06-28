@@ -34,8 +34,7 @@ subroutine qe_pseudo_init()
  use gvecw,             ONLY: qe_ecutwfc => ecutwfc, qe_gcutw => gcutw
  !
  use matrix_inversion,  ONLY: invmat
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

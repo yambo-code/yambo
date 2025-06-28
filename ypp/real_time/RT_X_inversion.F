@@ -19,7 +19,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
  use units,          ONLY:AUT2FS
  use com,            ONLY:msg
  use LIVE_t,         ONLY:live_timing
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

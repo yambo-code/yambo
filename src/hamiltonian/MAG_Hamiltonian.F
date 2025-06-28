@@ -58,8 +58,7 @@ subroutine MAG_Hamiltonian()
  use wrapper,        ONLY:Vstar_dot_V
  use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
  use QP_m,           ONLY:QP_table,QP_n_states
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

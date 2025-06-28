@@ -33,8 +33,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  use LIVE_t,        ONLY:live_timing
  use wrapper,       ONLY:V_dot_V
  use vec_operate,   ONLY:c2a
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !
@@ -310,7 +309,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    subroutine expand_grid()
      !
      use FFT_m,       ONLY:fft_size
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
      ! 

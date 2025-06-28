@@ -20,7 +20,7 @@ subroutine PARALLEL_WF_index(COMM)
 &                          COMM_copy,PAR_COM_density
  use wave_func,       ONLY:states_to_load
  use parallel_int,    ONLY:PP_redux_wait
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

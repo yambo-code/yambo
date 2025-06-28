@@ -22,8 +22,7 @@ subroutine RT_TRabs_output(what,how,ofile,N_files,W,TIME)
  use BS,              ONLY:BS_K_dim
  use BS_solvers,      ONLY:BSS_desc
  use stderr,          ONLY:STRING_match,set_real_printed_length
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

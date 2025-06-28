@@ -21,8 +21,7 @@ subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

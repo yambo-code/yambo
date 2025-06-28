@@ -63,8 +63,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use com,            ONLY:of_yaml_IDs
  use yaml_output,    ONLY:yaml_close_stream
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

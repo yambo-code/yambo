@@ -19,7 +19,7 @@ integer function io_BSS_invert(iq,W,ID)
  use IO_m,          ONLY:io_sec,io_status,read_is_on
  use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header
  use timing_m,      ONLY:timing
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  integer      :: iq

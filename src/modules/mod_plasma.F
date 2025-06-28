@@ -12,7 +12,7 @@
 module plasma
  !
  use pars, ONLY :SP
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

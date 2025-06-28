@@ -27,8 +27,7 @@ integer function io_NL(what,ID)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

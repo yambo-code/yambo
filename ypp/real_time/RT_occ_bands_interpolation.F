@@ -27,8 +27,7 @@ subroutine RT_occ_bands_interpolation(en,k,q,n_T_steps)
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,electrons_bands_interpolate,&
 &                         INTERP_obj,INTERP_mode,GRID_k
  use LIVE_t,         ONLY:live_timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

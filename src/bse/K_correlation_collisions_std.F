@@ -47,8 +47,7 @@ subroutine K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
  use collision_el,  ONLY:elemental_collision_free,elemental_collision_alloc
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

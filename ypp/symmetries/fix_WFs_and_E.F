@@ -28,8 +28,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR)
  use YPP_symm,            ONLY:wf_nc_k_save,wf_igk_save,wf_nc_k_reduced,wf_igk_reduced,&
 &                              wf_nc_k_new,wf_igk_new,&
 &                              wf_nc_k_new,wf_ncx_new,wf_ncx_save,wf_ng_new,wf_ng_save
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !
@@ -287,8 +286,7 @@ subroutine map_energies(E,E_new,k,kpoints_map)
  !
  use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

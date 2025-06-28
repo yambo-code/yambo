@@ -40,8 +40,7 @@ subroutine XCo_local(E,Xk)
  use SC,            ONLY:load_SC_components,SC_fft_size,compatible_SC_DB
 #endif
  use timing_m,      ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

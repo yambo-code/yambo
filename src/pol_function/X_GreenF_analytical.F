@@ -27,8 +27,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  use R_lattice,  ONLY:qindx_X,bz_samp
  use frequency,  ONLY:w_samp
  use parallel_m, ONLY:PAR_Xk_bz_index
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

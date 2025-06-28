@@ -29,8 +29,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use stderr,        ONLY:intc
  use QP_m,          ONLY:QP_G_damp
  use parser_m,      ONLY:parser
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

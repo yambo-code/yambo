@@ -17,8 +17,7 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt,ordered_grid_index
  use electrons,     ONLY:levels,spin
  use R_lattice,     ONLY:qindx_S,bz_samp
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  type(levels) ::E

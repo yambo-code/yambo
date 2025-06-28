@@ -23,8 +23,7 @@ subroutine ELPH_plot_gkkp(k,E,q)
  use IO_m,                ONLY:REP,deliver_IO_error_message,DUMP,manage_action,RD_CL_IF_END,OP_RD
  use stderr,              ONLY:intc
  use LIVE_t,              ONLY:live_timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

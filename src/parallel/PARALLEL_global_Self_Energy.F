@@ -55,8 +55,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use drivers,       ONLY:l_elph_corr
  use ELPH,          ONLY:elph_use_q_grid
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

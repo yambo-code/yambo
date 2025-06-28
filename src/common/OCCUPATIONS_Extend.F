@@ -24,8 +24,7 @@ subroutine OCCUPATIONS_Extend(Xe,E,k)
  use electrons,  ONLY:levels,n_sp_pol
  use R_lattice,  ONLY:bz_samp
  use interfaces, ONLY:OCCUPATIONS_Gaps
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -22,8 +22,7 @@ integer function io_ELPH(ID,what)
  use R_lattice,      ONLY:nkbz
  use D_lattice,      ONLY:n_atoms
  use timing_m,       ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

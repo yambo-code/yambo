@@ -20,7 +20,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -18,8 +18,7 @@ subroutine K_IP_sort(what,I,N,Indexes,vI,El,vC)
  use vec_operate,   ONLY:sort,degeneration_finder
  use units,         ONLY:HA2EV
  use parallel_int,  ONLY:PP_redux_wait
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

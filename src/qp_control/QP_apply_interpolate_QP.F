@@ -34,8 +34,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  use QP_CTL_m,      ONLY:QP_action,QP_ctl_msg_fmt,QP_ctl_xc_STRING,At_least_one_band_corrected
  use interpolate,   ONLY:NN_n_of_nearest,INTERP_obj,INTERPOLATE_msg_fmt,&
 &                        INTERPOLATION_driver_seed,INTERPOLATION_driver_do,INTERP_shell_factor
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

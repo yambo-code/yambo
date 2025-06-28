@@ -26,8 +26,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use PHOTOLUM,       ONLY:BSS_PL_free
  use MAGNONS,        ONLY:BSS_MAGN_free
  use DICHROISM,      ONLY:BSS_DICH_free
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

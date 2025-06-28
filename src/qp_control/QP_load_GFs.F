@@ -15,8 +15,7 @@ subroutine QP_load_GFs(bands,qp,E)
  !
  use electrons,     ONLY:n_sp_pol,spin,levels
  use QP_m,          ONLY:QP_t,GF_is_causal
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

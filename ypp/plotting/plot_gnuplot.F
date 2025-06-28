@@ -18,8 +18,7 @@ subroutine plot_gnuplot(eval_only)
 &                      plot_title,output_string,l_wavefunction,l_current,use_xcrysden,&
 &                      plot_is_1D,plot_is_2D,l_free_hole,l_average_eh
  use LIVE_t,      ONLY:live_timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  logical    :: eval_only

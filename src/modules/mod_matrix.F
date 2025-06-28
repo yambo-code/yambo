@@ -15,8 +15,7 @@ module matrix
  use pars,       ONLY:schlen,SP
  use parallel_m, ONLY:yMPI_comm
  use devxlib,    ONLY:devxlib_mapped,devxlib_memset_d
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

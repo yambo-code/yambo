@@ -21,8 +21,7 @@ subroutine RT_k_grid(E,k,q)
  use R_lattice,      ONLY:bz_samp,bz_samp_FineGd_alloc,bz_samp_duplicate_Fg,&
 &                         bz_samp_FineGd_default
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

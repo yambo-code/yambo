@@ -54,8 +54,7 @@ subroutine RT_initialize(E,k,q,Dip)
  use parser_m,       ONLY:parser
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_G_k_range
  use parallel_int,   ONLY:PP_redux_wait
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

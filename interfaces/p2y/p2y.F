@@ -29,8 +29,7 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use mod_com2y,           ONLY:interface_presets,force_noWFs,verboseIO
  use stderr,              ONLY:intc
  use qexml_module
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

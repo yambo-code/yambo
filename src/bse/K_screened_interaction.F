@@ -30,8 +30,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
 &                       OP_RD,RD,RD_CL,RD_CL_IF_END
  use devxlib,      ONLY:devxlib_memcpy_d2d,devxlib_memcpy_h2d,devxlib_memcpy_d2h
  use gpu_m,        ONLY:have_gpu
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

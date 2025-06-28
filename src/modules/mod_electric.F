@@ -13,8 +13,7 @@ module electric
  !
  use pars,       ONLY:SP,schlen,lchlen
  use electrons,  ONLY:levels
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

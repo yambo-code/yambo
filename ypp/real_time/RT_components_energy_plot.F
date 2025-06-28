@@ -28,8 +28,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  use real_time,      ONLY:RT_carriers,RT_bands
  use QP_m,           ONLY:QP_table,QP_n_states
  use interfaces,     ONLY:DESC_write
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

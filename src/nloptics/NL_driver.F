@@ -44,8 +44,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use collision_ext,  ONLY:ng_oscll,OSCLL,W
  use electric,       ONLY:l_res_symms
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

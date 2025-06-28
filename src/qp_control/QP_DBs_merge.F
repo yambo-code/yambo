@@ -18,8 +18,7 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,FILES)
  use C_driver,       ONLY:code_bin
  use vec_operate,    ONLY:v_is_zero
  use descriptors,    ONLY:IO_desc_duplicate
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

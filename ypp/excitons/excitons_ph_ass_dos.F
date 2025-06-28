@@ -28,8 +28,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  use ELPH,          ONLY:FAN_deltaE_treshold,elph_branches
  use functions,     ONLY:Lorentzian_func,boltzman_f,bose_f
  use stderr,        ONLY:STRING_same,intc
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

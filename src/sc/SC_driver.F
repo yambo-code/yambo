@@ -52,8 +52,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use collision_ext,  ONLY:COH_COLL_element,HXC_COLL_element,COLLISIONS_have_HARTREE
  use electrons,      ONLY:Spin_magn
  use electric,       ONLY:ELECTRIC_alloc,ELECTRIC_free,W_electric
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

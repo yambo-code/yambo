@@ -28,8 +28,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  use electrons,           ONLY:levels,n_sp_pol,n_spinor,n_spin
  use LIVE_t,              ONLY:live_timing
  use interfaces,          ONLY:io_DB1_selective_scan
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

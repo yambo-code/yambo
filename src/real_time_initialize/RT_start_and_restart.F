@@ -54,8 +54,7 @@ subroutine RT_start_and_restart(E,k,q)
  use parallel_m,     ONLY:PAR_G_k_range,PAR_IND_Xk_ibz
  use parallel_int,   ONLY:PP_wait,PP_redux_wait
  use RT_output_m,    ONLY:RT_desc,TIME_STEP_desc,Gr_desc
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

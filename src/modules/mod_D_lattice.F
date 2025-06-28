@@ -14,8 +14,7 @@ module D_lattice
  !
  use pars,        ONLY:LP,SP,lchlen,cONE,cZERO,cI,schlen
  use devxlib
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

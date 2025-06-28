@@ -24,8 +24,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  use QP_m,           ONLY:QP_QED_ng
  use collision_ext,  ONLY:P_COLL_element
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

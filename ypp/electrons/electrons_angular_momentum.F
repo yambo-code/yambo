@@ -32,8 +32,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  use LIVE_t,         ONLY:live_timing
  use units,          ONLY:SPEED_OF_LIGHT
  use com,            ONLY:msg,of_open_close
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

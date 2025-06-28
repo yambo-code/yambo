@@ -26,8 +26,7 @@ subroutine RT_X_effective(en)
  use vec_operate,    ONLY:sort
  use LIVE_t,         ONLY:live_timing
  use stderr,         ONLY:intc,real2ch,STRING_split
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

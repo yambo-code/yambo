@@ -15,8 +15,7 @@ module wave_func
  use pars,           ONLY:SP,schlen
  use devxlib,        ONLY:devxlib_mapped
  use gpu_m,          ONLY:have_gpu
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -16,8 +16,7 @@ subroutine INIT_DephMatrix()
  use pars,           ONLY:SP
  use parser_m,       ONLY:PARSER_array
  use real_time,      ONLY:RT_INPUT_Deph_limits
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

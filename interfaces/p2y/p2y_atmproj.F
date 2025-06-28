@@ -20,8 +20,7 @@ subroutine p2y_atmproj(filename,k)
  !
  use atmproj_tools_module,  ONLY:atmproj_read_ext !,nwfcx
  use qe_pseudo_m,           ONLY:nsp
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

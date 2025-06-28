@@ -23,8 +23,7 @@ subroutine INTERPOLATION_BZ_setup(Xk)
  use vec_operate,       ONLY:sort
  use matrix_operate,    ONLY:m3inv
  use com,               ONLY:msg
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

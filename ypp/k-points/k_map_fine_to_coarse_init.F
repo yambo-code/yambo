@@ -29,8 +29,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
  use stderr,              ONLY:STRING_same
  use vec_operate,         ONLY:c2a,v_is_zero
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

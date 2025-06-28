@@ -16,8 +16,7 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,Xen)
  use electrons,           ONLY:levels
  use R_lattice,           ONLY:bz_samp,bz_fine_grid,bz_samp_FineGd_alloc
  use LIVE_t,              ONLY:live_timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

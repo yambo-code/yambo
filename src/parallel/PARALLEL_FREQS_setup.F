@@ -15,8 +15,7 @@ subroutine PARALLEL_FREQS_setup(W,IND,COMM)
  use parallel_m,  ONLY:PP_indexes,yMPI_comm,PAR_IND_FREQ_ID,PAR_n_freqs,PP_indexes_reset,&
 &                      PAR_build_index,PAR_FREQS_index
  use parallel_int,ONLY:PARALLEL_index,PARALLEL_live_message
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

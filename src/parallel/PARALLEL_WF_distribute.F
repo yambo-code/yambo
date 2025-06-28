@@ -26,7 +26,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  use R_lattice,       ONLY:nkbz
  use collision_ext,   ONLY:GW_NEQ_collisions
 #endif
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -32,8 +32,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use interfaces,     ONLY:eval_G_minus_G
  use vec_operate,    ONLY:v_norm
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free,G_m_G_maxval,q0_def_norm
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

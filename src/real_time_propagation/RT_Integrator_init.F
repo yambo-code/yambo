@@ -20,8 +20,7 @@ subroutine RT_Integrator_init()
 &                         Integrator_name,integrator_exp_order,    &
 &                         a_tableau,b_tableau,c_tableau,RWA_table, &
 &                         I1_matrix,Integrator_nsteps,RT_bands
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

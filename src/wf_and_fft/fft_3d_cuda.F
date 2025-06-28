@@ -45,8 +45,7 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  use openacc
 #endif
  use gpu_m,  only: gpu_devsync
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

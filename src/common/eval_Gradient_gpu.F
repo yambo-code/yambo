@@ -39,8 +39,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  use mkl_dfti_omp_offload
 #endif
  use timing_m
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

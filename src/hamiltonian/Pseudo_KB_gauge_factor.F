@@ -24,8 +24,7 @@ subroutine Pseudo_KB_gauge_factor(gauge_factor)
  use drivers,       ONLY:l_real_time
  use fields,        ONLY:A_tot
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

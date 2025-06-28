@@ -41,8 +41,7 @@ subroutine NL_initialize(E,k)
  use electric,       ONLY:l_force_SndOrd,l_res_symms
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

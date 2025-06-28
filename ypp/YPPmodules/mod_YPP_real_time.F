@@ -13,8 +13,7 @@ module YPP_real_time
  !
  use units,    ONLY:HA2EV
  use pars,     ONLY:schlen,SP,DP,rZERO
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

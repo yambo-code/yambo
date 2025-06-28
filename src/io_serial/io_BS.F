@@ -29,8 +29,7 @@ integer function io_BS(iq,X,ID)
 &                        def_variable_bulk,io_variable_bulk,io_header,io_fragment
  use descriptors,   ONLY:IO_desc,IO_desc_reset,IO_desc_duplicate
  use timing_m,      ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

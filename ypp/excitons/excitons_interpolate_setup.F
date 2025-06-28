@@ -21,8 +21,7 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,BS_all_E,ID_INTERP_EXC,repor
  use YPPm,          ONLY:BS_E,EXCITONS_user_indexes,EXCITONS_n_user_states,coo_out,K_transform
  use com,           ONLY:msg
  use stderr,        ONLY:intc
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

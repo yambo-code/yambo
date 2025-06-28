@@ -19,8 +19,7 @@ subroutine RT_Dephasing_Matrix(E)
  use real_time,     ONLY:RT_Deph_Matrix,RT_is_statically_dephased,Phase_LifeTime,&
 &                        RAD_LifeTime,RT_bands,RT_INPUT_Deph_limits,RT_deph_cv_only, &
 &                        RT_deph_deg_thresh
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

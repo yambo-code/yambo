@@ -15,8 +15,7 @@ subroutine COLLISIONS_map_to_QP_table(what,COLL)
  use QP_m,          ONLY:QP_nk,QP_nb,QP_table,QP_n_states
  use electrons,     ONLY:n_sp_pol
  use R_lattice,     ONLY:nXkibz
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

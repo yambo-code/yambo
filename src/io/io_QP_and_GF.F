@@ -27,8 +27,7 @@ integer function io_QP_and_GF(what,qp,ID)
 #if _ELPH
  use ELPH,           ONLY:ELPH_desc,use_PH_DbGd
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

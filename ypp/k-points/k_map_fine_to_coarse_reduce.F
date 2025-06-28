@@ -16,8 +16,7 @@ logical function k_map_fine_to_coarse_reduce(FineGd_k)
  use vec_operate,         ONLY:c2a,rlu_v_is_zero
  use R_lattice,           ONLY:bz_samp
  use LIVE_t,              ONLY:live_timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

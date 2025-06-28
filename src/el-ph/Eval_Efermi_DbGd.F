@@ -23,8 +23,7 @@ function Eval_Efermi_DbGd(k,q,en)
  use interpolate,   ONLY:INTERPOLATION_BZ
  use interfaces,    ONLY:OCCUPATIONS_Fermi
  use com,           ONLY:msg
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

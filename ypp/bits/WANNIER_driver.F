@@ -26,7 +26,7 @@ subroutine WANNIER_driver(k,E)
  use QP_m,           ONLY:QP_t,QP_reset
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,LOG,DUMP
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !
@@ -90,8 +90,7 @@ subroutine WANNIER_driver(k,E)
    !-----------------------------------------------------------------------
    !---Subroutine from Wannier90, GPL license------------------------------
    !-----------------------------------------------------------------------
-   !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
    !

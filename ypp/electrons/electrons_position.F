@@ -23,8 +23,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  use wrapper,        ONLY:Vstar_dot_V
  use stderr,         ONLY:intc
  use interfaces,     ONLY:WF_load,WF_free
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -16,8 +16,7 @@ subroutine QP_expand(k,qp,qp_expanded)
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:n_sp_pol
  use descriptors,   ONLY:IO_desc_duplicate
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

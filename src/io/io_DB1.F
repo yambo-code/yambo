@@ -47,8 +47,7 @@ integer function io_DB1(E,k,ID)
 #if defined _RT
  use real_time,        ONLY:RT_bands
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

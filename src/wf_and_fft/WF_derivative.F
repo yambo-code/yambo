@@ -28,8 +28,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,derivative_sppol,do_der
 #if defined _SC
  use SC,             ONLY:SC_bands,found_SC_DB
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  ! Input variables

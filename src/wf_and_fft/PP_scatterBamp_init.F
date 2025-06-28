@@ -19,8 +19,7 @@ subroutine PP_scatterBamp_init(isc)
  use R_lattice,     ONLY:q_pt,b,rl_sop
  use vec_operate,   ONLY:c2a
  use timing_m,      ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

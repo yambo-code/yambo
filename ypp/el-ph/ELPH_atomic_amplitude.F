@@ -26,8 +26,7 @@ subroutine ELPH_atomic_amplitude(q)
  use ALLOC,               ONLY:ELPH_alloc
  use linear_algebra,      ONLY:DIAGO,USE_LK
  use stderr,              ONLY:intc
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  type(bz_samp)::q

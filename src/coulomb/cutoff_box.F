@@ -29,8 +29,7 @@ subroutine cutoff_box(q,is_cut)
  use LIVE_t,        ONLY:live_timing
  use zeros,         ONLY:k_iku_zero,G_iku_zero
  use openmp,        ONLY:OPENMP_update,n_threads,master_thread,OPENMP_set_threads
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -26,8 +26,7 @@ integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode
  use com,              ONLY:core_io_path
  use IO_m,             ONLY:OP_RD_CL,NONE,DUMP
  use IO_int,           ONLY:io_control,io_connect,io_disconnect,io_elemental,io_bulk
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -17,7 +17,7 @@ module pseudo
  use D_lattice,   ONLY:n_atomic_species,n_atoms_species
  use qe_pseudo_m, ONLY:qe_pseudo_deallocate, qe_pseudo_allocate,&
 &                      bec_type, deallocate_bec_type
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

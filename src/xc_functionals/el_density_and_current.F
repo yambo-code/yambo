@@ -64,8 +64,7 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  use RT_occupations,ONLY:RT_el_occ
  use real_time,     ONLY:RTibz
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

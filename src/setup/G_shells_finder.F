@@ -30,8 +30,7 @@ subroutine G_shells_finder()
  use zeros,        ONLY:G_iku_zero,G_mod_zero
  use parallel_m,   ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index 
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

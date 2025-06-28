@@ -23,8 +23,7 @@ integer function io_KB_pwscf(ID)
 &                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
 &                           PP_alloc_pwscf
  use timing_m,       ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

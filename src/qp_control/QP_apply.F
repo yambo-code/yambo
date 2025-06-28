@@ -41,8 +41,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
 &                        QP_ctl_ID,QP_ctl_t,QP_ctl_msg_fmt,QP_ctl_xc_STRING,QP_ctl_what,&
 &                        At_least_one_band_corrected
  use global_XC,     ONLY:correct_global_XC
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

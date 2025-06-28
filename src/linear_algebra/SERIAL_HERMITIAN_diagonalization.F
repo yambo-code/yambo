@@ -23,7 +23,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
 #ifdef _OPENMP
  use omp_lib
 #endif
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -26,8 +26,7 @@ integer function io_OSCLL(q,ID)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

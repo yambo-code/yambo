@@ -15,8 +15,7 @@ module RT_occupations
  use electrons,      ONLY:n_sp_pol
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt,&
 &                         l_phel_scatt,l_phel_corr
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

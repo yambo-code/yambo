@@ -25,8 +25,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use interfaces,     ONLY:WF_load,WF_free
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use interpolate,    ONLY:INTERP_mode
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

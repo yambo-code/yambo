@@ -15,8 +15,7 @@ subroutine INTERPOLATION_BZ(K,NK,ID,R1D,R2D,C1D,C2D,E)
  use electrons,   ONLY:levels
  use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D
  use timing_m,    ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

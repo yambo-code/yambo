@@ -25,8 +25,7 @@ subroutine INIT_q_points( )
  use ELPH,        ONLY:PH_qpt,elph_use_q_grid,elph_nQ,elph_grids_are_expanded
 #endif
  use parser_m,    ONLY:PARSER_array
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

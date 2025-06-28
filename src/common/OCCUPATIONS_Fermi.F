@@ -35,8 +35,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
 #if defined _SC
  use SC,            ONLY:SC_neq_kind,SC_mu,SC_occ
 #endif 
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

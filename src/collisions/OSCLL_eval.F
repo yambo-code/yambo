@@ -38,8 +38,7 @@ subroutine OSCLL_eval(q,k,en)
  use parallel_int,        ONLY:PP_redux_wait,PP_wait
  use parallel_m,          ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,master_cpu,PAR_IND_G_b, &
 &                              PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_A2A,PAR_COM_G_b_INDEX
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !  

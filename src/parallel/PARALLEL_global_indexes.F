@@ -30,8 +30,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use pars,          ONLY:SP
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

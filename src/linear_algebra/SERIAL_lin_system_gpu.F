@@ -24,8 +24,7 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
 #if defined _CUDA
  use cublas,         ONLY:CUBLAS_OP_N
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -23,8 +23,7 @@ integer function variables_ELPH(ID,what)
  use vec_operate,    ONLY:rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
  use descriptors,    ONLY:IO_desc_reset
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

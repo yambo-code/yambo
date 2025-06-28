@@ -25,8 +25,7 @@ subroutine electrons_dos(Xk,Xen)
  use QP_CTL_m,       ONLY:QP_apply
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k,INTERP_obj
  use stderr,         ONLY:intc
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -120,8 +120,7 @@ module POL_FIT_m
     !                    The estimated error in a(i) is sqrt(Cov(a(i),a(i))).
     ! Notes:
     !   This routine uses a QR decomposition method, which should be more
-    !   numerically stable than solving the normal equations.
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
     real(DP), intent(in)  :: x(:), y(:), sig(:)

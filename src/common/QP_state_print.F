@@ -18,8 +18,7 @@ subroutine QP_state_print(qp)
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  use descriptors,   ONLY:IO_desc_add
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

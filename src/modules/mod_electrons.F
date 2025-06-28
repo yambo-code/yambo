@@ -12,8 +12,7 @@
 module electrons
  !
  use pars,  ONLY:SP,rZERO
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -20,7 +20,7 @@ subroutine p2y_db1(en,k)
  use R_lattice,             ONLY : ng_vec,g_vec,bz_samp
  use wave_func,             ONLY : wf_ng, wf_nc_k, wf_ncx, wf_igk
  use mod_com2y,             ONLY : force_noWFs
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  type(levels),     intent(out)  :: en     ! Energies

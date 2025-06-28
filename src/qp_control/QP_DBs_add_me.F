@@ -16,8 +16,7 @@ subroutine QP_DBs_add_me(qp_base,qp2add,plan_EWZG,SAME_states,SAME_desc,OP,PRE_F
  use pars,           ONLY:cZERO,rZERO,cI,SP,rONE
  use QP_m,           ONLY:QP_t,QP_reset,QP_copy,QP_alloc
  use electrons,      ONLY:n_sp_pol
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -40,8 +40,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use stderr,         ONLY:intc
  use descriptors,    ONLY:IO_desc_add
  use PHOTOLUM,       ONLY:BSS_PL_free,PL
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

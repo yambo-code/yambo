@@ -17,7 +17,7 @@ subroutine RT_coefficients_Fourier(nt,P,nw,W,X,X_err,deltaW)
  use YPP_real_time,  ONLY:i_t_start,RT_conf
  use fields,         ONLY:EtoT
  use real_time,      ONLY:RT_step
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

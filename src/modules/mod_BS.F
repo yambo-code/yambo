@@ -15,8 +15,7 @@ module BS
  use pars,          ONLY: IP,IPL,SP,schlen,lchlen
  use collision_el,  ONLY: elemental_collision
  use gpu_m,         ONLY: have_gpu
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

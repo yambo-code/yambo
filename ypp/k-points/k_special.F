@@ -30,8 +30,7 @@ subroutine k_special(LIST_only)
  use vec_operate,         ONLY:c2a
  use YPPm,                ONLY:K_transform,SPECIAL_k,n_SPECIAL_k_MAX,SPECIAL_k_label,coo_out
  use LIVE_t,              ONLY:live_timing_is_on
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

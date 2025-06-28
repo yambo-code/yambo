@@ -30,8 +30,7 @@ subroutine RT_density(en,kpt,qpt)
  use interfaces,     ONLY:WF_load,WF_free,el_density_and_current
  use wave_func,      ONLY:WF,wf_ng
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -28,8 +28,7 @@ subroutine XCo_driver(E,k,Xk,q)
  use hamiltonian,   ONLY:l_sc_V_is_local
  use global_XC,     ONLY:H_SE_FOCK,H_SE_HARTREE,H_SE_COH,H_SE_SEX
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

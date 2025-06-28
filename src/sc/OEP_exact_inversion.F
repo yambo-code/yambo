@@ -35,8 +35,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  use wave_func,       ONLY:WF
  !
  ! I/O
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  real(SP),intent(out)    :: Voep(fft_size)

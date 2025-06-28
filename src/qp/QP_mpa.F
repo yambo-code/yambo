@@ -50,8 +50,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use functions,     ONLY:bose_E_cut
  use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memcpy_d2d
  use gpu_m,         ONLY:have_gpu
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -21,8 +21,7 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_RESTART_info,UNLIMITED_ti
 &                         RT_dyn_step,RT_step
  use IO_m,           ONLY:write_is_on,read_is_on
  use IO_int,         ONLY:def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

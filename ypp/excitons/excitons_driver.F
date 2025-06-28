@@ -25,8 +25,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 #if defined _YPP_RT
  use YPP_real_time, ONLY:l_RT_abs
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

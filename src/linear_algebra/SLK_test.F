@@ -36,8 +36,7 @@ subroutine SLK_test(E,k,q)
  use parallel_int,   ONLY:PARALLEL_global_indexes
  use linear_algebra, ONLY:INV,DIAGO,LIN_SYS,MAT_MUL,USE_LK,USE_SLK
  use matrix_operate, ONLY:hermitian
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !
@@ -201,7 +200,7 @@ end subroutine build_matrix
  use com,        ONLY:msg
  use parallel_m, ONLY:mpi_comm_world
  use wrapper,    ONLY:M_by_M
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

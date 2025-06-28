@@ -26,8 +26,7 @@ subroutine eval_Gradient(f,f_gradient,ng_)
 #endif
  use R_lattice,     ONLY:g_vec,ng_vec
  use wave_func,     ONLY:wf_ng
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -13,7 +13,7 @@ module PHOTOLUM
  !
  use BS,         ONLY:l_BS_photolum
  use pars,       ONLY:SP
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

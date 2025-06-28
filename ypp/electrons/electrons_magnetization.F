@@ -21,8 +21,7 @@ subroutine electrons_magnetization(Xk,Xen)
 &                         use_gnuplot,use_cube,plot_title,l_density,mag_dir
  use com,            ONLY:msg,of_open_close
  use xc_functionals, ONLY:magn
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

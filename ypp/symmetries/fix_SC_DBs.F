@@ -21,8 +21,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map)
  use hamiltonian,         ONLY:H_rotation,H_nl_sc,l_sc_V_is_local,H_potential
  use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp,nkibz
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

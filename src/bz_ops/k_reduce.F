@@ -25,8 +25,7 @@ subroutine k_reduce(k,FORCE_BZ)
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:b,rl_sop,bz_samp
  use zeros,          ONLY:k_rlu_zero
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

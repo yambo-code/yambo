@@ -31,9 +31,8 @@ subroutine K_blocks( )
 &                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim,n_BS_blks_min,&
 &                       BS_n_eh_spaces,BS_res_ares_n_mat,BS_IO_dim,l_BS_ares_from_res
  use com,          ONLY:msg
- !
- USE_MEMORY
- USE_PAR_MEMORY
+ use y_memory_alloc
+ use y_memory_alloc_par
  !
  implicit none
  !
@@ -170,8 +169,7 @@ subroutine K_block_alloc( iB, mode )
  use pars,         ONLY:SP,cZERO
  use BS,           ONLY:BS_blk,l_BSE_kernel_complete
  use BS_solvers,   ONLY:BSS_kernel_IO_on_the_fly
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !
@@ -203,7 +201,7 @@ subroutine K_block_free( iB, mode )
  !
  use BS,           ONLY:BS_blk,l_BSE_kernel_complete
  use BS_solvers,   ONLY:BSS_kernel_IO_on_the_fly
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

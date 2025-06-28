@@ -32,8 +32,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
 #endif
  use BS,             ONLY:l_BS_photolum
  use PHOTOLUM,       ONLY:BSS_PL_f,BSS_dipoles_PL,PL,PL_prefactor
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

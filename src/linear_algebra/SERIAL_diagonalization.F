@@ -30,7 +30,7 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
 #ifdef _OPENMP
  use omp_lib
 #endif
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

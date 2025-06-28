@@ -19,8 +19,7 @@ subroutine WF_alloc(WF,k_extrema_only)
  use parallel_int,  ONLY:PARALLEL_live_message
  use gpu_m,         ONLY:have_gpu
  use devxlib,       ONLY:devxlib_memset_d
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

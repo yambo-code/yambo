@@ -31,8 +31,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use OUTPUT,         ONLY:OUTPUT_driver
  use interfaces,     ONLY:DESC_write
  use timing_m,       ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

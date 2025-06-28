@@ -21,8 +21,7 @@ subroutine RT_occupations_driver(k,q,en)
  use real_time,      ONLY:RT_bands
  use YPPm,           ONLY:DIPs_mask,l_dipoles,DIPs,DIPs_V_bands
  use YPP_real_time,  ONLY:l_RT_time,l_RT_energy,l_RT_bands,l_RT_dos,RT_conf
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

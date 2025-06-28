@@ -22,8 +22,7 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
 &                        gsqF_energy_steps,PH_kpt_bz,elph_nk_bz,elph_use_q_grid,FineGd_E_kpq_components_reset
  use parallel_m,    ONLY:PAR_nQ_bz
  use stderr,        ONLY:STRING_split
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

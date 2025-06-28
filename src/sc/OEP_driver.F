@@ -37,8 +37,7 @@ subroutine OEP_driver(X,Xw,E,k,q,V_oep)
  use drivers,         ONLY:l_oep_exact,l_oep_slater,l_sc_srpa
  use SC,              ONLY:it_now,l_oep_iterative,l_oep_EWeight 
  use frequency,       ONLY:w_samp
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  real(SP),intent(inout)  :: V_oep(fft_size)

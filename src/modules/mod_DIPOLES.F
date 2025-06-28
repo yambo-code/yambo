@@ -16,7 +16,7 @@ module DIPOLES
  use units,         ONLY:HA2EV
  use descriptors,   ONLY:IO_desc
  use gpu_m,         ONLY:have_gpu
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

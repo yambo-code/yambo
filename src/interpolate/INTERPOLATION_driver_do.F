@@ -31,8 +31,7 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,FineGrid)
 &                               l_INTERP_f,l_INTERP_E,l_INTERP_dE,INTERP_FineGd,&
 &                               l_integral_respect,OUT_k_nk
  use IO_int,               ONLY:IO_and_Messaging_switch
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

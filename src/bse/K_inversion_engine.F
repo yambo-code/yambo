@@ -21,8 +21,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  use BS,             ONLY:BS_H_dim,l_BS_photolum
  use BS_solvers,     ONLY:Co_factor,K_INV_EPS,BSS_dipoles_opt,Co_factor,K_inv_slk,K_slk,K_INV_PL
  use PHOTOLUM,       ONLY:PL,PL_prefactor,BSS_dipoles_PL
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

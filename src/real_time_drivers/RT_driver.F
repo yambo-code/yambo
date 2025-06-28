@@ -48,8 +48,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PAR_COM_Xk_ibz_INDEX
  use units,           ONLY:FS2AUT
  use RT_lifetimes,    ONLY:l_initial_equilibrium
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

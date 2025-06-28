@@ -15,8 +15,7 @@ module nl_optics
  use pars,            ONLY:SP,schlen,lchlen
  use electrons,       ONLY:levels
  use real_time,       ONLY:NE_steps,dG_lesser
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

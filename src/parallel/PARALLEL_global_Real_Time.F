@@ -38,8 +38,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  ! ID's
  use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,&
 &                        PAR_IND_DIPk_ibz_ID,PAR_IND_Q_bz_ID,PAR_IND_WF_b_ID
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

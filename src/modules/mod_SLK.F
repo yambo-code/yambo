@@ -13,7 +13,7 @@ module SLK_m
  !
  use pars,       ONLY: SP
  use parallel_m, ONLY: yMPI_comm
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

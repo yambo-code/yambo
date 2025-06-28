@@ -22,8 +22,7 @@ subroutine k_circuit_driver(PATH,n_points)
 &                         CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
 &                         CIRCUIT_made_of_SPECIAL_k,BANDS_from_db,SPECIAL_k,&
 &                         BANDS_path,CIRCUIT_k_label,SPECIAL_k_label
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

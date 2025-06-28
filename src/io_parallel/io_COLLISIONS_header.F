@@ -28,7 +28,7 @@ integer function io_COLLISIONS_header(ID,COLL)
  use X_m,           ONLY:X_desc
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
  use timing_m,      ONLY:timing
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

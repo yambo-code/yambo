@@ -26,8 +26,7 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
 &                        EXCITON_kin,excitons_degeneracy_average,EXCITON_spin,BSiq
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_index
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

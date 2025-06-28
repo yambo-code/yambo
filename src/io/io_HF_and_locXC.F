@@ -22,7 +22,7 @@ integer function io_HF_and_locXC(ID)
  use IO_int,         ONLY:io_connect,io_disconnect,io_header,io_elemental,io_bulk,&
 &                         ver_is_gt_or_eq
  use timing_m,       ONLY:timing
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  integer :: ID

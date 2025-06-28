@@ -19,8 +19,7 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
 &                        X_fxc,EEL,Alpha,X_mat,DEV_VAR(X_mat),X_drude_term,X_RLcomp_ig
  use PHOTOLUM,      ONLY:PL
  use stderr,        ONLY:STRING_match
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -32,8 +32,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  use stderr,          ONLY:STRING_match,STRING_same,STRING_remove
  use com,             ONLY:msg
  use interpolate,     ONLY:INTERPOLATE_is_quiet
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

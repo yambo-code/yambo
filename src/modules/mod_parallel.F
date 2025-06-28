@@ -47,7 +47,7 @@ module parallel_m
 #endif
  !
 #if !defined _io_lib
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
 #endif
@@ -760,4 +760,3 @@ module parallel_m
    end subroutine par_distribute_set
 !
 end module parallel_m
-!

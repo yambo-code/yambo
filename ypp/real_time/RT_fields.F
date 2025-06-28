@@ -35,7 +35,7 @@ subroutine RT_fields()
  use YPP_real_time,  ONLY:RT_conf,ElField,RT_time
  use fields,         ONLY:Efield
  use stderr,         ONLY:STRING_split
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

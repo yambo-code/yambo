@@ -22,8 +22,7 @@ integer function io_MPA(X,Xw,ID)
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
  use mpa_m,         ONLY:MPA_freqs,MPA_alloc,MPA_E_par,MPA_R_par
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

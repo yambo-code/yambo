@@ -17,8 +17,7 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt,pp_range,npp,i_atom,is,ia,ik)
  use wave_func,     ONLY:wf_ncx,wf_igk,wf_nc_k
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use D_lattice,     ONLY:atom_pos,x_cc,a,n_atoms
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

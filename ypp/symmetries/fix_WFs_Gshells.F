@@ -23,8 +23,7 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym)
  use YPP_symm,            ONLY:wf_nc_k_save,wf_igk_save,wf_nc_k_reduced,wf_igk_reduced,&
 &                              wf_nc_k_new,l_wf_nc_k_red,ng_vec_new,ng_vec_save,wf_igk_new,&
 &                              wf_nc_k_new,wf_ncx_new,wf_ncx_save,wf_ng_new,wf_ng_save,wf_ng_cut
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

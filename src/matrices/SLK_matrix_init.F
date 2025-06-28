@@ -28,7 +28,7 @@ subroutine SLK_matrix_init(M_slk, N, N_blocks)
  !
  use SLK_m,          ONLY:SLK_ORTHO
  use matrix,         ONLY:PAR_matrix
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

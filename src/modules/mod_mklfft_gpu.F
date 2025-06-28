@@ -46,8 +46,7 @@ use mkl_dfti_omp_offload
 
 contains
 subroutine fft_3d_mklgpu(c_d,n,fft_sign,mklgpu_desc)
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -21,8 +21,7 @@ subroutine RT_TRabs_residuals(what,N_trans,N_dirs,DIP_dir,Xen,Xk,nb,l_EQ)
  use YPPm,            ONLY:BS_E
  use real_time,       ONLY:RT_bands
  use parallel_m,      ONLY:PAR_IND_DIPk_ibz,PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_DIP
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

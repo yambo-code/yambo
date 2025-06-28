@@ -29,8 +29,7 @@ subroutine PP_rotate_becp(isc,ibec,obec)
 &                        irt,atom_pos,n_atoms_species,n_atomic_species
  use R_lattice,     ONLY:k_pt,b
  use qe_pseudo_m,   ONLY:bec_type,beccopy,d1,d2,d3,nh,upf,indv_ijkb0
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

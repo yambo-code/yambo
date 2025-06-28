@@ -24,8 +24,7 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
 &                        FXC_LRC_alpha,FXC_LRC_beta,io_BS_Fxc
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,VERIFY,REP
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

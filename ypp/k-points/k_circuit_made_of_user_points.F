@@ -16,8 +16,7 @@ subroutine k_circuit_made_of_user_points( )
  use vec_operate,    ONLY:c2a,v_norm
  use parser_m,       ONLY:PARSER_array
  use YPPm,           ONLY:BANDS_steps,USER_k,CIRCUIT_k,coo_in,coo_out,K_transform,PROJECT_mode
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

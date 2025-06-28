@@ -48,8 +48,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! For I/O debug, see below
  !use IO_m,           ONLY:netcdf_call
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -31,8 +31,7 @@ subroutine ELPH_databases(k,E,q)
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:OP_APP_CL,REP,OP_RD_CL
  use parallel_int,        ONLY:PARALLEL_global_indexes
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

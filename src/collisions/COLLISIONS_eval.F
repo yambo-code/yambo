@@ -343,7 +343,7 @@ subroutine set_BS_blks(Xk)
  use BS,           ONLY:BS_K_dim,n_BS_blks,n_BS_blks_min,BS_blk,BS_res_ares_n_mat, &
 &                       BSK_IO_mode,l_BSE_kernel_full
  use R_lattice,    ONLY:bz_samp
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

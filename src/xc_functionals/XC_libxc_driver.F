@@ -41,8 +41,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
 &                         xc_f03_gga_exc,xc_f03_gga_vxc,xc_f03_gga_fxc
  use interfaces,     ONLY:el_density_and_current,el_magnetization
  use pseudo,         ONLY:pp_rho_nlcc,pp_has_nlcc,PP_nlcc_free
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

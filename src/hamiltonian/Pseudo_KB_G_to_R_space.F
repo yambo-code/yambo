@@ -26,8 +26,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  use timing_m,      ONLY:timing
  use parallel_int,  ONLY:PP_wait
  use parallel_m,    ONLY:master_cpu,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

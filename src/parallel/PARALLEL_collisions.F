@@ -138,8 +138,7 @@ subroutine PARALLEL_collisions( k, COLL_grp )
  use hamiltonian,   ONLY:B_mat_index,B_mat_index_cv
  use electrons,     ONLY:n_met_bands,n_full_bands
  use R_lattice,     ONLY:bz_samp,qindx_S,nqbz
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !
@@ -235,8 +234,7 @@ end subroutine PARALLEL_collisions
 subroutine PARALLEL_collisions_reset(COLL_grp)
  !
  use collision_ext, ONLY:COLLISIONS_group
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

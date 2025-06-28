@@ -29,8 +29,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  use YPP_symm,            ONLY:wf_nc_k_save,wf_igk_save,wf_nc_k_reduced,wf_igk_reduced,&
 &                              wf_nc_k_new,wf_igk_new,&
 &                              wf_nc_k_new,wf_ncx_new,wf_ncx_save
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

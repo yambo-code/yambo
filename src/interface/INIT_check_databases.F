@@ -39,8 +39,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  ! - io_COLLISIONS        (serial I/O) or
  ! - io_COLLISIONS_header (parallel I/O case)
  !
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

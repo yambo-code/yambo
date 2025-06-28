@@ -52,8 +52,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use wrapper,       ONLY:Vstar_dot_V,V_dot_V
  use wrapper_omp,   ONLY:Vstar_dot_V_omp,V_dot_V_omp
  use timing_m,      ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

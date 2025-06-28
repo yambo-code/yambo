@@ -18,8 +18,7 @@ subroutine QP_load_DB(i_ACTION,bands,en,k)
  use QP_CTL_m,      ONLY:QP_action
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,DUMP,REP
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

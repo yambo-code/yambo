@@ -16,7 +16,7 @@ subroutine X_GreenF_remap(bands,E,W)
  use LIVE_t,        ONLY:live_timing
  use electrons,     ONLY:levels,n_sp_pol,E_reset
  use frequency,     ONLY:w_samp,W_reset
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  integer      :: bands(2)

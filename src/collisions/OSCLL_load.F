@@ -21,8 +21,7 @@ subroutine OSCLL_load(q,k)
  use IO_m,                ONLY:OP_RD,RD_CL_IF_END,VERIFY,REP,manage_action,deliver_IO_error_message
  use IO_int,              ONLY:io_control,IO_and_Messaging_switch
  use com,                 ONLY:msg
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -38,8 +38,7 @@ subroutine electrons_WFs(Xen)
  use com,            ONLY:jobstr
  use R_lattice,      ONLY:nkibz
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -33,7 +33,7 @@ subroutine PARALLEL_inversion(M,N)
 &                         LINEAR_ALGEBRA_WS_reset
  use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

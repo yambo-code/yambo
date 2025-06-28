@@ -16,7 +16,7 @@ subroutine SERIAL_SVD(n,M,mode,SVD_digits)
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,la_xgesvd,&
 &                         LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

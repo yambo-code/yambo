@@ -36,8 +36,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
  use xc_functionals, ONLY:E_xc,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,XC_EXCHANGE,&
 &                         XC_LDA_X,XC_CORRELATION,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

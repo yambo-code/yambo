@@ -18,8 +18,7 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  use pars,           ONLY:SP,schlen
  use vec_operate,    ONLY:c2a,k2bz
  use R_lattice,      ONLY:rl_sop,bz_samp
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

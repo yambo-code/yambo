@@ -21,8 +21,7 @@ subroutine TDDFT_ALDA_G_space(E,k)
  use xc_functionals,ONLY:V_xc,F_xc,magn,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind
  use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

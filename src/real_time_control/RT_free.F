@@ -29,8 +29,7 @@ subroutine RT_free( )
  use RT_iterative,   ONLY:THETA_matrix,THETA_matrix_index
 #endif
  use RT_lifetimes,   ONLY:RT_ALL_lifetimes_free,q_weight_RT
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

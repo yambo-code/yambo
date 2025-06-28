@@ -22,8 +22,7 @@ module P2Ym
  use parallel_m,            ONLY : myid
  use parallel_int,          ONLY : PP_bcast   
  use units,                 ONLY : Da2AU
- ! 
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !
@@ -315,8 +314,7 @@ contains
  subroutine get_atoms
    use D_lattice,   ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species, &
 &                        atom_pos, Z_species,atomic_number,atom_mass,atoms_map
-   ! 
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
    !
@@ -555,8 +553,7 @@ contains
    use R_lattice,   ONLY:bz_samp
    use D_lattice,   ONLY:alat
    use vec_operate, ONLY:v_is_zero 
-   !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
    !
@@ -627,7 +624,7 @@ contains
    use pars,        only: pi
    use R_lattice,   ONLY: b, ng_vec, g_vec
    use D_lattice,   ONLY: alat
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
    !

@@ -18,8 +18,7 @@ subroutine Build_LSEX_collisions(k,q,i_qp,COLL)
  use collision_ext,  ONLY:OSCLL,W,ng_oscll,COLL_bands
  use QP_m,           ONLY:QP_table,QP_nk,QP_n_states
  use R_lattice,      ONLY:bz_samp,qindx_S
- ! 
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -23,8 +23,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
 #if defined _ELPH
  use ELPH,           ONLY:EkplusQ_mode
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

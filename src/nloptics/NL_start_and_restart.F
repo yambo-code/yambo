@@ -48,8 +48,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  use parallel_int,   ONLY:PP_wait,PP_redux_wait
  use stderr,         ONLY:intc
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

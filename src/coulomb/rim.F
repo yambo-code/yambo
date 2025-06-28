@@ -25,8 +25,7 @@ subroutine rim(mode,Xw)
 &                        cut_is_slab,idir
  use timing_m,      ONLY:timing
  use frequency,     ONLY:w_samp
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

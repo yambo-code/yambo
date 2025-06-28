@@ -20,8 +20,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  use LIVE_t,         ONLY:live_timing
  !
  ! Fourier
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

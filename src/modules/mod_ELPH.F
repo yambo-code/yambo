@@ -14,8 +14,7 @@ module ELPH
  use pars,           ONLY:SP,rZERO,schlen
  use electrons,      ONLY:levels,E_reset
  use descriptors,    ONLY:IO_desc
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

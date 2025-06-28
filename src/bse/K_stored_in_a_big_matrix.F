@@ -39,8 +39,7 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,BS_mat_dim,BS_mat,iq,what)
 &                         BSS_perturbative_width,run_inversion,run_Haydock,&
 &                         BSS_eh_E,BSS_eh_W
  use timing_m,       ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

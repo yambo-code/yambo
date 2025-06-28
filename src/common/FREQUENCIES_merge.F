@@ -17,7 +17,7 @@ subroutine FREQUENCIES_merge(W1,W2,table)
  !
  use pars,           ONLY:SP,cZERO
  use frequency,      ONLY:w_samp,W_reset
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

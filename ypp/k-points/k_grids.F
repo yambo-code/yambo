@@ -26,8 +26,7 @@ subroutine k_grids(en,k,Xk,q)
  use LIVE_t,              ONLY:live_timing_is_on
  use zeros,               ONLY:k_iku_zero
  use YPP_interfaces,      ONLY:k_special
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

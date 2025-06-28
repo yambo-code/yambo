@@ -18,8 +18,7 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
  use plasma,        ONLY:EH_gas
  use parallel_m,    ONLY:PAR_nQ_bz,PAR_Q_bz_index,PAR_IND_Q_bz
  use collision_ext, ONLY:GW_NEQ_collisions
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

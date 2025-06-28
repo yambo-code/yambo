@@ -21,8 +21,7 @@ subroutine PP_compute_becp(becp, npwk, wf_nb, wf_c, wf_b_indx)
  use qe_pseudo_m,   ONLY:nkb,vkb,bec_type,is_allocated_bec_type,&
 &                        allocate_bec_type,calbec
  use timing_m,      ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

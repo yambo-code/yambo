@@ -29,8 +29,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  use devxlib,       ONLY:devxlib_mapped
  use gpu_m
  use timing_m
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

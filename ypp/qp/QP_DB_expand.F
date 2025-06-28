@@ -17,8 +17,7 @@ subroutine QP_DB_expand( k )
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_WR_CL,DUMP,OP_RD_CL,LOG
  use QP_m,          ONLY:QP_t,QP_reset
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

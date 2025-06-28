@@ -17,8 +17,7 @@ integer function io_RIM(ID)
 &                         nqibz
  use IO_m,           ONLY:io_sec,read_is_on,io_status,write_is_on
  use IO_int,         ONLY:io_connect,io_disconnect,io_header,io_elemental,io_bulk,ver_is_gt_or_eq
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

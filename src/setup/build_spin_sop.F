@@ -20,8 +20,7 @@ subroutine build_spin_sop()
  use D_lattice,      ONLY:DEV_VAR(spin_sop)
  use electrons,      ONLY:n_spinor
  use gpu_m,          ONLY:have_gpu
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

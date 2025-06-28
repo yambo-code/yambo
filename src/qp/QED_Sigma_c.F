@@ -32,8 +32,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use parallel_m,          ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PAR_IND_Q_ibz,PAR_nQ_ibz,PAR_nQP
  use functions,           ONLY:theta_function
  use timing_m,            ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

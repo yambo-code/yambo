@@ -51,8 +51,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:NONE,RD,RD_CL,OP_RD,OP_RD_CL,io_SCREEN
  use stderr,        ONLY:intc
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  type(levels)::en,Xen

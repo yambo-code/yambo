@@ -20,8 +20,7 @@ subroutine QP_DBs_manipulate( E )
  use QP_m,          ONLY:QP_t,QP_reset,QP_solver,QP_table,QP_n_states
  use interfaces,    ONLY:QP_DBs_merge,DESC_write
  use electrons,     ONLY:levels,n_sp_pol
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

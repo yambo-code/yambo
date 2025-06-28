@@ -34,7 +34,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
 #if defined _SC
  use drivers,        ONLY:l_sc_magnetic
 #endif
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

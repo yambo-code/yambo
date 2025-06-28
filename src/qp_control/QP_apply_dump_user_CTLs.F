@@ -18,8 +18,7 @@ subroutine QP_apply_dump_user_CTLs( E, object )
  use QP_CTL_m,      ONLY:QP_action,n_QP_actions,QP_ctl_what,QP_ctl_DB_user,&
 &                        QP_ctl_ID,QP_CTL_is_active,QP_CTL_fill
  use stderr,        ONLY:STRING_split,STRING_same
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

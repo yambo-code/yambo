@@ -20,8 +20,7 @@ integer function io_GROT(io_db)
  use IO_int,         ONLY:io_connect,io_disconnect,io_elemental,&
 &                         io_bulk,io_header,ver_is_gt_or_eq
  use timing_m,       ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

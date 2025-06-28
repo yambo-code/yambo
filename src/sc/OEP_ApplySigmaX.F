@@ -39,8 +39,7 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  use SC,              ONLY:it_now
  !
  ! I/O
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  complex(SP),intent(out)  :: U_x(nkibz,maxval(n_met_bands),fft_size)

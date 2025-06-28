@@ -14,8 +14,7 @@ module YPP_ELPH
  use pars,                ONLY:SP,schlen,DP
  use D_lattice,           ONLY:n_atoms
  use R_lattice,           ONLY:nkbz
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

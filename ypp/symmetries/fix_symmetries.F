@@ -22,8 +22,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  use vec_operate,         ONLY:v_norm
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,alat,mag_syms,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

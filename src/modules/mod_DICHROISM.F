@@ -13,8 +13,7 @@ module DICHROISM
  !
  use pars,    ONLY:SP
  use BS,      ONLY:l_BS_dichroism
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

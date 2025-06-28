@@ -184,7 +184,7 @@ module QP_CTL_m
    end subroutine
    !
    subroutine QP_actions_reset
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
      integer :: i_a

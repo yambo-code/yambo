@@ -33,8 +33,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  use parallel_m,          ONLY:PP_indexes,PP_indexes_reset,myid,PAR_nQ_bz
  use parallel_int,        ONLY:PP_wait,PP_redux_wait,PARALLEL_index 
  use functions,           ONLY:Fermi_fnc_derivative
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

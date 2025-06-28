@@ -25,7 +25,7 @@ subroutine c2y_db1(en,k,file_name_)
  use xc_functionals,        ONLY: XC_EXCHANGE_CORRELATION,XC_LDA_C_PW
  use mod_com2y,             ONLY: print_interface_dimensions,symmetries_check_and_load,&
 &                                 alat_mult_factor
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  character(*)                   :: file_name_

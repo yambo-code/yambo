@@ -17,8 +17,7 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  use R_lattice,      ONLY:bz_samp,bz_map,WF_shifts
  use com,            ONLY:msg
  use pars,           ONLY:zero_dfl
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

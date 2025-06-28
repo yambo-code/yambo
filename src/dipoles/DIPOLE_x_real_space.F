@@ -27,8 +27,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
 &                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

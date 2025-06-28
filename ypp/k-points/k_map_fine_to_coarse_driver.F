@@ -19,8 +19,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  use electrons,           ONLY:levels,FineGd_E_components_reset
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:REP,OP_WR_CL
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

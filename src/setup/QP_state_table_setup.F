@@ -36,8 +36,7 @@ subroutine QP_state_table_setup(en)
 #if defined _SC
  use SC,            ONLY:l_SC_diagonal
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  type(levels)::en

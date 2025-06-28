@@ -25,8 +25,7 @@ integer function io_X(X,Xw,ID)
 &                        IO_OUTDATED_DB,frag_RESPONSE,IO_NO_DATABASE,io_mode,DUMP
  use stderr,        ONLY:intc,STRING_same
  use timing_m,      ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

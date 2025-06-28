@@ -28,8 +28,7 @@ subroutine RT_X_LRR_real_field(en)
  use com,            ONLY:of_open_close,msg
  use functions,      ONLY:theta_function
  use parser_m,       ONLY:parser
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

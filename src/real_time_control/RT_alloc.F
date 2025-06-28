@@ -30,8 +30,7 @@ subroutine RT_alloc(en,what)
 &                         dG_lesser,G_lesser,MEM_pointer,G_MEM_steps,REF_V_xc_sc,REF_V_hartree_sc,rho_reference,&
 &                         magn_reference,RT_bands,RT_nk,l_RT_is_WFfree,l_RT_rotate_DM,&
 &                         l_velocity_gauge_corr,dG_avg
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

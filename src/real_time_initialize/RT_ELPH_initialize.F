@@ -17,8 +17,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  use drivers,        ONLY:l_elph_scatt,l_phel_scatt
  use R_lattice,      ONLY:bz_samp
  use ELPH,           ONLY:PH_freqs_sq,PH_W_debye,GKKP_ep_sq,GKKP_pe_sq,l_GKKP_expanded_DB_exists,elph_nQ
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

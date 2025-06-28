@@ -26,8 +26,7 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  use R_lattice,           ONLY:bz_samp,bz_samp_reset
  use ELPH,                ONLY:elph_nb,ID_E_kpq,GKKP,FineGd_E_kpq_alloc,Efermi_DbGd
  use interpolate,         ONLY:INTERPOLATION_BZ
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

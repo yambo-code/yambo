@@ -22,8 +22,7 @@ integer function io_gFsq(ID)
  use QP_m,           ONLY:QP_n_states,QP_table
  use parallel_m,     ONLY:PAR_Q_bz_index
  use timing_m,       ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

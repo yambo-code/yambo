@@ -39,8 +39,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  use parallel_m,    ONLY:PAR_COM_WORLD,PAR_IND_WF_linear
  use stderr,        ONLY:intc
  use descriptors,   ONLY:IO_desc,IO_desc_reset,IO_desc_add
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !
@@ -440,7 +439,7 @@ subroutine check_qp_states(QP_table,QP_state,qp,en,Xen)
   !  
   use QP_m,          ONLY:QP_t
   use electrons,     ONLY:n_sp_pol,levels
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
   !

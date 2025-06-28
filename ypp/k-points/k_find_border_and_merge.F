@@ -15,8 +15,7 @@ subroutine k_find_border_and_merge(FineGd_E,FineGd_k,n_FineGd_DBs,FineGd_io_E,Fi
  use electrons, ONLY:levels,E_reset
  use stderr,    ONLY:intc
  use com,       ONLY:msg
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

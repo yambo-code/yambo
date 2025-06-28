@@ -28,7 +28,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD,RD,NONE,RD_CL,VERIFY,OP_RD_CL,REP
  use TDDFT,         ONLY:F_xc_gspace,FXC_n_g_corr,FXC_K_diagonal,io_BS_Fxc
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  type(bz_samp) ::Xk

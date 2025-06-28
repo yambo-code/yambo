@@ -20,7 +20,7 @@ subroutine MATRIX_transpose( operation, M_in, M_out )
  !
  use interfaces,     ONLY:MATRIX_duplicate
  use matrix,         ONLY:PAR_matrix,MATRIX_reset
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

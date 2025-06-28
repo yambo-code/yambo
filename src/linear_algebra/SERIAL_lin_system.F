@@ -19,8 +19,7 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  use drivers,        ONLY:l_nl_optics,l_real_time
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

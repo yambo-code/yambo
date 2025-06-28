@@ -17,8 +17,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  use parallel_int,ONLY:PP_redux_wait
  use stderr,      ONLY:intc
  use vec_operate, ONLY:sort
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

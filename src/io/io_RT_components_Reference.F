@@ -23,8 +23,7 @@ subroutine io_RT_components_Reference(ID)
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

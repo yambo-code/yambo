@@ -22,8 +22,7 @@
  use pw_data,               ONLY: n_spin_pw_, gamma_only_, noncolin_, igkv_
  use qexml_module
  use qexsd_module
- ! 
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

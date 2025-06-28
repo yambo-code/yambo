@@ -21,8 +21,7 @@ integer function io_ATMPROJ_pwscf(ID)
 &                           io_elemental,io_variable_bulk,def_variable_bulk, &
 &                           io_header,io_fragment
  use timing_m,       ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

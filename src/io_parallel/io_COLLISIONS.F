@@ -27,8 +27,7 @@ integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll_)
  use electrons,     ONLY:n_sp_pol
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
  use timing_m,      ONLY:timing
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

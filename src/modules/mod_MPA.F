@@ -39,8 +39,7 @@ module mpa_m
  use functions,       ONLY:NAN
  use matrix,          ONLY:PAR_matrix
  use gpu_m,           ONLY:have_gpu
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
 

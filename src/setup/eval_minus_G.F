@@ -20,8 +20,7 @@ subroutine eval_minus_G()
  use D_lattice,    ONLY:inv_index
  use R_lattice,    ONLY:ng_closed,g_rot,minus_G
  use R_lattice,    ONLY:DEV_VAR(minus_G)
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

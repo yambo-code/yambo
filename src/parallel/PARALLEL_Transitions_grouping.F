@@ -20,8 +20,7 @@ subroutine PARALLEL_Transitions_grouping()
 &                        PAR_COM_Xk_ibz_INDEX,PAR_IND_T_Haydock,PP_indexes_reset
  use R_lattice,     ONLY:nXkibz
  use vec_operate,   ONLY:sort
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

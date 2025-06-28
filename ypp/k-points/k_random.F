@@ -21,8 +21,7 @@ subroutine k_random(Xk,No_Weight)
  use parallel_m,          ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,        ONLY:PP_wait,PP_redux_wait,PARALLEL_index 
  use parser_m,            ONLY:parser 
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

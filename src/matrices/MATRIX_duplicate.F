@@ -16,7 +16,7 @@ subroutine MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
  use parallel_m,     ONLY:COMM_copy
  use pars,           ONLY:cZERO,SP
  use matrix,         ONLY:PAR_matrix,MATRIX_reset
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

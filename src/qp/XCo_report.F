@@ -22,8 +22,7 @@ subroutine XCo_report(qp,E,k)
  use com,           ONLY:msg
  use stderr,        ONLY:intc,real2ch
  use xc_functionals,ONLY:E_xc_val
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

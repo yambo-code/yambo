@@ -17,8 +17,7 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
  use QP_m,          ONLY:QP_n_states,QP_table
  use R_lattice,     ONLY:k_map
  use vec_operate,   ONLY:k_periodic_idx
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

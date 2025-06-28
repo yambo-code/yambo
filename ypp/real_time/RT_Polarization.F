@@ -28,8 +28,7 @@ subroutine RT_Polarization(en,k,q)
  use parallel_int,   ONLY:PP_redux_wait
  use DIPOLES,        ONLY:DIP_iR
  use functions,      ONLY:Fermi_fnc_derivative
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

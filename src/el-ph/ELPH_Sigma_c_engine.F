@@ -38,8 +38,7 @@ subroutine ELPH_Sigma_c_engine(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:Tel
  use functions,     ONLY:Fermi_fnc_derivative,Fermi_fnc
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

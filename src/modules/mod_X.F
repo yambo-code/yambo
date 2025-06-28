@@ -18,8 +18,7 @@ module X_m
  use matrix,         ONLY:PAR_matrix
  use OUTPUT,         ONLY:N_MAX_columns
  use gpu_m,          ONLY:have_gpu
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

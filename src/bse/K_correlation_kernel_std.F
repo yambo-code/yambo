@@ -32,8 +32,7 @@ function K_correlation_kernel_std(i_block,i_p,i_pmq,                            
  use R_lattice,    ONLY:DEV_VAR(G_m_G),DEV_VAR(g_rot)
  use wrapper,      ONLY:V_by_V_pwise_gpu,Vstar_dot_V_gpu
  use devxlib,      ONLY:devxlib_conjg_d,devxlib_xgemv_gpu
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

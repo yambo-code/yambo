@@ -58,8 +58,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_INDEX,SLK_COM_A2A
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

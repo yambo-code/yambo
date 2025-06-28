@@ -14,8 +14,7 @@ module R_lattice
  !
  use pars,        ONLY:SP,DP,schlen, IP
  use descriptors, ONLY:IO_desc
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

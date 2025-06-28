@@ -16,7 +16,7 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  use linear_algebra, ONLY: LINEAR_ALGEBRA_error,la_xgetrf,la_xgetri,&
 &                          LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY: timing
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

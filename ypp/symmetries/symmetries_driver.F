@@ -26,8 +26,7 @@ subroutine symmetries_driver(E,Xk)
  use IO_m,                ONLY:REP,OP_WR_CL,VERIFY
  use parser_m,            ONLY:parser
  use D_lattice,           ONLY:kpoints_map,old_nsym,old_dl_sop,old_S_contains_TR
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

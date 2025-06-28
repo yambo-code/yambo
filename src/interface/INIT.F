@@ -64,8 +64,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use com,            ONLY:of_yaml_IDs
  use yaml_output,    ONLY:yaml_close_stream
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

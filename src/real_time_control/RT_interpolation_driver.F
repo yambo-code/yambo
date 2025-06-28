@@ -19,8 +19,7 @@ subroutine RT_interpolation_driver(bands,E,K,what,Time,l_f,l_E,l_W,l_B,NN,VERB)
  use real_time,      ONLY:RT_carriers,l_TRabs_YPP
  use com,            ONLY:msg
  use interpolate,    ONLY:l_integral_respect,NN_n_of_nearest
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

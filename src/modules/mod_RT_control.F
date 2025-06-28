@@ -14,8 +14,7 @@ module RT_control
  use pars,       ONLY:SP,lchlen,schlen,rZERO
  use units,      ONLY:AUT2FS
  use real_time,  ONLY:l_NE_dynamics,l_NE_with_fields,l_elph_scatt
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

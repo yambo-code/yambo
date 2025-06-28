@@ -28,8 +28,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  use D_lattice,     ONLY:alat,a
  use timing_m,      ONLY:timing
  use parallel_m,    ONLY:master_cpu
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !
@@ -398,8 +397,7 @@ subroutine find_q_nns(q,q_grid_b_iku,idx_q,idx_is,idx_G)
  use pars,          ONLY:SP
  use R_lattice,     ONLY:bz_samp,RIM_W_ng,g_vec,ng_vec,rl_sop
  use vec_operate,   ONLY:v_is_zero
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

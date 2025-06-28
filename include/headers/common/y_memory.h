@@ -7,17 +7,6 @@
  
 */
 
-#if defined _OPENACC || defined _OPENMP_GPU
-#define USE_MEMORY \
- use pars,         ONLY:IPL NEWLINE \
- use y_memory,     ONLY:MEM_err,MEM_msg,MEM_count,MEM_count_d,MEM_global_mesg,IPL NEWLINE \
- use devxlib,      ONLY:devxlib_map,devxlib_unmap,devxlib_mapped,devxlib_memcpy_h2d
-#else
-#define USE_MEMORY \
- use pars,         ONLY:IPL NEWLINE \
- use y_memory,     ONLY:MEM_err,MEM_msg,MEM_count,MEM_global_mesg
-#endif
-
 #define YAMBO_ALLOC1(x,SIZE) \
     YAMBO_ALLOC(x,(SIZE(1)))
 #define YAMBO_ALLOC2(x,SIZE) \

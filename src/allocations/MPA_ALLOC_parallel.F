@@ -15,8 +15,7 @@ subroutine MPA_ALLOC_parallel(MPA_E_par,MPA_R_par,NG,NW,mode)
   use matrix,        ONLY:MATRIX_reset,PAR_matrix
   use parallel_int,  ONLY:PARALLEL_live_message
   use gpu_m,         ONLY:have_gpu
-  !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
   !

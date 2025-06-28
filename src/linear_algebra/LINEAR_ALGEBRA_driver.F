@@ -38,8 +38,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  use timing_m,      ONLY:timing
  use gpu_m,         ONLY:have_gpu
  use devxlib,       ONLY:devxlib_mapped
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

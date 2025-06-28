@@ -24,8 +24,7 @@ integer function io_PH(ID)
  use IO_m,                ONLY:io_sec,io_status,read_is_on,DB_is_OK
  use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps
  use descriptors,         ONLY:IO_desc_reset
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

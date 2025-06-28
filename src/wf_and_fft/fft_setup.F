@@ -33,8 +33,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use mkl_dfti_omp_offload
  use FFT_m,          ONLY:mklgpu_desc
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

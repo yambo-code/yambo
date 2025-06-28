@@ -17,8 +17,7 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
  use vec_operate,       ONLY:sort
  use parallel_m,        ONLY:PP_indexes,PP_indexes_reset,ncpu,myid
  use parallel_int,      ONLY:PP_redux_wait,PARALLEL_index 
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

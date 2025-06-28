@@ -36,8 +36,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
  use gpu_m,               ONLY:have_gpu,gpu_devsync
  use devxlib,             ONLY:devxlib_memcpy_h2d,devxlib_memset_d
  use stderr,              ONLY:STRING_match
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

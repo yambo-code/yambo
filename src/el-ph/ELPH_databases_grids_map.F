@@ -18,8 +18,7 @@ subroutine ELPH_databases_grids_map(k,q)
 &                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
  use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

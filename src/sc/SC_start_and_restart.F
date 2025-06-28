@@ -38,8 +38,7 @@ subroutine SC_start_and_restart(X,E,Xk,Dip)
  use FFT_m,          ONLY:fft_size
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_have_HARTREE
  use descriptors,    ONLY:IO_desc_reset
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

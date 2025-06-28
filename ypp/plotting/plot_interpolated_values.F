@@ -26,8 +26,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
 #if defined _YPP_RT
  use YPP_real_time,  ONLY:GreenF_T_and_W
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !
@@ -298,7 +297,7 @@ subroutine define_grid_map(Xk,Local_k,Grid_to_path_map,n_points_max)
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp
  use vec_operate,    ONLY:v_norm,iku_v_norm
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

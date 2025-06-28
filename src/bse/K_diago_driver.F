@@ -64,8 +64,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use petscmat,       ONLY:PETSC_NULL_CHARACTER
  use petscmatdef,    ONLY:tMat
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  ! 

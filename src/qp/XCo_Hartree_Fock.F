@@ -43,8 +43,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use pseudo,        ONLY:becp, pp_is_uspp
  use qe_pseudo_m,   ONLY:beccopy
  use devxlib,       ONLY:devxlib_memcpy_d2d
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

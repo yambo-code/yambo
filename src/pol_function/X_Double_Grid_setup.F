@@ -33,8 +33,7 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
 #if defined _RT
  use real_time,     ONLY:l_RT_uses_E_FineGd
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

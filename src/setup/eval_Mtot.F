@@ -21,8 +21,7 @@ subroutine eval_Mtot(en,k,q)
  use interfaces,     ONLY:WF_load,el_magnetization
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                         PARALLEL_WF_index
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

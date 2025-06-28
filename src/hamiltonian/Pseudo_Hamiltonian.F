@@ -49,8 +49,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  use parallel_m,    ONLY:PAR_G_k_range
  use real_time,     ONLY:Ho_plus_sigma,H_pseudo_eq
 #endif
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

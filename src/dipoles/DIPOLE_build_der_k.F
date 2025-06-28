@@ -33,7 +33,7 @@ subroutine DIPOLE_build_der_k(Xen,Xk,Dip,direction_is_todo)
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
  use stderr,         ONLY:STRING_match
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

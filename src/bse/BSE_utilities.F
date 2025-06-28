@@ -14,7 +14,7 @@
 subroutine BS_exchange_oscillators_alloc(iG)
  use BS,        ONLY:BS_T_grp,BS_n_g_exch
  use gpu_m,     ONLY:have_gpu
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  integer, intent(in) :: iG
@@ -29,7 +29,7 @@ end subroutine BS_exchange_oscillators_alloc
 subroutine BS_correlation_oscillators_alloc(iB)
  use BS,        ONLY:BS_blk,O_ng
  use gpu_m,     ONLY:have_gpu
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  integer, intent(in) :: iB
@@ -43,7 +43,7 @@ end subroutine BS_correlation_oscillators_alloc
 !
 subroutine BS_exchange_oscillators_free(iG_ref)
  use BS,        ONLY:BS_T_grp
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  integer, intent(in) :: iG_ref
@@ -57,7 +57,7 @@ end subroutine BS_exchange_oscillators_free
 !
 subroutine BS_correlation_oscillators_free(iB_ref,l_std_alg)
  use BS,        ONLY:BS_T_grp,l_BSE_minimize_memory,BS_blk,n_BS_blks
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  integer, intent(in) :: iB_ref
@@ -88,7 +88,7 @@ subroutine TDDFT_oscillators_alloc_L(iGL)
  use electrons, ONLY:n_spin,n_spinor
  use BS,        ONLY:BS_T_grp,BS_n_g_fxc
  use gpu_m,     ONLY:have_gpu
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  integer, intent(in) :: iGL
@@ -105,7 +105,7 @@ subroutine TDDFT_oscillators_alloc_R(iGR)
  use electrons, ONLY:n_spin,n_spinor
  use BS,        ONLY:BS_T_grp,BS_n_g_fxc
  use gpu_m,     ONLY:have_gpu
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  integer, intent(in) :: iGR
@@ -120,7 +120,7 @@ end subroutine TDDFT_oscillators_alloc_R
 !
 subroutine TDDFT_oscillators_free_L(iG_ref)
  use BS,        ONLY:BS_T_grp
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  integer, intent(in) :: iG_ref
@@ -134,7 +134,7 @@ end subroutine TDDFT_oscillators_free_L
 !
 subroutine TDDFT_oscillators_free_R(iG_ref)
  use BS,        ONLY:BS_T_grp
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  integer, intent(in) :: iG_ref

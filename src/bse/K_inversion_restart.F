@@ -23,8 +23,7 @@ subroutine K_inversion_restart(iq,W)
  use BS,             ONLY:l_BS_photolum
  use BS_solvers,     ONLY:K_INV_PL
  use PHOTOLUM,       ONLY:PL
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

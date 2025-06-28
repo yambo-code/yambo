@@ -13,8 +13,7 @@ subroutine RT_1D_Fourier_setup(FT,RT,N)
  !
  use YPP_real_time,  ONLY:OBS_el,Use_FFT,RT_ctl
  use pars,           ONLY:SP,cZERO_DP,cZERO
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

@@ -7,10 +7,6 @@
  
 */
 
-#define USE_PAR_MEMORY \
- use parallel_m,   ONLY:PAR_COM_HOST NEWLINE \
- use parallel_int, ONLY:PP_redux_wait,PP_wait
-
 
 #if defined _MPI
 

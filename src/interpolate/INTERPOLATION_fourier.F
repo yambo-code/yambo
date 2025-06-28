@@ -22,8 +22,7 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,NK,ID)
  use LIVE_t,            ONLY:live_timing
  use parallel_m,        ONLY:PP_indexes,PP_indexes_reset,myid
  use parallel_int,      ONLY:PP_redux_wait,PARALLEL_index 
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

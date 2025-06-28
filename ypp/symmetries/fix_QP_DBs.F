@@ -21,8 +21,7 @@ subroutine fix_QP_DBs(k,k_save,kpoints_map)
  use descriptors,         ONLY:IO_desc_duplicate
  use electrons,           ONLY:n_sp_pol
  use R_lattice,           ONLY:bz_samp
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

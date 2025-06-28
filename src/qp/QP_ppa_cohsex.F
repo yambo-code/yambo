@@ -75,8 +75,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

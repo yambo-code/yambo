@@ -45,8 +45,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
                          devxlib_memcpy_d2h
  use devxlib_async, ONLY:devxlib_async_synchronize
  use gpu_m
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

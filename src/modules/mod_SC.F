@@ -13,8 +13,7 @@ module SC
  !
  use descriptors,     ONLY:IO_desc
  use pars,            ONLY:SP,schlen,lchlen
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

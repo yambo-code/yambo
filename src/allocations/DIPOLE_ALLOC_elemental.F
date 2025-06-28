@@ -15,7 +15,7 @@ subroutine DIPOLE_ALLOC_elemental(what,d)
  use electrons,      ONLY:n_sp_pol,n_spinor
  use pars,           ONLY:cZERO
  use gpu_m,          ONLY:have_gpu
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

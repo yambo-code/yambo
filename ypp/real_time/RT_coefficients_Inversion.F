@@ -26,7 +26,7 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  use fields,          ONLY:Efield
  use interfaces,      ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra,  ONLY:INV
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  !

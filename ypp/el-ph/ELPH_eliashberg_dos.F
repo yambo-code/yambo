@@ -29,8 +29,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use parallel_m,          ONLY:PP_indexes,myid
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 
  use functions,           ONLY:Fermi_fnc_derivative
- !
- USE_MEMORY
+ use y_memory_alloc
  !
  implicit none
  type(levels) ::en

@@ -7,22 +7,6 @@
  
 */
 
-#define YAMBO_ALLOC1(x,SIZE) \
-    YAMBO_ALLOC(x,(SIZE(1)))
-#define YAMBO_ALLOC2(x,SIZE) \
-    YAMBO_ALLOC(x,(SIZE(1),SIZE(2)))
-#define YAMBO_ALLOC3(x,SIZE) \
-    YAMBO_ALLOC(x,(SIZE(1),SIZE(2),SIZE(3)))
-#define YAMBO_ALLOC4(x,SIZE) \
-    YAMBO_ALLOC(x,(SIZE(1),SIZE(2),SIZE(3),SIZE(4)))
-#define YAMBO_ALLOC5(x,SIZE) \
-    YAMBO_ALLOC(x,(SIZE(1),SIZE(2),SIZE(3),SIZE(4),SIZE(5)))
-#define YAMBO_ALLOC6(x,SIZE) \
-    YAMBO_ALLOC(x,(SIZE(1),SIZE(2),SIZE(3),SIZE(4),SIZE(5),SIZE(6)))
-
-#define SIMPLE_ALLOC(x,SIZE) \
-  allocate(x SIZE, &NEWLINE& stat=MEM_err,errmsg=MEM_msg)
-
 #define YAMBO_ALLOC_P(x,SIZE) \
   allocate(x SIZE, &NEWLINE& stat=MEM_err,errmsg=MEM_msg)NEWLINE \
   if (     associated(x)) &NEWLINE& call MEM_count(QUOTES x QUOTES,x)NEWLINE \

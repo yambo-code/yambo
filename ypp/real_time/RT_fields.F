@@ -28,7 +28,7 @@ subroutine RT_fields()
  use com,            ONLY:msg
  use pars,           ONLY:SP,schlen,pi,n_fields_defs_max
  use com,            ONLY:com_path
- use YPP_real_time,  ONLY:RT_conf,ElField,RT_time
+ use YPP_real_time,  ONLY:RT_conf,ElField,RT_time,ypp_chirp
  use fields,         ONLY:Efield
  use stderr,         ONLY:STRING_split
  !
@@ -64,6 +64,8 @@ subroutine RT_fields()
  ! 
  ! Field in frequency space from FT of real time expression
  if ( field_defs(1)/='FROM_W_FILE') call RT_Field_t_to_w(i_field)
+ !
+ if (.not. ypp_chirp>0._SP) return
  !
  ! Chirp the field and convert back into real time
  call RT_1D_Fourier_Chirp(ElField,RT_conf)
@@ -145,45 +147,74 @@ subroutine RT_print_Elfield(i_field,mode,Elfield)
  character(*), intent(in) :: mode
  type(OBS_el), intent(in) :: ElField
  !
- integer           :: i_t,i_w,idata
- character(schlen) :: filename
+ integer           :: i_t,i_w,idata,i_re_data,i_im_data,i_pol_data
+ character(schlen) :: filename1,filename2,basename
  real(SP)          :: field_data(7),Field_t,Field_w
  !
- if (mode=="time")         filename="YPP_EXTFIELD_"//trim(intc(i_field))//".time"
- if (mode=="time-chirped") filename="YPP_EXTFIELD_LINCHIRP_"//trim(intc(i_field))//".time"
- if (mode=="freq")         filename="YPP_EXTFIELD_"//trim(intc(i_field))//".freq"
- if (mode=="freq-chirped") filename="YPP_EXTFIELD_LINCHIRP_"//trim(intc(i_field))//".freq"
+ basename="YPP_EXTFIELD"//trim(intc(i_field))
  !
- open(unit=99+i_field,file=trim(com_path)//"/"//trim(filename))
+ if (mode=="time")         filename1=trim(basename)//"_P1.time"
+ if (mode=="time-chirped") filename1=trim(basename)//"_P1_LINCHIRP.time"
+ if (mode=="freq")         filename1=trim(basename)//"_P1.freq"
+ if (mode=="freq-chirped") filename1=trim(basename)//"_P1_LINCHIRP.freq"
+ !
+ if (mode=="time")         filename2=trim(basename)//"_P2.time"
+ if (mode=="time-chirped") filename2=trim(basename)//"_P2_LINCHIRP.time"
+ if (mode=="freq")         filename2=trim(basename)//"_P2.freq"
+ if (mode=="freq-chirped") filename2=trim(basename)//"_P2_LINCHIRP.freq"
+ !
+ open(unit=100+i_field,file=trim(com_path)//"/"//trim(filename1))
+ open(unit=200+i_field,file=trim(com_path)//"/"//trim(filename2))
  !
  if (index(mode,"time")>0) then
    !
-   write(99+i_field,*) RT_conf%T_n_steps
+   write(100+i_field,*) RT_conf%T_n_steps
+   write(200+i_field,*) RT_conf%T_n_steps
    !
    do i_t=1,RT_conf%T_n_steps
      Field_t=RT_conf%T_range(1)+(i_t-1)*RT_conf%delta_t   !-Efield%t_initial
      field_data(1)=Field_t/FS2AUT
-     do idata=1,6
-       field_data(idata+1)=real(ElField%F_t(i_t,idata))
+     do idata=1,3
+       i_pol_data=2*idata-1
+       field_data(idata+1)=real(ElField%F_t(i_t,i_pol_data))
      enddo
-     write(99+i_field,*) field_data
+     write(100+i_field,*) field_data(1:4)
+     do idata=1,3
+       i_pol_data=2*idata
+       field_data(idata+1)=real(ElField%F_t(i_t,i_pol_data))
+     enddo
+     write(200+i_field,*) field_data(1:4)
    enddo
    !
  else if (index(mode,"freq")>0) then
    !
-   write(99+i_field,*) RT_conf%W_n_steps
+   write(100+i_field,*) RT_conf%W_n_steps
+   write(200+i_field,*) RT_conf%W_n_steps
    !
    do i_w=1,RT_conf%W_n_steps
      Field_w=RT_conf%X_w_range(1)+(i_w-1)*RT_conf%delta_W
      field_data(1)=Field_w !/FS2AUT
-     do idata=1,6
-       field_data(idata+1)=real(ElField%F_w(i_w,idata))
+     do idata=1,3
+       i_pol_data=2*idata-1
+       i_re_data=2*idata-1
+       i_im_data=2*idata
+       field_data(i_re_data+1)=real(ElField%F_w(i_w,i_pol_data))
+       field_data(i_im_data+1)=aimag(ElField%F_w(i_w,i_pol_data))
      enddo
-     write(99+i_field,*) field_data
+     write(100+i_field,*) field_data
+     do idata=1,3
+       i_pol_data=2*idata
+       i_re_data=2*idata-1
+       i_im_data=2*idata
+       field_data(i_re_data+1)=real(ElField%F_w(i_w,i_pol_data))
+       field_data(i_im_data+1)=aimag(ElField%F_w(i_w,i_pol_data))
+     enddo
+     write(200+i_field,*) field_data
    enddo
    !
  endif
  !
- close(99+i_field)
+ close(100+i_field)
+ close(200+i_field)
  !
 end subroutine RT_print_Elfield

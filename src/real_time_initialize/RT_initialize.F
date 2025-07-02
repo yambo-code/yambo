@@ -227,10 +227,11 @@ subroutine RT_initialize(E,k,q,Dip)
  !
  ! Initial check for fields defined from file
  do i1=1,n_ext_fields
+   field_defs=""
    Efield(i1)%ef_name=trim(Efield(i1)%ef_name)
    call STRING_split(Efield(i1)%ef_name,field_defs)
    if ( field_defs(1)/='FROM_FILE') cycle
-   call RT_load_field_from_file_init(field_defs(2))
+   call RT_load_field_from_file_init(field_defs(2),field_defs(3))
  enddo
  !
  NE_i_last_field=0
@@ -284,18 +285,11 @@ subroutine RT_initialize(E,k,q,Dip)
        ! The time dependent fluence is evaluated during the dynamics
        call RT_Fluence_and_PI_kind(E,i1)
      else if ( field_defs(1)=='FROM_FILE') then
-       call RT_load_field_from_file(field_defs(2),i1)
+       call RT_load_field_from_file(field_defs(2),field_defs(3),i1)
      else
        Efield(i1)%t_final_indx=    NE_steps
        Efield(i1)%t_final=RT_step*(NE_steps-1)
      endif
-     !
-     ! DEBUG <
-     do i_defs=1,n_fields_defs_max
-       if ( field_defs(i_defs)/="PRINT_TO_FILE" ) cycle
-       call RT_print_field_to_file_init(i1)
-     enddo
-     ! DEBUG >
      !
    NE_i_last_field=max(NE_i_last_field,Efield(i1)%t_final_indx)
    !

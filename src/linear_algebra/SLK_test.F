@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! Copyright (C) 2004 WanT Group
 !
 ! This file is distributed under the terms of the
@@ -15,6 +19,10 @@
 ! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM AF
+!
+! headers
+!
+#include<y_memory.h>
 !
 subroutine SLK_test(E,k,q) 
  ! 
@@ -28,8 +36,9 @@ subroutine SLK_test(E,k,q)
  use parallel_int,   ONLY:PARALLEL_global_indexes
  use linear_algebra, ONLY:INV,DIAGO,LIN_SYS,MAT_MUL,USE_LK,USE_SLK
  use matrix_operate, ONLY:hermitian
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)   ::E
  type(bz_samp)  ::k,q
@@ -191,7 +200,9 @@ end subroutine build_matrix
  use com,        ONLY:msg
  use parallel_m, ONLY:mpi_comm_world
  use wrapper,    ONLY:M_by_M
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  integer            :: ndim
  complex(SP) :: Amat(ndim,ndim)

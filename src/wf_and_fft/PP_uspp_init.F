@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AF IM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PP_uspp_init()
  !
  ! checks and reads USPP DB, and, in case, initialize
@@ -25,8 +29,9 @@ subroutine PP_uspp_init()
  use gvect,         ONLY:qe_eigts1=>eigts1, qe_eigts2=>eigts2, qe_eigts3=>eigts3,&
 &                        qe_g=>g, qe_gg=>gg, qe_ngm=>ngm, qe_mill=>mill
  use timing_m,      ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! Work Space 
  !

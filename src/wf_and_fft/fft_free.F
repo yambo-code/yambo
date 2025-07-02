@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine fft_free()
  !
@@ -29,8 +33,9 @@ subroutine fft_free()
  use FFT_m,    ONLY:mklgpu_desc
 #  endif
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer :: ierr
  !

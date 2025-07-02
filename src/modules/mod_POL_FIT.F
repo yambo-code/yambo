@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! POL_Gilbreth_fit based on:
 !
 ! pfit.f90: Module for polynomial least-squares fitting
@@ -116,8 +120,9 @@ module POL_FIT_m
     !                    The estimated error in a(i) is sqrt(Cov(a(i),a(i))).
     ! Notes:
     !   This routine uses a QR decomposition method, which should be more
-    !   numerically stable than solving the normal equations.
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
     real(DP), intent(in)  :: x(:), y(:), sig(:)
     real(DP), intent(out) :: a(:)
     real(DP), allocatable :: work(:), C(:,:), Q(:,:), R(:,:), b(:)

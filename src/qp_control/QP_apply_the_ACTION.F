@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
  !
  ! Here I apply the strecth for both QP_action.
@@ -13,8 +17,9 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:bz_samp
  use QP_CTL_m,      ONLY:QP_action,QP_ctl_xc_STRING,At_least_one_band_corrected
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)    ::E
  type(bz_samp)   ::k

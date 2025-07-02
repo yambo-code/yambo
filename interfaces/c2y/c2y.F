@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DV
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function c2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
  use pars,                ONLY:SP,lchlen
@@ -19,8 +23,9 @@ integer function c2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use mod_com2y,           ONLY:interface_presets,force_noWFs
  use mod_wf2y,            ONLY:WF_splitter
  use parallel_int,        ONLY:PARALLEL_live_message
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  type(levels)                 :: en 
  type(bz_samp)                :: k 
  integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid,icd

@@ -6,6 +6,7 @@
 ! Authors (see AUTHORS file for details): AM
 !
 #include <dev_defs.h>
+#include <y_memory.h>
 !
 subroutine DIPOLE_ALLOC_elemental(what,d)
  !
@@ -14,9 +15,9 @@ subroutine DIPOLE_ALLOC_elemental(what,d)
  use electrons,      ONLY:n_sp_pol,n_spinor
  use pars,           ONLY:cZERO
  use gpu_m,          ONLY:have_gpu
+ use y_memory_alloc
  !
-#include <dev_defs.h>
-#include <y_memory.h>
+ implicit none
  !
  character(*)                :: what
  integer, optional           :: d(:)

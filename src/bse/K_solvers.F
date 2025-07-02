@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM IMA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  use stderr,         ONLY:intc
@@ -22,8 +26,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use PHOTOLUM,       ONLY:BSS_PL_free
  use MAGNONS,        ONLY:BSS_MAGN_free
  use DICHROISM,      ONLY:BSS_DICH_free
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels) ::Ken
  type(bz_samp)::Xk,q

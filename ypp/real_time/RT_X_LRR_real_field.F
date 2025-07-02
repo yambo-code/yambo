@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM CA DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! Partialy inspired from Octopus v. 3.1.0
 !
 ! Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch
@@ -24,8 +28,9 @@ subroutine RT_X_LRR_real_field(en)
  use com,            ONLY:of_open_close,msg
  use functions,      ONLY:theta_function
  use parser_m,       ONLY:parser
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)  :: en
  !

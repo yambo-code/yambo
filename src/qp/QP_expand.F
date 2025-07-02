@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QP_expand(k,qp,qp_expanded)
  !
  use pars,          ONLY:SP
@@ -12,8 +16,9 @@ subroutine QP_expand(k,qp,qp_expanded)
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:n_sp_pol
  use descriptors,   ONLY:IO_desc_duplicate
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp)    ::k
  type(QP_t)       ::qp,qp_expanded

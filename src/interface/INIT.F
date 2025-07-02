@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! INIT =-2  : Unsupported Runlevel(s) combination
@@ -60,8 +64,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use com,            ONLY:of_yaml_IDs
  use yaml_output,    ONLY:yaml_close_stream
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)    ::en
  type(bz_samp)   ::q,k

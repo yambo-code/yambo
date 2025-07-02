@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 module interpolate_tools
  !
  use pars,         ONLY:SP,schlen,rZERO
@@ -12,8 +16,9 @@ module interpolate_tools
 &                       l_INTERP_W,NN_nk_exact,NN_nk_border,NN_MAX_real_nearest,NN_n_of_nearest,l_INTERP_Z,&
 &                       INTERPOLATE_msg_fmt,OUT_k_nk,INTERP_FineGd
  use electrons,    ONLY:n_sp_pol
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !  
  contains
    !

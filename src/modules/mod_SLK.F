@@ -5,11 +5,17 @@
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
+! headers
+!
+#include<y_memory.h>
+!
 module SLK_m
  !
  use pars,       ONLY: SP
  use parallel_m, ONLY: yMPI_comm
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  integer              :: n_pools = 1 ! number of pools
  !

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
  !
  use pars,           ONLY:SP,cZERO
@@ -17,8 +21,9 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  use BS,             ONLY:BS_H_dim,l_BS_photolum
  use BS_solvers,     ONLY:Co_factor,K_INV_EPS,BSS_dipoles_opt,Co_factor,K_inv_slk,K_slk,K_INV_PL
  use PHOTOLUM,       ONLY:PL,PL_prefactor,BSS_dipoles_PL
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(w_samp),intent(in)  :: W
  complex(SP), intent(in)  :: Lo(BS_H_dim,W%n_freqs,Lo_dim)

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine INIT_DephMatrix()
  !
  ! Dephasing Matrix -> input file
@@ -12,8 +16,9 @@ subroutine INIT_DephMatrix()
  use pars,           ONLY:SP
  use parser_m,       ONLY:PARSER_array
  use real_time,      ONLY:RT_INPUT_Deph_limits
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! Work Space
  !

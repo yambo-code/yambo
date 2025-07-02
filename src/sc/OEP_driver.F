@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MG
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine OEP_driver(X,Xw,E,k,q,V_oep)
  !
  ! Driver for OEP potentials. Variables: 
@@ -33,8 +37,9 @@ subroutine OEP_driver(X,Xw,E,k,q,V_oep)
  use drivers,         ONLY:l_oep_exact,l_oep_slater,l_sc_srpa
  use SC,              ONLY:it_now,l_oep_iterative,l_oep_EWeight 
  use frequency,       ONLY:w_samp
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  real(SP),intent(inout)  :: V_oep(fft_size)
  type(X_t),intent(in)    :: X(2)  
  type(w_samp),intent(in) :: Xw

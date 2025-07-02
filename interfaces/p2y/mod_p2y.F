@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM AF DV
 !
+! headers
+!
+#include<y_memory.h>
+!
 module P2Ym
  !
  use pw_export_module
@@ -18,8 +22,9 @@ module P2Ym
  use parallel_m,            ONLY : myid
  use parallel_int,          ONLY : PP_bcast   
  use units,                 ONLY : Da2AU
- ! 
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  character(lchlen) :: index_filename
  character(lchlen) :: dftdata_fmt
@@ -309,8 +314,9 @@ contains
  subroutine get_atoms
    use D_lattice,   ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species, &
 &                        atom_pos, Z_species,atomic_number,atom_mass,atoms_map
-   ! 
-#include<y_memory.h>
+   use y_memory_alloc
+   !
+   implicit none
    !
    ! Work Space
    !
@@ -547,8 +553,9 @@ contains
    use R_lattice,   ONLY:bz_samp
    use D_lattice,   ONLY:alat
    use vec_operate, ONLY:v_is_zero 
+   use y_memory_alloc
    !
-#include<y_memory.h> 
+   implicit none
    !
    type(bz_samp) :: k
    !
@@ -617,7 +624,9 @@ contains
    use pars,        only: pi
    use R_lattice,   ONLY: b, ng_vec, g_vec
    use D_lattice,   ONLY: alat
-#include<y_memory.h>
+   use y_memory_alloc
+   !
+   implicit none
    !
    YAMBO_ALLOC(g_vec,(ng_vec,3)) ! The YAMBO array
    !

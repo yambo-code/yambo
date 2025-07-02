@@ -5,11 +5,16 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 module electrons
  !
  use pars,  ONLY:SP,rZERO
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  real(SP) :: nel
  real(SP) :: default_nel

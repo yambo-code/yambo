@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DV
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine plot_xcrysden()
  !
  use pars,        ONLY:SP,schlen
@@ -15,8 +19,9 @@ subroutine plot_xcrysden()
 &                      l_norm_to_one,WF_multiplier,l_exc_wf,plot_title,output_string,plot_is_2D
  use D_lattice,   ONLY:n_atomic_species,n_atoms_species,a,atom_pos,Z_species,n_atoms
  use LIVE_t,      ONLY:live_timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! Work Space...
  !

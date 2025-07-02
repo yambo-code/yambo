@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre_defined)
  !
  ! LOGICALS
@@ -26,8 +30,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use pars,          ONLY:SP
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)               ::E
  type(bz_samp)              ::Xk,q

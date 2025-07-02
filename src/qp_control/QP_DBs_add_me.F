@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QP_DBs_add_me(qp_base,qp2add,plan_EWZG,SAME_states,SAME_desc,OP,PRE_FAC)
  !
  ! This routine just adds to qp_base qp with the plan plan_EWZG
@@ -12,8 +16,9 @@ subroutine QP_DBs_add_me(qp_base,qp2add,plan_EWZG,SAME_states,SAME_desc,OP,PRE_F
  use pars,           ONLY:cZERO,rZERO,cI,SP,rONE
  use QP_m,           ONLY:QP_t,QP_reset,QP_copy,QP_alloc
  use electrons,      ONLY:n_sp_pol
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(QP_t)         ::qp_base,qp2add
  logical            ::plan_EWZG(4),SAME_states,SAME_desc

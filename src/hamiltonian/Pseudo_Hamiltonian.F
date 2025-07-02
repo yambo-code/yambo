@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  !
  ! This subroutine computes the non local part of the pseudo potential V^nl using the KB form factors.
@@ -45,8 +49,9 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  use parallel_m,    ONLY:PAR_G_k_range
  use real_time,     ONLY:Ho_plus_sigma,H_pseudo_eq
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp) :: Xk
  type(levels)  :: Xen

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES,MASK)
  !
  use pars,        ONLY:SP
@@ -13,8 +17,9 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  use parallel_int,ONLY:PP_redux_wait
  use stderr,      ONLY:intc
  use vec_operate, ONLY:sort
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(PP_indexes)        ::px
  integer                 ::uplim(:)

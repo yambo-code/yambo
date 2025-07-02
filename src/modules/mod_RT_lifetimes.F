@@ -5,12 +5,17 @@
 !
 ! Authors (see AUTHORS file for details): AM 
 !
+! headers
+!
+#include<y_memory.h>
+!
 module RT_lifetimes
  !
  use pars,           ONLY:SP,rZERO,schlen
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt,l_phel_scatt
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type RT_lifetime
    logical                  :: active=.FALSE.

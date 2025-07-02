@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM CA DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine symmetries_driver(E,Xk)
  !
  use pars,                ONLY:SP
@@ -22,8 +26,9 @@ subroutine symmetries_driver(E,Xk)
  use IO_m,                ONLY:REP,OP_WR_CL,VERIFY
  use parser_m,            ONLY:parser
  use D_lattice,           ONLY:kpoints_map,old_nsym,old_dl_sop,old_S_contains_TR
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels),intent(in)     :: E
  type(bz_samp),intent(inout) :: Xk

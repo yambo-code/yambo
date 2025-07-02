@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
+! headers
+!
+#include<y_memory.h>
+#include<dev_defs.h>
+!
 subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
 &                                M,M_slk,&
 &                                M_bse,&
@@ -33,9 +38,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  use timing_m,      ONLY:timing
  use gpu_m,         ONLY:have_gpu
  use devxlib,       ONLY:devxlib_mapped
+ use y_memory_alloc
  !
-#include<y_memory.h>
-#include<dev_defs.h>
+ implicit none
  !
  integer                    :: idriver
  integer,          optional :: lib_in

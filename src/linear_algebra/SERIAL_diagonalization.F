@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !
  !  The right eigenvector V_right(j) of M satisfies
@@ -26,8 +30,9 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
 #ifdef _OPENMP
  use omp_lib
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer           :: n
  complex(SP)       :: M(n,n),E(n),V_left(n,n),V_right(n,n)

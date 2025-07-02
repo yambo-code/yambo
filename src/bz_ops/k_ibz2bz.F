@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine k_ibz2bz(k,units,FORCE_BZ)
  !
  ! Output
@@ -14,8 +18,9 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  use pars,           ONLY:SP,schlen
  use vec_operate,    ONLY:c2a,k2bz
  use R_lattice,      ONLY:rl_sop,bz_samp
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp)::k
  character(1) ::units

@@ -5,13 +5,18 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine INTERPOLATION_driver_end(ID)
  !
  use interpolate_tools,    ONLY:INTERPOLATION_reset
  use interpolate,          ONLY:INTERPOLATE_msg_fmt,INTERPOLATE_initialized,&
 &                               lattice_vectors,INTERP_obj,max_interpls,int_sop,NN_nk_exact
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer, intent(in) :: ID
  !

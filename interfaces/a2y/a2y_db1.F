@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CH DS HM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine a2y_db1(en,k,ncid)
  !
  use netcdf
@@ -17,8 +21,9 @@ subroutine a2y_db1(en,k,ncid)
  use R_lattice,            only : ng_vec, bz_samp, nkibz
  use D_lattice,            only : nsym, n_atoms, n_atomic_species, atom_mass
  use mod_com2y,            only : print_interface_dimensions,  artificial_spin_pol
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels),   intent(inout) :: en
  type(bz_samp),  intent(inout) :: k
@@ -644,7 +649,9 @@ contains
     use pseudo,                only : PP_alloc_abinit, pp_n_l_times_proj_max,&
 &                                     pp_n_l_comp, pp_kbs,pp_kb,pp_kbd,&
 &                                     pp_table,l_many_proj,pp_n_l_max
-#include<y_memory.h>
+    use y_memory_alloc
+    !
+    implicit none
     real(SP),allocatable :: pp_kbs_(:,:)
     integer :: max_number_of_angular_momenta,max_number_of_projectors
     integer :: ia, nproj, ip, il, varid, start(3), count(3)
@@ -703,7 +710,9 @@ contains
     use pseudo,                only : PP_alloc_abinit, pp_n_l_times_proj_max,&
 &                                     pp_n_l_comp, pp_kbs,pp_kb,pp_kbd,&
 &                                     pp_table,l_many_proj,pp_n_l_max
-#include<y_memory.h>
+    use y_memory_alloc
+    !
+    implicit none
     real(SP),allocatable :: pp_kbs_(:,:)
     integer :: lmnmax
     integer, allocatable :: indlmn(:,:,:)

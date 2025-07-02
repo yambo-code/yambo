@@ -1290,3 +1290,9 @@ module parallel_int
    end subroutine
    !
 end module parallel_int
+
+
+module y_memory_alloc_par
+ use parallel_m,   ONLY:PAR_COM_HOST
+ use parallel_int, ONLY:PP_redux_wait,PP_wait
+end module y_memory_alloc_par

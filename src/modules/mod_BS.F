@@ -5,14 +5,19 @@
 !
 ! Authors (see AUTHORS file for details): AM MG
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 module BS
  !
  use pars,          ONLY: IP,IPL,SP,schlen,lchlen
  use collision_el,  ONLY: elemental_collision
  use gpu_m,         ONLY: have_gpu
+ use y_memory_alloc
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ implicit none
  !
  ! Modes and logicals
  !====================

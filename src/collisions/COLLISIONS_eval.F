@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<collisions.h>
+#include<y_memory.h>
+!
 subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! The EOM looks like:
@@ -274,7 +279,6 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
    subroutine CHECK_and_ALLOC(COLL_grp)
      !
-#include<collisions.h>
      !
      ! Define io_COLLs_header to handle either serial or parallel I/O
      !
@@ -339,8 +343,9 @@ subroutine set_BS_blks(Xk)
  use BS,           ONLY:BS_K_dim,n_BS_blks,n_BS_blks_min,BS_blk,BS_res_ares_n_mat, &
 &                       BSK_IO_mode,l_BSE_kernel_full
  use R_lattice,    ONLY:bz_samp
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp), intent(in) :: Xk
  !

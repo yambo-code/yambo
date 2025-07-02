@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DV DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  use pars,          ONLY:SP,pi,schlen
@@ -21,8 +25,9 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 #if defined _YPP_RT
  use YPP_real_time, ONLY:l_RT_abs
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp) ::Xk,k,q
  type(levels)  ::Xen,en

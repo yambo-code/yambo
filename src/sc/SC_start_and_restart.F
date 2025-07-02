@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine SC_start_and_restart(X,E,Xk,Dip)
  !
  use pars,           ONLY:schlen
@@ -34,8 +38,9 @@ subroutine SC_start_and_restart(X,E,Xk,Dip)
  use FFT_m,          ONLY:fft_size
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_have_HARTREE
  use descriptors,    ONLY:IO_desc_reset
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels) ::E
  type(X_t)    ::X(2)  ! Xx Em1s

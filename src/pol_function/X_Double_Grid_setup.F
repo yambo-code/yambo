@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
  !
  ! Define which kpts I will use in a consistent way between q=0 and q/=0
@@ -29,8 +33,9 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
 #if defined _RT
  use real_time,     ONLY:l_RT_uses_E_FineGd
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer                       :: iq
  type(bz_samp)                 :: k

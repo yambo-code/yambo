@@ -5,15 +5,20 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include <dev_defs.h>
+#include <y_memory.h>
+!
 module DIPOLES
  !
  use pars,          ONLY:SP,lchlen,schlen
  use units,         ONLY:HA2EV
  use descriptors,   ONLY:IO_desc
  use gpu_m,         ONLY:have_gpu
+ use y_memory_alloc
  !
-#include <dev_defs.h>
-#include <y_memory.h>
+ implicit none
  !
  ! Logicals
  !

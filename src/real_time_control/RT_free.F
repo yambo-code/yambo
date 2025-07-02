@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_free( )
  !
  use R_lattice,      ONLY:bz_samp_FineGd_reset
@@ -25,8 +29,9 @@ subroutine RT_free( )
  use RT_iterative,   ONLY:THETA_matrix,THETA_matrix_index
 #endif
  use RT_lifetimes,   ONLY:RT_ALL_lifetimes_free,q_weight_RT
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  call H_free()
  !

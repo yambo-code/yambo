@@ -8,7 +8,11 @@
 !> @brief Write info about k-points
 !
 ! io_sec=1   general parameters   
-! io_sec=2   k-points   
+! io_sec=2   k-points
+!
+! headers
+!
+#include<y_memory.h>
 !
 integer function io_kpts(k,Xk,q,io_db)
  !
@@ -19,8 +23,9 @@ integer function io_kpts(k,Xk,q,io_db)
 &                         io_variable_elemental,def_variable_elemental,io_header,&
 &                         def_variable_bulk,io_variable_bulk
  use timing_m,       ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp)::k,q,Xk
  integer      ::io_db

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_interpolation_driver(bands,E,K,what,Time,l_f,l_E,l_W,l_B,NN,VERB)
  !
  use pars,           ONLY:SP,schlen
@@ -15,8 +19,9 @@ subroutine RT_interpolation_driver(bands,E,K,what,Time,l_f,l_E,l_W,l_B,NN,VERB)
  use real_time,      ONLY:RT_carriers,l_TRabs_YPP
  use com,            ONLY:msg
  use interpolate,    ONLY:l_integral_respect,NN_n_of_nearest
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer,       intent(in)    :: bands(2),NN
  type(levels),  intent(inout) :: E

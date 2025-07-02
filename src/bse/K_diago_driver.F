@@ -7,6 +7,8 @@
 !
 ! headers
 !
+#include<y_memory.h>
+!
 #if defined _SLEPC && !defined _NL
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
@@ -57,14 +59,14 @@ subroutine K_diago_driver(iq,W,X_static)
  use BS,             ONLY:l_BS_abs,l_BS_kerr,l_BS_kerr_asymm,l_BS_magnons,l_BS_photolum,l_BS_dichroism
  use MAGNONS,        ONLY:BSS_MAGN_free
  use PHOTOLUM,       ONLY:BSS_PL_free
- !
 #if defined _SLEPC && !defined _NL
  use slepceps,       ONLY:SlepcInitialize
  use petscmat,       ONLY:PETSC_NULL_CHARACTER
  use petscmatdef,    ONLY:tMat
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  ! 
  type(w_samp)  :: W
  integer       :: iq

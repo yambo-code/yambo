@@ -21,6 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_fields()
  !
  use units,          ONLY:AUT2FS
@@ -31,8 +35,9 @@ subroutine RT_fields()
  use YPP_real_time,  ONLY:RT_conf,ElField,RT_time
  use fields,         ONLY:Efield
  use stderr,         ONLY:STRING_split
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! Work Space
  !

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine X_ALLOC_global(WHAT,W)
  !
  use pars,          ONLY:cZERO
@@ -15,8 +19,9 @@ subroutine X_ALLOC_global(WHAT,W)
  use drivers,       ONLY:l_optics
  use BS_solvers,    ONLY:B_Hall
  use PHOTOLUM,      ONLY:PL,PL_init
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  character(*)   :: WHAT
  type(w_samp)   :: W

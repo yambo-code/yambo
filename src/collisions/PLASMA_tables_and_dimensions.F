@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
  !
  use pars,          ONLY:SP
@@ -14,8 +18,9 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
  use plasma,        ONLY:EH_gas
  use parallel_m,    ONLY:PAR_nQ_bz,PAR_Q_bz_index,PAR_IND_Q_bz
  use collision_ext, ONLY:GW_NEQ_collisions
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer          :: iqbz,N
  type(levels)     :: E 

@@ -5,7 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM CH DS
 !
+! headers
+!
 #include<dev_defs.h>
+!
 !
 subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  !

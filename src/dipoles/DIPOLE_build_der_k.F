@@ -1,25 +1,13 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): MG, CA, DS
+! Copyright (C) 2015 The Yambo Team
 !
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Authors (see AUTHORS file for details): DS
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
+! headers
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+#include<y_memory.h>
 !
 subroutine DIPOLE_build_der_k(Xen,Xk,Dip,direction_is_todo)
  !
@@ -45,9 +33,10 @@ subroutine DIPOLE_build_der_k(Xen,Xk,Dip,direction_is_todo)
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
  use stderr,         ONLY:STRING_match
+ use y_memory_alloc
  !
-#include <y_memory.h>
-
+ implicit none
+ !
  type(levels),           intent(in)     :: Xen
  type(bz_samp),          intent(inout)  :: Xk
  type(DIPOLE_t),         intent(inout)  :: Dip

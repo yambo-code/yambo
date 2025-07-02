@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine io_RT_components_Reference(ID)
  !
  use pars,           ONLY:SP
@@ -19,8 +23,9 @@ subroutine io_RT_components_Reference(ID)
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer, intent(in)  :: ID
  !

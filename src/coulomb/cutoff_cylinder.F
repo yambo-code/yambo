@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DV
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine cutoff_cylinder(q,is_cut)
  !
  use pars,          ONLY:SP,pi
@@ -16,8 +20,9 @@ subroutine cutoff_cylinder(q,is_cut)
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  type(bz_samp) ::q
  logical       ::is_cut(3)
  !

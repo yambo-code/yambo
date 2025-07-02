@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
  use pars,           ONLY: SP
@@ -19,8 +23,9 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
 #ifdef _OPENMP
  use omp_lib
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer     :: n
  complex(SP) :: M(n,n)

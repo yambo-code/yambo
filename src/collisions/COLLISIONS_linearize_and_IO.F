@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA AM
 !
+! headers
+!
+#include<collisions.h>
+!
 subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL_grp,COLL_element,COLL_ID,COMM)
  !
  use pars,            ONLY:SP,cZERO
@@ -21,7 +25,6 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL_grp,COLL_eleme
  !
  implicit none                                              
  !
-#include<collisions.h>
  !
  character(*)                            :: what
  integer,                  intent(in)    :: i_coll,last_coll

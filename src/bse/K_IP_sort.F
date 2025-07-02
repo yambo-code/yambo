@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_IP_sort(what,I,N,Indexes,vI,El,vC)
  !
  use pars,          ONLY:SP,cZERO
@@ -14,8 +18,9 @@ subroutine K_IP_sort(what,I,N,Indexes,vI,El,vC)
  use vec_operate,   ONLY:sort,degeneration_finder
  use units,         ONLY:HA2EV
  use parallel_int,  ONLY:PP_redux_wait
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  character(*)  ::what
  integer       ::I,N,Indexes(5),vI(BS_H_dim,5)

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
  !
  use pars,                ONLY:SP,pi
@@ -25,8 +29,9 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
  use stderr,              ONLY:STRING_same
  use vec_operate,         ONLY:c2a,v_is_zero
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp), intent(in)     :: Xk
  type(levels),  intent(inout)  :: Xen

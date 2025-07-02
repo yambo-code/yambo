@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine Pseudo_KB_gauge_factor(gauge_factor)
  !
  use pars,          ONLY:SP
@@ -20,8 +24,9 @@ subroutine Pseudo_KB_gauge_factor(gauge_factor)
  use drivers,       ONLY:l_real_time
  use fields,        ONLY:A_tot
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  complex(SP)             :: gauge_factor(fft_size,n_atoms)
  !

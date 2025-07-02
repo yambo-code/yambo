@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  ! Interpolation scheme (PRB 38 p2721)
@@ -24,8 +28,9 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  use LIVE_t,            ONLY:live_timing
  use parallel_m,        ONLY:PP_indexes,PP_indexes_reset,myid,PAR_build_index,ncpu
  use parallel_int,      ONLY:PP_redux_wait,PARALLEL_index 
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer,       intent(in)  :: nvalues
  integer,       intent(in)  :: Nk,ID

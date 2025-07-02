@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 module RT_output_m
  !
  use drivers,    ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
@@ -12,8 +16,9 @@ module RT_output_m
  use units,      ONLY:FS2AUT
  use global_XC,  ONLY:QP_SE_NONE
  use descriptors,ONLY:IO_desc
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer, parameter       :: N_MAX_RT_o_files=150
  integer, parameter       :: N_MAX_RT_X_order=9

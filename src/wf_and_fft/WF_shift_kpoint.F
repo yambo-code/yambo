@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine WF_shift_kpoint(b_to_shift,nb_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
  !
@@ -16,8 +20,9 @@ subroutine WF_shift_kpoint(b_to_shift,nb_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_
  use wave_func,     ONLY: wf_ng_1st_BZ,wf_ng_overlaps
  use devxlib,       ONLY: devxlib_memcpy_d2d, devxlib_memset_d
  use gpu_m,         ONLY: have_gpu
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2),nb_to_shift
  type(bz_samp), intent(in) :: Xk

@@ -3,34 +3,9 @@
  
   Copyright (C) 2016 The Yambo Team
  
-  Authors (see AUTHORS file for details): HM AM
+  Authors (see AUTHORS file for details): HM AM DS
  
 */
-
- use pars,         ONLY:IPL
- use y_memory,     ONLY:MEM_err,MEM_msg,MEM_count,MEM_global_mesg
-#if defined _OPENACC || defined _OPENMP_GPU
- use y_memory,     ONLY:MEM_count_d
- use devxlib,      ONLY:devxlib_map,devxlib_unmap,devxlib_mapped,devxlib_memcpy_h2d
-#endif
-
- implicit none
-
-#define YAMBO_ALLOC1(x,SIZE) \
-    YAMBO_ALLOC(x,(SIZE(1)))
-#define YAMBO_ALLOC2(x,SIZE) \
-    YAMBO_ALLOC(x,(SIZE(1),SIZE(2)))
-#define YAMBO_ALLOC3(x,SIZE) \
-    YAMBO_ALLOC(x,(SIZE(1),SIZE(2),SIZE(3)))
-#define YAMBO_ALLOC4(x,SIZE) \
-    YAMBO_ALLOC(x,(SIZE(1),SIZE(2),SIZE(3),SIZE(4)))
-#define YAMBO_ALLOC5(x,SIZE) \
-    YAMBO_ALLOC(x,(SIZE(1),SIZE(2),SIZE(3),SIZE(4),SIZE(5)))
-#define YAMBO_ALLOC6(x,SIZE) \
-    YAMBO_ALLOC(x,(SIZE(1),SIZE(2),SIZE(3),SIZE(4),SIZE(5),SIZE(6)))
-
-#define SIMPLE_ALLOC(x,SIZE) \
-  allocate(x SIZE, &NEWLINE& stat=MEM_err,errmsg=MEM_msg)
 
 #define YAMBO_ALLOC_P(x,SIZE) \
   allocate(x SIZE, &NEWLINE& stat=MEM_err,errmsg=MEM_msg)NEWLINE \

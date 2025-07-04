@@ -91,8 +91,8 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  if (ENVIRONMENT=="Phonon_Self_Energy")        PAR_Q_ibz_range=PH_Q
 #endif
  !
- if (ENVIRONMENT=="Self_Energy"       ) then
-   PAR_n_G_vectors= X_ng
+ if ((ENVIRONMENT=="Self_Energy").or.(ENVIRONMENT=="Sigma_X")) then
+   PAR_n_G_vectors=X_ng
 #if defined _SC
    if (l_sc_run.and.&
 &      any( (/P_collisions%N,COH_collisions%N,HXC_collisions%N/)> 0))  &
@@ -131,7 +131,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !
  ! Generic Bands
  !---------------
- if (ENVIRONMENT=="Self_Energy"                     ) then
+ if ((ENVIRONMENT=="Self_Energy").or.(ENVIRONMENT=="Sigma_X")) then
    if (l_HF_and_locXC)                               PAR_n_bands=(/1,maxval((/E%nbm(:),QP_nb/))/)
    if ((l_gw0.or.l_life).and..not.computing_Fock)    PAR_n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
    if (.not.computing_Fock)                          PAR_n_bands(1)=QP_n_G_bands(1)
@@ -154,7 +154,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !
  ! QP states
  !-----------
- if (ENVIRONMENT=="Self_Energy"                     ) PAR_QP_range=QP_n_states
+ if ((ENVIRONMENT=="Self_Energy").or.(ENVIRONMENT=="Sigma_X")) PAR_QP_range=QP_n_states
  !
  ! Oscillators
 #if defined _NL || defined _RT

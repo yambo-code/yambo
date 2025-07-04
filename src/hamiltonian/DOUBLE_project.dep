@@ -1,3 +1,4 @@
+ Apply_W_field.o
  Bare_Hamiltonian.o
  Berry_polarization_NEQ.o
  Build_Overlaps_det_NEQ.o

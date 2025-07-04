@@ -17,10 +17,11 @@ module collision_ext
  implicit none
  !
  integer :: COLL_bands(2)
- integer :: COLL_hole_bands(2)
- integer :: COLL_elec_bands(2)
  integer :: COLL_ID
  integer :: PAR_COLL_min   = 0
+ !
+ character(schlen)       :: COLL_bands_frozen_ch
+ integer(LP), allocatable:: COLL_bands_frozen(:)
  !
  ! Cut off on exchange matrix elements
  ! Sx_cutoff=0 all, (Sx_cutoff>1 or Sx_cutoff<0)=none
@@ -34,7 +35,6 @@ module collision_ext
  logical :: COLLISIONS_HXC_MB=.FALSE.
  logical :: COLLISIONS_HXC_use_TDDFT=.FALSE.
  logical :: COLLISIONS_CV_only=.FALSE.
- logical :: COLLISIONS_FEW_only=.FALSE.
  logical :: COLLISIONS_from_BSE=.FALSE.
  logical :: COLLISIONS_load_SP=.FALSE.  ! Force loading of collision in single precision
  logical :: COLLISIONS_compr  =.FALSE. ! If parallel-io is used collisions in memory are compressed

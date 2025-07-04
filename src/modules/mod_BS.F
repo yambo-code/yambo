@@ -12,7 +12,7 @@
 !
 module BS
  !
- use pars,          ONLY: IP,IPL,SP,schlen,lchlen
+ use pars,          ONLY: IP,IPL,LP,SP,schlen,lchlen
  use collision_el,  ONLY: elemental_collision
  use gpu_m,         ONLY: have_gpu
  use y_memory_alloc
@@ -87,7 +87,7 @@ module BS
  real(SP),allocatable :: BS_kpt_bz(:,:)
  real(SP),allocatable :: BS_kpt_ibz(:,:)
  integer,allocatable :: BS_K_io_map(:)
- logical,allocatable :: BS_bands_frozen(:)
+ integer(LP),allocatable :: BS_bands_frozen(:)
  !
  ! Resonant/Antiresonant handling
  !================================

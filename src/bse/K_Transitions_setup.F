@@ -114,11 +114,11 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
        !
        do iv=V_bands(1),V_bands(2)
          !
-	 if (BS_bands_frozen(iv)) cycle
+	 if (BS_bands_frozen(iv)==1) cycle
 	 !
          do ic=C_bands(1),C_bands(2)
 	   !
-	   if (BS_bands_frozen(ic)) cycle
+	   if (BS_bands_frozen(ic)==1) cycle
            !
            do i_sp_c=1,n_sp_pol
              i_sp_v=i_sp_c
@@ -287,19 +287,7 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  C_bands=(/minval(Ken%nbf)+1,BS_bands(2)/)
  !
  allocate(BS_bands_frozen(BS_bands(1):BS_bands(2)))
- BS_bands_frozen=.false.
- !
- call parser('BSEFrozenBands', l_BS_freeze_bands)
- if (l_BS_freeze_bands) then
-   call STRING_split(BS_bands_frozen_ch,BS_bands_frozen_list)
-   ic=1
-   do iv=BS_bands(1),BS_bands(2)
-     write(*,*) iv,ic,trim(intc(iv))," ",trim(BS_bands_frozen_list(ic)),trim(intc(iv))==trim(BS_bands_frozen_list(ic))
-     if( .not. trim(intc(iv))==trim(BS_bands_frozen_list(ic)) ) cycle
-     BS_bands_frozen(iv)=.true.
-     ic=ic+1
-   enddo
- endif
+ call LEVELS_frozen(BS_bands,BS_bands_frozen,BS_bands_frozen_ch,"BSE",BS_bands(2)-BS_bands(1)+1)
  !
 #if defined _RT
  ! Bands range. In the _RT case %nbf and %nbm turn metallic when carriers are used.
@@ -334,11 +322,11 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
          !
          do iv=V_bands(1),V_bands(2)
            !
-	   if (BS_bands_frozen(iv)) cycle
+	   if (BS_bands_frozen(iv)==1) cycle
 	   !
            do ic=C_bands(1),C_bands(2)
 	     !
-	     if (BS_bands_frozen(ic)) cycle
+	     if (BS_bands_frozen(ic)==1) cycle
              !
              if (i_res_ares==1) then; ib1=iv; ib2=ic; endif
              if (i_res_ares==2) then; ib1=ic; ib2=iv; endif

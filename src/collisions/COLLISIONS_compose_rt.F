@@ -12,7 +12,7 @@ subroutine COLLISIONS_compose_rt(dG_avg)
  use pars,             ONLY:SP,cZERO,cI
  use drivers,          ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_sc_hartree
  use collision_ext,    ONLY:HXC_COLL_element,COLL_bands,HXC_collisions,COLLISIONS_CV_only,&
- &                          COLLISIONS_FEW_only,COLL_hole_bands,COLL_elec_bands
+ &                          COLL_bands_frozen
  use electrons,        ONLY:spin,n_met_bands,n_full_bands,n_sp_pol
  use R_lattice,        ONLY:nXkibz
  use parallel_int,     ONLY:PP_redux_wait
@@ -38,15 +38,11 @@ subroutine COLLISIONS_compose_rt(dG_avg)
  !
  do i_sp=1,n_sp_pol
  do ibp=COLL_bands(1),COLL_bands(2)
-   if ( COLLISIONS_FEW_only .and. ib<COLL_hole_bands(1) ) cycle
-   if ( COLLISIONS_FEW_only .and. ib>COLL_hole_bands(2) .and. ib<COLL_elec_bands(1) ) cycle
-   if ( COLLISIONS_FEW_only .and. ib>COLL_elec_bands(2) ) cycle
+   if ( COLL_bands_frozen(ibp)==1 ) cycle
    do ib=COLL_bands(1),COLL_bands(2)
      if ( COLLISIONS_CV_only .and. (ib> n_met_bands(i_sp)  .and. ibp> n_met_bands(i_sp) ) ) cycle
      if ( COLLISIONS_CV_only .and. (ib<=n_full_bands(i_sp) .and. ibp<=n_full_bands(i_sp)) ) cycle
-     if ( COLLISIONS_FEW_only .and. ibp<COLL_hole_bands(1) ) cycle
-     if ( COLLISIONS_FEW_only .and. ibp>COLL_hole_bands(2) .and. ibp<COLL_elec_bands(1) ) cycle
-     if ( COLLISIONS_FEW_only .and. ibp>COLL_elec_bands(2) ) cycle
+     if ( COLL_bands_frozen(ib)==1 ) cycle
      do_collisions(ib,ibp,i_sp,1)=.true.
      if (.not.PAR_IND_Bp_mat%element_1D( B_mat_index(ib,ibp,COLL_bands) ) ) cycle
      do_collisions(ib,ibp,i_sp,2)=.true.

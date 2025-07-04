@@ -12,7 +12,7 @@
 module nl_optics
  !
  use descriptors,     ONLY:IO_desc
- use pars,            ONLY:SP,schlen,lchlen
+ use pars,            ONLY:SP,LP,schlen,lchlen
  use electrons,       ONLY:levels
  use real_time,       ONLY:NE_steps,dG_lesser
  use y_memory_alloc
@@ -117,8 +117,6 @@ module nl_optics
  real(SP) :: NL_estep
  real(SP) :: NL_ang_step
  integer  :: NL_bands(2)
- integer  :: NL_elec_bands(2)
- integer  :: NL_hole_bands(2)
  integer  :: NL_nbands
  integer  :: n_angles
  real(SP) :: max_angle
@@ -130,6 +128,9 @@ module nl_optics
  !
  logical  :: Loop_on_frequencies
  logical  :: Loop_on_angles
+ !
+ character(schlen)       :: NL_bands_frozen_ch
+ integer(LP), allocatable:: NL_bands_frozen(:)
  !
  ! Velocity gauge in indepdent particle
  !     

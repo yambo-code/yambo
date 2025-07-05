@@ -14522,7 +14522,7 @@ printf %s "checking for internal HDF5 library... " >&6; };
       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
 printf "%s\n" "already compiled" >&6; } ;
       #
-    elif test "$IO_LIB_VER" = "serial" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
+    elif test "$IO_LIB_VER" = "serial" &&  test "$mpibuild"  = "yes"  && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
       #
       compile_hdf5="no" ;
       IO_LIB_VER="parallel";
@@ -14966,7 +14966,7 @@ printf %s "checking for internal NETCDF library... " >&6; };
       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
 printf "%s\n" "already compiled" >&6; } ;
       #
-    elif test "$IO_LIB_VER" = "serial" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
+    elif test "$IO_LIB_VER" = "serial" &&  test "$mpibuild"  = "yes"   && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
       #
       compile_netcdf="no" ;
       IO_LIB_VER="parallel";

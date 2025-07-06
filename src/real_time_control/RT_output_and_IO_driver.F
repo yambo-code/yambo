@@ -58,6 +58,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
        if(l_RT_induced_field)  call RT_output(what=trim(what)//" tot ind")
      endif
      !
+     !
      if(trim(what)=="close") then
        do i_ID=1,N_RT_databases
          if (RT_DB_ID(i_ID)==0) cycle

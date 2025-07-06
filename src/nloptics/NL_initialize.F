@@ -493,7 +493,7 @@ subroutine NL_initialize(E,k)
  !
  call RT_control_alloc("all")
  !
-! if(.not.l_pump_and_probe) then
+ !if(.not.l_pump_and_probe) then
  do NE_i_time=1,NE_steps
    Time=real(NE_i_time-1,SP)*RT_step
    OBS_RT_IO_t%Time(NE_i_time)=Time
@@ -522,12 +522,14 @@ subroutine NL_initialize(E,k)
    call msg( 'r', 'Adiabatic param      [1/mu]',Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency(1)**3)
  enddo
  call msg( 'r', 'Efield T_0                 ',T_0,"[fs]")
- call msg( 'r', 'Frequencies range          ',NL_er*HA2EV)
- call msg( 'sr','Frequencies steps          ',n_frequencies)
- call msg( 'r', 'Frequency   step           ',NL_estep*HA2EV)
- call msg( 'sr','Number of angles           ',n_angles)
- call msg( 'sr','Max angle (degree)         ',max_angle)
- call msg( 'r', 'Rotation axis              ',NL_rot_axis)
+ if (.not.l_pump_and_probe) then
+   call msg( 'r', 'Frequencies range          ',NL_er*HA2EV)
+   call msg( 'sr','Frequencies steps          ',n_frequencies)
+   call msg( 'r', 'Frequency   step           ',NL_estep*HA2EV)
+   call msg( 'sr','Number of angles           ',n_angles)
+   call msg( 'sr','Max angle (degree)         ',max_angle)
+   call msg( 'r', 'Rotation axis              ',NL_rot_axis)
+ endif
  call msg( 'r', 'Use Dipoles                ',l_use_DIPOLES)
  call msg( 'r', 'Induced Field              ',l_RT_induced_field)
  call msg( 'r', 'Force Snd Order Dipoles    ',l_force_SndOrd)

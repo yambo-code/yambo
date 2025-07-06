@@ -747,6 +747,7 @@ DEVXLIB_INCS
 DEVXLIB_LIBS
 with_ldiago_branch
 ldiago_opt
+compile_ldiago
 LDIAGO_GPU_SUPPORT
 LDIAGO_INCS
 LDIAGO_LIBS
@@ -14521,7 +14522,7 @@ printf %s "checking for internal HDF5 library... " >&6; };
       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
 printf "%s\n" "already compiled" >&6; } ;
       #
-    elif test "$IO_LIB_VER" = "serial" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
+    elif test "$IO_LIB_VER" = "serial" &&  test "$mpibuild"  = "yes"  && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
       #
       compile_hdf5="no" ;
       IO_LIB_VER="parallel";
@@ -14965,7 +14966,7 @@ printf %s "checking for internal NETCDF library... " >&6; };
       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
 printf "%s\n" "already compiled" >&6; } ;
       #
-    elif test "$IO_LIB_VER" = "serial" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
+    elif test "$IO_LIB_VER" = "serial" &&  test "$mpibuild"  = "yes"   && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
       #
       compile_netcdf="no" ;
       IO_LIB_VER="parallel";
@@ -16638,19 +16639,33 @@ fi
 ac_config_files="$ac_config_files lib/ldiago/make_ldiago.inc:lib/ldiago/make_ldiago.inc.in"
 
 
-# GPU flags are passed to ldiago compilation only if elpa library is available
-if test ! x"$def_gpu" = "x" && test "$def_elpa" = "-D_ELPA" ; then
-  ldiago_opt="$def_gpu $def_elpa"
-  LDIAGO_GPU_SUPPORT="$GPU_SUPPORT"
+if test "$def_scalapack" = "-D_SCALAPACK" ; then
+
+  compile_ldiago="yes"
+
+  # GPU flags are passed to ldiago compilation only if elpa library is available
+  if test ! x"$def_gpu" = "x" && test "$def_elpa" = "-D_ELPA" ; then
+    ldiago_opt="$def_gpu $def_elpa"
+    LDIAGO_GPU_SUPPORT="$GPU_SUPPORT"
+  else
+    ldiago_opt="$def_elpa"
+    LDIAGO_GPU_SUPPORT="no_gpu"
+  fi
+
+  LDIAGO_LIBS="${extlibs_path}/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/lib/libldiago.a"
+  LDIAGO_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/include/"
+  #LDIAGO_LIBS="${compdir}/lib/libldiago.a"
+  #LDIAGO_INCS="$IFLAG${compdir}/include/"
+
 else
-  ldiago_opt="$def_elpa"
-  LDIAGO_GPU_SUPPORT="no_gpu"
+
+  compile_ldiago="no"
+  ldiago_opt=""
+  LDIAGO_LIBS=""
+  LDIAGO_INCS=""
+
 fi
 
-LDIAGO_LIBS="${extlibs_path}/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/lib/libldiago.a"
-LDIAGO_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/include/"
-#LDIAGO_LIBS="${compdir}/lib/libldiago.a"
-#LDIAGO_INCS="$IFLAG${compdir}/include/"
 
 
 
@@ -17248,10 +17263,14 @@ if test "$internal_blacs" = "yes" ; then
   if test "$compile_blacs" = "no" ; then BLACS_check="I"; fi
 fi
 #
-if test x"$with_ldiago_branch" = "xnone"; then
- LDIAGO_check="I";
+if test "$compile_ldiago" = "yes"; then
+  if test x"$with_ldiago_branch" = "xnone"; then
+    LDIAGO_check="I";
+  else
+    LDIAGO_check="G";
+  fi
 else
- LDIAGO_check="G";
+  LDIAGO_check="-";
 fi
 #
 PETSC_check="-"

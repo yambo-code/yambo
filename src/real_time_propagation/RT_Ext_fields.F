@@ -41,9 +41,6 @@ subroutine RT_Ext_fields(A,time,i_f)
  ! 
  ! Work Space
  !
- ! DEBUG <
- logical     :: l_print_to_file
- ! DEBUG >
  integer     :: ikind
  real(SP)    :: Field_time,A_coeff
  complex(SP) :: A_of_t(2),E_of_t(2),J_of_t(2),theta,delta,signf
@@ -56,12 +53,6 @@ subroutine RT_Ext_fields(A,time,i_f)
    return
  endif
  !
- ! DEBUG <
- inquire ( unit=99+i_f,opened=l_print_to_file)
- if (l_print_to_file) l_print_to_file=Efield(i_f)%t_final_indx>=NE_i_time-2
- if (l_print_to_file.and.Efield(i_f)%t_initial_indx<4) call error('writing field to file requires initial index>3')
- ! DEBUG >
- !
  theta=theta_function(Field_time,RT_dyn_step,0)
  delta=theta_function(Field_time,RT_dyn_step,1)
  signf=theta_function(Field_time,RT_dyn_step,2)
@@ -71,13 +62,6 @@ subroutine RT_Ext_fields(A,time,i_f)
    A_of_t=small_a(Field_time,RT_dyn_step,Efield(i_f),0,envelop_only=(ikind==1))
    E_of_t=small_a(Field_time,RT_dyn_step,Efield(i_f),1,envelop_only=(ikind==1))
    J_of_t=small_a(Field_time,RT_dyn_step,Efield(i_f),2,envelop_only=(ikind==1))
-   !
-   ! DEBUG <
-   if (ikind==2.and.l_print_to_file) then
-     write(99+i_f,*) Field_time/FS2AUT,real(A_of_t(1),SP),real(E_of_t(1),SP),real(J_of_t(1),SP),&
-                     real(A_of_t(2),SP),real(E_of_t(2),SP),real(J_of_t(2),SP)
-   endif
-   ! DEBUG >
    !
    select case(Efield(i_f)%ef_pol)
    case("linear")

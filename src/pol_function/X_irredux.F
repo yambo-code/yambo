@@ -31,7 +31,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  use matrix,        ONLY:PAR_matrix
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_COM_RL_INDEX,myid,PAR_COM_X_WORLD_RL_resolved
+ use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved,myid
  use parallel_int,  ONLY:PP_redux_wait
  use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,&
 &                        n_out_threads,n_inn_threads,OPENMP_locks_reset,n_threads_FFT

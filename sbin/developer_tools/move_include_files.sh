@@ -47,7 +47,7 @@ END {
             print lines[i];  # Print other lines
         }
         if (lines[i] ~ /#include<y_memory.h>/ || lines[i] ~ /#include <y_memory.h>/) {
-            print " USE_MEMORY"   ;
+            print " use y_memory_alloc"   ;
 	    print " !";
             print " implicit none";  # Resume implicit none
         }

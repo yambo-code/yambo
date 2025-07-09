@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine EXC_WF_symm_qpoint(Xk,qpt,first_state,nstates,iq,isq,igq,&
 &                                        ID,S_index,EXC_WFs,l_min_mem)
  !
@@ -18,7 +22,9 @@ subroutine EXC_WF_symm_qpoint(Xk,qpt,first_state,nstates,iq,isq,igq,&
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:DUMP,REP,RD
  !
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  type(bz_samp), intent(in)   :: Xk,qpt
  integer,       intent(in)   :: first_state,nstates

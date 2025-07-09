@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine WF_derivative(derivative_bands,derivative_kpt,derivative_sppol,do_derivative,use_live_timing)
  !
  !  Remember wf_t = -i \der_t wf   with t=x,y,z
@@ -24,8 +28,9 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,derivative_sppol,do_der
 #if defined _SC
  use SC,             ONLY:SC_bands,found_SC_DB
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  ! Input variables
  integer,intent(in) :: derivative_bands(2)
  integer,intent(in) :: derivative_kpt(2)

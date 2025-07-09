@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine XCo_local(E,Xk)
  !
  ! Local V_xc
@@ -36,8 +40,9 @@ subroutine XCo_local(E,Xk)
  use SC,            ONLY:load_SC_components,SC_fft_size,compatible_SC_DB
 #endif
  use timing_m,      ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels) ::E       
  type(bz_samp)::Xk

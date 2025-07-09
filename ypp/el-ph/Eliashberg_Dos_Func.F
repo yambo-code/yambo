@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 real(SP) function Eliashberg_Dos_Func(iq,im,ph_en, ph_broad, PH_E, q) 
  !
  use pars,                ONLY:SP
@@ -12,8 +16,9 @@ real(SP) function Eliashberg_Dos_Func(iq,im,ph_en, ph_broad, PH_E, q)
  use R_lattice,           ONLY:bz_samp
  use functions,           ONLY:Fermi_fnc_derivative
  use ELPH,                ONLY:PH_freqs_sq,use_PH_DbGd
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer,      intent(in) :: iq,im
  real(SP),     intent(in) :: ph_en,ph_broad

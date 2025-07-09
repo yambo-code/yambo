@@ -4,6 +4,10 @@
 ! Copyright (C) 2018 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): CA
+!
+! headers
+!
+#include<y_memory.h>
 ! 
 integer function io_OSCLL(q,ID)
  !
@@ -22,8 +26,9 @@ integer function io_OSCLL(q,ID)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer     ::ID
  type(bz_samp), intent(in) :: q

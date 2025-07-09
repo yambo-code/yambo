@@ -4,6 +4,10 @@
 !
 ! Authors (see AUTHORS file for details): AM FP AC
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
 ! modify it under the terms of the GNU General Public
@@ -39,7 +43,9 @@ subroutine EXC_dipole(Xk,E,q,X)
  use parallel_int,   ONLY:PARALLEL_global_indexes,PP_redux_wait,PARALLEL_index,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,     ONLY:PAR_IND_WF_b_and_k
  !
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: Xk,q

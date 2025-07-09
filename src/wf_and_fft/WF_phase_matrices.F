@@ -11,7 +11,10 @@
 !
 !! @param[out]      WF_phases_S            Phase matrices
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
 !
 subroutine WF_phase_matrices(En,Xk,blim,klim)
  !    
@@ -35,8 +38,9 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  use IO_int,            ONLY:io_control
  use IO_m,              ONLY:VERIFY,DUMP,REP,OP_WR,WR,WR_CL,OP_RD_CL
  use timing_m,          ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer,       intent(in) :: blim(2),klim(2)
  type(levels),  intent(in) :: En

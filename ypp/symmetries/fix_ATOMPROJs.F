@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  !
  use pars,                ONLY:LP,SP,lchlen,cZERO
@@ -18,8 +22,9 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
  use R_lattice,           ONLY:bz_samp
  use electrons,           ONLY:levels
  use atom_proj
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels),intent(in)  :: E
  !

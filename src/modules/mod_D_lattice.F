@@ -5,13 +5,18 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 module D_lattice
  !
  use pars,        ONLY:LP,SP,lchlen,cONE,cZERO,cI,schlen
  use devxlib
+ use y_memory_alloc
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ implicit none
  !
  ! Non periodic directions
  !

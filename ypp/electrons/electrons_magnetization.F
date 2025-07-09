@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine electrons_magnetization(Xk,Xen)
  !
  use pars,           ONLY:SP,lchlen
@@ -17,8 +21,9 @@ subroutine electrons_magnetization(Xk,Xen)
 &                         use_gnuplot,use_cube,plot_title,l_density,mag_dir
  use com,            ONLY:msg,of_open_close
  use xc_functionals, ONLY:magn
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp) ::Xk
  type(levels)  ::Xen

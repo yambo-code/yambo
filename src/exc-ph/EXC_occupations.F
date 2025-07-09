@@ -4,6 +4,10 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
 ! modify it under the terms of the GNU General Public
@@ -32,7 +36,9 @@ subroutine EXC_occupations(E_QF,k,q,iq_ibz,EXC_n_states,EXC_indexes,EXC_occ)
  use BS,             ONLY:BS_H_dim,BS_bands
  use BS_solvers,     ONLY:BSS_eh_table,BS_mat
  !
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  type(levels), intent(in)  :: E_QF
  type(bz_samp),intent(in)  :: k,q

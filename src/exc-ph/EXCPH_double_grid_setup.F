@@ -4,6 +4,10 @@
 !
 ! Authors (see AUTHORS file for details): AC
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
 ! modify it under the terms of the GNU General Public
@@ -39,7 +43,9 @@ subroutine EXCPH_double_grid_setup(q)
 &                         EXC_occ,ID_occ,ID_occ_obj,EXC_occ_DbGd,q_DbGd,min_pos_E_DbGd
  use com,            ONLY:msg
  !
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  type(bz_samp), intent(in) :: q
  !

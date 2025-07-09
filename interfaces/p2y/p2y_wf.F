@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CH AF
 !
+! headers
+!
+#include<y_memory.h>
+!
  subroutine p2y_wf(wf_disk,i_sp_pol,ikibz, ib_grp)
  !
  ! Reads the WFs for single k-point ikibz and group of bands
@@ -18,8 +22,9 @@
  use pw_data,               ONLY: n_spin_pw_, gamma_only_, noncolin_, igkv_
  use qexml_module
  use qexsd_module
- ! 
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  integer,     intent(in)   :: i_sp_pol,ikibz, ib_grp
  complex(SP), intent(out)  :: wf_disk(wf_ncx,n_spinor,wf_nb_io)

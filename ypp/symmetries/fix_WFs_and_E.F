@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): CA DS
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR)
  !
@@ -24,8 +28,9 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR)
  use YPP_symm,            ONLY:wf_nc_k_save,wf_igk_save,wf_nc_k_reduced,wf_igk_reduced,&
 &                              wf_nc_k_new,wf_igk_new,&
 &                              wf_nc_k_new,wf_ncx_new,wf_ncx_save,wf_ng_new,wf_ng_save
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels),intent(in)  :: E
  !
@@ -281,8 +286,9 @@ subroutine map_energies(E,E_new,k,kpoints_map)
  !
  use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels), intent(in)     :: E
  type(levels), intent(out)    :: E_new

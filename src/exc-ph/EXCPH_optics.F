@@ -4,6 +4,10 @@
 !
 ! Authors (see AUTHORS file for details): AM FP AC
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
 ! modify it under the terms of the GNU General Public
@@ -44,7 +48,9 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  use frequency,      ONLY:w_samp
  use parser_m,       ONLY:parser
  !
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  type(levels)  ::E
  type(bz_samp) ::k,q

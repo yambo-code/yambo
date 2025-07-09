@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! This routine calculates the QP shifts due to el-ph intercation
@@ -46,8 +50,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 #if defined _RT
  use RT_control,    ONLY:RT_apply
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)  ::en
  type(bz_samp) ::k,q

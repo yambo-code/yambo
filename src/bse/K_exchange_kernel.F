@@ -5,7 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AF DS
 !
+! headers
+!
 #include<dev_defs.h>
+!
 !
 function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp_ik, i_Tk) result(H_x)
   !==============================

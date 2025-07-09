@@ -4,6 +4,10 @@
 !
 ! Authors (see AUTHORS file for details): FP AC
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
 ! modify it under the terms of the GNU General Public
@@ -60,7 +64,9 @@ subroutine EXCPH_X_phass_from_Hpert(wv,q,PL_ii)
  use parser_m,      ONLY:parser
  use com,           ONLY:msg,of_open_close
  !
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  type(bz_samp), intent(in)  :: q
  type(w_samp),  intent(in)  :: wv

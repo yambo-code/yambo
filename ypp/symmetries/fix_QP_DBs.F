@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine fix_QP_DBs(k,k_save,kpoints_map)
  !
  use pars,                ONLY:lchlen
@@ -17,8 +21,9 @@ subroutine fix_QP_DBs(k,k_save,kpoints_map)
  use descriptors,         ONLY:IO_desc_duplicate
  use electrons,           ONLY:n_sp_pol
  use R_lattice,           ONLY:bz_samp
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp),intent(in) :: k
  type(bz_samp),intent(in) :: k_save

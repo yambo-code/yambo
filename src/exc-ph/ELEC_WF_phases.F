@@ -4,6 +4,10 @@
 !
 ! Authors (see AUTHORS file for details): DS FP
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
 ! modify it under the terms of the GNU General Public
@@ -34,7 +38,9 @@ subroutine ELEC_WF_phases(E,k,l_min_mem,ID_phases)
  use IO_m,           ONLY:RD,OP_RD,DUMP,REP
  use IO_int,         ONLY:io_control
  !
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: k

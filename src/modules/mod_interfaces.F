@@ -7,6 +7,8 @@
 !
 ! headers
 !
+#include<dev_defs.h>
+!
 #if defined _SLEPC && !defined _NL
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
@@ -16,8 +18,6 @@
 #endif
 !
 module interfaces
- !
-#include<dev_defs.h>
  !
  implicit none
  !
@@ -176,8 +176,6 @@ module interfaces
      !
      use pars,           ONLY:SP,schlen
      use petscmatdef,    ONLY:tmat
-#include <petsc/finclude/petscsys.h>
-#include <petsc/finclude/petscmat.h>
      Mat                         :: M_slepc      ! matrix to diagonalize of stype from slepc
      integer                     :: n_eig        ! number of eigenvalues to compute
      complex(SP)                 :: V_right(:,:) ! right eigenvalues

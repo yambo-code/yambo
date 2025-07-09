@@ -4,6 +4,10 @@
 !
 ! Authors (see AUTHORS file for details): AM FP
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
 ! modify it under the terms of the GNU General Public
@@ -38,7 +42,9 @@ subroutine EXCPH_load_L(iq_bse,X,what,Ltype)
  use X_m,            ONLY:X_t
  use com,            ONLY:jobstr,msg
  !
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  ! 
  type(X_t)     ::X
  type(bz_samp) ::k,q

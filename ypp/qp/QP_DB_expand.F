@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QP_DB_expand( k )
  !
  use pars,          ONLY:schlen
@@ -13,8 +17,9 @@ subroutine QP_DB_expand( k )
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_WR_CL,DUMP,OP_RD_CL,LOG
  use QP_m,          ONLY:QP_t,QP_reset
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp)           :: k
  !

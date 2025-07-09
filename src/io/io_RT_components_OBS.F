@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine io_RT_components_OBS(ID,what)
  !
  use pars,        ONLY:SP,schlen
@@ -15,8 +19,9 @@ subroutine io_RT_components_OBS(ID,what)
  use netcdf,      ONLY:NF90_UNLIMITED
  use RT_control,  ONLY:J_cache,P_cache,Ms_cache,Ml_cache,A_cache,&
 &                      CACHE_OBS_steps_now,OBS_RT_IO_t,RT_do_IO
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer,      intent(in) :: ID
  character(*), intent(in) :: what

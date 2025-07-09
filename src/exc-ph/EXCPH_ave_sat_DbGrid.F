@@ -4,6 +4,10 @@
 !
 ! Authors (see AUTHORS file for details): AM FP
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
 ! modify it under the terms of the GNU General Public
@@ -30,7 +34,9 @@ subroutine EXCPH_ave_sat_DbGrid(iq_bz,q)
  use EXCPH,          ONLY:BS_Sat_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,EXCPH_deltaE_treshold, &
 &                         BS_E_in,EXCPH_Gkkp_sq,EXCPH_sum,EXCPH_states,L_damping,EXC_E_DbGd
  !
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  integer,       intent(in) :: iq_bz
  type(bz_samp), intent(in) :: q

@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<collisions.h>
+#include<y_memory.h>
+!
 subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
 &                               io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,&
 &                               io_ELPH_err,io_SC_E_err)
@@ -34,9 +39,9 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  ! - io_COLLISIONS        (serial I/O) or
  ! - io_COLLISIONS_header (parallel I/O case)
  !
-#include<collisions.h>
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(X_t)        :: X(5),Xbsk
  type(QP_t)       :: qp

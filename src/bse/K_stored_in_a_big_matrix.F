@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM MG DS
 !
+! headers
+!
+#include <y_memory.h>
+!
 subroutine K_stored_in_a_big_matrix(i_BS_mat,BS_mat_dim,BS_mat,iq,what)
  !
  ! Here I fill the kernel (coupling included) in an entire BIG matrix to be
@@ -35,8 +39,9 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,BS_mat_dim,BS_mat,iq,what)
 &                         BSS_perturbative_width,run_inversion,run_Haydock,&
 &                         BSS_eh_E,BSS_eh_W
  use timing_m,       ONLY:timing
+ use y_memory_alloc
  !
-#include <y_memory.h>
+ implicit none
  !
  integer,      intent(in) :: i_BS_mat,BS_mat_dim,iq
  complex(SP), allocatable, target :: BS_mat(:,:) 

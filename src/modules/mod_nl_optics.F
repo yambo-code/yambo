@@ -5,14 +5,19 @@
 !
 ! Authors (see AUTHORS file for details): MG AC
 !
+! headers
+!
+#include<y_memory.h>
+!
 module nl_optics
  !
  use descriptors,     ONLY:IO_desc
  use pars,            ONLY:SP,schlen,lchlen
  use electrons,       ONLY:levels
  use real_time,       ONLY:NE_steps,dG_lesser
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! Long range correction field
  !

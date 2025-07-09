@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MG
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  !
  !  Apply the NL local sX+cH operator to the valence wfs.
@@ -42,8 +46,9 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use X_m,             ONLY:X_mat,X_t
  !
  ! I/O
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  complex(SP),intent(inout)  :: U_csx(nkibz,maxval(n_met_bands),fft_size)
  type(levels), intent(in)   :: E
  type(bz_samp), intent(in)  :: k,q

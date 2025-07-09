@@ -4,6 +4,10 @@
 !
 ! Authors (see AUTHORS file for details): AC FP
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
 ! modify it under the terms of the GNU General Public
@@ -46,7 +50,9 @@ subroutine Satellite_DbGrid(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
  use ELPH,          ONLY:PH_freqs,FAN_deltaE_treshold,PH_freqs_sq,Q_io_map
  use functions,     ONLY:bose_f,boltzman_f
  !
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  integer,       intent(in)  :: il,iq_bz,i_alpha,i_beta
  complex(SP),   intent(in)  :: W

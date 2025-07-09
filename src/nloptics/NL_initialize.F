@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine NL_initialize(E,k)
  ! 
  use pars,           ONLY:SP,DP,pi
@@ -37,8 +41,9 @@ subroutine NL_initialize(E,k)
  use electric,       ONLY:l_force_SndOrd,l_res_symms
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels), intent(in) :: E
  type(bz_samp),intent(in) :: k

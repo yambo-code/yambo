@@ -4,6 +4,10 @@
 !
 ! Authors (see AUTHORS file for details): AM FP AC
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
 ! modify it under the terms of the GNU General Public
@@ -46,7 +50,9 @@ subroutine EXCPH_lifetime(k,q,X)
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
  use LIVE_t,        ONLY:live_timing
  !
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  type(levels)  ::E
  type(bz_samp) ::k,q

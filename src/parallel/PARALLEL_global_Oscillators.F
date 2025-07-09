@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA MG DS
 !
+! headers
+!
+#include<y_memory.h>
+! 
 subroutine PARALLEL_global_Oscillators(E,Xk,q)
  !
  use electrons,     ONLY:levels
@@ -27,8 +31,9 @@ subroutine PARALLEL_global_Oscillators(E,Xk,q)
 &                        PAR_IND_Xk_bz_ID,PAR_IND_Xk_ibz_ID
  use openmp,        ONLY:n_threads_OSCLL,OPENMP_set_threads
  use QP_m,          ONLY:QP_n_states,QP_table
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q

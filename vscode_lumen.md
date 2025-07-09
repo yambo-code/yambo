@@ -20,7 +20,7 @@ Enable debugging from VS code with:
 ### How to Use Debugger in VS code
 1) Open the yambo folder in VS code
 2) Create a folder `debug_run` and copy inside a SAVE folder and the input files you want to test
-3) Edit the `.vsocde/launch.json` file accordingly
+3) Edit the `.vsocde/launch.json_suggested` file accordingly and rename it `.vscode/launch.json`
 4) press F5 for `Run & Debug`
 5) `Debug Yambo` from the dropdown
 6) Open a given file in VS Code, for example `DIPOLE_driver.F` and hover your mouse on a line, then click left of line number to set a red dot (breakpoint). In this way you  set breakpoints by clicking the glutter (left of line numbers).

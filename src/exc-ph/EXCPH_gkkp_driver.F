@@ -4,6 +4,10 @@
 !
 ! Authors (see AUTHORS file for details): AM FP AC DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
 ! modify it under the terms of the GNU General Public
@@ -53,7 +57,9 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use timing_m,       ONLY:timing
  use com,            ONLY:msg
  !
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  type(levels)  ::E
  type(bz_samp) ::k,q

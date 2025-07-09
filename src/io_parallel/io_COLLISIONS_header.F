@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM CA DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_COLLISIONS_header(ID,COLL)
  !
  use pars,          ONLY:schlen,IP,IP_YIO,LP_YIO
@@ -24,8 +28,9 @@ integer function io_COLLISIONS_header(ID,COLL)
  use X_m,           ONLY:X_desc
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
  use timing_m,      ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer, intent(inout)            ::ID
  type(COLLISIONS_group)            ::COLL

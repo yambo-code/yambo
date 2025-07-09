@@ -5,13 +5,18 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 module ELPH
  !
  use pars,           ONLY:SP,rZERO,schlen
  use electrons,      ONLY:levels,E_reset
  use descriptors,    ONLY:IO_desc
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! Dumensions
  integer   :: ph_modes

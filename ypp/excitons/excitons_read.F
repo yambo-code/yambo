@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DV DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine excitons_read(k,Xk,en,Xen,iq,what,io_err)
  !
  use pars,          ONLY:pi
@@ -18,8 +22,9 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what,io_err)
  use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig
  use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_K_coupling,BSqpts
  use YPPm,          ONLY:BS_R_left,BS_R_right,BS_E,BS_E_SOC_corr,BS_R_PL,BS_R_kerr,Xbsk   
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp) ::Xk,k
  type(levels)  ::Xen,en

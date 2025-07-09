@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM MG DS
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine build_inverse_eh_table(nk)
  !
@@ -42,7 +46,9 @@ end subroutine build_inverse_eh_table
 subroutine BS_exchange_oscillators_alloc(iG)
  use BS,        ONLY:BS_T_grp,BS_n_g_exch
  use gpu_m,     ONLY:have_gpu
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  integer, intent(in) :: iG
  if (BS_T_grp(iG)%size==0) return
  !DEV_ACC enter data copyin(BS_T_grp(iG))
@@ -55,7 +61,9 @@ end subroutine BS_exchange_oscillators_alloc
 subroutine BS_correlation_oscillators_alloc(iB)
  use BS,        ONLY:BS_blk,O_ng
  use gpu_m,     ONLY:have_gpu
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  integer, intent(in) :: iB
  if (BS_blk(iB)%N_oscillators==0) return
  !DEV_ACC enter data copyin(BS_blk(iB))
@@ -67,7 +75,9 @@ end subroutine BS_correlation_oscillators_alloc
 !
 subroutine BS_exchange_oscillators_free(iG_ref)
  use BS,        ONLY:BS_T_grp
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  integer, intent(in) :: iG_ref
  integer :: iG
  do iG=iG_ref,1,-1
@@ -79,7 +89,9 @@ end subroutine BS_exchange_oscillators_free
 !
 subroutine BS_correlation_oscillators_free(iB_ref,l_std_alg)
  use BS,        ONLY:BS_T_grp,l_BSE_minimize_memory,BS_blk,n_BS_blks
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  integer, intent(in) :: iB_ref
  logical, intent(in) :: l_std_alg
  integer :: iB,ik_loop,ip_loop,ik_now,ip_now
@@ -108,7 +120,9 @@ subroutine TDDFT_oscillators_alloc_L(iGL)
  use electrons, ONLY:n_spin,n_spinor
  use BS,        ONLY:BS_T_grp,BS_n_g_fxc
  use gpu_m,     ONLY:have_gpu
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  integer, intent(in) :: iGL
  if (BS_T_grp(iGL)%size>0) then
    !DEV_ACC enter data copyin(BS_T_grp(iGL))
@@ -123,7 +137,9 @@ subroutine TDDFT_oscillators_alloc_R(iGR)
  use electrons, ONLY:n_spin,n_spinor
  use BS,        ONLY:BS_T_grp,BS_n_g_fxc
  use gpu_m,     ONLY:have_gpu
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  integer, intent(in) :: iGR
  if (BS_T_grp(iGR)%size>0) then
    !DEV_ACC enter data copyin(BS_T_grp(iGR))
@@ -136,7 +152,9 @@ end subroutine TDDFT_oscillators_alloc_R
 !
 subroutine TDDFT_oscillators_free_L(iG_ref)
  use BS,        ONLY:BS_T_grp
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  integer, intent(in) :: iG_ref
  integer :: iGL
  do iGL=iG_ref,1,-1
@@ -148,7 +166,9 @@ end subroutine TDDFT_oscillators_free_L
 !
 subroutine TDDFT_oscillators_free_R(iG_ref)
  use BS,        ONLY:BS_T_grp
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  integer, intent(in) :: iG_ref
  integer :: iGR
  do iGR=iG_ref,1,-1

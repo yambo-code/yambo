@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 module linear_algebra
  !
  use iso_c_binding
@@ -15,9 +20,9 @@ module linear_algebra
  use magma,            ONLY: magmaf_init,magmaf_queue_create,&
 &                            magmaf_cgeev_m,magmaf_zgeev_m,MagmaVec
 #endif
+ use y_memory_alloc
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ implicit none
  !
  integer, parameter :: USE_LK=1
  integer, parameter :: USE_SLK=2

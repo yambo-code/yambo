@@ -22,9 +22,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
 &                        PARALLEL_WF_distribute
  use parser_m,      ONLY:parser
- use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PAR_COM_Q_A2A,&
-&                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,&
-&                        PAR_Q_ibz_index,n_WF_bands_to_load,myid
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PAR_COM_Q_A2A,PAR_COM_NULL,master_cpu,&
+&                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,yMPI_comm,COMM_copy,PAR_COM_RL_A2A,&
+&                        PAR_Q_ibz_index,n_WF_bands_to_load,myid,PAR_COM_X_WORLD,PAR_COM_RL_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:manage_action,OP_RD_CL,OP_WR_CL,OP_APP_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
@@ -82,14 +82,18 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! MPA variables
  !
  integer           :: i_np,ID2
- logical           :: MPred,l_CPU_ONLY
+ logical           :: MPred,l_CPU_ONLY,condition,reset_permissions
  real(SP)          :: bose_PPA_E,MPred_rate,PPcond_rate,PPcond_Qrate,&
 &                     MP_err,MP_Qerr,cond_num(2),cond_numQ(2)
  complex(SP), allocatable :: MPA_Xo(:)
  character(len=99) :: str
  !
- integer, external ::io_X,io_MPA
-
+ integer, external :: io_X,io_MPA
+ type(yMPI_comm)   :: LOCAL_yMPI_COMM
+ !
+ reset_permissions=.true.
+ call COMM_copy(PAR_COM_NULL,LOCAL_yMPI_COMM)
+ condition=PAR_COM_X_WORLD%CPU_id==0
  !
  ! Reset & checks
  !
@@ -254,10 +258,10 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  endif
  !
  if(io_MULTIPOLE) then
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID2)
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID2,COMM=local_yMPI_COMM,DO_IT=condition)
    io_err=io_MPA(X,Xw,ID2)
    call IO_and_Messaging_switch("SAVE")
-   call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
+   call IO_and_Messaging_switch("+io_out",CONDITION=condition)
  endif
  !
  call PP_wait()
@@ -279,6 +283,17 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      X_range=(/1,Xw%n_freqs/)
      if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
      !
+     ! Only the master writes the header
+     if(iqibz==0) condition=master_cpu
+     !
+#if defined _PAR_IO
+     reset_permissions=(iqibz==0)
+     if(iqibz/=0) then
+       call COMM_copy(PAR_COM_RL_INDEX,LOCAL_yMPI_COMM)
+       condition=PAR_COM_RL_A2A%CPU_id==0
+     endif
+#endif
+     !
      call scatter_Gamp_gpu(isc,'c')
      if (have_gpu) call devxlib_memcpy_d2h(isc%gamp,DEV_VAR(isc%gamp))
      !
@@ -287,7 +302,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      if (io_RESPONSE) then
        !
        IO_ACT=manage_action(RD_CL_IF_END,iqibz,iq_to_start,q%nibz,PAR_INDEX=PAR_IND_Q_ibz)
-       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
+       call io_control(ACTION=IO_ACT,COM=REP,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
        io_err=io_X(X,Xw,ID)
        !
        call deliver_IO_error_message(io_err,'MPA/Xm',STOP_it=.TRUE.)
@@ -361,7 +376,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      if (io_MULTIPOLE) then
        !
-       call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iqibz,2*iqibz+1/),ID=ID2)
+       call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iqibz,2*iqibz+1/),ID=ID2,COMM=local_yMPI_COMM,DO_IT=condition)
        io_err=io_MPA(X,Xw,ID2)
        call msg('r',' :: PP cond fix/tot      ',PPcond_Qrate)
        call msg('r',' :: Mean np reduction    ',MPred_rate)

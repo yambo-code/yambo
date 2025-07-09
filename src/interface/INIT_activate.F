@@ -367,7 +367,7 @@ subroutine INIT_activate()
 #if defined _QED
    if (l_elphoton_corr) then
      if (l_gw0) then
-       call initactivate(1,'FFTGvecs RandQpts QEDRLvcs GbndRnge GDamping dScStep DysSolver') 
+       call initactivate(1,'FFTGvecs RandQptsSphe QEDRLvcs GbndRnge GDamping dScStep DysSolver') 
        if (trim(QP_solver)=="g") then
          call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
        else
@@ -440,7 +440,7 @@ subroutine INIT_activate()
    if (l_elph_corr) then
      call INIT_QP_ctl_switch('G')
      call initactivate(1,'DysSolver')
-     call initactivate(1,'GphBRnge FANdEtresh DWdEtresh ElPhModes GDamping dScStep ExtendOut ElPhRndNq RandQpts')
+     call initactivate(1,'GphBRnge FANdEtresh DWdEtresh ElPhModes GDamping dScStep ExtendOut ElPhRndNq RandQptsSphe')
      call initactivate(1,'GkkpDB WRgFsq NewtDchk OnMassShell')
    endif
    if (trim(QP_solver)=="g".and.l_elph_corr) then
@@ -553,7 +553,7 @@ subroutine INIT_activate()
    if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) then
      call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp RelaxTimeApprox RTAtemp RTAchem LifeFitTemp')
    endif
-   if (l_elph_scatt) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
+   if (l_elph_scatt) call initactivate(1,'MemTresh RandQptsSphe RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'EERimPerc')
    !
    call initactivate(1,'RTBands RTHoleBands RTElecBands Integrator GrKind TwoAlph RTehEny ScattTresh')
@@ -579,7 +579,7 @@ subroutine INIT_activate()
    if(.not.l_nl_p_and_p) call initactivate(1,'NLEnRange NLEnSteps NLrotaxis NLAngSteps NLMaxAng')
    if(     l_nl_p_and_p) call initactivate(1,'IOtime IOCachetime SaveVbhistory')
    call initactivate(1,'NLDamping RADLifeTime UseDipoles FrSndOrd NoComprCOLL COLLCut EvalCurrent InducedField') 
-   call initactivate(1,'FrPolPerdic TestOSCLL Gauge RADLifeTime HARRLvcs EXXRLvcs CORRLvcs') 
+   call initactivate(1,'TestOSCLL Gauge RADLifeTime HARRLvcs EXXRLvcs CORRLvcs') 
    call init_QP_ctl_switch('G')
    !
    do i1=1,n_ext_fields

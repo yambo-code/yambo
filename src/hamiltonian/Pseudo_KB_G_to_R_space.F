@@ -39,7 +39,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  !
  ! I / O
  !
- integer                 :: IO_ACT_NOW,ID,ID_R,io_err(3),io_KB_pwscf_err,io_KB_abinit_err,io_Vnl_err,io_KB_real_space_err
+ integer                 :: IO_ACT_NOW,ID,ID_R,io_err(2),io_KB_pwscf_err,io_KB_abinit_err,io_KB_real_space_err
  integer, external       :: io_KB_abinit,io_KB_pwscf,io_KB_real_space
  !
  !
@@ -51,7 +51,6 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  !
  io_KB_abinit_err= io_err(1)
  io_KB_pwscf_err = io_err(2)
- io_Vnl_err     = io_err(3)
  !
  if(io_KB_abinit_err/=0.and.io_KB_pwscf_err/=0) return
  !

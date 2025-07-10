@@ -56,20 +56,20 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  !
  allocate(X_par(1))
  !
- do iq=X%iq(1),X%iq(2)
-   !
-   ! PARALLEL indexes
-   !==================
-   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X)
-   !
-   ! WF distribution 
-   !=================
-   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_CON_BANDS_X(X%whoami),&
+ ! PARALLEL indexes
+ !==================
+ call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X)
+ !
+ ! WF distribution 
+ !=================
+ call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_CON_BANDS_X(X%whoami),&
 &                              Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),CLEAN_UP=.TRUE.)
-   !
-   call PARALLEL_WF_index(COMM=PAR_COM_Q_A2A)
-   !
-   if (WF_buffered_IO) call WF_load(WF_buffer,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER')
+ !
+ call PARALLEL_WF_index(COMM=PAR_COM_Q_A2A)
+ !
+ if (WF_buffered_IO) call WF_load(WF_buffer,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER')
+ !
+ do iq=X%iq(1),X%iq(2)
    !
    ! TDDFT setup
    call TDDFT_do_X_W_typs(iq,X,wv)
@@ -167,6 +167,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    endif
    !
  enddo
+ !
+ call PARALLEL_global_reset("Response_G_space",X%whoami)
  !
  ! CLEAN
  !

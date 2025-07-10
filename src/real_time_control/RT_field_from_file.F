@@ -21,26 +21,34 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_load_field_from_file_init(filename)
+subroutine RT_load_field_from_file_init(filename1,filename2)
  !
  use com,        ONLY:com_path
  use fields,     ONLY:field_from_file_steps
  !
  implicit none
  !
- character(*), intent(in)   :: filename
+ character(*), intent(in)   :: filename1,filename2
  !
- integer :: n_time_steps
+ integer :: n_time_steps1,n_time_steps2
  !
- open(unit=99,file=trim(filename))
- read(99,*) n_time_steps
+ call warning(" Loading Field from file"//trim(filename1)//" [experimental]")
+ !
+ open(unit=99,file=trim(filename1))
+ read(99,*) n_time_steps1
  close(99)
- field_from_file_steps=max(field_from_file_steps,n_time_steps)
+ if (filename2/="") then
+   open(unit=99,file=trim(filename2))
+   read(99,*) n_time_steps2
+   close(99)
+   if(n_time_steps1/=n_time_steps2) call error(" Field from file, polarizations with different dimensions")
+ endif
+ field_from_file_steps=max(field_from_file_steps,n_time_steps1)
  !
 end subroutine RT_load_field_from_file_init
 !
 !
-subroutine RT_load_field_from_file(filename,i_field)
+subroutine RT_load_field_from_file(filename1,filename2,i_field)
  !
  use real_time,  ONLY:RT_step
  use com,        ONLY:com_path
@@ -49,10 +57,11 @@ subroutine RT_load_field_from_file(filename,i_field)
  !
  implicit none
  !
- character(*), intent(in)   :: filename
+ character(*), intent(in)   :: filename1,filename2
  integer,      intent(in)   :: i_field
  !
- integer :: i1,i_field_file,n_time_steps
+ integer  :: i1,i_field_file,n_time_steps1,n_time_steps2,idata,i_pol1_data,i_pol2_data
+ real(SP) :: tmp_data(4,2)
  !
  i_field_file=-1
  do i1=1,n_ext_fields_max
@@ -61,20 +70,34 @@ subroutine RT_load_field_from_file(filename,i_field)
    exit
  enddo
  !
- field_from_file_fname(i_field_file)=filename
+ field_from_file_fname(i_field_file)=filename1
+ tmp_data=0._SP
  !
  if(i_field_file==1) then
    allocate(field_from_file(field_from_file_steps,7,n_ext_fields_max))
    field_from_file=0._SP
  endif
- open(unit=99,file=trim(filename))
- read(99,*) n_time_steps
- do i1=1,n_time_steps
-   read(99,*) field_from_file(i1,:,i_field_file) 
+ open(unit= 99,file=trim(filename1))
+ read( 99,*) n_time_steps1
+ if (filename2/="") then
+   open(unit=100,file=trim(filename2))
+   read(100,*) n_time_steps2
+ endif
+ do i1=1,n_time_steps1
+   read( 99,*) tmp_data(:,1)
+   if (filename2/="") read(100,*) tmp_data(:,2)
+   field_from_file(i1,1,i_field_file)=tmp_data(1,1)
+   do idata=2,4
+     i_pol1_data=2*idata-2
+     i_pol2_data=2*idata-1
+     field_from_file(i1,i_pol1_data,i_field_file)=tmp_data(idata,1)
+     field_from_file(i1,i_pol2_data,i_field_file)=tmp_data(idata,2)
+   enddo
  enddo
- close(99)
+ close( 99)
+ if (filename2/="") close(100)
  !
- Efield(i_field)%t_final_indx=(n_time_steps-8)/2+Efield(i_field)%t_initial_indx-1
+ Efield(i_field)%t_final_indx=(n_time_steps1-8)/2+Efield(i_field)%t_initial_indx-1
  Efield(i_field)%t_final=RT_step*(Efield(i_field)%t_final_indx-1)
  !
 end subroutine RT_load_field_from_file
@@ -92,13 +115,20 @@ subroutine RT_print_field_to_file_init(i_field)
  integer, intent(in)   :: i_field
  !
  integer :: n_time_steps
- character(schlen) :: filename
+ character(schlen) :: filename1,filename2
  !
- filename="RT_EXTFIELD_"//trim(intc(i_field))//".time"
+ filename1="RT_EXTFIELD"//trim(intc(i_field))//"_P1.time"
+ filename2=""
+ if ( trim(Efield(i_field)%ef_pol) == "circular" ) filename2="RT_EXTFIELD"//trim(intc(i_field))//"_P2.time"
  !
  n_time_steps=(Efield(i_field)%t_final_indx-Efield(i_field)%t_initial_indx+1)*2+8
  !
- open(unit=99+i_field,file=trim(com_path)//"/"//trim(filename))
- write(99+i_field,*) n_time_steps
+ open(unit=100+i_field,file=trim(com_path)//"/"//trim(filename1))
+ write(100+i_field,*) n_time_steps
+ !
+ if (filename2/="") then
+   open(unit=200+i_field,file=trim(com_path)//"/"//trim(filename2))
+   write(200+i_field,*) n_time_steps
+ endif
  !
 end subroutine RT_print_field_to_file_init

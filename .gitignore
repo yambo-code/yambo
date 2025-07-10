@@ -143,3 +143,6 @@ gfortran*.sh
 pgi*.sh
 nvidia*.sh
 git_nmd.sh
+
+#Configuation files
+.vscode/*.json

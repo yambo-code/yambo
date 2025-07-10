@@ -305,7 +305,9 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  l_matrix_init=.true.
  l_load_kernel=.true.
  l_write_kernel=.false.
+#if defined _MPI
  l_write_kernel_step= index(BSK_IO_mode,"write_all_steps")/=0
+#endif
  !
  if (l_write_kernel_step) then
    call warning("Experimental mode, IO at every step. Restart not possible")

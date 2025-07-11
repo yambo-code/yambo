@@ -30,7 +30,7 @@ subroutine EXC_WF_symm_qpoint(Xk,qpt,first_state,nstates,iq,isq,igq,&
  integer,       intent(in)   :: first_state,nstates
  integer,       intent(in)   :: iq,isq,igq
  integer,       intent(inout):: ID
- complex(SP),   intent(out)  :: EXC_WFs(BS_H_dim,first_state:nstates)
+ complex(SP),   intent(out)  :: EXC_WFs(BS_H_dim,nstates)
  integer,       intent(in)   :: S_index(BSS_n_eig)
  logical,       intent(in)   :: l_min_mem
  !
@@ -45,8 +45,8 @@ subroutine EXC_WF_symm_qpoint(Xk,qpt,first_state,nstates,iq,isq,igq,&
  complex(SP), allocatable :: WF_phases_cc(:,:,:,:,:),WF_phases_vv(:,:,:,:,:)
  !
  if(isq==idt_index) then
-   do iexc=first_state,nstates
-     il=S_index(iexc)
+   do iexc=1,nstates
+     il=S_index(iexc+first_state-1)
      EXC_WFs(:,iexc)=BS_mat(:,il)
    enddo
    return
@@ -137,8 +137,8 @@ subroutine EXC_WF_symm_qpoint(Xk,qpt,first_state,nstates,iq,isq,igq,&
          !
        endif
        !
-       do iexc=first_state,nstates
-         il=S_index(iexc)
+       do iexc=1,nstates
+         il=S_index(iexc+first_state-1)
          !
          do iv1 = BS_bands(1),BS_bands(2) 
            !

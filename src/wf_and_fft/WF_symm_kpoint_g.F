@@ -7,7 +7,7 @@
 !
 #include<dev_defs.h>                                                    
 !
-subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF)
+subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF,ssop)
  !
  use pars,          ONLY:SP,cZERO
  use electrons,     ONLY:n_spinor
@@ -24,11 +24,13 @@ subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF)
  integer,       intent(in) :: b_to_load(2)
  integer,       intent(in) :: ik,i_sp_pol,isymm,ig0
  type (WAVEs), target, intent(inout) :: WF
+ complex(SP) DEV_ATTR, optional, intent(in) :: ssop(2,2)
  !
  ! Work space
  !
  complex(SP)              DEV_ATTR :: WF_k_tmp(wf_ng_1st_BZ,n_spinor)
  complex(SP), pointer     DEV_ATTR :: WF_p(:,:)
+ complex(SP)              DEV_ATTR :: ssop_loc(2,2)
  !
  real(SP)    :: krot(3),G_cc(3)
  !
@@ -43,6 +45,14 @@ subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF)
  !
  isymm_m1=sop_inv(isymm)
  !  
+ if (n_spinor==2) then
+   if(present(ssop)) then
+     ssop_loc=ssop
+   else
+     ssop_loc=DEV_VAR(spin_sop)(:,:,isymm)
+   endif
+ endif
+ !
  do ib=b_to_load(1),b_to_load(2)
    !
    WF_k_tmp=cZERO
@@ -75,10 +85,8 @@ subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF)
        ig=DEV_VAR(wf_igk)(ic,ik)
        igr=DEV_VAR(g_rot)(ig,isymm)
        igs=DEV_VAR(G_m_G)(igr,ig0)
-       WF_k_tmp(igs,1)=DEV_VAR(spin_sop)(1,1,isymm)*WF_p(ig,1)+ &
-&                      DEV_VAR(spin_sop)(1,2,isymm)*WF_p(ig,2)
-       WF_k_tmp(igs,2)=DEV_VAR(spin_sop)(2,1,isymm)*WF_p(ig,1)+ &
-&                      DEV_VAR(spin_sop)(2,2,isymm)*WF_p(ig,2)
+       WF_k_tmp(igs,1)=ssop_loc(1,1)*WF_p(ig,1)+ssop_loc(1,2)*WF_p(ig,2)
+       WF_k_tmp(igs,2)=ssop_loc(2,1)*WF_p(ig,1)+ssop_loc(2,2)*WF_p(ig,2)
      enddo
    endif
    !

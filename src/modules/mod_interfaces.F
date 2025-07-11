@@ -334,20 +334,13 @@ module interfaces
      type(tddft_wf_t), target, intent(inout) :: tddft_wf
    end function TDDFT_ALDA_eh_space_R_kernel
    !
-   subroutine WF_symm_kpoint_g_ssop(b_to_load,ik,i_sp_pol,isymm,ig0,ssop,WF)
+   subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF)
      use pars,          ONLY:SP
      use wave_func,     ONLY:WAVEs
      integer,              intent(in)    :: b_to_load(2)
      integer,              intent(in)    :: ik,i_sp_pol,isymm,ig0
-     complex(SP) DEV_ATTR, intent(in)    :: ssop(2,2)
      type (WAVEs), target, intent(inout) :: WF
-   end subroutine WF_symm_kpoint_g_ssop
-   !
-   subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF)
-     use wave_func,     ONLY:WAVEs
-     integer,              intent(in)    :: b_to_load(2)
-     integer,              intent(in)    :: ik,i_sp_pol,isymm,ig0
-     type (WAVEs), target, intent(inout) :: WF
+     complex(SP) DEV_ATTR, optional, intent(in) :: ssop(2,2)
    end subroutine WF_symm_kpoint_g
    !
    subroutine WF_symm_kpoint_g_BZ(b_to_load,ik,i_sp_pol,isymm,ig0,isref,igref,WF)

@@ -77,7 +77,7 @@ integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll_)
      if (any((/COLL_bands_frozen==1/))) then
        Nb2=count(COLL_bands_frozen(COLL_grp%D(2,1):COLL_grp%D(2,2))==0)
        Nb1=count(COLL_bands_frozen(COLL_grp%D(1,1):COLL_grp%D(1,2))==0)
-       Nbc=count(COLL_bands_frozen(COLL_grp%D(2,2):COLL_grp%D(2,3))==0)
+       Nbc=count(COLL_bands_frozen(COLL_grp%D(2,3):COLL_grp%D(2,2))==0)
        Nbv=count(COLL_bands_frozen(COLL_grp%D(1,1):COLL_grp%D(1,4))==0)
      endif
      if (COLLISIONS_CV_only) then

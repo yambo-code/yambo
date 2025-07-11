@@ -18,7 +18,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  use QP_m,           ONLY: QP_ng_SH,QP_ng_Sx 
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_sp_pol
- use collision_ext,  ONLY:COLLISIONS_CV_only,COLLISIONS_FEW_only,HXC_collisions 
+ use collision_ext,  ONLY:COLLISIONS_CV_only,COLL_bands_frozen,HXC_collisions 
  use X_m,            ONLY:global_gauge,X_t
  use DIPOLES,        ONLY:DIPOLE_t,DIP_S
  use ALLOC,          ONLY:DIPOLE_ALLOC_elemental,DIPOLE_ALLOC_global
@@ -174,7 +174,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
    if(l_use_Hxc_collisions.and..not.COLLISIONS_have_HARTREE) eval_HARTREE=.TRUE.
    !     
    if(COLLISIONS_CV_only) call msg('rs','Collisions contains C<->V ONLY scatterings')
-   if(COLLISIONS_FEW_only) call msg('rs','Collisions contains ONLY selected scatterings')
+   if(any((/COLL_bands_frozen==1/))) call msg('rs','Collisions contains ONLY selected scatterings')
    !
  endif
  !

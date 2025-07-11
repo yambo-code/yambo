@@ -12,7 +12,7 @@
 module SC
  !
  use descriptors,     ONLY:IO_desc
- use pars,            ONLY:SP,schlen,lchlen
+ use pars,            ONLY:SP,LP,schlen,lchlen
  use y_memory_alloc
  !
  implicit none
@@ -32,6 +32,9 @@ module SC
  real(SP)          :: E_convergence
  real(SP)          :: SC_rho_threshold
  real(SP)          :: SC_cycle_mixing
+ !
+ character(schlen)       :: SC_bands_frozen_ch
+ integer(LP), allocatable:: SC_bands_frozen(:)
  !
  character(schlen) :: SC_preconditioning="simple"
  character(schlen) :: SC_potential

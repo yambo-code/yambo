@@ -17,9 +17,8 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  use electrons,      ONLY:n_met_bands,n_full_bands,n_sp_pol
  use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ_bz
  use collision_ext,  ONLY:COLLISIONS_element,COH_COLL_element,HXC_COLL_element,GW_NEQ_COLL_element,&
-&                         COLL_bands,COLLISIONS_load_SP,COLLISIONS_CV_only,COLLISIONS_FEW_only,&
-&                         GW_NEQ_collisions,COH_collisions,HXC_collisions,P_collisions,COLLISIONS_group,&
-&                         COLL_hole_bands,COLL_elec_bands
+&                         COLL_bands,COLLISIONS_load_SP,COLLISIONS_CV_only,&
+&                         GW_NEQ_collisions,COH_collisions,HXC_collisions,P_collisions,COLLISIONS_group
 #if defined _QED
  use QP_m,           ONLY:QP_QED_ng
  use collision_ext,  ONLY:P_COLL_element
@@ -120,10 +119,6 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      D(2,3)=minval(n_full_bands) ! lower bound for conduction
      D(1,4)=maxval(n_met_bands)  ! upper bound for valence
      D(2,4)=-1 ! unused
-   endif
-   if (COLLISIONS_FEW_only) then
-     D(1,3:4)=COLL_hole_bands  ! update upper (and lower) bound for valence
-     D(2,3:4)=COLL_elec_bands  ! update lower (and upper) bound for conduction
    endif
    if (l_collision.and.l_alloc) then
      allocate(HXC_COLL_element(size_))

@@ -224,6 +224,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
      !
      call live_timing()
      !
+     call PP_redux_wait(v2plot)
+     !
    else
      !
      wf_=cZERO
@@ -275,13 +277,13 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
      !
      call live_timing()
      !
+     call PP_redux_wait(wf_)
+     !
      do i1=1,n_lambda_deg
        v2plot(:) = v2plot(:)+abs(wf_(:,i1))**2
      enddo
      !
    endif
-   !
-   call PP_redux_wait(v2plot)
    !
    ! PLOT
    !

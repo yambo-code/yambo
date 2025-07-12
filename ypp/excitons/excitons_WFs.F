@@ -43,15 +43,16 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  ! Workspace
  !
  type(PP_indexes)  :: px
+ logical           :: l_free_hole_loc
  integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_l,i_lambda,j_lambda,i_sp_pol,ir,ir_hole,j1,&
-&                     n_lambda_deg,n_deg_max,neh1,iv1,ic1,ikbz1,ikibz1,i_sp_pol1,is1
+&                     n_lambda_deg,BS_E_deg_done,n_deg_max,neh1,iv1,ic1,ikbz1,ikibz1,i_sp_pol1,is1
  integer           :: ikpbz,ikp,isp
- real(SP)          :: alpha,r_hole_rlu(3)
- complex(SP)       :: phase,B_coeff
+ real(SP)          :: r_hole_rlu(3),k1(3),k2(3)
+ complex(SP)       :: B_coeff
  !
  integer,  allocatable :: rindex(:)
- real(SP), allocatable :: r_cell_cc(:,:),kp_dot_r_h(:),k_dot_r_e(:)
- complex(SP), allocatable :: wf_(:,:),wf_vc(:),WF1(:,:),WF2(:,:)
+ real(SP), allocatable :: r_cell_cc(:,:),kp_dot_r_h(:),k_dot_r_e(:),alpha(:)
+ complex(SP), allocatable :: wf_(:,:),wf_vc(:),WF1(:,:),WF2(:,:),phase(:)
  !
  call section('+','Excitonic Wave Function')
  !
@@ -91,7 +92,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    r_hole_rlu(:)=nint(r_hole_rlu(:)*fft_dim(:))
    ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
    if (ir_hole.lt.0) call error(' Hole coordinates in input must be positive') 
-   call msg('s','      position in the FFT grid     ',r_cell_cc(:,ir_hole),"[c.c.]")
+   call msg('s','      position in the FFT grid     ',r_cell_cc(ir_hole,:),"[c.c.]")
    !
    ! [3] Translation in the center of the Big grid
    !
@@ -107,7 +108,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
      !
    enddo
    ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
-   r_hole=r_cell_cc(:,ir_hole)
+   r_hole=r_cell_cc(ir_hole,:)
    !
    call msg('s','      translated position          ',r_hole,"[c.c.]")
    call msg('s','                                   ',r_hole*BO2ANG,"[A]")
@@ -127,9 +128,12 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  n_deg_max=0
  do i_lambda=1,EXCITONS_n_user_states
    j_lambda=EXCITONS_user_indexes(i_lambda)
-   n_deg_max=max(n_deg_max,count(BS_E_degs==BS_E_degs(j_lambda)))
+   n_lambda_deg=count(BS_E_degs==BS_E_degs(j_lambda))
+   n_deg_max=max(n_deg_max,n_lambda_deg)
  enddo
- YAMBO_ALLOC(wf_vc,(nr_tot))
+ YAMBO_ALLOC(wf_vc,(fft_size))
+ YAMBO_ALLOC(alpha,(nr_tot))
+ YAMBO_ALLOC(phase,(nr_tot))
  YAMBO_ALLOC(wf_,(nr_tot,n_deg_max))
  !
  ! Par Proc
@@ -143,11 +147,20 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  !
  call msg('s','Processing '//trim(intc(EXCITONS_n_user_states))//' states')
  !
+ BS_E_deg_done=-1
+ !
+ l_free_hole_loc=l_free_hole
+ !
  do i_lambda=1,EXCITONS_n_user_states
    !
    j_lambda=EXCITONS_user_indexes(i_lambda)
    !
+   if (BS_E_degs(j_lambda)==BS_E_deg_done) cycle
+   !
+   BS_E_deg_done=BS_E_degs(j_lambda)
+   !
    n_lambda_deg=count(BS_E_degs==BS_E_degs(j_lambda))
+   !
    !
    if (n_lambda_deg>1) call msg('s',' State '//trim(intc(j_lambda))//' Merged with states '//&
 &                                   trim(intc(BS_E_degs(j_lambda)))//' -> '//&
@@ -228,7 +241,11 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
      !
    else
      !
-     wf_=cZERO
+     wf_= cZERO
+     k_dot_r_e  = 1._SP
+     kp_dot_r_h = 1._SP
+     WF1 = cZERO
+     WF2 = cZERO
      !
      do neh = 1,BS_H_dim
        !
@@ -246,28 +263,32 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
        ikp   = Xk%sstar(ikpbz,1)
        isp   = Xk%sstar(ikpbz,2)
        !
-       do ir=1,nr_tot
-         if (l_free_hole) ir_hole=ir
-         k_dot_r_e(ir)       = dot_product(r_cell_cc(:,ir),     Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
-         kp_dot_r_h(ir_hole) = dot_product(r_cell_cc(:,ir_hole),Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
-       enddo
-       !
        call WF_apply_symm((/iv,ikp,  isp,i_sp_pol/),WF1)
        call WF_apply_symm((/ic,ikibz,is, i_sp_pol/),WF2)
        !
-       do ir=1,nr_tot
-         if (l_free_hole) ir_hole=ir
-         wf_vc(ir) = conjg(WF1(rindex(ir_hole),1))*WF2(rindex(ir),1)
-         if(n_spinor==2) wf_vc(ir) = wf_vc(ir) + conjg(WF1(rindex(ir_hole),2))*WF2(rindex(ir),2)
-         !
-         alpha=k_dot_r_e(ir)-kp_dot_r_h(ir_hole)
-         phase=cmplx(cos(alpha),sin(alpha),kind=SP)
-         wf_vc(ir) = wf_vc(ir)*phase
-       enddo
+       k1=Xk%ptbz(ikbz,:)/alat(:)*2._SP*pi
+       k2=Xk%ptbz(ikpbz,:)/alat(:)*2._SP*pi
+       !
+       k_dot_r_e(:)  = r_cell_cc(:,1)*k1(1)+r_cell_cc(:,2)*k1(2)+r_cell_cc(:,3)*k1(3)
+       !
+       if (l_free_hole_loc) then
+         wf_vc(:) = conjg(WF1(:,1))*WF2(:,1)
+         if(n_spinor==2) wf_vc(:) = wf_vc(:) + conjg(WF1(:,2))*WF2(:,2)
+         kp_dot_r_h(:) = r_cell_cc(:,1)*k2(1)+r_cell_cc(:,2)*k2(2)+r_cell_cc(:,3)*k2(3)
+         alpha(:)=k_dot_r_e(:)-kp_dot_r_h(:)
+       else
+         wf_vc(:) = WF1(rindex(ir_hole),1)*WF2(:,1)
+         if(n_spinor==2) wf_vc(:) = wf_vc(:) + WF1(rindex(ir_hole),2)*WF2(:,2)
+         kp_dot_r_h(ir_hole) = dot_product(r_cell_cc(ir_hole,:),k2(:))
+         alpha(:)=k_dot_r_e(:)-kp_dot_r_h(ir_hole)
+       endif
+       !
+       phase(:)=cmplx(cos(alpha(:)),sin(alpha(:)),kind=SP)
+       !phase(:)=alpha(:)
        !
        do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
-          i1=i_l-BS_E_degs(j_lambda)+1
-          wf_(:,i1) = wf_(:,i1)+BS_mat(neh,i_l)*wf_vc(:)
+         i1=i_l-BS_E_degs(j_lambda)+1
+         wf_(:,i1) = wf_(:,i1)+BS_mat(neh,i_l)*wf_vc(rindex(:))*phase(:)
        enddo
        !
        !if (master_thread) call live_timing(steps=1)
@@ -348,7 +369,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
      enddo
      !
      nr_tot = fft_size*ncell(1)*ncell(2)*ncell(3)
-     YAMBO_ALLOC(r_cell_cc,(3,nr_tot))
+     YAMBO_ALLOC(r_cell_cc,(nr_tot,3))
      YAMBO_ALLOC(rindex,(nr_tot))
      !
      nr=(/ncell(1)*fft_dim(1),ncell(2)*fft_dim(2),ncell(3)*fft_dim(3)/)
@@ -366,7 +387,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
            j2=ir2/fft_dim(2)
            j3=ir3/fft_dim(3)
            rindex(ir)=i1+fft_dim(1)*i2+fft_dim(1)*fft_dim(2)*i3+1
-           r_cell_cc(:,ir) = ir1*a(1,:)/fft_dim(1) +&
+           r_cell_cc(ir,:) = ir1*a(1,:)/fft_dim(1) +&
 &                            ir2*a(2,:)/fft_dim(2) +&
 &                            ir3*a(3,:)/fft_dim(3)
          end do

@@ -135,7 +135,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  ! Par Proc
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/EXCITONS_n_user_states/))
+ call PARALLEL_index(px,(/BS_H_dim/))
  call PP_wait()
  !
  ! Loop on exc states
@@ -144,8 +144,6 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  call msg('s','Processing '//trim(intc(EXCITONS_n_user_states))//' states')
  !
  do i_lambda=1,EXCITONS_n_user_states
-   !
-   if (.not.px%element_1D(i_lambda)) cycle
    !
    j_lambda=EXCITONS_user_indexes(i_lambda)
    !
@@ -160,116 +158,130 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    v2plot  =0._SP
    !
    if(l_average_eh) then
+     !
+     do neh = 1,BS_H_dim
        !
-         do neh = 1,BS_H_dim
-           !
-           ikbz  = BSS_eh_table(neh,1)
-           iv    = BSS_eh_table(neh,2)
-           ic    = BSS_eh_table(neh,3)
-           i_sp_pol = spin(BSS_eh_table(neh,:))
-           !
-           ikibz = Xk%sstar(ikbz,1)
-           is    = Xk%sstar(ikbz,2)
-           !
-           do neh1 = 1,BS_H_dim
-             !
-             ikbz1  = BSS_eh_table(neh1,1)
-             iv1    = BSS_eh_table(neh1,2)
-             ic1    = BSS_eh_table(neh1,3)
-             i_sp_pol1 = spin(BSS_eh_table(neh1,:))
-             !
-             ikibz1 = Xk%sstar(ikbz1,1)
-             is1    = Xk%sstar(ikbz1,2)
-             !
-             if(ikbz/=ikbz1) cycle
-               !      
-               ! Build the B_{vvk} (or B_{cck} ) matrix        
-               !
-               if (ic1==ic.and.trim(AVE_exc)=='h') then
-                 !
-		 call WF_apply_symm((/iv, ikibz, is, i_sp_pol /),WF1)
-		 call WF_apply_symm((/iv1,ikibz1,is1,i_sp_pol1/),WF2)
-                 !
-               elseif(iv1==iv.and.trim(AVE_exc)=='e') then
-                 !
-                 call WF_apply_symm((/ic, ikibz, is, i_sp_pol /),WF1)
-                 call WF_apply_symm((/ic1,ikibz1,is1,i_sp_pol1/),WF2)
-		 !
-               endif
-               !
-               do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
-                 !      
-                 B_coeff =  BS_mat(neh, i_l)* conjg(BS_mat(neh1, i_l))   
-                 !
-                 v2plot(:) = v2plot(:)+B_coeff*WF1(:,1)*conjg(WF2(:,1))
-                 if(n_spinor==2) v2plot(:) = v2plot(:)+B_coeff*WF1(:,2)*conjg(WF2(:,2))
-                 !
-               enddo
-               !
-             !
-           enddo ! loop on neh1
-           !
-         enddo ! loop on neh
+       if (.not.px%element_1D(neh)) cycle
+       !
+       ikbz  = BSS_eh_table(neh,1)
+       iv    = BSS_eh_table(neh,2)
+       ic    = BSS_eh_table(neh,3)
+       i_sp_pol = spin(BSS_eh_table(neh,:))
+       !
+       ikibz = Xk%sstar(ikbz,1)
+       is    = Xk%sstar(ikbz,2)
+       !
+       do neh1 = 1,BS_H_dim
          !
+         ikbz1  = BSS_eh_table(neh1,1)
+         iv1    = BSS_eh_table(neh1,2)
+         ic1    = BSS_eh_table(neh1,3)
+         i_sp_pol1 = spin(BSS_eh_table(neh1,:))
+         !
+         ikibz1 = Xk%sstar(ikbz1,1)
+         is1    = Xk%sstar(ikbz1,2)
+         !
+         if(ikbz/=ikbz1) cycle
+         !      
+         ! Build the B_{vvk} (or B_{cck} ) matrix        
+         !
+         if (ic1==ic.and.trim(AVE_exc)=='h') then
+           !
+           call WF_apply_symm((/iv, ikibz, is, i_sp_pol /),WF1)
+           call WF_apply_symm((/iv1,ikibz1,is1,i_sp_pol1/),WF2)
+           !
+           do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
+             !      
+             B_coeff =  BS_mat(neh, i_l)* conjg(BS_mat(neh1, i_l))   
+             !
+             v2plot(:) = v2plot(:)+B_coeff*WF1(:,1)*conjg(WF2(:,1))
+             if(n_spinor==2) v2plot(:) = v2plot(:)+B_coeff*WF1(:,2)*conjg(WF2(:,2))
+             !
+           enddo
+           !
+         elseif(iv1==iv.and.trim(AVE_exc)=='e') then
+           !
+           call WF_apply_symm((/ic, ikibz, is, i_sp_pol /),WF1)
+           call WF_apply_symm((/ic1,ikibz1,is1,i_sp_pol1/),WF2)
+           !
+           do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
+             !      
+             B_coeff =  conjg(BS_mat(neh, i_l))* BS_mat(neh1, i_l)
+             !
+             v2plot(:) = v2plot(:)+B_coeff*conjg(WF1(:,1))*WF2(:,1)
+             if(n_spinor==2) v2plot(:) = v2plot(:)+B_coeff*conjg(WF1(:,2))*WF2(:,2)
+             !
+           enddo
+           !
+         endif
+         !
+       enddo ! loop on neh1
+       !
        !if (master_thread) call live_timing(steps=1)
+       call live_timing(steps=1)
+       !
+     enddo ! loop on neh
+     !
+     call live_timing()
      !
    else
      !
-       wf_=cZERO
-       do neh = 1,BS_H_dim
-         !
-         ikbz  = BSS_eh_table(neh,1)
-         iv    = BSS_eh_table(neh,2)
-         ic    = BSS_eh_table(neh,3)
-         i_sp_pol = spin(BSS_eh_table(neh,:))
-         !
-         ikibz = Xk%sstar(ikbz,1)
-         is    = Xk%sstar(ikbz,2)
-         !
-         ikpbz = qindx_X(iq,ikbz,1)
-         ikp   = Xk%sstar(ikpbz,1)
-         isp   = Xk%sstar(ikpbz,2)
-         !
-         do ir=1,nr_tot
-           if (l_free_hole) ir_hole=ir
-           k_dot_r_e(ir)       = dot_product(r_cell_cc(:,ir),     Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
-           kp_dot_r_h(ir_hole) = dot_product(r_cell_cc(:,ir_hole),Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
-	 enddo
-         !
-         call WF_apply_symm((/iv,ikp,  isp,i_sp_pol/),WF1)
-         call WF_apply_symm((/ic,ikibz,is, i_sp_pol/),WF2)
-         !
-         do ir=1,nr_tot
-           if (l_free_hole) ir_hole=ir
-           wf_vc(ir) = conjg(WF1(rindex(ir),1))*WF2(rindex(ir_hole),1)
-           if(n_spinor==2) wf_vc(ir) = wf_vc(ir) + conjg(WF1(rindex(ir),2))*WF2(rindex(ir_hole),2)
-           !
-	   alpha=k_dot_r_e(ir)-kp_dot_r_h(ir_hole)
-           phase=cmplx(cos(alpha),sin(alpha),kind=SP)
-           wf_vc(ir) = wf_vc(ir)*phase
-	 enddo
-         !
-         do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
-            i1=i_l-BS_E_degs(j_lambda)+1
-            wf_(:,i1) = wf_(:,i1)+BS_mat(neh,i_l)*wf_vc(:)
-	 enddo
-         !
+     wf_=cZERO
+     !
+     do neh = 1,BS_H_dim
+       !
+       if (.not.px%element_1D(neh)) cycle
+       !
+       ikbz  = BSS_eh_table(neh,1)
+       iv    = BSS_eh_table(neh,2)
+       ic    = BSS_eh_table(neh,3)
+       i_sp_pol = spin(BSS_eh_table(neh,:))
+       !
+       ikibz = Xk%sstar(ikbz,1)
+       is    = Xk%sstar(ikbz,2)
+       !
+       ikpbz = qindx_X(iq,ikbz,1)
+       ikp   = Xk%sstar(ikpbz,1)
+       isp   = Xk%sstar(ikpbz,2)
+       !
+       do ir=1,nr_tot
+         if (l_free_hole) ir_hole=ir
+         k_dot_r_e(ir)       = dot_product(r_cell_cc(:,ir),     Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
+         kp_dot_r_h(ir_hole) = dot_product(r_cell_cc(:,ir_hole),Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
        enddo
        !
-       do i1=1,n_lambda_deg
+       call WF_apply_symm((/iv,ikp,  isp,i_sp_pol/),WF1)
+       call WF_apply_symm((/ic,ikibz,is, i_sp_pol/),WF2)
+       !
+       do ir=1,nr_tot
+         if (l_free_hole) ir_hole=ir
+         wf_vc(ir) = conjg(WF1(rindex(ir_hole),1))*WF2(rindex(ir),1)
+         if(n_spinor==2) wf_vc(ir) = wf_vc(ir) + conjg(WF1(rindex(ir_hole),2))*WF2(rindex(ir),2)
          !
-         v2plot(:) = v2plot(:)+abs(wf_(:,i1))**2
-	 !
+         alpha=k_dot_r_e(ir)-kp_dot_r_h(ir_hole)
+         phase=cmplx(cos(alpha),sin(alpha),kind=SP)
+         wf_vc(ir) = wf_vc(ir)*phase
+       enddo
+       !
+       do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
+          i1=i_l-BS_E_degs(j_lambda)+1
+          wf_(:,i1) = wf_(:,i1)+BS_mat(neh,i_l)*wf_vc(:)
        enddo
        !
        !if (master_thread) call live_timing(steps=1)
+       call live_timing(steps=1)
+       !
+     enddo
+     !
+     call live_timing()
+     !
+     do i1=1,n_lambda_deg
+       v2plot(:) = v2plot(:)+abs(wf_(:,i1))**2
+     enddo
      !
    endif
    !
-   !call live_timing()
-   !
-   !call PP_redux_wait(v2plot)
-   !
+   call PP_redux_wait(v2plot)
    !
    ! PLOT
    !

@@ -80,14 +80,6 @@ subroutine plot_gnuplot(eval_only)
      enddo
      v_max=maxval(v2plot2D(:,1))
      ! 
-     ! Daniele [15/7/2007]
-     ! Questo e' corretto, e' la normalizzazione. Io in una versione precedente
-     ! di questa subroutine, la parte 1d di gnuplot non la avevo normalizzata
-     ! a proposito. Siccome e' il plot piu' veloce, lo usavo per vedere il
-     ! valore assoluto. Quando si mette la hole, magari un po' casaccio, cosi'
-     ! vedi se stai pescando valori della wf, oppure no. Appunto nel caso che
-     ! uno mette la hole in un punto con poca densita'.
-     !
      if (l_norm_to_one) v2plot2D=v2plot2D/v_max  
      v2plot2D=v2plot2D*WF_multiplier
      !

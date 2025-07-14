@@ -18,7 +18,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  use D_lattice,     ONLY:a,alat
  use FFT_m,         ONLY:fft_dim,fft_size
  use com,           ONLY:msg,of_open_close
- use electrons,     ONLY:spin,n_spinor
+ use electrons,     ONLY:n_spinor
  use YPPm,          ONLY:v2plot,ncell,r_hole,l_free_hole,AVE_exc,&
 &                        nr,nr_tot,output_fname,l_average_eh,&
 &                        use_xcrysden,use_gnuplot,use_cube,plot_dim,&
@@ -43,15 +43,15 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  ! Workspace
  !
  type(PP_indexes)  :: px
- integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_l,i_lambda,j_lambda,i_sp_pol,ir,ir_hole,j1,&
-&                     n_lambda_deg,BS_E_deg_done,n_deg_max,neh1,iv1,ic1,ikbz1,ikibz1,i_sp_pol1,is1
- integer           :: ikpbz,ikp,isp,i_spinor,rh_size,ir_hole_rlu(3)
+ integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_lambda,j_lambda,i_sp_pol,ir,ir_hole,j1,&
+&                     n_lambda_deg,BS_E_deg_done,neh1,iv1,ic1,ikbz1,ikibz1,i_sp_pol1,is1
+ integer           :: ikpbz,ikp,isp,i_spinor,rh_size,ir_hole_rlu(3),i_plot
  real(SP)          :: r_hole_rlu(3),k1(3),k2(3)
  complex(SP)       :: B_coeff
  !
  integer,  allocatable :: rindex(:)
  real(SP), allocatable :: r_cell_cc(:,:),kp_dot_r_h(:),k_dot_r_e(:),alpha(:)
- complex(SP), allocatable :: wf_(:,:),wf_vc(:),WF1(:,:),WF2(:,:),phase(:)
+ complex(SP), allocatable :: wf_tmp(:),wf_vc(:),WF1(:,:),WF2(:,:),phase(:)
  !
  call section('+','Excitonic Wave Function')
  !
@@ -124,16 +124,10 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  YAMBO_ALLOC(k_dot_r_e,(nr_tot))
  YAMBO_ALLOC(kp_dot_r_h,(rh_size))
  !
- n_deg_max=0
- do i_lambda=1,EXCITONS_n_user_states
-   j_lambda=EXCITONS_user_indexes(i_lambda)
-   n_lambda_deg=count(BS_E_degs==BS_E_degs(j_lambda))
-   n_deg_max=max(n_deg_max,n_lambda_deg)
- enddo
  YAMBO_ALLOC(wf_vc,(fft_size))
  YAMBO_ALLOC(alpha,(nr_tot))
  YAMBO_ALLOC(phase,(nr_tot))
- YAMBO_ALLOC(wf_,(nr_tot,n_deg_max))
+ YAMBO_ALLOC(wf_tmp,(nr_tot))
  !
  ! Par Proc
  !
@@ -152,20 +146,17 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    !
    j_lambda=EXCITONS_user_indexes(i_lambda)
    !
-   if (BS_E_degs(j_lambda)==BS_E_deg_done) cycle
+   if (BS_E_degs(j_lambda)/=BS_E_deg_done) i1=0
    !
    BS_E_deg_done=BS_E_degs(j_lambda)
    !
+   i1=i1+1
+   !
    n_lambda_deg=count(BS_E_degs==BS_E_degs(j_lambda))
-   !
-   !
-   if (n_lambda_deg>1) call msg('s',' State '//trim(intc(j_lambda))//' Merged with states '//&
-&                                   trim(intc(BS_E_degs(j_lambda)))//' -> '//&
-&                                   trim(intc(BS_E_degs(j_lambda)+n_lambda_deg-1)))
    !
    if(l_average_eh) then
      !
-     v2plot  =0._SP
+     if(i1==1) v2plot  =0._SP
      !
      call live_timing('ExcWF@'//trim(intc(j_lambda)),px%n_of_elements(myid+1))  
      !
@@ -176,7 +167,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
        ikbz  = BSS_eh_table(neh,1)
        iv    = BSS_eh_table(neh,2)
        ic    = BSS_eh_table(neh,3)
-       i_sp_pol = spin(BSS_eh_table(neh,:))
+       i_sp_pol = BSS_eh_table(neh,4)
        !
        ikibz = Xk%sstar(ikbz,1)
        is    = Xk%sstar(ikbz,2)
@@ -186,7 +177,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
          ikbz1  = BSS_eh_table(neh1,1)
          iv1    = BSS_eh_table(neh1,2)
          ic1    = BSS_eh_table(neh1,3)
-         i_sp_pol1 = spin(BSS_eh_table(neh1,:))
+         i_sp_pol1 = BSS_eh_table(neh1,4)
          !
          ikibz1 = Xk%sstar(ikbz1,1)
          is1    = Xk%sstar(ikbz1,2)
@@ -200,14 +191,10 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
            call WF_apply_symm((/iv, ikibz, is, i_sp_pol /),WF1)
            call WF_apply_symm((/iv1,ikibz1,is1,i_sp_pol1/),WF2)
            !
-           do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
-             !      
-             B_coeff = BS_mat(neh, i_l)* conjg(BS_mat(neh1, i_l))   
-             !
-	     do i_spinor=1,n_spinor
-               v2plot(:) = v2plot(:)+B_coeff*WF1(:,i_spinor)*conjg(WF2(:,i_spinor))
-             enddo
-  	     !
+           B_coeff = BS_mat(neh, j_lambda)* conjg(BS_mat(neh1, j_lambda))
+           !
+           do i_spinor=1,n_spinor
+             v2plot(:) = v2plot(:)+B_coeff*WF1(:,i_spinor)*conjg(WF2(:,i_spinor))
            enddo
            !
          elseif(iv1==iv.and.trim(AVE_exc)=='e') then
@@ -215,14 +202,10 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
            call WF_apply_symm((/ic, ikibz, is, i_sp_pol /),WF1)
            call WF_apply_symm((/ic1,ikibz1,is1,i_sp_pol1/),WF2)
            !
-           do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
-             !      
-             B_coeff = conjg(BS_mat(neh, i_l))* BS_mat(neh1, i_l)
-             !
-	     do i_spinor=1,n_spinor
-               v2plot(:) = v2plot(:)+B_coeff*conjg(WF1(:,i_spinor))*WF2(:,i_spinor)
-             enddo
-             !
+           B_coeff = conjg(BS_mat(neh,j_lambda))* BS_mat(neh1,j_lambda)
+           !
+           do i_spinor=1,n_spinor
+             v2plot(:) = v2plot(:)+B_coeff*conjg(WF1(:,i_spinor))*WF2(:,i_spinor)
            enddo
            !
          endif
@@ -244,17 +227,13 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
      WF1 = cZERO
      WF2 = cZERO
      !
-     ! The following omp implementation assumes that, at all
-     ! "omp do" instructions the variables are split in the same way
-     ! among the omp threads
-     !
-     call OPENMP_update(master_thread)
-     !
-     wf_= cZERO
+     wf_tmp= cZERO
      !
      !$omp parallel default(shared), &
-     !$omp private(k_dot_r_e,alpha,phase,ir), &
-     !$omp reduction(+:wf_)
+     !$omp private(k_dot_r_e,kp_dot_r_h,alpha,phase,ir), &
+     !$omp reduction(+:wf_tmp)
+     !
+     call OPENMP_update(master_thread)
      !
      do neh = 1,BS_H_dim
        !
@@ -263,7 +242,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
        ikbz  = BSS_eh_table(neh,1)
        iv    = BSS_eh_table(neh,2)
        ic    = BSS_eh_table(neh,3)
-       i_sp_pol = spin(BSS_eh_table(neh,:))
+       i_sp_pol = BSS_eh_table(neh,4)
        !
        ikibz = Xk%sstar(ikbz,1)
        is    = Xk%sstar(ikbz,2)
@@ -298,8 +277,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
            kp_dot_r_h(ir)=r_cell_cc(ir,1)*k2(1)+r_cell_cc(ir,2)*k2(2)+r_cell_cc(ir,3)*k2(3)
            alpha(ir)=k_dot_r_e(ir)-kp_dot_r_h(ir)
            phase(ir)=cmplx(cos(alpha(ir)),sin(alpha(ir)),kind=SP)
+           wf_tmp(ir) = wf_tmp(ir)+BS_mat(neh,j_lambda)*wf_vc(rindex(ir))*phase(ir)
          enddo
-	 !$omp end do
          !
        else
          ! 
@@ -310,47 +289,49 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
            k_dot_r_e(ir) =r_cell_cc(ir,1)*k1(1)+r_cell_cc(ir,2)*k1(2)+r_cell_cc(ir,3)*k1(3)
            alpha(ir)=k_dot_r_e(ir)-kp_dot_r_h(1)
            phase(ir)=cmplx(cos(alpha(ir)),sin(alpha(ir)),kind=SP)
+           wf_tmp(ir) = wf_tmp(ir)+BS_mat(neh,j_lambda)*wf_vc(rindex(ir))*phase(ir)
          enddo
-	 !$omp end do
          !
        endif
        !
-       do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
-         i1=i_l-BS_E_degs(j_lambda)+1
-         !$omp do
-         do ir=1,nr_tot
-           wf_(ir,i1) = wf_(ir,i1)+BS_mat(neh,i_l)*wf_vc(rindex(ir))*phase(ir)
-         enddo
-	 !$omp end do
-       enddo
-       !
        if (master_thread) call live_timing(steps=1)
+       !write(*,*) neh,wf_tmp(1:10)
        !
      enddo
      !$omp end parallel
+     !write(*,*) "after redux ",wf_tmp(1:10)
      !
      call live_timing()
      !
-     call PP_redux_wait(wf_)
+     call PP_wait()
      !
-     v2plot= 0._SP
+     call PP_redux_wait(wf_tmp)
      !
-     !$omp parallel do default(shared), collapse(2) &
-     !$omp private(i1,ir), reduction(+:v2plot)
-     do i1=1,n_lambda_deg
-       do ir=1,nr_tot
-         v2plot(ir) = v2plot(ir)+abs(wf_(ir,i1))**2
-       enddo
+     if (i1==1) v2plot= 0._SP
+     !
+     do ir=1,nr_tot
+       v2plot(ir) = v2plot(ir)+abs(wf_tmp(ir))**2
      enddo
-     !$omp end parallel do
      !
+   endif
+   !
+   if (i1/=n_lambda_deg) cycle
+   !
+   if (n_lambda_deg==1) then
+     call msg('s','Plotting single state '//trim(intc(j_lambda)))
+     i_plot=j_lambda
+   else if (n_lambda_deg>1)  then
+     call msg('s','Plotting merged states '//&
+     &          trim(intc(BS_E_degs(j_lambda)))//' -> '//&
+     &          trim(intc(BS_E_degs(j_lambda)+n_lambda_deg-1)))
+     i_plot=BS_E_degs(j_lambda)
    endif
    !
    ! PLOT
    !
-   if (use_cube)      output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.cube'
-   if (use_xcrysden)  output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.xsf'
-   if (use_gnuplot)   output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))
+   if (use_cube)      output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(i_plot))//'.cube'
+   if (use_xcrysden)  output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(i_plot))//'.xsf'
+   if (use_gnuplot)   output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(i_plot))
    !
    if (use_cube) then 
      call of_open_close(trim(output_fname),'o')
@@ -378,7 +359,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  YAMBO_FREE(WF2)
  !
  YAMBO_FREE(wf_vc)
- YAMBO_FREE(wf_)
+ YAMBO_FREE(wf_tmp)
  !
  call WF_free(WF)
  !

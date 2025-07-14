@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AF
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine SERIAL_lin_system(n,nrhs,A,B)
  !
  !  Solve the linear system
@@ -15,8 +19,9 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  use drivers,        ONLY:l_nl_optics,l_real_time
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer     :: n,nrhs
  complex(SP) :: A(n,n),B(n,nrhs)

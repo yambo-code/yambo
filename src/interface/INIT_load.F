@@ -32,7 +32,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,RIM_W_ng,rimw_type,&
 &                        bz_samp,RIM_ng,RIM_epsm1,eps_env,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,RIM_sphe_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
- use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_core_bands,&
+ use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_bands_frozen_ch,&
 &                        BS_n_g_W,BS_n_g_exch,BS_n_g_fxc,BSE_L_kind,BS_K_cutoff,BSK_IO_mode,BSE_dipole_geometry
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,BSS_target_E,BSS_trange_E,&
 &                        BSS_dr,BSS_er,BSS_E_dir,BSS_Q_dir,BSS_damp_reference,BSS_inversion_mode,&
@@ -51,8 +51,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use QP_m,          ONLY:QP_QED_ng
 #endif
 #if defined _SC || defined _RT || defined _QED
- use hamiltonian,   ONLY:H_potential
- use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands,COLL_hole_bands,COLL_elec_bands
+ use hamiltonian,   ONLY:H_potential,H_ref_bands_frozen
+ use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands,COLL_bands_frozen,COLL_bands_frozen_ch
 #endif
  use QP_m,          ONLY:SC_E_threshold
 #if defined _SC
@@ -60,7 +60,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use SC,            ONLY:SC_iterations,SC_up_W_iters,&
 &                        SC_rho_threshold,SC_cycle_mixing,&
 &                        SC_bands,SC_preconditioning,OEP_approx,&
-&                        SC_neq_kind,SC_mu,SC_last_coh_it
+&                        SC_neq_kind,SC_mu,SC_last_coh_it,&
+&                        SC_bands_frozen,SC_bands_frozen_ch
 #endif
 #if defined _RT
  use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,Gless_RESTART_RT_IO_t,     &
@@ -68,19 +69,19 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use RT_occupations,ONLY:RT_RTA_temp,RT_RTA_chem
  use RT_lifetimes,  ONLY:RT_life_extrap_times_INPUT
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
-&                        NE_tot_time,RT_bands,RT_hole_bands,RT_elec_bands,RT_deph_range,    &
+&                        NE_tot_time,RT_bands,RT_bands_frozen_ch,RT_deph_range,  &
 &                        RT_ave_dephasing,RT_eh_en,RT_scatt_tresh,Gr_kind,       &
 &                        NE_MEM_treshold,NE_time_step_update_jump_INPUT,         &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
 &                        NE_initial_time_step_update,NE_step_update_treshold,    &
-&                        RT_MAX_step,RAD_magnification,  &
+&                        RT_MAX_step,RAD_magnification,RT_bands_frozen,          &
 &                        RT_deph_deg_thresh,RT_step_manual_prefactor,NE_time_step_update_manual
  use fields,        ONLY:n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
 #if defined _NL
  use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha, &
-&                        NL_verb_name,n_angles,NL_rot_axis,NL_hole_bands,NL_elec_bands,max_angle
+&                        NL_verb_name,n_angles,NL_rot_axis,NL_bands_frozen,NL_bands_frozen_ch,max_angle
 #endif 
 #if defined _NL | defined _SC
  use fields,        ONLY:Efield
@@ -294,10 +295,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSEmod',  '[BSE] resonant/retarded/coupling',BSE_mode,case="a")
  call it(defs,'Lkind',   '[BSE,X] bar(default)/full/tilde',BSE_L_kind,verb_level=V_resp)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
- call it(defs,'BSEHoleBands','[BSK] Bands range for Hole. If set, other bands are ignored in the hole channel',&
-&                                                                                            BS_core_bands(1:2),verb_level=V_resp)
- call it(defs,'BSEElecBands','[BSK] Bands range for Electrons. If set other bands are ignored in the electrons channel',&
-&                                                                                            BS_core_bands(3:4),verb_level=V_resp)
+ call it(defs,'BSEFrozenBands','[BSK] Bands expluded from BSE construction',BS_bands_frozen_ch,verb_level=V_resp)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSENGfxc','[BSK] Fxc components', BS_n_g_fxc,G_unit,verb_level=V_resp)
@@ -427,8 +425,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! Real Time dynamics
  !
  call it(defs,'RTBands',    '[RT] Bands',RT_bands)
- call it(defs,'RTHoleBands','[RT] Active Bands range in valence',RT_hole_bands,Verb_level=V_real_time)
- call it(defs,'RTElecBands','[RT] Active Bands range in conduct',RT_elec_bands,Verb_level=V_real_time)
+ call it(defs,'RTFrozenBands','[RT] Frozen Bands list',RT_bands_frozen_ch,Verb_level=V_real_time)
  !
  ! This call is a temporary fix due to the multiple definition of energy ranges.
  ! The call is needed to align the different values based on the USER definition.
@@ -538,8 +535,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! Non-linear Optics
  !
  call it(defs,'NLBands',      '[NL] Bands range',NL_bands)
- call it(defs,'NLHoleBands',  '[NL] Active Bands range in valence',NL_hole_bands,Verb_level=V_nl_optics)
- call it(defs,'NLElecBands',  '[NL] Active Bands range in conduct',NL_elec_bands,Verb_level=V_nl_optics)
+ call it(defs,'NLFrozenBands','[NL] Frozen Bands list',NL_bands_frozen_ch,Verb_level=V_nl_optics)
  call it(defs,'NLverbosity',  '[NL] Verbosity level (low | high)',NL_verb_name) 
  call it(defs,'NLstep',       '[NL] Time step length',RT_step,unit=Time_unit(1),Verb_level=V_nl_optics)
  call it(defs,'NLtime',       '[NL] Simulation Time',NE_tot_time,unit=Time_unit(1))
@@ -728,8 +724,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! SC and RT common
  !
  call it(defs,'COLLBands',   '[COLL] Bands for the collisions',COLL_bands)
- call it(defs,'COLLHoleBands','[COLL] Active Bands range in valence',COLL_hole_bands,Verb_level=V_sc)
- call it(defs,'COLLElecBands','[COLL] Active Bands range in conduct',COLL_elec_bands,Verb_level=V_sc)
+ call it(defs,'COLLFrozenBands','[COLL] Frozen Bands list',COLL_bands_frozen_ch,Verb_level=V_sc)
  !
  call it(defs,'HXC_Potential',  '[SC] SC HXC Potential',H_potential,protect=.FALSE.,case="A")
  call it(defs,'COLLCut',        '[SC,RT] Cutoff on the collisions, 0=full 1=none (default =0.0005)',&
@@ -738,8 +733,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
 #endif
  !
-#if defined _RT
-#endif
  !
 #if defined _SC
  call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
@@ -747,6 +740,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
  !
  if (initmode==4) then
+   !
+   call LEVELS_frozen(en)
    call LEVELS_mirror("MIRROR_q",en,X,Dip,l_USER_fields)
    call LEVELS_mirror("MIRROR_bands",en,X,Dip,l_USER_fields)
  endif

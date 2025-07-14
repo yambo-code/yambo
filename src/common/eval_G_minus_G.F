@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AMAFDS
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 integer function eval_G_minus_G(iG,iGo,COMM)
  !
@@ -23,8 +27,9 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  use R_lattice,    ONLY:G_m_G,DEV_VAR(G_m_G),G_m_G_maxval,g_vec,ng_in_shell,n_g_shells,E_of_shell
  use gpu_m,        ONLY:have_gpu
  use timing_m,     ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer :: iG,iGo
  type(yMPI_comm), optional :: COMM

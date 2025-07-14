@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  !
  use drivers,       ONLY:l_life
@@ -30,8 +34,9 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  use parallel_m,    ONLY:PAR_nQ_ibz,PAR_Xk_nbz,PAR_Xk_nibz
  ! ID's
  use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID,PAR_IND_Q_ibz_ID
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q

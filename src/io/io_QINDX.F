@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 !> @brief Read and write scattering indexes
 !
 ! io_sec=1   general parameters   
@@ -29,8 +33,9 @@ integer function io_QINDX(Xk,q,io_db)
 &                         ver_is_gt_or_eq,io_fragment,def_variable_bulk,io_variable_bulk
  use timing_m,       ONLY:timing
  use parallel_m,     ONLY:PAR_K_scheme
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp)::q,Xk
  integer      ::io_db,i3,i2,i2_dn,i2_up,i2_mem,i2_step,IO_size

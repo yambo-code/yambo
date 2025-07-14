@@ -5,12 +5,17 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 module YPP_real_time
  !
  use units,    ONLY:HA2EV
  use pars,     ONLY:schlen,SP,DP,rZERO
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! RT
  !

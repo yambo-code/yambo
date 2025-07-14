@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfiles,basename,int_kind,i_T)
  !
  use units,          ONLY:HA2EV
@@ -22,8 +26,9 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
 #if defined _YPP_RT
  use YPP_real_time,  ONLY:GreenF_T_and_W
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp),    intent(in)  :: Xk,LOCAL_k
  type(levels),     intent(in)  :: Xen
@@ -292,8 +297,9 @@ subroutine define_grid_map(Xk,Local_k,Grid_to_path_map,n_points_max)
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp
  use vec_operate,    ONLY:v_norm,iku_v_norm
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp),  intent(in)  :: Xk,LOCAL_k
  integer,        intent(out) :: Grid_to_path_map(LOCAL_k%nbz,Xk%nbz)

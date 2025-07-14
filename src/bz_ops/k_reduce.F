@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine k_reduce(k,FORCE_BZ)
  !
  ! Input:
@@ -21,8 +25,9 @@ subroutine k_reduce(k,FORCE_BZ)
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:b,rl_sop,bz_samp
  use zeros,          ONLY:k_rlu_zero
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp)::k
  logical      ::FORCE_BZ

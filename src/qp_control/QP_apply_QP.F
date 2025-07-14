@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QP_apply_QP(i_ACTION,bands,en,k,qp)
  !
  use pars,          ONLY:rZERO
@@ -12,8 +16,9 @@ subroutine QP_apply_QP(i_ACTION,bands,en,k,qp)
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol
  use QP_CTL_m,      ONLY:QP_action
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)    ::en
  type(QP_t)      ::qp

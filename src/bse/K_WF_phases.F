@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_WF_phases(Xk)
  !
  ! This routine evaluates the WF phases needed to evaluate the correlation
@@ -35,8 +39,9 @@ subroutine K_WF_phases(Xk)
  use electrons,     ONLY:n_sp_pol,n_spinor
  use interfaces,    ONLY:WF_apply_symm
  use timing_m,      ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! Work Space
  !

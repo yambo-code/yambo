@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QP_DBs_create_and_modify(en,k)
  !
  use pars,          ONLY:SP
@@ -15,8 +19,9 @@ subroutine QP_DBs_create_and_modify(en,k)
  use QP_m,          ONLY:QP_t,QP_reset,QP_state,QP_nb,QP_nk,QP_n_states,QP_alloc
  use R_lattice,     ONLY:bz_samp
  use YPPm,          ONLY:QP_user_corrections
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels), intent(in) :: en
  type(bz_samp),intent(in) :: k

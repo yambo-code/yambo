@@ -4,6 +4,11 @@
 ! Copyright (C) 2022 the YAMBO team
 !
 ! Authors (see AUTHORS file for details): AF
+!
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h> 
 ! 
 !=====================================================================
 ! Driver to 3D FFT: FFTW, Goedecker
@@ -27,7 +32,6 @@
 !
 !=====================================================================
 !
-#include<dev_defs.h>
 !
 subroutine fft_3d_hip(c_d,n,fft_sign,hipfft_plan)
  !
@@ -36,8 +40,9 @@ subroutine fft_3d_hip(c_d,n,fft_sign,hipfft_plan)
  use gpu_m,                only: gpu_devsync
  use devxlib_environment
  use hipfft_m
+ use y_memory_alloc
  !
-#include<y_memory.h> 
+ implicit none
  !
  integer      :: fft_sign,n(3)
  type(c_ptr)  :: hipfft_plan

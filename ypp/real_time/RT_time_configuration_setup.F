@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !
  use units,          ONLY:AUT2FS,pi,HA2EV
@@ -13,8 +17,9 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  use com,            ONLY:msg
  use real_time,      ONLY:RT_step
  use RT_control,     ONLY:TIME_adjust,RT_IO_t
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  character(*),  intent(in) :: what
  type(RT_IO_t), intent(in) :: GENERAL_RT_IO_t

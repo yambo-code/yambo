@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_X(X,Xw,ID)
  !
  use pars,          ONLY:SP,schlen
@@ -21,8 +25,9 @@ integer function io_X(X,Xw,ID)
 &                        IO_OUTDATED_DB,frag_RESPONSE,IO_NO_DATABASE,io_mode,DUMP
  use stderr,        ONLY:intc,STRING_same
  use timing_m,      ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(X_t)   :: X
  type(w_samp):: Xw

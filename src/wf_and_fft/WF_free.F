@@ -5,15 +5,20 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 subroutine WF_free(WF,keep_fft,keep_states_to_load)
  !
  use wave_func,    ONLY:WAVEs
  use pseudo,       ONLY:pp_is_uspp,PP_uspp_free
  use gpu_m,        ONLY:have_gpu
  use devxlib,      ONLY:devxlib_mapped
+ use y_memory_alloc
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ implicit none
  !
  type(WAVEs)       :: WF
  logical, optional :: keep_fft 

@@ -5,12 +5,17 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 module MAGNONS
  !
  use pars,       ONLY:SP
  use BS,         ONLY:l_BS_magnons
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  complex(SP), allocatable :: BSS_dipoles_magn(:,:)
  !

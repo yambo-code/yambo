@@ -5,7 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
 #include<dev_defs.h>
+!
 ! 
 function K_correlation_kernel_dir(i_block,i_p,i_pmq,                               &
 &                                 i_k_s,i_p_s,i_n_k,i_n_p,i_kmq_s,i_pmq_s,i_m_k,i_m_p,  &

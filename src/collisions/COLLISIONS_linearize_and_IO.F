@@ -3,7 +3,11 @@
 !
 ! Copyright (C) 2013 The Yambo Team
 !
-! Authors (see AUTHORS file for details): CA AM
+! Authors (see AUTHORS file for details): CA AM DS
+!
+! headers
+!
+#include<collisions.h>
 !
 subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL_grp,COLL_element,COLL_ID,COMM)
  !
@@ -12,8 +16,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL_grp,COLL_eleme
  use parallel_int,    ONLY:PP_wait
  use electrons,       ONLY:n_met_bands,n_full_bands,n_sp_pol
  use collision_ext,   ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group,&
-&                          COLLISIONS_CV_only,COLLISIONS_FEW_only,&
-&                          COLL_hole_bands,COLL_elec_bands
+&                          COLLISIONS_CV_only,COLL_bands_frozen
  use IO_int,          ONLY:io_control
  use IO_m,            ONLY:REP,OP_APP_CL,OP_WR_CL,OP_APP,WR,WR_CL,io_COLLs
  use COLL_interfaces, ONLY:io_COLLISIONS
@@ -21,7 +24,6 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL_grp,COLL_eleme
  !
  implicit none                                              
  !
-#include<collisions.h>
  !
  character(*)                            :: what
  integer,                  intent(in)    :: i_coll,last_coll
@@ -90,17 +92,13 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL_grp,COLL_eleme
    do i4=1,n_sp_pol                            ! i_sp_pol
    do i3=COLL_grp%D(3,1),COLL_grp%D(3,2)       ! ik
      do i2=COLL_grp%D(2,1),COLL_grp%D(2,2)     ! ib1
-       if ( COLLISIONS_FEW_only .and. i2<COLL_hole_bands(1) ) cycle
-       if ( COLLISIONS_FEW_only .and. i2>COLL_hole_bands(2) .and. i2<COLL_elec_bands(1) ) cycle
-       if ( COLLISIONS_FEW_only .and. i2>COLL_elec_bands(2) ) cycle
+       if ( COLL_bands_frozen(i2)==1 ) cycle
        do i1=COLL_grp%D(1,1),COLL_grp%D(1,2)   ! ib2
          !
          if ( COLLISIONS_CV_only .and. (i1> n_met_bands(i4)  .and. i2> n_met_bands(i4) ) ) cycle
          if ( COLLISIONS_CV_only .and. (i1<=n_full_bands(i4) .and. i2<=n_full_bands(i4)) ) cycle
          !
-         if ( COLLISIONS_FEW_only .and. i1<COLL_hole_bands(1) ) cycle
-         if ( COLLISIONS_FEW_only .and. i1>COLL_hole_bands(2) .and. i1<COLL_elec_bands(1) ) cycle
-         if ( COLLISIONS_FEW_only .and. i1>COLL_elec_bands(2) ) cycle
+         if ( COLL_bands_frozen(i1)==1 ) cycle
          !
          ! In the COHSEX/HF case a cutoff can be applied
          !

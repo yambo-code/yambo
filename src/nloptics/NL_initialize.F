@@ -5,12 +5,16 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine NL_initialize(E,k)
  ! 
  use pars,           ONLY:SP,DP,pi
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
  use vec_operate,    ONLY:normalize_v,v_norm,cross_product
- use collision_ext,  ONLY:COLLISIONS_CV_only,COLLISIONS_FEW_only,COLLISIONS_load_SP,COLLISIONS_compr
+ use collision_ext,  ONLY:COLLISIONS_CV_only,COLL_bands_frozen,COLLISIONS_load_SP,COLLISIONS_compr
  use hamiltonian,    ONLY:H_potential
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
@@ -37,8 +41,9 @@ subroutine NL_initialize(E,k)
  use electric,       ONLY:l_force_SndOrd,l_res_symms
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels), intent(in) :: E
  type(bz_samp),intent(in) :: k
@@ -419,7 +424,7 @@ subroutine NL_initialize(E,k)
  if(eval_COLLISIONS) then
    !      
    if(COLLISIONS_CV_only) call warning(' ONLY cv scattering in COLLISIONS! ')
-   if(COLLISIONS_FEW_only) call warning(' ONLY selected scattering in COLLISIONS! ')
+   if( any((/COLL_bands_frozen==1/)) ) call warning(' ONLY selected scattering in COLLISIONS! ')
    !
    if(l_no_compress_COLL) then
      call msg('sr','Full collisions in double-precision ')
@@ -488,7 +493,7 @@ subroutine NL_initialize(E,k)
  !
  call RT_control_alloc("all")
  !
-! if(.not.l_pump_and_probe) then
+ !if(.not.l_pump_and_probe) then
  do NE_i_time=1,NE_steps
    Time=real(NE_i_time-1,SP)*RT_step
    OBS_RT_IO_t%Time(NE_i_time)=Time
@@ -517,12 +522,14 @@ subroutine NL_initialize(E,k)
    call msg( 'r', 'Adiabatic param      [1/mu]',Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency(1)**3)
  enddo
  call msg( 'r', 'Efield T_0                 ',T_0,"[fs]")
- call msg( 'r', 'Frequencies range          ',NL_er*HA2EV)
- call msg( 'sr','Frequencies steps          ',n_frequencies)
- call msg( 'r', 'Frequency   step           ',NL_estep*HA2EV)
- call msg( 'sr','Number of angles           ',n_angles)
- call msg( 'sr','Max angle (degree)         ',max_angle)
- call msg( 'r', 'Rotation axis              ',NL_rot_axis)
+ if (.not.l_pump_and_probe) then
+   call msg( 'r', 'Frequencies range          ',NL_er*HA2EV)
+   call msg( 'sr','Frequencies steps          ',n_frequencies)
+   call msg( 'r', 'Frequency   step           ',NL_estep*HA2EV)
+   call msg( 'sr','Number of angles           ',n_angles)
+   call msg( 'sr','Max angle (degree)         ',max_angle)
+   call msg( 'r', 'Rotation axis              ',NL_rot_axis)
+ endif
  call msg( 'r', 'Use Dipoles                ',l_use_DIPOLES)
  call msg( 'r', 'Induced Field              ',l_RT_induced_field)
  call msg( 'r', 'Force Snd Order Dipoles    ',l_force_SndOrd)

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
  !
  use pars,          ONLY:rZERO,cZERO,schlen
@@ -18,8 +22,9 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
 &                        gsqF_energy_steps,PH_kpt_bz,elph_nk_bz,elph_use_q_grid,FineGd_E_kpq_components_reset
  use parallel_m,    ONLY:PAR_nQ_bz
  use stderr,        ONLY:STRING_split
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  character(*)            ::what
  type(GKKP_me), optional ::GKKP

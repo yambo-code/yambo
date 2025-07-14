@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine DIPOLE_g_space(Xen,Xk,Dip)
  !
@@ -32,8 +36,9 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
  use gpu_m,               ONLY:have_gpu,gpu_devsync
  use devxlib,             ONLY:devxlib_memcpy_h2d,devxlib_memset_d
  use stderr,              ONLY:STRING_match
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen

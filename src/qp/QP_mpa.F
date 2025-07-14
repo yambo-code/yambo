@@ -243,12 +243,13 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! MPA workspace
  !
- if (.not.allocated(MPA_E_par).and.io_RESPONSE) allocate(MPA_E_par(1))
- if (.not.allocated(MPA_R_par).and.io_RESPONSE) allocate(MPA_R_par(1))
- if (io_RESPONSE) then
-   ! AF: GPU allocation is performed separately below
-   call MPA_ALLOC_parallel(MPA_E_par(1),MPA_R_par(1),X%ng,2*X%mpa_npoles,"CPU_ONLY")
- endif
+ ! AF: GPU allocation is performed separately below
+ !
+ if (.not.allocated(MPA_E_par)) allocate(MPA_E_par(1))
+ if (.not.allocated(MPA_R_par)) allocate(MPA_R_par(1))
+ !
+ call MPA_ALLOC_parallel(MPA_E_par(1),MPA_R_par(1),X%ng,X%mpa_npoles,"CPU_ONLY")
+
  !
  ! setting up a MPA-specific MPI parallelism
  ! for the fitting of poles and residues, aimed at distributing
@@ -355,8 +356,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      MP_Qerr=0._SP
      cond_numQ(:)=0._SP
      !
-     MPA_R_par(1)%blc=0.0
-     MPA_E_par(1)%blc=0.0
+     MPA_R_par(1)%blc=0.0_SP
+     MPA_E_par(1)%blc=0.0_SP
 
      !
      ! reset dims according to =X_par(iq_mem)%cols/rows if SE_G parallelism is

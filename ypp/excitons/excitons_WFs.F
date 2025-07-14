@@ -277,8 +277,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
          kp_dot_r_h(:) = r_cell_cc(:,1)*k2(1)+r_cell_cc(:,2)*k2(2)+r_cell_cc(:,3)*k2(3)
          alpha(:)=k_dot_r_e(:)-kp_dot_r_h(:)
        else
-         wf_vc(:) = WF1(rindex(ir_hole),1)*WF2(:,1)
-         if(n_spinor==2) wf_vc(:) = wf_vc(:) + WF1(rindex(ir_hole),2)*WF2(:,2)
+         wf_vc(:) = conjg(WF1(rindex(ir_hole),1))*WF2(:,1)
+         if(n_spinor==2) wf_vc(:) = wf_vc(:) + conjg(WF1(rindex(ir_hole),2))*WF2(:,2)
          kp_dot_r_h(ir_hole) = dot_product(r_cell_cc(ir_hole,:),k2(:))
          alpha(:)=k_dot_r_e(:)-kp_dot_r_h(ir_hole)
        endif

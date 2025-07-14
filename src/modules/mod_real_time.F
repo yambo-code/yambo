@@ -140,9 +140,9 @@ module real_time
  !
  integer                 :: RT_nk
  integer                 :: RT_bands(2)
- integer                 :: RT_elec_bands(2)
- integer                 :: RT_hole_bands(2)
  integer                 :: RT_nbands
+ character(schlen)       :: RT_bands_frozen_ch
+ integer(LP), allocatable:: RT_bands_frozen(:)
  !
  ! Equilibrium V_xc and V_hartree in real space
  ! Presently REF_V_hartree_sc is not used

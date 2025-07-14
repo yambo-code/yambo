@@ -29,7 +29,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
  use BS_solvers,   ONLY:BSS_mode,BSS_uses_DbGd
  use BS,           ONLY:T_group,BS_bands,BS_T_grp,BS_nT_grps,BS_n_eh_spaces,&
 &                       BS_Blocks_and_Transitions_alloc,BS_perturbative_SOC,&
-&                       BS_nkFGbz_in_Tgrp
+&                       BS_nkFGbz_in_Tgrp,BS_bands_frozen
  use DIPOLES,      ONLY:DIPOLE_t
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_ordered,PAR_IND_T_groups,&
 &                       PAR_IND_T_Haydock,PP_indexes_reset
@@ -113,7 +113,12 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
        ! since i_k_bz and i_p_bz change at each iteration of the loop
        !
        do iv=V_bands(1),V_bands(2)
+         !
+	 if (BS_bands_frozen(iv)==1) cycle
+	 !
          do ic=C_bands(1),C_bands(2)
+	   !
+	   if (BS_bands_frozen(ic)==1) cycle
            !
            do i_sp_c=1,n_sp_pol
              i_sp_v=i_sp_c
@@ -235,12 +240,12 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  !   BS_H_dim
  !   BS_nT_at_k
  !
- use pars,         ONLY:SP
- use stderr,       ONLY:intc
+ use pars,         ONLY:SP,schlen
+ use stderr,       ONLY:intc,STRING_split
  use parser_m,     ONLY:parser
  use BS,           ONLY:BS_K_dim,BS_H_dim,BS_nT_at_k,BS_K_coupling,   &
 &                       l_BS_ares_from_res,BS_res_ares_n_mat,BS_bands,&
-&                       BS_n_eh_spaces,BS_core_bands,l_BS_fix_holes,l_BS_fix_elecs
+&                       BS_n_eh_spaces,BS_bands_frozen
  use DIPOLES,      ONLY:DIPOLE_t
  use electrons,    ONLY:levels,n_sp_pol
  use com,          ONLY:msg
@@ -269,7 +274,6 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  !
  logical, external :: K_Transition_check
  !
- !
  call section("+P",'Transition pre-analysis @q'//trim(intc(iq)))
  !
  call k_build_up_BZ_tables(Xk)
@@ -279,20 +283,6 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  !
  V_bands=(/BS_bands(1),maxval(Ken%nbm)/)
  C_bands=(/minval(Ken%nbf)+1,BS_bands(2)/)
- !
- call parser('BSEHoleBands', l_BS_fix_holes)
- call parser('BSEElecBands', l_BS_fix_elecs)
- if (l_BS_fix_holes.and.all(BS_core_bands(1:2)/=0)) then
-   if (BS_core_bands(1)<V_bands(1) .or. BS_core_bands(2)>V_bands(2)) &
-   &  call error(" BSECoreBands range must fit in BSEbands range for holes")
-   V_bands=(/BS_core_bands(1),BS_core_bands(2)/)
- endif
- !
- if (l_BS_fix_elecs.and.all(BS_core_bands(3:4)/=0)) then
-   if (BS_core_bands(3)<C_bands(1) .or. BS_core_bands(4)>C_bands(2)) &
-   &  call error(" BSECoreBands range must fit in BSEbands range for elecs")
-   C_bands=(/BS_core_bands(3),BS_core_bands(4)/)
- endif
  !
 #if defined _RT
  ! Bands range. In the _RT case %nbf and %nbm turn metallic when carriers are used.
@@ -326,7 +316,12 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
          ikp  =Xk%sstar(ikpbz,1)
          !
          do iv=V_bands(1),V_bands(2)
+           !
+	   if (BS_bands_frozen(iv)==1) cycle
+	   !
            do ic=C_bands(1),C_bands(2)
+	     !
+	     if (BS_bands_frozen(ic)==1) cycle
              !
              if (i_res_ares==1) then; ib1=iv; ib2=ic; endif
              if (i_res_ares==2) then; ib1=ic; ib2=iv; endif

@@ -95,9 +95,9 @@ subroutine COLLISIONS_basic_operations( what, COLL )
              i_m=i_n+i_mix
              !
              if ( COLLISIONS_CV_only .and. i_m<=n_full_bands(i_sp) ) cycle
-             if ( COLL_bands_frozen(i_m)==1 ) cycle
              !
              if (i_m>COLL_bands(2)) cycle
+             if ( COLL_bands_frozen(i_m)==1 ) cycle
              !
              ! No Off-diagonal elements in the case of P collisions
              !

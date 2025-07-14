@@ -245,7 +245,7 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  use parser_m,     ONLY:parser
  use BS,           ONLY:BS_K_dim,BS_H_dim,BS_nT_at_k,BS_K_coupling,   &
 &                       l_BS_ares_from_res,BS_res_ares_n_mat,BS_bands,&
-&                       BS_n_eh_spaces,BS_bands_frozen_ch,BS_bands_frozen
+&                       BS_n_eh_spaces,BS_bands_frozen
  use DIPOLES,      ONLY:DIPOLE_t
  use electrons,    ONLY:levels,n_sp_pol
  use com,          ONLY:msg
@@ -268,8 +268,6 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  !
  ! Work Space
  !
- character(schlen) :: BS_bands_frozen_list(BS_bands(2))
- logical      :: l_BS_freeze_bands
  real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,i_star,ib1,ib2,  &
 &                i_res_ares,BS_nT_at_k_tmp(Xk%nibz*2)
@@ -285,9 +283,6 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  !
  V_bands=(/BS_bands(1),maxval(Ken%nbm)/)
  C_bands=(/minval(Ken%nbf)+1,BS_bands(2)/)
- !
- allocate(BS_bands_frozen(BS_bands(1):BS_bands(2)))
- call LEVELS_frozen(BS_bands,BS_bands_frozen,BS_bands_frozen_ch,"BSE",BS_bands(2)-BS_bands(1)+1)
  !
 #if defined _RT
  ! Bands range. In the _RT case %nbf and %nbm turn metallic when carriers are used.

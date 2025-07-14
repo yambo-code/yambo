@@ -57,7 +57,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par,iq,mode)
    ColsFG_Tk = size(Vi(i_Tk)%fragment,2)
    ColsFG_Tp = size(Vi(i_Tp)%fragment,2)
    !
-#if defined _MPI
+#if defined _PAR_IO
    if (i_B>BSS_kernel_last_stored_block) then
      call io_control(ACTION=RD,ID=BS_ID(2))
      call io_BS_PAR_block(iq,i_B,BS_ID(2),"matonly")

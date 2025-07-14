@@ -185,7 +185,60 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
 end subroutine
 !
 !
-subroutine LEVELS_frozen(TMP_bands,TMP_bands_frozen,TMP_bands_frozen_ch,TMP_kind,nb)
+subroutine LEVELS_frozen(en)
+ !
+ use electrons,     ONLY:levels
+ use BS,            ONLY:BS_bands,BS_bands_frozen,BS_bands_frozen_ch
+#if defined _SC 
+ use SC,            ONLY:SC_bands,SC_bands_frozen,SC_bands_frozen_ch
+#endif
+#if defined _RT || defined _QED || defined _NL
+ use real_time,     ONLY:RT_bands,RT_bands_frozen,RT_bands_frozen_ch
+#endif
+#if defined _SC || defined _RT || defined _QED || defined _NL
+ use collision_ext, ONLY:COLL_bands,COLL_bands_frozen,COLL_bands_frozen_ch
+ use hamiltonian,   ONLY:H_ref_bands,H_ref_bands_frozen
+#endif
+#if defined _NL
+ use nl_optics,      ONLY:NL_bands,NL_bands_frozen,NL_bands_frozen_ch
+#endif
+ !
+ implicit none
+ !
+ type(levels), intent(in) :: en          
+ !
+ if(allocated(BS_bands_frozen)) deallocate(BS_bands_frozen)
+ allocate(BS_bands_frozen(BS_bands(1):BS_bands(2)))
+ call LEVELS_frozen_local(BS_bands,BS_bands_frozen,BS_bands_frozen_ch,"BSE",BS_bands(2)-BS_bands(1)+1)
+ !
+#if defined _SC || defined _RT || defined _NL
+ if(allocated(H_ref_bands_frozen)) deallocate(H_ref_bands_frozen)
+ allocate(H_ref_bands_frozen(en%nb))
+ H_ref_bands_frozen=0
+ if(allocated(COLL_bands_frozen)) deallocate(COLL_bands_frozen)
+ allocate(COLL_bands_frozen(en%nb))
+ call LEVELS_frozen_local((/1,COLL_bands(2)/),COLL_bands_frozen,COLL_bands_frozen_ch,"COLL",en%nb)
+#endif
+#if defined _RT
+ if(allocated(RT_bands_frozen)) deallocate(RT_bands_frozen)
+ allocate(RT_bands_frozen(en%nb))
+ call LEVELS_frozen_local((/1,RT_bands(2)/),RT_bands_frozen,RT_bands_frozen_ch,"RT",en%nb)
+#endif
+#if defined _SC
+ if(allocated(SC_bands_frozen)) deallocate(SC_bands_frozen)
+ allocate(SC_bands_frozen(en%nb))
+ call LEVELS_frozen_local((/1,SC_bands(2)/),SC_bands_frozen,SC_bands_frozen_ch,"SC",en%nb)
+#endif
+#if defined _NL
+ if(allocated(NL_bands_frozen)) deallocate(NL_bands_frozen)
+ allocate(NL_bands_frozen(en%nb))
+ call LEVELS_frozen_local((/1,NL_bands(2)/),NL_bands_frozen,NL_bands_frozen_ch,"NL",en%nb)
+#endif
+ !
+end subroutine LEVELS_frozen
+!
+!
+subroutine LEVELS_frozen_local(TMP_bands,TMP_bands_frozen,TMP_bands_frozen_ch,TMP_kind,nb)
  !
  use pars,          ONLY:LP,schlen
  use parser_m,      ONLY:parser
@@ -217,4 +270,4 @@ subroutine LEVELS_frozen(TMP_bands,TMP_bands_frozen,TMP_bands_frozen_ch,TMP_kind
    enddo
  endif
  !
-end subroutine LEVELS_frozen
+end subroutine LEVELS_frozen_local

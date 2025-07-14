@@ -739,24 +739,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
  !
  if (initmode==4) then
-#if defined _SC || defined _RT || defined _NL
-   allocate(H_ref_bands_frozen(en%nb))
-   H_ref_bands_frozen=0
-   allocate(COLL_bands_frozen(en%nb))
-   call LEVELS_frozen((/1,COLL_bands(2)/),COLL_bands_frozen,COLL_bands_frozen_ch,"COLL",en%nb)
-#endif
-#if defined _RT
-   allocate(RT_bands_frozen(en%nb))
-   call LEVELS_frozen((/1,RT_bands(2)/),RT_bands_frozen,RT_bands_frozen_ch,"RT",en%nb)
-#endif
-#if defined _SC
-   allocate(SC_bands_frozen(en%nb))
-   call LEVELS_frozen((/1,SC_bands(2)/),SC_bands_frozen,SC_bands_frozen_ch,"SC",en%nb)
-#endif
-#if defined _NL
-   allocate(NL_bands_frozen(en%nb))
-   call LEVELS_frozen((/1,NL_bands(2)/),NL_bands_frozen,NL_bands_frozen_ch,"NL",en%nb)
-#endif
+   !
+   call LEVELS_frozen(en)
    call LEVELS_mirror("MIRROR_q",en,X,Dip,l_USER_fields)
    call LEVELS_mirror("MIRROR_bands",en,X,Dip,l_USER_fields)
  endif

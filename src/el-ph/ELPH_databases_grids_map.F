@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine ELPH_databases_grids_map(k,q)
  !
  use drivers,        ONLY:l_phel_corr
@@ -14,8 +18,9 @@ subroutine ELPH_databases_grids_map(k,q)
 &                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
  use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp) ::k,q
  !

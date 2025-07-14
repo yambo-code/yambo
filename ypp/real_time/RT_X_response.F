@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_X_response(en,k,q)
  !
  use YPP_real_time,  ONLY:Use_FFT,Pol,Curr,N_probe_frequencies,&
@@ -18,8 +22,9 @@ subroutine RT_X_response(en,k,q)
  use electrons,      ONLY:levels
  use fields,         ONLY:Efield
  use parser_m,       ONLY:parser
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)  :: en
  type(bz_samp) :: k,q

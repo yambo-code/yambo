@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
+! headers
+!
+#include<y_memory.h> 
+!
 subroutine excitons_bands(k,Xk,en,Xen,q)
  !
  use pars,          ONLY:SP,schlen,rZERO
@@ -25,8 +29,9 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
 
+ use y_memory_alloc
  !
-#include<y_memory.h> 
+ implicit none
  !
  type(bz_samp) ::Xk,k,q
  type(levels)  ::Xen,en

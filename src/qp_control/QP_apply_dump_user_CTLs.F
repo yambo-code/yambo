@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QP_apply_dump_user_CTLs( E, object )
  !
  use pars,          ONLY:schlen
@@ -14,8 +18,9 @@ subroutine QP_apply_dump_user_CTLs( E, object )
  use QP_CTL_m,      ONLY:QP_action,n_QP_actions,QP_ctl_what,QP_ctl_DB_user,&
 &                        QP_ctl_ID,QP_CTL_is_active,QP_CTL_fill
  use stderr,        ONLY:STRING_split,STRING_same
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type (levels) ::E
  character(1)  ::object

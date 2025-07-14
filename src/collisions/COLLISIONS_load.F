@@ -5,6 +5,13 @@
 !
 ! Authors (see AUTHORS file for details): AM CA DS
 !
+! headers
+!
+#include<collisions.h>
+! Inside collisions.h, io_COLLs_header is defined as either
+! - io_COLLISIONS        (serial I/O) or
+! - io_COLLISIONS_header (parallel I/O case)
+!
 subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  ! Load all collisions contribution from any kind of self-energy 
@@ -36,12 +43,6 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use collision_ext,   ONLY:P_COLL_element,COLL_bands,P_collisions,GW_NEQ_collisions,&
 &                          GW_NEQ_COLL_element
 #endif
- !
- ! Inside collisions.h, io_COLLs_header is defined as either
- ! - io_COLLISIONS        (serial I/O) or
- ! - io_COLLISIONS_header (parallel I/O case)
- !
-#include<collisions.h>
  !
  implicit none
  !

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  use pars,          ONLY:SP
@@ -22,8 +26,9 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  use IO_m,          ONLY:OP_RD_CL,OP_RD,RD_CL,&
 &                        NONE,OP_WR_CL,REP,VERIFY
  use frequency,     ONLY:w_samp
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(w_samp) ::W
  integer      ::ik1,ik2,O_x_dim,iq

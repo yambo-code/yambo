@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
@@ -27,8 +31,9 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use OUTPUT,         ONLY:OUTPUT_driver
  use interfaces,     ONLY:DESC_write
  use timing_m,       ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp) :: kpt
  type(levels)  :: En

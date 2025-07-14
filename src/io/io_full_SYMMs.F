@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_full_SYMMs(k,ID)
  !
  use pars,          ONLY:schlen,SP,IP,IP_YIO,LP_YIO
@@ -17,8 +21,9 @@ integer function io_full_SYMMs(k,ID)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer,      intent(in) :: ID
  type(bz_samp),intent(in) :: k

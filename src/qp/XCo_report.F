@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine XCo_report(qp,E,k)
  !
  use drivers,       ONLY:l_real_time,l_gw0
@@ -18,8 +22,9 @@ subroutine XCo_report(qp,E,k)
  use com,           ONLY:msg
  use stderr,        ONLY:intc,real2ch
  use xc_functionals,ONLY:E_xc_val
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(QP_t)    ::qp
  type(levels)  ::E

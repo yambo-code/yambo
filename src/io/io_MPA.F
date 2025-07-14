@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DALV AF
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_MPA(X,Xw,ID)
  !
  use pars,          ONLY:SP,schlen
@@ -18,8 +22,9 @@ integer function io_MPA(X,Xw,ID)
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
  use mpa_m,         ONLY:MPA_freqs,MPA_alloc,MPA_E_par,MPA_R_par
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(X_t)   :: X
  type(w_samp):: Xw

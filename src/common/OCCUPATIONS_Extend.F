@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine OCCUPATIONS_Extend(Xe,E,k)
  !
  ! The occupation of E levels are decided using the Fermi "Levels" of Xe.
@@ -20,8 +24,9 @@ subroutine OCCUPATIONS_Extend(Xe,E,k)
  use electrons,  ONLY:levels,n_sp_pol
  use R_lattice,  ONLY:bz_samp
  use interfaces, ONLY:OCCUPATIONS_Gaps
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)    ::Xe,E
  type(bz_samp)   ::k

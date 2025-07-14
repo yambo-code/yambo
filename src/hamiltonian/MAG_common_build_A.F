@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine MAG_common_build_A(build)
  !
  !
@@ -41,7 +45,9 @@ subroutine MAG_common_build_A(build)
 &                         A_magn_x,A_magn_y,A_magn_z,gauge_factors,       &
 &                         phase_trick,phase_radius,n_loops
  use vec_operate,    ONLY:v_norm
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  ! Input variables
  logical   :: build

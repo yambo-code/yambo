@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): PM AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QED_Sigma_c(E,k,q,qp)
  !
  use pars,                ONLY:SP,pi,cI,rZERO
@@ -28,8 +32,9 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use parallel_m,          ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PAR_IND_Q_ibz,PAR_nQ_ibz,PAR_nQP
  use functions,           ONLY:theta_function
  use timing_m,            ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)              ::E
  type(bz_samp)             ::k,q

@@ -5,13 +5,17 @@
 !
 ! Authors (see AUTHORS file for details): AM CA DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll_)
  !
  use pars,          ONLY:schlen,IP,SP,DP,IP_YIO,CR_YIO
  use parallel_m,    ONLY:master_cpu
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use collision_ext, ONLY:COLLISIONS_element,COLLISIONS_group,PAR_COLL_min,&
-&                        COLLISIONS_CV_only,COLLISIONS_FEW_only,COLLISIONS_load_SP
+&                        COLLISIONS_CV_only,COLL_bands_frozen,COLLISIONS_load_SP
  use IO_m,          ONLY:io_sec,io_status,IO_OUTDATED_DB,read_is_on,IO_mode,io_unit,&
 &                        VERIFY,io_extension,write_is_on,nf90_sync,netcdf_call,YAMBO_DEF_CHUNK
  use IO_int,        ONLY:io_connect,io_header,io_elemental,ver_is_gt_or_eq,io_fragment, &
@@ -23,8 +27,9 @@ integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll_)
  use electrons,     ONLY:n_sp_pol
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
  use timing_m,      ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer, intent(inout)            ::ID
  type(COLLISIONS_group)            ::COLL_grp
@@ -37,6 +42,7 @@ integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll_)
  character(1)      :: TMP_VAR(1)
  character(schlen) :: db_name
  integer           :: i_coll,i_coll_mem,sync_step,stat,COLL_chunksize(3),N(3)
+ integer           :: Nbv,Nbc,Nb1,Nb2,Nk
  logical           :: def1,def2,io2,io3,io4,file_sync
  !
  call timing('io_COLLISIONS',OPR='start')
@@ -63,14 +69,21 @@ integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll_)
  if (def1) then
    call def_variable_bulk(ID,'N_COLLISIONS_STATES',1,(/1/),IP_YIO,par_io_kind='independent')
    if (write_is_on(ID)) then
-     if (COLLISIONS_CV_only.or.COLLISIONS_FEW_only) then
-       N(3)=(COLL_grp%D(3,2)-COLL_grp%D(3,1)+1)*2  ! 2*Nk
-       N(2)=COLL_grp%D(2,2)-COLL_grp%D(2,3)        ! Nc
-       N(1)=COLL_grp%D(1,4)-COLL_grp%D(1,1)+1      ! Nv
+     Nk=COLL_grp%D(3,2)-COLL_grp%D(3,1)+1
+     Nbc=COLL_grp%D(2,2)-COLL_grp%D(2,3)+1
+     Nbv=COLL_grp%D(1,4)-COLL_grp%D(1,1)+1
+     Nb2=COLL_grp%D(2,2)-COLL_grp%D(2,1)+1
+     Nb1=COLL_grp%D(1,2)-COLL_grp%D(1,1)+1
+     if (any((/COLL_bands_frozen==1/))) then
+       Nb2=count(COLL_bands_frozen(COLL_grp%D(2,1):COLL_grp%D(2,2))==0)
+       Nb1=count(COLL_bands_frozen(COLL_grp%D(1,1):COLL_grp%D(1,2))==0)
+       Nbc=count(COLL_bands_frozen(COLL_grp%D(2,3):COLL_grp%D(2,2))==0)
+       Nbv=count(COLL_bands_frozen(COLL_grp%D(1,1):COLL_grp%D(1,4))==0)
+     endif
+     if (COLLISIONS_CV_only) then
+       N=(/Nbv,Nbc,2*Nk/)
      else
-       N(3)=COLL_grp%D(3,2)-COLL_grp%D(3,1)+1
-       N(2)=COLL_grp%D(2,2)-COLL_grp%D(2,1)+1
-       N(1)=COLL_grp%D(1,2)-COLL_grp%D(1,1)+1
+       N=(/Nb1,Nb2,Nk/)
      endif
      COLL_element%N=N(1)*N(2)*N(3)*n_sp_pol
    endif

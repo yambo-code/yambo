@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM AC
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_gFsq(ID)
  !
  use pars,           ONLY:schlen
@@ -18,8 +22,9 @@ integer function io_gFsq(ID)
  use QP_m,           ONLY:QP_n_states,QP_table
  use parallel_m,     ONLY:PAR_Q_bz_index
  use timing_m,       ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer      ::ID
  !

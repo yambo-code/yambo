@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine k_circuit_made_of_special_points( PATH, n_points )
  !
  use pars,                ONLY:SP,schlen
@@ -16,8 +20,9 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
 &                              SPECIAL_k,n_SPECIAL_k_MAX,CIRCUIT_k,SPECIAL_k_label,&
 &                              n_SPECIAL_k_MAX,CIRCUIT_k_label,CIRCUIT_k_norm,CIRCUIT_made_of_SPECIAL_k
  use stderr,              ONLY:STRING_split,STRING_same,intc
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  character(*) :: PATH
  integer      :: n_points

@@ -5,12 +5,17 @@
 !
 ! Authors (see AUTHORS file for details): MG
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine NL_exc_driver(en,k)
  !
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)  :: en
  type(bz_samp) :: k

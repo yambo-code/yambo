@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AF IM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PP_compute_becp(becp, npwk, wf_nb, wf_c, wf_b_indx)
  !
  ! Compute becp = < beta_j | wfc_n > matrix elements
@@ -17,8 +21,9 @@ subroutine PP_compute_becp(becp, npwk, wf_nb, wf_c, wf_b_indx)
  use qe_pseudo_m,   ONLY:nkb,vkb,bec_type,is_allocated_bec_type,&
 &                        allocate_bec_type,calbec
  use timing_m,      ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! vars
  !

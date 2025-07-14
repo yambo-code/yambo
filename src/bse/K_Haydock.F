@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM MG DS IMA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_Haydock(iq,W,OBS,Xk)
  !
  use pars,           ONLY:SP,schlen,cI,cZERO,cONE
@@ -30,8 +34,9 @@ subroutine K_Haydock(iq,W,OBS,Xk)
  use timing_m,       ONLY:timing
  use descriptors,    ONLY:IO_desc_add
  use R_lattice,      ONLY:bz_samp
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(w_samp), intent(in) :: W
  integer,      intent(in) :: iq

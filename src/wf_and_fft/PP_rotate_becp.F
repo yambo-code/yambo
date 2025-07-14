@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AF IM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PP_rotate_becp(isc,ibec,obec)
  !
  ! isc(1), ibnd
@@ -25,8 +29,9 @@ subroutine PP_rotate_becp(isc,ibec,obec)
 &                        irt,atom_pos,n_atoms_species,n_atomic_species
  use R_lattice,     ONLY:k_pt,b
  use qe_pseudo_m,   ONLY:bec_type,beccopy,d1,d2,d3,nh,upf,indv_ijkb0
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! vars
  !

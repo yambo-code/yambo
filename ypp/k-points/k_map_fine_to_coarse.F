@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,Xen)
  !
  use pars,                ONLY:SP
@@ -12,8 +16,9 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,Xen)
  use electrons,           ONLY:levels
  use R_lattice,           ONLY:bz_samp,bz_fine_grid,bz_samp_FineGd_alloc
  use LIVE_t,              ONLY:live_timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  character(*)      , intent(in)    :: zone
  type(bz_fine_grid), intent(inout) :: FG

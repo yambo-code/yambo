@@ -7,13 +7,6 @@
  
 */
 
- use y_memory,       ONLY:MEM_global_mesg
- use parallel_m,   ONLY:PAR_COM_HOST
- use parallel_int, ONLY:PP_redux_wait,PP_wait
-
-#include<y_memory.h>
-
- integer(IPL) :: HOST_SIZE(1),LOCAL_SIZE(1)
 
 #if defined _MPI
 
@@ -81,6 +74,19 @@
 
 #endif
 
+#define YAMBO_ALLOC1(x,SIZE) \
+    YAMBO_ALLOC(x,(SIZE(1)))
+#define YAMBO_ALLOC2(x,SIZE) \
+    YAMBO_ALLOC(x,(SIZE(1),SIZE(2)))
+#define YAMBO_ALLOC3(x,SIZE) \
+    YAMBO_ALLOC(x,(SIZE(1),SIZE(2),SIZE(3)))
+#define YAMBO_ALLOC4(x,SIZE) \
+    YAMBO_ALLOC(x,(SIZE(1),SIZE(2),SIZE(3),SIZE(4)))
+#define YAMBO_ALLOC5(x,SIZE) \
+    YAMBO_ALLOC(x,(SIZE(1),SIZE(2),SIZE(3),SIZE(4),SIZE(5)))
+#define YAMBO_ALLOC6(x,SIZE) \
+    YAMBO_ALLOC(x,(SIZE(1),SIZE(2),SIZE(3),SIZE(4),SIZE(5),SIZE(6)))
+
 #define YAMBO_PAR_ALLOC1(x,SIZE) \
   YAMBO_PAR_ALLOC_CHECK1(x,SIZE) NEWLINE \
   YAMBO_ALLOC1(x,LOCAL_SIZE)
@@ -99,6 +105,9 @@
 #define YAMBO_PAR_ALLOC6(x,SIZE) \
   YAMBO_PAR_ALLOC_CHECK6(x,SIZE) NEWLINE \
   YAMBO_ALLOC6(x,LOCAL_SIZE)
+
+#define SIMPLE_ALLOC(x,SIZE) \
+  allocate(x SIZE, &NEWLINE& stat=MEM_err,errmsg=MEM_msg)
 
 #define SIMPLE_ALLOC1(x,SIZE) \
     SIMPLE_ALLOC(x,(SIZE(1)))

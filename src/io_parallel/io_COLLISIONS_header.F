@@ -5,13 +5,16 @@
 !
 ! Authors (see AUTHORS file for details): AM CA DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_COLLISIONS_header(ID,COLL)
  !
  use pars,          ONLY:schlen,IP,IP_YIO,LP_YIO
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
  use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands,COLLISIONS_group,&
-&                        COLLISIONS_CV_only,COLLISIONS_FEW_only,&
-&                        COLL_hole_bands,COLL_elec_bands
+&                        COLLISIONS_CV_only,COLL_bands_frozen
  use IO_m,          ONLY:variable_exist,write_is_on,io_status,IO_OUTDATED_DB,read_is_on
  use IO_int,        ONLY:io_connect,io_header,io_elemental,ver_is_gt_or_eq, &
 &                        io_variable_bulk,def_variable_bulk,io_disconnect,  &
@@ -24,8 +27,9 @@ integer function io_COLLISIONS_header(ID,COLL)
  use X_m,           ONLY:X_desc
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
  use timing_m,      ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer, intent(inout)            ::ID
  type(COLLISIONS_group)            ::COLL
@@ -97,19 +101,6 @@ integer function io_COLLISIONS_header(ID,COLL)
  endif
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
- if (variable_exist(ID,'COLLISIONS_FEW_only').or.write_is_on(ID)) then
-   call def_variable_elemental(ID,VAR="FEW_only_scattering",VAR_SZ=1,VAR_KIND=LP_YIO,MENU=0)
-   call  io_variable_elemental(ID,L0=COLLISIONS_FEW_only,VAR='FEW only scattering    ',WARN=.true.,OP=(/"=="/))
-   call def_variable_elemental(ID,VAR="COLL_hole_bands",VAR_SZ=2,VAR_KIND=IP_YIO,MENU=0)
-   call  io_variable_elemental(ID,I1=COLL_hole_bands,    VAR='COLL bands holes       ',WARN=.true.,OP=(/"==","=="/))
-   call def_variable_elemental(ID,VAR="COLL_elec_bands",VAR_SZ=2,VAR_KIND=IP_YIO,MENU=0)
-   call  io_variable_elemental(ID,I1=COLL_elec_bands,    VAR='COLL bands elecs       ',WARN=.true.,OP=(/"==","=="/))
- else
-   COLLISIONS_FEW_only=.false.
-   COLL_hole_bands=-1
-   COLL_elec_bands=-1
- endif
- !
  if(COLL%kind==H_SE_HARTREE.or.COLL%kind==H_SE_FOCK.or.COLL%kind==H_SE_SEX.or.COLL%kind>=H_SE_HARTREE) then
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -157,13 +148,20 @@ integer function io_COLLISIONS_header(ID,COLL)
  !
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
+ if (variable_exist(ID,'COLL_bands_frozen').or.write_is_on(ID)) then
+   call def_variable_bulk(ID,"COLL_bands_frozen",1,shape(COLL_bands_frozen),LP_YIO)
+   call  io_variable_bulk(ID,1,L1=COLL_bands_frozen)
+ else
+   COLL_bands_frozen=.false.
+ endif
+ !
  ! States
  !
  if (read_is_on(ID).and..not.allocated(COLL%state)) then
    YAMBO_ALLOC(COLL%state,(COLL%N,4))
  endif
- call def_variable_bulk(ID,'COLLISIONS_STATE',1,(/COLL%N,4/),IP_YIO)
- call  io_variable_bulk(ID,1,I2=COLL%state)
+ call def_variable_bulk(ID,'COLLISIONS_STATE',2,(/COLL%N,4/),IP_YIO)
+ call  io_variable_bulk(ID,2,I2=COLL%state)
  !
  io_COLLISIONS_header=io_status(ID)
  !

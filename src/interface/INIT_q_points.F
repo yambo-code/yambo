@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine INIT_q_points( )
  !
  ! This routine:
@@ -21,8 +25,9 @@ subroutine INIT_q_points( )
  use ELPH,        ONLY:PH_qpt,elph_use_q_grid,elph_nQ,elph_grids_are_expanded
 #endif
  use parser_m,    ONLY:PARSER_array
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! Work Space
  !

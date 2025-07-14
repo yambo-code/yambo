@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM MG DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 module real_time
  !
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt,l_phel_scatt
@@ -15,8 +19,9 @@ module real_time
  use RT_lifetimes,   ONLY:RT_obj_lifetime,RT_obj_lifetime_alloc,RT_obj_lifetime_free
  use RT_occupations, ONLY:RT_obj_occupation,RT_obj_occupation_alloc,RT_obj_occupation_free
  use electrons,      ONLY:E_fine_grid
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! CORE LOGICALS
  !
@@ -135,9 +140,9 @@ module real_time
  !
  integer                 :: RT_nk
  integer                 :: RT_bands(2)
- integer                 :: RT_elec_bands(2)
- integer                 :: RT_hole_bands(2)
  integer                 :: RT_nbands
+ character(schlen)       :: RT_bands_frozen_ch
+ integer(LP), allocatable:: RT_bands_frozen(:)
  !
  ! Equilibrium V_xc and V_hartree in real space
  ! Presently REF_V_hartree_sc is not used

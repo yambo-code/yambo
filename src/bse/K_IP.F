@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS AM IMA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  use pars,          ONLY:SP,IP,pi,cZERO,cONE,cI
@@ -32,8 +36,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use BS_solvers,    ONLY:B_Hall
  use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
  use units,         ONLY:SPEED_OF_LIGHT
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer       ::iq
  type(levels)  ::Ken

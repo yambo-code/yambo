@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,NK,ID)
  !
  use pars,              ONLY:SP,pi,cI,cZERO,DP,rZERO
@@ -18,8 +22,9 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,NK,ID)
  use LIVE_t,            ONLY:live_timing
  use parallel_m,        ONLY:PP_indexes,PP_indexes_reset,myid
  use parallel_int,      ONLY:PP_redux_wait,PARALLEL_index 
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer,intent(in)        :: nvalues
  integer,intent(in)        :: NK,ID

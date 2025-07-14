@@ -4,6 +4,10 @@
 ! Copyright (C) 2020 the YAMBO team
 !
 ! Authors (see AUTHORS file for details): CA
+!
+! headers
+!
+#include<y_memory.h>
 ! 
 subroutine OSCLL_load(q,k) 
  !
@@ -17,8 +21,9 @@ subroutine OSCLL_load(q,k)
  use IO_m,                ONLY:OP_RD,RD_CL_IF_END,VERIFY,REP,manage_action,deliver_IO_error_message
  use IO_int,              ONLY:io_control,IO_and_Messaging_switch
  use com,                 ONLY:msg
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp), intent(in) :: q,k
  !

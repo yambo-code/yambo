@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QP_state_table_setup(en)
  !
  ! There are 2 objects that command the QP corrections
@@ -32,8 +36,9 @@ subroutine QP_state_table_setup(en)
 #if defined _SC
  use SC,            ONLY:l_SC_diagonal
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  type(levels)::en
  !
  ! Work Space

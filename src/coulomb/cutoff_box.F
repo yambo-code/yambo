@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine cutoff_box(q,is_cut)
  !
  ! Vc(q,G)=1/(Vdl Nq)\sum_{q' G'} V(q'+G') F(q'+G',q+G) [3D BOX] 
@@ -25,8 +29,9 @@ subroutine cutoff_box(q,is_cut)
  use LIVE_t,        ONLY:live_timing
  use zeros,         ONLY:k_iku_zero,G_iku_zero
  use openmp,        ONLY:OPENMP_update,n_threads,master_thread,OPENMP_set_threads
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  logical      ::is_cut(3)
  type(bz_samp)::q

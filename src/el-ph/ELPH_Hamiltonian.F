@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine ELPH_Hamiltonian(en,k,q)
  !
  use pars,          ONLY:SP,lchlen,rZERO
@@ -25,8 +29,9 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use stderr,        ONLY:intc
  use QP_m,          ONLY:QP_G_damp
  use parser_m,      ONLY:parser
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)  ::en
  type(bz_samp) ::k,q

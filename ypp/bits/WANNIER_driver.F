@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM AR
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine WANNIER_driver(k,E)
  !
  ! Latest update: September 14th, 2016 by Antimo Marrazzo (antimo.marrazzo@epfl.ch)
@@ -22,7 +26,9 @@ subroutine WANNIER_driver(k,E)
  use QP_m,           ONLY:QP_t,QP_reset
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,LOG,DUMP
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  type(bz_samp) ::k
  type(levels)  ::E
@@ -84,8 +90,9 @@ subroutine WANNIER_driver(k,E)
    !-----------------------------------------------------------------------
    !---Subroutine from Wannier90, GPL license------------------------------
    !-----------------------------------------------------------------------
-   !
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
    !
    integer:: iun_nnkp
    character(len=*), intent(in)  :: keyword

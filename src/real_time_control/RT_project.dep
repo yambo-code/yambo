@@ -18,6 +18,7 @@
  RT_do_it.o
  RT_energy_components.o
  RT_entropy.o
+ RT_field_from_file.o
  RT_free.o
  RT_interpolation_doit_and_transfer.o
  RT_interpolation_driver.o

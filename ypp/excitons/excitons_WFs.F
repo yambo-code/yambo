@@ -229,6 +229,16 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
      !
      wf_tmp= cZERO
      !
+     ! DS note: 2025/07/14
+     ! The simulation is demading due to the huge loop on the nr_tot,
+     ! multiplied by a large loop on BS_H_dim. All other operations are irrelevant.
+     ! The present strategy emplois MPI distribution over BS_H_dim, OpenMP over nr_tot
+     ! A simplification would be possible, since the large nr_tot loop should be 
+     ! multiplied only by nkbz. This is the sole term which is not periodic in the extended supercell.
+     ! This could be achieved by replacing hte neh loop with a multiple loop over
+     ! nbkbz, n_sp_pol, nbv, nbc with a partial internal accumulation over nvb, nbc, n_sp_pol
+     ! For a system with many bands it would lead to a speed-up of a factor nbv*nbc*n_sp_pol
+     !
      !$omp parallel default(shared), &
      !$omp private(k_dot_r_e,kp_dot_r_h,alpha,phase,ir), &
      !$omp reduction(+:wf_tmp)
@@ -295,11 +305,9 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
        endif
        !
        if (master_thread) call live_timing(steps=1)
-       !write(*,*) neh,wf_tmp(1:10)
        !
      enddo
      !$omp end parallel
-     !write(*,*) "after redux ",wf_tmp(1:10)
      !
      call live_timing()
      !

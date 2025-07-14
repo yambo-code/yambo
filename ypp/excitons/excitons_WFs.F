@@ -18,9 +18,9 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  use D_lattice,     ONLY:a,alat
  use FFT_m,         ONLY:fft_dim,fft_size
  use com,           ONLY:msg,of_open_close
- use electrons,     ONLY:spin,n_spinor
+ use electrons,     ONLY:n_spinor,n_sp_pol
  use YPPm,          ONLY:v2plot,ncell,r_hole,l_free_hole,AVE_exc,&
-&                        nr,nr_tot,output_fname,l_average_eh,&
+&                        nr,nr_tot,output_fname,l_average_eh,elec_spin,hole_spin,&
 &                        use_xcrysden,use_gnuplot,use_cube,plot_dim,&
 &                        EXCITONS_user_indexes,EXCITONS_n_user_states
  use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_desc,BSS_n_eig
@@ -43,16 +43,16 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  ! Workspace
  !
  type(PP_indexes)  :: px
- logical           :: l_free_hole_loc
- integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_l,i_lambda,j_lambda,i_sp_pol,ir,ir_hole,j1,&
-&                     n_lambda_deg,BS_E_deg_done,n_deg_max,neh1,iv1,ic1,ikbz1,ikibz1,i_sp_pol1,is1
- integer           :: ikpbz,ikp,isp
+ integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_lambda,j_lambda,i_sp_pol,ir,ir_hole,j1,&
+&                     n_lambda_deg,BS_E_deg_done,neh1,iv1,ic1,ikbz1,ikibz1,i_sp_pol1,is1,&
+&                     i_spin_hole,i_spin_elec
+ integer           :: ikpbz,ikp,isp,i_spinor,j_spinor,rh_size,ir_hole_rlu(3),i_plot
  real(SP)          :: r_hole_rlu(3),k1(3),k2(3)
  complex(SP)       :: B_coeff
  !
  integer,  allocatable :: rindex(:)
  real(SP), allocatable :: r_cell_cc(:,:),kp_dot_r_h(:),k_dot_r_e(:),alpha(:)
- complex(SP), allocatable :: wf_(:,:),wf_vc(:),WF1(:,:),WF2(:,:),phase(:)
+ complex(SP), allocatable :: wf_tmp(:,:,:),wf_vc(:,:,:),WF1(:,:),WF2(:,:),phase(:)
  !
  call section('+','Excitonic Wave Function')
  !
@@ -89,8 +89,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    ! [2] Bare position in the FFT grid
    !
    call c2a(b_in=a,v_in=r_hole,v_out=r_hole_rlu,mode='kc2a')
-   r_hole_rlu(:)=nint(r_hole_rlu(:)*fft_dim(:))
-   ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
+   ir_hole_rlu(:)=nint(r_hole_rlu(:)*fft_dim(:))
+   ir_hole=1+ir_hole_rlu(1)+ ir_hole_rlu(2)*nr(1)+ ir_hole_rlu(3)*nr(1)*nr(2)
    if (ir_hole.lt.0) call error(' Hole coordinates in input must be positive') 
    call msg('s','      position in the FFT grid     ',r_cell_cc(ir_hole,:),"[c.c.]")
    !
@@ -99,20 +99,49 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    do j1=1,3
      if (ncell(j1)==1) cycle
      !
-     ! (***) Daniele 15/7/07 rev Andrea 12/07:
-     ! 
      ! The number of cells is always odd so that the hole can
      ! be placed in the middle.
      !
-     r_hole_rlu(j1)=r_hole_rlu(j1)+ncell(j1)/2*fft_dim(j1)
+     ir_hole_rlu(j1)=ir_hole_rlu(j1)+ncell(j1)/2*fft_dim(j1)
      !
    enddo
-   ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
+   ir_hole=1+ir_hole_rlu(1)+ir_hole_rlu(2)*nr(1)+ir_hole_rlu(3)*nr(1)*nr(2)
    r_hole=r_cell_cc(ir_hole,:)
    !
    call msg('s','      translated position          ',r_hole,"[c.c.]")
    call msg('s','                                   ',r_hole*BO2ANG,"[A]")
    !
+ endif
+ !
+ i_spin_hole=-1
+ if(trim(hole_spin)=="up")      i_spin_hole=1
+ if(trim(hole_spin)=="dn")      i_spin_hole=2
+ if(trim(hole_spin)=="average") i_spin_hole=0
+ if(trim(hole_spin)=="diag")    i_spin_hole=-10
+ !
+ i_spin_elec=-1
+ if(trim(elec_spin)=="up")      i_spin_elec=1
+ if(trim(elec_spin)=="dn")      i_spin_elec=2
+ if(trim(elec_spin)=="average") i_spin_elec=0
+ if(trim(elec_spin)=="diag")    i_spin_elec=-10
+ !
+ if (i_spin_elec==-1) call error(" wrong electron spin in input")
+ if (i_spin_hole==-1) call error(" wrong hole spin in input")
+ !
+ ! DS note: to change this for magnons
+ if (n_sp_pol==2 .and. (i_spin_elec+i_spin_hole)==3) then
+   call error("Spin polarized case: electron and hole cannot have opposite spin")
+ endif
+ !
+ if (n_spinor==2 .and. (i_spin_elec+i_spin_hole)<0) then
+   call warning("Spinorial case: diagonal approximation in spin space")
+   i_spin_elec=-10
+   i_spin_hole=-10
+ endif
+ !
+ if (l_free_hole) then
+   call warning("Free hole case, imposing elec spin to be identical to hole spin")
+   i_spin_elec=i_spin_hole
  endif
  !
  ! Allocation
@@ -122,19 +151,19 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  YAMBO_ALLOC(WF1,(fft_size,n_spinor))
  YAMBO_ALLOC(WF2,(fft_size,n_spinor))
  !
- YAMBO_ALLOC( k_dot_r_e,(nr_tot))
- YAMBO_ALLOC(kp_dot_r_h,(nr_tot))
- !
- n_deg_max=0
- do i_lambda=1,EXCITONS_n_user_states
-   j_lambda=EXCITONS_user_indexes(i_lambda)
-   n_lambda_deg=count(BS_E_degs==BS_E_degs(j_lambda))
-   n_deg_max=max(n_deg_max,n_lambda_deg)
- enddo
- YAMBO_ALLOC(wf_vc,(fft_size))
- YAMBO_ALLOC(alpha,(nr_tot))
- YAMBO_ALLOC(phase,(nr_tot))
- YAMBO_ALLOC(wf_,(nr_tot,n_deg_max))
+ if(.not.l_average_eh) then
+   rh_size=1
+   if (l_free_hole) rh_size=nr_tot
+   YAMBO_ALLOC(k_dot_r_e,(nr_tot))
+   YAMBO_ALLOC(kp_dot_r_h,(rh_size))
+   !
+   i1=n_spinor
+   if(l_free_hole) i1=1
+   YAMBO_ALLOC(wf_vc,(fft_size,n_spinor,i1))
+   YAMBO_ALLOC(alpha,(nr_tot))
+   YAMBO_ALLOC(phase,(nr_tot))
+   YAMBO_ALLOC(wf_tmp,(nr_tot,n_spinor,i1))
+ endif
  !
  ! Par Proc
  !
@@ -149,28 +178,23 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  !
  BS_E_deg_done=-1
  !
- l_free_hole_loc=l_free_hole
- !
  do i_lambda=1,EXCITONS_n_user_states
    !
    j_lambda=EXCITONS_user_indexes(i_lambda)
    !
-   if (BS_E_degs(j_lambda)==BS_E_deg_done) cycle
+   if (BS_E_degs(j_lambda)/=BS_E_deg_done) i1=0
    !
    BS_E_deg_done=BS_E_degs(j_lambda)
    !
+   i1=i1+1
+   !
    n_lambda_deg=count(BS_E_degs==BS_E_degs(j_lambda))
    !
-   !
-   if (n_lambda_deg>1) call msg('s',' State '//trim(intc(j_lambda))//' Merged with states '//&
-&                                   trim(intc(BS_E_degs(j_lambda)))//' -> '//&
-&                                   trim(intc(BS_E_degs(j_lambda)+n_lambda_deg-1)))
-   !
-   call live_timing('ExcWF@'//trim(intc(j_lambda)),px%n_of_elements(myid+1))  
-   !
-   v2plot  =0._SP
-   !
    if(l_average_eh) then
+     !
+     if(i1==1) v2plot  =0._SP
+     !
+     call live_timing('ExcWF@'//trim(intc(j_lambda)),px%n_of_elements(myid+1))  
      !
      do neh = 1,BS_H_dim
        !
@@ -179,7 +203,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
        ikbz  = BSS_eh_table(neh,1)
        iv    = BSS_eh_table(neh,2)
        ic    = BSS_eh_table(neh,3)
-       i_sp_pol = spin(BSS_eh_table(neh,:))
+       i_sp_pol = BSS_eh_table(neh,4)
        !
        ikibz = Xk%sstar(ikbz,1)
        is    = Xk%sstar(ikbz,2)
@@ -189,7 +213,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
          ikbz1  = BSS_eh_table(neh1,1)
          iv1    = BSS_eh_table(neh1,2)
          ic1    = BSS_eh_table(neh1,3)
-         i_sp_pol1 = spin(BSS_eh_table(neh1,:))
+         i_sp_pol1 = BSS_eh_table(neh1,4)
          !
          ikibz1 = Xk%sstar(ikbz1,1)
          is1    = Xk%sstar(ikbz1,2)
@@ -200,37 +224,54 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
          !
          if (ic1==ic.and.trim(AVE_exc)=='h') then
            !
+           if (n_sp_pol==2 .and. i_spin_hole>0) then
+             if (i_sp_pol /=i_spin_hole) cycle
+             if (i_sp_pol1/=i_spin_hole) cycle
+           endif
+           !
            call WF_apply_symm((/iv, ikibz, is, i_sp_pol /),WF1)
            call WF_apply_symm((/iv1,ikibz1,is1,i_sp_pol1/),WF2)
            !
-           do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
-             !      
-             B_coeff =  BS_mat(neh, i_l)* conjg(BS_mat(neh1, i_l))   
-             !
-             v2plot(:) = v2plot(:)+B_coeff*WF1(:,1)*conjg(WF2(:,1))
-             if(n_spinor==2) v2plot(:) = v2plot(:)+B_coeff*WF1(:,2)*conjg(WF2(:,2))
-             !
+           B_coeff = BS_mat(neh, j_lambda)* conjg(BS_mat(neh1, j_lambda))
+           !
+           do i_spinor=1,n_spinor
+             do j_spinor=1,n_spinor
+               if (n_spinor==2 .and. i_spin_hole>0) then
+                 if(i_spinor /= i_spin_hole) cycle
+                 if(j_spinor /= i_spin_hole) cycle
+                 if(i_spinor /= j_spinor .and. i_spin_hole==-10) cycle
+               endif
+               v2plot(:) = v2plot(:)+B_coeff*WF1(:,i_spinor)*conjg(WF2(:,i_spinor))
+             enddo
            enddo
            !
          elseif(iv1==iv.and.trim(AVE_exc)=='e') then
            !
+           if (n_sp_pol==2 .and. i_spin_elec>0) then
+             if (i_sp_pol /=i_spin_elec) cycle
+             if (i_sp_pol1/=i_spin_elec) cycle
+           endif
+           !
            call WF_apply_symm((/ic, ikibz, is, i_sp_pol /),WF1)
            call WF_apply_symm((/ic1,ikibz1,is1,i_sp_pol1/),WF2)
            !
-           do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
-             !      
-             B_coeff =  conjg(BS_mat(neh, i_l))* BS_mat(neh1, i_l)
-             !
-             v2plot(:) = v2plot(:)+B_coeff*conjg(WF1(:,1))*WF2(:,1)
-             if(n_spinor==2) v2plot(:) = v2plot(:)+B_coeff*conjg(WF1(:,2))*WF2(:,2)
-             !
+           B_coeff = conjg(BS_mat(neh,j_lambda))* BS_mat(neh1,j_lambda)
+           !
+           do i_spinor=1,n_spinor
+             do j_spinor=1,n_spinor
+               if (n_spinor==2) then
+                 if(i_spinor /= i_spin_elec .and. i_spin_elec>0) cycle
+                 if(j_spinor /= i_spin_elec .and. i_spin_elec>0) cycle
+                 if(i_spinor /= j_spinor .and. i_spin_elec==-10) cycle
+               endif
+               v2plot(:) = v2plot(:)+B_coeff*conjg(WF1(:,i_spinor))*WF2(:,j_spinor)
+             enddo
            enddo
            !
          endif
          !
        enddo ! loop on neh1
        !
-       !if (master_thread) call live_timing(steps=1)
        call live_timing(steps=1)
        !
      enddo ! loop on neh
@@ -241,11 +282,28 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
      !
    else
      !
-     wf_= cZERO
-     k_dot_r_e  = 1._SP
-     kp_dot_r_h = 1._SP
+     call live_timing('ExcWF@'//trim(intc(j_lambda)),px%n_of_elements(myid+1))
+     !
      WF1 = cZERO
      WF2 = cZERO
+     !
+     wf_tmp= cZERO
+     !
+     ! DS note: 2025/07/14
+     ! The simulation is demading due to the huge loop on the nr_tot,
+     ! multiplied by a large loop on BS_H_dim. All other operations are irrelevant.
+     ! The present strategy emplois MPI distribution over BS_H_dim, OpenMP over nr_tot
+     ! A simplification would be possible, since the large nr_tot loop should be 
+     ! multiplied only by nkbz. This is the sole term which is not periodic in the extended supercell.
+     ! This could be achieved by replacing hte neh loop with a multiple loop over
+     ! nbkbz, n_sp_pol, nbv, nbc with a partial internal accumulation over nvb, nbc, n_sp_pol
+     ! For a system with many bands it would lead to a speed-up of a factor nbv*nbc*n_sp_pol
+     !
+     !$omp parallel default(shared), &
+     !$omp private(k_dot_r_e,kp_dot_r_h,alpha,phase,ir), &
+     !$omp reduction(+:wf_tmp)
+     !
+     call OPENMP_update(master_thread)
      !
      do neh = 1,BS_H_dim
        !
@@ -254,7 +312,9 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
        ikbz  = BSS_eh_table(neh,1)
        iv    = BSS_eh_table(neh,2)
        ic    = BSS_eh_table(neh,3)
-       i_sp_pol = spin(BSS_eh_table(neh,:))
+       i_sp_pol = BSS_eh_table(neh,4)
+       !
+       if (n_sp_pol==2 .and. i_spin_hole>0 .and. i_sp_pol /=i_spin_hole) cycle
        !
        ikibz = Xk%sstar(ikbz,1)
        is    = Xk%sstar(ikbz,2)
@@ -266,51 +326,108 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
        call WF_apply_symm((/iv,ikp,  isp,i_sp_pol/),WF1)
        call WF_apply_symm((/ic,ikibz,is, i_sp_pol/),WF2)
        !
+       ! All the following operations are only up to fft_size
+       wf_vc=cZERO
+       if (l_free_hole) then
+         do i_spinor=1,n_spinor
+           if (n_spinor==2 .and. i_spin_hole>0 .and. i_spinor /= i_spin_hole) cycle
+           wf_vc(:,i_spinor,1) = wf_vc(:,i_spinor,1) + conjg(WF1(:,i_spinor))*WF2(:,i_spinor)
+         enddo
+       else
+         do i_spinor=1,n_spinor
+           if (n_spinor==2 .and. i_spin_hole>0 .and. i_spinor /= i_spin_hole) cycle
+           do j_spinor=1,n_spinor
+             if (n_spinor==2 .and. i_spin_elec>0 .and. j_spinor /= i_spin_elec) cycle
+             if (n_spinor==2 .and. i_spin_elec==-10 .and. i_spinor/= j_spinor) cycle
+             wf_vc(:,i_spinor,j_spinor) = wf_vc(:,i_spinor,j_spinor) + &
+             &      conjg(WF1(rindex(ir_hole),i_spinor))*WF2(:,j_spinor)
+           enddo
+         enddo
+       endif
+       !
        k1=Xk%ptbz(ikbz,:)/alat(:)*2._SP*pi
        k2=Xk%ptbz(ikpbz,:)/alat(:)*2._SP*pi
        !
-       k_dot_r_e(:)  = r_cell_cc(:,1)*k1(1)+r_cell_cc(:,2)*k1(2)+r_cell_cc(:,3)*k1(3)
-       !
-       if (l_free_hole_loc) then
-         wf_vc(:) = conjg(WF1(:,1))*WF2(:,1)
-         if(n_spinor==2) wf_vc(:) = wf_vc(:) + conjg(WF1(:,2))*WF2(:,2)
-         kp_dot_r_h(:) = r_cell_cc(:,1)*k2(1)+r_cell_cc(:,2)*k2(2)+r_cell_cc(:,3)*k2(3)
-         alpha(:)=k_dot_r_e(:)-kp_dot_r_h(:)
+       if (l_free_hole) then
+         !
+         do i_spinor=1,n_spinor
+           if (n_spinor==2 .and. i_spin_hole>0 .and. i_spinor /= i_spin_hole) cycle
+           !$omp do
+           do ir=1,nr_tot
+             k_dot_r_e(ir) =r_cell_cc(ir,1)*k1(1)+r_cell_cc(ir,2)*k1(2)+r_cell_cc(ir,3)*k1(3)
+             kp_dot_r_h(ir)=r_cell_cc(ir,1)*k2(1)+r_cell_cc(ir,2)*k2(2)+r_cell_cc(ir,3)*k2(3)
+             alpha(ir)=k_dot_r_e(ir)-kp_dot_r_h(ir)
+             phase(ir)=cmplx(cos(alpha(ir)),sin(alpha(ir)),kind=SP)
+             wf_tmp(ir,i_spinor,i_spinor) = wf_tmp(ir,i_spinor,i_spinor)+  &
+             &  BS_mat(neh,j_lambda)*wf_vc(rindex(ir),i_spinor,1)*phase(ir)
+           enddo
+         enddo
+         !
        else
-         wf_vc(:) = conjg(WF1(rindex(ir_hole),1))*WF2(:,1)
-         if(n_spinor==2) wf_vc(:) = wf_vc(:) + conjg(WF1(rindex(ir_hole),2))*WF2(:,2)
-         kp_dot_r_h(ir_hole) = dot_product(r_cell_cc(ir_hole,:),k2(:))
-         alpha(:)=k_dot_r_e(:)-kp_dot_r_h(ir_hole)
+         ! 
+         kp_dot_r_h(1) = dot_product(r_cell_cc(ir_hole,:),k2(:))
+         !
+         do i_spinor=1,n_spinor
+           if (n_spinor==2 .and. i_spin_hole>0 .and. i_spinor /= i_spin_hole) cycle
+           do j_spinor=1,n_spinor
+             if (n_spinor==2 .and. i_spin_elec>0 .and. j_spinor /= i_spin_elec) cycle
+             if (n_spinor==2 .and. i_spin_elec==-10 .and. i_spinor/= j_spinor) cycle
+             !$omp do
+              do ir=1,nr_tot
+                k_dot_r_e(ir) =r_cell_cc(ir,1)*k1(1)+r_cell_cc(ir,2)*k1(2)+r_cell_cc(ir,3)*k1(3)
+                alpha(ir)=k_dot_r_e(ir)-kp_dot_r_h(1)
+                phase(ir)=cmplx(cos(alpha(ir)),sin(alpha(ir)),kind=SP)
+                wf_tmp(ir,i_spinor,j_spinor) = wf_tmp(ir,i_spinor,j_spinor)+&
+                &  BS_mat(neh,j_lambda)*wf_vc(rindex(ir),i_spinor,j_spinor)*phase(ir)
+             enddo
+           enddo
+         enddo
+         !
        endif
        !
-       phase(:)=cmplx(cos(alpha(:)),sin(alpha(:)),kind=SP)
-       !phase(:)=alpha(:)
-       !
-       do i_l=BS_E_degs(j_lambda),BS_E_degs(j_lambda)+n_lambda_deg-1
-         i1=i_l-BS_E_degs(j_lambda)+1
-         wf_(:,i1) = wf_(:,i1)+BS_mat(neh,i_l)*wf_vc(rindex(:))*phase(:)
-       enddo
-       !
-       !if (master_thread) call live_timing(steps=1)
-       call live_timing(steps=1)
+       if (master_thread) call live_timing(steps=1)
        !
      enddo
+     !$omp end parallel
      !
      call live_timing()
      !
-     call PP_redux_wait(wf_)
+     call PP_wait()
      !
-     do i1=1,n_lambda_deg
-       v2plot(:) = v2plot(:)+abs(wf_(:,i1))**2
+     call PP_redux_wait(wf_tmp)
+     !
+     if (i1==1) v2plot= 0._SP
+     !
+     do i_spinor=1,n_spinor
+       if (n_spinor==2 .and. i_spin_hole>0 .and. i_spinor /= i_spin_hole) cycle
+       do j_spinor=1,n_spinor
+         if (n_spinor==2 .and. i_spin_elec>0 .and. j_spinor /= i_spin_elec) cycle
+         if (n_spinor==2 .and. i_spin_elec==-10 .and. i_spinor/= j_spinor) cycle
+         do ir=1,nr_tot
+           v2plot(ir) = v2plot(ir)+abs(wf_tmp(ir,i_spinor,j_spinor))**2
+         enddo
+       enddo
      enddo
      !
    endif
    !
+   if (i1/=n_lambda_deg) cycle
+   !
+   if (n_lambda_deg==1) then
+     call msg('s','Plotting single state '//trim(intc(j_lambda)))
+     i_plot=j_lambda
+   else if (n_lambda_deg>1)  then
+     call msg('s','Plotting merged states '//&
+     &          trim(intc(BS_E_degs(j_lambda)))//' -> '//&
+     &          trim(intc(BS_E_degs(j_lambda)+n_lambda_deg-1)))
+     i_plot=BS_E_degs(j_lambda)
+   endif
+   !
    ! PLOT
    !
-   if (use_cube)      output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.cube'
-   if (use_xcrysden)  output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.xsf'
-   if (use_gnuplot)   output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))
+   if (use_cube)      output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(i_plot))//'.cube'
+   if (use_xcrysden)  output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(i_plot))//'.xsf'
+   if (use_gnuplot)   output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(i_plot))
    !
    if (use_cube) then 
      call of_open_close(trim(output_fname),'o')
@@ -338,7 +455,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  YAMBO_FREE(WF2)
  !
  YAMBO_FREE(wf_vc)
- YAMBO_FREE(wf_)
+ YAMBO_FREE(wf_tmp)
  !
  call WF_free(WF)
  !

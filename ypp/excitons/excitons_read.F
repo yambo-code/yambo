@@ -119,7 +119,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what,io_err)
    !
    ! Loading tables and eigenvectors
    !
-   YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,3+n_sp_pol-1))
+   YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,5))
    YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/3/),ID=io_ID)

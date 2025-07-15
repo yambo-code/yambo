@@ -20,7 +20,7 @@ subroutine INIT_ypp_load(defs)
 &                        BZ_FineGd_nkpts_to_use,BZ_random_nkpts,CIRCUIT_E_DB_path,coo_in,coo_out,current_dir,&
 &                        deg_energy,BANDS_steps,DOS_bands,DOS_broadening,PROJECT_path,QP_DB_to_expand,&
 &                        DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
-&                        INTERP_grid,mag_dir,N_path_pts,ncell,p_dir,p_format,PDOS_atoms,EXC_min,&
+&                        INTERP_grid,mag_dir,N_path_pts,ncell,p_dir,p_format,PDOS_atoms,elec_spin,hole_spin,EXC_min,&
 &                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
 &                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,BSiq_via_command_line,&
 &                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_N_perp,PROJECT_steps,PROJECT_threshold,&
@@ -265,6 +265,8 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'EHdensity', 'Calculate (h)ole/(e)lectron density from BSE wave-function',AVE_exc,case="a")
  call it(defs,'Cells', 'Number of cell repetitions in each direction (odd or 1)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell (positive)',r_hole)
+ call it(defs,'HoleSpin', '[cc] The spin of the hole can be "up" "dn" "average" "diag"',hole_spin)
+ call it(defs,'ElecSpin', '[cc] The spin of the elec can be "up" "dn" "average" "diag"',elec_spin)
  call it('f',defs,'PrtDOS', 'Print Exciton Density of States') 
  !
  ! WFs

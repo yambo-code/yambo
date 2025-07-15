@@ -129,6 +129,8 @@ module YPPm
  character(1) ::p_format     
  character(1) ::mag_dir     
  character(3) ::p_dir        
+ character(7) ::elec_spin
+ character(7) ::hole_spin
  character(lchlen) ::output_fname 
  character(schlen) ::plot_title 
  character(schlen) ::V_value 

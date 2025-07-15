@@ -21,14 +21,9 @@ subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,         ONLY:live_timing
  use X_m,            ONLY:global_gauge
-<<<<<<< HEAD
- use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_Z,BSS_eh_f,BSS_n_eig,BSS_dipoles_opt
+ use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_Z,BSS_eh_f,BSS_dipoles_opt
  use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,&
  &                        l_BS_res_from_E,BS_not_const_eh_f
-=======
- use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_Z,BSS_eh_f,BSS_dipoles_opt
- use BS,             ONLY:BS_K_dim,BS_H_dim,BS_K_coupling
->>>>>>> develop
  use MAGNONS,        ONLY:BSS_dipoles_magn
  use DICHROISM,      ONLY:BSS_dipoles_dich
  !
@@ -49,13 +44,9 @@ subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
  !
  complex(SP), allocatable :: tmp_res(:), BS_R_tmp(:) 
  !
-<<<<<<< HEAD
  if (l_BS_res_from_E.and.BS_not_const_eh_f) &
  & call error(" To be fixed, since sqrt of BSS_eh_f takes a conjg and it should not")
  !
- call PP_indexes_reset(px)
- call PARALLEL_index(px,(/BSS_n_eig/))
-=======
  ! Sanity checks
  if (.not. allocated(BS_E)) return 
  if (.not. associated(BS_R_right) .or. .not. allocated(BS_V_right)) return 
@@ -64,7 +55,6 @@ subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
  !
  if (size(BS_R_right)       /= neig_total)     call error("Size mismatch between eigvals and R.residuals.")
  if (size(BS_V_right,dim=2) /= neigs_this_cpu) call error("Size mismatch between eigvecs and R.residuals.")
->>>>>>> develop
  !
  velocity_correction=(index(mode,"opt")>0).and.(trim(global_gauge)=="velocity")
  !

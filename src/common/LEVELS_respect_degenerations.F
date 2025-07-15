@@ -10,7 +10,7 @@ subroutine LEVELS_respect_degenerations(E,Dip,X)
  use electrons,     ONLY:levels
  use stderr,        ONLY:intc
  use vec_operate,   ONLY:degeneration_finder
- use BS,            ONLY:BS_bands
+ use BS,            ONLY:BS_bands,BS_bands_frozen
  use X_m,           ONLY:X_t
  use DIPOLES,       ONLY:DIPOLE_t
  use QP_m,          ONLY:QP_n_G_bands
@@ -107,6 +107,7 @@ subroutine LEVELS_respect_degenerations(E,Dip,X)
  !
  ! MIRROR
  !--------
+ call LEVELS_frozen(E)
  call LEVELS_mirror("MIRROR_bands",E,X,Dip,l_USER_fields)
  !
  contains

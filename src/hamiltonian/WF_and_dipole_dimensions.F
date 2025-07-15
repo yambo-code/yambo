@@ -80,12 +80,19 @@ subroutine WF_and_dipole_dimensions(X,Xk)
    !
  endif
  !
- ! The following lines should be unified moving eval_HARTREE and eval_DFT 
- ! inside the hamoltonian module and using them also with yambo_sc
+ ! Instead of setting a WF_G_max, it would be better to directly load the WFs with the proper cutoff 
  !
 #if defined _RT || defined _NL
+ !
+ ! If I'm running TD-HARTREE with lower cutoff, I likely to not put the Vxc cutoff in input
+ ! The DFT subroutines are called just to evaluate the equilibrium term with QP_ng_Vxc at the defaul (=mximum) 
+ ! since WF_load is done with QP_ng_SH this makes the code crash. This prevents the code from crashing
+ ! 
+ if (eval_HARTREE.and..not.eval_DFT) QP_ng_Vxc=QP_ng_SH
+ !
  if (eval_HARTREE.or.eval_energy.or.l_velocity_gauge_corr.or..not.l_RT_is_WFfree) WF_G_max=max(QP_ng_SH, WF_G_max)
  if (eval_DFT    .or.eval_energy.or.l_velocity_gauge_corr) WF_G_max=max(QP_ng_Vxc,WF_G_max)
+ !
 #endif
  !
 #if defined _SC

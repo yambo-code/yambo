@@ -21,8 +21,8 @@ subroutine COLLISIONS_basic_operations( what, COLL )
  !  integer,     pointer  :: IO_status(:) => null()
  ! end type
  !
- use collision_ext, ONLY:COLLISIONS_group,COLLISIONS_CV_only,COLLISIONS_FEW_only,&
- &                       COLL_bands,COLL_hole_bands,COLL_elec_bands
+ use collision_ext, ONLY:COLLISIONS_group,COLLISIONS_CV_only,&
+ &                       COLL_bands,COLL_bands_frozen
  use R_lattice,     ONLY:nXkibz
  use electrons,     ONLY:n_sp_pol,n_full_bands,n_met_bands
  use wave_func,     ONLY:states_to_load
@@ -88,20 +88,16 @@ subroutine COLLISIONS_basic_operations( what, COLL )
          do i_n=COLL_bands(1),COLL_bands(2)
            !
            if ( COLLISIONS_CV_only .and. i_n> n_met_bands(i_sp)  ) cycle
-           if ( COLLISIONS_FEW_only .and. i_n<COLL_hole_bands(1) ) cycle
-           if ( COLLISIONS_FEW_only .and. i_n>COLL_hole_bands(2) .and. i_n<COLL_elec_bands(1) ) cycle
-           if ( COLLISIONS_FEW_only .and. i_n>COLL_elec_bands(2) ) cycle
+           if ( COLL_bands_frozen(i_n)==1 ) cycle
            !
            do i_mix=0,COLL_bands(2)-COLL_bands(1)
              !
              i_m=i_n+i_mix
              !
              if ( COLLISIONS_CV_only .and. i_m<=n_full_bands(i_sp) ) cycle
-             if ( COLLISIONS_FEW_only .and. i_m<COLL_hole_bands(1) ) cycle
-             if ( COLLISIONS_FEW_only .and. i_m>COLL_hole_bands(2) .and. i_m<COLL_elec_bands(1) ) cycle
-             if ( COLLISIONS_FEW_only .and. i_m>COLL_elec_bands(2) ) cycle
              !
              if (i_m>COLL_bands(2)) cycle
+             if ( COLL_bands_frozen(i_m)==1 ) cycle
              !
              ! No Off-diagonal elements in the case of P collisions
              !

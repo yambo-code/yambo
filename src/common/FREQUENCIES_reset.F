@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine FREQUENCIES_reset(Xw,what)
  !
  ! Input
@@ -18,7 +22,9 @@ subroutine FREQUENCIES_reset(Xw,what)
  !
  use frequency,   ONLY:w_samp,bare_grid_N,coarse_grid_Pt,ordered_grid_index,coarse_grid_index
  use X_m,         ONLY:X_poles_tab
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  type(w_samp)  :: Xw
  character(*)  :: what

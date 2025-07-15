@@ -62,7 +62,7 @@ include/system/*
 lib/install/make_iotk.inc
 lib/iotk/make.sys
 lib/iotk/make_iotk.inc
-lib/ydiago/make_ydiago.inc
+lib/ldiago/make_ldiago.inc
 lib/yambo
 lib/*/*stamp
 lib/*/package-installed
@@ -82,7 +82,7 @@ lib/*/petsc-*
 lib/*/slepc-*
 lib/*/futile*
 lib/*/yaml*
-lib/*/Ydiago*
+lib/*/Ldiago*
 lib/*/devicexlib*
 lib/hdf5/hdf5*
 lib/external/*
@@ -139,3 +139,6 @@ gfortran*.sh
 pgi*.sh
 nvidia*.sh
 git_nmd.sh
+
+#Configuation files
+.vscode/*.json

@@ -2,6 +2,7 @@
  Build_Overlaps_Det_EQ.o
  DIPOLE_IO.o
  DIPOLE_SC_rotate.o
+ DIPOLE_build_der_k.o
  DIPOLE_check_shifted_grids.o
  DIPOLE_covariant.o
  DIPOLE_dimensions.o
@@ -24,5 +25,6 @@
  DIPOLE_spin_magnetization.o
  DIPOLE_x_real_space.o
  Ionic_polarization.o
+ OVERLAPS_IO.o
  POLARIZATION_output.o
 

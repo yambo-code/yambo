@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine bz_samp_indexes(en,k,Xk,q)
  !
  ! ikbz=(ik,is) --<--:--<-- okbz=(ok,os) = (IK-Q)
@@ -51,8 +55,9 @@ subroutine bz_samp_indexes(en,k,Xk,q)
 #if defined _ELPH
  use ELPH,           ONLY:elph_use_q_grid
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels) ::en
  type(bz_samp)::k,Xk,q

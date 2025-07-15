@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  !
  use pars,           ONLY:SP,schlen,pi
@@ -19,8 +23,9 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  use wrapper,        ONLY:Vstar_dot_V
  use stderr,         ONLY:intc
  use interfaces,     ONLY:WF_load,WF_free
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! Input variables
  integer                  :: nkpt_pos(2),nband_pos(2)

@@ -127,10 +127,14 @@ if test "$internal_blacs" = "yes" ; then
   if test "$compile_blacs" = "no" ; then BLACS_check="I"; fi
 fi
 #
-if test x"$with_ldiago_branch" = "xnone"; then
- LDIAGO_check="I"; 
+if test "$compile_ldiago" = "yes"; then
+  if test x"$with_ldiago_branch" = "xnone"; then
+    LDIAGO_check="I"; 
+  else
+    LDIAGO_check="G"; 
+  fi
 else
- LDIAGO_check="G"; 
+  LDIAGO_check="-"; 
 fi
 #
 PETSC_check="-"

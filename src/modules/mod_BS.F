@@ -5,14 +5,19 @@
 !
 ! Authors (see AUTHORS file for details): AM MG
 !
-module BS
- !
- use pars,          ONLY: IP,IPL,SP,schlen,lchlen
- use collision_el,  ONLY: elemental_collision
- use gpu_m,         ONLY: have_gpu
- !
+! headers
+!
 #include<dev_defs.h>
 #include<y_memory.h>
+!
+module BS
+ !
+ use pars,          ONLY: IP,IPL,LP,SP,schlen,lchlen
+ use collision_el,  ONLY: elemental_collision
+ use gpu_m,         ONLY: have_gpu
+ use y_memory_alloc
+ !
+ implicit none
  !
  ! Modes and logicals
  !====================
@@ -38,11 +43,7 @@ module BS
  character(schlen) :: BSE_dipole_geometry="none"
  character(schlen) :: BSK_mode
  character(schlen) :: BSK_IO_mode
- !
- ! Kind of response function
- !===========================
- logical :: l_BS_fix_holes
- logical :: l_BS_fix_elecs
+ character(schlen) :: BS_bands_frozen_ch=""
  !
  ! Dipoles tracing 
  !=================
@@ -72,7 +73,6 @@ module BS
  integer :: BS_IO_dim(2,4)
  integer :: MAX_BSK_LIN_size
  integer :: BS_bands(2)
- integer :: BS_core_bands(4)
  integer :: BS_q(2)
  integer :: BS_iq_now
  integer :: BS_identifier
@@ -87,6 +87,7 @@ module BS
  real(SP),allocatable :: BS_kpt_bz(:,:)
  real(SP),allocatable :: BS_kpt_ibz(:,:)
  integer,allocatable :: BS_K_io_map(:)
+ integer(LP),allocatable :: BS_bands_frozen(:)
  !
  ! Resonant/Antiresonant handling
  !================================

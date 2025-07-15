@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine MAG_Hamiltonian()
  !
  ! WARNING: you need to put you system at the corner of the supercell <---
@@ -54,8 +58,9 @@ subroutine MAG_Hamiltonian()
  use wrapper,        ONLY:Vstar_dot_V
  use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
  use QP_m,           ONLY:QP_table,QP_n_states
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! Dummies
  !

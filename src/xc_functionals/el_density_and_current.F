@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,compute_rho_map)
  !
  ! Electronic density (and current).
@@ -60,8 +64,9 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,c
  use RT_occupations,ONLY:RT_el_occ
  use real_time,     ONLY:RTibz
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp)::k
  type(levels) ::E       

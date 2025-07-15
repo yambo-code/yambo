@@ -33,7 +33,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
-&                     RIM_anisotropy,RIM_ng,RIM_W_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
+&                     RIM_anisotropy,RIM_ng,RIM_W_ng,RIM_n_rand_pts,RIM_sphe_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets,k_map,qindx_S_max_Go,RIMW_type,eps_env
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn
  use parallel_m, ONLY:ncpu,CPU_str_reset,CREATE_hosts_COMM
@@ -78,8 +78,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     l_SC_nl_mix,SC_kind,SC_perturbation,SC_desc,SC_neq_kind,SC_last_coh_it
 #endif
 #if defined _SC || defined _RT || defined _QED || defined _NL
- use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff,COLLISIONS_CV_only,COLLISIONS_FEW_only, &
-&                         COLLISIONS_load_SP,COLLISIONS_compr,COLL_hole_bands,COLL_elec_bands
+ use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff,COLLISIONS_CV_only, &
+&                         COLLISIONS_load_SP,COLLISIONS_compr,COLL_bands_frozen_ch
  use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
@@ -90,7 +90,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     CACHE_OBS_steps,CACHE_OBS_steps_now,RT_NAN_found,SAVE_Vb_history
  use RT_lifetimes,ONLY:RT_life_extrap_times
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_deph_range,&
-&                     Gr_kind,two_alpha,RAD_LifeTime,Phase_LifeTime,RT_elec_bands,RT_hole_bands,&
+&                     Gr_kind,two_alpha,RAD_LifeTime,Phase_LifeTime,RT_bands_frozen_ch,&
 &                     NE_tot_time,NE_MEM_treshold,RT_eh_en,l_update_SOC,&
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,&
 &                     i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps,RT_step_manual_prefactor,&
@@ -103,13 +103,13 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
 #if defined _NL
  use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,NL_initial_versor,     &
-&                     NL_verb_name,NL_bands,NL_desc,n_angles,NL_rot_axis,NL_hole_bands,NL_elec_bands,max_angle
+&                     NL_verb_name,NL_bands,NL_desc,n_angles,NL_rot_axis,NL_bands_frozen_ch,max_angle
  use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _SC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
 &                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
- use electric,    ONLY:l_P_periodic,l_force_SndOrd
+ use electric,    ONLY:l_force_SndOrd
 #endif
 #if defined _YAML_OUTPUT
  use com,         ONLY:depth_yaml
@@ -282,6 +282,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  RIM_anisotropy=0._SP
  RIM_ng=0
  RIM_n_rand_pts=0
+ RIM_sphe_n_rand_pts=0
  !
  ! RIM-W
  !
@@ -559,12 +560,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 # endif
  !
  COLLISIONS_CV_only=.FALSE.
- COLLISIONS_FEW_only=.FALSE.
  COLLISIONS_load_SP=.FALSE.
  COLLISIONS_compr  =.FALSE.
  !
- COLL_hole_bands=-1
- COLL_elec_bands=-1
+ COLL_bands_frozen_ch=""
  !
  H_potential="NONE"
  !
@@ -594,7 +593,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  call IO_desc_reset(SC_desc)
  !
- l_P_periodic   =.FALSE.
  l_force_SndOrd =.FALSE.
  !
 #endif
@@ -627,8 +625,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NE_time=0._SP
  NE_tot_time= 1000._SP*FS2AUT
  !
- RT_hole_bands=-1
- RT_elec_bands=-1
+ RT_bands_frozen_ch=""
  !
  NE_time_step_update_last_point = 1
  NE_time_step_update_jump       = 0._SP
@@ -709,8 +706,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NE_tot_time   =  -1._SP*FS2AUT 
  Integrator_name='INVINT'
  NL_bands      =(/0,0/)
- NL_hole_bands =-1
- NL_elec_bands =-1
+ NL_bands_frozen_ch=""
  NL_correlation="IPA"
  NL_er         =(/-1._SP,-1._SP/)/HA2EV
  n_frequencies =0

@@ -7,6 +7,8 @@
 !
 ! headers
 !
+#include<dev_defs.h>
+!
 #if defined _SLEPC && !defined _NL
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
@@ -16,8 +18,6 @@
 #endif
 !
 module interfaces
- !
-#include<dev_defs.h>
  !
  implicit none
  !
@@ -177,8 +177,6 @@ module interfaces
      !
      use pars,           ONLY:SP,schlen
      use petscmatdef,    ONLY:tmat
-#include <petsc/finclude/petscsys.h>
-#include <petsc/finclude/petscmat.h>
      Mat                         :: M_slepc      ! matrix to diagonalize of stype from slepc
      integer                     :: n_eig        ! number of eigenvalues to compute
      complex(SP)                 :: V_right(:,:) ! right eigenvalues
@@ -279,12 +277,7 @@ module interfaces
    !
    subroutine K_diago_perturbative(pert_dim, what, i_BS_mat, &
     &           BS_corrections, BS_VR, neigs_this_cpu, neig_shift, BS_VL, BS_Overlap) 
-     use pars,           ONLY:SP,cZERO
-     use wrapper_omp,    ONLY:V_dot_V_omp
-     use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
-     use LIVE_t,         ONLY:live_timing
-     use BS_solvers,     ONLY:BSS_eh_E_SOC_corr,BSS_eh_W,BSS_eh_E,BSS_n_eig
- 	  use BS,             ONLY:BS_K_coupling,BS_K_dim,BS_H_dim
+     use pars,           ONLY:SP
      implicit none
      integer,     intent(in)                   :: pert_dim
      character(3),intent(in)                   :: what
@@ -342,16 +335,16 @@ module interfaces
      type(tddft_wf_t), target, intent(inout) :: tddft_wf
    end function TDDFT_ALDA_eh_space_R_kernel
    !
-   subroutine WF_shift_kpoint_gpu(b_to_shift,nb_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k_out)
+   subroutine WF_shift_kpoint(b_to_shift,nb_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
      use pars,          ONLY:SP
      use electrons,     ONLY:n_spinor
      use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
      use R_lattice,     ONLY:bz_samp
-     integer,       intent(in) :: wf_shift(3),ikbz,i_sp_pol,b_to_shift(2),nb_to_shift
+     integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2),nb_to_shift
      type(bz_samp), intent(in) :: Xk
      complex(SP),   intent(in)  DEV_ATTR :: WF_k_in (wf_ng_1st_BZ,n_spinor,nb_to_shift)
      complex(SP),   intent(out) DEV_ATTR :: WF_k_out(wf_ng_overlaps,n_spinor,nb_to_shift)
-   end subroutine WF_shift_kpoint_gpu
+   end subroutine WF_shift_kpoint
    !
    subroutine WF_symm_kpoint(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
      use pars,          ONLY:SP 

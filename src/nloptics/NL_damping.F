@@ -5,6 +5,16 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
+!> @brief Dephasing for the real-time dynamics 
+!!
+!! @param[in]       V_bands                     time-dependent valence bands
+!! @param[in]       ik				k-point index
+!! @param[in]       i_sp_pol			spin-polarization index
+!! @param[in]       E 	                        energies and life-time array
+!!
+!! @param[out]      I_relax			relaxation matrix (distributed on k-points)
+!
+!
 subroutine NL_damping(E,ik,i_sp_pol,V_bands)
  !
  ! Output: I_relax

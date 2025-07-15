@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_Integrator_init()
  ! 
  use pars,           ONLY:SP,cONE,cZERO
@@ -16,8 +20,9 @@ subroutine RT_Integrator_init()
 &                         Integrator_name,integrator_exp_order,    &
 &                         a_tableau,b_tableau,c_tableau,RWA_table, &
 &                         I1_matrix,Integrator_nsteps,RT_bands
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer  :: ib
  !

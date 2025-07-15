@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM DS AF
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! K = <2V-W> for n_spin=1; K=<V-W> for n_spin>1
@@ -51,9 +56,9 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use MAGNONS,       ONLY:BSS_MAGN_free
  use PHOTOLUM,      ONLY:BSS_PL_free
  use parser_m,      ONLY:parser
+ use y_memory_alloc
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ implicit none
  !
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q
@@ -300,7 +305,9 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  l_matrix_init=.true.
  l_load_kernel=.true.
  l_write_kernel=.false.
+#if defined _MPI
  l_write_kernel_step= index(BSK_IO_mode,"write_all_steps")/=0
+#endif
  !
  if (l_write_kernel_step) then
    call warning("Experimental mode, IO at every step. Restart not possible")

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  !
  ! INCLUDED in: scatter_Gamp_incl.F
@@ -25,8 +29,9 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  use devxlib,       ONLY:devxlib_mapped
  use gpu_m
  use timing_m
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(elemental_collision), target::isc
  character(1) ::mode

@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): MG
 !
+! headers
+!
+#include<y_memory.h>
+#include<yambo_wfs.h>
+!
 subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  !
  !  Exchange KLI/CEDA
@@ -37,9 +42,9 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  use stderr,          ONLY:intc
  !
  ! I/O
+ use y_memory_alloc
  !
-#include<y_memory.h>
-#include<yambo_wfs.h>
+ implicit none
  !
  real(SP),    intent(out):: Vkli(fft_size)
  real(SP),    intent(in) :: Vslt(fft_size),rho(fft_size)

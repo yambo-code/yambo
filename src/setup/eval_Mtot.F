@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include <y_memory.h>
+!
 subroutine eval_Mtot(en,k,q)
  !
  use pars,           ONLY:SP
@@ -17,8 +21,9 @@ subroutine eval_Mtot(en,k,q)
  use interfaces,     ONLY:WF_load,el_magnetization
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                         PARALLEL_WF_index
+ use y_memory_alloc
  !
-#include <y_memory.h>
+ implicit none
  !
  type(levels)    ::en
  type(bz_samp)   ::k,q

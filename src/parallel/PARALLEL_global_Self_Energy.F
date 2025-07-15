@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  use electrons,     ONLY:levels
@@ -51,8 +55,9 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use drivers,       ONLY:l_elph_corr
  use ELPH,          ONLY:elph_use_q_grid
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q

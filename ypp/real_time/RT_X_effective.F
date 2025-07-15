@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_X_effective(en)
  !
  use pars,           ONLY:SP,lchlen,pi,schlen,cZERO,n_fields_defs_max
@@ -22,8 +26,9 @@ subroutine RT_X_effective(en)
  use vec_operate,    ONLY:sort
  use LIVE_t,         ONLY:live_timing
  use stderr,         ONLY:intc,real2ch,STRING_split
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)  :: en
  !

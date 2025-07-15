@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AC
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine LSEX_potential(q,X,Xw) 
  !
  ! Construct the screeend potential W(G=G'=0,q)
@@ -28,8 +32,9 @@ subroutine LSEX_potential(q,X,Xw)
  use collision_ext,       ONLY:ng_oscll
  use stderr,              ONLY:intc
  use parallel_int,        ONLY:PP_wait
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp), intent(in) :: q
  type(w_samp)              :: Xw

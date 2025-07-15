@@ -34,8 +34,6 @@ changelog:
 	./sbin/gitchangelog.py > ChangeLog
 interfaces:
 	@for target in $(INTERFCS) ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; exit 1;fi ; done
-gpl:
-	@for target in $(GPL)      ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; exit 1;fi ; done
 core:
 	@for target in $(CORE)     ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; exit 1;fi ; done
 ph-project:

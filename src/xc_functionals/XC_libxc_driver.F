@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MG DS DV
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ! This routine evaluates the xc functional in yambo 
@@ -38,8 +42,9 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
 &                         xc_f03_gga_exc,xc_f03_gga_vxc,xc_f03_gga_fxc
  use interfaces,     ONLY:el_density_and_current,el_magnetization
  use pseudo,         ONLY:pp_rho_nlcc,pp_has_nlcc,PP_nlcc_free
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels) ::en
  type(bz_samp)::Xk

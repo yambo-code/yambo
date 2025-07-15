@@ -4,6 +4,10 @@
 ! Copyright (C) 2025 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): CA
+!
+! headers
+!
+#include<y_memory.h>
 !                  
 subroutine DIPOLE_symmetrize(k)
  !
@@ -18,8 +22,9 @@ subroutine DIPOLE_symmetrize(k)
  use com,            ONLY:msg
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
  use parallel_int,   ONLY:PP_redux_wait
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !     
  type(bz_samp), intent(in)  :: k
  !

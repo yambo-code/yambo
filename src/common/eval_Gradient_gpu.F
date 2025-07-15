@@ -5,7 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM MG AF
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
 !
 subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  !
@@ -36,8 +39,9 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  use mkl_dfti_omp_offload
 #endif
  use timing_m
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer,          intent(in) :: spinor_size
  complex(SP),      intent(in) :: f(fft_size,spinor_size)

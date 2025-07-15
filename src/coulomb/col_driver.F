@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 ! DESCRIPTION :
 ! 
 ! the variables generated/read in this series of rotuines are:
@@ -24,7 +29,6 @@
 ! 4 pi / |q+G|^2 = 2 pi DLVol NqBZ qpg(q,G)                                  
 ! |q+G| = Sqrt[ 2 / ( DLVol NqBZ qpg(q,G)) ]                                  
 !
-#include<dev_defs.h>
 !
 subroutine col_driver(bare_NG,q)
  !
@@ -46,8 +50,9 @@ subroutine col_driver(bare_NG,q)
  use wave_func,     ONLY:wf_ng
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,REP,VERIFY
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer       :: bare_NG
  type(bz_samp) :: q
@@ -88,8 +93,7 @@ subroutine col_driver(bare_NG,q)
  !
  if (.not.l_rim) then
    RIM_ng=0
-   call parser('RandQpts',l_RandQpts)
-   if (.not.l_RandQpts) RIM_n_rand_pts=0
+   RIM_n_rand_pts=0
  endif
  !
  call parser('QpgFull',RIM_is_diagonal)

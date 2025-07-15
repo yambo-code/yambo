@@ -5,14 +5,19 @@
 !
 ! Authors (see AUTHORS file for details): AM DS NM
 !
+! headers
+!
+#include <y_memory.h>
+!
 module BS_solvers
  !
  use descriptors,    ONLY:IO_desc
  use pars,           ONLY:SP,schlen,lchlen
  use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_dim,BS_H_dim,BS_block,n_BS_blks,BS_blk
  use matrix,         ONLY:PAR_matrix
+ use y_memory_alloc
  !
-#include <y_memory.h>
+ implicit none
  !
  ! Epsilon factor
  !==================

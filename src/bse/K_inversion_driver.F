@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_inversion_driver(iq,W,E,k,q) 
  !
  use pars,           ONLY:SP
@@ -36,8 +40,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use stderr,         ONLY:intc
  use descriptors,    ONLY:IO_desc_add
  use PHOTOLUM,       ONLY:BSS_PL_free,PL
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(w_samp) :: W
  integer      :: iq

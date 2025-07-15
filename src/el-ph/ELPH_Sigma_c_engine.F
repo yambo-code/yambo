@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 !> @brief Calculate real and imaginary part of the electron-phonon self-energy
 !!
 !! @param[in]       i_qp                quasi-particle index
@@ -34,8 +38,9 @@ subroutine ELPH_Sigma_c_engine(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:Tel
  use functions,     ONLY:Fermi_fnc_derivative,Fermi_fnc
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer,      intent(in) :: i_qp
  integer,      intent(in) :: ob

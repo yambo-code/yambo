@@ -7,6 +7,8 @@
 !
 ! headers
 !
+#include<y_memory.h>
+!
 #if defined _SLEPC && !defined _NL
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
@@ -57,14 +59,14 @@ subroutine K_diago_driver(iq,W,X_static)
  use BS,             ONLY:l_BS_abs,l_BS_kerr,l_BS_kerr_asymm,l_BS_magnons,l_BS_photolum,l_BS_dichroism
  use MAGNONS,        ONLY:BSS_MAGN_free
  use PHOTOLUM,       ONLY:BSS_PL_free
- !
 #if defined _SLEPC && !defined _NL
  use slepceps,       ONLY:SlepcInitialize
  use petscmat,       ONLY:PETSC_NULL_CHARACTER
  use petscmatdef,    ONLY:tMat
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  ! 
  type(w_samp)  :: W
  integer       :: iq
@@ -125,9 +127,13 @@ subroutine K_diago_driver(iq,W,X_static)
  l_kerr_lft=l_BS_kerr_asymm.or.l_BS_dichroism
  l_kerr_rgt=l_BS_kerr      .or.l_BS_dichroism
  !
- l_diago     = index(BSS_mode,'o')/=0 ! old diago
  l_slepc     = index(BSS_mode,'s')/=0
+#if defined _SCALAPACK
+ l_diago     = index(BSS_mode,'o')/=0 ! old diago
  l_ldiago    = index(BSS_mode,'d')/=0 
+#else
+ l_diago     = index(BSS_mode,'o')/=0 .or. index(BSS_mode,'d')/=0
+#endif
  !
 #if defined _NL
  if (l_ldiago) then
@@ -248,6 +254,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if (K_is_not_hermitian) then
        !
+#if defined _SCALAPACK
        if (l_ldiago) then 
          ! BS_V_left are only referenced in non-hermitian case
          ! In coupling case, if the user requested n values,
@@ -259,6 +266,7 @@ subroutine K_diago_driver(iq,W,X_static)
          &                   solver_type=BSS_ldiago_solver, elpasolver=elpa_solver)
          BSS_n_eig = size(BS_E)
       endif
+#endif
       !
       if(l_diago) then
          ! call LINEAR_ALGEBRA_driver(DIAGO,M=BS_V_right,E_cmpl=BS_E,V_left=BS_V_left)
@@ -277,12 +285,14 @@ subroutine K_diago_driver(iq,W,X_static)
        !
      else
        !
+#if defined _SCALAPACK
        if (l_ldiago) then
          call LDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
 &                           neigs_range=neigs_range, eigvals_range=eigvals_range,   &
 &                           solver_type=BSS_ldiago_solver, elpasolver=elpa_solver)
          BSS_n_eig = size(BS_E)
        endif
+#endif
        !
        if(l_diago) then
          call LINEAR_ALGEBRA_driver(DIAGO,M=BS_V_right,E_real=BS_E_real)
@@ -316,10 +326,12 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if (l_diago) call live_timing( )
      !
+#if defined _SCALAPACK
      if (l_ldiago) then
        ! BSS_n_eig could be lowered by LDIAGO_driver
        if (BSS_n_eig_before_solver/=BSS_n_eig) call K_ldiago_resize_variables()
      endif
+#endif
      !
      ! Compute residuals
      !
@@ -423,7 +435,9 @@ subroutine K_diago_driver(iq,W,X_static)
      &                                                   BS_mat=BS_V_right,write_ev=.not.l_ldiago)
      !
      call PP_wait()
+#if defined _SCALAPACK
      if (l_ldiago .and. BSS_write_eig_2_db) call write_bs_ev_par(iq, i_BS_mat, BS_V_right, BS_V_left)
+#endif
    endif
    !
    YAMBO_FREE(BS_E)
@@ -572,6 +586,9 @@ subroutine K_diago_driver(iq,W,X_static)
 #endif
    !
    subroutine K_local_init()
+     ! 
+     BSS_n_eig=BSS_n_eig_Input
+     !
      !
      K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
      !
@@ -599,6 +616,7 @@ subroutine K_diago_driver(iq,W,X_static)
        call warning('Preconditioning not supported in pseudo-hermitian case. Switching to non-hermitian diagonalization')
      endif
      !
+#if defined _SCALAPACK
      if (l_ldiago) then
        !
        if (BSS_ldiago_solver/="s" .and. BSS_ldiago_solver/="e") then
@@ -660,6 +678,7 @@ subroutine K_diago_driver(iq,W,X_static)
        endif
        !
      endif
+#endif
      !
    end subroutine K_local_init
    !
@@ -687,6 +706,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if(l_diago) BSS_n_eig = BS_mat_dim
      !
+#if defined _SCALAPACK
      ! set a Ldiago defaults.
      if(l_ldiago) then
        !
@@ -717,6 +737,7 @@ subroutine K_diago_driver(iq,W,X_static)
        endif
        !
      endif
+#endif
      !
      BSS_n_eig_before_solver=BSS_n_eig
      !

@@ -5,9 +5,13 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
-#include<dev_defs.h>
+! headers
 !
-subroutine WF_shift_kpoint_gpu(b_to_shift,nb_to_shift,ikbz,i_sp_pol,wf_shift,Xk,WF_k_in,WF_k_out)
+#include<dev_defs.h>
+#include<y_memory.h>
+!
+!
+subroutine WF_shift_kpoint(b_to_shift,nb_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
  !
  use pars,          ONLY: SP,cZERO
  use electrons,     ONLY: n_spinor
@@ -16,10 +20,11 @@ subroutine WF_shift_kpoint_gpu(b_to_shift,nb_to_shift,ikbz,i_sp_pol,wf_shift,Xk,
  use wave_func,     ONLY: wf_ng_1st_BZ,wf_ng_overlaps
  use devxlib,       ONLY: devxlib_memcpy_d2d, devxlib_memset_d
  use gpu_m,         ONLY: have_gpu
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
- integer,       intent(in) :: wf_shift(3),ikbz,i_sp_pol,b_to_shift(2),nb_to_shift
+ integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2),nb_to_shift
  type(bz_samp), intent(in) :: Xk
  complex(SP), intent(in)  DEV_ATTR :: WF_k_in (wf_ng_1st_BZ, n_spinor,nb_to_shift)
  complex(SP), intent(out) DEV_ATTR :: WF_k_out(wf_ng_overlaps,n_spinor,nb_to_shift)
@@ -62,7 +67,7 @@ subroutine WF_shift_kpoint_gpu(b_to_shift,nb_to_shift,ikbz,i_sp_pol,wf_shift,Xk,
      !DEV_CUF kernel do(3) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:WF_tmp,G_m_G,WF_k_out)
      !DEV_OMPGPU teams loop collapse(3)
-     !DEV_OMP parallel do default(shared), private(i_sp_pol,i_b,i_spinor,ig,igp),collapse(3)
+     !DEV_OMP parallel do default(shared), private(i_b,i_spinor,ig,igp),collapse(3)
      !
      do i_b=i_b1,i_b2
        do i_spinor=1,n_spinor
@@ -94,5 +99,5 @@ subroutine WF_shift_kpoint_gpu(b_to_shift,nb_to_shift,ikbz,i_sp_pol,wf_shift,Xk,
  YAMBO_FREE_GPU(WF_tmp)
  YAMBO_FREE(WF_tmp)
  !
-end subroutine WF_shift_kpoint_gpu
+end subroutine WF_shift_kpoint
 

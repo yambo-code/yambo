@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw,IO_BS_err,ID_BS)
  !
  ! HXC collisions 
@@ -30,7 +34,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw,IO_BS_err,ID_BS)
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_HXC_local,COLLISIONS_HXC_MB,&
 &                        COLL_bands,HXC_COLL_element,HXC_collisions,COH_COLL_element,COH_collisions,&
-&                        COLLISIONS_HXC_use_TDDFT,PAR_COLL_min,COLLISIONS_CV_only
+&                        COLL_bands_frozen,COLLISIONS_HXC_use_TDDFT,PAR_COLL_min,COLLISIONS_CV_only
  use timing_m,      ONLY:timing
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx,QP_ng_Sc
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
@@ -42,8 +46,9 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw,IO_BS_err,ID_BS)
  use R_lattice,     ONLY:qindx_S,bz_samp,g_rot,minus_G,G_m_G
  use hamiltonian,   ONLY:B_mat_index
  use fft_m,         ONLY:fft_size
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)             ::E
  type(bz_samp)            ::k,q,Xk
@@ -455,7 +460,12 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw,IO_BS_err,ID_BS)
        !i_p_s =k%sstar(i_p_bz,2)
        !
        do i_mp=COLL_bands(1),COLL_bands(2)
+         !
+         if ( COLL_bands_frozen(i_mp)==1 ) cycle
+         !
          do i_np=COLL_bands(1),COLL_bands(2)
+           !
+           if ( COLL_bands_frozen(i_mp)==1 ) cycle
            !
            if ( (i_np> n_met_bands(ip_sp)  .and. i_mp> n_met_bands(ip_sp) ) ) cycle
            if ( (i_np<=n_full_bands(ip_sp) .and. i_mp<=n_full_bands(ip_sp)) ) cycle
@@ -620,7 +630,12 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw,IO_BS_err,ID_BS)
        if (k%sstar(i_p_bz,2)/=1) cycle
        !
        do i_mp=COLL_bands(1),COLL_bands(2)
+         !
+         if ( COLL_bands_frozen(i_mp)==1 ) cycle
+         !
          do i_np=i_mp,COLL_bands(2)
+           !
+           if ( COLL_bands_frozen(i_np)==1 ) cycle
            !
            cc_vv_colls=(i_np> n_met_bands(ip_sp)  .and. i_mp>n_met_bands(ip_sp) ) .or. &
            &           (i_np<=n_full_bands(ip_sp) .and. i_mp<=n_full_bands(ip_sp))
@@ -815,6 +830,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw,IO_BS_err,ID_BS)
        !
        do i_mp=COLL_bands(1),COLL_bands(2)
          !
+         if ( COLL_bands_frozen(i_mp)==1 ) cycle
+         !
          do i_np=COLL_bands(1),COLL_bands(2)
            TMP_index(i_np)=B_mat_index(i_np,i_mp,COLL_bands)
          enddo
@@ -826,6 +843,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw,IO_BS_err,ID_BS)
          call scatter_Bamp(iscp_XC)
          !
          do i_np=COLL_bands(1),COLL_bands(2)
+           !
+           if ( COLL_bands_frozen(i_np)==1 ) cycle
            !
            cc_vv_colls=(i_np> n_met_bands(i_sp)  .and. i_mp>n_met_bands(i_sp) ) .or. &
            &           (i_np<=n_full_bands(i_sp) .and. i_mp<=n_full_bands(i_sp))

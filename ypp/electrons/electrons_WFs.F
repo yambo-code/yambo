@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+#include<yambo_wfs.h>
+!
 subroutine electrons_WFs(Xen)
  !
  use pars,           ONLY:SP,lchlen
@@ -34,9 +39,9 @@ subroutine electrons_WFs(Xen)
  use com,            ONLY:jobstr
  use R_lattice,      ONLY:nkibz
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
-#include<yambo_wfs.h>
+ implicit none
  !
  type(levels)  ::Xen
  !

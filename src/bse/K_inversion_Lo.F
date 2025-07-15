@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo) 
  !
  use pars,           ONLY:SP,cZERO,cI,pi,rZERO,schlen
@@ -28,8 +32,9 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo)
 #endif
  use BS,             ONLY:l_BS_photolum
  use PHOTOLUM,       ONLY:BSS_PL_f,BSS_dipoles_PL,PL,PL_prefactor
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(w_samp),  intent(inout) :: W
  type(levels),  intent(in)    :: E

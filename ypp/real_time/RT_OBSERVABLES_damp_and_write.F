@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM CA DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  !
  use YPP_real_time,  ONLY:l_force_min_damp,RT_time,OBS_el,RT_ctl
@@ -12,9 +16,11 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  use pars,           ONLY:pi,SP
  use units,          ONLY:AUT2FS
  use RT_control,     ONLY:RT_output
+ use fields,         ONLY:A_ext
  use real_time,      ONLY:RT_ind_J,RT_P
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(OBS_el) :: OBS
  type(RT_ctl) :: RT
@@ -59,6 +65,7 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  do i_t=1,RT%T_n_steps
    if (STRING_match(OBS%title,"polarization")) RT_P=OBS%F_t(i_t,1:3)
    if (STRING_match(OBS%title,"current")     ) RT_ind_J=OBS%F_t(i_t,1:3)
+   if (STRING_match(OBS%title,"Field")       ) A_ext%vecpot_vel(1)=OBS%F_t(i_t,1)
    call RT_output(trim(OBS%title),TIME=RT_time(i_t)*AUT2FS)
  enddo
  call RT_output(what="close "//trim(OBS%title))

@@ -47,7 +47,7 @@ subroutine V_qp_basis_to_H(ik,i_sp_pol,V,H)
      if (.not.(PAR_IND_QP%element_1D(i1))) cycle
    endif
    if (l_par_RT) then
-     if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 )) cycle
+     if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1) )) cycle
    endif
    !
    ! In the RT simulation the bands QP_table matrix is not ordered

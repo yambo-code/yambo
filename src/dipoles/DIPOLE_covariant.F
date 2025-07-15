@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MG CA DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
  !
  ! Build the covariant dipole operator at zero field
@@ -13,7 +17,8 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
  use pars,           ONLY:SP,cI,cZERO,pi
  use LIVE_t,         ONLY:live_timing
  use electrons,      ONLY:levels,n_sp_pol
- use DIPOLES,        ONLY:DIPOLE_t,DIP_S,DIP_iR,DIP_v,covariant_obs,x_space_obs
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_S,DIP_iR,DIP_v,l_force_SndOrd,&
+ &                        covariant_obs,x_space_obs
  use ALLOC,          ONLY:DIPOLE_ALLOC_elemental
  use R_lattice,      ONLY:bz_samp,k_map
  use vec_operate,    ONLY:k_periodic_idx
@@ -25,8 +30,9 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
  use stderr,         ONLY:STRING_match
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels),           intent(in)     ::Xen
  type(bz_samp),          intent(inout)  ::Xk
@@ -35,7 +41,7 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
  !
  ! Work Space
  !
- logical     ::l_eval_polarization,l_force_SndOrd
+ logical     ::l_eval_polarization
  integer     ::ik,iv,ic,ic_min,iv_max,i_sp_pol,ikm1,id_red,idir,idx(3),ikbz,ik_mem,istep,max_step
  real(SP)    ::Ev_m_Ec_KS
  complex(SP), allocatable :: Sm1_plus (:,:,:),Sm1_minus(:,:,:)
@@ -46,20 +52,12 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
  !
  if(.not.Dip%force_v_g_space) Dip%Vnl_included=.true.
  !
- if (any(Xen%nbf/=Xen%nbm)) call error(' Covariant dipoles not implemented for metals')
- !
- call parser('EvPolarization'  ,l_eval_polarization)
- call parser('FrSndOrd'        ,l_force_SndOrd)
- !
  if(.not.allocated(k_map%k_map_dir)) call k_map_nearest_by_dir(Xk,k_map)
  if(.not.allocated(Xk%k_table))      call k_build_up_BZ_tables(Xk)
  !
- ! Notice that DIP_S is defined in the BZ       
+ if (any(Xen%nbf/=Xen%nbm)) call error(' Covariant dipoles not implemented for metals')
  !
- call DIPOLE_ALLOC_elemental('DIP_S',(/Dip%ib(2),Dip%ib(2),6,Xk%nbz/))
- DIP_S=cZERO
- !
- call DIPOLE_overlaps(Xk,Dip)
+ call parser('EvPolarization'  ,l_eval_polarization)
  !
  direction_is_todo(:)= (k_map%max_kdir(:)==1)
  !
@@ -159,7 +157,7 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
        do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
          if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
          do idir=1,3
-           DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)=(DIP_tmp(idir,ic,iv)+conjg(DIP_tmp(idir,iv,ic)))/cI
+           DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)=(DIP_tmp(idir,ic,iv)+conjg(DIP_tmp(idir,iv,ic)))*cI
          enddo
        enddo
      enddo
@@ -195,7 +193,7 @@ subroutine DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
  call live_timing()
  !
 #if defined _NL
- if (l_eval_polarization) call POLARIZATION_output(Xen,Xk,Dip)
+ if (l_eval_polarization) call POLARIZATION_output(Xen,Xk)
 #endif
  !
  if (any(direction_is_todo)) then

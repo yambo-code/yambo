@@ -1,23 +1,25 @@
 /*
   License-Identifier: GPL
- 
+
   Copyright (C) 2020 The Yambo Team
- 
+
   Authors (see AUTHORS file for details): DS
 */
 /*
  C wrapper
-*/ 
+*/
+#pragma once
+
 #if defined _C_US
- #define C_FUNC(name,NAME) name ## _
+#define C_FUNC(name, NAME) name##_
 #else
- #define C_FUNC(name,NAME) name
+#define C_FUNC(name, NAME) name
 #endif
 /*
  F90 wrapper
 */
 #if defined _FORTRAN_US
- #define F90_FUNC(name) name ## _
+#define F90_FUNC(name) name##_
 #else
- #define F90_FUNC(name) name
+#define F90_FUNC(name) name
 #endif

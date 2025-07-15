@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AF
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h> 
+!
 !=====================================================================
 ! Driver to 3D FFT: FFTW, Goedecker
 !
@@ -27,7 +32,6 @@
 !
 !=====================================================================
 !
-#include<dev_defs.h>
 !
 subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  !
@@ -41,8 +45,9 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  use openacc
 #endif
  use gpu_m,  only: gpu_devsync
+ use y_memory_alloc
  !
-#include<y_memory.h> 
+ implicit none
  !
  integer   :: fft_sign,n(3)
  integer   :: cufft_plan

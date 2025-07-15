@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_inversion_driver(iq,W,E,k,q) 
  !
  use pars,           ONLY:SP
@@ -24,6 +28,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use IO_m,           ONLY:REP,NONE,OP_WR_CL
  use matrix,         ONLY:MATRIX_reset
  use timing_m,       ONLY:timing
+ use BS_solvers,     ONLY:BS_mat
+ use interfaces,     ONLY:K_stored_in_a_big_matrix
 #if defined _SCALAPACK
  use interfaces,     ONLY:MATRIX_transfer,MATRIX_duplicate
  use parallel_m,     ONLY:linear_algebra_is_parallel
@@ -34,8 +40,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use stderr,         ONLY:intc
  use descriptors,    ONLY:IO_desc_add
  use PHOTOLUM,       ONLY:BSS_PL_free,PL
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(w_samp) :: W
  integer      :: iq
@@ -141,7 +148,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
  else
    !
-   call K_stored_in_a_big_matrix(1,iq,"INV")
+   call K_stored_in_a_big_matrix(1,BS_H_dim,BS_mat,iq,"INV")
    !
    ! Diagonal removal
    !==================

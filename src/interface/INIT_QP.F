@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine INIT_QP(comment)
  !
  ! QP_state -> input file
@@ -13,8 +17,9 @@ subroutine INIT_QP(comment)
  use QP_m,      ONLY:QP_nk,QP_nb,QP_state
  use parser_m,  ONLY:PARSER_array
  use it_tools,  ONLY:check_verbosity
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  character(*) ::comment
  ! 

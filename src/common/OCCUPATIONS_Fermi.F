@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
  !
  ! Mode = "FERMI" 
@@ -31,8 +35,9 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
 #if defined _SC
  use SC,            ONLY:SC_neq_kind,SC_mu,SC_occ
 #endif 
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)  ::E
  type(bz_samp) ::K
@@ -118,6 +123,8 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
  ! Start Loop
  ! 
  i_trials=1
+ ! Setting this to 1.E-4 is needed for CrI3,
+ ! however, it make Benzene tests fail
  nel_diff_zero=1.E-5
  Fermi_is_converged=.false.
  !

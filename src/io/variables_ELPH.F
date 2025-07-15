@@ -5,13 +5,17 @@
 !
 ! Authors (see AUTHORS file for details): AM AC
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function variables_ELPH(ID,what)
  !
  use pars,           ONLY:SP
  use IO_m,           ONLY:io_status,read_is_on,write_is_on,io_mode,DUMP,IO_INCOMPATIBLE_VAR
  use IO_int,         ONLY:ver_is_gt_or_eq,io_variable_elemental,io_bulk,def_variable_elemental
  use ELPH,           ONLY:ph_modes,elph_nb,elph_nk_bz,ELPH_desc,elph_grids_are_expanded, &
-&                         QP_PH_n_G_bands,PH_W_debye,elph_nQ,PH_kpt_bz,l_GKKP_hosts_bare_dV,&
+&                         QP_PH_n_G_bands,PH_W_debye,elph_nQ,PH_kpt_bz,l_GKKP_hosts_bare_dV,l_GKKP_DW,&
 &                         elph_use_q_grid,PH_qpt,elph_nQ_used,elph_Ham_bands,elph_branches
  use ALLOC,          ONLY:ELPH_alloc
  use R_lattice,      ONLY:nkbz,nqibz,q_pt
@@ -19,15 +23,16 @@ integer function variables_ELPH(ID,what)
  use vec_operate,    ONLY:rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
  use descriptors,    ONLY:IO_desc_reset
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer, intent(in) ::ID
  character(*) ::what
  !
  !Work Space
  !
- integer                ::iq
+ integer                ::iq,PARS_size
  logical                ::l_gFsq,l_gkkp
  real(SP)               ::v(3)
  !
@@ -40,8 +45,11 @@ integer function variables_ELPH(ID,what)
  !
  call IO_desc_reset(ELPH_desc)
  !
- if (.not.ver_is_gt_or_eq(ID,revision=18920)) call def_variable_elemental(ID,"PARS",6,SP,0)
- if (     ver_is_gt_or_eq(ID,revision=18920)) call def_variable_elemental(ID,"PARS",7,SP,0)
+ PARS_size=6
+ if (     ver_is_gt_or_eq(ID,revision=18920)) PARS_size=7
+ if (     ver_is_gt_or_eq(ID,revision=21400)) PARS_size=8
+ call def_variable_elemental(ID,"PARS",PARS_size,SP,0)
+ !
  call io_variable_elemental(ID,VAR="[ELPH] Phonon modes",I0=ph_modes,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
  call io_variable_elemental(ID,VAR="[ELPH] Q points",I0=elph_nQ,CHECK=.true.,OP=(/"=="/),&
 &                             TERMINATOR="[avail]",DESCRIPTOR=ELPH_desc)
@@ -50,10 +58,19 @@ integer function variables_ELPH(ID,what)
  call io_variable_elemental(ID,VAR="[ELPH] K points",I0=elph_nk_bz,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
  call io_variable_elemental(ID,VAR="[ELPH] El-PH bands",I0=elph_nb,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
  call io_variable_elemental(ID,VAR="[ELPH] Using the Q-grid",L0=elph_use_q_grid,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
+ !
  if (ver_is_gt_or_eq(ID,revision=18920)) then
    call io_variable_elemental(ID,VAR="[ELPH] Bare interaction",L0=l_GKKP_hosts_bare_dV,&
 &                               CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
  endif
+ !
+ if (ver_is_gt_or_eq(ID,revision=21400)) then
+   call io_variable_elemental(ID,VAR="[ELPH] Debye-Waller interaction",L0=l_GKKP_DW, &
+&                             CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
+ else
+    l_GKKP_DW=.TRUE.
+ endif
+ !
  if (l_gFsq) then
    call def_variable_elemental(ID,"QP_nb_nk_n_states",3,SP,0)
    call io_variable_elemental(ID,I0=QP_nb)

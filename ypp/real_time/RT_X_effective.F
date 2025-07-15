@@ -5,9 +5,13 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_X_effective(en)
  !
- use pars,           ONLY:SP,lchlen,pi,schlen,cZERO
+ use pars,           ONLY:SP,lchlen,pi,schlen,cZERO,n_fields_defs_max
  use YPP_real_time,  ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_IO_J_and_P,&
 &                         max_n_of_paths,Use_FFT,RT_conf,N_pumps,N_probe_frequencies,X_order,&
 &                         l_RT_X_inversion,l_skip_pol_and_curr_IO
@@ -22,13 +26,14 @@ subroutine RT_X_effective(en)
  use vec_operate,    ONLY:sort
  use LIVE_t,         ONLY:live_timing
  use stderr,         ONLY:intc,real2ch,STRING_split
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)  :: en
  !
  character(lchlen) :: jobstr_save
- character(schlen) :: X_file_name,field_defs(3)
+ character(schlen) :: X_file_name,field_defs(n_fields_defs_max)
  integer           :: i_f,i_fp,f_indx(max_n_of_paths),i_order,min_X_order,i_c,i_t,i_conv,&
 &                     i_p,N_periods,i_Pump,i_Probe
  real(SP)          :: Pump_Frequency(1),Unit_of_Measure

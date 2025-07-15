@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 module parallel_m
  !
  ! Collective Operations (from  http://linux.die.net/man/3/mpi_lor )
@@ -43,7 +47,9 @@ module parallel_m
 #endif
  !
 #if !defined _io_lib
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
 #endif
  !
 #if defined _MPI
@@ -721,4 +727,36 @@ module parallel_m
 #endif
    end subroutine CREATE_hosts_COMM
    !
+   subroutine par_distribute_set(nsets, nsets_this_cpu, nset_shift, comm)
+     !
+     implicit none
+     !
+     integer, intent(in)      :: nsets
+     integer, intent(out)     :: nsets_this_cpu, nset_shift
+     integer, optional        :: comm
+
+#if defined _MPI
+     integer                  :: nProcs, my_rank, ierr
+     integer                  :: loc_comm = mpi_comm_world
+     !
+     if (present(comm)) loc_comm = comm
+     !
+     call MPI_COMM_SIZE(loc_comm, nProcs, ierr)
+     call MPI_COMM_RANK(loc_comm, my_rank, ierr)
+
+     nsets_this_cpu = nsets/nProcs 
+     nset_shift  = nsets_this_cpu * my_rank
+     !
+     if (my_rank .lt. mod(nsets, nProcs)) then
+       nsets_this_cpu = nsets_this_cpu + 1
+       nset_shift = nset_shift + my_rank
+     else 
+       nset_shift = nset_shift + mod(nsets, nProcs)
+     endif
+#else 
+     nset_shift = 0
+     nsets_this_cpu = nsets
+#endif
+   end subroutine par_distribute_set
+!
 end module parallel_m

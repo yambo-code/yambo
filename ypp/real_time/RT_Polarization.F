@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM 
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_Polarization(en,k,q)
  !
  use pars,           ONLY:cZERO,SP,schlen,rZERO
@@ -24,8 +28,9 @@ subroutine RT_Polarization(en,k,q)
  use parallel_int,   ONLY:PP_redux_wait
  use DIPOLES,        ONLY:DIP_iR
  use functions,      ONLY:Fermi_fnc_derivative
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)  :: en
  type(bz_samp) :: k,q
@@ -70,7 +75,7 @@ subroutine RT_Polarization(en,k,q)
  ! Alloc
  !-------
  if (STRING_same(RT_pol_mode,"slice")) then
-   YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,1))
+   YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol,1))
    dG_lesser=cZERO
    !
    ! Time conf
@@ -99,16 +104,8 @@ subroutine RT_Polarization(en,k,q)
      !
      call gimme_a_G_Time_Point(i_T)
      !
-#if defined _PAR_IO
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),ID=ID)
      io_err=io_RT_components('G_lesser',ID)
-#else
-     do ik = 1, RT_nk 
-       IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,1,RT_nk)
-       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=ID)
-       io_err=io_RT_components('G_lesser',ID)
-     enddo
-#endif
      !
      RT_P=cZERO
      !
@@ -143,7 +140,7 @@ subroutine RT_Polarization(en,k,q)
              enddo
            endif
            if (STRING_same(RT_pol_mode,"slice")) then
-             RT_P=RT_P+DIP_iR(ic,i_n,i_m,ik_mem,i_sp_pol)*dG_lesser(i_m,i_n,ik,1)/DL_vol*k%weights(ik)
+             RT_P=RT_P+DIP_iR(ic,i_n,i_m,ik_mem,i_sp_pol)*dG_lesser(i_m,i_n,ik,i_sp_pol,1)/DL_vol*k%weights(ik)
            endif
          enddo K_LOOP
        enddo

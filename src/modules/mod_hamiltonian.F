@@ -5,15 +5,23 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 module hamiltonian
  !
- use pars,       ONLY:SP,schlen
+ use pars,       ONLY:LP,SP,schlen
  use electrons,  ONLY:levels
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer           :: H_ref_bands(2)
  integer           :: H_ref_nbands
+ !
+ character(schlen)       :: H_ref_bands_frozen_ch
+ integer(LP), allocatable:: H_ref_bands_frozen(:)
  !
  character(schlen) :: H_potential
  !
@@ -57,9 +65,19 @@ module hamiltonian
    integer function B_mat_index(ib1,ib2,nb)
      integer :: ib1,ib2,nb(2)
      !
+     ! This is identical to 
+     ! B_mat_index = matrix_index(ib1-nb(1)+1,ib2-nb(1)+1,nb(2)-nb(1)+1)
      B_mat_index=(ib1-nb(1))*(nb(2)-nb(1)+1)+ib2-nb(1)+1
      !
-   end function
+   end function B_mat_index
+   !
+   integer function B_mat_index_cv(ib1,ib2,nb1,nb2)
+     integer :: ib1,ib2,nb1(2),nb2(2)
+     !
+     B_mat_index_cv=(ib1-nb1(1))*(nb2(2)-nb2(1)+1)+ib2-nb2(1)+1
+     !
+   end function B_mat_index_cv
+   !
    !
    subroutine H_QP_table_setup(E)
      use drivers,        ONLY:l_use_collisions

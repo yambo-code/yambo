@@ -28,15 +28,17 @@
  io_RT_components_OBS.o
  io_RT_components_Reference.o
  io_RT_components_TIME_points.o
+ io_RT_components_V_bands.o
  io_RT_components_header.o
  io_SC_components.o
  io_USPP_pwscf.o
- io_Vnl.o
  io_WF.o
  io_X.o
  io_descriptors.o
+ io_full_SYMMs.o
  io_gFsq.o
  io_header.o
+ io_kpts.o
  io_out_of_date.o
  load_SC_components.o
  variables_DIPOLES.o

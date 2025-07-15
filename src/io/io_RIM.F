@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include <y_memory.h>
+!
 integer function io_RIM(ID)
  !
  use pars,           ONLY:SP
@@ -13,8 +17,9 @@ integer function io_RIM(ID)
 &                         nqibz
  use IO_m,           ONLY:io_sec,read_is_on,io_status,write_is_on
  use IO_int,         ONLY:io_connect,io_disconnect,io_header,io_elemental,io_bulk,ver_is_gt_or_eq
+ use y_memory_alloc
  !
-#include <y_memory.h>
+ implicit none
  !
  integer :: ID
  ! 

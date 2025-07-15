@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM DS AF
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! K = <2V-W> for n_spin=1; K=<V-W> for n_spin>1
@@ -26,18 +31,19 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use X_m,           ONLY:X_t
  use interfaces,    ONLY:el_density_and_current
  use QP_m,          ONLY:QP_ng_Vxc
- use BS,            ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
-&                        BS_res_K_exchange,BS_Block_size,BS_n_g_W,&
+ use BS_solvers,    ONLY:BSS_kernel_last_stored_block
+ use BS,            ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,BS_ID,&
+&                        BS_res_K_exchange,BS_Block_size,l_BSE_kernel_full,BS_n_g_W,&
 &                        O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
 &                        BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                        BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
-&                        WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
-&                        BS_nT_grps,BS_blks_free,l_BS_ares_from_res,&
+&                        WF_phase,n_BS_blks,BS_blk,BS_T_grp,BSK_IO_mode,BSK_IO_sum_value,&
+&                        BS_nT_grps,l_BS_ares_from_res,BS_K_has_been_calculated_loaded,&
 &                        l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
 &                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val,l_BS_magnons
  use collision_el,  ONLY:elemental_collision_free
  use IO_int,        ONLY:io_control
- use IO_m,          ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
+ use IO_m,          ONLY:REP,OP_WR,RD,WR,WR_CL,OP_APP,io_BS_K,deliver_IO_error_message
  use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc, &
 &                        FXC_mode,tddft_wf_t,l_Fxc_from_Vxc
  use xc_functionals,ONLY:V_xc,F_xc,F_xc_mat,magn,XC_potential_driver
@@ -50,9 +56,9 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use MAGNONS,       ONLY:BSS_MAGN_free
  use PHOTOLUM,      ONLY:BSS_PL_free
  use parser_m,      ONLY:parser
+ use y_memory_alloc
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ implicit none
  !
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q
@@ -93,8 +99,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP),   external :: TDDFT_ALDA_eh_space_G_kernel
  complex(SP),   external :: K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
- logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_bs_tddft_wf_in_loop,l_matrix_init,&
- &             l_load_kernel,l_write_kernel,l_skip_phases,l_std_alg,l_dir_alg,l_tddft_gsum,l_tddft_rsum
+ logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_bs_tddft_wf_in_loop,l_matrix_init,BS_blk_todo,&
+ &             l_load_kernel,l_write_kernel,l_write_kernel_step,l_skip_phases,l_std_alg,l_dir_alg,l_tddft_gsum,l_tddft_rsum
  !
  ! I/O
  !
@@ -205,7 +211,10 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    call msg('r','[BSE] Correlation components ',(/BS_n_g_W,O_ng/))
  endif
  !
- call K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
+ call K_restart(iq,X,BS_ID(1),BS_ID(2),BS_ID(3),l_partial_kernel_loaded)
+ ID_head =BS_ID(1)
+ ID      =BS_ID(2)
+ ID_compr=BS_ID(3)
  !
  if( l_BSE_kernel_complete ) return
  !
@@ -296,6 +305,15 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  l_matrix_init=.true.
  l_load_kernel=.true.
  l_write_kernel=.false.
+#if defined _MPI
+ l_write_kernel_step= index(BSK_IO_mode,"write_all_steps")/=0
+#endif
+ !
+ if (l_write_kernel_step) then
+   call warning("Experimental mode, IO at every step. Restart not possible")
+ else
+   BSS_kernel_last_stored_block=n_BS_blks
+ endif
  !
  BS_blk_done=.false.
  !
@@ -376,6 +394,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    do i_block=1,n_BS_blks
      !
+     if (.not. allocated(BS_blk(i_block)%mat) ) call K_block_alloc(i_block,"all")
+     !
      ! Read BS_blk to check if the transition was already computed
      !
      if (.not.l_partial_kernel_loaded) then
@@ -392,16 +412,16 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      ! check if this block need to be done
      ! skip this block if already done
      !
-     BS_blk_done(i_block)=.true.
-     skip_check: do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
-       do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
-         if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t") cycle
-         BS_blk_done(i_block)=.false.
-         exit skip_check
-       enddo
-     enddo skip_check
+     BS_blk_done(i_block)=all((/BS_blk(i_block)%done=="t"/))
+     BS_blk_todo         =all((/BS_blk(i_block)%done=="f"/))
      !
      if (BS_blk_done(i_block)) m_steps=m_steps-i_steps
+     !
+     if ( (.not.l_partial_kernel_loaded) .and. io_BS_K .and. l_write_kernel_step) then
+       !
+       if (BS_blk_done(i_block) .or. BS_blk_todo) call K_block_free(i_block,"all")
+       !
+     endif
      !
      call live_timing(steps=i_steps)
      !
@@ -464,10 +484,19 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      if(l_partial_kernel_loaded.and.l_write_kernel) then
        call io_control(ACTION=WR,ID=ID)
        call io_BS_PAR_block(iq,i_block,ID,"full")
+       if (io_BS_K.and.l_write_kernel_step) call K_block_free(i_block,"all")
      endif
 #endif
      cycle
    endif
+   !
+   if (l_write_kernel_step) then
+     if (iHxc==1) BSK_IO_sum_value=.false.
+     if (iHxc==2) BSK_IO_sum_value=l_bs_exch
+     if (iHxc==3) BSK_IO_sum_value=l_bs_exch.or.BS_K_is_ALDA
+   endif
+   !
+   if (.not. allocated(BS_blk(i_block)%mat) ) call K_block_alloc(i_block,"all")
    !
    ! Read BS_blk to check if the transition was already computed
    !
@@ -561,12 +590,21 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t".and.l_BSE_restart) cycle
        !
+       ! H_pos defines the position inside the full bse matrix when
+       ! l_BS_ares_from_res=.false.  Otherwise it defines the position
+       ! inside the R/C blocks
+       !
        H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+& 
        &              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
        H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
        &              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1)
        !
-       if (H_pos(1)>H_pos(2)) cycle
+       ! When l_BS_ares_from_res=.false., the full coupling block, and
+       ! the upper part of the anti-resonant blocks are also computed
+       !
+       ! When l_BSE_kernel_full the full blocks are computed
+       !
+       if (H_pos(1)>H_pos(2) .and. .not. l_BSE_kernel_full) cycle
        !
        i_k_bz  = BS_T_grp(i_Tgrp_k)%table(i_Tk,1) 
        i_p_bz  = BS_T_grp(i_Tgrp_p)%table(i_Tp,1) 
@@ -814,7 +852,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if(iHxc==3) call BS_correlation_oscillators_free(i_block,l_std_alg)
    !
-100 if(l_write_kernel) then
+100 if(l_write_kernel.or.l_write_kernel_step) then
 #if defined _PAR_IO
      call io_control(ACTION=WR,ID=ID)
      call io_BS_PAR_block(iq,i_block,ID,"full")
@@ -822,6 +860,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      call io_control(ACTION=WR,COM=REP,SEC=(/i_block+1/),ID=ID)
      io_BS_err=io_BS(iq,X,ID)
 #endif
+     if (io_BS_K.and.l_write_kernel_step) call K_block_free(i_block,"all")
    endif
    !
    call live_timing(steps=i_steps)
@@ -890,6 +929,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  call io_control(ACTION=WR_CL,COM=REP,ID=ID_head)
  call io_control(ACTION=WR_CL,COM=REP,ID=ID)
  call io_BS_PAR_free(ID_head,ID,"full",.true.)
+ ! In this mode the blocks are written to disk after each step and the memory is freed
+ if (io_BS_K.and.l_write_kernel_step) BS_K_has_been_calculated_loaded=.false.
 #else
  call io_control(ACTION=WR_CL,COM=REP,SEC=(/n_BS_blks+2/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)

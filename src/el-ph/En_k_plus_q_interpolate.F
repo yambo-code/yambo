@@ -5,6 +5,20 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
+!> @brief This subroutine interpolate energies at k+q for the double-grid q-points
+!!
+!! @param[in]       k                           k-points sampling
+!! @param[in]       q                           q-points sampling
+!! @param[in]       E                           KS energies
+!! @param[in]       iqbz                        q-point where energies are interpolated
+!!
+!! @param[out]      GKKP%E_dg_kpq(iqbz)%E_kpq   interpolated energies at k+q_dbgrid
+!! @param[out]      GKKP%E_dg_kpq(iqbz)%f_kpq   occupations at k+q_dbgrid
+!
+! headers
+!
+#include<y_memory.h>
+!
 subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  !
  use pars,                ONLY:pi,rZERO
@@ -12,8 +26,9 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  use R_lattice,           ONLY:bz_samp,bz_samp_reset
  use ELPH,                ONLY:elph_nb,ID_E_kpq,GKKP,FineGd_E_kpq_alloc,Efermi_DbGd
  use interpolate,         ONLY:INTERPOLATION_BZ
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp), intent(in)   :: k,q
  type(levels) , intent(in)   :: E

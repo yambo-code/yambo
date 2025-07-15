@@ -1,0 +1,58 @@
+{
+  // File associations for proper syntax highlighting
+  "files.associations": {
+    "*.F": "FortranFreeForm",
+    "*.F90": "FortranFreeForm",
+    "*.inc": "FortranFreeForm"
+  },
+  // GitHub Copilot activation for Fortran
+  "github.copilot.enable": {
+    "Fortran": true,
+    "Fortran77": true
+  },
+  // Fortran linter configuration
+  "fortran.linter.compiler": "gfortran",
+  "fortran.linter.compilerPath": "/usr/bin/gfortran",
+  "fortran.linter.extraArgs": [
+    "-Wall",
+    "-Wextra",
+    "-pedantic",
+    "-std=f2008",
+    "-cpp",
+    "-D_HDF5_LIB",
+    "-D_HDF5_IO",
+    "-D_MPI",
+    "-DYAMBO_ALLOC",
+    "-DDEV_SUB_ALT(x)=x##_cpu"
+  ],
+  "fortran.linter.includePaths": [
+    "${workspaceFolder}/src/modules/",
+    "${workspaceFolder}/src/parser/",
+    "${workspaceFolder}/include/",
+    "${workspaceFolder}/include/headers/common",
+    "${workspaceFolder}/include/version",
+    "${workspaceFolder}/include/system",
+    "${workspaceFolder}/include/headers/parser"
+  ],
+  "fortran.fortls.preprocessor.definitions": {
+    "_HDF5_LIB": "",
+    "_HDF5_IO": "",
+    "_MPI": "",
+    "YAMBO_ALLOC(A,x)": "allocate(A x)",
+  },
+  "fortran.fortls.path": "/home/reho0001/.local/bin/fortls",
+  // Optional formatter
+  "fortran.formatting.formatter": "fprettify",
+  "fortran.formatting.fprettifyArgs": [
+    "/root/.local/bin/fprettify"
+  ],
+  "fortran.formatting.path": "/root/.local/bin/fprettify", // Change me: Path to the fprettify executable
+  "editor.formatOnSave": true,
+  // Enable verbose logging
+  "fortran.logging.level": "Debug",
+  "fortran.experimental.keepInitDiagnostics": false,
+  //This is needed if fortls is installed via pipx
+  "terminal.integrated.env.linux": {
+    "PATH": "${env:HOME}/.local/bin:${env:PATH}"
+  }
+}

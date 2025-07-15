@@ -88,7 +88,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
    !
    do ib=H_ref_bands(1),H_ref_bands(2)
      do ibp=ib,H_ref_bands(2)
-       PAR_IND_local(ib,ibp)=PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1)
+       PAR_IND_local(ib,ibp)=PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1) )
      enddo
    enddo
    !

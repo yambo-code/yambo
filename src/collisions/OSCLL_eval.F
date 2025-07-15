@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 !> @brief Calculate oscillators  <\psi_k | exp[i*(q+G)] |\psi_{k+q} > for few G-vectors
 !
 !! @param[out]      OSCLL_k	              Oscillators for each k-point
@@ -33,9 +38,9 @@ subroutine OSCLL_eval(q,k,en)
  use parallel_int,        ONLY:PP_redux_wait,PP_wait
  use parallel_m,          ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,master_cpu,PAR_IND_G_b, &
 &                              PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_A2A,PAR_COM_G_b_INDEX
+ use y_memory_alloc
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ implicit none
  !  
  type(bz_samp), intent(in) :: q,k
  type(levels),  intent(in) :: en
@@ -125,6 +130,7 @@ subroutine OSCLL_eval(q,k,en)
  !
  COLL_nbands=COLL_bands(2)-COLL_bands(1)+1
  !
+ do i_sp_pol=1,n_sp_pol
  do i_k=1,QP_nk
    !
    if (.not.PAR_IND_Xk_ibz%element_1D(i_k)) cycle
@@ -149,10 +155,8 @@ subroutine OSCLL_eval(q,k,en)
      i_kmq   = k%sstar(qindx_S(i_k,iqbz,1),1)
      i_kmq_s = k%sstar(qindx_S(i_k,iqbz,1),2)
      !
-     !  Spin-Polarization not supported!!
-     ! 
-     i_k_sp  = 1
-     i_kmq_sp= 1
+     i_k_sp  = i_sp_pol
+     i_kmq_sp= i_sp_pol
      !
      ! Load only two k-points 
      !	   
@@ -193,6 +197,7 @@ subroutine OSCLL_eval(q,k,en)
    !
    call live_timing(steps=1)
    !
+ enddo
  enddo
  !
  call IO_and_Messaging_switch("RESTORE")

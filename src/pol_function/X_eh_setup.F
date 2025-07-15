@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  !
  use pars,          ONLY:SP
@@ -13,8 +17,9 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  use electrons,     ONLY:levels,n_sp_pol,spin_occ
  use frequency,     ONLY:ordered_grid_index
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,PAR_IND_VAL_BANDS_X
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)  ::Xen 
  type(bz_samp) ::Xk

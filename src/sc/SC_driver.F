@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM MG
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
  use pars,           ONLY:SP,schlen,cZERO,rZERO
@@ -48,8 +52,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use collision_ext,  ONLY:COH_COLL_element,HXC_COLL_element,COLLISIONS_have_HARTREE
  use electrons,      ONLY:Spin_magn
  use electric,       ONLY:ELECTRIC_alloc,ELECTRIC_free,W_electric
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels) ::E
  type(bz_samp)::k,q,Xk

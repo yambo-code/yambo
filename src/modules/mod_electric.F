@@ -5,12 +5,17 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 module electric
  !
  use pars,       ONLY:SP,schlen,lchlen
  use electrons,  ONLY:levels
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  complex(SP)            :: NL_initial_P(3) ! in principle it can be different from zero
  !
@@ -28,7 +33,7 @@ module electric
  !
  ! Polarization
  !
- logical :: l_P_periodic ! Enforce periodicity in the polarization
+ logical  :: l_res_symms=.FALSE.  ! Do not use resisual symmetries (default False)
  !
  contains
    !

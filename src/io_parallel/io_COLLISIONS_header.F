@@ -5,14 +5,21 @@
 !
 ! Authors (see AUTHORS file for details): AM CA DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_COLLISIONS_header(ID,COLL)
  !
- use pars,          ONLY:schlen,IP,IP_YIO
+ use pars,          ONLY:schlen,IP,IP_YIO,LP_YIO
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands,COLLISIONS_group,COLLISIONS_CV_only
- use IO_m,          ONLY:io_status,IO_OUTDATED_DB,read_is_on
+ use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands,COLLISIONS_group,&
+&                        COLLISIONS_CV_only,COLL_bands_frozen
+ use IO_m,          ONLY:variable_exist,write_is_on,io_status,IO_OUTDATED_DB,read_is_on
  use IO_int,        ONLY:io_connect,io_header,io_elemental,ver_is_gt_or_eq, &
-&                        io_variable_bulk,def_variable_bulk,io_disconnect
+&                        io_variable_bulk,def_variable_bulk,io_disconnect,  &
+&                        def_variable_elemental,&
+&                        io_variable_elemental
  use global_XC,     ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED,&
 &                        H_SE_FOCK,H_SE_COH,H_SE_SEX,H_SE_HARTREE
  use plasma,        ONLY:N_plasma_poles_global,PLASMA_redux_percent
@@ -20,7 +27,9 @@ integer function io_COLLISIONS_header(ID,COLL)
  use X_m,           ONLY:X_desc
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
  use timing_m,      ONLY:timing
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  integer, intent(inout)            ::ID
  type(COLLISIONS_group)            ::COLL
@@ -54,7 +63,7 @@ integer function io_COLLISIONS_header(ID,COLL)
  if (COLL%kind==QP_SE_GW_NEQ) SIZE_=SIZE_+3
  if (COLL%kind==QP_SE_GW_QED) SIZE_=SIZE_+2
  if (ver_is_gt_or_eq(ID,revision=21128)) then
-   SIZE_ = SIZE_+1
+   SIZE_ = SIZE_+2
  endif
  call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=SIZE_,MENU=0)
  !
@@ -100,9 +109,16 @@ integer function io_COLLISIONS_header(ID,COLL)
    if (V_kind_disk>=H_SE_HARTREE) SIZE_=SIZE_+1
    if (V_kind_disk==             H_SE_FOCK.or.V_kind_disk==             H_SE_SEX.or.&
 &        V_kind_disk==H_SE_HARTREE+H_SE_FOCK.or.V_kind_disk==H_SE_HARTREE+H_SE_SEX     ) SIZE_=SIZE_+1
+   if (ver_is_gt_or_eq(ID,revision=24115)) then
+     SIZE_ = SIZE_-1
+     ! COLLISIONS_cutoff is always zero in io_parallel
+   endif
+
    call io_elemental(ID,VAR="HXC_PARAMETERS",VAR_SZ=SIZE_,MENU=0)
-   call io_elemental(ID,R0=COLLISIONS_cutoff,&
+   if (.not.ver_is_gt_or_eq(ID,revision=24115)) then
+     call io_elemental(ID,R0=COLLISIONS_cutoff,&
 &         VAR='Collisions Cutoff                 ',WARN=.true.,OP=(/"=="/))
+   endif
    !
    if (V_kind_disk>=H_SE_HARTREE) then
      call io_elemental(ID,I0=QP_ng_SH,&
@@ -132,13 +148,20 @@ integer function io_COLLISIONS_header(ID,COLL)
  !
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
+ if (variable_exist(ID,'COLL_bands_frozen').or.write_is_on(ID)) then
+   call def_variable_bulk(ID,"COLL_bands_frozen",1,shape(COLL_bands_frozen),LP_YIO)
+   call  io_variable_bulk(ID,1,L1=COLL_bands_frozen)
+ else
+   COLL_bands_frozen=.false.
+ endif
+ !
  ! States
  !
  if (read_is_on(ID).and..not.allocated(COLL%state)) then
    YAMBO_ALLOC(COLL%state,(COLL%N,4))
  endif
- call def_variable_bulk(ID,'COLLISIONS_STATE',1,(/COLL%N,4/),IP_YIO)
- call  io_variable_bulk(ID,1,I2=COLL%state)
+ call def_variable_bulk(ID,'COLLISIONS_STATE',2,(/COLL%N,4/),IP_YIO)
+ call  io_variable_bulk(ID,2,I2=COLL%state)
  !
  io_COLLISIONS_header=io_status(ID)
  !

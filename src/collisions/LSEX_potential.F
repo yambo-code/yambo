@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AC
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine LSEX_potential(q,X,Xw) 
  !
  ! Construct the screeend potential W(G=G'=0,q)
@@ -28,8 +32,9 @@ subroutine LSEX_potential(q,X,Xw)
  use collision_ext,       ONLY:ng_oscll
  use stderr,              ONLY:intc
  use parallel_int,        ONLY:PP_wait
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp), intent(in) :: q
  type(w_samp)              :: Xw
@@ -60,7 +65,7 @@ subroutine LSEX_potential(q,X,Xw)
  if(Correlation==LSEX) then
    call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID)
    io_err=io_X(X,Xw,ID)
-   if (io_err<0) call error('Incomplete and/or broken tatic diel. fun. database')
+   if (io_err<0) call error('Incomplete and/or broken static diel. fun. database')
  endif
  !
  YAMBO_ALLOC(W,(q%nbz,ng_oscll,ng_oscll))

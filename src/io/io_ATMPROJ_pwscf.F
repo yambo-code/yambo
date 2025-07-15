@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_ATMPROJ_pwscf(ID)
  !
  use atom_proj
@@ -17,8 +21,9 @@ integer function io_ATMPROJ_pwscf(ID)
 &                           io_elemental,io_variable_bulk,def_variable_bulk, &
 &                           io_header,io_fragment
  use timing_m,       ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer,intent(in) :: ID
  ! 

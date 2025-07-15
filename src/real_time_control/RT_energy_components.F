@@ -10,7 +10,7 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  use pars,           ONLY:SP,cZERO
  use DIPOLES,        ONLY:P_square
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels,n_spin
+ use electrons,      ONLY:levels,n_spin,n_sp_pol
  use hamiltonian,    ONLY:V_hartree_sc,Hzero
  use units,          ONLY:HA2EV
  use FFT_m,          ONLY:fft_size
@@ -26,12 +26,12 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  !
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
- complex(SP),   intent(in) :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
+ complex(SP),   intent(in) :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2),n_sp_pol)
  real(SP),      intent(out):: Energies(5),dE_IP
  character(3),  intent(in) :: what
  !
  real(SP) , allocatable    :: E_xc_rt(:,:)
- complex(SP) :: G_full(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2)), &
+ complex(SP) :: G_full(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2),n_sp_pol), &
 &               dE_tot,dE_kin,dE_ion,dE_h,dE_xc,dE_hxc,dE_h_sc,E_xc_sc,E_xc_ref,dE_xc_sc,dE_hxc_sc
  !
  if(.not.eval_energy) return
@@ -51,7 +51,7 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  dE_hxc_sc =cZERO
  !
  if(     trim(what)=='el') G_full=dG_lesser
- if(.not.trim(what)=='el') G_full=dG_lesser+G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2))
+ if(.not.trim(what)=='el') G_full=dG_lesser+G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2),:)
  !
  ! Non-interacting energy variation
  !

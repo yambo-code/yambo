@@ -47,7 +47,9 @@ logical function INIT_read_command_line_potentials(string,potential_user_string)
      H_potential=trim(H_potential)//"IP"
    case('cvonly')
      H_potential=trim(H_potential)//"CVONLY"
- end select
+   case('kbse')
+     H_potential=trim(H_potential)//"KBSE"
+  end select
  !
  string=STRING_remove(string,trim(potential_user_string),replace=" ")
  !

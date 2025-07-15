@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_QP_and_GF(what,qp,ID)
  use pars,           ONLY:SP,schlen
  use D_lattice,      ONLY:alat
@@ -23,8 +27,9 @@ integer function io_QP_and_GF(what,qp,ID)
 #if _ELPH
  use ELPH,           ONLY:ELPH_desc,use_PH_DbGd
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(QP_t)  ::qp
  character(*)::what ! 'QP'/'G'/filename

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM MG DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 module real_time
  !
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt,l_phel_scatt
@@ -15,8 +19,9 @@ module real_time
  use RT_lifetimes,   ONLY:RT_obj_lifetime,RT_obj_lifetime_alloc,RT_obj_lifetime_free
  use RT_occupations, ONLY:RT_obj_occupation,RT_obj_occupation_alloc,RT_obj_occupation_free
  use electrons,      ONLY:E_fine_grid
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! CORE LOGICALS
  !
@@ -49,6 +54,7 @@ module real_time
  logical          :: l_P_integrating_J
  logical          :: l_velocity_gauge_corr
  logical          :: l_velocity_gauge_diam
+ logical          :: l_length_grad_k
  !
  ! Specific flag for when Yambo libraries are called to perform TRabs via YPP
  !
@@ -75,6 +81,7 @@ module real_time
  !
  integer  :: NE_i_time=1 ! = NE_time/RT_step+1
  integer  :: NE_steps    ! Still relative to RT_step
+ integer  :: NE_i_last_field
  !
  ! Lifetimes Extrapolation Time status
  !
@@ -134,6 +141,8 @@ module real_time
  integer                 :: RT_nk
  integer                 :: RT_bands(2)
  integer                 :: RT_nbands
+ character(schlen)       :: RT_bands_frozen_ch
+ integer(LP), allocatable:: RT_bands_frozen(:)
  !
  ! Equilibrium V_xc and V_hartree in real space
  ! Presently REF_V_hartree_sc is not used
@@ -182,9 +191,10 @@ module real_time
  !
  ! GFs
  !-----
- complex(SP), allocatable :: G_lesser(:,:,:,:)          ! Band, Band, K, Time
- complex(SP), allocatable :: dG_lesser(:,:,:,:)
- complex(SP), allocatable :: G_lesser_reference(:,:,:)  ! Band, Band, K
+ complex(SP), allocatable :: G_lesser(:,:,:,:,:)          ! Band, Band, K, Spin, Time
+ complex(SP), allocatable :: dG_lesser(:,:,:,:,:)
+ complex(SP), allocatable :: dG_avg(:,:,:,:)
+ complex(SP), allocatable :: G_lesser_reference(:,:,:,:)  ! Band, Band, K, Spin
  complex(SP), allocatable :: I1_matrix(:,:)
  !
  ! RT_Hamiltonian
@@ -192,6 +202,7 @@ module real_time
  !
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
  complex(SP), allocatable :: H_EQ(:,:,:,:)
+ complex(SP), allocatable :: H_field(:,:,:,:)
  complex(SP), allocatable :: H_pseudo_eq(:,:,:,:)
  complex(SP), allocatable :: RT_Vnl_xc(:,:,:,:)
  !
@@ -210,6 +221,7 @@ module real_time
  logical  :: l_RT_RWA
  logical  :: l_RT_ACC
  logical  :: l_RT_PERT
+ logical  :: l_RT_FRES
  logical  :: l_RT_DIAG
  !
  logical  :: l_RT_SIMPLE

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine XCo_local(E,Xk)
  !
  ! Local V_xc
@@ -36,8 +40,9 @@ subroutine XCo_local(E,Xk)
  use SC,            ONLY:load_SC_components,SC_fft_size,compatible_SC_DB
 #endif
  use timing_m,      ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels) ::E       
  type(bz_samp)::Xk
@@ -129,7 +134,7 @@ subroutine XCo_local(E,Xk)
        endif
        !
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-       if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 )) cycle
+       if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1) )) cycle
        !
      else
 #endif
@@ -189,7 +194,7 @@ subroutine XCo_local(E,Xk)
 #if defined _RT
      if (l_real_time) then
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-       if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 )) cycle
+       if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1) )) cycle
      else
 #endif
        if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine COLLISIONS_basic_operations( what, COLL )
  !
  ! Here I allocate and define some objects of the COLLISIONS_group kind.
@@ -17,13 +21,15 @@ subroutine COLLISIONS_basic_operations( what, COLL )
  !  integer,     pointer  :: IO_status(:) => null()
  ! end type
  !
- use collision_ext, ONLY:COLLISIONS_group,COLL_bands,COLLISIONS_CV_only
+ use collision_ext, ONLY:COLLISIONS_group,COLLISIONS_CV_only,&
+ &                       COLL_bands,COLL_bands_frozen
  use R_lattice,     ONLY:nXkibz
  use electrons,     ONLY:n_sp_pol,n_full_bands,n_met_bands
  use wave_func,     ONLY:states_to_load
  use IO_m,          ONLY:io_COLLs
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  character(*)           :: what
  type(COLLISIONS_group) :: COLL
@@ -77,22 +83,25 @@ subroutine COLLISIONS_basic_operations( what, COLL )
      !
      COLL%N=0
      !
-     do i_k=1,nXkibz
-       do i_n=COLL_bands(1),COLL_bands(2)
-         do i_mix=0,COLL_bands(2)-COLL_bands(1)
+     do i_sp=1,n_sp_pol
+       do i_k=1,nXkibz
+         do i_n=COLL_bands(1),COLL_bands(2)
            !
-           i_m=i_n+i_mix
+           if ( COLLISIONS_CV_only .and. i_n> n_met_bands(i_sp)  ) cycle
+           if ( COLL_bands_frozen(i_n)==1 ) cycle
            !
-           ! No Off-diagonal elements in the case of P collisions
-           !
-           if (trim(COLL%name)=="Momentum".and.i_mix>0)  cycle
-           !
-           if (i_m>COLL_bands(2)) cycle
-           !
-           do i_sp=1,n_sp_pol
+           do i_mix=0,COLL_bands(2)-COLL_bands(1)
              !
-             if ( COLLISIONS_CV_only .and. i_n> n_met_bands(i_sp)  ) cycle
+             i_m=i_n+i_mix
+             !
              if ( COLLISIONS_CV_only .and. i_m<=n_full_bands(i_sp) ) cycle
+             !
+             if (i_m>COLL_bands(2)) cycle
+             if ( COLL_bands_frozen(i_m)==1 ) cycle
+             !
+             ! No Off-diagonal elements in the case of P collisions
+             !
+             if (trim(COLL%name)=="Momentum".and.i_mix>0)  cycle
              !
              COLL%N=COLL%N+1
              if (i_c==2) then
@@ -104,6 +113,7 @@ subroutine COLLISIONS_basic_operations( what, COLL )
                  COLL%state(COLL%N,:4)=(/i_m,i_n,i_k,i_sp/)
                endif
              endif
+             !
            enddo
          enddo
        enddo

@@ -5,13 +5,19 @@
 !
 ! Authors (see AUTHORS file for details): MG
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine eval_R_minus_R()
  !
  ! Evaluate the R_i-R_j table
  ! 
  use FFT_m,     ONLY:fft_size,fft_dim,modx
  use D_lattice, ONLY:R_m_R
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  ! Work Space
  ! 

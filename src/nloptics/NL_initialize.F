@@ -5,12 +5,16 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine NL_initialize(E,k)
  ! 
  use pars,           ONLY:SP,DP,pi
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
  use vec_operate,    ONLY:normalize_v,v_norm,cross_product
- use collision_ext,  ONLY:COLLISIONS_CV_only,COLLISIONS_load_SP,COLLISIONS_compr
+ use collision_ext,  ONLY:COLLISIONS_CV_only,COLL_bands_frozen,COLLISIONS_load_SP,COLLISIONS_compr
  use hamiltonian,    ONLY:H_potential
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
@@ -21,20 +25,25 @@ subroutine NL_initialize(E,k)
  use QP_m,           ONLY:QP_ng_Sc,QP_ng_Sx,QP_ng_Sh
  use collision_ext,  ONLY:ng_oscll,COLLISIONS_cutoff
  use R_lattice,      ONLY:bz_samp,k_map
- use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
+ use IO_m,           ONLY:io_GF
+ use X_m,            ONLY:global_gauge
+ use fields,         ONLY:Efield,Efield_strength,n_ext_fields,n_ext_fields_max,EtoT
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field,l_NE_with_fields, &
-&                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential,RAD_LifeTime
- use RT_control,     ONLY:SETUP_RT_IO_type,OBS_RT_IO_t
+&                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential,RAD_LifeTime,&
+&                         l_velocity_gauge_corr,l_velocity_gauge_diam,G_MEM_steps,RT_nk,i_MEM_now
+ use RT_control,     ONLY:SETUP_RT_IO_type,OBS_RT_IO_t,NE_i_start_time,RT_control_alloc,RT_control_free,l_NE_with_fields,&
+&                         SAVE_Vb_history,SAVE_G_history
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM,  &
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity,LSEX,&
 &                         l_eval_CURRENT,l_pump_and_probe,DephMult,l_velocity_IPA,n_angles,l_test_OSCLL,LHF,eval_OSCLL,  &
-&                         NL_ang_step,n_runs,NL_rot_axis,loop_on_frequencies,loop_on_angles,NL_initial_versor
- use electric,       ONLY:l_force_SndOrd,l_P_periodic
+&                         NL_ang_step,n_runs,NL_rot_axis,loop_on_frequencies,loop_on_angles,NL_initial_versor,max_angle
+ use electric,       ONLY:l_force_SndOrd,l_res_symms
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels), intent(in) :: E
  type(bz_samp),intent(in) :: k
@@ -43,6 +52,7 @@ subroutine NL_initialize(E,k)
  !
  real(SP) :: Time,W_0,T_0,sigma,E_dot_rot_axis 
  integer  :: i1,n_active_fields
+ logical  :: l_velocity_gauge_tmp
  real(SP) :: Sampling_Time
  logical  :: l_no_compress_COLL
  !
@@ -52,12 +62,25 @@ subroutine NL_initialize(E,k)
  call parser('FrSndOrd',             l_force_SndOrd)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('EvalCurrent' ,         l_eval_CURRENT)
- call parser('FrPolPerdic' ,         l_P_periodic)
  call parser('TestOSCLL',            l_test_OSCLL)
  call parser('NoComprCOLL',          l_no_compress_COLL)
+ call parser('UseSymm',              l_res_symms)
+ call parser('SaveVbhistory',        SAVE_Vb_history)
+ call parser('VelGaugeNoDiam',       l_velocity_gauge_tmp)
+ call parser('UseDipoles',           l_use_DIPOLES)
+ call parser('SaveGhistory',         SAVE_G_history)
+ !
+ l_velocity_gauge_corr=.false.
+ l_velocity_gauge_diam=.not.l_velocity_gauge_tmp
+ !
+ if (SAVE_G_history) then
+   io_GF=.true.
+   RT_nk=k%nibz
+   G_MEM_steps=1
+   i_MEM_now=1
+ endif
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
- if(l_P_periodic)  call msg('sr','[NL] Enforce periodicity of the polarization repect to Efield')
  !
  ! Velocity gauge mode
  ! =======================================
@@ -140,10 +163,9 @@ subroutine NL_initialize(E,k)
  !
  ! This part of the code works with only one field
  !
- n_ext_fields=3
  n_active_fields=0
  !
- do i1=1,n_ext_fields
+ do i1=1,n_ext_fields_max
    !
    Efield(i1)%ef_name=trim(Efield(i1)%ef_name)      
    if((Efield(i1)%ef_name=='none')) cycle
@@ -169,8 +191,6 @@ subroutine NL_initialize(E,k)
    ! see definition of "step_case" in function "theta_function" in src/modules/mod_functions.F
    Efield(i1)%t_initial_indx=max(nint(Efield(i1)%t_initial/RT_step)+1,2)
    Efield(i1)%t_initial     =real(Efield(i1)%t_initial_indx-1)*RT_step
-   if(Efield(i1)%ef_pol/="linear") call error("Only 'linear' polarization has been implemented and tested ")
-   Efield(i1)%ef_pol        ="linear"
    !
    call Check_symmetries(Efield(i1)%versor,"electric")
    !
@@ -377,6 +397,8 @@ subroutine NL_initialize(E,k)
    !
  endif
  !
+ if (l_pump_and_probe) eval_dG=.true.
+ !
  if(eval_COLLISIONS) then
    COLLISIONS_load_SP =.not.l_no_compress_COLL
    COLLISIONS_compr   =.not.l_no_compress_COLL
@@ -402,6 +424,7 @@ subroutine NL_initialize(E,k)
  if(eval_COLLISIONS) then
    !      
    if(COLLISIONS_CV_only) call warning(' ONLY cv scattering in COLLISIONS! ')
+   if( any((/COLL_bands_frozen==1/)) ) call warning(' ONLY selected scattering in COLLISIONS! ')
    !
    if(l_no_compress_COLL) then
      call msg('sr','Full collisions in double-precision ')
@@ -422,7 +445,7 @@ subroutine NL_initialize(E,k)
  !
  if(n_angles>=1) then
    ! loop on angles
-   NL_ang_step=2.0*pi/real(n_angles,SP)
+   NL_ang_step=(max_angle/360.0*2.0*pi)/real(n_angles,SP)
    if(all(abs(NL_rot_axis)<epsilon(1.))) call error("Null rotation axis!!! ")
    NL_rot_axis=normalize_v(NL_rot_axis)
    n_runs=n_angles
@@ -463,14 +486,19 @@ subroutine NL_initialize(E,k)
  ! frequencies is supported
  !
  RT_dyn_step=RT_step
- OBS_RT_IO_t%INTERVAL_time     =RT_step
- OBS_RT_IO_t%INTERVAL_time_INPUT=RT_step
- call SETUP_RT_IO_type(OBS_RT_IO_t,who="OBS",what="INIT")
- YAMBO_ALLOC(OBS_RT_IO_t%Time,(NE_steps))
+ !
+ ! I/O steps
+ !===========
+ call RT_IO_type_time_steps("INIT")
+ !
+ call RT_control_alloc("all")
+ !
+ !if(.not.l_pump_and_probe) then
  do NE_i_time=1,NE_steps
    Time=real(NE_i_time-1,SP)*RT_step
    OBS_RT_IO_t%Time(NE_i_time)=Time
  enddo
+ !endif
  !
  ! LOG
  ! ===
@@ -490,17 +518,21 @@ subroutine NL_initialize(E,k)
    call msg( 'r', 'Efield                     '//trim(Efield(i1)%ef_name))
    call msg( 'r', 'Efield width               ',Efield(i1)%width*AUT2FS,"[fs]")
    call msg( 'r', 'Efield Amplitude      [V/m]',Efield(i1)%amplitude*AU2VMm1)
+   call msg( 'r', 'Pond. Energy        [eV/mu]',Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency(1)**2*HA2EV)
+   call msg( 'r', 'Adiabatic param      [1/mu]',Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency(1)**3)
  enddo
  call msg( 'r', 'Efield T_0                 ',T_0,"[fs]")
- call msg( 'r', 'Frequencies range          ',NL_er*HA2EV)
- call msg( 'sr','Frequencies steps          ',n_frequencies)
- call msg( 'r', 'Frequency   step           ',NL_estep*HA2EV)
- call msg( 'sr','Number of angles           ',n_angles)
- call msg( 'r', 'Rotation axis              ',NL_rot_axis)
+ if (.not.l_pump_and_probe) then
+   call msg( 'r', 'Frequencies range          ',NL_er*HA2EV)
+   call msg( 'sr','Frequencies steps          ',n_frequencies)
+   call msg( 'r', 'Frequency   step           ',NL_estep*HA2EV)
+   call msg( 'sr','Number of angles           ',n_angles)
+   call msg( 'sr','Max angle (degree)         ',max_angle)
+   call msg( 'r', 'Rotation axis              ',NL_rot_axis)
+ endif
  call msg( 'r', 'Use Dipoles                ',l_use_DIPOLES)
  call msg( 'r', 'Induced Field              ',l_RT_induced_field)
  call msg( 'r', 'Force Snd Order Dipoles    ',l_force_SndOrd)
  call msg( 'r', 'Evaluate Current           ',l_eval_CURRENT)
- call msg( 'r', 'Enforce periodic pol.      ',l_P_periodic)
  !
 end subroutine NL_initialize

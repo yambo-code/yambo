@@ -4,11 +4,15 @@
 ! Copyright (C) 2018 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): CA
+!
+! headers
+!
+#include<y_memory.h>
 ! 
 integer function io_OSCLL(q,ID)
  !
  use pars,          ONLY:SP,schlen,IP_YIO
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,n_sp_pol
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use R_lattice,     ONLY:nXkibz,bz_samp
  use QP_m,          ONLY:QP_nk
@@ -22,8 +26,9 @@ integer function io_OSCLL(q,ID)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer     ::ID
  type(bz_samp), intent(in) :: q
@@ -53,10 +58,10 @@ integer function io_OSCLL(q,ID)
    !
    ! Variable for the Oscillators
    !
-   call def_variable_elemental(ID,"ng_oscll",1,IP_YIO,0)
+   call def_variable_elemental(ID,"ng_oscll",VAR_SZ=1,VAR_KIND=IP_YIO,MENU=0)
    call io_variable_elemental(ID,VAR="RL vectors in oscillators",I0=ng_oscll,CHECK=.true.,OP=(/"=="/))
    !
-   call def_variable_elemental(ID,"COLL_bands",2,IP_YIO,0)
+   call def_variable_elemental(ID,"COLL_bands",VAR_SZ=2,VAR_KIND=IP_YIO,MENU=0)
    call io_variable_elemental(ID,VAR="Oscillators bands range",I1=COLL_bands,CHECK=.true.,OP=(/"==","=="/))
    !
    io_OSCLL=io_status(ID)
@@ -83,7 +88,7 @@ integer function io_OSCLL(q,ID)
  !
  if (read_is_on(ID)) then
    if(.not.allocated(OSCLL)) then
-     YAMBO_ALLOC(OSCLL,(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),PAR_Xk_nibz,q%nbz,ng_oscll))
+     YAMBO_ALLOC(OSCLL,(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),PAR_Xk_nibz,n_sp_pol,q%nbz,ng_oscll))
    endif
  endif
  !
@@ -107,7 +112,7 @@ integer function io_OSCLL(q,ID)
      io_OSCLL=io_status(ID)
      if (io_OSCLL/=0) goto 1
      !
-     if (read_is_on(ID)) OSCLL(ib,:,ik_mem,:,ig)=disk_data
+     if (read_is_on(ID)) OSCLL(ib,:,ik_mem,i_sp_pol,:,ig)=disk_data
      !
    enddo
  enddo

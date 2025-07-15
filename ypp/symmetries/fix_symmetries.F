@@ -5,9 +5,13 @@
 !
 ! Authors (see AUTHORS file for details): CA DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  !
- use pars,                ONLY:SP
+ use pars,                ONLY:LP,SP
  use com,                 ONLY:msg
  use parser_m,            ONLY:parser
  use matrix_operate,      ONLY:m3det
@@ -18,13 +22,14 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  use vec_operate,         ONLY:v_norm
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,alat,mag_syms,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer, intent(out)   :: old_nsym
  real(SP),intent(out)   :: old_dl_sop(3,3,nsym)
  integer, intent(out)   :: old_sop_inv(nsym)
- logical, intent(out)   :: S_contains_TR(nsym)
+ integer(LP), intent(out)   :: S_contains_TR(nsym)
  !
  ! Work space
  !
@@ -93,7 +98,10 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  !
  ! Time-reversal related Symmetries
  !
- forall (is=1:nsym) S_contains_TR(is)=is>nsym/(1+i_time_rev)
+ S_contains_TR=0
+ do is=1,nsym
+  if(is>nsym/(1+i_time_rev)) S_contains_TR(is)=1
+ enddo
  !
  spatial_nsym=nsym/(1+i_time_rev)
  !

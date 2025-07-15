@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  !
  ! Extend the QP correction from the kpt in qp to the kpt in k
@@ -22,6 +26,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  use IO_m,          ONLY:OP_WR_CL,LOG
  use electrons,     ONLY:n_sp_pol,spin
  use com,           ONLY:msg
+ use parallel_m,    ONLY:master_cpu
  use electrons,     ONLY:levels,spin
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use stderr,        ONLY:real2ch
@@ -29,8 +34,9 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  use QP_CTL_m,      ONLY:QP_action,QP_ctl_msg_fmt,QP_ctl_xc_STRING,At_least_one_band_corrected
  use interpolate,   ONLY:NN_n_of_nearest,INTERP_obj,INTERPOLATE_msg_fmt,&
 &                        INTERPOLATION_driver_seed,INTERPOLATION_driver_do,INTERP_shell_factor
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)  ::en
  type(QP_t)    ::qp
@@ -150,9 +156,12 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  ! Output
  !--------
  !
- QP_interpolated_name='QP_interpolated'
- call io_control(ACTION=OP_WR_CL,COM=LOG,SEC=(/1,2,3/),ID=ID_IO)
- i_err=io_QP_and_GF(trim(QP_interpolated_name),qp_interpolated,ID_IO)
+ if(master_cpu) then
+   QP_interpolated_name='QP_interpolated'
+   call io_control(ACTION=OP_WR_CL,COM=LOG,SEC=(/1,2,3/),ID=ID_IO)
+   i_err=io_QP_and_GF(trim(QP_interpolated_name),qp_interpolated,ID_IO)
+ endif
+ !          
  call QP_reset(qp_interpolated)
  !
  ! Clean

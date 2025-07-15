@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AC
 !
+! headers
+!
+#include<y_memory.h>
+!
 !> @brief Return phonon energy in the double-grid
 !
 ! @param[in]       q                   momenutm sampling
@@ -19,8 +23,9 @@ function get_ph_E_DbGd(il,iq_fg,iq_bz,q)
  use pars,          ONLY:SP
  use R_lattice,     ONLY:bz_samp
  use ELPH,          ONLY:PH_freqs,PH_freqs_sq
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer,       intent(in)  :: il,iq_bz,iq_fg
  type(bz_samp), intent(in)  :: q

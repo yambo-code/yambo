@@ -5,13 +5,18 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 module R_lattice
  !
  use pars,        ONLY:SP,DP,schlen, IP
  use descriptors, ONLY:IO_desc
+ use y_memory_alloc
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ implicit none
  !
  integer, parameter:: MAX_kpts_to_report=50
  !
@@ -139,6 +144,7 @@ module R_lattice
  integer :: RIM_ng
  integer :: RIM_id_epsm1_reference
  integer :: RIM_n_rand_pts
+ integer :: RIM_sphe_n_rand_pts
  logical :: RIM_is_diagonal
  real(SP):: RIM_RL_vol
  real(SP):: RIM_epsm1(3)
@@ -176,6 +182,10 @@ module R_lattice
  real(SP)                :: cyl_zz_save
  logical                 :: cut_is_slab
  integer                 :: idir(3)
+ !
+ ! Environment effectice screening
+ !
+ real(SP)                :: eps_env
  !
  ! BZ map by direction
  !

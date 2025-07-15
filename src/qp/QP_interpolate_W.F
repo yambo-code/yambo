@@ -5,13 +5,18 @@
 !
 ! Authors (see AUTHORS file for details): AG
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 subroutine QP_interpolate_W(X,Xw,q,mode)
  !
  use pars,          ONLY:SP,pi,zero_dfl,schlen,DP,rZERO
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,RIM_W_ng,b,k_grid_b,bare_qpg,&
 &                        RIM_W_is_diagonal,RIM_W,RIM_W_d,f_coeff,idir,RIM_W_E,&
-&                        RIM_id_epsm1_reference,RIM_epsm1,RIM_qpg
+&                        RIM_id_epsm1_reference,RIM_epsm1,RIM_qpg,eps_env
  use vec_operate,   ONLY:c2a,v_norm
  use ALLOC,         ONLY:X_ALLOC_elemental
  use X_m,           ONLY:X_mat,X_t
@@ -23,9 +28,9 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  use D_lattice,     ONLY:alat,a
  use timing_m,      ONLY:timing
  use parallel_m,    ONLY:master_cpu
+ use y_memory_alloc
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ implicit none
  !
  type(X_t)    :: X
  type(w_samp) :: Xw
@@ -94,6 +99,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
 #ifdef _GPU
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_W),RIM_W)
 #endif
+   !RIM_W=RIM_W/eps_env
    return
  endif
  !
@@ -378,6 +384,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
    io_err=io_RIM_W(ID,mode,Xw)
  endif
  !
+ !RIM_W=RIM_W/eps_env
 #ifdef _GPU
  YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_W),RIM_W)
 #endif
@@ -390,8 +397,9 @@ subroutine find_q_nns(q,q_grid_b_iku,idx_q,idx_is,idx_G)
  use pars,          ONLY:SP
  use R_lattice,     ONLY:bz_samp,RIM_W_ng,g_vec,ng_vec,rl_sop
  use vec_operate,   ONLY:v_is_zero
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp):: q
  real(SP)     :: q_grid_b_iku(3,2)

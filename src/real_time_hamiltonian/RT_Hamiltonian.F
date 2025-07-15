@@ -36,16 +36,15 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  use pars,           ONLY:SP,cONE,cZERO
  use wrapper_omp,    ONLY:M_plus_alpha_M_omp
- use electrons,      ONLY:levels,n_spinor,n_spin
+ use electrons,      ONLY:levels,n_spinor,n_spin,n_sp_pol
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_use_Hxc_collisions
  use R_lattice,      ONLY:bz_samp,nXkibz
  use hamiltonian,    ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,REF_V_xc_sc, &
-&                         rho_reference,magn_reference,RT_Vnl_xc,H_EQ,         &
+&                         rho_reference,magn_reference,RT_Vnl_xc,H_field,H_EQ,    &
 &                         l_RT_RWA,eval_HARTREE,eval_DFT,RTibz,RT_potential,      &
-&                         RT_bands,RT_nbands,    &
-&                         l_update_SOC,l_velocity_gauge_corr
+&                         RT_bands,RT_nbands,dG_avg,l_update_SOC,l_velocity_gauge_corr
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A,PAR_G_k_range
@@ -60,12 +59,12 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  type(levels),  intent(inout) :: E
  type(bz_samp), intent(in)    :: k
- complex(SP),   intent(in)    :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
+ complex(SP),   intent(in)    :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2),n_sp_pol)
  type(gauge_field), intent(in):: A_input
  !
  ! Work Space
  !
- integer                  :: ik,ik_RT,ib
+ integer                  :: ik,ik_RT,ib,i_sp_pol
  logical                  :: l_H_contains_Hartree
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
  complex(SP), allocatable :: V_scf(:),V_scf_grad(:,:),V_xc_mat(:,:,:)
@@ -135,26 +134,28 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
        deallocate(V_xc_mat)
      endif
      allocate(V_scf_grad(fft_size,3))
-     call eval_Gradient(V_scf,V_scf_grad,1,"potential")
+     call eval_Gradient_rho_pot(V_scf,V_scf_grad)
      deallocate(V_scf)
      !
    endif
    !
    ! Add H_nl_sc to Ho_plus_Sigma 
    !---------------------------------
+   do i_sp_pol=1,n_sp_pol
    do ik=1,nXkibz 
      !
      H_nl_sc=cZERO
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
      !
-     call V_real_space_to_H(ik,1,H_nl_sc,WF,'def+xc',V=V_hartree_sc,Vxc=V_xc_sc)
+     call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WF,'def+xc',V=V_hartree_sc,Vxc=V_xc_sc)
      if(n_spinor==2.and.l_update_soc) call Vgrad_real_space_to_H(ik,H_nl_sc,WF,V_scf_grad)
      !
      call PP_redux_wait(H_nl_sc,COMM=PAR_COM_Xk_ibz_A2A%COMM)
      !
-     forall(ik_RT=RTibz%k_range(ik,1):RTibz%k_range(ik,2)) Ho_plus_Sigma(:,:,ik_RT,1)=H_nl_sc
+     forall(ik_RT=RTibz%k_range(ik,1):RTibz%k_range(ik,2)) Ho_plus_Sigma(:,:,ik_RT,i_sp_pol)=H_nl_sc
      !
+   enddo
    enddo
    !
    l_H_contains_Hartree=index(trim(RT_potential),"HARTREE")>0
@@ -166,21 +167,24 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !======================================================
  if (l_use_Hxc_collisions) then
    !
-   call COLLISIONS_compose_rt(dG_in)
+   call Build_dG_avg(dG_in,dG_avg)
+   call COLLISIONS_compose_rt(dG_avg)
    !
    ! Add RT_Vnl_xc to Ho_plus_Sigma 
    !---------------------------------
-   do ik=1,nXkibz 
+   do i_sp_pol=1,n_sp_pol
+   do ik=1,nXkibz
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      if (l_H_contains_HARTREE) then
        do ik_RT =RTibz%k_range(ik,1),RTibz%k_range(ik,2)
-         Ho_plus_Sigma(:,:,ik_RT,1)=Ho_plus_Sigma(:,:,ik_RT,1)+RT_Vnl_xc(:,:,ik,1)
+         Ho_plus_Sigma(:,:,ik_RT,i_sp_pol)=Ho_plus_Sigma(:,:,ik_RT,i_sp_pol)+RT_Vnl_xc(:,:,ik,i_sp_pol)
        enddo
      else
        do ik_RT =RTibz%k_range(ik,1),RTibz%k_range(ik,2)
-         Ho_plus_Sigma(:,:,ik_RT,1)=RT_Vnl_xc(:,:,ik,1)
+         Ho_plus_Sigma(:,:,ik_RT,i_sp_pol)=RT_Vnl_xc(:,:,ik,i_sp_pol)
        enddo
      endif
+   enddo
    enddo
    !
  endif
@@ -191,14 +195,20 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    !
    call timing('RT Apply Field',OPR='start')
    !
+   H_field=cZERO
+   do i_sp_pol=1,n_sp_pol
    do ik=1,nXkibz 
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      H_nl_sc=cZERO
-     call RT_apply_field(ik,1,H_nl_sc,A_input)
+     call RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
+     call RT_gradk_rho_times_E(ik,i_sp_pol,H_nl_sc,dG_in,A_input,k,E)
      do ik_RT =RTibz%k_range(ik,1),RTibz%k_range(ik,2)
-       call M_plus_alpha_M_omp(RT_nbands,cONE,H_nl_sc,Ho_plus_sigma(:,:,ik_RT,1))
+       H_field(:,:,ik_RT,i_sp_pol)=H_nl_sc
+       call M_plus_alpha_M_omp(RT_nbands,cONE,H_nl_sc,Ho_plus_sigma(:,:,ik_RT,i_sp_pol))
      enddo
    enddo
+   enddo
+   !
    !
    call timing('RT Apply Field',OPR='stop')
    !

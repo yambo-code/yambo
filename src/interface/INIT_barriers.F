@@ -44,7 +44,7 @@ subroutine INIT_barriers()
  bse_sex  =trim(BSK_mode)=='SEX'
  bse_bsfxc=trim(BSK_mode)=='BSfxc'
  !
- bss_diago=l_bss.and.index(BSS_mode,'d')/=0
+ bss_diago=l_bss.and.(index(BSS_mode,'d')/=0.or.index(BSS_mode,'o')/=0)
  bss_inv=l_bss.and.index(BSS_mode,'i')/=0
  bss_haydock=l_bss.and.index(BSS_mode,'h')/=0
  bss_tddft=l_bss.and.index(BSS_mode,'t')/=0
@@ -115,7 +115,7 @@ subroutine INIT_barriers()
    goto 1
  endif
  if (gw0_mpa) then
-   on_runlevels='dyson gw0 mpa em1d el_el_corr el_ph_corr HF_and_locXC'
+   on_runlevels='dyson gw0 mpa em1d el_el_corr el_ph_corr HF_and_locXC rim_w'
    call switch_off_runlevel('all',except=trim(on_runlevels)//' '//trim(always_on_runlevels))
    goto 1
  endif

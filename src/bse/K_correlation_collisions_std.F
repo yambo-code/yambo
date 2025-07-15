@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM DS HM
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 !************************* WARNING **************************
 !* In this subroutine there is a bug for finite q (iq/=1)   *
 !* plus spin-orbit that we were not able to solve yet.      * 
@@ -37,14 +42,14 @@ subroutine K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
  use R_lattice,     ONLY:qindx_X,bz_samp
  use BS,            ONLY:O_ng,BS_bands,BS_res_K_corr,BS_blk,&
 &                        K_CORR_collision,BS_T_grp,&
-&                        BS_K_dim,l_BS_ares_from_res
+&                        BS_K_dim,l_BS_ares_from_res,l_BSE_kernel_full
  use electrons,     ONLY:n_sp_pol
  use collision_el,  ONLY:elemental_collision_free,elemental_collision_alloc
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
+ use y_memory_alloc
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ implicit none
  !
  integer,       intent(in)  :: iq,i_block,qindx_ID_frag
  type(bz_samp), intent(in)  :: Xk,q
@@ -140,7 +145,7 @@ subroutine K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
        H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
 &              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
        !
-       if (H_pos(1)>H_pos(2)) cycle
+       if (H_pos(1)>H_pos(2) .and. .not. l_BSE_kernel_full) cycle
        !
        call fill_indexes(i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,i_block,iq,               &
        &                        i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,         &
@@ -175,7 +180,7 @@ subroutine K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
        H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
 &              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
        !
-       if (H_pos(1)>H_pos(2)) cycle
+       if (H_pos(1)>H_pos(2) .and. .not. l_BSE_kernel_full) cycle
        !
        call fill_indexes(i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,i_block,iq,               &
        &                        i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,         &
@@ -229,7 +234,7 @@ subroutine K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
        H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
 &              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
        !
-       if (H_pos(1)>H_pos(2)) cycle
+       if (H_pos(1)>H_pos(2) .and. .not. l_BSE_kernel_full) cycle
        !
        call fill_indexes(i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,i_block,iq,               &
        &                        i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,         &
@@ -267,7 +272,7 @@ subroutine K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
        H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
 &              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
        !
-       if (H_pos(1)>H_pos(2)) cycle
+       if (H_pos(1)>H_pos(2) .and. .not. l_BSE_kernel_full) cycle
        !
        call fill_indexes(i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,i_block,iq,               &
        &                        i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,         &

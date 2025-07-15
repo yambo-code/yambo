@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 !> @brief Load wave-function in different forms
 !!
@@ -15,14 +19,14 @@
 !! @param[in]       kpts_to_load                k-points range 
 !! @param[in]       k_extrema_only              k-points, load only !first and last in range
 !! @param[in]       sp_pol_to_load              spin-polarization range 
-!! @param[in]       space                       R = real-space,  G = G-space, C = ?, B = ?
+!! @param[in]       space                       R=real-space,G=G-space,C=k-centred,B=buff.-mode
 !! @param[in]       title                       purpose of the wave-function loading
 !! @param[in]       impose_free_and_alloc       force deallocation of already loaded WF
 !! @param[in]       force_WFo                   do not rotate the WF (for yambo_sc)
 !! @param[in]       keep_states_to_load         keep (.TRUE.) or not (.FALSE.) states already loaded
 !! @param[in]       quiet                       turn off report and log for the WF_laod
 !!
-!! @param[out]      WF                  Wave-function object
+!! @param[out]      WF                          Wave-function object
 !
 subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load,k_extrema_only,&
 &                  space,title,impose_free_and_alloc,force_WFo,keep_states_to_load,quiet)
@@ -56,8 +60,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use gpu_m,         ONLY:have_gpu, gpu_devsync, gpu_getstat
  use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memcpy_d2d,&
                          devxlib_allocated,devxlib_memset_d
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
  type(WAVEs), target   :: WF

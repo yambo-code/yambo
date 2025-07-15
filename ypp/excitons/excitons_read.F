@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DV DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine excitons_read(k,Xk,en,Xen,iq,what,io_err)
  !
  use pars,          ONLY:pi
@@ -18,8 +22,9 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what,io_err)
  use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig
  use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_K_coupling,BSqpts
  use YPPm,          ONLY:BS_R_left,BS_R_right,BS_E,BS_E_SOC_corr,BS_R_PL,BS_R_kerr,Xbsk   
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp) ::Xk,k
  type(levels)  ::Xen,en
@@ -114,11 +119,12 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what,io_err)
    !
    ! Loading tables and eigenvectors
    !
-   YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,3+n_sp_pol-1))
+   YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,5))
    YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/3/),ID=io_ID)
-   io_err=io_BSS_diago(iq,1,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BsE_corr=BS_E_SOC_corr,bsR_kerr=BS_R_kerr,bsR_pl=BS_R_PL)
+   io_err=io_BSS_diago(iq,1,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,&
+   &                   BsE_corr=BS_E_SOC_corr,bsR_kerr=BS_R_kerr,bsR_pl=BS_R_PL,BS_mat=BS_mat)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC 3, not compatible with ypp input')
    !
    ! Create the anti-resonant part of the eh_table

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 logical function k_map_fine_to_coarse_reduce(FineGd_k)
  !
  use zeros,               ONLY:k_rlu_zero
@@ -12,8 +16,9 @@ logical function k_map_fine_to_coarse_reduce(FineGd_k)
  use vec_operate,         ONLY:c2a,rlu_v_is_zero
  use R_lattice,           ONLY:bz_samp
  use LIVE_t,              ONLY:live_timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp), intent(inout)      :: FineGd_k
  !

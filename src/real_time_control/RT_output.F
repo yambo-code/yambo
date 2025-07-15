@@ -176,6 +176,8 @@ subroutine RT_output(what,VALUES,TIME,E)
      case('total_field')
        data_to_dump(2:4) = -real(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
+     case('YPP-Field')
+       data_to_dump(2) = -real(A_ext%vecpot_vel(1))*AU2VMm1 !/SPEED_OF_LIGHT
      case('external_field')
        data_to_dump(2:4) = -real(A_ext%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_ext%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1

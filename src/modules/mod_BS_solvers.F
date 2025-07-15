@@ -3,7 +3,11 @@
 !
 ! Copyright (C) 2016 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS NM
+!
+! headers
+!
+#include <y_memory.h>
 !
 module BS_solvers
  !
@@ -11,8 +15,9 @@ module BS_solvers
  use pars,           ONLY:SP,schlen,lchlen
  use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_dim,BS_H_dim,BS_block,n_BS_blks,BS_blk
  use matrix,         ONLY:PAR_matrix
+ use y_memory_alloc
  !
-#include <y_memory.h>
+ implicit none
  !
  ! Epsilon factor
  !==================
@@ -54,7 +59,11 @@ module BS_solvers
  character(schlen):: BSS_mode
  complex(SP)      :: BSS_Wd
  integer  :: BSS_n_freqs
- integer  :: BSS_n_eig            !number of eigenvalues to find
+ integer  :: BSS_n_eig            ! number of eigenvalues to find. Ldiago/Slepc
+ integer  :: BSS_n_eig_Input      ! number of eigenvalues requested in input. Ldiago/Slepc
+ integer  :: BSS_first_eig        ! index of the first eigenvalue to find. Ldiago
+ real(SP) :: BSS_target_E         ! find eigenvalues close to this energy. Slepc
+ real(SP) :: BSS_trange_E(2)      ! find eigenvalues in this energy range. Ldiago
  real(SP) :: BSS_er(2)
  real(SP) :: BSS_dr(2)
  real(SP) :: BSS_damp_reference
@@ -62,9 +71,12 @@ module BS_solvers
  real(SP) :: BSS_E_dir(3)         ! Electric field
  real(SP) :: BSS_P_dir(3)         ! Induced polarization
  real(SP) :: BSS_Q_dir(3)         ! Field propagation direction
+ real(SP) :: BSS_kernel_stored_size
+ integer  :: BSS_kernel_last_stored_block
  logical  :: BSS_uses_DbGd
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
+ logical  :: BSS_kernel_IO_on_the_fly
  logical  :: BSS_perturbative_width
  logical  :: l_abs_prop_chi_bse=.TRUE.
  logical  :: l_eels_can_be_computed=.TRUE.
@@ -78,6 +90,7 @@ module BS_solvers
  ! Solvers (Diago)
  !=========
  logical  :: BSS_write_eig_2_db
+ character(1) :: BSS_ldiago_solver     ! "s" for scalapack / "e" for elpa
  !
  ! Solvers (Haydock)
  !=========
@@ -99,9 +112,9 @@ module BS_solvers
  integer          :: BSS_slepc_maxit         !maximum number of iterations
  integer          :: BSS_slepc_mpd           !maximum allowed dimension
  real(SP)         :: BSS_slepc_tol           !tolerance for the iterative solver
- real(SP)         :: BSS_slepc_target_E      !find eigenvalues close to this energy
  character(schlen):: BSS_slepc_matrix_format !matrix type ("shell","explicit","explicit-debug")
  logical          :: BSS_slepc_double_grp    !duplicate the number of groups for slepc shells solver
+ logical          :: BSS_slepc_pseudo_herm   !use a BSE specific solver designed for pseudo-hermitian matrices
  !
  ! Solvers (Inversion)
  !=========
@@ -129,6 +142,7 @@ module BS_solvers
  ! Solvers (Temporary (LARGE) arrays to be used in solvers ONLY)
  !=========
  integer    , allocatable :: BSS_eh_table(:,:)
+ integer    , allocatable :: BSS_eh_table_m1(:,:,:,:,:)
  real(SP)   , allocatable :: BSS_eh_E(:)
  real(SP)   , allocatable :: BSS_eh_f(:)
  real(SP)   , allocatable :: BSS_eh_W(:)
@@ -155,7 +169,8 @@ module BS_solvers
    end function
    !
    integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,BsRr,BsE_corr,&
-   &                                    bsL_magn,bsR_magn,bsL_kerr,bsR_kerr,bsR_dich,bsR_pl)
+   &                        bsL_magn,bsR_magn,bsL_kerr,bsR_kerr,bsR_dich,bsR_pl,&
+   &                        BS_mat,write_ev)
      use pars,          ONLY:SP
      use X_m,           ONLY:X_t
      implicit none
@@ -164,7 +179,16 @@ module BS_solvers
      complex(SP)        ,optional :: bsE(:)
      real(SP),   pointer,optional :: BsE_corr(:,:),bsR_pl(:,:)
      complex(SP),pointer,optional :: bsL_kerr(:),bsR_kerr(:),bsR_dich(:,:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
+     complex(SP)        ,optional :: BS_mat(:,:)
+     logical, optional            :: write_ev
    end function
+
+   subroutine write_bs_ev_par(iq, i_BS_mat, BS_VR, BS_VL)
+     use pars,           ONLY:SP
+     implicit none
+     integer, intent(in)      :: i_BS_mat, iq
+     complex(SP),allocatable, target, optional ::BS_VR(:,:),BS_VL(:,:)
+   end subroutine write_bs_ev_par
    !
    integer function io_BSS_Haydock(ID,iq,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp1)
      use pars,          ONLY:SP
@@ -260,11 +284,11 @@ module BS_solvers
      complex(SP), allocatable                :: TMP_C2(:,:)
      integer :: dim1
      !
-     dim1=size(VAR_C2(:,1))
-     allocate(TMP_C2(dim1,BSS_n_eig))
-     TMP_C2=VAR_C2(:,:BSS_n_eig)
+     dim1=size(VAR_C2,2)
+     allocate(TMP_C2(BSS_n_eig,dim1))
+     TMP_C2=VAR_C2(:BSS_n_eig,:)
      deallocate(VAR_C2)
-     allocate(VAR_C2(dim1,BSS_n_eig))
+     allocate(VAR_C2(BSS_n_eig,dim1))
      VAR_C2=TMP_C2
      !
    end subroutine resizeC2
@@ -275,11 +299,11 @@ module BS_solvers
      complex(SP), allocatable            :: TMP_C2(:,:)
      integer :: dim1
      !
-     dim1=size(VAR_C2(:,1))
-     allocate(TMP_C2(dim1,BSS_n_eig))
-     TMP_C2=VAR_C2(:,:BSS_n_eig)
-     deallocate(VAR_C2); nullify(VAR_C2)
-     allocate(VAR_C2(dim1,BSS_n_eig))
+     dim1=size(VAR_C2,2)
+     allocate(TMP_C2(BSS_n_eig,dim1))
+     TMP_C2=VAR_C2(:BSS_n_eig,:)
+     deallocate(VAR_C2)
+     allocate(VAR_C2(BSS_n_eig,dim1))
      VAR_C2=TMP_C2
      !
    end subroutine resizeC2p

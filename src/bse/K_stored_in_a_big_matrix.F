@@ -5,36 +5,56 @@
 !
 ! Authors (see AUTHORS file for details): AM MG DS
 !
-subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
+! headers
+!
+#include <y_memory.h>
+!
+subroutine K_stored_in_a_big_matrix(i_BS_mat,BS_mat_dim,BS_mat,iq,what)
  !
  ! Here I fill the kernel (coupling included) in an entire BIG matrix to be
  ! used for diagonalization and/or invertion
  !
+ ! Below how the matrix is computed
+ ! - coupling (c) and anti-coupling (q) blocks are computed only if coupling is requested
+ ! - in case 2 the diagonal terms of coupling and anti-coupling are both computed, although this is not needed
+ ! - cases 3 and 4 are for debugging purposes only
+ !
+ !         Case 1                           Case 2                              Case 3                          Case 4
+ !   l_BS_ares_from_res=.true.      l_BS_ares_from_res=.false.           l_BS_ares_from_res=.true.        l_BS_ares_from_res=.false.
+ !   l_BSE_matrix_full=.false.      l_BSE_matrix_full=.false.            l_BSE_matrix_full=.true.         l_BSE_matrix_full=.true.
+ !   coupling block is a square     coupling block maybe rectangular     coupling block is a square       coupling block maybe rectangular
+ !
+ !       (r r r c c c)                    (r r r c c)                        (r r r c c c)                    (r r r c c)
+ !       (- r r - c c)                    (- r r c c)                        (r r r c c c)                    (r r r c c)
+ !       (- - r - - c)                    (- - r c c)                        (r r r c c c)                    (r r r c c)
+ !       (- - - - - -)                    (- - - a a)                        (- - - - - -)                    (q q q a a)
+ !       (- - - - - -)                    (- - - - a)                        (- - - - - -)                    (q q q a a)
+ !       (- - - - - -)                                                       (- - - - - -)
+ !
  use pars,           ONLY:SP,cI,cZERO,cONE
  use parallel_int,   ONLY:PP_redux_wait
  use BS,             ONLY:BS_K_coupling,n_BS_blks,BS_res_ares_n_mat,&
-&                         l_BS_ares_from_res,BS_blks_free
- use BS_solvers,     ONLY:BS_mat,BS_blk,BS_H_dim,BS_K_dim,&
+&                         l_BS_ares_from_res,l_BSE_kernel_full
+ use BS_solvers,     ONLY:BS_blk,BS_H_dim,BS_K_dim,&
 &                         BSS_perturbative_width,run_inversion,run_Haydock,&
 &                         BSS_eh_E,BSS_eh_W
  use timing_m,       ONLY:timing
+ use y_memory_alloc
  !
-#include <y_memory.h>
+ implicit none
  !
- integer,      intent(in) :: i_BS_mat,iq
+ integer,      intent(in) :: i_BS_mat,BS_mat_dim,iq
+ complex(SP), allocatable, target :: BS_mat(:,:) 
  character(*), intent(in) :: what
  !
  ! Work Space
  !
  complex(SP) :: Mij
- integer     :: i_Tk,i_Tp,i_r,i_c,H_pos(2),H_shift(2),i_B,BS_mat_dim
+ integer     :: i_Tk,i_Tp,i_r,i_c,H_pos(2),H_shift(2),i_B
  !
  if (allocated(BS_mat)) return
  !
  call timing('BSE matrix filling',OPR='start')
- !
- if (     BS_K_coupling) BS_mat_dim=BS_H_dim
- if (.not.BS_K_coupling) BS_mat_dim=BS_K_dim(i_BS_mat)
  !
  YAMBO_ALLOC(BS_mat,(BS_mat_dim,BS_mat_dim))
  BS_mat    = cZERO
@@ -48,7 +68,14 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
    !
    H_shift=0
    if(BS_blk(i_B)%mode=="C") H_shift(2)=BS_K_dim(1)
+   if(BS_blk(i_B)%mode=="Q") H_shift(1)=BS_K_dim(1)
    if(BS_blk(i_B)%mode=="A") H_shift(:)=BS_K_dim(1)
+   !
+   ! Skip Q and A block
+   if (   l_BS_ares_from_res   .and. H_shift(1)>0) cycle
+   !
+   ! Skip Q block
+   if ((.not.l_BSE_kernel_full).and. H_shift(1)>H_shift(2)) cycle
    !
    do i_r=1,BS_blk(i_B)%size(1)
      !
@@ -58,12 +85,16 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
        !
        H_pos(2)=BS_blk(i_B)%coordinate(2)+i_c-1
        !
-       ! Then the upper triangle of each block and direct symmetrization
+       if ( .not.l_BSE_kernel_full) then
+         ! The upper triangle only of the whole matrix
+         if( H_pos(1)+H_shift(1)>H_pos(2)+H_shift(2)) cycle
+         !
+         ! The upper triangle only of each block
+         if (l_BS_ares_from_res  .and.  H_pos(1)>H_pos(2)) cycle
+       endif
        !
-       if (H_pos(1)+H_shift(1)>H_pos(2)+H_shift(2)) cycle
-       if (l_BS_ares_from_res.and.H_pos(1)>H_pos(2)) cycle
-       !
-       Mij=BS_blk(i_B)%mat(i_r,i_c)
+       if(     allocated(BS_blk(i_B)%mat)) Mij=BS_blk(i_B)%mat(i_r,i_c)
+       if(.not.allocated(BS_blk(i_B)%mat)) Mij=cZERO
        !
        ! Add energies to the diagonal
        !
@@ -78,35 +109,47 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
        case("R")
            BS_mat(H_pos(1)            ,H_pos(2)            )=       Mij
            ! The resonant block is hermitial
-           BS_mat(H_pos(2)            ,H_pos(1)            )= conjg(Mij)
+           if (.not.l_BSE_kernel_full) &
+           & BS_mat(H_pos(2)          ,H_pos(1)            )= conjg(Mij)
            if (l_BS_ares_from_res.and.BS_K_coupling) then
              ! The anti-resonant block is A=-R*
              BS_mat(H_pos(1)+BS_K_dim(1),H_pos(2)+BS_K_dim(1))=-conjg(Mij)
              ! The anti-resonant block is hermitian
-             BS_mat(H_pos(2)+BS_K_dim(1),H_pos(1)+BS_K_dim(1))=      -Mij
+             if (.not.l_BSE_kernel_full) &
+             & BS_mat(H_pos(2)+BS_K_dim(1),H_pos(1)+BS_K_dim(1))=    -Mij
            endif
        case("C")
            BS_mat(H_pos(1)            ,H_pos(2)+BS_K_dim(1))=       Mij
-           ! Anti-coupling from coupling: the whole BSE matrix is Pseudo-HErmitian
-           BS_mat(H_pos(2)+BS_K_dim(1),H_pos(1)            )=-conjg(Mij)
+           ! Anti-coupling from coupling: the whole BSE matrix is Pseudo-Hermitian
+           if (.not.l_BSE_kernel_full) &
+           & BS_mat(H_pos(2)+BS_K_dim(1),H_pos(1)            )=-conjg(Mij)
+           ! In case l_BS_ares_from_res=.false. the coupling an anti-couling 
+           ! bocks maybe rectangular and I cannot symmetrize them
            if (l_BS_ares_from_res) then
              ! The coupling block and the anti-coupling block are symmetric
              BS_mat(H_pos(2)            ,H_pos(1)+BS_K_dim(1))=       Mij
-             BS_mat(H_pos(1)+BS_K_dim(1),H_pos(2)            )=-conjg(Mij)
+             if (.not.l_BSE_kernel_full) &
+             & BS_mat(H_pos(1)+BS_K_dim(1),H_pos(2)            )=-conjg(Mij)
            endif
        case("A")
-         ! The anti-resonant block is hermitial
          if(BS_res_ares_n_mat==1) then
+           ! Case with coupling
            BS_mat(H_pos(1)+BS_K_dim(1),H_pos(2)+BS_K_dim(1))=       Mij
-           BS_mat(H_pos(2)+BS_K_dim(1),H_pos(1)+BS_K_dim(1))= conjg(Mij)
+           ! The anti-resonant block is hermitial
+           if (.not.l_BSE_kernel_full) &
+           & BS_mat(H_pos(2)+BS_K_dim(1),H_pos(1)+BS_K_dim(1))= conjg(Mij)
          else
+           ! Case without coupling, there are two BS_mat
            BS_mat(H_pos(1)            ,H_pos(2)            )=       Mij
-           BS_mat(H_pos(2)            ,H_pos(1)            )= conjg(Mij)
+           ! The anti-resonant block is hermitial
+           if (.not.l_BSE_kernel_full) &
+           & BS_mat(H_pos(2)            ,H_pos(1)            )= conjg(Mij)
          endif
        case("Q")
            BS_mat(H_pos(1)+BS_K_dim(1),H_pos(2)            )=       Mij
            ! Coupling from anti-coupling: the whole BSE matrix is Pseudo-HErmitian
-           BS_mat(H_pos(2)            ,H_pos(1)+BS_K_dim(1))=-conjg(Mij)
+           if (.not.l_BSE_kernel_full) &
+           & BS_mat(H_pos(2)            ,H_pos(1)+BS_K_dim(1))=-conjg(Mij)
        end select
        !
      enddo

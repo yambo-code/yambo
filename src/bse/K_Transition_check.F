@@ -16,7 +16,7 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
                         l_BS_magnons,l_BS_photolum,l_BS_res_from_E
 #if defined _RT
  use drivers,      ONLY:l_rt_carriers_in_use,l_rpa_IP
- use RT_control,   ONLY:NEQ_Residuals,NEQ_Kernel,EQ_Transitions,EQ_NoOcc
+ use RT_control,   ONLY:NEQ_Residuals,NEQ_Kernel,EQ_Transitions,ALL_NoOcc,EQ_NoOcc
 #endif
  !
  implicit none
@@ -42,7 +42,7 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  !
  ! Small energy transitions. Dipoles in length gauge are not defined
  if ((.not.l_BS_magnons).and.iq==1) then
-   if ( abs(Eo_eh) < Dip%Energy_treshold .and. trim(global_gauge)=="length") K_Transition_check=.FALSE.
+   if ( abs(Eo_eh) < Dip%Energy_threshold .and. trim(global_gauge)=="length") K_Transition_check=.FALSE.
  endif
  ! Null energy transitions are always removed
  if ( abs(E_eh) == 0._SP )  K_Transition_check=.FALSE.
@@ -104,13 +104,13 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  !if ( E_eh< 0._SP ) f_eh_PL = -Ken%f(iv,ik ,i_sp_v)*(spin_occ-Ken%f(ic,ikp,i_sp_c))/spin_occ/spin_occ
  !
 #if defined _RT
- if(EQ_NoOcc) then
-   f_eh_REF=1._SP
-   f_eh    =1._SP
-   f_eh_RES=1._SP
-   f_eh_EQ =1._SP
-   f_e     =1._SP
-   f_h     =1._SP
+ if(EQ_NoOcc.or.ALL_NoOcc) then
+   f_eh_REF=spin_occ
+   f_eh    =spin_occ
+   f_eh_RES=spin_occ
+   f_eh_EQ =spin_occ
+   f_e     =spin_occ
+   f_h     =spin_occ
  endif
 #endif
  !
@@ -165,5 +165,9 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  !
  if (any((/abs(E_eh)<BS_eh_en(1).and.BS_eh_en(1)>0._SP,&
 &          abs(E_eh)>BS_eh_en(2).and.BS_eh_en(2)>0._SP/))) K_Transition_check=.FALSE.
+ !
+#if defined _RT
+ if(ALL_NoOcc) K_Transition_check=All_NoOcc
+#endif
  !
 end function

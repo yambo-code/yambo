@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 module collision_el
  !
  !=====================
@@ -15,9 +20,9 @@ module collision_el
  use parallel_m,  ONLY:PP_indexes
  use qe_pseudo_m, ONLY:bec_type,deallocate_bec_type
  use gpu_m,       ONLY:have_gpu
+ use y_memory_alloc
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ implicit none
  !
  type elemental_collision
    !
@@ -155,6 +160,7 @@ module collision_el
          !
        endif
        ggw%ngrho=NG
+       ggw%iqref=0
      endif
      !
      ! GAMP

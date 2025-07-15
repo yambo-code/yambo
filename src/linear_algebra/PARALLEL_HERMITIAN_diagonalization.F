@@ -6,6 +6,10 @@
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  !
  ! perform the diagonalization by using scalapack
@@ -16,7 +20,9 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  integer           :: N
  type(PAR_matrix)  :: M,V
@@ -32,7 +38,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  !
  if (SLK_ORTHO%coordinate(1)==-1) return
  !
- call timing('PARALLEL_HERMITIAN_diagonalization',OPR='start')
+ call timing('PAR_HERM_diago',OPR='start')
  !
  lwork=-1
  lrwork=-1
@@ -65,7 +71,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  !
  call LINEAR_ALGEBRA_WS_reset(WS) 
  !
- call timing('PARALLEL_HERMITIAN_diagonalization',OPR='stop')
+ call timing('PAR_HERM_diago',OPR='stop')
  !
 end subroutine PARALLEL_HERMITIAN_diagonalization
 

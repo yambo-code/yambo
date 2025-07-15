@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_diagonal(iq,what)
  !
  use pars,           ONLY:SP,cZERO,cI
@@ -13,8 +17,9 @@ subroutine K_diagonal(iq,what)
  use BS,             ONLY:BS_K_dim,BSE_mode,BS_H_dim,BS_n_eh_spaces
  use SLK_m,          ONLY:SLK_POOL
  use parallel_int,   ONLY:PP_redux_wait
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer,       intent(in) :: iq
  character(*)              :: what

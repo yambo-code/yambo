@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<dev_defs.h>
+!
 !#ifdef _MKLGPU
 !include "mkl_dfti_omp_offload.f90"
 !#endif
@@ -16,7 +20,6 @@ module FFT_m
  use mklfft_gpu
 #endif
  !
-#include<dev_defs.h>
  !
  implicit none
  !

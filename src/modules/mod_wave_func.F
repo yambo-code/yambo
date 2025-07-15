@@ -5,14 +5,19 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-module wave_func
- !
- use pars,           ONLY:SP
- use devxlib,        ONLY:devxlib_mapped
- use gpu_m,          ONLY:have_gpu
- !
+! headers
+!
 #include <dev_defs.h>
 #include <y_memory.h>
+!
+module wave_func
+ !
+ use pars,           ONLY:SP,schlen
+ use devxlib,        ONLY:devxlib_mapped
+ use gpu_m,          ONLY:have_gpu
+ use y_memory_alloc
+ !
+ implicit none
  !
  type WAVEs 
    integer              :: b(2)      ! band range 
@@ -39,6 +44,7 @@ module wave_func
  ! Real components ?
  !
  logical                :: real_wavefunctions
+ character(schlen)      :: WF_load_mode="all"   ! "all"/"on-the-fly"/"on-the-fly-kq"
  !
  ! Bands block size
  !

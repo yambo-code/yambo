@@ -128,8 +128,8 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  l_slepc     = index(BSS_mode,'s')/=0
 #if defined _SCALAPACK
- l_diago     = index(BSS_mode,'o')/=0 ! old diago
- l_ldiago    = index(BSS_mode,'d')/=0 
+ l_diago     = index(BSS_mode,'o')/=0.or.      l_BS_photolum ! old diago
+ l_ldiago    = index(BSS_mode,'d')/=0.and..not.l_BS_photolum 
 #else
  l_diago     = index(BSS_mode,'o')/=0 .or. index(BSS_mode,'d')/=0
 #endif
@@ -379,17 +379,12 @@ subroutine K_diago_driver(iq,W,X_static)
          endif
        endif
        !
-       ! DS: this also should be changed according to the general structure
-       if(l_BS_photolum) call PL_diago_non_herm_residual(BS_V_left,BS_V_right,BS_R_PL,BS_overlap)
-       !
      else
        !
        ! Left residuals
        if( l_abs_res  ) BS_R_left_abs =conjg(BS_R_right_abs)
        if( l_kerr_lft ) BS_R_left_kerr=conjg(BS_R_right_kerr)
        if(l_BS_magnons) BS_R_left_magn=conjg(BS_R_right_magn)
-       !
-       if(l_BS_photolum) call PL_diago_herm_residual(BS_mat,BS_R_PL)
        !
      endif
      !
@@ -399,9 +394,9 @@ subroutine K_diago_driver(iq,W,X_static)
      if(l_BS_photolum) then
        if (l_ldiago) call error("PL not implemented in Ldiago solver")
        if (K_is_not_hermitian) then
-         call PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap)
+         call PL_diago_non_herm_residual(BS_V_left,BS_V_right,BS_R_PL,BS_overlap)
        else
-         call PL_diago_residual(BS_V_right,BS_V_right,BS_R_PL,K_is_not_hermitian)
+         call PL_diago_herm_residual(BS_V_right,BS_R_PL)
        endif
      endif
      !

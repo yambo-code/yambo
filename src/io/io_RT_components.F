@@ -55,7 +55,7 @@ integer function io_RT_components(what,ID)
  use IO_m,           ONLY:io_sec,read_is_on,write_is_on,io_file
  use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step,RT_carriers,RT_nbands,G_MEM_steps
  use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,Gless_RESTART_RT_IO_t,OBS_RT_IO_t,CACHE_OBS_steps_now,&
-&                         Vbands_RT_IO_t,CACHE_OBS_steps,RT_DB_file_name,Gless_RT_IO_t,SAVE_Vb_history,&
+&                         Vbands_RT_IO_t,CACHE_OBS_steps,RT_DB_file_name,Gless_RT_IO_t,SAVE_Vb_history,SAVE_Vb_floquet,&
 &                         RT_DB_name,RT_define_the_IO_DB_identifier,RT_do_IO,RT_current_DB_identifier,RT_return_db_ID
 #if defined _PAR_IO
 #endif
@@ -150,7 +150,7 @@ integer function io_RT_components(what,ID)
      if (io_RT_components/=0) goto 1
    endif
    !
-   if (RT_do_IO("V_bands"))           call io_RT_components_TIME_points(ID,T_size,.FALSE.,SAVE_Vb_history,Vbands_RT_IO_t)
+   if (RT_do_IO("V_bands"))           call io_RT_components_TIME_points(ID,T_size,.FALSE.,(SAVE_Vb_history.or.SAVE_Vb_floquet),Vbands_RT_IO_t)
    !
    if (RT_do_IO("G_lesser"))          call io_RT_components_TIME_points(ID,T_size,.FALSE.,.TRUE.,Gless_RT_IO_t)
    !

@@ -560,6 +560,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &  verb_level=V_nl_optics)
  call it('f',defs,'EvalCurrent','[NL] Evaluate the current')
  call it('f',defs,'SaveVbhistory',  '[RT] Save the history of the wave-functions function',Verb_level=V_nl_optics)
+ call it('f',defs,'SaveVbfloquet',  '[RT] Save wave-functions for Floquet Analysis',Verb_level=V_nl_optics)
  !
 #endif
  !

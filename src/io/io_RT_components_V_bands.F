@@ -29,7 +29,7 @@ subroutine io_RT_components_V_bands(ID,T_size)
  use IO_m,           ONLY:read_is_on,write_is_on
  use IO_int,         ONLY:def_variable_bulk,io_variable_bulk
  use electrons,      ONLY:n_sp_pol,n_full_bands
- use RT_control,     ONLY:Vbands_RT_IO_t,NE_i_start_time,SAVE_Vb_history
+ use RT_control,     ONLY:Vbands_RT_IO_t,NE_i_start_time,SAVE_Vb_history, SAVE_Vb_floquet
  use real_time,      ONLY:RT_bands,RT_nbands,NE_i_time!,RT_dyn_step,RT_step
  use nl_optics,      ONLY:V_bands
  use netcdf,         ONLY:NF90_UNLIMITED

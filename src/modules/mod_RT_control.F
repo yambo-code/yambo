@@ -71,6 +71,7 @@ module RT_control
  ! G_lesser I/O
  logical                  :: SAVE_G_history
  logical                  :: SAVE_Vb_history
+ logical                  :: SAVE_Vb_floquet
  !
  ! J, P and M (spin) cache 
  !

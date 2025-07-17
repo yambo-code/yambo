@@ -247,6 +247,19 @@ subroutine NL_initialize(E,k)
  endif
  !
  if(all(NL_er>0._SP).and.n_frequencies>=1) NL_estep=(NL_er(2)-NL_er(1))/real(n_frequencies,SP)
+ !
+ ! Check if there are condintions for Floquet analysis
+ !
+ if (SAVE_Vb_floquet) then
+    if (.not.(Efield(1)%ef_name=='SOFTSIN'.or.Efield(1)%ef_name=='SIN')) then
+      call warning(' Floquet analysis implemented only for pure periodic signal. Switching it off ')
+      SAVE_Vb_floquet = .FALSE.
+    endif
+    if (NE_tot_time < 4._SP*EtoT(E=NL_er(1))+Phase_LifeTime*DephMult) then
+      call warning(' Total time too short for Floquet Analysis. Switching it off ')
+      SAVE_Vb_floquet = .FALSE.
+   endif
+ endif
  ! 
  ! Determine the total time from the damping or from T_0
  !
@@ -273,6 +286,7 @@ subroutine NL_initialize(E,k)
 &         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(3)%frequency(1))+5._SP*RT_step/))
      endif
      !
+     if (SAVE_Vb_floquet) Sampling_Time = Sampling_Time + 3._SP*EtoT(E=NL_er(1)) ! Try this
      NE_tot_time=NE_tot_time+Sampling_Time
      !
      call msg('sr','Dephasing Time              ',DephMult*Phase_LifeTime*AUT2FS,"[fs]")
@@ -290,7 +304,7 @@ subroutine NL_initialize(E,k)
    endif
    ! 
  else
-   call msg('s','Total simulation time read from input') 
+   call msg('s','Total simulation time read from input')
  endif
  !
  call msg('sr','Total simulation time       ',NE_tot_time*AUT2FS,"[fs]")

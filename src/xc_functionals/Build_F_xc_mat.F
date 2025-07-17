@@ -80,7 +80,7 @@ subroutine Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
      !do ifft=1,fft_size
      !  mod_mag=abs(magn(ifft,3))
      !  !The same factor is also used in XC_eval_LDA_kernel
-     !  mod_mag=mod_mag_n*real(fft_size,SP)/DL_vol
+     !  mod_mag=mod_mag*real(fft_size,SP)/DL_vol
      !  if(mod_mag< 1.E-6_SP) magn_inv(ifft)=0._SP
      !  if(mod_mag>=1.E-6_SP) magn_inv(ifft)=1._SP/mod_mag
      !enddo

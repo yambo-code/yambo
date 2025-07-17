@@ -287,7 +287,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
            ! V_xc is needed for F_xc_mat in Build_Fxc_mat.F with n_spinor=2, 
            ! In the magnons case, I could use it also for F_xc_mat with n_sp_pol==2,
            ! avoiding the call to XC_eval_lda_kernel
-           ! Howerver but the latter is more precise, since it works with DP quantities
+           ! Howerver, the latter is more precise, since it works with DP quantities
            forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(v1rho(i2,i1),SP)
          endif
          ! Needed to build Fxc unless in magnons case with n_sp_pol==2

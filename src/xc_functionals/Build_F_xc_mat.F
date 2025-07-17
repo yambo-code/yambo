@@ -69,15 +69,21 @@ subroutine Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
    else
      !
      ! The following is in principle ok, but slightly less precise
+     ! than the same operation done in XC_eval_LDA_kernel with DP quantities
+     ! There F_xc(:,1:2,1:2) is filled and directly used here
+     ! However, XC_eval_LDA_kernel works for LDA alone. The code below
+     ! would work also for GGA 
      !
      ! DEBUG<
-     Vxc_mag(:)  =(V_xc(:,1)-V_xc(:,2))/2._SP
-     !
-     do ifft=1,fft_size
-       mod_mag=abs(magn(ifft,3))
-       if(mod_mag< 1.E-6_SP) magn_inv(ifft)=0._SP
-       if(mod_mag>=1.E-6_SP) magn_inv(ifft)=1._SP/mod_mag
-     enddo
+     !Vxc_mag(:)  =(V_xc(:,1)-V_xc(:,2))/2._SP
+     !!
+     !do ifft=1,fft_size
+     !  mod_mag=abs(magn(ifft,3))
+     !  !The same factor is also used in XC_eval_LDA_kernel
+     !  mod_mag=mod_mag_n*real(fft_size,SP)/DL_vol
+     !  if(mod_mag< 1.E-6_SP) magn_inv(ifft)=0._SP
+     !  if(mod_mag>=1.E-6_SP) magn_inv(ifft)=1._SP/mod_mag
+     !enddo
      !!
      !F_xc_mat(:,1,2,1,2)= cZERO
      !F_xc_mat(:,1,2,2,1)= 2*Vxc_mag*magn_inv
@@ -94,9 +100,14 @@ subroutine Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
    !
  else if (n_spinor==2) then
    !
+   ! At variance with the case n_sp_pol=2, here F_xc(:,1:2,1:2 from XC_eval_LDA_kernel
+   ! here contains v2rho2, e.g. the second order derivative w.r.t. the density
+   ! Accordingly, the term proportional to the V_xc(:,1)-V_xc(:,2) is added here
+   !
    magn_versor=0._SP
    do ifft=1,fft_size
      mod_mag_n=v_norm(magn(ifft,:))
+     ! The same factor is also used in XC_eval_LDA_kernel
      mod_mag=mod_mag_n*real(fft_size,SP)/DL_vol
      if(mod_mag< 1.E-6_SP) magn_versor(ifft,:)=0._SP
      if(mod_mag>=1.E-6_SP) magn_versor(ifft,:)=magn(ifft,:)/mod_mag_n

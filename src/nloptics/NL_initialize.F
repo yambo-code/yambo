@@ -286,7 +286,7 @@ subroutine NL_initialize(E,k)
 &         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(3)%frequency(1))+5._SP*RT_step/))
      endif
      !
-     if (SAVE_Vb_floquet) Sampling_Time = Sampling_Time + 3._SP*EtoT(E=NL_er(1)) ! Try this
+     if (SAVE_Vb_floquet) Sampling_Time = 4._SP*EtoT(E=NL_er(1))+5._SP*RT_step ! That is the max tot time - I keep it the same for all freqs
      NE_tot_time=NE_tot_time+Sampling_Time
      !
      call msg('sr','Dephasing Time              ',DephMult*Phase_LifeTime*AUT2FS,"[fs]")

@@ -148,6 +148,7 @@ module BS
  !     |_l_BS_ares_from_res=.FALSE. 2                  2
  !
  logical :: l_BS_ares_from_res=.TRUE. 
+ logical :: l_BS_res_from_E
  integer :: BS_res_ares_n_mat=1
  integer :: BS_n_eh_spaces=1 
  !

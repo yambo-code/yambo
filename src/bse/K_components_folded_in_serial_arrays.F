@@ -17,7 +17,8 @@ subroutine K_components_folded_in_serial_arrays(iq)
  use BS_solvers,     ONLY:BSS_eh_E_SOC_corr,&
 &                         BSS_dipoles_opt,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_f_RES,BSS_eh_W,BSS_eh_Z,BSS_alloc
  use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_T_grp,BS_K_coupling,BS_perturbative_SOC,&
-&                         BS_n_eh_spaces,l_BS_optics,l_BS_magnons,l_BS_dichroism,l_BS_photolum
+&                         BS_n_eh_spaces,l_BS_optics,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
+&                         BS_dip_size,BS_H_dim
  use timing_m,       ONLY:timing
  use LIVE_t,         ONLY:live_timing
  use MAGNONS,        ONLY:BSS_dipoles_magn,BSS_MAGN_alloc
@@ -90,17 +91,18 @@ subroutine K_components_folded_in_serial_arrays(iq)
        BSS_eh_table(H_pos,:)=(/i_k_bz,i_v,i_c,i_sp_c,i_sp_v/)
        !
        BSS_eh_E(H_pos)=BS_T_grp(i_g)%E(i_Tr,1)*ares_fac
+       !write(*,*) 'BS_T_grp(i_g)%f(i_Tr)', BS_T_grp(i_g)%f(i_Tr), i_g, i_Tr
        BSS_eh_f(H_pos)=BS_T_grp(i_g)%f(i_Tr)*ares_fac
        BSS_eh_f_RES(H_pos)=BS_T_grp(i_g)%f_RES(i_Tr)*ares_fac
+       if (l_BS_photolum) then
+         BSS_PL_f(H_pos,i_res_ares_solver)=BS_T_grp(i_g)%f_PL(i_Tr,i_res_ares_solver)
+         if (BS_n_eh_spaces==1.and.BS_n_eh_spaces_solver==1) &
+         & BSS_PL_f(H_pos,2)=BS_T_grp(i_g)%f_PL(i_Tr,2)
+       endif
+       !
        if (allocated(BS_T_grp(i_g)%Z)) BSS_eh_Z(H_pos)=BS_T_grp(i_g)%Z(i_Tr)*ares_fac
        if (allocated(BS_T_grp(i_g)%W)) BSS_eh_W(H_pos)=BS_T_grp(i_g)%W(i_Tr)*ares_fac
-       !
        if (BS_perturbative_SOC) BSS_eh_E_SOC_corr(:,H_pos)=BS_T_grp(i_g)%E_SOC_corr(:,i_Tr)*ares_fac
-       !
-       if (l_BS_photolum) then
-         BSS_PL_f(H_pos)=BS_T_grp(i_g)%f_PL(i_Tr,i_res_ares_solver)
-         if (BS_n_eh_spaces==1.and.BS_n_eh_spaces_solver==1) BSS_PL_f(H_pos+BS_K_dim(1))=BS_T_grp(i_g)%f_PL(i_Tr,2)
-       endif
        !
        if (l_BS_optics) BSS_dipoles_opt(:,H_pos)=BS_T_grp(i_g)%dipoles_opt(:,i_Tr,i_res_ares_solver)
        !
@@ -108,7 +110,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
        !
        if (l_BS_dichroism) BSS_dipoles_dich(:,H_pos)=BS_T_grp(i_g)%dipoles_dic(:,i_Tr,i_res_ares_solver)
        !
-       if (l_BS_photolum) BSS_dipoles_PL(:,H_pos)=BS_T_grp(i_g)%dipoles_opt(:,i_Tr,i_res_ares_solver)*PL_weights(:)
+       if (l_BS_photolum) BSS_dipoles_PL(:,H_pos)=BS_T_grp(i_g)%dipoles_opt(:,i_Tr,i_res_ares_solver)*PL_weights(:BS_dip_size)
        !
      enddo
      !

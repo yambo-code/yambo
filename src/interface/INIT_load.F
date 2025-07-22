@@ -29,6 +29,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng,WF_load_mode
  use D_lattice,     ONLY:Tel,non_periodic_directions,molecule_position,Bose_Temp
+ use D_lattice,     ONLY:Boltz_Temp
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,RIM_W_ng,rimw_type,&
 &                        bz_samp,RIM_ng,RIM_epsm1,eps_env,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,RIM_sphe_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
@@ -210,10 +211,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #else
  call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit,verb_level=V_general)
 #endif
+ call it(defs,'EXCTemp', '[EXCPH] Excitonic Temperature (for luminescence spectra)',Boltz_Temp,T_unit)
  call it(defs,'BoseCut', '[BOSE] Finite T Bose function cutoff',bose_E_cut,verb_level=V_general)
 #if defined _ELPH 
  call it('f',defs,'BSEscatt', '[KPT] Compute extended k/q scatering',verb_level=V_kpt)
- call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level=V_ph) 
+call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level=V_ph) 
  call it(defs,'EkpqShFact', '[ELPH] E(k+q) Interpolation shell factor (used only with double-grid)',E_kpq_sh_fact,verb_level=V_ph)
 #endif
  call it('f',defs,'WFbuffIO','[IO] Wave-functions buffered I/O',verb_level=V_io) 

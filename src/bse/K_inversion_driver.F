@@ -67,7 +67,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! I/O
  !
- integer           :: i_err,ID,Lo_dim,Lo_n_loop
+ integer           :: i_err,ID,Lo_dim
  integer, external :: io_BSS_invert
  !
  if (BS_res_ares_n_mat>1) then
@@ -160,7 +160,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !===========================================================================
  Lo_dim=1
  if (BS_K_anti_resonant.and.l_BS_ares_from_res) Lo_dim=2
- Lo_n_loop=Lo_dim
  !
  ! In the PL case we need, in addition to the standard GF, also some additional L_k^(r)(w) A_k(w) L_k^(a)(w), where
  ! L^(a/r) are deduced from the standard components.
@@ -172,7 +171,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  YAMBO_ALLOC(Lo,(BS_H_dim,W%n_freqs,Lo_dim))
  !
- call K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
+ call K_inversion_Lo(iq,W,E,k,Lo_dim,Lo)
  !
  ! Initialize & write the output file 
  !====================================
@@ -191,7 +190,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 &                              TOTAL=W%n_freqs,NCPU=PAR_COM_SLK_INDEX_local%n_CPU)
    call live_timing('Perturbative inversion ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
    !
-   call K_inversion_engine("any",1,W%n_freqs,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
+   call K_inversion_engine("any",1,W%n_freqs,PAR_IND_freqs,W,Lo,Lo_dim,.FALSE.)
    !
    call PP_redux_wait(K_INV_EPS%err,COMM=PAR_COM_SLK_INDEX_local%COMM)
    call PP_redux_wait(Resp_ii(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
@@ -204,7 +203,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
    K_INV_EPS%spectra(:,1)=Resp_ii(:,2)
    if (l_BS_photolum) then
-     K_INV_PL%spectra(:,1)=PL(:,2)
+     K_INV_PL%spectra(:,1)=cmplx(PL(:,2),0._SP,kind=SP)
      !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,3,4/),ID=ID)
      i_err=io_BSS_invert(iq,W,ID)
@@ -256,7 +255,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! I/O [after full inversion]
  !=====
  K_INV_EPS%spectra(:,1)=Resp_ii(:,2)
- if (l_BS_photolum) K_INV_PL%spectra(:,1)=PL(:,2)
+ if (l_BS_photolum) K_INV_PL%spectra(:,1)=cmplx(PL(:,2),0._SP,kind=SP)
  !
  if (l_BS_photolum) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3,4/),ID=ID)
@@ -299,7 +298,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
        !
        iw=TYP%iw_full(i1)
        !
-       call K_inversion_engine(TYP%what,iw,1,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.TRUE.)
+       call K_inversion_engine(TYP%what,iw,1,PAR_IND_freqs,W,Lo,Lo_dim,.TRUE.)
        !
        call live_timing(steps=1)
        !

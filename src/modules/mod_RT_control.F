@@ -465,30 +465,4 @@ module RT_control
      enddo
    end subroutine
    !
-   ! I put this here for the moment... not sure this is the best solution => not so
-   !
-   subroutine RT_setup_Floquet_analysis(freq)
-     !      
-     use QP_m,       ONLY:Time_of
-     use pars,       ONLY:pi
-     use real_time,  ONLY:RT_step
-     !
-     implicit none
-     !
-     real(SP), intent(in)    :: freq
-     !
-     ! Workspace
-     real(SP) :: period
-     !      
-     if (.not.SAVE_Vb_floquet) return
-     !
-     ! Set up the interval
-     !
-     period = 2._SP*pi/freq     
-     Vbands_RT_IO_t%INTERVAL_steps = nint((Period/10._SP)/RT_step)
-     !
-     call warning(' WF IO time changed to perform Floquet analysis ')
-     !
-   end subroutine
-   !
 end module RT_control

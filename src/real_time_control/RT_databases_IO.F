@@ -280,6 +280,7 @@ subroutine RT_databases_IO(E,DO_IT)
    if (SAVE_Vb_floquet) then 
      if (NE_i_time < Vbands_IO_starttime)  Start_sampling = .false. 
      if (NE_i_time==NE_i_start_time) Start_sampling = .true.
+     if (NE_i_time ==  Vbands_IO_starttime) Vbands_RT_IO_t%last_point =  Vbands_IO_starttime - Vbands_RT_IO_t%INTERVAL_steps
    endif
    !
    if ((RT_do_it('Vb').or.DO_IT) .and.Start_sampling) then

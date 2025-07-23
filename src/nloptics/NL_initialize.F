@@ -31,8 +31,8 @@ subroutine NL_initialize(E,k)
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field,l_NE_with_fields, &
 &                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential,RAD_LifeTime,&
 &                         l_velocity_gauge_corr,l_velocity_gauge_diam,G_MEM_steps,RT_nk,i_MEM_now
- use RT_control,     ONLY:SETUP_RT_IO_type,OBS_RT_IO_t,NE_i_start_time, RT_control_alloc,RT_control_free,l_NE_with_fields,&
-&                         SAVE_Vb_history,SAVE_G_history, SAVE_Vb_floquet, RT_setup_Floquet_analysis, Vbands_IO_starttime
+ use RT_control,     ONLY:OBS_RT_IO_t, NE_i_start_time, RT_control_alloc,RT_control_free,l_NE_with_fields,Vbands_RT_IO_t,&                         
+&                         SAVE_Vb_history,SAVE_G_history, SAVE_Vb_floquet, Vbands_IO_starttime
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM,  &
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity,LSEX,&
@@ -248,7 +248,6 @@ subroutine NL_initialize(E,k)
  !
  if(all(NL_er>0._SP).and.n_frequencies>=1) NL_estep=(NL_er(2)-NL_er(1))/real(n_frequencies,SP)
  !
- !call RT_setup_Floquet_analysis(n_active_fields,W_0)
  if (SAVE_Vb_floquet) then
    if (.not.(Efield(1)%ef_name=='SOFTSIN'.or.Efield(1)%ef_name=='SIN')) then
       call warning(' Floquet analysis implemented only for pure periodic signal. Switching it off ')
@@ -298,10 +297,9 @@ subroutine NL_initialize(E,k)
      endif
      !
      if (SAVE_Vb_floquet) then
-       Sampling_Time = 4._SP*EtoT(E=W_0)+5._SP*RT_step ! That is the max tot time - I keep it the same for all freqs
+       Sampling_Time = 4._SP*EtoT(E=W_0)+5._SP*RT_step 
        Vbands_IO_starttime = int(NE_tot_time/RT_step)
-       call RT_setup_Floquet_analysis(W_0)
-       call msg('sr','WF IO is starting at ', Vbands_IO_starttime,"[steps]")
+       Vbands_RT_IO_t%INTERVAL_time_INPUT = (2._SP*pi/W_0)/10._SP
      endif
      !
      NE_tot_time=NE_tot_time+Sampling_Time
@@ -521,6 +519,7 @@ subroutine NL_initialize(E,k)
  !
  ! I/O steps
  !===========
+ !
  call RT_IO_type_time_steps("INIT")
  !
  call RT_control_alloc("all")

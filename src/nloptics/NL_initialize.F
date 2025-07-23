@@ -31,8 +31,8 @@ subroutine NL_initialize(E,k)
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field,l_NE_with_fields, &
 &                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential,RAD_LifeTime,&
 &                         l_velocity_gauge_corr,l_velocity_gauge_diam,G_MEM_steps,RT_nk,i_MEM_now
- use RT_control,     ONLY:SETUP_RT_IO_type,OBS_RT_IO_t,NE_i_start_time,RT_control_alloc,RT_control_free,l_NE_with_fields,&
-&                         SAVE_Vb_history,SAVE_G_history, SAVE_Vb_floquet
+ use RT_control,     ONLY:SETUP_RT_IO_type,OBS_RT_IO_t,NE_i_start_time, RT_control_alloc,RT_control_free,l_NE_with_fields,&
+&                         SAVE_Vb_history,SAVE_G_history, SAVE_Vb_floquet, RT_setup_Floquet_analysis, Vbands_IO_starttime
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM,  &
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity,LSEX,&
@@ -248,16 +248,27 @@ subroutine NL_initialize(E,k)
  !
  if(all(NL_er>0._SP).and.n_frequencies>=1) NL_estep=(NL_er(2)-NL_er(1))/real(n_frequencies,SP)
  !
- ! Check if there are condintions for Floquet analysis
- !
+ !call RT_setup_Floquet_analysis(n_active_fields,W_0)
  if (SAVE_Vb_floquet) then
-    if (.not.(Efield(1)%ef_name=='SOFTSIN'.or.Efield(1)%ef_name=='SIN')) then
+   if (.not.(Efield(1)%ef_name=='SOFTSIN'.or.Efield(1)%ef_name=='SIN')) then
       call warning(' Floquet analysis implemented only for pure periodic signal. Switching it off ')
       SAVE_Vb_floquet = .FALSE.
-    endif
-    if (NE_tot_time < 4._SP*EtoT(E=NL_er(1))+Phase_LifeTime*DephMult) then
-      call warning(' Total time too short for Floquet Analysis. Switching it off ')
-      SAVE_Vb_floquet = .FALSE.
+   endif
+   if (NE_tot_time > 0._SP) then
+      call warning(' Recalculating time for Floquet analysis ')
+      NE_tot_time = -1._SP
+   endif
+   if ((Efield(2)%ef_name/='none').or.(Efield(3)%ef_name/='none')) then
+     call warning(' Floquet analysis only with one external field. Switching it off ')
+     SAVE_Vb_floquet = .FALSE.
+   endif
+   if (SAVE_Vb_history) then
+     call warning(' Floquet Analysis not compatible with saving WF history. Switching it off ')
+     SAVE_Vb_floquet = .FALSE.
+   endif
+   if (n_active_fields>1) then
+     call warning(' Floquet Analysis not compatible with multiple fieldis. Switching it off ')
+     SAVE_Vb_floquet = .FALSE.
    endif
  endif
  ! 
@@ -286,7 +297,13 @@ subroutine NL_initialize(E,k)
 &         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(3)%frequency(1))+5._SP*RT_step/))
      endif
      !
-     if (SAVE_Vb_floquet) Sampling_Time = 4._SP*EtoT(E=NL_er(1))+5._SP*RT_step ! That is the max tot time - I keep it the same for all freqs
+     if (SAVE_Vb_floquet) then
+       Sampling_Time = 4._SP*EtoT(E=W_0)+5._SP*RT_step ! That is the max tot time - I keep it the same for all freqs
+       Vbands_IO_starttime = int(NE_tot_time/RT_step)
+       call RT_setup_Floquet_analysis(W_0)
+       call msg('sr','WF IO is starting at ', Vbands_IO_starttime,"[steps]")
+     endif
+     !
      NE_tot_time=NE_tot_time+Sampling_Time
      !
      call msg('sr','Dephasing Time              ',DephMult*Phase_LifeTime*AUT2FS,"[fs]")

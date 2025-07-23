@@ -57,11 +57,12 @@ subroutine io_RT_components_V_bands(ID,T_size)
  VAR_SZ(6)    = T_size
  dim_names(6) ='V_bands_IO_time_step'
  IPOS(6)      = Vbands_RT_IO_t%N
- ! 
+ !
+  
  ! Variable Definitions...
  !-------------------------
  if( NE_i_time==NE_i_start_time .or. .not.l_nl_p_and_p) then
-   if (SAVE_Vb_history) VAR_SZ(6)    = NF90_UNLIMITED
+   if (SAVE_Vb_history.or.SAVE_Vb_floquet) VAR_SZ(6)    = NF90_UNLIMITED
    !call def_variable_bulk(ID,"V_bands",4,VAR_SZ,SP,dim_names=dim_names,par_io_kind='collective',silent=.true.)
    call def_variable_bulk(ID,"V_bands",4,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
    VAR_SZ(6)    = T_size

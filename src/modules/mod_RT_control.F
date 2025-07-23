@@ -72,6 +72,7 @@ module RT_control
  logical                  :: SAVE_G_history
  logical                  :: SAVE_Vb_history
  logical                  :: SAVE_Vb_floquet
+ real(SP)                 :: Vbands_IO_starttime
  !
  ! J, P and M (spin) cache 
  !
@@ -462,6 +463,32 @@ module RT_control
        if (what=="f" ) E%f(ib,ik_RT,i_sp_pol)=RT_carriers%OCC_el%N_ref(i_RT)+RT_carriers%OCC_el%dN(i_RT)
        if (what=="df") E%f(ib,ik_RT,i_sp_pol)=RT_carriers%OCC_el%dN(i_RT)
      enddo
+   end subroutine
+   !
+   ! I put this here for the moment... not sure this is the best solution => not so
+   !
+   subroutine RT_setup_Floquet_analysis(freq)
+     !      
+     use QP_m,       ONLY:Time_of
+     use pars,       ONLY:pi
+     use real_time,  ONLY:RT_step
+     !
+     implicit none
+     !
+     real(SP), intent(in)    :: freq
+     !
+     ! Workspace
+     real(SP) :: period
+     !      
+     if (.not.SAVE_Vb_floquet) return
+     !
+     ! Set up the interval
+     !
+     period = 2._SP*pi/freq     
+     Vbands_RT_IO_t%INTERVAL_steps = nint((Period/10._SP)/RT_step)
+     !
+     call warning(' WF IO time changed to perform Floquet analysis ')
+     !
    end subroutine
    !
 end module RT_control

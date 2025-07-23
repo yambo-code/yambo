@@ -96,7 +96,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP), allocatable DEV_ATTR :: O1(:),O2(:),O_times_W(:)
  !
  complex(SP),   external :: K_correlation_kernel_std,K_correlation_kernel_dir
- complex(SP),   external :: TDDFT_ALDA_eh_space_G_kernel
+ complex(SP),   external :: TDDFT_ALDA_eh_space_G_kernel_resonant,TDDFT_ALDA_eh_space_G_kernel_coupling
  complex(SP),   external :: K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
  logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_bs_tddft_wf_in_loop,l_matrix_init,BS_blk_todo,&
@@ -735,7 +735,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          ! ALDA
          if (iHxc==2) then
            if(l_tddft_rsum)     H_x=H_x+TDDFT_ALDA_eh_space_R_kernel(is_k,os_k,is_p,os_p,tddft_wf,'RES')
-           if(l_tddft_gsum)     H_x=H_x+TDDFT_ALDA_eh_space_G_kernel(BS_n_g_fxc,&
+           if(l_tddft_gsum)     H_x=H_x+TDDFT_ALDA_eh_space_G_kernel_resonant(BS_n_g_fxc,&
 &                                   BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
          endif
          !
@@ -765,7 +765,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          ! ALDA
          if (iHxc==2) then
            if(l_tddft_rsum)     H_x=H_x+TDDFT_ALDA_eh_space_R_kernel(is_k,os_k,is_p,os_p,tddft_wf,'CPL')
-           if(l_tddft_gsum)     H_x=H_x+TDDFT_ALDA_eh_space_G_kernel(BS_n_g_fxc,&
+           if(l_tddft_gsum)     H_x=H_x+TDDFT_ALDA_eh_space_G_kernel_coupling(BS_n_g_fxc,&
 &                                 BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
          endif
          !

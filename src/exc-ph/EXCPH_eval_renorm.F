@@ -8,25 +8,6 @@
 !
 #include<y_memory.h>
 !
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-!> @brief This subroutine add the contribution of the iq satellites
-!         to the renormalization factor R and R_PH_abs
 !
 ! @param[in]       iq_bz               iq_bz index 
 ! @param[in]       q                   bz sampling
@@ -35,7 +16,6 @@
 ! @param[out]      R_PH_abs            renormalization factor for phonon-absorption
 ! @param[out]      R_PL                luminescence renormalization factor
 ! @param[out]      R_PL_PH_abs         luminescence renormalization factor for phonon-absorption
-
 !
 subroutine EXCPH_eval_renorm(iq_bz,q,R,R_PH_abs,R_PL,R_PL_PH_abs)
  !

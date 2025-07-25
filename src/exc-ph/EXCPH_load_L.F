@@ -32,7 +32,7 @@
 subroutine EXCPH_load_L(iq_bse,X,what,Ltype)
  !
  use pars,           ONLY:lchlen
- use BS_solvers,     ONLY:io_BSS_diago,BSS_n_eig,BSS_free,BSS_write_eig_2_db,BSS_n_eig
+ use BS_solvers,     ONLY:io_BSS_diago,BS_mat,BSS_n_eig,BSS_free,BSS_write_eig_2_db
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message
  use R_lattice,      ONLY:bz_samp
  use BS,             ONLY:BS_H_dim,BSE_L_kind,BS_res_ares_n_mat,BS_K_dim
@@ -112,9 +112,9 @@ subroutine EXCPH_load_L(iq_bse,X,what,Ltype)
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2,3/),ID=ID_BS)
    if(l_read_residuals) then
-      io_err=io_BSS_diago(iq_bse,1,ID_BS,X,bsE=BS_E,bsRr=BS_R_right,bsRl=BS_R_left)
+      io_err=io_BSS_diago(iq_bse,1,ID_BS,X,bsE=BS_E,BS_mat=BS_mat,bsRr=BS_R_right,bsRl=BS_R_left)
    else
-      io_err=io_BSS_diago(iq_bse,1,ID_BS,X,bsE=BS_E)
+      io_err=io_BSS_diago(iq_bse,1,ID_BS,X,bsE=BS_E,BS_mat=BS_mat)
    endif
    if(io_err/=0) call error(" Error loading "//trim(Ltype)//" for q = "//trim(intc(iq_bse)))
    !

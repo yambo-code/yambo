@@ -3,6 +3,10 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
+!
+! headers
+!
+#include<y_memory.h>
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -41,7 +45,9 @@ subroutine ELPH_sngl_db(k,E,q)
  use IO_m,                ONLY:REP,OP_WR_CL,VERIFY,OP_APP_CL,OP_RD_CL
  use IO_int,              ONLY:io_control
  !
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  type(bz_samp)      :: k,q
  type(levels)       :: E

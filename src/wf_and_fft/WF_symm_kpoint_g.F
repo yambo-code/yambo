@@ -5,7 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MG CA DS AF
 !
+! headers
+!
 #include<dev_defs.h>                                                    
+!
 !
 subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF,ssop,isref,igref)
  !

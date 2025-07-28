@@ -3,6 +3,10 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
+!
+! headers
+!
+#include<y_memory.h>
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -35,7 +39,9 @@ subroutine ELPH_load_indexes(k,E,q,qindx_ID,qindx_ID_frag)
  use IO_m,                ONLY:OP_APP_CL,REP,OP_RD_CL
  use parallel_int,        ONLY:PARALLEL_global_indexes
  !
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  type(bz_samp) ::k,q
  type(levels)  ::E

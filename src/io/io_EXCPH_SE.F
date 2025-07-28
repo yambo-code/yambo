@@ -4,6 +4,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
 ! modify it under the terms of the GNU General Public
@@ -34,7 +38,9 @@ integer function io_EXCPH_SE(ID,what)
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:nqibz
  use timing_m,       ONLY:timing
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  integer      ::ID
  character(*) ::what

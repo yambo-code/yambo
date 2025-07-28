@@ -3,6 +3,10 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
+!
+! headers
+!
+#include<y_memory.h>
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -35,7 +39,9 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
 &                                elph_nQ,elph_nk_bz,elph_grids_are_expanded,elph_use_q_grid,&
 &                                PH_qpt,PH_kpt_bz,GKKP,PH_freqs_sq
  !
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  integer,     intent(in)  :: i_sp_pol,ncid
  integer,     intent(out) :: grpid
@@ -258,7 +264,9 @@ subroutine a2y_gkkp(iq,i_sp_pol,ncid,grpid)
  use pars,                  ONLY: DP,SP
  use elph,                  ONLY: GKKP,elph_nb,ph_modes,elph_nQ,elph_nk_bz,PH_pol_vector
  !
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  integer,     intent(in)  :: iq,i_sp_pol,ncid,grpid
  !

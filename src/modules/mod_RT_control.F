@@ -72,7 +72,8 @@ module RT_control
  logical                  :: SAVE_G_history
  logical                  :: SAVE_Vb_history
  logical                  :: SAVE_Vb_floquet
- real(SP)                 :: Vbands_IO_starttime
+ integer                  :: Floquet_order
+ integer                  :: Vbands_IO_time(2)
  !
  ! J, P and M (spin) cache 
  !

@@ -11,7 +11,7 @@ subroutine RT_databases_IO(E,DO_IT)
  use RT_control,     ONLY:RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,Vbands_RT_IO_t,&
 &                         Gless_RESTART_RT_IO_t,CARR_RT_IO_t,CACHE_OBS_steps_now,CACHE_OBS_steps,    &
 &                         SAVE_G_history,NE_i_start_time,CACHE_OBS_last_point,Gless_RT_IO_t,RT_DB_ID,&
-&                         RT_return_db_ID,RT_DB_name,SAVE_Vb_history, SAVE_Vb_floquet, Vbands_IO_starttime
+&                         RT_return_db_ID,RT_DB_name,SAVE_Vb_history, SAVE_Vb_floquet, Vbands_IO_time
 #if defined _ELPH_ITERATIVE
  use RT_lifetimes,   ONLY:l_RT_iterative_ELPH_lifetimes
 #endif
@@ -43,7 +43,7 @@ subroutine RT_databases_IO(E,DO_IT)
  !
  integer           :: i_mem,io_OBS,io_carr,IO_ACT,i_time,i_db
  integer, external :: io_RT_components
- logical, external :: RT_do_it
+ logical, external :: RT_do_it,RT_Dynamics_is_over
  !
  ! ... G_lesser
  !
@@ -278,9 +278,9 @@ subroutine RT_databases_IO(E,DO_IT)
    !
    Start_sampling = .true.
    if (SAVE_Vb_floquet) then 
-     if (NE_i_time < Vbands_IO_starttime)  Start_sampling = .false. 
-     if (NE_i_time==NE_i_start_time) Start_sampling = .true.
-     if (NE_i_time ==  Vbands_IO_starttime) Vbands_RT_IO_t%last_point =  Vbands_IO_starttime - Vbands_RT_IO_t%INTERVAL_steps
+     if (NE_i_time < Vbands_IO_time(1).or.NE_i_time > Vbands_IO_time(2))  Start_sampling = .false. 
+     if (NE_i_time==NE_i_start_time.or.RT_Dynamics_is_over()) Start_sampling = .true.
+     if (NE_i_time ==  Vbands_IO_time(1)) Vbands_RT_IO_t%last_point =  Vbands_IO_time(1) - Vbands_RT_IO_t%INTERVAL_steps
    endif
    !
    if ((RT_do_it('Vb').or.DO_IT) .and.Start_sampling) then

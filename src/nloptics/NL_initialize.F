@@ -32,7 +32,7 @@ subroutine NL_initialize(E,k)
 &                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential,RAD_LifeTime,&
 &                         l_velocity_gauge_corr,l_velocity_gauge_diam,G_MEM_steps,RT_nk,i_MEM_now
  use RT_control,     ONLY:OBS_RT_IO_t, NE_i_start_time, RT_control_alloc,RT_control_free,l_NE_with_fields,Vbands_RT_IO_t,&                         
-&                         SAVE_Vb_history,SAVE_G_history, SAVE_Vb_floquet, Vbands_IO_starttime
+&                         SAVE_Vb_history,SAVE_G_history, SAVE_Vb_floquet, Vbands_IO_time, Floquet_order
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM,  &
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity,LSEX,&
@@ -66,7 +66,7 @@ subroutine NL_initialize(E,k)
  call parser('NoComprCOLL',          l_no_compress_COLL)
  call parser('UseSymm',              l_res_symms)
  call parser('SaveVbhistory',        SAVE_Vb_history)
- call parser('SaveVbfloquet',        SAVE_Vb_floquet)
+ !call parser('SaveVbfloquet',        SAVE_Vb_floquet)
  call parser('VelGaugeNoDiam',       l_velocity_gauge_tmp)
  call parser('UseDipoles',           l_use_DIPOLES)
  call parser('SaveGhistory',         SAVE_G_history)
@@ -82,6 +82,9 @@ subroutine NL_initialize(E,k)
  endif
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
+ !
+ Floquet_order = min(5,Floquet_order)
+ SAVE_Vb_floquet = (Floquet_order > 0)
  !
  ! Velocity gauge mode
  ! =======================================
@@ -298,8 +301,9 @@ subroutine NL_initialize(E,k)
      !
      if (SAVE_Vb_floquet) then
        Sampling_Time = 4._SP*EtoT(E=W_0)+5._SP*RT_step 
-       Vbands_IO_starttime = int(NE_tot_time/RT_step)
-       Vbands_RT_IO_t%INTERVAL_time_INPUT = (2._SP*pi/W_0)/10._SP
+       Vbands_RT_IO_t%INTERVAL_time_INPUT = (2._SP*pi/W_0)/(2._SP*Floquet_order + 1._SP)
+       Vbands_IO_time(1) = int(NE_tot_time/RT_step)
+       Vbands_IO_time(2) = int((NE_tot_time+2._SP*pi/W_0)/RT_step) 
      endif
      !
      NE_tot_time=NE_tot_time+Sampling_Time

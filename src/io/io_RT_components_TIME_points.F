@@ -15,7 +15,7 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_RESTART_info,UNLIMITED_ti
  use drivers,        ONLY:l_real_time
  use units,          ONLY:AUT2FS
  use RT_output_m,    ONLY:RT_desc
- use RT_control,     ONLY:RT_IO_t,RT_do_IO
+ use RT_control,     ONLY:RT_IO_t,RT_do_IO,Floquet_order
  use netcdf,         ONLY:NF90_UNLIMITED
  use real_time,      ONLY:MEM_pointer,G_MEM_steps,NE_i_time,i_MEM_now,i_MEM_prev,i_MEM_old,&
 &                         RT_dyn_step,RT_step
@@ -44,6 +44,9 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_RESTART_info,UNLIMITED_ti
                         R0=TYP%INTERVAL_time     ,CHECK=.FALSE.,             &
 &                       DESCRIPTOR=RT_desc,UNIT=AUT2FS)
  endif
+ !
+ call def_variable_elemental(ID,"IO_Floquet_order",1,IP_YIO,0) 
+ call io_variable_elemental(ID,I0=Floquet_order)
  !
  call def_variable_elemental(ID,"IO_TIME_steps_last_nsteps",3,IP_YIO,0) 
  call io_variable_elemental(ID,I0=TYP%INTERVAL_steps)

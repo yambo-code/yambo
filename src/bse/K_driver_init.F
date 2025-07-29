@@ -142,13 +142,6 @@ subroutine K_driver_init(what,iq,Ken,Xk)
 #if defined _RT 
  if (l_rt_carriers_in_use) BS_K_anti_resonant=.TRUE.
 #endif
- !
- ! Is ARES derivable from RES?
- !-----------------------------
- ! Developer options. Without the code works in default mode
- ! With the user can switch to experimental coding
- call parser('ImposeFullBSE',l_BSE_kernel_full)
- call parser('ImposeAsymBSE',l_flag)
 
  ! In the resonat only case l_BSE_ares_from_res=.true.
  ! This is needed to switch off all the lines related to the excplicit calculation of the ARES part
@@ -160,6 +153,13 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  if (l_BS_photolum) l_BS_res_from_E=.TRUE.
  call parser('SelectResFromF',l_flag)
  if (l_flag)        l_BS_res_from_E=.FALSE.
+ !
+ ! Is ARES derivable from RES?
+ !-----------------------------
+ ! Developer options. Without the code works in default mode
+ ! With the user can switch to experimental coding
+ call parser('ImposeFullBSE',l_BSE_kernel_full)
+ call parser('ImposeAsymBSE',l_flag)
  !
  ! In all other cases the code checks what to do
  if (.not.trim(BSE_mode)=="resonant") then

@@ -47,6 +47,7 @@ subroutine DIPOLE_setup(Dip)
  l_BS_dichroism= (index(BSE_prop,'dich')/=0)
  l_BS_photolum=  (index(BSE_prop,'photolum')/=0)
  call parser('ImposeAsymBSE',l_flag)
+ if(.not.l_flag) call parser('ImposeFullBSE',l_flag)
  !
  ! Bands ordering
  !----------------

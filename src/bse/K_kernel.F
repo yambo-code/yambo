@@ -97,8 +97,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP), allocatable DEV_ATTR :: O1(:),O2(:),O_times_W(:)
  !
  complex(SP),   external :: K_correlation_kernel_std,K_correlation_kernel_dir
- complex(SP),   external :: TDDFT_ALDA_eh_space_G_kernel_resonant,TDDFT_ALDA_eh_space_G_kernel_coupling
- complex(SP),   external :: K_exchange_kernel_resonant,K_exchange_kernel_coupling
+ complex(SP),   external :: TDDFT_ALDA_eh_space_G_kernel,TDDFT_ALDA_eh_space_G_kernel_coupling
+ complex(SP),   external :: K_exchange_kernel,K_exchange_kernel_coupling
  !
  logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_bs_tddft_wf_in_loop,l_matrix_init,BS_blk_todo,&
  &             l_load_kernel,l_write_kernel,l_write_kernel_step,l_skip_phases,l_std_alg,l_dir_alg,l_tddft_gsum,l_tddft_rsum
@@ -474,8 +474,16 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  do i_block=1,n_BS_blks
    !
    ! BS_blk(i_block)%mode can have 4 values: "R", "C", "A", "Q"
-   ! However modes "A" and "Q" are expliciltly needed only when l_BS_ares_from_res=.false.
-   ! In such case the present subroutine switches to moden_now="F"
+   ! - The resonant block "R" is always computed
+   ! - The coupling block "C":
+   !   (i)  It is computed using the indexes of the resonant block when BS_n_eh_space=1
+   !        In this case some relations are used, which holds at q=0 only and 
+   !        if l_BS_ares_from_res=.true.
+   !   (ii) It is directly computed using the indexes of the coupling block BS_n_eh_space=2
+   !        In this case the code switches to mode_now="F"(ull) and standard relations are used
+   ! - The anti-resonant "A" and anti-coupling "Q" blocks are expliciltly needed only when l_BS_ares_from_res=.false.
+   !   also in this case the code switches to mode_now="F"(ull) and standard relations are used
+   !
    mode_now=BS_blk(i_block)%mode
    if (BS_n_eh_spaces==2) mode_now="F"
    !
@@ -735,13 +743,13 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          !===================================
          !
          ! Exchange
-         if (iHxc==1) H_x=K_exchange_kernel_resonant(iq, BS_n_g_exch,               &
+         if (iHxc==1) H_x=K_exchange_kernel(iq, BS_n_g_exch,               &
 &                                   BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
          !
          ! ALDA
          if (iHxc==2) then
            if(l_tddft_rsum)     H_x=H_x+TDDFT_ALDA_eh_space_R_kernel(is_k,os_k,is_p,os_p,tddft_wf,'RES')
-           if(l_tddft_gsum)     H_x=H_x+TDDFT_ALDA_eh_space_G_kernel_resonant(BS_n_g_fxc,&
+           if(l_tddft_gsum)     H_x=H_x+TDDFT_ALDA_eh_space_G_kernel(BS_n_g_fxc,&
 &                                   BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
          endif
          !
@@ -763,7 +771,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          ! :::COUPLING TERM:::
          !=============================
-         !
+         ! 
          ! This implementation is used only at iq=1 when l_BS_ares_from_res=.true.
          ! It uses only hald of the BS_T_grps, saving memory & cpu time for the oscillators
          ! Otherwise the exchange and tddft implementation are not corret
@@ -783,6 +791,9 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          ! Correlations
          if (iHxc==3) then
+           ! To check for magnons
+           ! When doing correlation i invert i_c_p and i_v_p
+           ! Here also i_p_sp_pol_c and i_p_sp_pol_v are inverted ...
            if (l_std_alg)       H_c=K_correlation_kernel_std(i_block,i_p,i_pmq, &
 &                                 i_k_s,i_kp_s,i_c_k,i_v_p,i_kmq_s,i_kp_mq_s,i_v_k,i_c_p,    &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &

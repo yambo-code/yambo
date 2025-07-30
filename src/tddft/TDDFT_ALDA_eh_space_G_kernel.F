@@ -5,13 +5,9 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
-function TDDFT_ALDA_eh_space_G_kernel_resonant(BS_n_g_fxc, BS_T_grp_ip, i_Tp, BS_T_grp_ik, i_Tk) result(H_x)
+function TDDFT_ALDA_eh_space_G_kernel(BS_n_g_fxc, BS_T_grp_ip, i_Tp, BS_T_grp_ik, i_Tk) result(H_x)
  !
- ! Calculates the F_xc scattering 
- !
- !  (ic(1),ik(1),is(1)) --<--:...:--<-- (ic(2),ik(2),is(2))
- !                              :Fxc:
- !  (iv(1),ik(3),is(3)) -->--:...:-->-- (iv(2),ik(4),is(4))
+ ! It calculates the F_xc matrix elements from the product O_L(k)*O_R(p)
  !
  use pars,           ONLY:SP,pi,cZERO
  use FFT_m,          ONLY:fft_size
@@ -51,18 +47,18 @@ function TDDFT_ALDA_eh_space_G_kernel_resonant(BS_n_g_fxc, BS_T_grp_ip, i_Tp, BS
  !
  H_x=H_x/4._SP/pi
  !
-end function TDDFT_ALDA_eh_space_G_kernel_resonant
+end function TDDFT_ALDA_eh_space_G_kernel
 !
 !
 !
 !
 function TDDFT_ALDA_eh_space_G_kernel_coupling(BS_n_g_fxc, BS_T_grp_ip, i_Tp, BS_T_grp_ik, i_Tk) result(H_x)
  !
- ! Calculates the F_xc scattering 
+ ! This is used only at q=0
  !
- !  (ic(1),ik(1),is(1)) --<--:...:--<-- (ic(2),ik(2),is(2))
- !                              :Fxc:
- !  (iv(1),ik(3),is(3)) -->--:...:-->-- (iv(2),ik(4),is(4))
+ ! It calculates the F_xc matrix elements from the product O_L(k)*Coupling(O_R(p))
+ !
+ ! The Coupling(O) operation uses the relation O_{cvk}(G)=O*_{vck}(-G)
  !
  use pars,           ONLY:SP,pi,cZERO
  use FFT_m,          ONLY:fft_size
@@ -101,6 +97,8 @@ function TDDFT_ALDA_eh_space_G_kernel_coupling(BS_n_g_fxc, BS_T_grp_ip, i_Tp, BS
  ! Co = 4*pi*spin_occ/DL_vol/Nq
  ! --> X/Co = 1/4/pi
  !
- H_x=H_x/4._SP/pi
+ ! Compared to the implementation of the exchange, there is a conjg operation.
+ ! This is due to the use of ik "on the left", and ip "on the right", which gives a conjg
+ H_x=conjg(H_x)/4._SP/pi
  !
 end function TDDFT_ALDA_eh_space_G_kernel_coupling

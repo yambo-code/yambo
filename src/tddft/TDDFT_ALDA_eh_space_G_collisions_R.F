@@ -102,6 +102,9 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_R(iq,Xk,i_T_grp,NG,l_bs_tddft_wf_in_
    os=(/i_v,i_p,i_sp,i_sp_v/)
    qs=(/minus_G(i_g_p),iq,1/)
    !
+   ! To test if I want to use this only for q=0,
+   ! or if I use the same prcedure of exchange
+   !
    !if (mode=="R".or.mode=="Q".or.mode=="F") then
    !  is(1)=i_c
    !  os(1)=i_v

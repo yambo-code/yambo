@@ -139,15 +139,19 @@ integer function io_BS_PAR_init(iq,ID,mode)
    BSK_n_dims=2
    n_replica=1
    !
+   ! Resonant block
    dim_names(2:3,1) = [character(schlen) :: 'BS_K_dim', 'BS_K_dim']
    BS_IO_dim(:,1) = (/BS_K_dim(1),BS_K_dim(1)/)
    !
-   if(BS_n_eh_spaces==2) then
+   if(.not.l_BS_ares_from_res) then
+     ! Coupling block
      dim_names(2:3,2) = [character(schlen) ::  'BS_K_dim', 'BS_K_dim_A']
      BS_IO_dim(:,2) = (/BS_K_dim(1),BS_K_dim(2)/)
+     ! Anti-resonant block
      dim_names(2:3,3) = [character(schlen) :: 'BS_K_dim_A', 'BS_K_dim_A']
      BS_IO_dim(:,3) = (/BS_K_dim(2),BS_K_dim(2)/)
    else if (BS_K_coupling) then
+     ! Coupling block
      dim_names(2:3,2) = [character(schlen) :: 'BS_K_dim', 'BS_K_dim']
      BS_IO_dim(:,2) = (/BS_K_dim(1),BS_K_dim(1)/)
    endif
@@ -157,7 +161,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
    chunksize(3) = YAMBO_DEF_CHUNK
    ! If BSE matrix is <YAMBO_DEF_CHUNK, we do not chunk.
    if (BS_K_dim(1) < YAMBO_DEF_CHUNK) chunksize(2:3) = 0
-   if (BS_n_eh_spaces==2 .and. BS_K_dim(2) < YAMBO_DEF_CHUNK) chunksize(2:3) = 0
+   if (.not.l_BS_ares_from_res .and. BS_K_dim(2) < YAMBO_DEF_CHUNK) chunksize(2:3) = 0
    !
  end select
  !

@@ -92,6 +92,7 @@ subroutine TDDFT_oscillators_alloc_L(iGL)
  !
  implicit none
  integer, intent(in) :: iGL
+ !
  if (BS_T_grp(iGL)%size>0) then
    !DEV_ACC enter data copyin(BS_T_grp(iGL))
    YAMBO_ALLOC(BS_T_grp(iGL)%O_tddft_L,(BS_n_g_fxc,BS_T_grp(iGL)%size,n_spinor,n_spinor))

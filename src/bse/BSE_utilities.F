@@ -11,6 +11,75 @@
 #include<y_memory.h>
 !
 !
+subroutine build_inverse_BS_eh_table_from_BSS_table(nk)
+ !
+ use electrons,       ONLY:n_sp_pol
+ use BS,              ONLY:BS_H_dim,BS_bands
+ use BS_solvers,      ONLY:BSS_eh_table,BSS_eh_table_m1
+ !
+ implicit none
+ !
+ integer, intent(in) :: nk
+ !
+ integer :: iv,ic,i_H,ik_bz,i_sp_c,i_sp_v
+ !
+ if (.not.allocated(BSS_eh_table_m1)) then
+   allocate(BSS_eh_table_m1(nk,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol,n_sp_pol))
+   BSS_eh_table_m1=0
+ endif 
+ !call live_timing('BSE inverse eh-table',BS_H_dim)
+ !
+ do i_H=1,BS_H_dim
+   !
+   ik_bz = BSS_eh_table(i_H,1)
+   iv    = BSS_eh_table(i_H,2)
+   ic    = BSS_eh_table(i_H,3)
+   i_sp_c= BSS_eh_table(i_H,4)
+   i_sp_v= BSS_eh_table(i_H,5)
+   !
+   BSS_eh_table_m1(ik_bz,iv,ic,i_sp_c,i_sp_v)=i_H
+   !call live_timing(steps=1)
+   !
+ enddo
+ !call live_timing( )
+ !
+end subroutine build_inverse_BS_eh_table_from_BSS_table
+!
+!
+subroutine build_inverse_BS_eh_table_from_BS_kernel(nk)
+ !
+ use electrons,       ONLY:n_sp_pol
+ use BS,              ONLY:BS_bands,BS_K_dim,BS_blk
+ use BS_solvers,      ONLY:BSS_eh_table_m1
+ !
+ implicit none
+ !
+ integer, intent(in) :: nk
+ !
+ integer :: i_H,ik_bz,iv,ic,i_sp_c,i_sp_v
+ !
+ allocate(BSS_eh_table_m1(nk,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol,n_sp_pol))
+ BSS_eh_table_m1=0
+ !call live_timing('BSE inverse eh-table',BS_H_dim)
+ !
+ do i_H=1,2*BS_K_dim(1)
+   !
+   ik_bz    = BS_blk(i_H)%table(1,1)
+   iv       = BS_blk(i_H)%table(2,1)
+   ic       = BS_blk(i_H)%table(3,1)
+   i_sp_c   = BS_blk(i_H)%table(4,1)
+   i_sp_v   = BS_blk(i_H)%table(5,1)
+   !
+   BSS_eh_table_m1(ik_bz,iv,ic,i_sp_c,i_sp_v)=i_H
+   !
+   !call live_timing(steps=1)
+   !
+ enddo
+ !call live_timing( )
+ !
+end subroutine build_inverse_BS_eh_table_from_BS_kernel
+!
+!
 subroutine BS_exchange_oscillators_alloc(iG)
  use BS,        ONLY:BS_T_grp,BS_n_g_exch
  use gpu_m,     ONLY:have_gpu
@@ -23,7 +92,7 @@ subroutine BS_exchange_oscillators_alloc(iG)
  YAMBO_ALLOC(BS_T_grp(iG)%O_x,(BS_n_g_exch,BS_T_grp(iG)%size))
  if (have_gpu) then
    YAMBO_ALLOC_GPU(DEV_VAR(BS_T_grp(iG)%O_x),(BS_n_g_exch,BS_T_grp(iG)%size))
- endif   
+ endif
 end subroutine BS_exchange_oscillators_alloc
 !
 subroutine BS_correlation_oscillators_alloc(iB)
@@ -38,7 +107,7 @@ subroutine BS_correlation_oscillators_alloc(iB)
  YAMBO_ALLOC(BS_blk(iB)%O_c,(O_ng,BS_blk(iB)%N_oscillators))
  if (have_gpu) then
    YAMBO_ALLOC_GPU(DEV_VAR(BS_blk(iB)%O_c),(O_ng,BS_blk(iB)%N_oscillators))
- endif   
+ endif
 end subroutine BS_correlation_oscillators_alloc
 !
 subroutine BS_exchange_oscillators_free(iG_ref)

@@ -131,7 +131,7 @@ subroutine cutoff_driver(q)
  call section('*',trim(ch1))
  !
  ch1=           'Cut directions       '
- ch2=' '
+ ch2= ' '
  if (is_cut(1)) ch1=STRING_pack(ch1,'X')
  if (is_cut(1)) ch2=STRING_pack(ch2,'x')
  if (is_cut(2)) ch1=STRING_pack(ch1,'Y')
@@ -192,12 +192,12 @@ subroutine cutoff_driver(q)
  !
  sym_points=0.
  if (cut_is_cyl) then
-   do i1=1,3
-     if (is_cut(i1)) then
-       sym_points(1,i1)=-cyl_length/2.
-       sym_points(2,i1)= cyl_length/2.
-     endif
-   enddo
+   !do i1=1,3
+   !  if (is_cut(i1)) then
+   !    sym_points(1,i1)=-cyl_length/2.
+   !    sym_points(2,i1)= cyl_length/2.
+   !  endif
+   !enddo
  else if (cut_is_box) then
    i4=0
    do i1=-1,1,2

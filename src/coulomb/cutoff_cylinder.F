@@ -11,7 +11,7 @@
 !
 subroutine cutoff_cylinder(q,is_cut)
  !
- use pars,          ONLY:SP,pi
+ use pars,          ONLY:SP,pi,schlen
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:cyl_ph_radius,bare_qpg,cyl_length,cyl_cut,g_vec,&
@@ -32,6 +32,7 @@ subroutine cutoff_cylinder(q,is_cut)
 &                lenw2,limit,leniw,maxp1
  real(SP)      ::cyl_ph_radius2,cyl_cut2,c1,c2,Vd,abserr,epsabs
  complex(SP)   ::V_cut(q%nibz,wf_ng)
+ character(schlen) :: cyl_direction
  logical       ::infcyl
 #if defined _DOUBLE
  real(SP),  external    ::DBESJ1_
@@ -49,19 +50,26 @@ subroutine cutoff_cylinder(q,is_cut)
  !
  ! Check cylinder axis in along one principal axis
  !
- if(is_cut(1).and.is_cut(2)) call error('Check cylinder axis direction')
- if(is_cut(2).and.is_cut(3)) call error('Check cylinder axis direction')
- if(is_cut(1).and.is_cut(3)) call error('Check cylinder axis direction')
+ if (infcyl) then
+   if(all(is_cut)) call error('Infinite cylinder, but cutoff in all direction')
+   cyl_direction="unknonw"
+   if(is_cut(2).and.is_cut(3)) cyl_direction="x"
+   if(is_cut(1).and.is_cut(3)) cyl_direction="y"
+   if(is_cut(1).and.is_cut(2)) cyl_direction="z"
+   if(trim(cyl_direction)=="unkonwn") call error('Unknown cylinder direction')
+ else
+   if(.not.all(is_cut)) call error('Finite cylinder, but cutoff not in all directions')
+ endif
  !
- if(is_cut(1)) then
+ if(trim(cyl_direction)=="x") then
    ipar=1
    iort1=2
    iort2=3
- elseif(is_cut(2)) then
+ elseif(trim(cyl_direction)=="y") then
    ipar=2
    iort1=1
    iort2=3
- elseif(is_cut(3)) then
+ elseif(trim(cyl_direction)=="z") then
    ipar=3
    iort1=2
    iort2=1

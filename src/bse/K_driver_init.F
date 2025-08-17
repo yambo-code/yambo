@@ -176,6 +176,9 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    if (.not.BS_K_coupling) BS_res_ares_n_mat=2
  endif
  !
+ ! In this case the anti-resonant space is used to build the coupling matrix
+ if (BS_K_coupling.and.iq/=1) BS_n_eh_spaces=2
+ !
  if (what=="loop-init") return
  !
  ! BSE_L_kind check
@@ -285,6 +288,8 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  call parser('BSS_FKE',BSS_uses_FKE)
  !
+ ! I/O structure
+ !===============
  BSS_kernel_IO_on_the_fly=index(BSK_IO_mode,"read_on_the_fly")>0 .and. (index(BSS_mode,'h')/=0 .or. index(BSS_mode,'s')/=0)
  if (BSS_kernel_IO_on_the_fly) then
    call STRING_split(BSK_IO_mode,BSK_IO_strings,n_non_empty_strings=BSK_IO_n_strings)

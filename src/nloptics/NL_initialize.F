@@ -529,8 +529,10 @@ subroutine NL_initialize(E,k)
    call msg( 'sr','Frequencies steps          ',n_frequencies)
    call msg( 'r', 'Frequency   step           ',NL_estep*HA2EV)
    call msg( 'sr','Number of angles           ',n_angles)
-   call msg( 'sr','Max angle (degree)         ',max_angle)
-   call msg( 'r', 'Rotation axis              ',NL_rot_axis)
+   if(n_angles>0) then
+     call msg( 'sr','Max angle (degree)         ',max_angle)
+     call msg( 'r', 'Rotation axis              ',NL_rot_axis)
+   endif
  endif
  call msg( 'r', 'Use Dipoles                ',l_use_DIPOLES)
  call msg( 'r', 'Induced Field              ',l_RT_induced_field)

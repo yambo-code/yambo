@@ -25,6 +25,7 @@ subroutine DIPOLE_setup(Dip)
  !
  ! Work Space
  !
+ logical           :: l_flag
 #if defined _NL
  logical           :: l_dip_appr_from_user
 #endif
@@ -45,10 +46,12 @@ subroutine DIPOLE_setup(Dip)
  l_BS_magnons=   (index(BSE_prop,'magn')/=0)
  l_BS_dichroism= (index(BSE_prop,'dich')/=0)
  l_BS_photolum=  (index(BSE_prop,'photolum')/=0)
+ call parser('ImposeAsymBSE',l_flag)
+ if(.not.l_flag) call parser('ImposeFullBSE',l_flag)
  !
  ! Bands ordering
  !----------------
- if (l_BS_dichroism.or.l_BS_magnons .or. l_BS_photolum) Dip%bands_ordered=.false.
+ if (l_BS_dichroism.or.l_BS_magnons .or. l_BS_photolum .or. l_flag) Dip%bands_ordered=.false.
 #if defined _SLEPC && !defined _NL
  !if ( index(BSS_mode,'s')/=0 )  Dip%bands_ordered=.false.
 #endif

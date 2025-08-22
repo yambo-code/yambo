@@ -114,6 +114,8 @@ subroutine NL_initialize(E,k)
  if(DP/=SP)      call error(" Non-linear optics works only in double precision, configure with --enable-dp flag")
  if(n_sp_pol/=1) call error(" Spin-polarized systems not yet implemented")
  if(any(NL_bands(:)==0)) call error("Any of the NLBands limits is 0, change to nv|nc with 0<nv<fermi<nc")
+ if(any(NL_bands(1)>E%nbf)) call error("You should include at least a valence band")
+ if(any(NL_bands(2)<E%nbf+1)) call error("You should include at least a conduction band")
  !
  ! K-sampling
  ! ===========
@@ -527,8 +529,10 @@ subroutine NL_initialize(E,k)
    call msg( 'sr','Frequencies steps          ',n_frequencies)
    call msg( 'r', 'Frequency   step           ',NL_estep*HA2EV)
    call msg( 'sr','Number of angles           ',n_angles)
-   call msg( 'sr','Max angle (degree)         ',max_angle)
-   call msg( 'r', 'Rotation axis              ',NL_rot_axis)
+   if(n_angles>0) then
+     call msg( 'sr','Max angle (degree)         ',max_angle)
+     call msg( 'r', 'Rotation axis              ',NL_rot_axis)
+   endif
  endif
  call msg( 'r', 'Use Dipoles                ',l_use_DIPOLES)
  call msg( 'r', 'Induced Field              ',l_RT_induced_field)

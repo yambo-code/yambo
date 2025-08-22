@@ -23,7 +23,8 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,         ONLY:live_timing
  use X_m,            ONLY:global_gauge
- use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling
+ use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,&
+ &                        l_BS_res_from_E,BS_not_const_eh_f
  use BS_solvers,     ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f
  use MAGNONS,        ONLY:BSS_dipoles_magn
  use DICHROISM,      ONLY:BSS_dipoles_dich
@@ -50,6 +51,9 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  !
  complex(SP),allocatable :: tmp_res(:)
  complex(SP),pointer     :: BS_R_tmp(:) => null()
+ !
+ if (l_BS_res_from_E.and.BS_not_const_eh_f) &
+ & call error(" To be fixed, since sqrt of BSS_eh_f takes a conjg and it should not")
  !
  ! Sanity checks
  if (.not. allocated(BS_E))      return 

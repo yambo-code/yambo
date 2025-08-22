@@ -105,8 +105,6 @@ module BS
  !  Kt = |                              |  =   |                                     |  (1b)
  !       |  cI*Kt_Q(q)         K_A(q)   |      | -[cI*Kt_C(-q)]^\dag   -K_R^\dag(-q) |
  !
- ! with 
- !
  !
  ! In general we have
  !
@@ -120,7 +118,7 @@ module BS
  !  - n_spinor==2 and q/=1
  !  - magnons
  !
- ! ONLY in these cases and when we need the entire matrix (l_BS_anti_resonant=.TRUE.) we have
+ ! Only in these cases and when we need the entire matrix (l_BS_anti_resonant=.TRUE.) we have
  !
  !  l_BS_ares_from_res=.FALSE.
  !
@@ -148,8 +146,10 @@ module BS
  !     |_l_BS_ares_from_res=.FALSE. 2                  2
  !
  logical :: l_BS_ares_from_res=.TRUE. 
- integer :: BS_res_ares_n_mat=1
- integer :: BS_n_eh_spaces=1 
+ logical :: l_BS_res_from_E
+ integer :: BS_res_ares_n_mat
+ integer :: BS_res_ares_n_grps
+ integer :: BS_n_eh_spaces
  !
  ! Live Timing
  !=============
@@ -312,7 +312,8 @@ module BS
      integer :: nT,nDIP
      !
      nT=BS_T_grp(iT)%size
-     nDIP=2/BS_n_eh_spaces
+     nDIP=1
+     if(l_BS_ares_from_res) nDIP=2
      !
      YAMBO_ALLOC(BS_T_grp(iT)%dipoles_opt,(BS_dip_size,nT,nDIP))
      BS_T_grp(iT)%dipoles_opt=cZERO

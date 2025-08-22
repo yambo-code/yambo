@@ -109,22 +109,6 @@ module wave_func
      complex(SP), optional :: wf(:,:,:)
    end function
    !
-   function WF_symm(ifft,isc)
-     use pars,        ONLY: SP
-     use electrons,   ONLY: n_spinor
-     integer             :: ifft,isc(4)
-     complex(SP),dimension(n_spinor) :: WF_symm
-   end function
-   !
-#if defined _GPU
-   function WF_symm_gpu(ifft,isc)
-     use pars,        ONLY: SP
-     use electrons,   ONLY: n_spinor
-     integer             :: ifft,isc(4)
-     complex(SP),dimension(n_spinor) DEV_ATTR :: WF_symm_gpu
-   end function
-#endif
-   !
  end interface 
  !
  contains

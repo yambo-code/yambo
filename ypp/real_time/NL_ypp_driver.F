@@ -220,13 +220,13 @@ subroutine NL_ypp_driver(en,k)
          !
          if(.not.runs_ok(i_f)) cycle
          !
-         if (i_order==1) then
-           Susceptibility(i_order,i_f,1)=4._SP*pi*dot_product( Efield(i_Probe)%versor(:),X_effective(i_order,i_f,:) )*&
-&                                        Divide_by_Field(Efield(i_Probe),i_order)
-	   Susceptibility(i_order,i_f,2:3)=cZERO
-         else 
+!         if (i_order==1) then
+!           Susceptibility(i_order,i_f,1)=4._SP*pi*dot_product( Efield(i_Probe)%versor(:),X_effective(i_order,i_f,:) )*&
+!&                                        Divide_by_Field(Efield(i_Probe),i_order)
+!	   Susceptibility(i_order,i_f,2:3)=cZERO
+!         else 
            Susceptibility(i_order,i_f,:)=X_effective(i_order,i_f,:)*Divide_by_Field(Efield(i_Probe),i_order)
-         end if
+!         end if
          !
        enddo
        ! 
@@ -405,6 +405,12 @@ subroutine NL_ypp_driver(en,k)
        !
        call DESC_write('o probe','#',NL_desc)
        !
+       if (X_order==1) then
+         call msg('o probe','#')
+         call msg('o probe','#',"xhi_ab(\omega)")
+         call msg('o probe','#',"multiply by 4 \pi and field versor to compare with epsilon")
+         call msg('o probe','#')
+       endif
        call msg('o probe','#')
        call msg('o probe','#',headings(1:n_headings,i_order),INDENT=0,USE_TABS=.TRUE.)
        call msg('o probe','#')

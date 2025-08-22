@@ -29,7 +29,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp,    &
-&                     molecule_position,l_0D,l_1D,l_2D,l_3D
+&                     molecule_position,l_0D,l_1D,l_2D,l_3D,Boltz_Temp
  use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
@@ -255,6 +255,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  molecule_position=0._SP
  lattice='Unknown'
  Bose_Temp=-1./HA2EV
+ Boltz_Temp=0._SP
  l_3D=.TRUE.
  l_2D=.FALSE.
  l_1D=.FALSE.
@@ -521,7 +522,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  GS_exx_SCREENING=0.0            ! no screening
  !
  l_BS_anomalous_Hall=.false.
- PL_weights=(/1._SP,1._SP,1._SP/)
+ PL_weights=(/1._SP,0._SP,0._SP/)
  !
 #if defined _ELPH 
  !

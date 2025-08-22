@@ -54,7 +54,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
  !
  ! Work Space
  !
- real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
+ real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL(2)
  logical      :: l_trans_in_group,l_grp_to_grp
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,i_star,ib1,ib2,  &
 &                i_T_now,i_T_group_now,i_T_group_last,i_T_group_start,i_g,n_loops,i_loop,i_T_in_the_grp,i_res_ares,&
@@ -202,8 +202,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
                  endif
                end if
                !
-               ! To be fixed
-               if (l_BS_photolum) BS_T_grp(i_T_group_now)%f_PL(i_T_in_the_grp,i_res_ares) =f_eh_PL
+               if (l_BS_photolum) then 
+                 BS_T_grp(i_T_group_now)%f_PL(i_T_in_the_grp,:) =f_eh_PL
+               endif
                !
                BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
                !
@@ -268,7 +269,7 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  !
  ! Work Space
  !
- real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
+ real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL(2)
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,i_star,ib1,ib2,  &
 &                i_res_ares,BS_nT_at_k_tmp(Xk%nibz*2)
  !

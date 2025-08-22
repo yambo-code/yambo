@@ -40,24 +40,28 @@ integer function io_kpts(k,Xk,q,io_db)
    io_kpts=io_header(io_db,IMPOSE_SN=.true.)
    !
    call def_variable_elemental(io_db,"k_nibz",1,IP_YIO,0)
-   call io_variable_elemental(io_db,I0=k%nibz)
+   call io_variable_elemental(io_db,I0=k%nibz,CHECK=.true.,OP=(/"=="/))
    !
    call def_variable_elemental(io_db,"k_nbz",1,IP_YIO,0)
-   call io_variable_elemental(io_db,I0=k%nbz)
+   call io_variable_elemental(io_db,I0=k%nbz,CHECK=.true.,OP=(/"=="/))
    !
    call def_variable_elemental(io_db,"Xk_nibz",1,IP_YIO,0)
-   call io_variable_elemental(io_db,VAR="Number of kpts for polarization (ibz)",I0=Xk%nibz)
+   call io_variable_elemental(io_db,VAR="Number of kpts for polarization (ibz)",&
+   &                                         I0=Xk%nibz,CHECK=.true.,OP=(/"=="/))
    !
    call def_variable_elemental(io_db,"Xk_nbz",1,IP_YIO,0)
-   call io_variable_elemental(io_db,VAR="Number of kpts for polarization ( bz)",I0=Xk%nbz)
+   call io_variable_elemental(io_db,VAR="Number of kpts for polarization (bz)",&
+   &                                         I0=Xk%nbz,CHECK=.true.,OP=(/"=="/))
    !
    call def_variable_elemental(io_db,"q_nibz",1,IP_YIO,0)
-   call io_variable_elemental(io_db,I0=q%nibz)
+   call io_variable_elemental(io_db,I0=q%nibz,CHECK=.true.,OP=(/"=="/))
    !
    call def_variable_elemental(io_db,"q_nbz",1,IP_YIO,0)
-   call io_variable_elemental(io_db,I0=q%nbz)
+   call io_variable_elemental(io_db,I0=q%nbz,CHECK=.true.,OP=(/"=="/))
    !
    call def_variable_elemental(io_db,"",0,0,1)
+   !
+   io_kpts=io_status(io_db)
    !
    if (io_kpts/=0) goto 1
    !

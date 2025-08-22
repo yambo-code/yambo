@@ -128,6 +128,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
    i_res_ares=BS_T_grp(i_T_g)%i_res_ares
    !
+   if (l_BS_ares_from_res .and. i_res_ares==2) cycle
+   !
    do i_T=1,BS_T_grp(i_T_g)%size
      !
      i_sort =sum(BS_T_grp(BS_T_grp(i_T_g)%i_T_ref:i_T_g-1)%size)+i_T 

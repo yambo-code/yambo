@@ -166,7 +166,6 @@ module R_lattice
  ! Coulomb (including Cutoff)
  !
  real(SP)                :: cyl_ph_radius
- real(SP)                :: cyl_length
  real(SP)                :: box_length(3)
  real(SP)                :: cyl_cut
  real(SP)                :: ws_cutoff 
@@ -442,7 +441,6 @@ module R_lattice
      Box_length=0.
      cyl_ph_radius=0.
      box_length=0.
-     cyl_length=0.
      ws_cutoff=0.7
      cut_geometry='none'
      cut_description='none'

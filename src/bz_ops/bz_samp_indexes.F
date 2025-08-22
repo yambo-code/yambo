@@ -128,7 +128,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  q%description='q'
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=io_db)
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=io_db)
  io_err=io_kpts(k,Xk,q,io_db)
  !
  if (io_err/=0) then

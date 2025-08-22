@@ -198,7 +198,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call K_Transitions_setup(iq,Ken,Xk,Dip,VB,CB)
    !
    !... Blocks build-up
-   if (.not.l_rpa_IP) call K_blocks()
+   if (.not.l_rpa_IP) call K_blocks(iq)
    !
    ! Wave Functions distribution 
    !=============================

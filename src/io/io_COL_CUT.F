@@ -11,9 +11,10 @@
 !
 integer function io_COL_CUT(ID)
  !
+ use pars,           ONLY:SP
  use wave_func,      ONLY:wf_ng,cutoff_ng
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,CUTOFF_plus_RIM,&
-&                         cyl_ph_radius,box_length,cyl_length,cut_geometry,&
+&                         cyl_ph_radius,box_length,cut_geometry,&
 &                         ng_closed,nqibz,bare_qpg,cut_description
  use IO_m,           ONLY:io_sec,io_status
  use IO_int,         ONLY:io_connect,io_disconnect,io_header,io_elemental,io_bulk
@@ -26,9 +27,11 @@ integer function io_COL_CUT(ID)
  ! 
  ! Work Space
  !
+ real(SP)            ::cyl_length
  integer             ::CUT_RIM_ng,CUT_RIM_npts,cutoff_ng_db
  !
  cutoff_ng = wf_ng ! when writing, the cutoff_ng is the same as the wavefunction ng
+ cyl_length= 0._SP ! not to break compatibility with previous databases
  !
  call timing('io_COL_CUT',OPR='start')
  io_COL_CUT=io_connect(desc="cutoff",type=2,ID=ID)

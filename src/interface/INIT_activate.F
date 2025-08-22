@@ -148,7 +148,7 @@ subroutine INIT_activate()
  !
  !Col CUTOFF 
  !
- if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTRadius CUTCylLen CUTwsGvec CUTCol_test EpsEnv')
+ if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTRadius CUTwsGvec CUTCol_test EpsEnv')
  !
  !XX
  !

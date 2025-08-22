@@ -159,7 +159,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! BSS_eh_table_m1
  !
- call build_inverse_eh_table(k%nbz)
+ call build_inverse_BS_eh_table_from_BSS_table(k%nbz)
  !
  ! Save the Lin in information
  ! 

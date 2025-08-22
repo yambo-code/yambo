@@ -10,7 +10,7 @@
 #include<dev_defs.h>
 !
 !
-function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp_ik, i_Tk) result(H_x)
+function K_exchange_kernel(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp_ik, i_Tk) result(H_x)
   !==============================
   !
   ! :::EXCHANGE    (resonant):::
@@ -65,7 +65,7 @@ function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
                                    BS_T_grp_ik%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
 #endif
   !
-end function K_exchange_kernel_resonant
+end function K_exchange_kernel
 !
 !
 !

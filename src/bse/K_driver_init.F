@@ -142,13 +142,6 @@ subroutine K_driver_init(what,iq,Ken,Xk)
 #if defined _RT 
  if (l_rt_carriers_in_use) BS_K_anti_resonant=.TRUE.
 #endif
- !
- ! Is ARES derivable from RES?
- !-----------------------------
- ! Developer options. Without the code works in default mode
- ! With the user can switch to experimental coding
- call parser('ImposeFullBSE',l_BSE_kernel_full)
- call parser('ImposeAsymBSE',l_flag)
 
  ! In the resonat only case l_BSE_ares_from_res=.true.
  ! This is needed to switch off all the lines related to the excplicit calculation of the ARES part
@@ -160,6 +153,13 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  if (l_BS_photolum) l_BS_res_from_E=.TRUE.
  call parser('SelectResFromF',l_flag)
  if (l_flag)        l_BS_res_from_E=.FALSE.
+ !
+ ! Is ARES derivable from RES?
+ !-----------------------------
+ ! Developer options. Without the code works in default mode
+ ! With the user can switch to experimental coding
+ call parser('ImposeFullBSE',l_BSE_kernel_full)
+ call parser('ImposeAsymBSE',l_flag)
  !
  ! In all other cases the code checks what to do
  if (.not.trim(BSE_mode)=="resonant") then
@@ -175,6 +175,9 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    BS_n_eh_spaces=2
    if (.not.BS_K_coupling) BS_res_ares_n_mat=2
  endif
+ !
+ ! In this case the anti-resonant space is used to build the coupling matrix
+ if (BS_K_coupling.and.iq/=1) BS_n_eh_spaces=2
  !
  if (what=="loop-init") return
  !
@@ -292,6 +295,8 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  call parser('BSS_FKE',BSS_uses_FKE)
  !
+ ! I/O structure
+ !===============
  BSS_kernel_IO_on_the_fly=index(BSK_IO_mode,"read_on_the_fly")>0 .and. (index(BSS_mode,'h')/=0 .or. index(BSS_mode,'s')/=0)
  if (BSS_kernel_IO_on_the_fly) then
    call STRING_split(BSK_IO_mode,BSK_IO_strings,n_non_empty_strings=BSK_IO_n_strings)

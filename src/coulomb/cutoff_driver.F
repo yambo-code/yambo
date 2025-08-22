@@ -30,7 +30,7 @@ subroutine cutoff_driver(q)
  use pars,          ONLY:SP,schlen,lchlen
  use vec_operate,   ONLY:v_is_zero
  use com,           ONLY:msg
- use R_lattice,     ONLY:cyl_ph_radius,box_length,cyl_length,cut_geometry,bz_samp,cut_description,ws_cutoff,&
+ use R_lattice,     ONLY:cyl_ph_radius,box_length,cut_geometry,bz_samp,cut_description,ws_cutoff,&
                          cut_is_slab
  use stderr,        ONLY:STRING_split,STRING_pack
  use IO_int,        ONLY:io_control
@@ -94,7 +94,6 @@ subroutine cutoff_driver(q)
  !
  if (.not.cut_is_box)                        box_length=0.
  if (.not.cut_is_sphere.and..not.cut_is_cyl) cyl_ph_radius=0.
- if (.not.cut_is_cyl)                        cyl_length=0.
  if (.not.is_cut(1))                         box_length(1)=0.
  if (.not.is_cut(2))                         box_length(2)=0.
  if (.not.is_cut(3))                         box_length(3)=0.
@@ -131,7 +130,7 @@ subroutine cutoff_driver(q)
  call section('*',trim(ch1))
  !
  ch1=           'Cut directions       '
- ch2=' '
+ ch2= ' '
  if (is_cut(1)) ch1=STRING_pack(ch1,'X')
  if (is_cut(1)) ch2=STRING_pack(ch2,'x')
  if (is_cut(2)) ch1=STRING_pack(ch1,'Y')
@@ -170,17 +169,9 @@ subroutine cutoff_driver(q)
    call msg('r','Box sides            ',length(:i1),"[a.u.]")
    write (cut_description,'(a,3f6.3)') trim(cut_geometry)//' ', length(:i1)
  else if (cut_is_cyl) then
-   if (cyl_length > 0.) then
-     call msg('r','Cyl. length          ',cyl_length,"[a.u.]")
-   else
-     call msg('r','Cyl. length          : infinite')
-   endif
-   call msg('r',  'Cyl. radius          ',cyl_ph_radius,"[a.u.]")
-   if (cyl_length > 0.) then
-     write (cut_description,'(a,f6.3,a,f6.3)') trim(cut_geometry)//' ',cyl_length,' ',cyl_ph_radius 
-   else
-     write (cut_description,'(a,a,a,f6.3)') trim(cut_geometry)//' ','infinite',' ',cyl_ph_radius
-   endif
+   call msg('r','Cyl. length          : infinite')
+   call msg('r','Cyl. radius          ',cyl_ph_radius,"[a.u.]")
+   write (cut_description,'(a,a,a,f6.3)') trim(cut_geometry)//' ','infinite',' ',cyl_ph_radius
  endif
  !
  ! Checking geometry symmetry
@@ -191,14 +182,7 @@ subroutine cutoff_driver(q)
  ! symmetry operations.
  !
  sym_points=0.
- if (cut_is_cyl) then
-   do i1=1,3
-     if (is_cut(i1)) then
-       sym_points(1,i1)=-cyl_length/2.
-       sym_points(2,i1)= cyl_length/2.
-     endif
-   enddo
- else if (cut_is_box) then
+ if (cut_is_box) then
    i4=0
    do i1=-1,1,2
      do i2=-1,1,2

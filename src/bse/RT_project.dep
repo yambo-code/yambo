@@ -2,4 +2,5 @@
  K_Transitions_setup.o
  K_driver_init.o
  K_inversion_driver.o
+ PL_diago_residual.o
 

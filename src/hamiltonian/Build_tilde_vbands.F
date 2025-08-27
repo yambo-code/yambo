@@ -37,6 +37,8 @@ subroutine Build_tilde_vbands(en,Xk,ikbz,i_sp,istep,id_red,V_bands,V_tilde)
  complex(SP) :: tmp_Vp(H_ref_bands(1):H_ref_bands(2),en%nbf(i_sp)),tmp_Vm(H_ref_bands(1):H_ref_bands(2),en%nbf(i_sp))
  !
  V_tilde=cZERO
+ tmp_Vm =cZERO
+ tmp_Vp =cZERO
  nbf=en%nbf(i_sp)
  !
  if(k_map%max_kdir(id_red)==1) return
@@ -72,11 +74,11 @@ subroutine Build_tilde_vbands(en,Xk,ikbz,i_sp,istep,id_red,V_bands,V_tilde)
  !
  call M_by_M_omp('N','N',H_ref_nbands,nbf,H_ref_bands(2),cONE,  &
 &  DIP_S(H_ref_bands(1):,:,id_red+(istep-1)*3,ikbz,i_sp),H_ref_nbands, &
-&  V_bands(:,:nbf,ikp_ibz),H_ref_bands(2),cZERO,tmp_Vp(H_ref_bands(1):,:en%nbf(i_sp)),H_ref_nbands)
+&  V_bands(:,:nbf,ikp_ibz),H_ref_bands(2),cZERO,tmp_Vp(H_ref_bands(1):,:nbf),H_ref_nbands)
  !
  call M_by_M_omp('C','N',H_ref_nbands,nbf,H_ref_bands(2),cONE,  &
 &  DIP_S(:,H_ref_bands(1):,id_red+(istep-1)*3,ikm ,i_sp),H_ref_bands(2), &
-&  V_bands(:,:nbf,ikm_ibz),H_ref_bands(2),cZERO,tmp_Vm(H_ref_bands(1):,:en%nbf(i_sp)),H_ref_nbands)
+&  V_bands(:,:nbf,ikm_ibz),H_ref_bands(2),cZERO,tmp_Vm(H_ref_bands(1):,:nbf),H_ref_nbands)
  !
  ! Eq. (53) in PRB 69, 085106 (2004), derived in appendix (C), see eq. C(11)
  !

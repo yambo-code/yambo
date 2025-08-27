@@ -144,7 +144,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
    endif
    if (X_do_obs("PL")) then
      X_obs(5)%N_columns=3
-     X_obs(5)%COL_header(1)   = 'E'
+     X_obs(5)%COL_header(1)   = 'E [eV]'
      X_obs(5)%COL_header(2:3) = (/'PL  ','PL_o'/)
    endif
    !

@@ -49,7 +49,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Work space
  !
  integer           ::i_T_g,i_T,n_SOC,i_pert_SOC,i_res_ares,i_sort,nVAR,Indexes(5)
- real(SP)          ::f_eh,f_eh_PL,res_PL
+ real(SP)          ::f_eh,f_eh_PL(2),res_PL(2)
  logical           ::dip_v,dip_r
  complex(SP)       ::res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),Z_eh,E_eh,g_fac
  !
@@ -128,6 +128,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
    i_res_ares=BS_T_grp(i_T_g)%i_res_ares
    !
+   if (l_BS_ares_from_res .and. i_res_ares==2) cycle
+   !
    do i_T=1,BS_T_grp(i_T_g)%size
      !
      i_sort =sum(BS_T_grp(BS_T_grp(i_T_g)%i_T_ref:i_T_g-1)%size)+i_T 
@@ -200,9 +202,15 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
        ! Note that res_PL is always positive as f_eh_PL>0
        !
-       f_eh_PL=BS_T_grp(i_T_g)%f_PL(i_T,1)
-       P_weighted(:)=BS_T_grp(i_T_g)%dipoles_opt(:,i_T,1)*PL_weights(:)
-       res_PL=real(dot_product(P_weighted,P_weighted)*f_eh_PL*Z_eh*E_eh)
+       f_eh_PL=BS_T_grp(i_T_g)%f_PL(i_T,:)
+       res_PL(1)=abs(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))**2
+       if(l_BS_trace) then
+         res_PL(1)=abs(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))**2+ &
+                  +abs(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1))**2+ &
+                  +abs(BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1))**2
+       endif
+       res_PL(1)=res_PL(1)*f_eh_PL(1)*Z_eh*E_eh
+       res_PL(2)=res_PL(1)*f_eh_PL(2)*Z_eh*E_eh
      endif
      !
      ! Dichroism
@@ -284,9 +292,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        endif
        !
        if (l_BS_photolum) then
-         PL(:,3)=PL(:,3) +PL_prefactor*res_PL*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))/pi
+	 !
+	 ! I^PL = L<
+	 !  
+         PL(:,3)=PL(:,3) + PL_prefactor*res_PL(1)*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))/pi
          if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
-           PL(:,3)=PL(:,3)-PL_prefactor*res_PL*aimag(-1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC))))/pi
+           PL(:,3)=PL(:,3) + PL_prefactor*res_PL(2)*aimag(-1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC))))/pi
          endif
        endif
        !

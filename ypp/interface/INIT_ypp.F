@@ -696,6 +696,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    if (l_exc_wf.and.(.not.l_free_hole.and..not.l_average_eh)) call initactivate(1,"Cells Hole Dimension") 
    if (l_exc_wf.and.(l_free_hole.or.l_average_eh)) call initactivate(1,"WFMult") 
    if (l_exc_wf.and.l_average_eh) call initactivate(1,"EHdensity")
+   if (l_exc_wf.and.n_spin>1) call initactivate(1,"ElecSpin HoleSpin")
    if (l_spin) call initactivate(1,"Degen_Step")
 #if defined _YPP_ELPH
    if (l_eliashberg)  call initactivate(1,"Degen_Step") 

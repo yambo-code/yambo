@@ -151,7 +151,7 @@ subroutine INIT_activate()
  !
  !Col CUTOFF 
  !
- if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTRadius CUTCylLen CUTwsGvec CUTCol_test EpsEnv')
+ if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTRadius CUTwsGvec CUTCol_test EpsEnv')
  !
  !XX
  !
@@ -261,7 +261,7 @@ subroutine INIT_activate()
    call initactivate(1,'EvPolarization FrSndOrd')
 #endif
    !
-   call initactivate(1,'PL_weights')
+   call initactivate(1,'PL_weights EXCTemp')
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')

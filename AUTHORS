@@ -4,7 +4,6 @@ ACTIVE DEVELOPERS
 
    NAME SURNAME                 (INITIALS)    (since year)
    ------------			----------    ------------
- * Andrea Marini                   (AM)  	 (2001)
  * Myrta Gruening                  (MG)  	 (2004)
  * Daniele Varsano                 (DV)  	 (2004)
  * Conor Hogan                     (CH)  	 (2005)
@@ -22,7 +21,6 @@ ACTIVE DEVELOPERS
  * Alberto Guandalini              (AG)  	 (2020)
  * Riccardo Reho                   (RR)  	 (2022)
  * Giacomo Sesti                   (GS)  	 (2022)
- * Blanca Mellado Pinto            (BM)          (2023)
  * Nalabothula Muralidhar          (NM)          (2024)
 
 FORMER DEVELOPERS
@@ -30,6 +28,7 @@ FORMER DEVELOPERS
 
    NAME SURNAME 		(INITIALS)   (period of activity)
    ------------			----------   --------------------
+ * Andrea Marini                   (AM)  	 (2001-2025)
  * David Kammerlader               (DK)  	 (2010-2012)
  * Fabio Affinito                  (FA)  	 (2013-2019)
  * Pedro Melo                      (PM)  	 (2013-2022)
@@ -42,14 +41,18 @@ FORMER DEVELOPERS
  * Henrique Miranda                (HM)  	 (2016-2018)
  * Elena Molteni                   (EM)  	 (2019-2021)
  * Ignacio Martin Alliati          (IMA) 	 (2020-2024)
+ * Blanca Mellado Pinto            (BM)          (2023-2025)
 
 ACKNOWLEDGEMENTS
 =================
 
-In all source files the Yambo developers are included with their initials.
-Andrea Marini is the original developer of the code and still the main responsible for the code development.
+In all source files the developers are included with their initials.
 
-For aknowledging the Yambo Team please refer to the following published articles:
+Andrea Marini is the original developer of the Yambo code
+
+Davide Sangallli and Claudio Attaccalite are the founders of the Lumen fork
+
+For aknowledging the developers Team please refer to the following published articles:
 
 - A Marini, et al. "Yambo: an ab initio tool for excited state calculations",
   Computer Physics Communications 180 (8), 1392 (2009)

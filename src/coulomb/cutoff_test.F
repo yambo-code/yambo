@@ -3,14 +3,14 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AMDV
+! Authors (see AUTHORS file for details): AM DV
 !
 subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab,is_cut,q)
  !
  use pars,          ONLY:SP,schlen,pi
  use vec_operate,   ONLY:v_norm
  use D_lattice,     ONLY:alat,sop_inv,a,DL_vol
- use R_lattice,     ONLY:bz_samp,cyl_ph_radius,bare_qpg,cyl_length,box_length,&
+ use R_lattice,     ONLY:bz_samp,cyl_ph_radius,bare_qpg,box_length,&
 &                        g_vec,g_rot,nqibz
  use wave_func,     ONLY:wf_ng
  use com,           ONLY:msg,of_open_close
@@ -75,9 +75,9 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab
  !
  if (cut_is_cyl) then
    dummy=(/v_norm(a(1,:)),v_norm(a(2,:)),v_norm(a(3,:))/)
-   if (is_cut(1).and.cyl_length==0) dummy(1)=2.0_SP*plot_factor*dummy(1)*10.0
-   if (is_cut(2).and.cyl_length==0) dummy(2)=2.0_SP*plot_factor*dummy(2)*10.0
-   if (is_cut(3).and.cyl_length==0) dummy(3)=2.0_SP*plot_factor*dummy(3)*10.0
+   if (is_cut(1)) dummy(1)=2.0_SP*plot_factor*dummy(1)*10.0
+   if (is_cut(2)) dummy(2)=2.0_SP*plot_factor*dummy(2)*10.0
+   if (is_cut(3)) dummy(3)=2.0_SP*plot_factor*dummy(3)*10.0
  endif
  if (cut_is_box) then
    if (is_cut(1)) dummy(1)=2.0_SP*plot_factor*box_length(1)
@@ -245,16 +245,9 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab
    real(SP) function V_in_cyl(r)
      real(SP) :: r(3)
      V_in_cyl=0.
-     if (cyl_length>0) then 
-       if ((is_cut(1).and.abs(r(1))<cyl_length.and.abs(r(2))**2+abs(r(3))**2<cyl_ph_radius**2).or.&
-&           (is_cut(2).and.abs(r(2))<cyl_length.and.abs(r(1))**2+abs(r(3))**2<cyl_ph_radius**2).or.&
-&           (is_cut(3).and.abs(r(3))<cyl_length.and.abs(r(1))**2+abs(r(2))**2<cyl_ph_radius**2)) &
-&       V_in_cyl=1./v_norm(r)
-     else
        if ((is_cut(1).and.abs(r(2))**2+abs(r(3))**2<cyl_ph_radius**2).or.&
 &           (is_cut(2).and.abs(r(1))**2+abs(r(3))**2<cyl_ph_radius**2).or.&
 &           (is_cut(3).and.abs(r(1))**2+abs(r(2))**2<cyl_ph_radius**2)) V_in_cyl=1._SP/v_norm(r)
-     endif
    end function
 
    real(SP) function V_in_ws(r)

@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
+integer function EPS_via_perturbative_inversion(n,m,D,C,f,Lo)
  !
  ! Here I  wante to calculate
  !
@@ -33,7 +33,7 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
  !
  implicit none
  !
- integer,    intent(in)  ::n,m,n_loop
+ integer,    intent(in)  ::n,m
  complex(SP),intent(in)  ::C,D(n),Lo(n,m)
  complex(SP),intent(out) ::f
  !
@@ -51,7 +51,7 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
  !
  R_x_D_nm1(:,1)=Lo(:,1)*D(:)
  fo=C*Vstar_dot_V_omp(n,D,R_x_D_nm1(:,1))
- if(n_loop==2) then
+ if(m==2) then
    R_x_D_nm1(:,2)=Lo(:,2)*conjg(D(:))
    fo=fo+C*V_dot_V_omp(n,D,R_x_D_nm1(:,2))
  endif
@@ -69,17 +69,17 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
    !
    if (.not.K_slk%kind=="SLK") then
      call M_by_V_omp('n',n,BS_mat,R_x_D_nm1(:,1),R_x_D_n(:,1))
-     if (n_loop==2) call M_by_V_omp('n',n,conjg(BS_mat),R_x_D_nm1(:,2),R_x_D_n(:,2))
+     if (m==2) call M_by_V_omp('n',n,conjg(BS_mat),R_x_D_nm1(:,2),R_x_D_n(:,2))
    else
 #if defined _SCALAPACK
      call PARALLEL_M_by_V('n',n,K_slk,R_x_D_nm1(:,1),R_x_D_n(:,1))
-     if (n_loop==2) call PARALLEL_M_by_V('C',n,K_slk,R_x_D_nm1(:,2),R_x_D_n(:,2))
+     if (m==2) call PARALLEL_M_by_V('C',n,K_slk,R_x_D_nm1(:,2),R_x_D_n(:,2))
 #endif
    endif
    !
    R_x_D_n(:,1)=Lo(:,1)*R_x_D_n(:,1)
    delta_f=C*Vstar_dot_V_omp(n,D,R_x_D_n(1:n,1))
-   if (n_loop==2) then 
+   if (m==2) then 
      R_x_D_n(:,2)=Lo(:,2)*R_x_D_n(:,2)
      delta_f=delta_f+C*V_dot_V_omp(n,D,R_x_D_n(:,2))
    endif

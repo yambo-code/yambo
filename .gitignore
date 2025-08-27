@@ -20,7 +20,6 @@ objects.mk
 ##################
 config/compilation_helper.sh.inc
 lib/archive/git.list
-
 # Compiled source #
 ###################
 *.com
@@ -136,6 +135,7 @@ nohup.out
 autom4te.cache
 
 #Scripts
+compile_yambo_gcc
 gfortran*.sh
 pgi*.sh
 nvidia*.sh

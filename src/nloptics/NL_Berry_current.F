@@ -88,7 +88,7 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
 !    Using higher order for the k-derivative gives a worst result
 !    when compared with dP/dt for this reason this line is commented
 !
-    if(k_map%max_kdir(id_red)>=6.and..not.l_force_SndOrd) max_step=2
+!    if(k_map%max_kdir(id_red)>=6.and..not.l_force_SndOrd) max_step=2
 !
      !
      do ikbz=1,nXkbz
@@ -119,7 +119,7 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
    !
    ! Notice that the 2.0 originates from H i\der_k +i \der_k H = 2 * Re[H i\der_k]
    !
-   NL_J_red(id_red)=2.0*spin_occ*real(NL_J_red(id_red),SP)/dble(Nperpend)
+   NL_J_red(id_red)=2.0_SP*spin_occ*real(NL_J_red(id_red),SP)/dble(Nperpend)
    !
  enddo
  !
@@ -129,7 +129,7 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  ! 
 !$omp parallel do default(shared), private(i1)
  do id=1,3
-   NL_J(id)=sum(NL_J_red(:)*a(:,id))/(4.0*pi)
+   NL_J(id)=sum(NL_J_red(:)*a(:,id))/(4.0_SP*pi)
  enddo
 !$omp end parallel do
  !

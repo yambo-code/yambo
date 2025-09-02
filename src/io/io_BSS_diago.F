@@ -180,7 +180,7 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  !
 end function
 
-subroutine write_bs_ev_par(iq, i_BS_mat, BS_VR, BS_VL, neigs_this_cpu, neig_shift)
+subroutine write_bs_ev_par(iq, i_BS_mat, neigs_this_cpu, neig_shift, BS_VR, BS_VL)
   !
   use pars,           ONLY:SP,schlen
   use BS,             ONLY:BS_K_dim, BS_H_dim,BS_K_coupling,BS_res_ares_n_mat

@@ -183,10 +183,10 @@ module BS_solvers
      logical, optional            :: write_ev
    end function
 
-   subroutine write_bs_ev_par(iq, i_BS_mat, BS_VR, BS_VL)
+   subroutine write_bs_ev_par(iq, i_BS_mat, neigs_this_cpu, neig_shift, BS_VR, BS_VL)
      use pars,           ONLY:SP
      implicit none
-     integer, intent(in)      :: i_BS_mat, iq
+     integer, intent(in)      :: i_BS_mat, iq, neigs_this_cpu, neig_shift
      complex(SP),allocatable, target, optional ::BS_VR(:,:),BS_VL(:,:)
    end subroutine write_bs_ev_par
    !

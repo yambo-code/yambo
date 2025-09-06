@@ -432,7 +432,8 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      call PP_wait()
 #if defined _SCALAPACK
-     if (l_ldiago .and. BSS_write_eig_2_db) call write_bs_ev_par(iq, i_BS_mat, BS_V_right, BS_V_left)
+     if (l_ldiago .and. BSS_write_eig_2_db) call write_bs_ev_par(iq, i_BS_mat, &
+&                             neigs_this_cpu, neig_shift, BS_V_right, BS_V_left)
 #endif
    endif
    !

@@ -174,7 +174,10 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
        endif
        !
        BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
-       if (BS_K_coupling.and.l_BS_ares_from_res) then
+       if (BS_K_coupling.and.l_BS_ares_from_res.and.iq==1) then
+         ! In the coulping case at q=1 when there are 2 blocks per group
+         ! See also src/bse/K_blocks.F and K_components_folded_in_serial_arrays.F
+	 ! Possibly to be extended also to i_G_shift==1
          BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
        endif
        !
@@ -191,7 +194,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
          call error(' finite q not implemented for dichroism')
        endif
        BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
-       if (BS_K_coupling.and.l_BS_ares_from_res) then
+       if (BS_K_coupling.and.l_BS_ares_from_res.and.iq==1) then
          BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
        endif
      endif
@@ -228,7 +231,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
                                                                !      or the right R residual associated to (eps_c\dn-eps_v\up)
                                                                ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c) = conjg(<c\up|S+|v\dn>(i_sp_pol_v))
                                                                ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c) = conjg(<c\dn|S-|v\up>(i_sp_pol_v))
-       if (BS_K_coupling.and.l_BS_ares_from_res) then          ! This is the right A residual associated to (eps_v\up-eps_c\dn)
+       if (BS_K_coupling.and.l_BS_ares_from_res.and.iq==1) then! This is the right A residual associated to (eps_v\up-eps_c\dn)
          BS_T_grp(i_T_g)%dipoles_mag(1,i_T,2)=DIP_Smins        ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c)
          BS_T_grp(i_T_g)%dipoles_mag(2,i_T,2)=DIP_Splus        ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c)
        endif

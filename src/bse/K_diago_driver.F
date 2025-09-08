@@ -31,7 +31,8 @@ subroutine K_diago_driver(iq,W,X_static)
 &                         BS_res_ares_n_mat,l_BS_abs,l_BS_dichroism,l_BS_ares_from_res !,BS_Blocks_symmetrize_K,&
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,BSS_resize,BSS_n_eig_Input, &
 &                         BSS_write_eig_2_db,BSS_eh_W,BSS_n_eig,BS_E,BSS_slepc_pseudo_herm,write_bs_ev_par,&
-&                         BSS_ldiago_solver,BSS_first_eig,BSS_target_E,BSS_trange_E,BSS_er,BSS_slepc_precondition
+&                         BSS_ldiago_solver,BSS_first_eig,BSS_target_E,BSS_trange_E,BSS_er,BSS_slepc_precondition,&
+&                         load_Diago
  use X_m,            ONLY:X_t,X_OUTPUT_driver
  use electrons,      ONLY:n_sp_pol,n_spinor
  use frequency,      ONLY:w_samp
@@ -191,6 +192,8 @@ subroutine K_diago_driver(iq,W,X_static)
    ! Kernel and/or BSS components loading
    !======================================
    if (io_err<0) then
+     !
+     if (load_Diago) call error("Loading of ndb.BS_diago failed in load diago mode") 
      !
      call K_components_folded_in_serial_arrays(iq)
      !

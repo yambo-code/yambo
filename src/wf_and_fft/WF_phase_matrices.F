@@ -129,6 +129,16 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
      YAMBO_ALLOC(WF_phases,(nsz(1),nsz(2),nsz(3),nsz(4),nsz(5)))
      WF_phases=cZERO
      !
+     ! Here we have to apply to symmetries: 
+     ! (i)  expand from IBZ to BZ (s1)
+     ! (ii) rotate the expanded wfc to get WF_phase at each symmetry (s2, isloop)
+     !
+     ! We cannot use sop_tab to get the index of symmetry s2(s1) in the
+     ! spinorial case, because we are in SU(3) instead of SO(3)
+     !
+     ! Therefore, we need to explicity apply both s1 and s2: we use
+     ! OPTION 1 by DS. OPTION 2 is coded but not working at the moment
+     !
      do istark=1,Xk%nstar(ik)
        !
        !if ( .not.PAR_IND_WF_k%element_1D(ik) ) cycle
@@ -138,6 +148,7 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
        !
        iGk =minus_G(Xk%g_table(ik,isk))
        !
+       ! OPTION 1: expand from IBZ (WF_k) to BZ (WF_Rk)
        call WF_copy(WF_k,WF_Rk)
        call WF_symm_kpoint_g(blim,ik,i_sp_pol,isk,iGk,WF_Rk)
        !
@@ -152,20 +163,21 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
          ! spin_sop with time-reversal are not a space group
          ! I need to build the composed spin symmetry operator
          !
-         if(n_spinor==2) then
-           s1=spin_sop(:,:,isk)
-           s2=spin_sop(:,:,isloop)
-           if (isk   >nsym/(1+i_time_rev)) s1=conjg(s1)
-           if (isloop>nsym/(1+i_time_rev)) then
-             s2=conjg(s2)
-             s1=conjg(s1)
-           endif
-           spin_sop_composed=matmul(s2,s1)
-           if (isk_c >nsym/(1+i_time_rev)) spin_sop_composed=conjg(spin_sop_composed)
-#if defined _CUDA
-           call dev_memcpy(spin_sop_composed_d,spin_sop_composed)
-#endif
-         endif
+         ! OPTION 2 (disabled): directly compute composed spin symmetry
+         !if(n_spinor==2) then
+         !  s1=spin_sop(:,:,isk)
+         !  s2=spin_sop(:,:,isloop)
+         !  if (isk   >nsym/(1+i_time_rev)) s1=conjg(s1)
+         !  if (isloop>nsym/(1+i_time_rev)) then
+         !    s2=conjg(s2)
+         !    s1=conjg(s1)
+         !  endif
+         !  spin_sop_composed=matmul(s2,s1)
+         !  if (isk_c >nsym/(1+i_time_rev)) spin_sop_composed=conjg(spin_sop_composed)
+!#f defined _CUDA
+         !  call dev_memcpy(spin_sop_composed_d,spin_sop_composed)
+!#ndif
+         !endif
          !
          ! symmetry used by yambo
          isk_y=Xk%s_table(ik,isk_c)
@@ -173,11 +185,12 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
          !
          iRkbz =Xk%k_table(ik,isk_c)
          !
-         ! OPTION 1: Apply second symmetry operatio to the WF already expanded in the BZ
+         ! OPTION 1: Apply second symmetry operation (WF_Rk_c from isk) 
+         ! to the WF already expanded in the BZ (WF_Rk)
          call WF_copy(WF_Rk,WF_Rk_c)
          call WF_symm_kpoint_g(blim,ik,i_sp_pol,isloop,iGloop,WF_Rk_c,isref=isk,iGref=iGk)
          !
-         ! OPTION 2: Use the composed symmetry, importing the composed spin soc
+         ! OPTION 2 (disabled): Use the composed symmetry, importing the composed spin soc
          !call WF_copy(WF_k,WF_Rk_c)
          !call WF_symm_kpoint_g(blim,ik,i_sp_pol,isk_c,iGk_c,WF_Rk_c,ssop=spin_sop_composed)
          !

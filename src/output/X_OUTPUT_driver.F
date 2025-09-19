@@ -14,7 +14,8 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
  use electrons,     ONLY:n_spinor
  use PHOTOLUM,      ONLY:PL
  use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,BS_K_coupling,&
-&                        l_BS_photolum,l_BS_abs,l_BS_jdos,l_BS_esort_indx,l_BS_esort
+&                        l_BS_photolum,l_BS_abs,l_BS_jdos,l_BS_esort_indx,l_BS_esort,&
+&                        l_BS_magnetoelectric
  use BS_solvers,    ONLY:l_abs_prop_chi_bse,l_eels_can_be_computed
  use stderr,         ONLY:STRING_match,STRING_split,intc,STRING_remove
  use OUTPUT,         ONLY:OUTPUT_driver
@@ -35,7 +36,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
  ! Work Space
  integer            ::it,itp,ik,ic
  character(schlen)  ::key(10),BASIC_col(7)
- character(5)       ::obs_with_res(7)
+ character(5)       ::obs_with_res(8)
  logical            ::l_flag,l_print_res
  !
  if (STRING_match(WHAT,"DEF")) then
@@ -55,6 +56,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
    call ELEMENTAL_init(14,"CD","Dichroism","dichroism")
    call ELEMENTAL_init(15,"Spm","Magnons (S+-)","magnons")
    call ELEMENTAL_init(16,"Smp","Magnons (S-p)","magnons")
+   call ELEMENTAL_init(17,"ME","Magnetoelectric","magnetoelectric")
  endif
  !
  if (STRING_match(WHAT,"INIT")) then
@@ -88,6 +90,17 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
    if (l_BS_magnons) call X_obs_onoff("+ Spm")
    if (l_BS_magnons.and.n_spinor==2) call X_obs_onoff("+ Smp")
    if (l_BS_dichroism) call X_obs_onoff("+ CD")
+   if (l_BS_magnetoelectric) then
+     call X_obs_onoff("+ ME")
+
+     ! ME DEBUG
+     write(*,*) "\n (X_OUTPUT_driver): X_obs_onoff(+ ME) called"
+     write(*,*) "\n (X_OUTPUT_driver): X_do_obs(ME)=", X_do_obs("ME")
+   else
+     write(*,*) "\n (X_OUTPUT_driver): X_obs_onoff(+ ME) NOT called"
+   endif
+
+  ! ME DEBUG
    !
    !...solvers specific
    if (present(solver)) then
@@ -128,7 +141,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
        X_obs(4)%N_columns=3
        X_obs(4)%COL_header(1:3)  = (/'Re(E)','Im(E)','N_deg'/)
      endif
-     obs_with_res=[character(5) :: "eps","alpha","Spm","Smp","off","beta","CD" ]
+     obs_with_res=[character(5) :: "eps","alpha","Spm","Smp","off","beta","CD","ME" ]
      do it=1,N_X_obs
        if (.not.X_do_obs(trim(X_obs(it)%what))) cycle
        l_print_res=.false.

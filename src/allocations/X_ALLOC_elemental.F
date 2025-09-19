@@ -15,7 +15,7 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
  !
  use pars,          ONLY:rZERO,cZERO
  use X_m,           ONLY:Resp_ii,Resp_ij,Epsilon_ii,Joint_DOS,BS_E_sorted,BS_E_sorted_indx, &
-&                        Epsilon_ij,X_magnons,X_dichroism,                  &
+&                        Epsilon_ij,X_magnons,X_dichroism,ME_ii,             &
 &                        X_fxc,EEL,Alpha,X_mat,DEV_VAR(X_mat),X_drude_term,X_RLcomp_ig
  use PHOTOLUM,      ONLY:PL
  use stderr,        ONLY:STRING_match
@@ -75,6 +75,10 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
      if (allocated(X_mat)) return
      YAMBO_ALLOC(X_mat,(DIM(1),DIM(2),DIM(3)))
      X_mat=cZERO
+   case('ME')
+     if (allocated(ME_ii)) return
+     YAMBO_ALLOC(ME_ii,(DIM(1),DIM(2))) !2(int)3(nonint)4(n-1 Haydock/inv shifted)
+     ME_ii   = cZERO
 #ifdef _GPU
      YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(X_mat),X_mat)
 #endif

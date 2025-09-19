@@ -29,7 +29,8 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BSE_L_kind,BS_bands,&
 &                        BS_dip_size,l_BS_trace,BS_n_eh_spaces,&
 &                        l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
-&                        BSE_dipole_geometry,BS_field_direction,l_BS_ares_from_res
+&                        BSE_dipole_geometry,BS_field_direction,l_BS_ares_from_res,&
+&                        l_BS_magnetoelectric
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_COM_Xk_ibz_INDEX
@@ -157,7 +158,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
      ! *velocity* : DIP(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> = conjg(q_ver*<v|r|c>)
      !
      ! Absorption, KERR, PL, Dichroism
-     if(l_BS_abs.or.l_BS_kerr.or.l_BS_photolum.or.l_BS_dichroism) then
+     if(l_BS_abs.or.l_BS_kerr.or.l_BS_photolum.or.l_BS_dichroism.or.l_BS_magnetoelectric) then
        !
        if(iq==1.and.i_G_shift==1) then
          call DIPOLE_rotate(ic,iv,ik_bz,i_sp_pol_c,trim(DIP_kind),Xk,DIP_bare)

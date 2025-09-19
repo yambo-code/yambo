@@ -14,7 +14,7 @@ subroutine X_ALLOC_global(WHAT,W)
  use pars,          ONLY:cZERO
  use ALLOC,         ONLY:X_ALLOC_elemental
  use X_m,           ONLY:Resp_ii,Resp_ij,Epsilon_ii,Epsilon_ij,&
-&                        Alpha,Joint_DOS,X_magnons,X_dichroism,EEL,X_do_obs
+&                        Alpha,Joint_DOS,X_magnons,X_dichroism,EEL,X_do_obs,ME_ii
  use frequency,     ONLY:w_samp
  use drivers,       ONLY:l_optics
  use BS_solvers,    ONLY:B_Hall
@@ -80,6 +80,11 @@ subroutine X_ALLOC_global(WHAT,W)
    if (X_do_obs("Esort")) call X_ALLOC_elemental("BS_E_SORTED",(/1000,9,2/))
    if (X_do_obs("fxc")) call X_ALLOC_elemental("FXC",(/W%n_freqs/))
    !
+   if (X_do_obs("ME")) then
+     write(*,*) "(X_ALLOC_global): Called X_ALLOC_elemental(ME)"
+     call X_ALLOC_elemental("ME",(/W%n_freqs,4/))
+     ME_ii(:,1)=W%p(:)
+   endif
  else if (WHAT=="FREE") then
    call X_ALLOC_elemental("FREE ALL")
  endif

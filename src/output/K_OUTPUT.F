@@ -19,7 +19,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use X_m,            ONLY:Epsilon_ii,eps_2_alpha,X_OUTPUT_driver,Epsilon_ij,&
 &                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,&
 &                         BS_E_sorted_indx,X_magnons,i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus,&
-&                         Resp_ii,Resp_ij,l_drude,skip_cond_sum_rule,X_drude_term,global_gauge
+&                         Resp_ii,Resp_ij,l_drude,skip_cond_sum_rule,X_drude_term,global_gauge,ME_ii
  use com,            ONLY:msg,com_compose_msg
  use R_lattice,      ONLY:bare_qpg,FineGd_desc,nkbz
  use electrons,      ONLY:spin_occ
@@ -109,6 +109,46 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
        spectra_ij(:,i_rsp)=Resp_ij(:,i_rsp+1)
        spectra_ij(:,i_rsp)=Resp_ij(:,i_rsp+1)
      endif
+   enddo
+   !
+   ! Eq.(1.12) PRB 48, 11705 (1993)
+   !
+   A_drude=para_term_w0-diam_term_exact
+   !
+   if (trim(global_gauge)=='velocity') then
+     ! DS. Note. The sum rule imposition does not work if neq occupations are loaded. Not sure why.
+     if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
+     if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
+     spectra(:,1)=spectra(:,1)-diam_term_used(2)
+     spectra(:,2)=spectra(:,2)-diam_term_used(1)
+     spectra(:,3)=spectra(:,3)-diam_term_used(3)
+   endif
+   !
+   do i_rsp=1,n_resp
+     if(trim(global_gauge)=='length'  ) spectra(:,i_rsp)= spectra(:,i_rsp)/bare_qpg(iq,i_G_shift)**2
+     if(trim(global_gauge)=='velocity') spectra(:,i_rsp)= spectra(:,i_rsp)/ W%p(:)**2
+     !
+     if (X_do_obs("off").or.X_do_obs("beta")) then
+       if(trim(global_gauge)=='length'  ) spectra_ij(:,i_rsp)=spectra_ij(:,i_rsp)/bare_qpg(iq,i_G_shift)**2
+       if(trim(global_gauge)=='velocity') spectra_ij(:,i_rsp)=spectra_ij(:,i_rsp)/ W%p(:)**2
+     endif
+   enddo
+   !
+ endif
+
+ if (X_do_obs("ME")) then
+   !
+   fac=eps_2_alpha/4._SP/pi
+   if (l_col_cut) fac=fac*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
+   !
+   ! Resp = -vX
+   do i_rsp=1,n_resp
+     spectra(:,i_rsp)=cmplx(ME_ii(:,i_rsp+1),kind=DP)
+     spectra(:,i_rsp)=cmplx(ME_ii(:,i_rsp+1),kind=DP)
+     !if (X_do_obs("off").or.X_do_obs("beta")) then
+     !  spectra_ij(:,i_rsp)=ME_ij(:,i_rsp+1)
+     !  spectra_ij(:,i_rsp)=ME_ij(:,i_rsp+1)
+     !endif
    enddo
    !
    ! Eq.(1.12) PRB 48, 11705 (1993)
@@ -307,6 +347,31 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    call ELEMENTAL_dump_real("PL",PL(:,2:3))
  endif
  !
+ ! MAGNETOELECTRIC
+ !------------
+ if (X_do_obs("ME")) then
+   ! ME DEBUG
+   write(*,*) "X_do_obs(ME)=.true."
+   !
+   call get_from_Lbar_or_Lfull_inverted(tmp_var_DP,spectra)
+   !
+   Epsilon_ii(:,2:4)=cmplx(tmp_var_DP,kind=SP)
+   call add_drude_term(Epsilon_ii(:,2:4))
+   !
+   nel_diam(:)=real(A_drude(:))/real(nkbz,SP)*spin_occ/Co_factor
+   !
+   ! ... Diamagnetic term
+   call msg("o eps",com_compose_msg(pre="# ",body="Diamagnetic term")," ",INDENT=0)
+   call msg("o eps",com_compose_msg(pre="# ",body="Ao"),nel_diam(1),INDENT=0,after_msg="[nel]")
+   if (.not.STRING_match(WHAT,"IP")) &
+   &call msg("o eps",com_compose_msg(pre="# ",body="A"),nel_diam(2),INDENT=0,after_msg="[nel]")
+   if (l_last_col) &
+   &call msg("o eps",com_compose_msg(pre="# ",body="A'"),nel_diam(3),INDENT=0,after_msg="[nel]")
+   !
+   ! ... Epsilon_ii
+   call ELEMENTAL_dump("eps",Epsilon_ii(:,2:4)+1._SP)
+ endif
+
  if (STRING_match(WHAT,"close")) call X_OUTPUT_driver("close "//OBS)
  if (STRING_match(WHAT,"reset")) call X_OUTPUT_driver("reset "//OBS)
  !

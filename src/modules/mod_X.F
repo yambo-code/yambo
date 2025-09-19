@@ -80,6 +80,7 @@ module X_m
  complex(SP), allocatable :: X_fxc(:)
  complex(SP), allocatable :: X_magnons(:,:,:)
  complex(SP), allocatable :: X_dichroism(:,:)
+ complex(SP), allocatable :: ME_ii(:,:)
  !
  ! Response function
  !

@@ -22,12 +22,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use electrons,     ONLY:levels,spin_occ,spin,nel,n_sp_pol,n_spinor
  use X_m,           ONLY:Resp_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        X_drude_term,global_gauge,N_BS_E_sorted,i_G_shift,&
-&                        skip_cond_sum_rule,X_magnons,Resp_ij,X_dichroism
+&                        skip_cond_sum_rule,X_magnons,Resp_ij,X_dichroism,ME_ii
  use BS_solvers,    ONLY:Co_factor,diam_term_exact,para_term_w0,BSS_Wd,BSS_mode,BSS_uses_DbGd,FG_factor
  use BS,            ONLY:BS_T_grp,BS_nkFGbz_in_Tgrp,BS_nT_grps,BS_perturbative_SOC,&
 &                        BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_H_dim,l_BS_kerr_asymm,&
 &                        l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
-&                        BS_K_anti_resonant,l_BS_ares_from_res
+&                        BS_K_anti_resonant,l_BS_ares_from_res,l_BS_magnetoelectric
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_COM_Xk_ibz_INDEX
@@ -56,7 +56,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  integer       :: i_ColFG
  complex(SP), allocatable :: E_DbGd(:)
  !
- complex(SP)       ::P_weighted(3),res_kerr,res_magn(2),res_dich
+ complex(SP)       ::P_weighted(3),res_kerr,res_magn(2),res_dich,res_me
  integer,        allocatable :: vtmpI(:,:)
  complex(SP),    allocatable :: vtmpC(:,:)
  !
@@ -238,8 +238,13 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        res_magn=res_magn*f_eh*Z_eh
        if (l_BS_esort.and.i_res_ares==1) then
          call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_magn(1),vtmpC)
-	 if(n_spinor==2) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_magn(2),vtmpC)
-       endif
+       if(n_spinor==2) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_magn(2),vtmpC)
+         endif
+     endif
+     if(l_BS_magnetoelectric) then
+       res_me=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
+       res_me=res_me*f_eh*Z_eh*E_eh
+       if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me,vtmpC)
      endif
      !
      if ( abs(real(E_plus_W0)) < Dip%Energy_threshold .and. iq==1 .and. dip_r ) then
@@ -247,6 +252,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        res_kerr=0._SP
        res_PL  =0._SP
        res_dich=0._SP
+       res_me  =0._SP
      endif
      !
      ! Response functions and pert SOC loop     
@@ -317,6 +323,14 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          endif
        endif
        !
+       if (l_BS_magnetoelectric) then
+         do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_T_g)
+           ME_ii(:,3)=ME_ii(:,3)-res_me/(W_bss%p(:)-E_plus_W(i_pert_SOC)-E_DbGd(i_ColFG))
+           if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
+             ME_ii(:,3)=ME_ii(:,3)+conjg(res_me)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)+E_DbGd(i_ColFG)))
+           endif
+         enddo
+       endif
      enddo
      !
      deallocate(E_DbGd)
@@ -329,6 +343,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  call live_timing()
  !
  if (l_BS_abs) Resp_ii(:,3) = Resp_ii(:,3) * FG_factor
+ !
+ if (l_BS_magnetoelectric) ME_ii(:,3) = ME_ii(:,3) * FG_factor
  !
  ! Sorting procedure
  !===================
@@ -370,6 +386,11 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
  endif
+ if(l_BS_magnetoelectric) then
+   call PP_redux_wait( ME_ii(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait( ME_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
+ endif
+
  !
  ! Factors and more
  !==================
@@ -403,7 +424,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if (l_BS_magnons) X_magnons(:,:,3)=X_magnons(:,:,3)*Co_factor/(4._SP*pi)
  !
- if (     l_rpa_IP) call K_OUTPUT(iq,W_bss,"open dump IP close reset","optics kerr magnons PL dichroism")
+ if (l_BS_magnetoelectric) ME_ii(:,3)=ME_ii(:,3)*Co_factor
+ !
+ if (     l_rpa_IP) call K_OUTPUT(iq,W_bss,"open dump IP close reset","optics kerr magnons PL dichroism magnetoelectric")
  call K_OUTPUT(iq,W_bss,"open dump close reset bare","E_IP E_INDX_IP")
  !
  ! Clean

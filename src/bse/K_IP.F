@@ -242,7 +242,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          endif
      endif
      if(l_BS_magnetoelectric) then
-       res_me=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
+       ! 
+       ! Gives seg. fault...
+       res_me=BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)+BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1) ! Only Sx
+       res_me=res_me*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
+       !
+       !res_me=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
        res_me=res_me*f_eh*Z_eh*E_eh
        if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me,vtmpC)
      endif
@@ -386,6 +391,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
  endif
+ !
  if(l_BS_magnetoelectric) then
    call PP_redux_wait( ME_ii(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( ME_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )

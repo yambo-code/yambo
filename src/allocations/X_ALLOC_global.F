@@ -81,7 +81,6 @@ subroutine X_ALLOC_global(WHAT,W)
    if (X_do_obs("fxc")) call X_ALLOC_elemental("FXC",(/W%n_freqs/))
    !
    if (X_do_obs("ME")) then
-     write(*,*) "(X_ALLOC_global): Called X_ALLOC_elemental(ME)"
      call X_ALLOC_elemental("ME",(/W%n_freqs,4/))
      ME_ii(:,1)=W%p(:)
    endif

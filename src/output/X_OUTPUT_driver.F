@@ -90,17 +90,8 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
    if (l_BS_magnons) call X_obs_onoff("+ Spm")
    if (l_BS_magnons.and.n_spinor==2) call X_obs_onoff("+ Smp")
    if (l_BS_dichroism) call X_obs_onoff("+ CD")
-   if (l_BS_magnetoelectric) then
-     call X_obs_onoff("+ ME")
+   if (l_BS_magnetoelectric) call X_obs_onoff("+ ME")
 
-     ! ME DEBUG
-     write(*,*) "\n (X_OUTPUT_driver): X_obs_onoff(+ ME) called"
-     write(*,*) "\n (X_OUTPUT_driver): X_do_obs(ME)=", X_do_obs("ME")
-   else
-     write(*,*) "\n (X_OUTPUT_driver): X_obs_onoff(+ ME) NOT called"
-   endif
-
-  ! ME DEBUG
    !
    !...solvers specific
    if (present(solver)) then

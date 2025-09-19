@@ -198,7 +198,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
      endif
      !
      ! Magnons
-     if (l_BS_magnons) then
+     if (l_BS_magnons.or.l_BS_magnetoelectric) then
        !
        ! notice:
        ! In optics q=0 requires a special treatment due to the non analytic behaviour

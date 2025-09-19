@@ -351,25 +351,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !------------
  if (X_do_obs("ME")) then
    ! ME DEBUG
-   write(*,*) "X_do_obs(ME)=.true."
-   !
-   call get_from_Lbar_or_Lfull_inverted(tmp_var_DP,spectra)
-   !
-   Epsilon_ii(:,2:4)=cmplx(tmp_var_DP,kind=SP)
-   call add_drude_term(Epsilon_ii(:,2:4))
-   !
-   nel_diam(:)=real(A_drude(:))/real(nkbz,SP)*spin_occ/Co_factor
-   !
-   ! ... Diamagnetic term
-   call msg("o eps",com_compose_msg(pre="# ",body="Diamagnetic term")," ",INDENT=0)
-   call msg("o eps",com_compose_msg(pre="# ",body="Ao"),nel_diam(1),INDENT=0,after_msg="[nel]")
-   if (.not.STRING_match(WHAT,"IP")) &
-   &call msg("o eps",com_compose_msg(pre="# ",body="A"),nel_diam(2),INDENT=0,after_msg="[nel]")
-   if (l_last_col) &
-   &call msg("o eps",com_compose_msg(pre="# ",body="A'"),nel_diam(3),INDENT=0,after_msg="[nel]")
-   !
-   ! ... Epsilon_ii
-   call ELEMENTAL_dump("eps",Epsilon_ii(:,2:4)+1._SP)
+   write(*,*) "(K_OUTPUT.F): X_do_obs(ME)=.true."
+   call ELEMENTAL_dump("ME",ME_ii(:,2:4))
  endif
 
  if (STRING_match(WHAT,"close")) call X_OUTPUT_driver("close "//OBS)

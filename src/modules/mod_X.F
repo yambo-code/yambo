@@ -165,7 +165,7 @@ module X_m
    integer               :: N_messages
    character(schlen)     :: messages(N_MAX_columns)
  end type
- integer, parameter     :: N_X_obs=16
+ integer, parameter     :: N_X_obs=17
  type(X_obs_t)          :: X_obs(N_X_obs) 
  !
  interface

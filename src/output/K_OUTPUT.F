@@ -312,7 +312,15 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
 
  ! MAGNETOELECTRIC
  !------------
- if (X_do_obs("ME")) call ELEMENTAL_dump("ME",HA2EV*ME_ii(:,2:))
+if (X_do_obs("ME")) then
+   !do i_rsp=1,n_resp
+   !spectra(:,i_rsp) = cmplx(ME_ii(:, i_rsp+1), kind=DP)
+   !enddo
+   !call get_from_Lbar_or_Lfull_inverted(tmp_var_DP, spectra)
+   !ME_ii(:,2:4) = cmplx(tmp_var_DP, kind=SP)
+   call ELEMENTAL_dump("ME", ME_ii(:,2:))
+endif
+
 
  if (STRING_match(WHAT,"close")) call X_OUTPUT_driver("close "//OBS)
  if (STRING_match(WHAT,"reset")) call X_OUTPUT_driver("reset "//OBS)

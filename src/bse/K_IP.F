@@ -242,13 +242,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          endif
      endif
      if(l_BS_magnetoelectric) then
-       ! 
-       ! Gives seg. fault...
        res_me=BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)+BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1) ! Only Sx
        res_me=res_me*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
-       !
-       !res_me=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
-       res_me=res_me*f_eh*Z_eh*E_eh
+       res_me=res_me*f_eh*Z_eh/(q0_def_norm)
        if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me,vtmpC)
      endif
      !
@@ -330,9 +326,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
        if (l_BS_magnetoelectric) then
          do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_T_g)
-           ME_ii(:,3)=ME_ii(:,3)-res_me/(W_bss%p(:)-E_plus_W(i_pert_SOC)-E_DbGd(i_ColFG))
+           ME_ii(:,3)=ME_ii(:,3)-res_me/(W_bss%p(:)-E_plus_W(i_pert_SOC))
            if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
-             ME_ii(:,3)=ME_ii(:,3)+conjg(res_me)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)+E_DbGd(i_ColFG)))
+             ME_ii(:,3)=ME_ii(:,3)+conjg(res_me)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
            endif
          enddo
        endif
@@ -430,7 +426,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if (l_BS_magnons) X_magnons(:,:,3)=X_magnons(:,:,3)*Co_factor/(4._SP*pi)
  !
- if (l_BS_magnetoelectric) ME_ii(:,3)=ME_ii(:,3)*Co_factor
+ if (l_BS_magnetoelectric) ME_ii(:,3)=ME_ii(:,3)*Co_factor/(8._SP*pi)
  !
  if (     l_rpa_IP) call K_OUTPUT(iq,W_bss,"open dump IP close reset","optics kerr magnons PL dichroism magnetoelectric")
  call K_OUTPUT(iq,W_bss,"open dump close reset bare","E_IP E_INDX_IP")

@@ -157,7 +157,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
      ! *length*   : DIP(c,v,k) is q_ver*<v|r|c> while I need q_ver*<c|r|v> = conjg(q_ver*<v|r|c>)
      ! *velocity* : DIP(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> = conjg(q_ver*<v|r|c>)
      !
-     ! Absorption, KERR, PL, Dichroism
+     ! Absorption, KERR, PL, Dichroism, Magnetoelectric
      if(l_BS_abs.or.l_BS_kerr.or.l_BS_photolum.or.l_BS_dichroism.or.l_BS_magnetoelectric) then
        !
        if(iq==1.and.i_G_shift==1) then

@@ -161,14 +161,6 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    call ELEMENTAL_dump("eps",Epsilon_ii(:,2:4)+1._SP)
  endif
 
- if (X_do_obs("ME")) then
-   !
-   ! Resp = -vX
-   do i_rsp=1,n_resp
-     spectra(:,i_rsp)=cmplx(ME_ii(:,i_rsp+1),kind=DP)
-   enddo
-   !
- endif
  !
  !
  ! Epsilon_ij
@@ -320,27 +312,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
 
  ! MAGNETOELECTRIC
  !------------
- if (X_do_obs("ME")) then
-   !
-   call get_from_Lbar_or_Lfull_inverted(tmp_var_DP,spectra)
-   !
-   ME_ii(:,2:4)=cmplx(tmp_var_DP,kind=SP)
-   call add_drude_term(ME_ii(:,2:4))
-   !
-   nel_diam(:)=real(A_drude(:))/real(nkbz,SP)*spin_occ/Co_factor
-   !
-   ! ... Diamagnetic term
-   call msg("o eps",com_compose_msg(pre="# ",body="Diamagnetic term")," ",INDENT=0)
-   call msg("o eps",com_compose_msg(pre="# ",body="Ao"),nel_diam(1),INDENT=0,after_msg="[nel]")
-   if (.not.STRING_match(WHAT,"IP")) &
-   &call msg("o eps",com_compose_msg(pre="# ",body="A"),nel_diam(2),INDENT=0,after_msg="[nel]")
-   if (l_last_col) &
-   &call msg("o eps",com_compose_msg(pre="# ",body="A'"),nel_diam(3),INDENT=0,after_msg="[nel]")
-   !
-   ! ... ME_ii
-   call ELEMENTAL_dump("ME",ME_ii(:,2:4)+1._SP)
- endif
-
+ if (X_do_obs("ME")) call ELEMENTAL_dump("ME",HA2EV*ME_ii(:,2:))
 
  if (STRING_match(WHAT,"close")) call X_OUTPUT_driver("close "//OBS)
  if (STRING_match(WHAT,"reset")) call X_OUTPUT_driver("reset "//OBS)

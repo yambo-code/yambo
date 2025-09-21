@@ -1,9 +1,3 @@
-# Personal #
-############
-./make_*.sh
-./symlink_modules*.sh
-./yambo_intel_single_precission_omp_configure.sh
-
 # DEPS #
 ########
 modulesdep.list

@@ -22,7 +22,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use electrons,     ONLY:levels,spin_occ,spin,nel,n_sp_pol,n_spinor
  use X_m,           ONLY:Resp_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        X_drude_term,global_gauge,N_BS_E_sorted,i_G_shift,&
-&                        skip_cond_sum_rule,X_magnons,Resp_ij,X_dichroism,ME_ii
+&                        skip_cond_sum_rule,X_magnons,Resp_ij,X_dichroism,ME_ij
  use BS_solvers,    ONLY:Co_factor,diam_term_exact,para_term_w0,BSS_Wd,BSS_mode,BSS_uses_DbGd,FG_factor
  use BS,            ONLY:BS_T_grp,BS_nkFGbz_in_Tgrp,BS_nT_grps,BS_perturbative_SOC,&
 &                        BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_H_dim,l_BS_kerr_asymm,&
@@ -56,7 +56,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  integer       :: i_ColFG
  complex(SP), allocatable :: E_DbGd(:)
  !
- complex(SP)       ::P_weighted(3),res_kerr,res_magn(2),res_dich,res_me
+ complex(SP)       ::P_weighted(3),res_kerr,res_magn(2),res_dich,res_me(3)
  integer,        allocatable :: vtmpI(:,:)
  complex(SP),    allocatable :: vtmpC(:,:)
  !
@@ -244,19 +244,26 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if(l_BS_magnetoelectric) then
 
        ! TODO: Figure out what's the best way to get sigma_x, sigma_y, and sigma_z
-       ! Here only Sx and Sy are calculated (hard-coded). Agreement with DIP_spin database
+       ! Here they are hard-coded. Agreement with DIP_spin database
        ! when conjg (why?)
 
        ! Sx
-       ! res_me=conjg(BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)+BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1))
+       res_me(1)=conjg(BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)+&
+                       BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1))
+       res_me(1)=res_me(1)*(-cI*BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
+       res_me(1)=res_me(1)*f_eh*Z_eh/(q0_def_norm)
 
        ! Sy
-       res_me=-cI*conjg((BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)-BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)))
+       res_me(2)=-cI*conjg(BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)-&
+                           BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1))
+       res_me(2)=res_me(2)*(-cI*BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
+       res_me(2)=res_me(2)*f_eh*Z_eh/(q0_def_norm)
 
-       ! This made the residuals correct according to the database DIP_spin*conjg(DIP_iR):
-       !res_me=res_me*conjg(conjg(-cI*BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))) (why?)
-       res_me=res_me*(-cI*BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
-       res_me=res_me*f_eh*Z_eh/(q0_def_norm)
+       ! Sz
+       res_me(3)=BS_T_grp(i_T_g)%dipoles_mag(3,i_T,1)
+       res_me(3)=res_me(3)*(-cI*BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
+       res_me(3)=res_me(3)*f_eh*Z_eh/(q0_def_norm)
+
        if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me,vtmpC)
      endif
      !
@@ -265,7 +272,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        res_kerr=0._SP
        res_PL  =0._SP
        res_dich=0._SP
-       res_me  =0._SP
      endif
      !
      ! Response functions and pert SOC loop     
@@ -337,9 +343,13 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        endif
        !
        if (l_BS_magnetoelectric) then
-           ME_ii(:,3)=ME_ii(:,3)-res_me/(W_bss%p(:)-E_plus_W(i_pert_SOC))
+           ME_ij(:,1,3)=ME_ij(:,1,3)-res_me(1)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
+           ME_ij(:,2,3)=ME_ij(:,2,3)-res_me(2)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
+           ME_ij(:,3,3)=ME_ij(:,3,3)-res_me(3)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
            if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
-             ME_ii(:,3)=ME_ii(:,3)+conjg(res_me)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+             ME_ij(:,1,3)=ME_ij(:,1,3)+conjg(res_me(1))/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+             ME_ij(:,2,3)=ME_ij(:,2,3)+conjg(res_me(2))/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+             ME_ij(:,3,3)=ME_ij(:,3,3)+conjg(res_me(3))/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
            endif
        endif
      enddo
@@ -355,7 +365,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if (l_BS_abs) Resp_ii(:,3) = Resp_ii(:,3) * FG_factor
  !
- if (l_BS_magnetoelectric) ME_ii(:,3) = ME_ii(:,3) * FG_factor
+ ! if (l_BS_magnetoelectric) ME_ij(:,:,3) = ME_ij(:,:,3) * FG_factor
  !
  ! Sorting procedure
  !===================
@@ -399,8 +409,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  endif
  !
  if(l_BS_magnetoelectric) then
-   call PP_redux_wait( ME_ii(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-   call PP_redux_wait( ME_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
+   call PP_redux_wait( ME_ij(:,:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait( ME_ij(:,:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
  endif
 
  !
@@ -436,7 +446,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if (l_BS_magnons) X_magnons(:,:,3)=X_magnons(:,:,3)*Co_factor/(4._SP*pi)
  !
- if (l_BS_magnetoelectric) ME_ii(:,3)=ME_ii(:,3)*(-1._SP*Co_factor/(8._SP*pi))
+ if (l_BS_magnetoelectric) ME_ij(:,:,3)=ME_ij(:,:,3)*(-1._SP*Co_factor/(8._SP*pi))
  !
  if (     l_rpa_IP) call K_OUTPUT(iq,W_bss,"open dump IP close reset","optics kerr magnons PL dichroism magnetoelectric")
  call K_OUTPUT(iq,W_bss,"open dump close reset bare","E_IP E_INDX_IP")

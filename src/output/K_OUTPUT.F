@@ -19,7 +19,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use X_m,            ONLY:Epsilon_ii,eps_2_alpha,X_OUTPUT_driver,Epsilon_ij,&
 &                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,&
 &                         BS_E_sorted_indx,X_magnons,i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus,&
-&                         Resp_ii,Resp_ij,l_drude,skip_cond_sum_rule,X_drude_term,global_gauge,ME_ii
+&                         Resp_ii,Resp_ij,l_drude,skip_cond_sum_rule,X_drude_term,global_gauge,ME_ij
  use com,            ONLY:msg,com_compose_msg
  use R_lattice,      ONLY:bare_qpg,FineGd_desc,nkbz
  use electrons,      ONLY:spin_occ
@@ -312,14 +312,9 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
 
  ! MAGNETOELECTRIC
  !------------
-if (X_do_obs("ME")) then
-   !do i_rsp=1,n_resp
-   !spectra(:,i_rsp) = cmplx(ME_ii(:, i_rsp+1), kind=DP)
-   !enddo
-   !call get_from_Lbar_or_Lfull_inverted(tmp_var_DP, spectra)
-   !ME_ii(:,2:4) = cmplx(tmp_var_DP, kind=SP)
-   call ELEMENTAL_dump("ME", ME_ii(:,2:))
-endif
+if (X_do_obs("MEx")) call ELEMENTAL_dump("MEx", ME_ij(:,1,2:))
+if (X_do_obs("MEy")) call ELEMENTAL_dump("MEy", ME_ij(:,2,2:))
+if (X_do_obs("MEz")) call ELEMENTAL_dump("MEz", ME_ij(:,3,2:))
 
 
  if (STRING_match(WHAT,"close")) call X_OUTPUT_driver("close "//OBS)

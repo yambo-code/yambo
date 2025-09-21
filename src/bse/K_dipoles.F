@@ -232,6 +232,13 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
        if (BS_K_coupling.and.l_BS_ares_from_res) then          ! This is the right A residual associated to (eps_v\up-eps_c\dn)
          BS_T_grp(i_T_g)%dipoles_mag(1,i_T,2)=DIP_Smins        ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c)
          BS_T_grp(i_T_g)%dipoles_mag(2,i_T,2)=DIP_Splus        ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c)
+         if (l_BS_magnetoelectric) then
+           BS_T_grp(i_T_g)%dipoles_mag(3,i_T,2)=DIP_expanded(3)
+         endif
+       endif
+
+       if (l_BS_magnetoelectric) then
+         BS_T_grp(i_T_g)%dipoles_mag(3,i_T,1)=DIP_expanded(3)
        endif
        !
      endif

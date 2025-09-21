@@ -11,7 +11,8 @@ subroutine DIPOLE_setup(Dip)
  use DIPOLES,        ONLY:DIPOLE_t,x_space_obs,g_space_obs,covariant_obs,shifted_grids_obs,&
 &                         der_k_obs,specific_obs,eval_OVERLAPS
  use IO_m,           ONLY:io_DIP
- use BS,             ONLY:BSE_prop,l_BS_magnons,l_BS_dichroism,l_BS_photolum
+ use BS,             ONLY:BSE_prop,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
+&                         l_BS_magnetoelectric
  use electrons,      ONLY:n_spin,n_spinor
  use parser_m,       ONLY:parser
  use stderr,         ONLY:STRING_same,STRING_match
@@ -43,9 +44,10 @@ subroutine DIPOLE_setup(Dip)
  !
  ! Observables (needed later)
  !----------------------------
- l_BS_magnons=   (index(BSE_prop,'magn')/=0)
- l_BS_dichroism= (index(BSE_prop,'dich')/=0)
- l_BS_photolum=  (index(BSE_prop,'photolum')/=0)
+ l_BS_magnons=         (index(BSE_prop,'magn')/=0)
+ l_BS_dichroism=       (index(BSE_prop,'dich')/=0)
+ l_BS_photolum=        (index(BSE_prop,'photolum')/=0)
+ l_BS_magnetoelectric= (index(BSE_prop,'ME')/=0)
  call parser('ImposeAsymBSE',l_flag)
  if(.not.l_flag) call parser('ImposeFullBSE',l_flag)
  !
@@ -139,7 +141,9 @@ subroutine DIPOLE_setup(Dip)
  ! ...M_spin, M_orb (CD or RT version), M_iti
  specific_obs=""
  if (n_spin>1) then
-   if (STRING_match(Dip%computed,"spin").or.l_BS_magnons) specific_obs=" M_spin"
+   if (STRING_match(Dip%computed,"spin").or.&
+       l_BS_magnons.or.&
+       l_BS_magnetoelectric) specific_obs=" M_spin"
    if (STRING_match(Dip%computed,"orb")) specific_obs=trim(specific_obs)//" M_orbRT M_it"
 #if defined _RT
    ! Always force all dipoles in real-time case

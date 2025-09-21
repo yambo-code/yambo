@@ -36,7 +36,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
  ! Work Space
  integer            ::it,itp,ik,ic
  character(schlen)  ::key(10),BASIC_col(7)
- character(5)       ::obs_with_res(8)
+ character(5)       ::obs_with_res(7)
  logical            ::l_flag,l_print_res
  !
  if (STRING_match(WHAT,"DEF")) then
@@ -56,7 +56,9 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
    call ELEMENTAL_init(14,"CD","Dichroism","dichroism")
    call ELEMENTAL_init(15,"Spm","Magnons (S+-)","magnons")
    call ELEMENTAL_init(16,"Smp","Magnons (S-p)","magnons")
-   call ELEMENTAL_init(17,"ME","Magnetoelectric","magnetoelectric")
+   call ELEMENTAL_init(17,"MEx","Magnetoelectric (Mx)","magnetoelectric")
+   call ELEMENTAL_init(18,"MEy","Magnetoelectric (My)","magnetoelectric")
+   call ELEMENTAL_init(19,"MEz","Magnetoelectric (Mz)","magnetoelectric")
  endif
  !
  if (STRING_match(WHAT,"INIT")) then
@@ -90,7 +92,12 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
    if (l_BS_magnons) call X_obs_onoff("+ Spm")
    if (l_BS_magnons.and.n_spinor==2) call X_obs_onoff("+ Smp")
    if (l_BS_dichroism) call X_obs_onoff("+ CD")
-   if (l_BS_magnetoelectric) call X_obs_onoff("+ ME")
+   if (l_BS_magnetoelectric) then 
+     call X_obs_onoff("+ MEx")
+     call X_obs_onoff("+ MEy")
+     call X_obs_onoff("+ MEz")
+   endif
+
 
    !
    !...solvers specific
@@ -132,7 +139,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
        X_obs(4)%N_columns=3
        X_obs(4)%COL_header(1:3)  = (/'Re(E)','Im(E)','N_deg'/)
      endif
-     obs_with_res=[character(5) :: "eps","alpha","Spm","Smp","off","beta","CD","ME" ]
+     obs_with_res=[character(5) :: "eps","alpha","Spm","Smp","off","beta","CD" ]
      do it=1,N_X_obs
        if (.not.X_do_obs(trim(X_obs(it)%what))) cycle
        l_print_res=.false.

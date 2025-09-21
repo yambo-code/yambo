@@ -43,7 +43,7 @@ subroutine K_observables(W,Xk)
  l_BS_magnons         = STRING_match(BSE_prop,'magn') .and.n_spin>1
  l_BS_kerr_asymm      = STRING_match(BSE_prop,'asymm') .and. l_BS_kerr
  l_BS_anomalous_Hall  = STRING_match(BSE_prop,'anHall') .and. l_BS_kerr
- l_BS_magnetoelectric = STRING_match(BSE_prop,'ME')
+ l_BS_magnetoelectric = STRING_match(BSE_prop,'ME') .and.n_spin>1
  !
  ! How ...
  !---------

@@ -318,8 +318,11 @@ module BS
      !
      YAMBO_ALLOC(BS_T_grp(iT)%dipoles_opt,(BS_dip_size,nT,nDIP))
      BS_T_grp(iT)%dipoles_opt=cZERO
-     if(l_BS_magnons.or.l_BS_magnetoelectric) then
+     if(l_BS_magnons) then
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_mag,(2,nT,nDIP))
+     endif
+     if(l_BS_magnetoelectric) then
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_mag,(3,nT,nDIP))
      endif
      if(l_BS_dichroism) then
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_dic,(BS_dip_size,nT,nDIP))

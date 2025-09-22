@@ -243,25 +243,27 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      endif
      if(l_BS_magnetoelectric) then
 
-       ! TODO: Figure out what's the best way to get sigma_x, sigma_y, and sigma_z
-       ! Here they are hard-coded. Agreement with DIP_spin database
-       ! when conjg (why?)
+       ! Dipole residuals: res_me(i) = <vk|sigma_i|ck> * <ck|r_j|vk>
+       ! BSE dipoles stored according to:
+       ! BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=<ck|sigma_x+i*sigma_y|vk>/2
+       ! BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=<ck|sigma_x-i*sigma_y|vk>/2
+       ! BS_T_grp(i_T_g)%dipoles_mag(3,i_T,1)=<vk|sigma_z|ck>
 
-       ! Sx
+       ! sigma_x
        res_me(1)=conjg(BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)+&
                        BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1))
-       res_me(1)=res_me(1)*(-cI*BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
+       res_me(1)=res_me(1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
        res_me(1)=res_me(1)*f_eh*Z_eh/(q0_def_norm)
 
-       ! Sy
+       ! sigma_y
        res_me(2)=-cI*conjg(BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)-&
                            BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1))
-       res_me(2)=res_me(2)*(-cI*BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
+       res_me(2)=res_me(2)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
        res_me(2)=res_me(2)*f_eh*Z_eh/(q0_def_norm)
 
-       ! Sz
+       ! sigma_z
        res_me(3)=BS_T_grp(i_T_g)%dipoles_mag(3,i_T,1)
-       res_me(3)=res_me(3)*(-cI*BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
+       res_me(3)=res_me(3)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
        res_me(3)=res_me(3)*f_eh*Z_eh/(q0_def_norm)
 
        if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me,vtmpC)

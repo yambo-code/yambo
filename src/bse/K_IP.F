@@ -266,7 +266,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        res_me(3)=res_me(3)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
        res_me(3)=res_me(3)*f_eh*Z_eh/(q0_def_norm)
 
-       if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me,vtmpC)
+       ! This I'm not so sure about...
+       if (l_BS_esort.and.i_res_ares==1) then 
+         call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me(1),vtmpC)
+         call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me(2),vtmpC)
+         call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me(3),vtmpC)
+       endif
      endif
      !
      if ( abs(real(E_plus_W0)) < Dip%Energy_threshold .and. iq==1 .and. dip_r ) then
@@ -366,8 +371,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  call live_timing()
  !
  if (l_BS_abs) Resp_ii(:,3) = Resp_ii(:,3) * FG_factor
- !
- ! if (l_BS_magnetoelectric) ME_ij(:,:,3) = ME_ij(:,:,3) * FG_factor
  !
  ! Sorting procedure
  !===================

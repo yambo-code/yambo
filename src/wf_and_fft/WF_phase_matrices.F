@@ -33,7 +33,7 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  use matrix_operate,    ONLY:m3det!,UP_matrix_index
  use vec_operate,       ONLY:degeneration_finder
  use parallel_m,        ONLY:PAR_IND_WF_k,PAR_IND_WF_b,PAR_IND_B_mat
- use parallel_int,      ONLY:PP_redux_wait,PARALLEL_WF_index,PARALLEL_WF_distribute
+ use parallel_int,      ONLY:PP_wait,PP_redux_wait,PARALLEL_WF_index,PARALLEL_WF_distribute
  use interfaces,        ONLY:WF_symm_kpoint_g,WF_load,WF_free,eval_G_minus_G
  use IO_int,            ONLY:io_control
  use IO_m,              ONLY:VERIFY,DUMP,REP,OP_WR,WR,WR_CL,OP_RD_CL
@@ -274,6 +274,8 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  io_err=io_WF_phases(blim,0,0,0,ID,nsz)
  !
  YAMBO_FREE(WF_phases_b_map)
+ !
+ call PP_wait()
  !
  call timing("WF_phases",OPR="stop")
  !

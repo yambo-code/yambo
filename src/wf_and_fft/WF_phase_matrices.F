@@ -175,9 +175,10 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
          ! spin_sop with time-reversal are not a space group
          ! I need to build the composed spin symmetry operator
          !
-         ! OPTION 2 (disabled): directly compute composed spin symmetry
+         ! (disabled if n_spinor=2)
+         ! OPTION 2: directly compute composed spin symmetry
          if(n_spinor==2.and.opt2) then
-	   ! The following code is probably wrong
+           ! The following code is probably wrong
            s1=spin_sop(:,:,isk)
            s2=spin_sop(:,:,isloop)
            !if (isloop>nsym/(1+i_time_rev)) s1=conjg(s1)
@@ -206,7 +207,8 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
            call WF_symm_kpoint_g(blim,ik,i_sp_pol,isloop,iGloop,WF_Rk_c,isref=isk,iGref=iGk)
          endif
          !
-         ! OPTION 2 (disabled): Use the composed symmetry, importing the composed spin soc
+         ! (disabled if n_spinor=2)
+         ! OPTION 2: Use the composed symmetry, importing the composed spin soc
          if (opt2) then
            call WF_copy(WF_k,WF_Rk_c)
            call WF_symm_kpoint_g(blim,ik,i_sp_pol,isk_c,iGk_c,WF_Rk_c,ssop=spin_sop_composed)

@@ -211,8 +211,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #else
  call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit,verb_level=V_general)
 #endif
- call it(defs,'EXCTemp', '[EXCPH] Excitonic Temperature (for luminescence spectra)',Boltz_Temp,T_unit)
- call it(defs,'BoseCut', '[BOSE] Finite T Bose function cutoff',bose_E_cut,verb_level=V_general)
+ call it(defs,'EXCTemp', 'Excitonic Temperature (for luminescence spectra and EXCPH)',Boltz_Temp,T_unit)
+ call it(defs,'BoseCut', 'Finite T Bose function cutoff',bose_E_cut,verb_level=V_general)
 #if defined _ELPH 
  call it('f',defs,'BSEscatt', '[KPT] Compute extended k/q scatering',verb_level=V_kpt)
 call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level=V_ph) 
@@ -698,7 +698,6 @@ call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level
  call it(defs,'ELPhExcStates', '[EXCPH] Incoming (external) exciton states',EXCPH_states)
  call it(defs,'ELPhExcSum',    '[EXCPH] Outgoing (virtual) exciton states',EXCPH_sum)
  call it(defs,'LoutPath',      '[EXCPH] Path of the outgoing L',Lout_path)
- call it(defs,'EXCTemp'       ,'[EXCPH] Excitonic Temperature (for luminescence spectra)',Boltz_Temp,T_unit)
  call it(defs,'AlphaQ'       ,'[EXCPH] Excitonic band structure 2D distortion',alphaQ)
  call it(defs,'EXCLongDr'     ,'[EXCPH] Electric field versor for the excitons',EXC_q0)
  !

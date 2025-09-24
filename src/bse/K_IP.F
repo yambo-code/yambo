@@ -247,26 +247,25 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        ! BSE dipoles stored according to:
        ! BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=<ck|sigma_x+i*sigma_y|vk>/2
        ! BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=<ck|sigma_x-i*sigma_y|vk>/2
-       ! BS_T_grp(i_T_g)%dipoles_mag(3,i_T,1)=<vk|sigma_z|ck>
+       ! BS_T_grp(i_T_g)%dipoles_mag(3,i_T,1)=<ck|sigma_z|vk>
 
-       ! sigma_x
+       ! <vk|sigma_x|ck><ck|r_j|vk>
        res_me(1)=conjg(BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)+&
                        BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1))
-       res_me(1)=res_me(1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
+       res_me(1)=res_me(1)*BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)
        res_me(1)=res_me(1)*f_eh*Z_eh/(q0_def_norm)
 
-       ! sigma_y
-       res_me(2)=-cI*conjg(BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)-&
-                           BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1))
-       res_me(2)=res_me(2)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
+       ! <vk|sigma_y|vk><vk|r_j|ck>
+       res_me(2)=conjg(cI*(BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)-&
+                       BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)))
+       res_me(2)=res_me(2)*BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)
        res_me(2)=res_me(2)*f_eh*Z_eh/(q0_def_norm)
 
-       ! sigma_z
-       res_me(3)=BS_T_grp(i_T_g)%dipoles_mag(3,i_T,1)
-       res_me(3)=res_me(3)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
+       ! <vk|sigma_z|ck><vk|r_j|ck>
+       res_me(3)=conjg(BS_T_grp(i_T_g)%dipoles_mag(3,i_T,1))
+       res_me(3)=res_me(3)*BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)
        res_me(3)=res_me(3)*f_eh*Z_eh/(q0_def_norm)
 
-       ! This I'm not so sure about...
        if (l_BS_esort.and.i_res_ares==1) then 
          call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me(1),vtmpC)
          call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me(2),vtmpC)

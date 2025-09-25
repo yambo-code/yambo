@@ -244,7 +244,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if(l_BS_magnetoelectric) then
 
        ! Dipole residuals: res_me(i) = <vk|sigma_i|ck> * <ck|r_j|vk>
-       ! BSE dipoles stored according to:
+       ! BSE dipoles_mag:
        ! BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=<ck|sigma_x+i*sigma_y|vk>/2
        ! BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=<ck|sigma_x-i*sigma_y|vk>/2
        ! BS_T_grp(i_T_g)%dipoles_mag(3,i_T,1)=<ck|sigma_z|vk>

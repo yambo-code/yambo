@@ -233,12 +233,12 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
          BS_T_grp(i_T_g)%dipoles_mag(1,i_T,2)=DIP_Smins        ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c)
          BS_T_grp(i_T_g)%dipoles_mag(2,i_T,2)=DIP_Splus        ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c)
          if (l_BS_magnetoelectric) then
-           BS_T_grp(i_T_g)%dipoles_mag(3,i_T,2)=conjg(DIP_expanded(3))
+           BS_T_grp(i_T_g)%dipoles_mag(3,i_T,2)=DIP_expanded(3)
          endif
        endif
-
+       !
        if (l_BS_magnetoelectric) then
-         BS_T_grp(i_T_g)%dipoles_mag(3,i_T,1)=DIP_expanded(3)
+         BS_T_grp(i_T_g)%dipoles_mag(3,i_T,1)=conjg(DIP_expanded(3))
        endif
        !
      endif

@@ -43,13 +43,14 @@ void title_lumen(FILE *file_name, char *cmnt, struct tool_struct t)
     char *tool = running_tool();
     char *pj = running_project();
     char *libs = running_libraries();
-    fprintf(file_name, "%s%s\n", cmnt, " _ ");
-    fprintf(file_name, "%s%s\n", cmnt, "| |");
-    fprintf(file_name, "%s%s\n", cmnt, "| |        _   _ _ ______   ____  ___");
-    fprintf(file_name, "%s%s\n", cmnt, "| |       | | | | '_     \\/ _  \\ _` \\");
-    fprintf(file_name, "%s%s\n", cmnt, "| |       | | | | | | | | |  ___/ | | |");
-    fprintf(file_name, "%s%s\n", cmnt, "| |___    | |_| | | | | | |    _  | | |");
-    fprintf(file_name, "%s%s\n", cmnt, "\\____/  \\__,__|_| |_| |_/\\___|_| |_|");
+    fprintf(file_name, "%s%s\n", cmnt, "  _ ");
+    fprintf(file_name, "%s%s\n", cmnt, " | |");
+    fprintf(file_name, "%s%s\n", cmnt, " | |     _   _ _ __ ___   ____  __ _");
+    fprintf(file_name, "%s%s\n", cmnt, " | |    | | | | '_ ' _  \\/ _  \\/ _` \\");
+    fprintf(file_name, "%s%s\n", cmnt, " | |    | | | | | | | | |  ___/ | | |");
+    fprintf(file_name, "%s%s\n", cmnt, " | |___ | |_| | | | | | |  \\__| | | |");
+    fprintf(file_name, "%s%s\n", cmnt, " \\_____/\\__,__|_| |_| |_/\\____|_| |_|");
+    fprintf(file_name, "%s%s\n", cmnt, " ");
     fprintf(file_name, "%s '%s' \n", cmnt, t.desc);
     if (strlen(pj) > 0)
     {

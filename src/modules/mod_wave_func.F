@@ -60,7 +60,7 @@ module wave_func
  !
  ! Max Num. of G-VECTORS for the WFs maxval(wf_igk) > wf_ncx
  !
- integer                :: wf_ng          ! For WFs in the    IBZ
+ integer                :: wf_ng          ! For WFs in the    IBZ (may be later overwritten, e.g. by io_COL_CUT)
  integer                :: wf_ng_1st_BZ   ! For WFs in the 1st BZ
  integer                :: wf_ng_overlaps ! For WFs shifted used by the overlaps
  integer                :: cutoff_ng      ! For G-vectors used in cutoff (if read, may be different from wf_ng)
@@ -85,6 +85,11 @@ module wave_func
  integer,    allocatable DEV_ATTR :: wf_igk_d(:,:)
  logical                :: wf_norm_test
  !
+ ! Wave function phases
+ !
+ integer,     allocatable :: WF_phases_b_map(:,:,:,:)
+ complex(SP), allocatable :: WF_phases(:,:,:,:,:)
+ !
  interface
    !
    integer function io_WF(ID,wf)
@@ -92,6 +97,15 @@ module wave_func
      integer            :: ID
      complex(SP), optional :: wf(:,:,:)
    end function
+   !
+   integer function io_WF_phases(nb,ik,istark,i_sp_pol,ID,nsz,WF_phases)
+     use pars,        ONLY: SP
+     use electrons,   ONLY: n_max_deg
+     use D_lattice,   ONLY: nsym
+     integer               :: nb(2),ik,istark,i_sp_pol,ID
+     integer, intent(in)   :: nsz(5)
+     complex(SP), optional :: WF_phases(:,:,:,:,:)
+   end function io_WF_phases
    !
  end interface 
  !

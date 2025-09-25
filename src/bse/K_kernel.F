@@ -220,7 +220,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  if( l_BSE_kernel_complete ) return
  !
  io_QINDX_err=0
- if (l_bs_corr) io_QINDX_err=qindx_B_init(qindx_ID,qindx_ID_frag)
+ if (l_bs_corr) io_QINDX_err=qindx_B_init(qindx_ID,qindx_ID_frag,"minus_q")
  if(io_QINDX_err/=0) call error('Error reading qindx_B database ')
  !
  ! Screened interaction

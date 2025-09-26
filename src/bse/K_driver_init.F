@@ -183,8 +183,8 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  ! BSE_L_kind check
  !==============
- if (.not.STRING_match(BSE_L_kind,"bar").and..not.STRING_match(BSE_L_kind,"full")) &
- & call error('set Lkind = DEFAULT or BAR or FULL')
+ if (.not.STRING_match(BSE_L_kind,"bar").and..not.STRING_match(BSE_L_kind,"full").and..not.STRING_match(BSE_L_kind,"tilde")) &
+ &   call error('set Lkind = DEFAULT or BAR or FULL or TILDE')
  !
  BS_K_is_ALDA=l_alda_fxc
  if (l_alda_fxc) then

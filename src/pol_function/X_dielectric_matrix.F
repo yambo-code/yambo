@@ -67,6 +67,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  !
  call X_AVERAGE_setup("INIT",-1,X%q0)
  !
+ ! Some check
+ !
+ if(X%ib(2)>Xen%nb) call warning("More bands required in X than available in the current SAVE.")
+ !
  l_X_terminator = X_terminator_Kind/='none'
  if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') then
    call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
@@ -190,13 +194,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
      call FREQUENCIES_reset(Xw,"all")
      if (X%iq(1)==X%iq(2)) X_dielectric_matrix=X%iq(1)
      return
+   else
+     if(X%ib(2)>Xen%nb) call error("Too many bands required in X. Run DFT with more bands!") 
    endif
    !
  endif
- !
- ! Some check
- !
- if(X%ib(2)>Xen%nb) call error("Too many bands required in X. Run DFT with more bands!")
  !
  ! Parallel distribution
  !=======================

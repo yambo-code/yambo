@@ -45,6 +45,7 @@ module EXCPH
  complex(SP), allocatable :: EXCPH_Gkkp(:,:,:)
  real(SP),    allocatable :: EXCPH_Gkkp_sq(:,:,:)
  integer                  :: n_exc_in
+ integer                  :: n_exc_out
  integer                  :: EXCPH_states(2)    ! External states
  integer                  :: EXCPH_sum(2)       ! Internal states ("virtual")
  integer                  :: EXCPH_interband(2) ! Interband states

@@ -35,7 +35,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use EXCPH,          ONLY:BS_mat_in,BS_mat_out,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,BS_E_in,BS_E,BSS_eh_table_m1_in,&
 &                         EXCPH_states,EXCPH_sum,k_plus_q_table,build_Q_map,EXCPH_q, &
 &                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,l_const_elph,l_abs_elph,l_abs_exc,l_elec_only,l_hole_only, &
-&                         n_exc_in,BSE_alloc,BSE_free,BSE_in_alloc,BSE_out_alloc,BSE_in_free
+&                         n_exc_in,n_exc_out,BSE_alloc,BSE_free,BSE_in_alloc,BSE_out_alloc,BSE_in_free
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
  use com,            ONLY:msg
@@ -64,7 +64,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! Define n_exc_in
  !
- n_exc_in=EXCPH_states(2)-EXCPH_states(1)+1
+ n_exc_in= EXCPH_states(2)-EXCPH_states(1)+1
+ n_exc_out=EXCPH_sum(2)   -EXCPH_sum(1)+1
  ! Sorting index is trivial, no sorting done in exc-ph.
  do il=EXCPH_states(1),EXCPH_States(2)
    S_index(il)=il
@@ -208,7 +209,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      !
      BS_mat_out=cZERO
      ! Here we obtain the rotated BS_mat_out at iq_bz
-     call EXC_WF_symm_qpoint(k,q,EXCPH_states(1),n_exc_in,iq,iq_s,1,ID_phases,S_index,BS_mat_out,l_min_mem)
+     call EXC_WF_symm_qpoint(k,q,EXCPH_states(1),n_exc_out,iq,iq_s,1,ID_phases,S_index,BS_mat_out,l_min_mem)
      !
      EXCPH_gkkp          =cZERO
      EXCPH_gkkp_sq       =rZERO

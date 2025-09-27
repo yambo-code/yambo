@@ -56,9 +56,8 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
    call ELEMENTAL_init(14,"CD","Dichroism","dichroism")
    call ELEMENTAL_init(15,"Spm","Magnons (S+-)","magnons")
    call ELEMENTAL_init(16,"Smp","Magnons (S-p)","magnons")
-   call ELEMENTAL_init(17,"MEx","Magnetoelectric (Mx)","magnetoelectric")
-   call ELEMENTAL_init(18,"MEy","Magnetoelectric (My)","magnetoelectric")
-   call ELEMENTAL_init(19,"MEz","Magnetoelectric (Mz)","magnetoelectric")
+   call ELEMENTAL_init(17,"MEspin","Magnetoelectric (spin)","magnetoelectric")
+   call ELEMENTAL_init(18,"MEorb" ,"Magnetoelectric (orbital)","magnetoelectric")
  endif
  !
  if (STRING_match(WHAT,"INIT")) then
@@ -93,9 +92,8 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
    if (l_BS_magnons.and.n_spinor==2) call X_obs_onoff("+ Smp")
    if (l_BS_dichroism) call X_obs_onoff("+ CD")
    if (l_BS_magnetoelectric) then 
-     call X_obs_onoff("+ MEx")
-     call X_obs_onoff("+ MEy")
-     call X_obs_onoff("+ MEz")
+     call X_obs_onoff("+ MEspin")
+     call X_obs_onoff("+ MEorb")
    endif
 
 

@@ -15,18 +15,19 @@ subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
  ! BS_R_right_XX(i)=<q0_XX|j><j|i_R>
  !                 =conjg(BSS_dipoles(j))*BS_V_right(j,i)
  !
- use pars,           ONLY:SP,cZERO
- use stderr,         ONLY:intc
- use wrapper_omp,    ONLY:V_dot_V_omp
- use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset,ncpu
- use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
- use LIVE_t,         ONLY:live_timing
- use X_m,            ONLY:global_gauge
- use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_Z,BSS_eh_f,BSS_dipoles_opt
- use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,&
- &                        l_BS_res_from_E,BS_not_const_eh_f
- use MAGNONS,        ONLY:BSS_dipoles_magn
- use DICHROISM,      ONLY:BSS_dipoles_dich
+ use pars,            ONLY:SP,cZERO
+ use stderr,          ONLY:intc
+ use wrapper_omp,     ONLY:V_dot_V_omp
+ use parallel_m,      ONLY:PP_indexes,myid,PP_indexes_reset,ncpu
+ use parallel_int,    ONLY:PP_redux_wait,PARALLEL_index 
+ use LIVE_t,          ONLY:live_timing
+ use X_m,             ONLY:global_gauge
+ use BS_solvers,      ONLY:BSS_eh_E,BSS_eh_Z,BSS_eh_f,BSS_dipoles_opt
+ use BS,              ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,&
+ &                         l_BS_res_from_E,BS_not_const_eh_f
+ use MAGNONS,         ONLY:BSS_dipoles_magn
+ use DICHROISM,       ONLY:BSS_dipoles_dich
+ use MAGNETOELECTRIC, ONLY:BSS_dipoles_me
  !
  implicit none
  !
@@ -101,6 +102,8 @@ subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
  if(trim(mode)=="opt2") tmp_res=BSS_dipoles_opt(2,res_range(1):res_range(2))
  if(trim(mode)=="dic1") tmp_res=BSS_dipoles_dich(1,res_range(1):res_range(2)) 
  if(trim(mode)=="dic2") tmp_res=BSS_dipoles_dich(2,res_range(1):res_range(2)) 
+ if(trim(mode)=="me1")  tmp_res=BSS_dipoles_me(1,res_range(1):res_range(2)) 
+ if(trim(mode)=="me2")  tmp_res=BSS_dipoles_me(2,res_range(1):res_range(2)) 
  if(trim(mode)=="mag1") tmp_res=BSS_dipoles_magn(1,res_range(1):res_range(2))
  if(trim(mode)=="mag2") tmp_res=BSS_dipoles_magn(2,res_range(1):res_range(2))
  !

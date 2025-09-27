@@ -241,36 +241,63 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        if(n_spinor==2) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_magn(2),vtmpC)
          endif
      endif
+     !
      if(l_BS_magnetoelectric) then
 
+       ! Spin part
+       res_me(1)=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_spin(1,i_T,1))
+       if(l_BS_trace) then
+         ! x*sigma = DIP_x*DIP_spin;
+         res_me(1)=(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_spin(1,i_T,1))+     &
+         &          BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_spin(2,i_T,1))+     &
+         &          BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_spin(3,i_T,1)))/3._SP
+       endif
+       res_me(1)=res_me(1)*f_eh*Z_eh/(q0_def_norm)
+
+       ! Orbital part
+       res_me(2)=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(1,i_T,1))
+       if(l_BS_trace) then
+         ! x*L = DIP_x*DIP_orbital;
+         res_me(2)=(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(1,i_T,1))+     &
+         &          BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(2,i_T,1))+     &
+         &          BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(3,i_T,1)))/3._SP
+       endif
+       res_me(2)=res_me(2)*f_eh*Z_eh/(q0_def_norm)
+
+       if (l_BS_esort.and.i_res_ares==1) then 
+         call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me(1),vtmpC)
+         call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me(2),vtmpC)
+       endif
+
+       ! Old part to be deleted...
        ! Dipole residuals: res_me(i) = <vk|sigma_i|ck> * <ck|r_j|vk>
        ! BSE dipoles_mag:
        ! BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=<ck|sigma_x+i*sigma_y|vk>/2
        ! BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=<ck|sigma_x-i*sigma_y|vk>/2
        ! BS_T_grp(i_T_g)%dipoles_mag(3,i_T,1)=<ck|sigma_z|vk>
-
        ! <vk|sigma_x|ck><ck|r_j|vk>
-       res_me(1)=conjg(BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)+&
-                       BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1))
-       res_me(1)=res_me(1)*BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)
-       res_me(1)=res_me(1)*f_eh*Z_eh/(q0_def_norm)
 
-       ! <vk|sigma_y|vk><vk|r_j|ck>
-       res_me(2)=conjg(cI*(BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)-&
-                       BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)))
-       res_me(2)=res_me(2)*BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)
-       res_me(2)=res_me(2)*f_eh*Z_eh/(q0_def_norm)
+       ! res_me(1)=conjg(BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)+&
+       !                 BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1))
+       ! res_me(1)=res_me(1)*BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)
+       ! res_me(1)=res_me(1)*f_eh*Z_eh/(q0_def_norm)
 
-       ! <vk|sigma_z|ck><vk|r_j|ck>
-       res_me(3)=conjg(BS_T_grp(i_T_g)%dipoles_mag(3,i_T,1))
-       res_me(3)=res_me(3)*BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)
-       res_me(3)=res_me(3)*f_eh*Z_eh/(q0_def_norm)
+       ! ! <vk|sigma_y|vk><vk|r_j|ck>
+       ! res_me(2)=conjg(cI*(BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)-&
+       !                 BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)))
+       ! res_me(2)=res_me(2)*BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)
+       ! res_me(2)=res_me(2)*f_eh*Z_eh/(q0_def_norm)
 
-       if (l_BS_esort.and.i_res_ares==1) then 
-         call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me(1),vtmpC)
-         call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me(2),vtmpC)
-         call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me(3),vtmpC)
-       endif
+       ! ! <vk|sigma_z|ck><vk|r_j|ck>
+       ! res_me(3)=conjg(BS_T_grp(i_T_g)%dipoles_mag(3,i_T,1))
+       ! res_me(3)=res_me(3)*BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)
+       ! res_me(3)=res_me(3)*f_eh*Z_eh/(q0_def_norm)
+
+       ! if (l_BS_esort.and.i_res_ares==1) then 
+       !   call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me(1),vtmpC)
+       !   call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me(2),vtmpC)
+       !   call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_me(3),vtmpC)
+       ! endif
      endif
      !
      if ( abs(real(E_plus_W0)) < Dip%Energy_threshold .and. iq==1 .and. dip_r ) then
@@ -351,11 +378,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        if (l_BS_magnetoelectric) then
            ME_ij(:,1,3)=ME_ij(:,1,3)-res_me(1)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
            ME_ij(:,2,3)=ME_ij(:,2,3)-res_me(2)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
-           ME_ij(:,3,3)=ME_ij(:,3,3)-res_me(3)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
            if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
              ME_ij(:,1,3)=ME_ij(:,1,3)+conjg(res_me(1))/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
              ME_ij(:,2,3)=ME_ij(:,2,3)+conjg(res_me(2))/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
-             ME_ij(:,3,3)=ME_ij(:,3,3)+conjg(res_me(3))/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
            endif
        endif
      enddo

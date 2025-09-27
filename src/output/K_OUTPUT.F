@@ -312,9 +312,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
 
  ! MAGNETOELECTRIC
  !------------
-if (X_do_obs("MEx")) call ELEMENTAL_dump("MEx", ME_ij(:,1,2:))
-if (X_do_obs("MEy")) call ELEMENTAL_dump("MEy", ME_ij(:,2,2:))
-if (X_do_obs("MEz")) call ELEMENTAL_dump("MEz", ME_ij(:,3,2:))
+if (X_do_obs("MEspin")) call ELEMENTAL_dump("MEspin", ME_ij(:,1,2:))
+if (X_do_obs("MEorb"))  call ELEMENTAL_dump("MEorb",  ME_ij(:,2,2:))
 
 
  if (STRING_match(WHAT,"close")) call X_OUTPUT_driver("close "//OBS)

@@ -84,6 +84,12 @@ subroutine K_observables(W,Xk)
      call warning(" Natural dichroism without trace. Quadripolar terms are neglected")
    endif
  endif
+ if (l_BS_magnetoelectric) then
+   if (.not.(l_col_cut.and.Xk%nbz==1) ) then
+     call warning(" Periodic system detected. Orbital ME tensor coded only for isolated systems")
+   endif
+   if (.not.l_BS_trace) BS_dip_size=2
+ endif
  !
  if (l_BS_trace   ) BS_dip_size = 3
  if (l_BS_trace .and. .not.l_rpa_IP) call error(" trace coded only at the IP level")

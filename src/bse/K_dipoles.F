@@ -182,14 +182,14 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
      endif
      !
      ! Dichroism
-     if (l_BS_dichroism) then
+     if (l_BS_dichroism.or.l_BS_magnetoelectric) then
        if(iq==1.and.i_G_shift==1) then  
          call DIPOLE_rotate(ic,iv,ik_bz,i_sp_pol_c,"DIP_L",Xk,DIP_expanded)
          do i_dip=1,BS_dip_size
            DIP_projected(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
          enddo
        else
-         call error(' finite q not implemented for dichroism')
+         call error(' finite q not implemented for dichroism or magnetoelectric effect')
        endif
        BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
        if (BS_K_coupling.and.l_BS_ares_from_res) then
@@ -197,7 +197,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
        endif
      endif
      !
-     ! Magnons
+     ! Magnons and Magnetoelectric
      if (l_BS_magnons.or.l_BS_magnetoelectric) then
        !
        ! notice:
@@ -218,29 +218,37 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
          DIP_expanded(3)=-conjg(BSE_scatt%rhotw(1))
        endif
        !
-       ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_c), to get <c|S-|v>(i_sp_pol_v) = conjg(<v|S+|c>(i_sp_pol_c))
-       ! DIP_Splus(c,v,k) is  <v|S+|c>(i_sp_pol_c), to get <c|S+|v>(i_sp_pol_v) = conjg(<v|S-|c>(i_sp_pol_c))
+       ! Magnons
+       if (l_BS_magnons) then
+         !
+         ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_c), to get <c|S-|v>(i_sp_pol_v) = conjg(<v|S+|c>(i_sp_pol_c))
+         ! DIP_Splus(c,v,k) is  <v|S+|c>(i_sp_pol_c), to get <c|S+|v>(i_sp_pol_v) = conjg(<v|S-|c>(i_sp_pol_c))
+         !
+         DIP_Splus = 0.5_SP*(DIP_expanded(1)+cI*DIP_expanded(2))  ! S+ for c\dn> transitions: <v\up|c\dn>
+         DIP_Smins = 0.5_SP*(DIP_expanded(1)-cI*DIP_expanded(2))  ! S- for c\up> transitions: <v\dn|c\up>
+         !
+         BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=conjg(DIP_Splus)   ! S- for |c\dn> trans: <c\dn|S-|v\up>(i_sp_pol_v) = conjg(<v\up|S+|c\dn>(i_sp_pol_c))
+         BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=conjg(DIP_Smins)   ! S+ for |c\up> trans: <c\dn|S+|v\up>(i_sp_pol_v) = conjg(<v\dn|S-|c\up>(i_sp_pol_c))
+                                                                 !      or the right R residual associated to (eps_c\dn-eps_v\up)
+                                                                 ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c) = conjg(<c\up|S+|v\dn>(i_sp_pol_v))
+                                                                 ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c) = conjg(<c\dn|S-|v\up>(i_sp_pol_v))
+         if (BS_K_coupling.and.l_BS_ares_from_res) then          ! This is the right A residual associated to (eps_v\up-eps_c\dn)
+           BS_T_grp(i_T_g)%dipoles_mag(1,i_T,2)=DIP_Smins        ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c)
+           BS_T_grp(i_T_g)%dipoles_mag(2,i_T,2)=DIP_Splus        ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c)
+         endif
+         !
+         endif
        !
-       DIP_Splus = 0.5_SP*(DIP_expanded(1)+cI*DIP_expanded(2))  ! S+ for c\dn> transitions: <v\up|c\dn>
-       DIP_Smins = 0.5_SP*(DIP_expanded(1)-cI*DIP_expanded(2))  ! S- for c\up> transitions: <v\dn|c\up>
-       !
-       BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=conjg(DIP_Splus)   ! S- for |c\dn> trans: <c\dn|S-|v\up>(i_sp_pol_v) = conjg(<v\up|S+|c\dn>(i_sp_pol_c))
-       BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=conjg(DIP_Smins)   ! S+ for |c\up> trans: <c\dn|S+|v\up>(i_sp_pol_v) = conjg(<v\dn|S-|c\up>(i_sp_pol_c))
-                                                               !      or the right R residual associated to (eps_c\dn-eps_v\up)
-                                                               ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c) = conjg(<c\up|S+|v\dn>(i_sp_pol_v))
-                                                               ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c) = conjg(<c\dn|S-|v\up>(i_sp_pol_v))
-       if (BS_K_coupling.and.l_BS_ares_from_res) then          ! This is the right A residual associated to (eps_v\up-eps_c\dn)
-         BS_T_grp(i_T_g)%dipoles_mag(1,i_T,2)=DIP_Smins        ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c)
-         BS_T_grp(i_T_g)%dipoles_mag(2,i_T,2)=DIP_Splus        ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c)
-         if (l_BS_magnetoelectric) then
-           BS_T_grp(i_T_g)%dipoles_mag(3,i_T,2)=DIP_expanded(3)
+       ! Magnetoelectric
+       if (l_BS_magnetoelectric) then
+         do i_dip=1,BS_dip_size
+           DIP_projected(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
+         enddo
+         BS_T_grp(i_T_g)%dipoles_spin(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
+         if (BS_K_coupling.and.l_BS_ares_from_res) then
+           BS_T_grp(i_T_g)%dipoles_spin(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
          endif
        endif
-       !
-       if (l_BS_magnetoelectric) then
-         BS_T_grp(i_T_g)%dipoles_mag(3,i_T,1)=conjg(DIP_expanded(3))
-       endif
-       !
      endif
      !
    enddo

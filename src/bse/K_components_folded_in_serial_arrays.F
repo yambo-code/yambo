@@ -12,19 +12,20 @@ subroutine K_components_folded_in_serial_arrays(iq)
  !
  ! See mod_BS on the K structure
  !
- use parallel_int,   ONLY:PP_redux_wait
- use parallel_m,     ONLY:PAR_COM_eh_INDEX,PAR_IND_T_groups,PAR_COM_Xk_ibz_INDEX
- use BS_solvers,     ONLY:BSS_eh_E_SOC_corr,&
-&                         BSS_dipoles_opt,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_f_RES,BSS_eh_W,BSS_eh_Z,BSS_alloc
- use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_T_grp,BS_K_coupling,BS_perturbative_SOC,&
-&                         BS_n_eh_spaces,l_BS_optics,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
-&                         BS_dip_size,BS_H_dim,l_BS_ares_from_res
- use timing_m,       ONLY:timing
- use LIVE_t,         ONLY:live_timing
- use MAGNONS,        ONLY:BSS_dipoles_magn,BSS_MAGN_alloc
- use DICHROISM,      ONLY:BSS_dipoles_dich,BSS_DICH_alloc
- use PHOTOLUM,       ONLY:BSS_dipoles_PL,BSS_PL_alloc,BSS_PL_f,PL_weights
- use timing_m,       ONLY:timing
+ use parallel_int,    ONLY:PP_redux_wait
+ use parallel_m,      ONLY:PAR_COM_eh_INDEX,PAR_IND_T_groups,PAR_COM_Xk_ibz_INDEX
+ use BS_solvers,      ONLY:BSS_eh_E_SOC_corr,&
+&                          BSS_dipoles_opt,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_f_RES,BSS_eh_W,BSS_eh_Z,BSS_alloc
+ use BS,              ONLY:BS_K_dim,BS_nT_grps,BS_T_grp,BS_K_coupling,BS_perturbative_SOC,&
+&                          BS_n_eh_spaces,l_BS_optics,l_BS_magnons,l_BS_dichroism,l_BS_magnetoelectruc
+&                          l_BS_photolum,BS_dip_size,BS_H_dim,l_BS_ares_from_res
+ use timing_m,        ONLY:timing
+ use LIVE_t,          ONLY:live_timing
+ use MAGNONS,         ONLY:BSS_dipoles_magn,BSS_MAGN_alloc
+ use DICHROISM,       ONLY:BSS_dipoles_dich,BSS_DICH_alloc
+ use MAGNETOELECTRIC, ONLY:BSS_dipoles_me,  BSS_ME_alloc
+ use PHOTOLUM,        ONLY:BSS_dipoles_PL,BSS_PL_alloc,BSS_PL_f,PL_weights
+ use timing_m,        ONLY:timing
  !
  implicit none
  !
@@ -48,6 +49,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
  !
  call BSS_alloc( )
  call BSS_MAGN_alloc( )
+ call BSS_DICH_alloc( )
  call BSS_DICH_alloc( )
  call BSS_PL_alloc( )
  !
@@ -107,6 +109,8 @@ subroutine K_components_folded_in_serial_arrays(iq)
        !
        if (l_BS_dichroism) BSS_dipoles_dich(:,H_pos)=BS_T_grp(i_g)%dipoles_dic(:,i_Tr,i_res_ares_solver)
        !
+       if (l_BS_magnetoelectric) BSS_dipoles_me(:,H_pos)=BS_T_grp(i_g)%dipoles_spin(:,i_Tr,i_res_ares_solver)
+       !
        if (l_BS_photolum) BSS_dipoles_PL(:,H_pos)=BS_T_grp(i_g)%dipoles_opt(:,i_Tr,i_res_ares_solver)*PL_weights(:BS_dip_size)
        !
      enddo
@@ -154,6 +158,11 @@ subroutine K_components_folded_in_serial_arrays(iq)
  if (l_BS_dichroism) then
    call PP_redux_wait(BSS_dipoles_dich,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait(BSS_dipoles_dich,COMM=PAR_COM_eh_INDEX%COMM)
+ endif
+ !
+ if (l_BS_magnetoelectric) then
+   call PP_redux_wait(BSS_dipoles_me,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait(BSS_dipoles_me,COMM=PAR_COM_eh_INDEX%COMM)
  endif
  !
  if (l_BS_photolum) then

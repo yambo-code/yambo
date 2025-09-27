@@ -17,17 +17,18 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  !
  !  Remember: 1/(w-H)= \sum_ij |i right><i left|j right>^{-1) <j left| /(w-E_i)
  !
- use pars,           ONLY:SP,cZERO
- use wrapper_omp,    ONLY:Vstar_dot_V_omp,V_dot_V_omp
- use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset,ncpu
- use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
- use LIVE_t,         ONLY:live_timing
- use X_m,            ONLY:global_gauge
- use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,&
- &                        l_BS_res_from_E,BS_not_const_eh_f
- use BS_solvers,     ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f
- use MAGNONS,        ONLY:BSS_dipoles_magn
- use DICHROISM,      ONLY:BSS_dipoles_dich
+ use pars,            ONLY:SP,cZERO
+ use wrapper_omp,     ONLY:Vstar_dot_V_omp,V_dot_V_omp
+ use parallel_m,      ONLY:PP_indexes,myid,PP_indexes_reset,ncpu
+ use parallel_int,    ONLY:PP_redux_wait,PARALLEL_index 
+ use LIVE_t,          ONLY:live_timing
+ use X_m,             ONLY:global_gauge
+ use BS,              ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,&
+ &                         l_BS_res_from_E,BS_not_const_eh_f
+ use BS_solvers,      ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f
+ use MAGNONS,         ONLY:BSS_dipoles_magn
+ use DICHROISM,       ONLY:BSS_dipoles_dich
+ use MAGNETOELECTRiC, ONLY:BSS_dipoles_me
  !
  implicit none
  !
@@ -112,6 +113,8 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  if(trim(mode)=="opt2") tmp_res=BSS_dipoles_opt(2,res_range(1):res_range(2))
  if(trim(mode)=="dic1") tmp_res=BSS_dipoles_dich(1,res_range(1):res_range(2)) 
  if(trim(mode)=="dic2") tmp_res=BSS_dipoles_dich(2,res_range(1):res_range(2)) 
+ if(trim(mode)=="me1")  tmp_res=BSS_dipoles_me(1,res_range(1):res_range(2)) 
+ if(trim(mode)=="me2")  tmp_res=BSS_dipoles_me(2,res_range(1):res_range(2)) 
  if(trim(mode)=="mag1") tmp_res=BSS_dipoles_magn(1,res_range(1):res_range(2))
  if(trim(mode)=="mag2") tmp_res=BSS_dipoles_magn(2,res_range(1):res_range(2))
  !

@@ -81,10 +81,10 @@ subroutine X_ALLOC_global(WHAT,W)
    if (X_do_obs("fxc")) call X_ALLOC_elemental("FXC",(/W%n_freqs/))
    !
    if (X_do_obs("magnetoelectric")) then
-     call X_ALLOC_elemental("ME",(/W%n_freqs,3,4/))
+     call X_ALLOC_elemental("ME",(/W%n_freqs,2,4/))
      ME_ij(:,1,1)=W%p(:)
      ME_ij(:,2,1)=W%p(:)
-     ME_ij(:,3,1)=W%p(:)
+     ME_ij=cZERO
    endif
  else if (WHAT=="FREE") then
    call X_ALLOC_elemental("FREE ALL")

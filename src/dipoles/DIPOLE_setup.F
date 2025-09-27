@@ -53,7 +53,14 @@ subroutine DIPOLE_setup(Dip)
  !
  ! Bands ordering
  !----------------
- if (l_BS_dichroism.or.l_BS_magnons .or. l_BS_photolum .or. l_flag) Dip%bands_ordered=.false.
+ if (l_BS_dichroism.or. &
+&    l_BS_magnons  .or. &
+&    l_BS_photolum .or. &
+&    l_flag        .or. &
+&    l_BS_magnetoelectric) then
+  Dip%bands_ordered=.false.
+endif
+ !
 #if defined _SLEPC && !defined _NL
  !if ( index(BSS_mode,'s')/=0 )  Dip%bands_ordered=.false.
 #endif
@@ -150,7 +157,9 @@ subroutine DIPOLE_setup(Dip)
    if (l_real_time) specific_obs=" M_spin M_orbRT M_it"
 #endif
  endif
- if (l_BS_dichroism) specific_obs=trim(specific_obs)//" M_orbCD"
+ if (l_BS_dichroism.or.l_BS_magnetoelectric) then
+  specific_obs=trim(specific_obs)//" M_orbCD"
+ endif
  ! 
  ! Computed components
  !---------------------

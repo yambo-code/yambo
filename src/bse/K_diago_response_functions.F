@@ -6,7 +6,8 @@
 ! Authors (see AUTHORS file for details): DS AM MG
 !
 subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
- &                    BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
+ &                    BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich, &
+                    & BS_R_right_me,BS_R_PL)
  !
  ! eps2(iw)= 1 - Sum  [BS_R_left(i)*BS_R_right(i)] / [w+i*eta - E(i)]  
  !
@@ -26,9 +27,10 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  use units,          ONLY:HA2EV
  use vec_operate,    ONLY:degeneration_finder,sort
  use BS_solvers,     ONLY:B_Hall,para_term_w0
- use X_m,            ONLY:Resp_ij,X_magnons,X_dichroism
+ use X_m,            ONLY:Resp_ij,X_magnons,X_dichroism,ME_ij
  use PHOTOLUM,       ONLY:PL,PL_prefactor
- use BS,             ONLY:l_BS_kerr,l_BS_kerr_asymm,l_BS_magnons,l_BS_photolum,l_BS_dichroism
+ use BS,             ONLY:l_BS_kerr,l_BS_kerr_asymm,l_BS_magnons,l_BS_photolum,&
+&                         l_BS_dichroism,l_BS_magnetoelectric
  !
  implicit none
  !
@@ -38,7 +40,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  complex(SP), pointer, intent(in) :: BS_R_left_abs(:),BS_R_right_abs(:)
  real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
  complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
- complex(SP), pointer, intent(in) :: BS_R_left_kerr(:),BS_R_right_kerr(:),BS_R_right_dich(:,:)
+ complex(SP), pointer, intent(in) :: BS_R_left_kerr(:),BS_R_right_kerr(:),&
+                                   & BS_R_right_dich(:,:),BS_R_right_me(:,:)
  real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
  !
  ! Work space
@@ -64,10 +67,11 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  if(l_BS_esort.and.i_BS_mat==1) then
    EDIM=BSS_n_eig
    nVAR=2
-   if(l_BS_abs)       nVAR=nVAR+1
-   if(l_BS_kerr)      nVAR=nVAR+1
-   if(l_BS_dichroism) nVAR=nVAR+1
-   if(l_BS_magnons)   nVAR=nVAR+n_spinor
+   if(l_BS_abs)             nVAR=nVAR+1
+   if(l_BS_kerr)            nVAR=nVAR+1
+   if(l_BS_dichroism)       nVAR=nVAR+1
+   if(l_BS_magnetoelectric) nVAR=nVAR+2
+   if(l_BS_magnons)         nVAR=nVAR+n_spinor
    allocate(BS_E_sorted_tmp(EDIM,nVAR))
    BS_E_sorted_tmp=cZERO
  endif
@@ -97,6 +101,10 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
    if(l_BS_dichroism) then
      res_dich=(BS_R_left_abs(i1)*BS_R_right_dich(i1,1)+BS_R_left_kerr(i1)*BS_R_right_dich(i1,2))
      res_dich=res_dich*ares_fac/q0_def_norm/2._SP
+   endif
+   if(l_BS_magnetoelectric) then
+     res_me(1)=(BS_R_left_abs(i1)*BS_R_right_me(i1,1)*ares_fac/q0_def_norm
+     res_me(2)=(BS_R_left_abs(i1)*BS_R_right_me(i1,2)*ares_fac/q0_def_norm
    endif
    if(l_BS_magnons) then
      res_magn(1)=BS_R_left_magn(i1,1)*BS_R_right_magn(i1,1)*ares_fac
@@ -155,6 +163,19 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
        X_dichroism(:,2)=X_dichroism(:,2)-res_dich/(W%p(:)-EXC_E(i_pert_SOC))
        if (l_ADD_the_ARES_using_the_RES) then
          X_dichroism(:,2)=X_dichroism(:,2)+conjg(res_dich)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+       endif
+     endif
+     !
+     if(l_BS_magnetoelectric) then
+       if(l_BS_esort.and.i_BS_mat==1) then
+         BS_E_sorted_tmp(i1,nVAR+2:nVAR+2)=res_me(:2)
+         nVAR=nVAR+2
+       endif
+       ME_ij(:,1,2)=ME_ij(:,1,2)-res_me(1)/(W%p(:)-EXC_E(i_pert_SOC))
+       ME_ij(:,2,2)=ME_ij(:,2,2)-res_me(2)/(W%p(:)-EXC_E(i_pert_SOC))
+       if (l_ADD_the_ARES_using_the_RES) then
+         ME_ij(:,1,2)=ME_ij(:,1,2)+conjg(res_me(1))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+         ME_ij(:,2,2)=ME_ij(:,2,2)+conjg(res_me(2))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
      endif
      !
@@ -241,6 +262,10 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
    call PP_redux_wait(X_dichroism(:,2))
  endif
  !
+ if(l_BS_magnetoelectric) then
+   call PP_redux_wait(ME_ij(:,:,2))
+ endif
+ !
  if(l_BS_magnons) then
    call PP_redux_wait(X_magnons(:,:,2))
  endif
@@ -263,6 +288,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  !
  ! Factors to be fixed
  if (l_BS_dichroism) X_dichroism(:,2)=X_dichroism(:,2)*(cI/SPEED_OF_LIGHT)*Co_factor/(4._SP*pi)
+ !
+ if (l_BS_magnetoelectric) ME_ij(:,:,2)=ME_ij(:,:,2)*(-1._SP*Co_factor/(8._SP*pi))
  !
  if (l_BS_magnons) X_magnons(:,:,2)=X_magnons(:,:,2)*Co_factor/(4._SP*pi)
  !

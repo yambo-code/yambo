@@ -40,6 +40,7 @@ subroutine Dipole_orbital_magnetization_cd(Xen,Xk,Dip)
  !
  if (n_LT_steps>0) call live_timing('Orbital magnetization (CD)',n_LT_steps)
  !
+ !
  ! Main loop over k in IBZ
  !
  do i_sp_pol=1,n_sp_pol
@@ -52,6 +53,9 @@ subroutine Dipole_orbital_magnetization_cd(Xen,Xk,Dip)
      !
      ik_mem=PAR_DIPk_ibz_index(ik)
      ! 
+     !> @var ib(1)  lowest valence, ib(2)     upper conduction
+     !> @var ib_lim(1) top valence, ib_lim(2) bottom conduction
+     !
      do iv=Dip%ib(1),Dip%ib_lim(1) 
        !
        if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle

@@ -210,6 +210,7 @@ module BS
    complex(SP), allocatable      :: dipoles_opt(:,:,:)         ! (/x,y,z ; i_Tr ;   2)
    complex(SP), allocatable      :: dipoles_dic(:,:,:)         ! (/x,y,z ; i_Tr ;   2) 
    complex(SP), allocatable      :: dipoles_mag(:,:,:)         ! (/S+,S-,Sz ; i_Tr; 2)
+   complex(SP), allocatable      :: dipoles_spin(:,:,:)        ! (/x,y,z ; i_Tr ;   2) 
    !
    ! Exchange Oscillators
    !
@@ -322,9 +323,9 @@ module BS
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_mag,(2,nT,nDIP))
      endif
      if(l_BS_magnetoelectric) then
-       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_mag,(3,nT,nDIP))
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_spin,(BS_dip_size,nT,nDIP))
      endif
-     if(l_BS_dichroism) then
+     if(l_BS_dichroism.or.l_BS_magnetoelectric) then
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_dic,(BS_dip_size,nT,nDIP))
      endif
      YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,5))
@@ -359,11 +360,14 @@ module BS
        if (.not.allocated(BS_T_grp(iT)%table)) cycle
        !
        YAMBO_FREE(BS_T_grp(iT)%dipoles_opt)
-       if (l_BS_magnons.or.l_BS_magnetoelectric) then
+       if (l_BS_magnons) then
          YAMBO_FREE(BS_T_grp(iT)%dipoles_mag)
        endif
-       if (l_BS_dichroism) then
+       if (l_BS_dichroism.or.l_BS_magnetoelectric) then
          YAMBO_FREE(BS_T_grp(iT)%dipoles_dic)
+       endif
+       if (l_BS_magnetoelectric) then
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_spin)
        endif
        YAMBO_FREE(BS_T_grp(iT)%table)
        YAMBO_FREE(BS_T_grp(iT)%E)

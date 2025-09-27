@@ -29,7 +29,8 @@ subroutine K_diago_driver(iq,W,X_static)
  use units,          ONLY:HA2EV
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
 &                         BS_res_ares_n_mat,l_BS_ares_from_res,&
-&                         l_BS_abs,l_BS_kerr,l_BS_kerr_asymm,l_BS_magnons,l_BS_photolum,l_BS_dichroism
+&                         l_BS_abs,l_BS_kerr,l_BS_kerr_asymm,l_BS_magnons,l_BS_photolum,l_BS_dichroism,&
+&                         l_BS_magnetoelectric
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,BSS_resize_only,BSS_resize_and_save,BSS_n_eig_Input, &
 &                         BSS_write_eig_2_db,BSS_eh_W,BSS_n_eig,BS_E,BSS_slepc_pseudo_herm,write_bs_ev_par,&
 &                         BSS_ldiago_solver,BSS_first_eig,BSS_target_E,BSS_trange_E,BSS_er,BSS_slepc_precondition
@@ -104,6 +105,7 @@ subroutine K_diago_driver(iq,W,X_static)
  complex(SP),pointer     :: BS_R_left_kerr(:)    => null()
  complex(SP),pointer     :: BS_R_right_kerr(:)   => null()
  complex(SP),pointer     :: BS_R_right_dich(:,:) => null()
+ complex(SP),pointer     :: BS_R_right_me(:,:)   => null()
  !
  complex(SP),pointer     :: BS_R_left_magn(:,:)  => null()
  complex(SP),pointer     :: BS_R_right_magn(:,:) => null()
@@ -179,7 +181,8 @@ subroutine K_diago_driver(iq,W,X_static)
    !========================
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
    io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
-  &                    BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
+  &                    BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,&
+  &                    BS_R_right_me,BS_R_PL)
    !
    ! Kernel and/or BSS components loading
    !======================================
@@ -345,6 +348,13 @@ subroutine K_diago_driver(iq,W,X_static)
        BS_R_right_dich(:,2) = tmp_res_ptr
      endif
      !
+     if(l_BS_magnetoelectric) then
+       call K_diago_R_res("me1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_right)
+       BS_R_right_me(:,1) = tmp_res_ptr
+       call K_diago_R_res("me2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_right)
+       BS_R_right_me(:,2) = tmp_res_ptr
+     endif
+     !
      if(l_BS_magnons) then
        call K_diago_R_res("mag1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_right)
        BS_R_right_magn(:,1) = tmp_res_ptr
@@ -415,7 +425,8 @@ subroutine K_diago_driver(iq,W,X_static)
    ! Now I calculate the physical quantities
    !=========================================
    call K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
-   &               BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
+   &               BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,&
+   &               BS_R_right_me,BS_R_PL)
    !
    ! Diagonalization DB (OUT)
    !==========================
@@ -423,7 +434,8 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
      io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
-     &     BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL,&
+     &     BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,&
+     &                                                   BS_R_right_me,BS_R_PL,&
      &                                                   BS_mat=BS_V_right,write_ev=.not.l_ldiago)
      !
      call PP_wait()
@@ -475,6 +487,9 @@ subroutine K_diago_driver(iq,W,X_static)
        if (l_BS_dichroism) then
          YAMBO_ALLOC_P(BS_R_right_dich,(BSS_n_eig,2))
        endif
+       if (l_BS_magnetoelectric) then
+         YAMBO_ALLOC_P(BS_R_right_me,(BSS_n_eig,2))
+       endif
        if (l_BS_magnons) then
          YAMBO_ALLOC_P(BS_R_left_magn,(BSS_n_eig,2))
          YAMBO_ALLOC_P(BS_R_right_magn,(BSS_n_eig,2))
@@ -519,6 +534,7 @@ subroutine K_diago_driver(iq,W,X_static)
      YAMBO_FREE_P(BS_R_right_kerr)
      YAMBO_FREE_P(BS_R_left_kerr)
      YAMBO_FREE_P(BS_R_right_dich)
+     YAMBO_FREE_P(BS_R_right_me)
      YAMBO_FREE_P(BS_R_right_magn)
      YAMBO_FREE_P(BS_R_left_magn)
      YAMBO_FREE_P(BS_R_PL)
@@ -538,6 +554,7 @@ subroutine K_diago_driver(iq,W,X_static)
     if(associated(BS_R_left_kerr) ) call BSS_resize_only(BS_R_left_kerr)
     if(associated(BS_R_right_kerr)) call BSS_resize_only(BS_R_right_kerr)
     if(associated(BS_R_right_dich)) call BSS_resize_only(BS_R_right_dich)
+    if(associated(BS_R_right_me))   call BSS_resize_only(BS_R_right_me)
     if(associated(BS_R_left_magn) ) call BSS_resize_only(BS_R_left_magn)
     if(associated(BS_R_right_magn)) call BSS_resize_only(BS_R_right_magn)
     if(associated(BS_R_PL)        ) call BSS_resize_only(BS_R_PL)
@@ -560,6 +577,7 @@ subroutine K_diago_driver(iq,W,X_static)
      if(associated(BS_R_left_kerr) ) call BSS_resize_only(BS_R_left_kerr)
      if(associated(BS_R_right_kerr)) call BSS_resize_only(BS_R_right_kerr)
      if(associated(BS_R_right_dich)) call BSS_resize_only(BS_R_right_dich)
+     if(associated(BS_R_right_me))   call BSS_resize_only(BS_R_right_me)
      if(associated(BS_R_left_magn) ) call BSS_resize_only(BS_R_left_magn)
      if(associated(BS_R_right_magn)) call BSS_resize_only(BS_R_right_magn)
      if(associated(BS_R_PL)        ) call BSS_resize_only(BS_R_PL)

@@ -17,13 +17,12 @@ subroutine K_components_folded_in_serial_arrays(iq)
  use BS_solvers,      ONLY:BSS_eh_E_SOC_corr,&
 &                          BSS_dipoles_opt,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_f_RES,BSS_eh_W,BSS_eh_Z,BSS_alloc
  use BS,              ONLY:BS_K_dim,BS_nT_grps,BS_T_grp,BS_K_coupling,BS_perturbative_SOC,&
-&                          BS_n_eh_spaces,l_BS_optics,l_BS_magnons,l_BS_dichroism,l_BS_magnetoelectruc
+&                          BS_n_eh_spaces,l_BS_optics,l_BS_magnons,l_BS_dichroism,l_BS_magnetoelectric,&
 &                          l_BS_photolum,BS_dip_size,BS_H_dim,l_BS_ares_from_res
  use timing_m,        ONLY:timing
  use LIVE_t,          ONLY:live_timing
  use MAGNONS,         ONLY:BSS_dipoles_magn,BSS_MAGN_alloc
- use DICHROISM,       ONLY:BSS_dipoles_dich,BSS_DICH_alloc
- use MAGNETOELECTRIC, ONLY:BSS_dipoles_me,  BSS_ME_alloc
+ use DICHROISM,       ONLY:BSS_dipoles_dich,BSS_DICH_alloc,BSS_dipoles_me,BSS_ME_alloc
  use PHOTOLUM,        ONLY:BSS_dipoles_PL,BSS_PL_alloc,BSS_PL_f,PL_weights
  use timing_m,        ONLY:timing
  !
@@ -50,7 +49,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
  call BSS_alloc( )
  call BSS_MAGN_alloc( )
  call BSS_DICH_alloc( )
- call BSS_DICH_alloc( )
+ call BSS_ME_alloc( )
  call BSS_PL_alloc( )
  !
  if (BS_nT_grps>0) call live_timing("Unfolding BSE components",PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1))

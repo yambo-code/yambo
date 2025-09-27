@@ -26,15 +26,14 @@ subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
  use BS,              ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,&
  &                         l_BS_res_from_E,BS_not_const_eh_f
  use MAGNONS,         ONLY:BSS_dipoles_magn
- use DICHROISM,       ONLY:BSS_dipoles_dich
- use MAGNETOELECTRIC, ONLY:BSS_dipoles_me
+ use DICHROISM,       ONLY:BSS_dipoles_dich,BSS_dipoles_me
  !
  implicit none
  !
  character(*),intent(in)  :: mode
  integer,     intent(in)  :: i_BS_mat, neigs_this_cpu, neig_shift
  complex(SP), allocatable,         intent(in)  :: BS_E(:)
- complex(SP), pointer,             intent(out) :: BS_R_right(:)
+ complex(SP), pointer,             intent(inout) :: BS_R_right(:)
  complex(SP), target, allocatable, intent(in)  :: BS_V_right(:,:)
  !
  ! Workspace

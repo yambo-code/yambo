@@ -1,0 +1,32 @@
+309      & call MEM_count("tmp_res_ptr",tmp_res_ptr)
+(gdb) print bs_r_right_abs
+$18 = (PTR TO -> (
+    COMPLEX(4) (1600) )) 0x7fffa8c6fd80
+(gdb) n
+310         if (.not.associated(tmp_res_ptr)) &
+(gdb) print bs_r_right_abs
+$19 = (PTR TO -> (
+    COMPLEX(4) (1600) )) 0x7fffa8c6fd80
+(gdb) n
+317          if(l_abs_res) then
+(gdb) print bs_r_right_abs
+$20 = (PTR TO -> (
+    COMPLEX(4) (1600) )) 0x7fffa8c6fd80
+(gdb) print bs_r_right_abs
+$21 = (PTR TO -> (
+    COMPLEX(4) (1600) )) 0x7fffa8c6fd80
+(gdb) n
+318                           call K_diago_R_res("opt1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,BS_R_right_abs, BS_V_right)
+(gdb) print bs_r_right_abs
+
+$22 = (PTR TO -> (
+    COMPLEX(4) (1600) )) 0x7fffa8c6fd80
+
+(gdb) n                                
+319   |!!!!!!-->   if(l_kerr_rgt) call K_diago_R_res("opt2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,BS_R_right_kerr,BS_V_right)
+
+(gdb) print bs_r_right_abs
+$23 = (PTR TO -> (
+    COMPLEX(4) (:) )) <not associated>
+(gdb)
+

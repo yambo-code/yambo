@@ -242,7 +242,7 @@ module interfaces
      complex(SP), pointer, intent(in) :: BS_R_left_abs(:),BS_R_right_abs(:)
      real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
      complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
-     complex(SP), pointer, intent(in) :: BS_R_left_kerr(:),BS_R_right_kerr(:),BS_R_right_dich(:,:) &
+     complex(SP), pointer, intent(in) :: BS_R_left_kerr(:),BS_R_right_kerr(:),BS_R_right_dich(:,:), &
                                        & BS_R_right_me(:,:)
      real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
    end subroutine
@@ -254,7 +254,7 @@ module interfaces
      character(*),intent(in)  :: mode
      integer,     intent(in)  :: i_BS_mat, neigs_this_cpu, neig_shift
      complex(SP), allocatable,         intent(in)  :: BS_E(:)
-     complex(SP), pointer,             intent(out) :: BS_R_right(:)
+     complex(SP), pointer,             intent(inout) :: BS_R_right(:)
      complex(SP), target, allocatable, intent(in)  :: BS_V_right(:,:)
    end subroutine K_diago_R_res
    !

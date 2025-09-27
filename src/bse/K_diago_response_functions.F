@@ -52,7 +52,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  real(SP), allocatable     :: vtmpR(:)
  complex(SP), allocatable  :: BS_E_sorted_tmp(:,:)
  integer, allocatable      :: sort_indx(:),first_exc(:),n_of_exc(:)
- complex(SP)               :: g_fac,res_kerr,res_dich,res_magn(2),res_pl(2)
+ complex(SP)               :: g_fac,res_kerr,res_dich,res_me(2),res_magn(2),res_pl(2)
  logical                   :: l_ADD_the_ARES_using_the_RES
  !
  n_SOC=1
@@ -103,8 +103,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
      res_dich=res_dich*ares_fac/q0_def_norm/2._SP
    endif
    if(l_BS_magnetoelectric) then
-     res_me(1)=(BS_R_left_abs(i1)*BS_R_right_me(i1,1)*ares_fac/q0_def_norm
-     res_me(2)=(BS_R_left_abs(i1)*BS_R_right_me(i1,2)*ares_fac/q0_def_norm
+     res_me(1)=BS_R_left_abs(i1)*BS_R_right_me(i1,1)*ares_fac/q0_def_norm
+     res_me(2)=BS_R_left_abs(i1)*BS_R_right_me(i1,2)*ares_fac/q0_def_norm
    endif
    if(l_BS_magnons) then
      res_magn(1)=BS_R_left_magn(i1,1)*BS_R_right_magn(i1,1)*ares_fac

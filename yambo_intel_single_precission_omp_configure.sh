@@ -15,7 +15,7 @@ FC=ifort \
 CC=icc \
 MPICC=mpiicc \
 MPIFC=mpiifort \
-FCFLAGS="-O2 -g -traceback -check bounds -fpe0" \
+FCFLAGS="-O0 -g -traceback -check bounds -fpe0" \
 --enable-msgs-comps \
 --enable-time-profile \
 --enable-mpi \
@@ -36,6 +36,7 @@ FCFLAGS="-O2 -g -traceback -check bounds -fpe0" \
 --with-scalapack-libs="mkl" \
 --with-extlibs-path="${YAMBO_LIBS_ROOT}"
 
+#FCFLAGS="-O2 -g -traceback -check bounds -fpe0" \
 #--enable-slepc-linalg \
 #--with-petsc-path="${PETSC_ROOT}" \
 #--with-slepc-path="${SLEPC_ROOT}" \

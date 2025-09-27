@@ -94,7 +94,7 @@ subroutine K_observables(W,Xk)
  if (l_BS_trace   ) BS_dip_size = 3
  if (l_BS_trace .and. .not.l_rpa_IP) call error(" trace coded only at the IP level")
  !
- l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum
+ l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum.or.l_BS_magnetoelectric
  !
  ! Now fix BSE_prop string
  !

@@ -35,4 +35,3 @@ module MAGNETOELECTRIC
    end subroutine
    !
 end module
-

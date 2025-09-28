@@ -336,8 +336,6 @@ subroutine K_diago_driver(iq,W,X_static)
      !====================================
      !
      ! Right residuals
-     write(*,*) "\n(K_diago_driver): l_abs_res= ", l_abs_res
-     write(*,*) "\n(K_diago_driver): l_kerr_rgt= ", l_kerr_rgt
      if(l_abs_res) then
                       call K_diago_R_res("opt1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,BS_R_right_abs, BS_V_right)
        if(l_kerr_rgt) call K_diago_R_res("opt2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,BS_R_right_kerr,BS_V_right)

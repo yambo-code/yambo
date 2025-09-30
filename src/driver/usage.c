@@ -49,7 +49,7 @@ void usage(options_struct *options, struct tool_struct t, char *what,
 
     if (strcmp(what, "help") == 0)
     {
-        title(stderr, "", t);
+        title_lumen(stderr, "", t);
 
         n_strings = 0;
         for (i_opt = 0; i_opt < n_options; i_opt++)
@@ -181,7 +181,7 @@ void usage(options_struct *options, struct tool_struct t, char *what,
             fprintf(stderr, "unrecognized option '%s'\n", what);
             exit(0);
         }
-        title(stderr, "", t);
+        title_lumen(stderr, "", t);
         fprintf(stderr, "\n");
         fprintf(stderr, " Long  option: %s\n", options[i_opt].long_opt);
         if (options[i_opt].short_opt > 57)

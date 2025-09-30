@@ -523,7 +523,7 @@ subroutine NL_initialize(E,k)
    call msg( 'r', 'Pond. Energy        [eV/mu]',Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency(1)**2*HA2EV)
    call msg( 'r', 'Adiabatic param      [1/mu]',Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency(1)**3)
  enddo
- call msg( 'r', 'Efield T_0                 ',T_0,"[fs]")
+ call msg( 'r', 'Efield T_0                 ',T_0*AUT2FS,"[fs]")
  if (.not.l_pump_and_probe) then
    call msg( 'r', 'Frequencies range          ',NL_er*HA2EV)
    call msg( 'sr','Frequencies steps          ',n_frequencies)

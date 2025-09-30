@@ -174,7 +174,7 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
        enddo
      endif
      if (write_soc_corr) then
-       if (.not.any((/EXCITONS_user_indexes==j2/))) cycle
+       !if (.not.any((/EXCITONS_user_indexes==j2/))) cycle
        n_elements=n_elements+2
        rv(n_elements-1:n_elements)=(/BS_E_SOC_corr(1,j2),BS_E_SOC_corr(2,j2)/)*HA2EV*1000._SP
      endif

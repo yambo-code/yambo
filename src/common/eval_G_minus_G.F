@@ -38,7 +38,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  integer :: i1,i2,is
  integer :: iG_shell,iGo_shell,iG_shell_0,iG_shell_max,iG_,iGo_,iG_alloc,iGo_alloc
- integer :: ngx1,ngx2,ngx3, iv1_rlu(3)
+ integer :: ngx1,ngx2,ngx3, iv1_rlu(3),iG_max
  real(SP):: E_iG, E_iGo, E_max
  real(SP):: v1(3),v2(3)
  real(SP), allocatable :: E_G_m_G(:,:),g_vec_rlu(:,:)
@@ -70,6 +70,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  ! aux data
  YAMBO_ALLOC(E_G_m_G,(iG_,iGo_))
+ iG_max=iG_
  !
  ! setup MPI parallelism if required
  !
@@ -140,6 +141,11 @@ integer function eval_G_minus_G(iG,iGo,COMM)
    !
    iG_= ng_in_shell(is)
    if (iGo==0) iGo_=iG_
+   !
+   if(iG_>iG_max) then
+      iG_shell=is-1
+      exit shell2_loop
+   endif
    !
    if( maxval(E_G_m_G(1:iG_,1:iGo_)) > E_max ) then
       iG_shell=is-1

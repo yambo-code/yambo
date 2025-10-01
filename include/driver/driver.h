@@ -25,6 +25,7 @@ void usage(struct options_struct *options, struct tool_struct t, char *what,
            int n_options);
 struct tool_struct versions();
 void title_lumen(FILE *file_name, char *cmnt, struct tool_struct t);
+void title_yambo(FILE *file_name, char *cmnt, struct tool_struct t);
 int use_me(struct options_struct *options, struct tool_struct t, int i_opt);
 char *running_tool();
 char *running_project();

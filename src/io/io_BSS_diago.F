@@ -6,8 +6,8 @@
 ! Authors (see AUTHORS file for details): AM DS NM
 !
 integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
-&                             bsL_magn,bsR_magn,bsL_kerr,bsR_kerr,bsR_dich,bsR_me,bsR_pl,&
-&                             BS_mat,write_ev)
+&                             bsL_magn,bsR_magn,bsL_kerr,bsR_kerr,bsR_dich,&
+&                             bsR_mespin,bsR_meorb,bsR_pl,BS_mat,write_ev)
  !
  use pars,          ONLY:SP,schlen,IP
  use stderr,        ONLY:intc
@@ -26,7 +26,7 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  integer                        :: iq,ID,i_BS_mat
  complex(SP)        , optional  :: bsE(:)
  real(SP)   ,pointer, optional  :: BsE_corr(:,:),bsR_pl(:,:)
- complex(SP),pointer, optional  :: bsL_kerr(:),bsR_kerr(:),bsR_dich(:,:),bsR_me(:,:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
+ complex(SP),pointer, optional  :: bsL_kerr(:),bsR_kerr(:),bsR_dich(:,:),bsR_mespin(:,:),bsR_meorb(:,:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
  complex(SP)        , optional  :: BS_mat(:,:)
  logical, optional              :: write_ev
  !
@@ -142,10 +142,17 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
      endif
    endif
    !
-   if(present(bsR_me)) then
-     if(associated(bsR_me)) then
-       call io_bulk(ID,'BS_ME_Residuals',VAR_SZ=(/2,BSS_n_eig,2/))
-       call io_bulk(ID,C2=bsR_me)
+   if(present(bsR_mespin)) then
+     if(associated(bsR_mespin)) then
+       call io_bulk(ID,'BS_MEspin_Residuals',VAR_SZ=(/2,BSS_n_eig,2/))
+       call io_bulk(ID,C2=bsR_mespin)
+     endif
+   endif
+   !
+   if(present(bsR_meorb)) then
+     if(associated(bsR_meorb)) then
+       call io_bulk(ID,'BS_MEorb_Residuals',VAR_SZ=(/2,BSS_n_eig,2/))
+       call io_bulk(ID,C2=bsR_meorb)
      endif
    endif
    !

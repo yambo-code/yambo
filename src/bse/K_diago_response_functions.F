@@ -6,8 +6,8 @@
 ! Authors (see AUTHORS file for details): DS AM MG
 !
 subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
- &                    BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich, &
-                    & BS_R_right_me,BS_R_PL)
+ &                    BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,&
+ &                    BS_R_right_mespin,BS_R_right_meorb,BS_R_PL)
  !
  ! eps2(iw)= 1 - Sum  [BS_R_left(i)*BS_R_right(i)] / [w+i*eta - E(i)]  
  !
@@ -27,10 +27,10 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  use units,          ONLY:HA2EV
  use vec_operate,    ONLY:degeneration_finder,sort
  use BS_solvers,     ONLY:B_Hall,para_term_w0
- use X_m,            ONLY:Resp_ij,X_magnons,X_dichroism,ME_ij
+ use X_m,            ONLY:Resp_ij,X_magnons,X_dichroism,X_mespin,X_meorb
  use PHOTOLUM,       ONLY:PL,PL_prefactor
  use BS,             ONLY:l_BS_kerr,l_BS_kerr_asymm,l_BS_magnons,l_BS_photolum,&
-&                         l_BS_dichroism,l_BS_magnetoelectric
+&                         l_BS_dichroism,l_BS_mespin,l_BS_meorb
  !
  implicit none
  !
@@ -40,8 +40,9 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  complex(SP), pointer, intent(in) :: BS_R_left_abs(:),BS_R_right_abs(:)
  real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
  complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
- complex(SP), pointer, intent(in) :: BS_R_left_kerr(:),BS_R_right_kerr(:),&
-                                   & BS_R_right_dich(:,:),BS_R_right_me(:,:)
+ complex(SP), pointer, intent(in) :: BS_R_left_kerr(:),&
+                                   & BS_R_right_kerr(:),BS_R_right_dich(:,:),&
+                                   & BS_R_right_mespin(:,:),BS_R_right_meorb(:,:)
  real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
  !
  ! Work space
@@ -52,7 +53,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  real(SP), allocatable     :: vtmpR(:)
  complex(SP), allocatable  :: BS_E_sorted_tmp(:,:)
  integer, allocatable      :: sort_indx(:),first_exc(:),n_of_exc(:)
- complex(SP)               :: g_fac,res_kerr,res_dich,res_me(2),res_magn(2),res_pl(2)
+ complex(SP)               :: g_fac,res_kerr,res_dich,res_mespin,res_meorb,res_magn(2),res_pl(2)
  logical                   :: l_ADD_the_ARES_using_the_RES
  !
  n_SOC=1
@@ -70,7 +71,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
    if(l_BS_abs)             nVAR=nVAR+1
    if(l_BS_kerr)            nVAR=nVAR+1
    if(l_BS_dichroism)       nVAR=nVAR+1
-   if(l_BS_magnetoelectric) nVAR=nVAR+2
+   if(l_BS_mespin)          nVAR=nVAR+1
+   if(l_BS_meorb)           nVAR=nVAR+1
    if(l_BS_magnons)         nVAR=nVAR+n_spinor
    allocate(BS_E_sorted_tmp(EDIM,nVAR))
    BS_E_sorted_tmp=cZERO
@@ -102,9 +104,11 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
      res_dich=(BS_R_left_abs(i1)*BS_R_right_dich(i1,1)+BS_R_left_kerr(i1)*BS_R_right_dich(i1,2))
      res_dich=res_dich*ares_fac/q0_def_norm/2._SP
    endif
-   if(l_BS_magnetoelectric) then
-     res_me(1)=BS_R_left_abs(i1)*BS_R_right_me(i1,1)*ares_fac/q0_def_norm
-     res_me(2)=BS_R_left_abs(i1)*BS_R_right_me(i1,2)*ares_fac/q0_def_norm
+   if(l_BS_mespin) then
+     res_mespin=BS_R_left_abs(i1)*BS_R_right_mespin(i1,1)*ares_fac/q0_def_norm
+   endif
+   if(l_BS_meorb) then
+     res_meorb=BS_R_left_abs(i1)*BS_R_right_meorb(i1,1)*ares_fac/q0_def_norm
    endif
    if(l_BS_magnons) then
      res_magn(1)=BS_R_left_magn(i1,1)*BS_R_right_magn(i1,1)*ares_fac
@@ -166,16 +170,25 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
        endif
      endif
      !
-     if(l_BS_magnetoelectric) then
+     if(l_BS_mespin) then
        if(l_BS_esort.and.i_BS_mat==1) then
-         BS_E_sorted_tmp(i1,nVAR+2:nVAR+2)=res_me(:2)
-         nVAR=nVAR+2
+         BS_E_sorted_tmp(i1,nVAR+2:nVAR+2)=res_mespin
+         nVAR=nVAR+1
        endif
-       ME_ij(:,1,2)=ME_ij(:,1,2)-res_me(1)/(W%p(:)-EXC_E(i_pert_SOC))
-       ME_ij(:,2,2)=ME_ij(:,2,2)-res_me(2)/(W%p(:)-EXC_E(i_pert_SOC))
+       X_mespin(:,2)=X_mespin(:,2)-res_mespin/(W%p(:)-EXC_E(i_pert_SOC))
        if (l_ADD_the_ARES_using_the_RES) then
-         ME_ij(:,1,2)=ME_ij(:,1,2)+conjg(res_me(1))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
-         ME_ij(:,2,2)=ME_ij(:,2,2)+conjg(res_me(2))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+         X_mespin(:,2)=X_mespin(:,2)+conjg(res_mespin)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+       endif
+     endif
+     !
+     if(l_BS_meorb) then
+       if(l_BS_esort.and.i_BS_mat==1) then
+         BS_E_sorted_tmp(i1,nVAR+2:nVAR+2)=res_mespin
+         nVAR=nVAR+1
+       endif
+       X_meorb(:,2)=X_meorb(:,2)-res_meorb/(W%p(:)-EXC_E(i_pert_SOC))
+       if (l_ADD_the_ARES_using_the_RES) then
+         X_meorb(:,2)=X_meorb(:,2)+conjg(res_meorb)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
      endif
      !
@@ -262,8 +275,12 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
    call PP_redux_wait(X_dichroism(:,2))
  endif
  !
- if(l_BS_magnetoelectric) then
-   call PP_redux_wait(ME_ij(:,:,2))
+ if(l_BS_mespin) then
+   call PP_redux_wait(X_mespin(:,2))
+ endif
+ !
+ if(l_BS_meorb) then
+   call PP_redux_wait(X_meorb(:,2))
  endif
  !
  if(l_BS_magnons) then
@@ -289,7 +306,9 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  ! Factors to be fixed
  if (l_BS_dichroism) X_dichroism(:,2)=X_dichroism(:,2)*(cI/SPEED_OF_LIGHT)*Co_factor/(4._SP*pi)
  !
- if (l_BS_magnetoelectric) ME_ij(:,:,2)=ME_ij(:,:,2)*(-1._SP*Co_factor/(8._SP*pi))
+ if (l_BS_mespin) X_mespin(:,2)=X_mespin(:,2)*(-1._SP*Co_factor/(8._SP*pi))
+ !
+ if (l_BS_meorb) X_meorb(:,2)=X_meorb(:,2)*(-1._SP*Co_factor/(8._SP*pi))
  !
  if (l_BS_magnons) X_magnons(:,:,2)=X_magnons(:,:,2)*Co_factor/(4._SP*pi)
  !

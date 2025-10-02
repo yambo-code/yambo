@@ -360,7 +360,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        if (l_BS_meorb) then
            X_meorb(:,3)=X_meorb(:,3)-res_meorb/(W_bss%p(:)-E_plus_W(i_pert_SOC))
            if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
-             X_meorb(:,3)=X_meorb(:,2,3)+conjg(res_meorb)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+             X_meorb(:,3)=X_meorb(:,3)+conjg(res_meorb)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
            endif
        endif
      enddo
@@ -461,7 +461,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if (l_BS_meorb) X_meorb(:,3)=X_meorb(:,3)*(-1._SP*Co_factor/(8._SP*pi))
  !
- if (     l_rpa_IP) call K_OUTPUT(iq,W_bss,"open dump IP close reset","optics kerr magnons PL dichroism magnetoelectric")
+ if (     l_rpa_IP) call K_OUTPUT(iq,W_bss,"open dump IP close reset","optics kerr magnons PL dichroism &
+&                                                                      mespin meorb")
  call K_OUTPUT(iq,W_bss,"open dump close reset bare","E_IP E_INDX_IP")
  !
  ! Clean

@@ -17,12 +17,12 @@ subroutine K_components_folded_in_serial_arrays(iq)
  use BS_solvers,      ONLY:BSS_eh_E_SOC_corr,&
 &                          BSS_dipoles_opt,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_f_RES,BSS_eh_W,BSS_eh_Z,BSS_alloc
  use BS,              ONLY:BS_K_dim,BS_nT_grps,BS_T_grp,BS_K_coupling,BS_perturbative_SOC,&
-&                          BS_n_eh_spaces,l_BS_optics,l_BS_magnons,l_BS_dichroism,l_BS_magnetoelectric,&
+&                          BS_n_eh_spaces,l_BS_optics,l_BS_magnons,l_BS_dichroism,l_BS_mespin,l_BS_meorb,&
 &                          l_BS_photolum,BS_dip_size,BS_H_dim,l_BS_ares_from_res
  use timing_m,        ONLY:timing
  use LIVE_t,          ONLY:live_timing
  use MAGNONS,         ONLY:BSS_dipoles_magn,BSS_MAGN_alloc
- use DICHROISM,       ONLY:BSS_dipoles_dich,BSS_DICH_alloc,BSS_dipoles_me,BSS_ME_alloc
+ use DICHROISM,       ONLY:BSS_dipoles_dich,BSS_DICH_alloc,BSS_dipoles_mespin,BSS_MEspin_alloc,BSS_dipoles_meorb,BSS_MEorb_alloc
  use PHOTOLUM,        ONLY:BSS_dipoles_PL,BSS_PL_alloc,BSS_PL_f,PL_weights
  use timing_m,        ONLY:timing
  !
@@ -49,7 +49,8 @@ subroutine K_components_folded_in_serial_arrays(iq)
  call BSS_alloc( )
  call BSS_MAGN_alloc( )
  call BSS_DICH_alloc( )
- call BSS_ME_alloc( )
+ call BSS_MEspin_alloc( )
+ call BSS_MEorb_alloc( )
  call BSS_PL_alloc( )
  !
  if (BS_nT_grps>0) call live_timing("Unfolding BSE components",PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1))
@@ -108,10 +109,9 @@ subroutine K_components_folded_in_serial_arrays(iq)
        !
        if (l_BS_dichroism) BSS_dipoles_dich(:,H_pos)=BS_T_grp(i_g)%dipoles_dic(:,i_Tr,i_res_ares_solver)
        !
-       if (l_BS_magnetoelectric) then 
-         BSS_dipoles_me(1,H_pos)=BS_T_grp(i_g)%dipoles_spin(1,i_Tr,i_res_ares_solver)
-         BSS_dipoles_me(2,H_pos)=BS_T_grp(i_g)%dipoles_dic(1,i_Tr,i_res_ares_solver)
-       endif
+       if (l_BS_mespin) BSS_dipoles_mespin(:,H_pos)=BS_T_grp(i_g)%dipoles_spin(:,i_Tr,i_res_ares_solver)
+       !
+       if (l_BS_meorb)  BSS_dipoles_meorb(:,H_pos)=BS_T_grp(i_g)%dipoles_dic(:,i_Tr,i_res_ares_solver)
        !
        if (l_BS_photolum) BSS_dipoles_PL(:,H_pos)=BS_T_grp(i_g)%dipoles_opt(:,i_Tr,i_res_ares_solver)*PL_weights(:BS_dip_size)
        !
@@ -162,9 +162,14 @@ subroutine K_components_folded_in_serial_arrays(iq)
    call PP_redux_wait(BSS_dipoles_dich,COMM=PAR_COM_eh_INDEX%COMM)
  endif
  !
- if (l_BS_magnetoelectric) then
-   call PP_redux_wait(BSS_dipoles_me,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-   call PP_redux_wait(BSS_dipoles_me,COMM=PAR_COM_eh_INDEX%COMM)
+ if (l_BS_mespin) then
+   call PP_redux_wait(BSS_dipoles_mespin,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait(BSS_dipoles_mespin,COMM=PAR_COM_eh_INDEX%COMM)
+ endif
+ !
+ if (l_BS_meorb) then
+   call PP_redux_wait(BSS_dipoles_meorb,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait(BSS_dipoles_meorb,COMM=PAR_COM_eh_INDEX%COMM)
  endif
  !
  if (l_BS_photolum) then

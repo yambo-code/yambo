@@ -232,7 +232,7 @@ module interfaces
    !
    subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
      &                                   BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,&
-     &                                   BS_R_right_me,BS_R_PL)
+     &                                   BS_R_right_mespin,BS_R_right_meorb,BS_R_PL)
      use BS_solvers,    ONLY:BSS_n_eig
      use pars,          ONLY:SP
      use frequency,     ONLY:w_samp
@@ -243,7 +243,7 @@ module interfaces
      real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
      complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
      complex(SP), pointer, intent(in) :: BS_R_left_kerr(:),BS_R_right_kerr(:),BS_R_right_dich(:,:), &
-                                       & BS_R_right_me(:,:)
+                                       & BS_R_right_mespin(:,:),BS_R_right_meorb(:,:)
      real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
    end subroutine
    !

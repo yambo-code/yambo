@@ -15,7 +15,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
  use PHOTOLUM,      ONLY:PL
  use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,BS_K_coupling,&
 &                        l_BS_photolum,l_BS_abs,l_BS_jdos,l_BS_esort_indx,l_BS_esort,&
-&                        l_BS_magnetoelectric
+&                        l_BS_mespin,l_BS_meorb
  use BS_solvers,    ONLY:l_abs_prop_chi_bse,l_eels_can_be_computed
  use stderr,         ONLY:STRING_match,STRING_split,intc,STRING_remove
  use OUTPUT,         ONLY:OUTPUT_driver
@@ -56,8 +56,8 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
    call ELEMENTAL_init(14,"CD","Dichroism","dichroism")
    call ELEMENTAL_init(15,"Spm","Magnons (S+-)","magnons")
    call ELEMENTAL_init(16,"Smp","Magnons (S-p)","magnons")
-   call ELEMENTAL_init(17,"MEspin","Magnetoelectric (spin)","magnetoelectric")
-   call ELEMENTAL_init(18,"MEorb" ,"Magnetoelectric (orbital)","magnetoelectric")
+   call ELEMENTAL_init(17,"MEspin","Magnetoelectric (spin)",  "magnetoelectric_spin")
+   call ELEMENTAL_init(18,"MEorb" ,"Magnetoelectric (orbital)","magnetoelectric_orbital")
  endif
  !
  if (STRING_match(WHAT,"INIT")) then
@@ -91,9 +91,8 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
    if (l_BS_magnons) call X_obs_onoff("+ Spm")
    if (l_BS_magnons.and.n_spinor==2) call X_obs_onoff("+ Smp")
    if (l_BS_dichroism) call X_obs_onoff("+ CD")
-   if (l_BS_magnetoelectric) then 
-     call X_obs_onoff("+ MEspin")
-     call X_obs_onoff("+ MEorb")
+   if (l_BS_mespin) call X_obs_onoff("+ MEspin")
+   if (l_BS_meorb)  call X_obs_onoff("+ MEorb")
    endif
 
 

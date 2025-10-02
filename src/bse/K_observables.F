@@ -19,7 +19,7 @@ subroutine K_observables(W,Xk)
  use BS,           ONLY:BS_dip_size,l_BS_anomalous_Hall,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,&
 &                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,l_BS_kerr_asymm,l_BS_esort_indx,&
-&                       l_BS_magnetoelectric
+&                       l_BS_mespin,l_BS_meorb
  use parser_m,     ONLY:parser
  use stderr,       ONLY:STRING_match
  use electrons,    ONLY:levels,n_sp_pol,n_spin
@@ -40,10 +40,11 @@ subroutine K_observables(W,Xk)
  l_BS_dichroism       = STRING_match(BSE_prop,'dich')
  l_BS_kerr            = STRING_match(BSE_prop,'kerr')
  l_BS_photolum        = STRING_match(BSE_prop,'photolum')
- l_BS_magnons         = STRING_match(BSE_prop,'magn') .and.n_spin>1
- l_BS_kerr_asymm      = STRING_match(BSE_prop,'asymm') .and. l_BS_kerr
+ l_BS_kerr_asymm      = STRING_match(BSE_prop,'asymm')  .and. l_BS_kerr
  l_BS_anomalous_Hall  = STRING_match(BSE_prop,'anHall') .and. l_BS_kerr
- l_BS_magnetoelectric = STRING_match(BSE_prop,'ME') .and.n_spin>1
+ l_BS_magnons         = STRING_match(BSE_prop,'magn')   .and.n_spin>1
+ l_BS_MEspin          = STRING_match(BSE_prop,'MEspin') .and.n_spin>1
+ l_BS_MEorb           = STRING_match(BSE_prop,'MEorb')  .and.n_spin>1
  !
  ! How ...
  !---------
@@ -84,7 +85,7 @@ subroutine K_observables(W,Xk)
      call warning(" Natural dichroism without trace. Quadripolar terms are neglected")
    endif
  endif
- if (l_BS_magnetoelectric) then
+ if (l_BS_meorb) then
    if (.not.(l_col_cut.and.Xk%nbz==1) ) then
      call warning(" Periodic system detected. Orbital ME tensor coded only for isolated systems")
    endif
@@ -94,7 +95,7 @@ subroutine K_observables(W,Xk)
  if (l_BS_trace   ) BS_dip_size = 3
  if (l_BS_trace .and. .not.l_rpa_IP) call error(" trace coded only at the IP level")
  !
- l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum.or.l_BS_magnetoelectric
+ l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum.or.l_BS_mespin.or.l_BS_meorb
  !
  ! Now fix BSE_prop string
  !
@@ -110,7 +111,8 @@ subroutine K_observables(W,Xk)
  if(l_BS_esort)           BSE_prop=trim(BSE_prop)//' esrt'
  if(l_BS_esort)           BSE_prop=trim(BSE_prop)//' indx'
  if(l_BS_trace)           BSE_prop=trim(BSE_prop)//' trace'
- if(l_BS_magnetoelectric) BSE_prop=trim(BSE_prop)//' ME'
+ if(l_BS_mespin)          BSE_prop=trim(BSE_prop)//' MEspin'
+ if(l_BS_meorb)           BSE_prop=trim(BSE_prop)//' MEorb'
  !
  ! Solver Logicals
  !=================

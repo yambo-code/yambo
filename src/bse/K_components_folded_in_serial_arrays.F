@@ -108,7 +108,10 @@ subroutine K_components_folded_in_serial_arrays(iq)
        !
        if (l_BS_dichroism) BSS_dipoles_dich(:,H_pos)=BS_T_grp(i_g)%dipoles_dic(:,i_Tr,i_res_ares_solver)
        !
-       if (l_BS_magnetoelectric) BSS_dipoles_me(:,H_pos)=BS_T_grp(i_g)%dipoles_spin(:,i_Tr,i_res_ares_solver)
+       if (l_BS_magnetoelectric) then 
+         BSS_dipoles_me(1,H_pos)=BS_T_grp(i_g)%dipoles_spin(1,i_Tr,i_res_ares_solver)
+         BSS_dipoles_me(2,H_pos)=BS_T_grp(i_g)%dipoles_dic(1,i_Tr,i_res_ares_solver)
+       endif
        !
        if (l_BS_photolum) BSS_dipoles_PL(:,H_pos)=BS_T_grp(i_g)%dipoles_opt(:,i_Tr,i_res_ares_solver)*PL_weights(:BS_dip_size)
        !

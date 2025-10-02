@@ -65,7 +65,8 @@ module BS
  logical :: l_BS_optics
  logical :: l_BS_esort
  logical :: l_BS_esort_indx
- logical :: l_BS_magnetoelectric
+ logical :: l_BS_mespin
+ logical :: l_BS_meorb
  !
  ! Dimensions
  !=============
@@ -322,10 +323,10 @@ module BS
      if(l_BS_magnons) then
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_mag,(2,nT,nDIP))
      endif
-     if(l_BS_magnetoelectric) then
+     if(l_BS_mespin) then
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_spin,(BS_dip_size,nT,nDIP))
      endif
-     if(l_BS_dichroism.or.l_BS_magnetoelectric) then
+     if(l_BS_dichroism.or.l_BS_meorb) then
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_dic,(BS_dip_size,nT,nDIP))
      endif
      YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,5))
@@ -363,10 +364,10 @@ module BS
        if (l_BS_magnons) then
          YAMBO_FREE(BS_T_grp(iT)%dipoles_mag)
        endif
-       if (l_BS_dichroism.or.l_BS_magnetoelectric) then
+       if (l_BS_dichroism.or.l_BS_meorb) then
          YAMBO_FREE(BS_T_grp(iT)%dipoles_dic)
        endif
-       if (l_BS_magnetoelectric) then
+       if (l_BS_mespin) then
          YAMBO_FREE(BS_T_grp(iT)%dipoles_spin)
        endif
        YAMBO_FREE(BS_T_grp(iT)%table)

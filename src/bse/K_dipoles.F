@@ -30,7 +30,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
 &                        BS_dip_size,l_BS_trace,BS_n_eh_spaces,&
 &                        l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
 &                        BSE_dipole_geometry,BS_field_direction,l_BS_ares_from_res,&
-&                        l_BS_magnetoelectric
+&                        l_BS_mespin,l_BS_meorb
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_COM_Xk_ibz_INDEX
@@ -158,7 +158,8 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
      ! *velocity* : DIP(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> = conjg(q_ver*<v|r|c>)
      !
      ! Absorption, KERR, PL, Dichroism, Magnetoelectric
-     if(l_BS_abs.or.l_BS_kerr.or.l_BS_photolum.or.l_BS_dichroism.or.l_BS_magnetoelectric) then
+     if(l_BS_abs.or.l_BS_kerr.or.l_BS_photolum.or.&
+&       l_BS_dichroism.or.l_BS_meorb.or.l_BS_mespin) then
        !
        if(iq==1.and.i_G_shift==1) then
          call DIPOLE_rotate(ic,iv,ik_bz,i_sp_pol_c,trim(DIP_kind),Xk,DIP_bare)
@@ -181,15 +182,16 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
        !
      endif
      !
-     ! Dichroism
-     if (l_BS_dichroism.or.l_BS_magnetoelectric) then
+     ! Dichroism or orbital magnetoelectric part
+     if (l_BS_dichroism.or.l_BS_meorb) then
        if(iq==1.and.i_G_shift==1) then  
          call DIPOLE_rotate(ic,iv,ik_bz,i_sp_pol_c,"DIP_L",Xk,DIP_expanded)
          do i_dip=1,BS_dip_size
            DIP_projected(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
          enddo
        else
-         call error(' finite q not implemented for dichroism or magnetoelectric effect')
+         if (l_BS_dichroism) call error(' finite q not implemented for dichroism effect')
+         if (l_BS_meorb)     call error(' finite q not implemented for magnetoelectric effect')
        endif
        BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
        if (BS_K_coupling.and.l_BS_ares_from_res) then
@@ -197,8 +199,8 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
        endif
      endif
      !
-     ! Magnons and Magnetoelectric
-     if (l_BS_magnons.or.l_BS_magnetoelectric) then
+     ! Magnons and Magnetoelectric spin part
+     if (l_BS_magnons.or.l_BS_mespin) then
        !
        ! notice:
        ! In optics q=0 requires a special treatment due to the non analytic behaviour
@@ -209,6 +211,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
        if(iq==1.and.i_G_shift==1) then
          call DIPOLE_rotate(ic,iv,ik_bz,i_sp_pol_c,"DIP_S",Xk,DIP_expanded)
        else
+         if (l_BS_mespin) call error(' finite q not implemented for magnetoelectric effect')
          call scatter_Bamp_spin(BSE_scatt,'x')
          DIP_expanded(1)=-conjg(BSE_scatt%rhotw(1))
          call scatter_Bamp_spin(BSE_scatt,'y')
@@ -239,8 +242,8 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
          !
          endif
        !
-       ! Magnetoelectric
-       if (l_BS_magnetoelectric) then
+       ! Magnetoelectric spin part
+       if (l_BS_mespin) then
          do i_dip=1,BS_dip_size
            DIP_projected(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
          enddo

@@ -12,7 +12,7 @@ subroutine DIPOLE_setup(Dip)
 &                         der_k_obs,specific_obs,eval_OVERLAPS
  use IO_m,           ONLY:io_DIP
  use BS,             ONLY:BSE_prop,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
-&                         l_BS_magnetoelectric
+&                         l_BS_mespin,l_BS_meorb
  use electrons,      ONLY:n_spin,n_spinor
  use parser_m,       ONLY:parser
  use stderr,         ONLY:STRING_same,STRING_match
@@ -47,7 +47,8 @@ subroutine DIPOLE_setup(Dip)
  l_BS_magnons=         (index(BSE_prop,'magn')/=0)
  l_BS_dichroism=       (index(BSE_prop,'dich')/=0)
  l_BS_photolum=        (index(BSE_prop,'photolum')/=0)
- l_BS_magnetoelectric= (index(BSE_prop,'ME')/=0)
+ l_BS_mespin=          (index(BSE_prop,'MEspin')/=0)
+ l_BS_meorb=           (index(BSE_prop,'MEorb')/=0)
  call parser('ImposeAsymBSE',l_flag)
  if(.not.l_flag) call parser('ImposeFullBSE',l_flag)
  !
@@ -57,7 +58,8 @@ subroutine DIPOLE_setup(Dip)
 &    l_BS_magnons  .or. &
 &    l_BS_photolum .or. &
 &    l_flag        .or. &
-&    l_BS_magnetoelectric) then
+&    l_BS_mespin   .or. &
+&    l_BS_meorb) then
   Dip%bands_ordered=.false.
 endif
  !
@@ -150,9 +152,9 @@ endif
  if (n_spin>1) then
    if (STRING_match(Dip%computed,"spin").or.&
        l_BS_magnons.or.&
-       l_BS_magnetoelectric) specific_obs=" M_spin"
-   !if (STRING_match(Dip%computed,"orb").and..not.l_BS_magnetoelectric) then 
-   if (STRING_match(Dip%computed,"orb")) then 
+       l_BS_mespin) specific_obs=" M_spin"
+   !if (STRING_match(Dip%computed,"orb")) then 
+   if (STRING_match(Dip%computed,"orb").and..not.l_BS_meorb) then 
      specific_obs=trim(specific_obs)//" M_orbRT M_it"
    endif
 #if defined _RT
@@ -160,7 +162,7 @@ endif
    if (l_real_time) specific_obs=" M_spin M_orbRT M_it"
 #endif
  endif
- if (l_BS_dichroism.or.l_BS_magnetoelectric) then
+ if (l_BS_dichroism.or.l_BS_meorb) then
   specific_obs=trim(specific_obs)//" M_orbCD"
  endif
  ! 

@@ -90,7 +90,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
  use_left_and_right=.false.
  scheme="hermitian"
  if(BS_K_Coupling.or.impose_pseudo_herm_scheme) scheme="pseudo-herm"
- use_left_and_right=trim(OBS)=="kerr".or.trim(OBS)=="dichroism"
+ use_left_and_right=trim(OBS)=="kerr".or.trim(OBS)=="dichroism".or.trim(OBS)=="magnetoelectric"
  velocity_correction= trim(global_gauge)=="velocity" .and. (trim(OBS)=="optics" .or. trim(OBS)=="kerr")
  !
  if (isec(2)/=0) sec="="
@@ -232,11 +232,12 @@ subroutine K_Haydock(iq,W,OBS,Xk)
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
    do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_g)
-     if (trim(OBS)=="jdos")        V0(i_g)%fragment(:,i_ColFG) = 1._SP
-     if (trim(OBS)=="optics")      V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
-     if (trim(OBS)=="kerr")        V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(2,:,1)
-     if (trim(OBS)=="dichroism")   V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_dic(1,:,1)
-     if (trim(OBS)=="magnons")     V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
+     if (trim(OBS)=="jdos")            V0(i_g)%fragment(:,i_ColFG) = 1._SP
+     if (trim(OBS)=="optics")          V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
+     if (trim(OBS)=="kerr")            V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(2,:,1)
+     if (trim(OBS)=="dichroism")       V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_dic(1,:,1)
+     if (trim(OBS)=="magnetoelectric") V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_spin(1,:,1)
+     if (trim(OBS)=="magnons")         V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
      V0(i_g)%fragment(:,i_ColFG) = V0(i_g)%fragment(:,i_ColFG)*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
    enddo
    !
@@ -275,6 +276,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
      do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_g)
        if (trim(OBS)=="kerr") W0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
        if (trim(OBS)=="dichroism") W0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)/q0_def_norm
+       if (trim(OBS)=="magnetoelectric") W0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)/q0_def_norm
        W0(i_g)%fragment(:,i_ColFG) = W0(i_g)%fragment(:,i_ColFG)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
      enddo
      if(velocity_correction) V_tmp(i_g)%fragment = W0(i_g)%fragment/BS_T_grp(i_g)%E

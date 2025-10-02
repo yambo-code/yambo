@@ -151,7 +151,10 @@ endif
    if (STRING_match(Dip%computed,"spin").or.&
        l_BS_magnons.or.&
        l_BS_magnetoelectric) specific_obs=" M_spin"
-   if (STRING_match(Dip%computed,"orb")) specific_obs=trim(specific_obs)//" M_orbRT M_it"
+   !if (STRING_match(Dip%computed,"orb").and..not.l_BS_magnetoelectric) then 
+   if (STRING_match(Dip%computed,"orb")) then 
+     specific_obs=trim(specific_obs)//" M_orbRT M_it"
+   endif
 #if defined _RT
    ! Always force all dipoles in real-time case
    if (l_real_time) specific_obs=" M_spin M_orbRT M_it"

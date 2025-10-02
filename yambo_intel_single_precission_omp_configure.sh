@@ -34,10 +34,11 @@ FCFLAGS="-O0 -g -traceback -check bounds -fpe0" \
 --with-lapack-libs="-L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lmkl_blacs_intelmpi_lp64 -liomp5 -lpthread -lm -ldl" \
 --with-blacs-libs="mkl" \
 --with-scalapack-libs="mkl" \
---with-extlibs-path="${YAMBO_LIBS_ROOT}" \
---enable-slepc-linalg \
---with-petsc-path="${PETSC_ROOT}" \
---with-slepc-path="${SLEPC_ROOT}" \
---with-libxc-path="${LIBXC_ROOT}" \
+--with-extlibs-path="${YAMBO_LIBS_ROOT}"
+
+#--enable-slepc-linalg
+#--with-petsc-path="${PETSC_ROOT}" \
+#--with-slepc-path="${SLEPC_ROOT}" \
+#--with-libxc-path="${LIBXC_ROOT}" \
 
 #FCFLAGS="-O2 -g -traceback -check bounds -fpe0" \

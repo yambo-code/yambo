@@ -19,7 +19,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use BS_solvers,      ONLY:BSS_desc,BSS_free,BS_mat,run_Haydock,&
 &                          run_inversion,run_Diago,run_Slepc,BSS_kernel_IO_on_the_fly
  use BS,              ONLY:BS_K_has_been_calculated_loaded,BS_ID,&
-&                          l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_jdos
+&                          l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,&
+&                          l_BS_magnetoelectric,l_BS_jdos
  use parallel_m,      ONLY:master_cpu,CPU_structure
  use IO_int,          ONLY:IO_and_Messaging_switch
  use linear_algebra,  ONLY:INV,DIAGO
@@ -113,6 +114,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    if (l_BS_kerr)    call K_Haydock(iq,W_bss,"kerr",Xk)
    if (l_BS_magnons) call K_Haydock(iq,W_bss,"magnons",Xk)
    if (l_BS_dichroism) call K_Haydock(iq,W_bss,"dichroism",Xk)
+   if (l_BS_magnetoelectric) call K_Haydock(iq,W_bss,"magnetoelectric",Xk)
    !
  endif
  !

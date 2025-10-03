@@ -35,7 +35,7 @@ subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF,ssop,isref,igref)
  complex(SP)              DEV_ATTR :: WF_k_tmp(wf_ng_1st_BZ,n_spinor)
  complex(SP), pointer     DEV_ATTR :: WF_p(:,:)
  complex(SP)              DEV_ATTR :: ssop_loc(2,2)
- integer                  DEV_ATTR :: wf_tab_loc(wf_ng)
+ integer                  DEV_ATTR :: wf_tab_loc(wf_ng,2)
  !
  real(SP)    :: krot(3),G_cc(3)
  !
@@ -66,13 +66,15 @@ subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF,ssop,isref,igref)
      igp=DEV_VAR(g_rot)(ig,isref)
      igs=DEV_VAR(G_m_G)(igp,igref)
      igr=DEV_VAR(g_rot)(igs,isymm)
-     wf_tab_loc(ic)=DEV_VAR(G_m_G)(igr,ig0)
+     wf_tab_loc(ic,1)=igs
+     wf_tab_loc(ic,2)=DEV_VAR(G_m_G)(igr,ig0)
    enddo
  else
    do ic=1,wf_nc_k(ik)
      ig=DEV_VAR(wf_igk)(ic,ik)
      igr=DEV_VAR(g_rot)(ig,isymm)
-     wf_tab_loc(ic)=DEV_VAR(G_m_G)(igr,ig0)
+     wf_tab_loc(ic,1)=ig
+     wf_tab_loc(ic,2)=DEV_VAR(G_m_G)(igr,ig0)
    enddo
  endif
  !
@@ -86,24 +88,26 @@ subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF,ssop,isref,igref)
    if (n_spinor==1) then
      !
      !DEV_ACC_DEBUG data present(WF_k_tmp,g_rot,WF_p)
-     !DEV_ACC parallel loop private(ig,igr,igs)
+     !DEV_ACC parallel loop private(ig,igs)
      !DEV_CUF kernel do(1) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:WF_k_tmp,g_rot,WF_p)
      !DEV_OMPGPU teams loop
      do ic=1,wf_nc_k(ik)
-       igs=wf_tab_loc(ic)
+       ig =wf_tab_loc(ic,1)
+       igs=wf_tab_loc(ic,2)
        WF_k_tmp(igs,1)=WF_p(ig,1)
      enddo
      !
    else
      !
      !DEV_ACC_DEBUG data present(WF_k_tmp,g_rot,WF_p)
-     !DEV_ACC parallel loop private(ig,igr,igs)
+     !DEV_ACC parallel loop private(ig,igs)
      !DEV_CUF kernel do(1) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:WF_k_tmp,g_rot,WF_p)
      !DEV_OMPGPU teams loop
      do ic=1,wf_nc_k(ik)
-       igs=wf_tab_loc(ic)
+       ig =wf_tab_loc(ic,1)
+       igs=wf_tab_loc(ic,2)
        WF_k_tmp(igs,1)=ssop_loc(1,1)*WF_p(ig,1)+ssop_loc(1,2)*WF_p(ig,2)
        WF_k_tmp(igs,2)=ssop_loc(2,1)*WF_p(ig,1)+ssop_loc(2,2)*WF_p(ig,2)
      enddo

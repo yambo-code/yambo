@@ -31,7 +31,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use X_m,           ONLY:X_t
  use interfaces,    ONLY:el_density_and_current
  use QP_m,          ONLY:QP_ng_Vxc
- use BS_solvers,    ONLY:BSS_kernel_last_stored_block
+ use BS_solvers,    ONLY:BSS_kernel_last_stored_block,load_Diago
  use BS,            ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,BS_ID,&
 &                        BS_res_K_exchange,BS_Block_size,l_BSE_kernel_full,BS_n_g_W,&
 &                        O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
@@ -130,6 +130,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call k_build_up_BZ_tables(Xk)
  !
+ if (load_Diago) then
+   call msg('s','[BSE] Kernel calculation skipped, trying to load ndb.BS_diago directly ')
+   return
+ endif
+ !
  ! Titles
  !========
  !
@@ -217,7 +222,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  ID      =BS_ID(2)
  ID_compr=BS_ID(3)
  !
- if( l_BSE_kernel_complete ) return
+ if( l_BSE_kernel_complete) return
  !
  io_QINDX_err=0
  if (l_bs_corr) io_QINDX_err=qindx_B_init(qindx_ID,qindx_ID_frag,"minus_q")

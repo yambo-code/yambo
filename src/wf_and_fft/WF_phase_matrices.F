@@ -22,7 +22,7 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  use units,             ONLY:HA2EV
  use LIVE_t,            ONLY:live_timing
  use R_lattice,         ONLY:bz_samp,G_m_G,minus_G,g_vec,rl_sop
- use D_lattice,         ONLY:nsym,i_time_rev,sop_tab,DEV_VAR(spin_sop)
+ use D_lattice,         ONLY:nsym,i_time_rev,sop_tab,spin_sop
  use electrons,         ONLY:levels,n_max_deg
  use wave_func,         ONLY:WAVEs,io_WF_phases,WF_phases_b_map
  use wave_func,         ONLY:wf_ng_overlaps,wf_ng_1st_BZ,WF_copy,wf_nc_k
@@ -33,7 +33,7 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  use matrix_operate,    ONLY:m3det!,UP_matrix_index
  use vec_operate,       ONLY:degeneration_finder
  use parallel_m,        ONLY:PAR_IND_WF_k,PAR_IND_WF_b,PAR_IND_B_mat
- use parallel_int,      ONLY:PP_redux_wait,PARALLEL_WF_index,PARALLEL_WF_distribute
+ use parallel_int,      ONLY:PP_wait,PP_redux_wait,PARALLEL_WF_index,PARALLEL_WF_distribute
  use interfaces,        ONLY:WF_symm_kpoint_g,WF_load,WF_free,eval_G_minus_G
  use IO_int,            ONLY:io_control
  use IO_m,              ONLY:VERIFY,DUMP,REP,OP_WR,WR,WR_CL,OP_RD_CL
@@ -51,6 +51,7 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  integer           :: first_el(blim(2)-blim(1)+1),n_of_el(blim(2)-blim(1)+1),&
  &                    blim_n(2),n_deg_grp,i_grp,g0_idx(3,2),nsz(5),max_igk
  real(SP)          :: g0_length(3)
+ logical           :: opt1,opt2
  integer           :: ikbz,iRkbz,isk,isloop,isk_c,isk_y,iGk_y,iGk_c,iGk,iGloop,istark,&
  &                    iby,ibc,iby_phase,ibc_phase,i_sp_pol,ik,&
  &                    ifrag,s_count,i_wf_y,i_wf_c,iGp,ng_tmp,nb,NG_max
@@ -66,6 +67,15 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  integer              :: io_err,ID
  !
  if (nsym==1) return
+ !
+ ! 2025/09/23
+ ! At present option 2 is buggy with n_spinor=2.
+ ! It produces exc-ph couplings which are not
+ ! fully symmetric. If fixed, this would be more elegant than option 1
+ ! An even better fix would be to correctly detect the double point group in the code
+ !
+ opt1=(n_spinor==2)
+ opt2=.not.opt1
  !
  nsz=0
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
@@ -149,35 +159,40 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
        iGk =minus_G(Xk%g_table(ik,isk))
        !
        ! OPTION 1: expand from IBZ (WF_k) to BZ (WF_Rk)
-       call WF_copy(WF_k,WF_Rk)
-       call WF_symm_kpoint_g(blim,ik,i_sp_pol,isk,iGk,WF_Rk)
+       if (opt1) then
+         call WF_copy(WF_k,WF_Rk)
+         call WF_symm_kpoint_g(blim,ik,i_sp_pol,isk,iGk,WF_Rk)
+       endif
        !
        do isloop=1,nsym
          !
          ! symmetry composed
          isk_c=sop_tab(isloop,isk)
-         iGk_c =minus_G(Xk%g_table(ik,isk_c))
+         iGk_c=minus_G(Xk%g_table(ik,isk_c))
          !
          iGloop=G_m_G(iGk_c,iGk)
          !
          ! spin_sop with time-reversal are not a space group
          ! I need to build the composed spin symmetry operator
          !
-         ! OPTION 2 (disabled): directly compute composed spin symmetry
-         !if(n_spinor==2) then
-         !  s1=spin_sop(:,:,isk)
-         !  s2=spin_sop(:,:,isloop)
-         !  if (isk   >nsym/(1+i_time_rev)) s1=conjg(s1)
-         !  if (isloop>nsym/(1+i_time_rev)) then
-         !    s2=conjg(s2)
-         !    s1=conjg(s1)
-         !  endif
-         !  spin_sop_composed=matmul(s2,s1)
-         !  if (isk_c >nsym/(1+i_time_rev)) spin_sop_composed=conjg(spin_sop_composed)
-!#f defined _CUDA
-         !  call dev_memcpy(spin_sop_composed_d,spin_sop_composed)
-!#ndif
-         !endif
+         ! (disabled if n_spinor=2)
+         ! OPTION 2: directly compute composed spin symmetry
+         if(n_spinor==2.and.opt2) then
+           ! The following code is probably wrong
+           s1=spin_sop(:,:,isk)
+           s2=spin_sop(:,:,isloop)
+           !if (isloop>nsym/(1+i_time_rev)) s1=conjg(s1)
+           if (isk   >nsym/(1+i_time_rev)) s1=conjg(s1)
+           if (isloop>nsym/(1+i_time_rev)) then
+             s2=conjg(s2)
+             s1=conjg(s1)
+           endif
+           spin_sop_composed=matmul(s2,s1)
+           if (isk_c >nsym/(1+i_time_rev)) spin_sop_composed=conjg(spin_sop_composed)
+#if defined _CUDA
+           call dev_memcpy(spin_sop_composed_d,spin_sop_composed)
+#endif
+         endif
          !
          ! symmetry used by yambo
          isk_y=Xk%s_table(ik,isk_c)
@@ -187,12 +202,17 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
          !
          ! OPTION 1: Apply second symmetry operation (WF_Rk_c from isk) 
          ! to the WF already expanded in the BZ (WF_Rk)
-         call WF_copy(WF_Rk,WF_Rk_c)
-         call WF_symm_kpoint_g(blim,ik,i_sp_pol,isloop,iGloop,WF_Rk_c,isref=isk,iGref=iGk)
+         if (opt1) then
+           call WF_copy(WF_Rk,WF_Rk_c)
+           call WF_symm_kpoint_g(blim,ik,i_sp_pol,isloop,iGloop,WF_Rk_c,isref=isk,iGref=iGk)
+         endif
          !
-         ! OPTION 2 (disabled): Use the composed symmetry, importing the composed spin soc
-         !call WF_copy(WF_k,WF_Rk_c)
-         !call WF_symm_kpoint_g(blim,ik,i_sp_pol,isk_c,iGk_c,WF_Rk_c,ssop=spin_sop_composed)
+         ! (disabled if n_spinor=2)
+         ! OPTION 2: Use the composed symmetry, importing the composed spin soc
+         if (opt2) then
+           call WF_copy(WF_k,WF_Rk_c)
+           call WF_symm_kpoint_g(blim,ik,i_sp_pol,isk_c,iGk_c,WF_Rk_c,ssop=DEV_VAR(spin_sop_composed))
+         endif
          !
          call WF_copy(WF_k,WF_Rk_y)
          call WF_symm_kpoint_g(blim,ik,i_sp_pol,isk_y,iGk_y,WF_Rk_y)
@@ -274,6 +294,8 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  io_err=io_WF_phases(blim,0,0,0,ID,nsz)
  !
  YAMBO_FREE(WF_phases_b_map)
+ !
+ call PP_wait()
  !
  call timing("WF_phases",OPR="stop")
  !

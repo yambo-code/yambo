@@ -195,7 +195,7 @@ module fields
    !
    complex(SP) function Divide_by_Field(Field,order)
      !
-     use pars, ONLY: cI,cONE,pi,schlen
+     use pars, ONLY: SP,cI,cONE,pi,schlen
      use stderr,ONLY:STRING_split
      type(ext_field):: Field
      integer        :: order
@@ -212,8 +212,8 @@ module fields
          if (order==0) Divide_by_Field =  4._SP*cONE/Field%amplitude**2
        case('QSSIN') !Approximate relations/does not work yet
          sigma=Field%width
-         T_0=10._SP*sigma
          W_0=Field%frequency(1)
+         T_0=pi/W_0*(real(nint(W_0/pi*3._SP*sigma),SP))
          T = 2._SP*pi/W_0
          E_w= sqrt(pi/2._SP)*Field%amplitude*sigma*exp(-cI*W_0*T_0)*&
               &(erf((T-T_0)/sqrt(2._SP)/sigma)+erf(T_0/sqrt(2._SP)/sigma))

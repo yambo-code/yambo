@@ -138,7 +138,7 @@ end subroutine of_open_close
 subroutine write_the_logo(unit_,comment_)
  !
  use LIVE_t,       ONLY:LIVE_message
- use LOGO,         ONLY:pickup_a_logo,logo_line,n_logo_lines
+ use LOGO,         ONLY:pickup_a_lumen_logo,logo_line,n_logo_lines
  use pars,         ONLY:schlen
  !
  implicit none
@@ -148,7 +148,7 @@ subroutine write_the_logo(unit_,comment_)
  character(schlen)::space_,ch ! Work Space
  integer          ::i1        !
  !
- call pickup_a_logo(unit_)
+ call pickup_a_lumen_logo(unit_)
  !
  if (unit_<0) return
  !

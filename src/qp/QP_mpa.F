@@ -164,14 +164,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! WF distributed & load
  !=======================
  !
- if ( .not.l_sc_run ) then
-   call PARALLEL_global_indexes(E,k,q,"Self_Energy")
-   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
-   call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
-   call PARALLEL_WF_index( )
- endif
- !
- ch='-GW'
+ if ( .not.l_sc_run ) call PARALLEL_global_indexes(E,k,q,"Self_Energy")
  !
  ! Redefine iq_to_start to be CPU-dependent
  !
@@ -182,6 +175,14 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      exit
    endif
  enddo
+ !
+ if ( .not.l_sc_run ) then
+   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
+   call PARALLEL_WF_index( )
+ endif
+ !
+ ch='-GW'
  !
  ! wf and collisions dimension
  !-----------------------------
@@ -226,9 +227,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
    allocate(X_par(1))
  endif
  !
-   if (io_RESPONSE) call X_ALLOC_parallel(X_par(1),X%ng,2*X%mpa_npoles,"X")
-   YAMBO_ALLOC(W_,(QP_dSc_steps))
-   YAMBO_ALLOC(dc,(QP_dSc_steps))
+ if (io_RESPONSE) call X_ALLOC_parallel(X_par(1),X%ng,2*X%mpa_npoles,"X")
+ YAMBO_ALLOC(W_,(QP_dSc_steps))
+ YAMBO_ALLOC(dc,(QP_dSc_steps))
  !
  ! MPA workspace
  !

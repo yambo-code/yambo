@@ -21,6 +21,9 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
 #endif
+#if defined _ELPH && !defined _RT
+ use drivers,       ONLY:l_EXCPH_gkkp,l_EXCPH_optics,l_EXCPH_lifetime
+#endif
  use gpu_m,         ONLY:GPU_test_dim
  use X_m,           ONLY:X_t,i_X_kind_existing_DB
  use DIPOLES,       ONLY:DIPOLE_t
@@ -225,6 +228,15 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (launch_me) call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip)
  if (launch_me) call mem_manager_report
+ !
+ ! EXCITON-PHONON 
+ ! ===============
+#if defined _ELPH && !defined _RT
+ if (l_EXCPH_gkkp)     call EXCPH_gkkp_driver(Ken,Xk,q,X(i_X_kind))
+ if (l_EXCPH_optics)   call EXCPH_optics(Ken,Xk,q,X(i_X_kind),Xw(3))
+ if (l_EXCPH_lifetime) call EXCPH_lifetime(Xk,q,X(i_X_kind))
+#endif
+ !
  !
  ! ACFDT
  !=======

@@ -54,29 +54,29 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  implicit none
  !
- type(levels)        ::E
- type(bz_samp)       ::Xk,k,q
- type(X_t)           ::X
- type(QP_t)          ::qp
- type(w_samp)        ::Xw
- integer             ::GW_iter
+ type(levels) ::E
+ type(bz_samp)::Xk,k,q
+ type(X_t)    ::X
+ type(QP_t)   ::qp
+ type(w_samp) ::Xw
+ integer      ::GW_iter
  !
  ! Work Space
  !
- integer          :: i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,iqs,i_qp_to_start,iq_to_start,is,&
-&                    iq_mem,X_range(2),io_err,ID,IO_ACT,timing_steps
- !
- complex(SP), allocatable          :: W_(:),dc(:)
- type(elemental_collision), target :: isc,iscp
- !
  type(w_samp)     :: Sc_W(qp%n_states)
- character(schlen):: ch,SECTION_name
+ integer          :: i_qp,i_w,iqbz,iqibz,ib,i_v,i_c,i_k,i_kmq,i_kmq_Go,i_kmq_bz,i_kmq_s,&
+&                    i_sp_pol,ig1,ig2,iqs,i_qp_to_start,iq_to_start,is,iq_mem,&
+&                    X_range(2),io_err,ID,IO_ACT,timing_steps
  !
+ character(schlen):: ch,SECTION_name
  integer          :: X_mpa_npoles,X_ng
  logical          :: X_is_TR_rotated,l_X_ALLOC_elemental,l_RIM_W_g
  real(SP)         :: E_kmq,f_kmq
  real(DP)         :: dp_dummy_r,dp_dummy_i
  complex(DP)      :: dp_dummy,ctmp,W_1,W_i
+ !
+ complex(SP), allocatable          :: W_(:),dc(:)
+ type(elemental_collision), target :: isc,iscp
  !
  complex(SP), pointer DEV_ATTR :: isc_rhotw_p(:)
  complex(SP), pointer DEV_ATTR :: iscp_rhotw_p(:)
@@ -111,10 +111,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  iq_to_start  =1
  QP_Sc        =cZERO
  !
- ! for G & Sigma
  ! Sc Energy points (1 type each QP state !)
  !-------------------------------------------
- !
  if (trim(QP_solver)=='n') then
    !
    do i_qp=1,qp%n_states
@@ -128,7 +126,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
    QP_dSc_steps=QP_Sc_steps
    do i_qp=1,qp%n_states
      call W_reset(Sc_W(i_qp))
-     Sc_W(i_qp)%n_freqs=QP_Sc_steps
+     Sc_W(i_qp)%n_freqs =QP_Sc_steps
      call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),E%E,.FALSE.)
      !
      if(Sc_W(i_qp)%grid_type=="ra") then
@@ -166,24 +164,24 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! WF distributed & load
  !=======================
  !
- if ( .not.l_sc_run ) call PARALLEL_global_indexes(E,k,q,"Self_Energy")
- !
- ! Redefine iq_to_start to be CPU-dependent
- !
- do iqbz=1,q%nbz 
-   if (PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) then
-     iq_to_start=iqbz
-     exit
-   endif
- enddo
- !
- if( .not.l_sc_run ) then
+ if ( .not.l_sc_run ) then
+   call PARALLEL_global_indexes(E,k,q,"Self_Energy")
    call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
    call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
    call PARALLEL_WF_index( )
  endif
  !
  ch='-GW'
+ !
+ ! Redefine iq_to_start to be CPU-dependent
+ !
+ do iqbz=1,q%nbz 
+   iqibz=q%sstar(iqbz,1)
+   if (PAR_IND_Q_ibz%element_1D(iqibz)) then
+     iq_to_start=iqbz
+     exit
+   endif
+ enddo
  !
  ! wf and collisions dimension
  !-----------------------------
@@ -219,8 +217,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !------------
  !
  ! MB: we load X_par and not X_mat (refer to QP_ppa_cohsex)
- !     Here deallocate X_mat
- !
+ ! deallocate X_mat
  call X_ALLOC_elemental("X")
  !
  if (.not.io_RESPONSE) call error("[MPA] .not. io_RESPONSE untested with MPA")
@@ -228,10 +225,10 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (.not.allocated(X_par).and.io_RESPONSE) then
    allocate(X_par(1))
  endif
- if (io_RESPONSE) call X_ALLOC_parallel(X_par(1),X%ng,2*X%mpa_npoles,"X")
  !
- YAMBO_ALLOC(W_,(QP_dSc_steps))
- YAMBO_ALLOC(dc,(QP_dSc_steps))
+   if (io_RESPONSE) call X_ALLOC_parallel(X_par(1),X%ng,2*X%mpa_npoles,"X")
+   YAMBO_ALLOC(W_,(QP_dSc_steps))
+   YAMBO_ALLOC(dc,(QP_dSc_steps))
  !
  ! MPA workspace
  !
@@ -273,13 +270,14 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call timing('GW(mpa)_init',OPR='stop')
  !
- Q_loop: do iqbz=iq_to_start,q%nbz 
+ Q_loop: do iqbz=iq_to_start,q%nbz
    !
-   if (.not.PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) cycle
+   iqs  =q%sstar(iqbz,2)
+   iqibz=q%sstar(iqbz,1)
    !
-   isc%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
-   iqibz=isc%qs(2)
-   iqs  =isc%qs(3)
+   if (.not.PAR_IND_Q_ibz%element_1D(iqibz)) cycle
+   !
+   isc%qs(2:3)=(/iqibz,iqs/)
    !
    if (iqibz/=isc%iqref) then
      !
@@ -438,12 +436,22 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      if (i_qp==QP_n_states) i_qp_to_start=1
      !
+     i_v=QP_table(i_qp,1)
+     i_c=QP_table(i_qp,2)
+     i_k=QP_table(i_qp,3)
+     i_sp_pol=spin(QP_table(i_qp,:))
      !
-     isc%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
-     isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),spin(QP_table(i_qp,:))/)
-     isc%qs(1)=qindx_S(QP_table(i_qp,3),iqbz,2)
+     i_kmq_Go=qindx_S(i_k,iqbz,2)
+     i_kmq_bz=qindx_S(i_k,iqbz,1)
      !
-     iscp%is=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
+     i_kmq  =k%sstar(i_kmq_bz,1)
+     i_kmq_s=k%sstar(i_kmq_bz,2)
+     !
+     isc%is=(/i_v,i_k,  1,      i_sp_pol/)
+     isc%os=(/0,  i_kmq,i_kmq_s,i_sp_pol/)
+     isc%qs(1)=i_kmq_Go
+     !
+     iscp%is=(/i_c,i_k,1,i_sp_pol/)
      iscp%qs=isc%qs
      !
      ! DALV: here the grid is centered in E0
@@ -453,15 +461,15 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        if (.not.PAR_IND_G_b%element_1D(ib)) cycle
        !
-       if (q%sstar(iqbz,2)==1) call live_timing(steps=1)
+       if (iqs==1) call live_timing(steps=1)
        !
        isc%os(1)=ib
        !
        call scatter_Bamp_gpu(isc)
        iscp%os=isc%os
        !
-       if (any(isc%is/=iscp%is))  then
-         call scatter_Bamp(iscp)
+       if (any(isc%is/=iscp%is)) then
+         call scatter_Bamp_gpu(iscp)
        else
          if (     have_gpu) call devxlib_memcpy_d2d(iscp_rhotw_p, isc_rhotw_p)
          if (.not.have_gpu) iscp_rhotw_p=isc_rhotw_p

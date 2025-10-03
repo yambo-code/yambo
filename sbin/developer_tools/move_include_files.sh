@@ -10,6 +10,8 @@ for file in */*/*.F; do
  if [ "$file" == "src/bse/K_diago_driver.F" ]; then continue; fi
  if [[ "$file" == *"_incl.F"* ]]; then continue; fi
 
+ if grep -q "! headers" "$file"; then continue; fi
+
  echo "Checking file $file"
 
 awk '

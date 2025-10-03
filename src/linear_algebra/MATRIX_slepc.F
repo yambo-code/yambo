@@ -269,6 +269,7 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
  !Set monitor
  call EPSMonitorSet(eps,MyEPSMonitor,0,PETSC_NULL_FUNCTION,ierr)
  !
+#if PETSC_VERSION_GE(3,22,0)
  if(present(V_left).and.BSS_slepc_pseudo_herm.and.epskind==EPSKRYLOVSCHUR) then
    ! Default Shao used in case input is mispelled or not set
    epsbsetype=EPS_KRYLOVSCHUR_BSE_SHAO
@@ -283,15 +284,20 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
  !
  ! Fix the BSS_slepc_approach string
  if (epskind==EPSKRYLOVSCHUR) BSS_slepc_approach="Krylov-Schur"
+#endif
  !
  if(present(V_left)) then
+#if PETSC_VERSION_GE(3,22,0)
    if(BSS_slepc_pseudo_herm.and.epskind==EPSKRYLOVSCHUR) then
      if(epsbsetype==EPS_KRYLOVSCHUR_BSE_SHAO)         BSS_slepc_approach=trim(BSS_slepc_approach)//"+Shao" 
      if(epsbsetype==EPS_KRYLOVSCHUR_BSE_GRUNING)      BSS_slepc_approach=trim(BSS_slepc_approach)//"+Gruning" 
      if(epsbsetype==EPS_KRYLOVSCHUR_BSE_PROJECTEDBSE) BSS_slepc_approach=trim(BSS_slepc_approach)//"+ProjectedBSE"
    else
+#endif
      BSS_slepc_approach=trim(BSS_slepc_approach)//"+NonHermitian"
+#if PETSC_VERSION_GE(3,22,0)
    endif
+#endif
  endif
  !
  call msg( 'sr', '[SLEPC] Approach                          ',BSS_slepc_approach)

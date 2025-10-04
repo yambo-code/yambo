@@ -187,10 +187,10 @@ module interfaces
    end subroutine
 #endif
    !
-   integer function eval_G_minus_G(iG,iGo,force_recompute,COMM)
+   integer function eval_G_minus_G(iG,iGo,opr_in,COMM)
      use parallel_m,      ONLY:yMPI_comm
      integer :: iG,iGo
-     logical,         optional :: force_recompute
+     character(1),    optional :: opr_in
      type(yMPI_comm), optional :: COMM
    end function
    !

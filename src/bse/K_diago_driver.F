@@ -224,13 +224,17 @@ subroutine K_diago_driver(iq,W,X_static)
          ! 2. Here we create a distributed PETSC matrix from the BS_blks
          !    There are 2 cases
          ! control of hermitian / pseudo-hermitian / non hermitian is in part explicit here
+#if PETSC_VERSION_GE(3,22,0)
          if (BSS_slepc_pseudo_herm) then
            ! 2.1. Nest matrix uses pseudo-hermitian structure of BSE, only for the coupling case
            call K_stored_in_a_nest_matrix(i_BS_mat,iq,slepc_mat)
          else
+#endif
            ! 2.2. Single PETSc matrix, for resonant case or non-hermitian coupling
            call K_stored_in_a_slepc_matrix(i_BS_mat,iq,slepc_mat)
+#if PETSC_VERSION_GE(3,22,0)
          endif
+#endif
        endif        
      endif
 #endif

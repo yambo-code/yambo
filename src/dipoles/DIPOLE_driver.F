@@ -30,6 +30,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  use drivers,        ONLY:l_optics
  use pars,           ONLY:SP,schlen
+ use com,            ONLY:msg
  use electrons,      ONLY:levels,n_sp_pol
  use IO_m,           ONLY:io_DIP
  use R_lattice,      ONLY:bz_samp
@@ -56,7 +57,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  ! Work Space
  !
  integer           :: ik,io_err,io_err_Overlaps
- character(schlen) :: msg
+ character(schlen) :: message
  logical           :: l_warning,direction_is_todo(3)
  !
  call section('*','Dipoles')
@@ -168,10 +169,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  ! Warn about missing [Sigma,r] commutator
  !
  if (      Dip%Vnl_included .and.l_warning.and.(len_trim(g_space_obs)>0.or.Dip%force_v_g_space)) then
-   msg=' [r,Vnl^pseudo] included in'
-   if (.not.len_trim(g_space_obs)>0) msg=trim(msg)//' velocity dipoles.'
-   if (     len_trim(g_space_obs)>0) msg=trim(msg)//' position and velocity dipoles.'
-   call warning(trim(msg))
+   message='[r,Vnl^pseudo] included in'
+   if (.not.len_trim(g_space_obs)>0) message=trim(message)//' velocity dipoles.'
+   if (     len_trim(g_space_obs)>0) message=trim(message)//' position and velocity dipoles.'
+   call msg('s',trim(message))
    call warning(' In case H contains other non local terms, these are neglected ')
    Vnl_commutator_warning=.TRUE.
  endif
@@ -179,10 +180,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  ! Warn about missing [Vnl,r] commutator
  !
  if ((.not.Dip%Vnl_included).and.l_warning) then
-   msg=' [r,Vnl^pseudo] not included in'
-   if (.not.len_trim(g_space_obs)>0) msg=trim(msg)//' velocity dipoles'
-   if (     len_trim(g_space_obs)>0) msg=trim(msg)//' position and velocity dipoles'
-   call warning(trim(msg))
+   message=' [r,Vnl^pseudo] not included in'
+   if (.not.len_trim(g_space_obs)>0) message=trim(message)//' velocity dipoles'
+   if (     len_trim(g_space_obs)>0) message=trim(message)//' position and velocity dipoles'
+   call warning(trim(message))
    call warning(' In case H contains other non local terms, also these are neglected ')
    Vnl_commutator_warning=.TRUE.
  endif

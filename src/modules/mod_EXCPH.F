@@ -45,6 +45,7 @@ module EXCPH
  complex(SP), allocatable :: EXCPH_Gkkp(:,:,:)
  real(SP),    allocatable :: EXCPH_Gkkp_sq(:,:,:)
  integer                  :: n_exc_in
+ integer                  :: n_exc_out
  integer                  :: EXCPH_states(2)    ! External states
  integer                  :: EXCPH_sum(2)       ! Internal states ("virtual")
  integer                  :: EXCPH_interband(2) ! Interband states
@@ -64,7 +65,7 @@ module EXCPH
  ! ExcPH gkkp
  !
  complex(SP), allocatable :: A_rot(:,:),Xi(:,:)
- integer,     allocatable :: BSS_eh_table_m1_in(:,:,:)
+ integer,     allocatable :: BSS_eh_table_m1_in(:,:,:,:,:)
  integer,     allocatable :: k_plus_q_table(:,:)
  complex(SP), allocatable :: BS_E_in(:),BS_E(:)
  real(SP),    allocatable :: BS_all_E(:,:)
@@ -146,8 +147,8 @@ module EXCPH
      ! 
      YAMBO_ALLOC(BS_E_in,(BSS_n_eig))
      YAMBO_ALLOC(BS_mat_in,(BS_H_dim,EXCPH_states(1):EXCPH_states(2)))
-     YAMBO_ALLOC(BSS_eh_table_in,(BS_H_dim,3+n_sp_pol-1))
-     YAMBO_ALLOC(BSS_eh_table_m1_in,(k%nbz,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2)))
+     YAMBO_ALLOC(BSS_eh_table_in,(BS_H_dim,5))
+     YAMBO_ALLOC(BSS_eh_table_m1_in,(k%nbz,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol,n_sp_pol))
      !
      BS_mat_in=cZERO
      BS_E_in  =cZERO
@@ -265,7 +266,7 @@ module EXCPH
      ! pre-allocs...
      !
      YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
-     YAMBO_ALLOC(BSS_eh_table_m1,(k%nbz,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),1,1))
+     YAMBO_ALLOC(BSS_eh_table_m1,(k%nbz,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol,n_sp_pol))
      !
      if(.not.allocated(BS_E)) then
         YAMBO_ALLOC(BS_E,(BSS_n_eig))

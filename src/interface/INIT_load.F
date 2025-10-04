@@ -220,7 +220,7 @@ call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level
 #endif
  call it('f',defs,'WFbuffIO','[IO] Wave-functions buffered I/O',verb_level=V_io) 
  call it('f',defs,'NoDiagSC','New setup for non-diagonal supercells',verb_level=V_general) 
- call it('f',defs,'DegFix','Force the code to impose the energy levels to respect their degeneracy') 
+ call it('f',defs,'DegFix','Force the code to impose the energy levels to respect their degeneracy',verb_level=V_general) 
  !
  ! Parallel Setup
  !

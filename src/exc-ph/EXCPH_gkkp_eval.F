@@ -39,7 +39,7 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  !
  integer                 :: io_err,i_H,i_Hp,i_alpha,iq_db,ik_db,&
 &                           iv,ic,ik_bz,ivp,icp,i_beta,ik_plus_iq_bz,IO_ACT, &
-&                           iv_in,ic_in,ik_bz_in
+&                           iv_in,ic_in,ik_bz_in,i_sp_c,i_sp_v,i_sp_c_in,i_sp_v_in
  real(SP)                :: ph_E
  complex(SP)             :: elph_gkkp,EXC_out,EXC_in
  integer, external       :: io_ELPH
@@ -86,6 +86,8 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
      ik_bz = BSS_eh_table(i_H,1)
      iv    = BSS_eh_table(i_H,2)
      ic    = BSS_eh_table(i_H,3)
+     i_sp_c= BSS_eh_table(i_H,4)
+     i_sp_v= BSS_eh_table(i_H,5)
      !
      ! only sum k-points up to the shell with radius EXCPH_kthresh (debug only)
      if (EXCPH_kthresh>0._SP) then
@@ -103,7 +105,7 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
        !
        if (l_elec_only) exit
        !
-       i_Hp=BSS_eh_table_m1(ik_bz,ivp,ic,1,1)
+       i_Hp=BSS_eh_table_m1(ik_bz,ivp,ic,i_sp_c,i_sp_v)
        if (i_Hp==0) cycle
        !
        if (.not.l_const_elph) then
@@ -126,7 +128,7 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
        !
        if (l_hole_only) exit
        !
-       i_Hp=BSS_eh_table_m1(ik_plus_iq_bz,iv,icp,1,1)
+       i_Hp=BSS_eh_table_m1(ik_plus_iq_bz,iv,icp,i_sp_c,i_sp_v)
        if (i_Hp==0) cycle
        if (.not.l_const_elph) then
          ik_db=K_io_map(ik_plus_iq_bz)
@@ -155,16 +157,22 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
        ik_bz = BSS_eh_table(i_H,1)
        iv    = BSS_eh_table(i_H,2)
        ic    = BSS_eh_table(i_H,3)
+       i_sp_c= BSS_eh_table(i_H,4)
+       i_sp_v= BSS_eh_table(i_H,5)
        !
        ! K_in = (ik_bz,iv,ic)
        !
        ik_bz_in = BSS_eh_table_in(i_H,1)
        iv_in    = BSS_eh_table_in(i_H,2)
        ic_in    = BSS_eh_table_in(i_H,3)
+       i_sp_c_in= BSS_eh_table_in(i_H,4)
+       i_sp_v_in= BSS_eh_table_in(i_H,5)
        !
        if (ik_bz /= ik_bz_in) call error(" Wrong k correspondence")
        if (iv    /= iv_in   ) call error(" Wrong iv correspondence")
        if (ic    /= ic_in   ) call error(" Wrong ic correspondence")
+       if (i_sp_c/= i_sp_c_in) call error(" Wrong i_sp_c correspondence")
+       if (i_sp_v/= i_sp_v_in) call error(" Wrong i_sp_v correspondence")
        !
        ! EXC_IN: "Left" part of exciton-phonon coupling. The "right" part is its conjugate
        !

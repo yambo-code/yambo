@@ -62,7 +62,7 @@ configure: uncompress
 compile: uncompress configure
 	@if test -d $(PACKAGE) && ! test -f compiled.stamp ; then \
          echo "\t[$(PACKAGE)] compilation"; \
-         ( cd $(PACKAGE);  $(make) -j1 PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) >> ${compdir}/log/compile_$(PACKAGE).log 2>&1 ) ; \
+         ( cd $(PACKAGE);  $(make) $(MAKEFLAGS) PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) >> ${compdir}/log/compile_$(PACKAGE).log 2>&1 ) ; \
          touch compiled.stamp; \
         fi
 

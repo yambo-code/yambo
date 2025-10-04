@@ -11,7 +11,7 @@
 #include<y_memory.h>
 !
 !
-integer function eval_G_minus_G(iG,iGo,COMM)
+integer function eval_G_minus_G(iG,iGo,opr_in,COMM)
  !
  ! Evaluates the  G-G' table :
  !
@@ -19,6 +19,10 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  ! and returns the orginal iG that is redefined in output
  ! in such a way that G_m_G(iG,j) exists for all j
+ !
+ ! If operation is "+" fills the table with:
+ !
+ !  g_vec( G_m_G(i,j) ) = g_vec(i)+g_vec(j)
  !
  use pars,         ONLY:SP
  use vec_operate,  ONLY:iku_v_norm, c2a
@@ -32,23 +36,30 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  implicit none
  !
  integer :: iG,iGo
+ character(1),    optional :: opr_in
  type(yMPI_comm), optional :: COMM
  !
  ! Work Space
  !
  integer :: i1,i2,is
- integer :: iG_shell,iGo_shell,iG_shell_0,iG_shell_max,iG_,iGo_,iG_alloc,iGo_alloc
+ integer :: iG_shell,iGo_shell,iG_shell_0,iG_shell_max,iG_,iGo_,&
+ &          iG_alloc,iGo_alloc,iG_closed,iGo_closed
  integer :: ngx1,ngx2,ngx3, iv1_rlu(3),iG_max
  real(SP):: E_iG, E_iGo, E_max
  real(SP):: v1(3),v2(3)
  real(SP), allocatable :: E_G_m_G(:,:),g_vec_rlu(:,:)
  integer,  allocatable :: ig_vec_rlu(:,:), imap(:,:,:)
  integer,  allocatable :: G_m_G_maxval_tmp(:)
+ character(1)          :: opr
  type(PP_indexes)  :: PAR_IND_G
  !
  integer, external :: G_index
+ integer, external :: G2G
  !
  ! Init
+ !
+ opr = "-"
+ if(present(opr_in)) opr=opr_in
  !
  iG_=iG
  iGo_=iGo
@@ -69,32 +80,43 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  call timing("eval_G_minus_G",opr="start")
  !
  ! aux data
- YAMBO_ALLOC(E_G_m_G,(iG_,iGo_))
- iG_max=iG_
+ iG_closed=G2G(iG_)
+ iGo_closed=G2G(iGo_)
+ YAMBO_ALLOC(E_G_m_G,(iG_closed,iGo_closed))
+ iG_max=iG_closed
  !
  ! setup MPI parallelism if required
  !
  call PP_indexes_reset(PAR_IND_G)
  if (present(COMM)) then
    !
-   call PARALLEL_index(PAR_IND_G,(/iGo_/),COMM=COMM)
+   call PARALLEL_index(PAR_IND_G,(/iGo_closed/),COMM=COMM)
    !
-   call PARALLEL_live_message("[G_m_G] G-vectors",LOADED=PAR_IND_G%n_of_elements(myid+1),TOTAL=iGo_)
+   call PARALLEL_live_message("[G_m_G] G-vectors",LOADED=PAR_IND_G%n_of_elements(myid+1),TOTAL=iGo_closed)
    !
  endif
  !
  !$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
- do i2=1,iGo_
+ do i2=1,iGo_closed
    !
    if(present(COMM)) then
      E_G_m_G(:,i2)=0.0_SP
      if (.not.PAR_IND_G%element_1D(i2)) cycle
    endif
    !
-   do i1=1,iG_
-     v1(:)=g_vec(i1,:)-g_vec(i2,:)
-     E_G_m_G(i1,i2)=0.5_SP*iku_v_norm(v1)**2
-   enddo
+   if (opr=="-") then
+     do i1=1,iG_closed
+       v1(:)=g_vec(i1,:)-g_vec(i2,:)
+       E_G_m_G(i1,i2)=0.5_SP*iku_v_norm(v1)**2
+     enddo
+   else if (opr=="+") then
+     do i1=1,iG_closed
+       v1(:)=g_vec(i1,:)+g_vec(i2,:)
+       E_G_m_G(i1,i2)=0.5_SP*iku_v_norm(v1)**2
+     enddo
+   else
+     call error(" eval_g_minus_g: wrong operation in input")
+   endif
  enddo
  !$omp end parallel do
  !
@@ -231,12 +253,17 @@ integer function eval_G_minus_G(iG,iGo,COMM)
      if (.not.PAR_IND_G%element_1D(i2)) cycle
    endif
    !
-   do i1=1,iG_
-     !
-     iv1_rlu(:)=ig_vec_rlu(i1,:)-ig_vec_rlu(i2,:)
-     G_m_G(i1,i2)=imap(iv1_rlu(1),iv1_rlu(2),iv1_rlu(3))
-     !
-   enddo
+   if (opr=="-") then
+     do i1=1,iG_
+       iv1_rlu(:)=ig_vec_rlu(i1,:)-ig_vec_rlu(i2,:)
+       G_m_G(i1,i2)=imap(iv1_rlu(1),iv1_rlu(2),iv1_rlu(3))
+     enddo
+   else if (opr=="+") then
+     do i1=1,iG_
+       iv1_rlu(:)=ig_vec_rlu(i1,:)+ig_vec_rlu(i2,:)
+       G_m_G(i1,i2)=imap(iv1_rlu(1),iv1_rlu(2),iv1_rlu(3))
+     enddo
+   endif
    !
    G_m_G_maxval_tmp(i2)=maxval(G_m_G(:,i2)) 
    !

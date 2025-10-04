@@ -111,7 +111,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      endif
    enddo
    !
-   ! Eq.(1.12) PRB 48, 11705 (1993)
+   ! Eqs.(23a) and (48a) in PRB 95, 155203 (2017),
+   ! from Eq.(1.12) PRB 48, 11705 (1993)
    !
    A_drude=para_term_w0-diam_term_exact
    !

@@ -65,9 +65,15 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  DIP_S=cZERO
  !
  call k_find_smallest_g0(g0_idx,g0_length)
- iG0=max(maxval(g0_idx(:,1)),maxval(g0_idx(:,2)))
+ iG0=maxval(g0_idx)
  !
  ! Generate G_m_G of the needed size
+ !
+ YAMBO_FREE(G_m_G)
+ ng_tmp=eval_G_minus_G(iG0,iG0,opr_in="+")
+ !
+ ! New iG0 for composed shifts
+ iG0=maxval(G_m_G)
  !
  YAMBO_FREE(G_m_G)
  ng_tmp=eval_G_minus_G(wf_ng_1st_BZ,iG0)
@@ -171,7 +177,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            ! 2) the orignal points ikbz that corresponds to (k+q) was 
            !    shifted in the opposite direction the two
            !    shifts cancel out and I get shift==0 ==> WF_shifts==-1
-           ! 3) the orignal points ibbz that corresponds to (k+q) was
+           ! 3) the orignal points ikbz that corresponds to (k+q) was
            !    already shifted in the right direction I keep this shift
            !    case WF_shifts==1    
            ! 

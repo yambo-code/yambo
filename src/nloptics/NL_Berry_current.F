@@ -84,12 +84,8 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
      Nperpend=k_map%max_kdir(id2)*k_map%max_kdir(id3)       
      !
      max_step=1
-! 
-!    Using higher order for the k-derivative gives a worst result
-!    when compared with dP/dt for this reason this line is commented
-!
-!    if(k_map%max_kdir(id_red)>=6.and..not.l_force_SndOrd) max_step=2
-!
+     ! 
+     ! Using higher order for the k-derivative gives a worst result
      !
      do ikbz=1,nXkbz
        !
@@ -127,7 +123,7 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  !  
  ! Transform in cartesian coordinates
  ! 
-!$omp parallel do default(shared), private(i1)
+!$omp parallel do default(shared), private(id)
  do id=1,3
    NL_J(id)=sum(NL_J_red(:)*a(:,id))/(4.0_SP*pi)
  enddo

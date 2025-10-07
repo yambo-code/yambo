@@ -49,6 +49,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use timing_m,       ONLY:timing
  use parallel_int,   ONLY:PP_wait
 #if defined _SLEPC && !defined _NL
+ use petscsys
  use slepceps,       ONLY:SlepcInitialize
  use petscmat,       ONLY:PETSC_NULL_CHARACTER
  use petscmatdef,    ONLY:tMat

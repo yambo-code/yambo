@@ -342,17 +342,16 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !======
  if (iHxc==2) then
    !
+   call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT",keep_states_to_load=.true.)
+   !
    ! This part could be done just by the master bypassing the PAR_IND_WF_linear ...
    !
    if(rho_map_thresh>0._SP) then
-     call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT",keep_states_to_load=.true.)
      YAMBO_ALLOC(rho,(fft_size))
-     call el_density_and_current(Ken,Xk,rho=rho,compute_rho_map=.true.)
+     call el_density_and_current(Ken,Xk,rho=rho)
+     call compute_rho_map(rho)
      YAMBO_FREE(rho)
-     call WF_free(WF,keep_states_to_load=.true.)
    endif
-   !
-   call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT",keep_states_to_load=.true.)
    !
    QP_ng_Vxc=BS_n_g_fxc
    !

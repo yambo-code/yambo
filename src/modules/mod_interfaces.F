@@ -129,7 +129,7 @@ module interfaces
     complex(SP),pointer,optional       :: BS_overlap(:,:)
   end subroutine LDIAGO_driver
 
-   subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,compute_rho_map)
+   subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
@@ -141,7 +141,6 @@ module interfaces
      real(SP), optional             ::J(fft_size,3)
      integer,  optional, intent(in) ::bands(2)
      logical,  optional, intent(in) ::force_spatial_inversion
-     logical,  optional, intent(in) ::compute_rho_map
    end subroutine el_density_and_current
    !
    subroutine el_magnetization(en,Xk,magn,bands)

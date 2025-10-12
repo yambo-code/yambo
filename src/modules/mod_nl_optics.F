@@ -155,10 +155,6 @@ module nl_optics
  logical  :: l_eval_CURRENT  ! Evaluate current using the commutator v=[H,r] and the IP formulation
  logical  :: l_test_OSCLL    ! Test collisions built using OSCLLs vs standard Collisions
  !
- ! Wk operator at equilibrium 
- !
- complex(SP), allocatable :: Wk_EQ(:,:,:,:,:)
- !     
  ! IO variables
  !
  real(SP),     allocatable :: NL_P_t(:,:)
@@ -249,8 +245,6 @@ module nl_optics
        YAMBO_ALLOC(Sigma_SEX_EQ,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_sp_pol,PAR_Xk_nibz))
      endif          
      !  
-     YAMBO_ALLOC(Wk_EQ,(3,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_sp_pol,PAR_Xk_nibz))
-     !
    end subroutine NL_alloc_k_distributed
    !
    subroutine NL_free
@@ -274,10 +268,7 @@ module nl_optics
      YAMBO_FREE(V_xc_0)
      YAMBO_FREE(VAL_BANDS)
      !
-     if(.not.l_use_DIPOLES) then
-       call ELECTRIC_free()
-       YAMBO_FREE(Wk_EQ)
-     endif
+     if(.not.l_use_DIPOLES) call ELECTRIC_free()
      !
      YAMBO_FREE(NL_P_t)
      YAMBO_FREE(NL_J_t)

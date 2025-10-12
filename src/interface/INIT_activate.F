@@ -575,7 +575,7 @@ subroutine INIT_activate()
 #if defined _NL
  if (l_nl_optics) then
    call initactivate(1,'FFTGvecs NLBands NLHoleBands NLElecBands NLverbosity NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
-   call initactivate(1,'TestOSCLL UseSymm VelGaugeNoDiam')
+   call initactivate(1,'TestOSCLL NoUseSymm VelGaugeNoDiam')
    if(.not.l_nl_p_and_p) call initactivate(1,'NLEnRange NLEnSteps NLrotaxis NLAngSteps NLMaxAng')
    if(     l_nl_p_and_p) call initactivate(1,'IOtime IOCachetime SaveVbhistory')
    call initactivate(1,'NLDamping RADLifeTime UseDipoles FrSndOrd NoComprCOLL COLLCut EvalCurrent InducedField') 

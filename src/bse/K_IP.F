@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2012 The Yambo Team
 !
-! Authors (see AUTHORS file for details): DS AM IMA
+! Authors (see AUTHORS file for details): DS AM IMA TG
 !
 ! headers
 !
@@ -56,7 +56,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  integer       :: i_ColFG
  complex(SP), allocatable :: E_DbGd(:)
  !
- complex(SP)       ::P_weighted(3),res_kerr,res_magn(2),res_dich,res_mespin,res_meorb
+ complex(SP)       ::P_weighted(3),res_kerr,res_magn(2),res_dich,res_mespin,res_meorb,res_mespin_tot
  integer,        allocatable :: vtmpI(:,:)
  complex(SP),    allocatable :: vtmpC(:,:)
  !
@@ -99,6 +99,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    dip_r=.false.
    dip_v=.true.
  endif
+ res_mespin_tot=0._SP
  !
  ! Sorting pre-setup
  !-------------------
@@ -351,6 +352,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        endif
        !
        if (l_BS_mespin) then
+           res_mespin_tot = res_mespin_tot - real(res_mespin)/E_plus_W(i_pert_SOC)
            X_mespin(:,3)=X_mespin(:,3)-res_mespin/(W_bss%p(:)-E_plus_W(i_pert_SOC))
            if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
              X_mespin(:,3)=X_mespin(:,3)+conjg(res_mespin)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
@@ -463,6 +465,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if (     l_rpa_IP) call K_OUTPUT(iq,W_bss,"open dump IP close reset","optics kerr magnons PL dichroism &
 &                                                                      mespin meorb")
+ write(*,*) "\n(K_IP): res_mespin_tot= ", res_mespin_tot*Co_factor/(4._SP*pi)
  call K_OUTPUT(iq,W_bss,"open dump close reset bare","E_IP E_INDX_IP")
  !
  ! Clean

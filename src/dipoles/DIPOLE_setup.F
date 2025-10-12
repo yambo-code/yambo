@@ -58,7 +58,6 @@ subroutine DIPOLE_setup(Dip)
 &    l_BS_magnons  .or. &
 &    l_BS_photolum .or. &
 &    l_flag        .or. &
-&    l_BS_mespin   .or. &
 &    l_BS_meorb) then
   Dip%bands_ordered=.false.
 endif
@@ -153,8 +152,7 @@ endif
    if (STRING_match(Dip%computed,"spin").or.&
        l_BS_magnons.or.&
        l_BS_mespin) specific_obs=" M_spin"
-   !if (STRING_match(Dip%computed,"orb")) then 
-   if (STRING_match(Dip%computed,"orb").and..not.l_BS_meorb) then 
+   if (STRING_match(Dip%computed,"orb")) then 
      specific_obs=trim(specific_obs)//" M_orbRT M_it"
    endif
 #if defined _RT

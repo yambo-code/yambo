@@ -10,12 +10,14 @@ PETSC_ROOT="/apps/software/petsc/3.16.3"
 SLEPC_ROOT="/apps/software/slepc/3.16.1"
 YAMBO_LIBS_ROOT="${HOME}/yambo-libs"
 
+# Debug flags
+#FCFLAGS="-O0 -g -traceback -check bounds -fpe0" \
+
 ./configure \
 FC=ifort \
 CC=icc \
 MPICC=mpiicc \
 MPIFC=mpiifort \
-FCFLAGS="-O0 -g -traceback -check bounds -fpe0" \
 --enable-msgs-comps \
 --enable-time-profile \
 --enable-mpi \

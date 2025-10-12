@@ -160,9 +160,8 @@ endif
    if (l_real_time) specific_obs=" M_spin M_orbRT M_it"
 #endif
  endif
- if (l_BS_dichroism.or.l_BS_meorb) then
-  specific_obs=trim(specific_obs)//" M_orbCD"
- endif
+ if (l_BS_dichroism) specific_obs=trim(specific_obs)//" M_orbCD"
+ if (l_BS_meorb) specific_obs=trim(specific_obs)//" M_orbRT M_it"
  ! 
  ! Computed components
  !---------------------

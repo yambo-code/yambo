@@ -209,7 +209,7 @@ module BS
    complex(SP), allocatable      :: Z(:)
    ! For dipoles the anti-resonant component is always stored
    complex(SP), allocatable      :: dipoles_opt(:,:,:)         ! (/x,y,z ; i_Tr ;   2)
-   complex(SP), allocatable      :: dipoles_dic(:,:,:)         ! (/x,y,z ; i_Tr ;   2) 
+   complex(SP), allocatable      :: dipoles_orb(:,:,:)         ! (/x,y,z ; i_Tr ;   2) 
    complex(SP), allocatable      :: dipoles_mag(:,:,:)         ! (/S+,S-,Sz ; i_Tr; 2)
    complex(SP), allocatable      :: dipoles_spin(:,:,:)        ! (/x,y,z ; i_Tr ;   2) 
    !
@@ -327,7 +327,7 @@ module BS
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_spin,(BS_dip_size,nT,nDIP))
      endif
      if(l_BS_dichroism.or.l_BS_meorb) then
-       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_dic,(BS_dip_size,nT,nDIP))
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_orb,(BS_dip_size,nT,nDIP))
      endif
      YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,5))
      YAMBO_ALLOC(BS_T_grp(iT)%E,(nT,dom_k_T_group))
@@ -365,7 +365,7 @@ module BS
          YAMBO_FREE(BS_T_grp(iT)%dipoles_mag)
        endif
        if (l_BS_dichroism.or.l_BS_meorb) then
-         YAMBO_FREE(BS_T_grp(iT)%dipoles_dic)
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_orb)
        endif
        if (l_BS_mespin) then
          YAMBO_FREE(BS_T_grp(iT)%dipoles_spin)

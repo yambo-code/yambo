@@ -193,9 +193,9 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
          if (l_BS_dichroism) call error(' finite q not implemented for dichroism effect')
          if (l_BS_meorb)     call error(' finite q not implemented for magnetoelectric effect')
        endif
-       BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
+       BS_T_grp(i_T_g)%dipoles_orb(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
        if (BS_K_coupling.and.l_BS_ares_from_res) then
-         BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
+         BS_T_grp(i_T_g)%dipoles_orb(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
        endif
      endif
      !

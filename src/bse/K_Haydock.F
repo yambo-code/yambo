@@ -238,9 +238,9 @@ subroutine K_Haydock(iq,W,OBS,Xk)
      if (trim(OBS)=="jdos")                     V0(i_g)%fragment(:,i_ColFG) = 1._SP
      if (trim(OBS)=="optics")                   V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
      if (trim(OBS)=="kerr")                     V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(2,:,1)
-     if (trim(OBS)=="dichroism")                V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_dic(1,:,1)
+     if (trim(OBS)=="dichroism")                V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_orb(1,:,1)
      if (trim(OBS)=="mespin")     V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_spin(1,:,1)
-     if (trim(OBS)=="meorb")  V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_dic(1,:,1)
+     if (trim(OBS)=="meorb")  V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_orb(1,:,1)
      if (trim(OBS)=="magnons")                  V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
      V0(i_g)%fragment(:,i_ColFG) = V0(i_g)%fragment(:,i_ColFG)*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
    enddo

@@ -294,12 +294,21 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
      !call VecScatterBegin(ctxi,xi,vouti,INSERT_VALUES,SCATTER_FORWARD,ierr)
      !call VecScatterEnd(ctxi,xi,vouti,INSERT_VALUES,SCATTER_FORWARD,ierr)
      !
+#if PETSC_VERSION_LT(3,23,0)
      call VecGetArrayReadF90(voutr(i+1),xsr,ierr)
      !call VecGetArrayReadF90(vouti,xsi,ierr)
      V_right(:, i+1) = cmplx(xsr,kind=SP)
      !if (BSS_slepc_double_grp) V_right(BS_K_dim(1)+1:,i+1) =cI*V_right(BS_K_dim(1)+1:,i+1)
      call VecRestoreArrayReadF90(voutr(i+1),xsr,ierr)
      !call VecRestoreArrayReadF90(vouti,xsi,ierr)
+#else
+     call VecGetArrayRead(voutr(i+1),xsr,ierr)
+     !call VecGetArrayRead(vouti,xsi,ierr)
+     V_right(:, i+1) = cmplx(xsr,kind=SP)
+     !if (BSS_slepc_double_grp) V_right(BS_K_dim(1)+1:,i+1) =cI*V_right(BS_K_dim(1)+1:,i+1)
+     call VecRestoreArrayRead(voutr(i+1),xsr,ierr)
+     !call VecRestoreArrayRead(vouti,xsi,ierr)
+#endif
      !
      call VecScatterDestroy(ctxr(i+1),ierr)
      call VecDestroy(voutr(i+1),ierr)
@@ -315,12 +324,21 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
      !call VecScatterBegin(ctxi_left,xi_left,vouti_left,INSERT_VALUES,SCATTER_FORWARD,ierr)
      !call VecScatterEnd(ctxi_left,xi_left,vouti_left,INSERT_VALUES,SCATTER_FORWARD,ierr)
      !
+#if PETSC_VERSION_LT(3,23,0)
      call VecGetArrayReadF90(voutr_left(i+1),xsr_left,ierr)
      !call VecGetArrayReadF90(vouti_left,xsi_left,ierr)
      V_left(:, i+1) = cmplx(xsr_left,kind=SP)
      !if (BSS_slepc_double_grp) V_left(BS_K_dim(1)+1:,i+1) =cI*V_left(BS_K_dim(1)+1:,i+1)
      call VecRestoreArrayReadF90(voutr_left(i+1),xsr_left,ierr)
      !call VecRestoreArrayReadF90(vouti_left,xsi_left,ierr)
+#else
+     call VecGetArrayRead(voutr_left(i+1),xsr_left,ierr)
+     !call VecGetArrayRead(vouti_left,xsi_left,ierr)
+     V_left(:, i+1) = cmplx(xsr_left,kind=SP)
+     !if (BSS_slepc_double_grp) V_left(BS_K_dim(1)+1:,i+1) =cI*V_left(BS_K_dim(1)+1:,i+1)
+     call VecRestoreArrayRead(voutr_left(i+1),xsr_left,ierr)
+     !call VecRestoreArrayRead(vouti_left,xsi_left,ierr)
+#endif
      !
      !
      call VecScatterDestroy(ctxr_left(i+1),ierr)
@@ -334,9 +352,15 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
      call VecScatterBegin(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
      call VecScatterEnd(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
      !
+#if PETSC_VERSION_LT(3,23,0)
      call VecGetArrayReadF90(voutr(i+1),xsr,ierr)
      V_right(:, i+1) = xsr
      call VecRestoreArrayReadF90(voutr(i+1),xsr,ierr)
+#else
+     call VecGetArrayRead(voutr(i+1),xsr,ierr)
+     V_right(:, i+1) = xsr
+     call VecRestoreArrayRead(voutr(i+1),xsr,ierr)
+#endif
      call VecScatterDestroy(ctxr(i+1),ierr)
      call VecDestroy(voutr(i+1),ierr)
    endif

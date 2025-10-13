@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2020 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM MG DS IMA
+! Authors (see AUTHORS file for details): AM MG DS IMA TG
 !
 subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_threshold,FG_factor)
  !

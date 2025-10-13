@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2015 The Yambo Team
 !
-! Authors (see AUTHORS file for details): DS AM MG
+! Authors (see AUTHORS file for details): DS AM MG TG
 !
 subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
  &                    BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,&

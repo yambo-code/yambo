@@ -87,7 +87,9 @@ subroutine K_observables(W,Xk)
  endif
  if (l_BS_meorb) then
    if (.not.(l_col_cut.and.Xk%nbz==1) ) then
-     call warning(" Periodic system detected. Orbital ME tensor coded only for isolated systems")
+     call warning(" Periodic system detected. Orbital ME tensor not fully implemented.")
+   else
+     call warning(" Non-periodic system detected. Orbital ME tensor assumes periodic system.")
    endif
    if (.not.l_BS_trace) BS_dip_size=2
  endif

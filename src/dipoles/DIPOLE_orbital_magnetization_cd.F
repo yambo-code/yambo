@@ -40,7 +40,6 @@ subroutine Dipole_orbital_magnetization_cd(Xen,Xk,Dip)
  !
  if (n_LT_steps>0) call live_timing('Orbital magnetization (CD)',n_LT_steps)
  !
- !
  ! Main loop over k in IBZ
  !
  do i_sp_pol=1,n_sp_pol
@@ -70,7 +69,7 @@ subroutine Dipole_orbital_magnetization_cd(Xen,Xk,Dip)
            DIP_x_loc(:)=conjg(-cI*DIP_iR(:,ib,iv,ik_mem,i_sp_pol))
            !
            DIP_v_loc(:)=DIP_v(:,ic,ib,ik_mem,i_sp_pol)
-           ! 
+           !
            DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)=&
 &                   DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)+cross_product(DIP_x_loc,DIP_v_loc)
            !

@@ -35,16 +35,16 @@ subroutine K_observables(W,Xk)
  !
  ! What...
  !=========
- l_BS_abs             = STRING_match(BSE_prop,'abs')
- l_BS_jdos            = STRING_match(BSE_prop,'jdos')
- l_BS_dichroism       = STRING_match(BSE_prop,'dich')
- l_BS_kerr            = STRING_match(BSE_prop,'kerr')
- l_BS_photolum        = STRING_match(BSE_prop,'photolum')
- l_BS_kerr_asymm      = STRING_match(BSE_prop,'asymm')  .and. l_BS_kerr
- l_BS_anomalous_Hall  = STRING_match(BSE_prop,'anHall') .and. l_BS_kerr
- l_BS_magnons         = STRING_match(BSE_prop,'magn')   .and.n_spin>1
- l_BS_MEspin          = STRING_match(BSE_prop,'MEspin') .and.n_spin>1
- l_BS_MEorb           = STRING_match(BSE_prop,'MEorb')  .and.n_spin>1
+ l_BS_abs       = STRING_match(BSE_prop,'abs')
+ l_BS_jdos      = STRING_match(BSE_prop,'jdos')
+ l_BS_dichroism = STRING_match(BSE_prop,'dich')
+ l_BS_kerr      = STRING_match(BSE_prop,'kerr')
+ l_BS_photolum  = STRING_match(BSE_prop,'photolum')
+ l_BS_kerr_asymm= STRING_match(BSE_prop,'asymm')  .and. l_BS_kerr
+ l_BS_anomalous_Hall = STRING_match(BSE_prop,'anHall') .and. l_BS_kerr
+ l_BS_magnons = STRING_match(BSE_prop,'magn')   .and.n_spin>1
+ l_BS_MEspin = STRING_match(BSE_prop,'MEspin') .and.n_spin>1
+ l_BS_MEorb = STRING_match(BSE_prop,'MEorb')  .and.n_spin>1
  !
  ! How ...
  !---------

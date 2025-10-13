@@ -255,6 +255,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
            BS_T_grp(i_T_g)%dipoles_spin(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
          endif
        endif
+       !
      endif
      !
    enddo

@@ -44,11 +44,11 @@ subroutine DIPOLE_setup(Dip)
  !
  ! Observables (needed later)
  !----------------------------
- l_BS_magnons=         (index(BSE_prop,'magn')/=0)
- l_BS_dichroism=       (index(BSE_prop,'dich')/=0)
- l_BS_photolum=        (index(BSE_prop,'photolum')/=0)
- l_BS_mespin=          (index(BSE_prop,'MEspin')/=0)
- l_BS_meorb=           (index(BSE_prop,'MEorb')/=0)
+ l_BS_magnons=   (index(BSE_prop,'magn')/=0)
+ l_BS_dichroism= (index(BSE_prop,'dich')/=0)
+ l_BS_photolum=  (index(BSE_prop,'photolum')/=0)
+ l_BS_mespin=    (index(BSE_prop,'MEspin')/=0)
+ l_BS_meorb=     (index(BSE_prop,'MEorb')/=0)
  call parser('ImposeAsymBSE',l_flag)
  if(.not.l_flag) call parser('ImposeFullBSE',l_flag)
  !

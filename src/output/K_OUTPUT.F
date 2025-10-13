@@ -162,8 +162,6 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    ! ... Epsilon_ii
    call ELEMENTAL_dump("eps",Epsilon_ii(:,2:4)+1._SP)
  endif
-
- !
  !
  ! Epsilon_ij
  !------------

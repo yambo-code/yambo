@@ -68,12 +68,12 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  if(l_BS_esort.and.i_BS_mat==1) then
    EDIM=BSS_n_eig
    nVAR=2
-   if(l_BS_abs)             nVAR=nVAR+1
-   if(l_BS_kerr)            nVAR=nVAR+1
-   if(l_BS_dichroism)       nVAR=nVAR+1
-   if(l_BS_mespin)          nVAR=nVAR+1
-   if(l_BS_meorb)           nVAR=nVAR+1
-   if(l_BS_magnons)         nVAR=nVAR+n_spinor
+   if(l_BS_abs)       nVAR=nVAR+1
+   if(l_BS_kerr)      nVAR=nVAR+1
+   if(l_BS_dichroism) nVAR=nVAR+1
+   if(l_BS_magnons)   nVAR=nVAR+n_spinor
+   if(l_BS_mespin)    nVAR=nVAR+1
+   if(l_BS_meorb)     nVAR=nVAR+1
    allocate(BS_E_sorted_tmp(EDIM,nVAR))
    BS_E_sorted_tmp=cZERO
  endif

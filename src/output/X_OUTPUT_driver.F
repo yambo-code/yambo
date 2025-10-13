@@ -93,8 +93,6 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
    if (l_BS_dichroism) call X_obs_onoff("+ CD")
    if (l_BS_mespin) call X_obs_onoff("+ MEspin")
    if (l_BS_meorb)  call X_obs_onoff("+ MEorb")
-
-
    !
    !...solvers specific
    if (present(solver)) then

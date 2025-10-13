@@ -26,7 +26,9 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  integer                        :: iq,ID,i_BS_mat
  complex(SP)        , optional  :: bsE(:)
  real(SP)   ,pointer, optional  :: BsE_corr(:,:),bsR_pl(:,:)
- complex(SP),pointer, optional  :: bsL_kerr(:),bsR_kerr(:),bsR_dich(:,:),bsR_mespin(:,:),bsR_meorb(:,:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
+ complex(SP),pointer, optional  :: bsL_kerr(:),bsR_kerr(:),bsR_dich(:,:),&
+&                                  bsR_mespin(:,:),bsR_meorb(:,:),bsL_magn(:,:),&
+&                                  bsR_magn(:,:),bsRl(:),bsRr(:)
  complex(SP)        , optional  :: BS_mat(:,:)
  logical, optional              :: write_ev
  !

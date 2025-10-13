@@ -34,7 +34,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P,loop_on_angles,n_angles,&
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,runs_done,n_runs_todo,l_eval_CURRENT,NL_rot_axis,&
 &                         HF,SEX,NL_bands,NL_nbands,NL_alloc_k_distributed,NL_J_t,n_runs,loop_on_frequencies, &
-&                         l_pump_and_probe,eval_OSCLL,l_test_OSCLL,LSEX,LHF,Sigma_SEX_EQ,Wk_EQ
+&                         l_pump_and_probe,eval_OSCLL,l_test_OSCLL,LSEX,LHF,Sigma_SEX_EQ
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,NE_time,RT_nbands,RT_bands, &
                           eval_DFT,eval_HARTREE,RT_P,RT_ind_J,l_velocity_gauge_diam
  use RT_control,     ONLY:RT_NAN_found
@@ -43,7 +43,6 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,PAR_Xk_ibz_index
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use collision_ext,  ONLY:ng_oscll,OSCLL,W
- use electric,       ONLY:l_res_symms
  use y_memory_alloc
  !
  implicit none
@@ -108,10 +107,6 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  if(io_err/=0) call error("Error in Dipoles I/O")
  call OVERLAPS_IO(k,E,Dip,'read',io_err,'NL')
  if(io_err/=0) call error("Error in Overlaps I/O")
- !
- ! Symmetrize dipoles if old-symmetries are present
- ! =================================================
- if(l_res_symms) call DIPOLE_symmetrize(k)
  !
  ! Generate bare_qpg if required
  !=============================
@@ -242,21 +237,6 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
    enddo
    !
  endif
- !
- ! Store Equilibrium Wk
- if(.not.l_use_DIPOLES.and..not.trim(global_gauge)=='velocity'.and.l_res_symms) then
-   do ik=1,QP_nk
-     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
-     ik_mem=PAR_Xk_ibz_index(ik)
-     do i_sp_pol=1,n_sp_pol
-       call Build_W_operator(E,k,ik,i_sp_pol,V_bands(:,:E%nbf(i_sp_pol),:,i_sp_pol), & 
-&                            Wk_EQ(:,:,:,i_sp_pol,ik_mem))
-     enddo
-   enddo
- else
-   YAMBO_FREE(Wk_EQ)
- endif
- !
  !
  ! Check if calculation was already done
  ! =====================================

@@ -18,7 +18,8 @@ subroutine K_observables(W,Xk)
  use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,load_Diago,BSS_mode
  use BS,           ONLY:BS_dip_size,l_BS_anomalous_Hall,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,&
-&                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,l_BS_kerr_asymm,l_BS_esort_indx
+&                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,l_BS_kerr_asymm,l_BS_esort_indx,&
+&                       l_BS_mespin,l_BS_meorb
  use parser_m,     ONLY:parser
  use stderr,       ONLY:STRING_match
  use electrons,    ONLY:levels,n_sp_pol,n_spin
@@ -39,9 +40,11 @@ subroutine K_observables(W,Xk)
  l_BS_dichroism = STRING_match(BSE_prop,'dich')
  l_BS_kerr      = STRING_match(BSE_prop,'kerr')
  l_BS_photolum  = STRING_match(BSE_prop,'photolum')
- l_BS_magnons   = STRING_match(BSE_prop,'magn') .and.n_spin>1
- l_BS_kerr_asymm= STRING_match(BSE_prop,'asymm') .and. l_BS_kerr
+ l_BS_kerr_asymm= STRING_match(BSE_prop,'asymm')  .and. l_BS_kerr
  l_BS_anomalous_Hall = STRING_match(BSE_prop,'anHall') .and. l_BS_kerr
+ l_BS_magnons = STRING_match(BSE_prop,'magn')   .and.n_spin>1
+ l_BS_MEspin = STRING_match(BSE_prop,'MEspin') .and.n_spin>1
+ l_BS_MEorb = STRING_match(BSE_prop,'MEorb')  .and.n_spin>1
  !
  ! How ...
  !---------
@@ -82,26 +85,36 @@ subroutine K_observables(W,Xk)
      call warning(" Natural dichroism without trace. Quadripolar terms are neglected")
    endif
  endif
+ if (l_BS_meorb) then
+   if (.not.(l_col_cut.and.Xk%nbz==1) ) then
+     call warning(" Periodic system detected. Orbital ME tensor not fully implemented.")
+   else
+     call warning(" Non-periodic system detected. Orbital ME tensor assumes periodic system.")
+   endif
+   if (.not.l_BS_trace) BS_dip_size=2
+ endif
  !
  if (l_BS_trace   ) BS_dip_size = 3
  if (l_BS_trace .and. .not.l_rpa_IP) call error(" trace coded only at the IP level")
  !
- l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum
+ l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum.or.l_BS_mespin.or.l_BS_meorb
  !
  ! Now fix BSE_prop string
  !
  BSE_prop=""
- if(l_BS_abs)            BSE_prop=trim(BSE_prop)//' abs'
- if(l_BS_jdos)           BSE_prop=trim(BSE_prop)//' jdos'
- if(l_BS_dichroism)      BSE_prop=trim(BSE_prop)//' dich'
- if(l_BS_kerr)           BSE_prop=trim(BSE_prop)//' kerr'
- if(l_BS_kerr_asymm)     BSE_prop=trim(BSE_prop)//' asymm'
- if(l_BS_anomalous_Hall) BSE_prop=trim(BSE_prop)//' anHall'
- if(l_BS_photolum)       BSE_prop=trim(BSE_prop)//' photolum'
- if(l_BS_magnons)        BSE_prop=trim(BSE_prop)//' magn'
- if(l_BS_esort)          BSE_prop=trim(BSE_prop)//' esrt'
- if(l_BS_esort)          BSE_prop=trim(BSE_prop)//' indx'
- if(l_BS_trace)          BSE_prop=trim(BSE_prop)//' trace'
+ if(l_BS_abs)             BSE_prop=trim(BSE_prop)//' abs'
+ if(l_BS_jdos)            BSE_prop=trim(BSE_prop)//' jdos'
+ if(l_BS_dichroism)       BSE_prop=trim(BSE_prop)//' dich'
+ if(l_BS_kerr)            BSE_prop=trim(BSE_prop)//' kerr'
+ if(l_BS_kerr_asymm)      BSE_prop=trim(BSE_prop)//' asymm'
+ if(l_BS_anomalous_Hall)  BSE_prop=trim(BSE_prop)//' anHall'
+ if(l_BS_photolum)        BSE_prop=trim(BSE_prop)//' photolum'
+ if(l_BS_magnons)         BSE_prop=trim(BSE_prop)//' magn'
+ if(l_BS_esort)           BSE_prop=trim(BSE_prop)//' esrt'
+ if(l_BS_esort)           BSE_prop=trim(BSE_prop)//' indx'
+ if(l_BS_trace)           BSE_prop=trim(BSE_prop)//' trace'
+ if(l_BS_mespin)          BSE_prop=trim(BSE_prop)//' MEspin'
+ if(l_BS_meorb)           BSE_prop=trim(BSE_prop)//' MEorb'
  !
  ! Solver Logicals
  !=================

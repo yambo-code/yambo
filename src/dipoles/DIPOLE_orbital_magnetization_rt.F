@@ -77,7 +77,9 @@ subroutine Dipole_orbital_magnetization_rt(Xen,Xk,Dip)
            !if (iv>=ib) DIP_pos(:,1)=      -cI*DIP_iR(:,iv,ib,ik_mem,i_sp_pol)
            !if (ic< ib) DIP_pos(:,2)=conjg(-cI*DIP_iR(:,ib,ic,ik_mem,i_sp_pol))
            !if (ic>=ib) DIP_pos(:,2)=      -cI*DIP_iR(:,ic,ib,ik_mem,i_sp_pol)
-           DIP_pos(:,1)= -cI*DIP_iR(:,ib,iv,ik_mem,i_sp_pol)
+
+           ! conjg for first r because of how cross_product is coded in mod_vec_operate.F
+           DIP_pos(:,1)= conjg(-cI*DIP_iR(:,ib,iv,ik_mem,i_sp_pol))
            DIP_pos(:,2)= -cI*DIP_iR(:,ic,ib,ik_mem,i_sp_pol)
            !
            !DIP_tmp=-cI*cross_product(DIP_pos(:,1),DIP_pos(:,2))

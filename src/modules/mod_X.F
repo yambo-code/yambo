@@ -80,6 +80,8 @@ module X_m
  complex(SP), allocatable :: X_fxc(:)
  complex(SP), allocatable :: X_magnons(:,:,:)
  complex(SP), allocatable :: X_dichroism(:,:)
+ complex(SP), allocatable :: X_mespin(:,:)
+ complex(SP), allocatable :: X_meorb(:,:)
  !
  ! Response function
  !
@@ -164,7 +166,7 @@ module X_m
    integer               :: N_messages
    character(schlen)     :: messages(N_MAX_columns)
  end type
- integer, parameter     :: N_X_obs=16
+ integer, parameter     :: N_X_obs=18
  type(X_obs_t)          :: X_obs(N_X_obs) 
  !
  interface

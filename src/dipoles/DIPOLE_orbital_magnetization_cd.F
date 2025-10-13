@@ -52,6 +52,9 @@ subroutine Dipole_orbital_magnetization_cd(Xen,Xk,Dip)
      !
      ik_mem=PAR_DIPk_ibz_index(ik)
      ! 
+     !> @var ib(1)  lowest valence, ib(2)     upper conduction
+     !> @var ib_lim(1) top valence, ib_lim(2) bottom conduction
+     !
      do iv=Dip%ib(1),Dip%ib_lim(1) 
        !
        if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
@@ -62,12 +65,13 @@ subroutine Dipole_orbital_magnetization_cd(Xen,Xk,Dip)
          !
          do ib=Dip%ib(1),Dip%ib(2)
            !
-           DIP_x_loc(:)=-cI*DIP_iR(:,ib,iv,ik_mem,i_sp_pol)
+           ! conjg because of how cross_product is coded in mod_vec_operate.F
+           DIP_x_loc(:)=conjg(-cI*DIP_iR(:,ib,iv,ik_mem,i_sp_pol))
            !
            DIP_v_loc(:)=DIP_v(:,ic,ib,ik_mem,i_sp_pol)
            !
            DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)=&
-&                     DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)+cross_product(DIP_x_loc,DIP_v_loc)
+&                   DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)+cross_product(DIP_x_loc,DIP_v_loc)
            !
            ! DEBUG <
            !write(*,*) "[DIP] writing DIP_orbital(..,ic,iv,ik,,) values"

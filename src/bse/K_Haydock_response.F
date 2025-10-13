@@ -3,14 +3,14 @@
 !
 ! Copyright (C) 2020 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM MG DS IMA
+! Authors (see AUTHORS file for details): AM MG DS IMA TG
 !
 subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_threshold,FG_factor)
  !
  use pars,           ONLY:SP,cZERO,cONE,cI,pi
  use units,          ONLY:SPEED_OF_LIGHT
  use X_m,            ONLY:Resp_ii,Joint_DOS,global_gauge, &
-&                         X_magnons,Resp_ij,X_dichroism,i_G_shift
+&                         X_magnons,Resp_ij,X_dichroism,X_mespin,X_meorb,i_G_shift
  use R_lattice,      ONLY:bare_qpg
  use frequency,      ONLY:w_samp
  use BS,             ONLY:BSE_mode
@@ -226,6 +226,10 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
      X_magnons(iw,1,i_resp(:))=-X_o(1:2,1)*Co/(4._SP*pi)
    case("dichroism")
      X_dichroism(iw,i_resp(:))=-X_o(1:2,1)*Co/(4._SP*pi)*(cI/SPEED_OF_LIGHT)
+   case("mespin")
+     X_mespin(iw,i_resp(:))=-X_o(1:2,1)*(-1._SP*Co)/(8._SP*pi)
+   case("meorb")
+     X_mespin(iw,i_resp(:))=-X_o(1:2,1)*(-1._SP*Co)/(8._SP*pi)
    end select
    !
  enddo
@@ -248,6 +252,12 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
    case("dichroism")
      sums=(X_dichroism(iw,2)+X_dichroism(iw,4))/2._SP
      diff= X_dichroism(iw,2)-X_dichroism(iw,4)
+   case("mespin")
+     sums=(X_mespin(iw,2)+X_mespin(iw,4))/2._SP
+     diff= X_mespin(iw,2)-X_mespin(iw,4)
+   case("meorb")
+     sums=(X_meorb(iw,2)+X_meorb(iw,4))/2._SP
+     diff= X_meorb(iw,2)-X_meorb(iw,4)
    end select
    !
    update_thresh = abs(real(sums))>0._SP .and. abs(aimag(sums))>0._SP

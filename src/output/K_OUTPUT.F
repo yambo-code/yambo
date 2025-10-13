@@ -19,7 +19,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use X_m,            ONLY:Epsilon_ii,eps_2_alpha,X_OUTPUT_driver,Epsilon_ij,&
 &                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,&
 &                         BS_E_sorted_indx,X_magnons,i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus,&
-&                         Resp_ii,Resp_ij,l_drude,skip_cond_sum_rule,X_drude_term,global_gauge
+&                         Resp_ii,Resp_ij,l_drude,skip_cond_sum_rule,X_drude_term,global_gauge,&
+&                         X_mespin,X_meorb
  use com,            ONLY:msg,com_compose_msg
  use R_lattice,      ONLY:bare_qpg,FineGd_desc,nkbz
  use electrons,      ONLY:spin_occ
@@ -308,6 +309,13 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    call ELEMENTAL_dump_real("PL",PL(:,2:3))
  endif
  !
+
+ ! MAGNETOELECTRIC
+ !------------
+if (X_do_obs("MEspin")) call ELEMENTAL_dump("MEspin", X_mespin(:,2:))
+if (X_do_obs("MEorb"))  call ELEMENTAL_dump("MEorb",  X_meorb(:,2:))
+
+
  if (STRING_match(WHAT,"close")) call X_OUTPUT_driver("close "//OBS)
  if (STRING_match(WHAT,"reset")) call X_OUTPUT_driver("reset "//OBS)
  !

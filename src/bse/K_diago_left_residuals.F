@@ -114,8 +114,8 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  if(trim(mode)=="dic2")    tmp_res=BSS_dipoles_dich(2,res_range(1):res_range(2)) 
  if(trim(mode)=="mespin1") tmp_res=BSS_dipoles_mespin(1,res_range(1):res_range(2)) 
  if(trim(mode)=="mespin2") tmp_res=BSS_dipoles_mespin(2,res_range(1):res_range(2)) 
- if(trim(mode)=="meorb1")  tmp_res=BSS_dipoles_mespin(1,res_range(1):res_range(2)) 
- if(trim(mode)=="meorb2")  tmp_res=BSS_dipoles_mespin(2,res_range(1):res_range(2)) 
+ if(trim(mode)=="meorb1")  tmp_res=BSS_dipoles_meorb(1,res_range(1):res_range(2)) 
+ if(trim(mode)=="meorb2")  tmp_res=BSS_dipoles_meorb(2,res_range(1):res_range(2)) 
  if(trim(mode)=="mag1")    tmp_res=BSS_dipoles_magn(1,res_range(1):res_range(2))
  if(trim(mode)=="mag2")    tmp_res=BSS_dipoles_magn(2,res_range(1):res_range(2))
  !

@@ -14,7 +14,6 @@
  mod_IO.o
  mod_IO_interfaces.o
  mod_LIVE_t.o
- mod_MAGNETOELECTRIC.o
  mod_MAGNONS.o
  mod_MPA.o
  mod_NL_interfaces.o

@@ -10,7 +10,7 @@ RT_objects = io_RT_components.o io_RT_components_G_lesser.o io_RT_components_hea
 NL_objects = variables_NL.o io_NL.o io_RT_components_V_bands.o
 #endif
 #if defined _ELPH 
-ELPH_objects = variables_ELPH.o io_ELPH.o io_gFsq.o
+ELPH_objects = variables_ELPH.o io_ELPH.o io_gFsq.o io_EXCPH_gkkp.o
 #endif
 #if defined _PHEL 
 PHEL_objects = io_PH.o
@@ -23,7 +23,7 @@ objs = ver_is_gt_or_eq.o \
        io_E_SOC_map.o \
        io_RIM.o io_RIM_W.o    io_GROT.o     $(ELPH_objects) $(PHEL_objects) \
        io_QINDX.o  io_kpts.o  io_QP_and_GF.o  io_X.o  io_MPA.o  \
-       io_DB1.o       io_WF.o       io_KB_abinit.o   io_KB_pwscf.o   io_HF_and_locXC.o \
+       io_DB1.o io_WF.o io_WF_phases.o io_KB_abinit.o io_KB_pwscf.o io_HF_and_locXC.o \
        io_BS_Fxc.o  io_NLCC_pwscf.o \
        io_ATMPROJ_pwscf.o  io_descriptors.o \
        io_BSS_diago.o  io_BSS_Haydock.o io_BSS_invert.o io_USPP_pwscf.o \

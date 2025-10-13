@@ -72,6 +72,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  !
  if(BS_K_coupling) then
    if (BSS_slepc_pseudo_herm) then
+#if PETSC_VERSION_GE(3,22,0)
      call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,slepc_mat_R,ierr)
      call MatSetOption(slepc_mat_R,MAT_HERMITIAN,PETSC_TRUE,ierr)
      call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim/2,SL_H_dim/2,0,slepc_mat_C,ierr)
@@ -81,6 +82,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
      call MatCreateBSE(slepc_mat_R,slepc_mat_C,slepc_mat,ierr)
      call MatDestroy(slepc_mat_R,ierr)
      call MatDestroy(slepc_mat_C,ierr)
+#endif
    else
      call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim,SL_H_dim,0,slepc_mat,ierr)
      call MatShellSetOperation(slepc_mat,MATOP_MULT,K_multiply_by_V_slepc,ierr)

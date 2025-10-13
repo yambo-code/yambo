@@ -56,7 +56,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
  if (BS_nT_grps>0) call live_timing("Unfolding BSE components",PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1))
  !
  ! In the coulping case at q=1 when there are 2 blocks per group
- ! See also src/bse/K_blocks.F
+ ! See also src/bse/K_blocks.F and K_dipoles.F
  !
  n_blocks_per_grp=1
  if (BS_K_coupling.and.l_BS_ares_from_res.and.iq==1) n_blocks_per_grp=2

@@ -9,7 +9,7 @@
 !
 #include<y_memory.h>
 !
-subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,compute_rho_map)
+subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  !
  ! Electronic density (and current).
  !
@@ -43,15 +43,15 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,c
  !
  use pars,          ONLY:SP,DP
  use com,           ONLY:msg
- use stderr,        ONLY:real2ch,intc
+ use stderr,        ONLY:real2ch
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
  use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:nsym,i_time_rev,mag_syms,dl_sop,DL_vol
+ use D_lattice,     ONLY:nsym,i_time_rev,mag_syms,dl_sop
  use FFT_m,         ONLY:fft_size,fft_dim,fft_rot_r,fft_rot_r_inv,fft_g_table
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan
 #endif
- use wave_func,     ONLY:WF,rho_map,rho_map_inv,rho_map_thresh,rho_map_size
+ use wave_func,     ONLY:WF,rho_map,rho_map_size
  use parallel_m,    ONLY:PAR_IND_WF_linear,PAR_COM_density
  use parallel_int,  ONLY:PP_redux_wait
  use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,becp,pp_has_nlcc
@@ -75,7 +75,6 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,c
  real(SP), optional             ::J(fft_size,3)
  integer,  optional, intent(in) ::bands(2)
  logical,  optional, intent(in) ::force_spatial_inversion
- logical,  optional, intent(in) ::compute_rho_map
  !
  ! Work Space 
  !
@@ -85,9 +84,8 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,c
  integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2),wf_rspace_size
  integer    :: i_r,ig,i_dir,ifft
  real(SP)   :: f_occ,raux,kw
- logical    :: warn_done,l_si,l_rho,l_drho,l_J,l_rho_map
+ logical    :: warn_done,l_si,l_rho,l_drho,l_J
  !
- integer,     allocatable :: rho_map_tmp(:)
  real(SP),    allocatable :: rho_no_sym(:),drho_no_sym(:,:),J_no_sym(:,:)
  complex(SP), allocatable :: WF_der(:,:,:)
  complex(DP), allocatable :: rhog_aug_DP(:,:), aux_DP(:)
@@ -102,9 +100,7 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,c
  l_drho    =present(drho)
  l_J       =present(J)
  l_si      =.false.
- l_rho_map =.false.
  if (present(force_spatial_inversion)) l_si     =force_spatial_inversion
- if (present(compute_rho_map)        ) l_rho_map=compute_rho_map
  !
  !
  if (l_rho) then
@@ -325,27 +321,6 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,c
    endif
  endif
  !
- if(l_rho_map) then
-   !
-   allocate(rho_map_tmp(fft_size))
-   allocate(rho_map_inv(fft_size))
-   rho_map_inv=-1
-   !
-   rho_map_size=0
-   do ifft=1,fft_size
-     if(rho(ifft)*real(fft_size,SP)/real(DL_vol,SP)<rho_map_thresh) cycle
-     rho_map_size=rho_map_size+1
-     rho_map_tmp(rho_map_size)=ifft
-     rho_map_inv(ifft)=rho_map_size
-   enddo
-   !
-   call msg('s','[FFT] Instead of full fft_size '//trim(intc(fft_size))//' using rho_map_size '//trim(intc(rho_map_size)))
-   allocate(rho_map(rho_map_size))
-   rho_map=rho_map_tmp(:rho_map_size)
-   deallocate(rho_map_tmp)
-   !
- endif
- !
  if (l_drho) then
    do i_symm=1,rho_syms
      do ifft=1,fft_size
@@ -371,4 +346,42 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,c
  call timing('el_density',OPR='stop')
 #endif
  ! 
+end subroutine
+
+
+subroutine compute_rho_map(rho)
+ !
+ use pars,          ONLY:SP
+ use com,           ONLY:msg
+ use FFT_m,         ONLY:fft_size
+ use stderr,        ONLY:intc
+ use D_lattice,     ONLY:nsym,i_time_rev,mag_syms,dl_sop,DL_vol
+ use wave_func,     ONLY:rho_map,rho_map_inv,rho_map_thresh,rho_map_size
+ !
+ implicit none
+ !
+ real(SP), intent(in) :: rho(fft_size)
+ !
+ ! Workspace
+ !
+ integer :: ifft
+ integer, allocatable :: rho_map_tmp(:)
+ !
+ allocate(rho_map_tmp(fft_size))
+ allocate(rho_map_inv(fft_size))
+ rho_map_inv=-1
+ !
+ rho_map_size=0
+ do ifft=1,fft_size
+   if(rho(ifft)*real(fft_size,SP)/real(DL_vol,SP)<rho_map_thresh) cycle
+   rho_map_size=rho_map_size+1
+   rho_map_tmp(rho_map_size)=ifft
+   rho_map_inv(ifft)=rho_map_size
+ enddo
+ !
+ call msg('s','[FFT] Instead of full fft_size '//trim(intc(fft_size))//' using rho_map_size '//trim(intc(rho_map_size)))
+ allocate(rho_map(rho_map_size))
+ rho_map=rho_map_tmp(:rho_map_size)
+ deallocate(rho_map_tmp)
+ !
 end subroutine

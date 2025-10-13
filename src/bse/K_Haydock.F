@@ -57,7 +57,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
  !
  real(SP)           ::reached_threshold
  real(SP)           ::Bf(Haydock_iterMAX+1),Af(Haydock_iterMAX)
- integer            ::ItParity,Cf_size,Haydock_n_converged,Haydock_required_converged
+ integer            ::ItParity,Cf_size,Ares_fac,Haydock_n_converged,Haydock_required_converged
  complex(SP)        ::v0_mod_
  character(schlen)  ::dumb_ch
  logical            ::impose_pseudo_herm_scheme,use_left_and_right,velocity_correction,tmp_converged
@@ -100,8 +100,11 @@ subroutine K_Haydock(iq,W,OBS,Xk)
  if (isec(2)==0) sec="+"
  call section(sec,'Haydock Solver in the '//trim(OBS)//' basis @q'//trim(intc(iq))//" using the "//trim(scheme)//" scheme")
  !
- if (     l_BS_ares_from_res) HAYVEC_size = BS_K_dim(1)
- if (.not.l_BS_ares_from_res) then
+ if (l_BS_ares_from_res) then
+   Ares_fac=2
+   HAYVEC_size = BS_K_dim(1)
+ else
+   Ares_fac=1
    if(.not.BS_K_coupling) HAYVEC_size = BS_K_dim(1)
    if(     BS_K_coupling) HAYVEC_size = BS_H_dim
  endif
@@ -135,6 +138,10 @@ subroutine K_Haydock(iq,W,OBS,Xk)
    allocate(W0(BS_nT_grps))
    call BS_HAYVEC_alloc(W0,BS_nkFGbz_in_Tgrp)
  endif
+ !
+ ! For the coupling case if A = -R* (l_BS_ares_from_res=.TRUE.), V0 = (u0, -iu0*)
+ ! At each iteration however the relation changes V1= (u1, iu1*),
+ ! this is why the ItParity is needed 
  !
  ItParity=1
  it_on_disk=0
@@ -317,15 +324,12 @@ subroutine K_Haydock(iq,W,OBS,Xk)
      !
      Cf= cZERO
      !
+     ! First K_multiply_by_V is with parity=-1 in pseudo-hermitian case
+     !
      call K_multiply_by_V(V0,Vnp1,-1,iq,"all")
      call K_dot_product(v0_mod_,V0,Vnp1,1)
      !
-     ! For the coupling case if A = -R* (l_BS_ares_from_res=.FALSE.), V0 = (u0, -iu0*)
-     ! At each iteration however the relation changes V1= (u1, iu1*),
-     ! this is why the ItParity is needed 
-     !
-     if(     l_BS_ares_from_res) Haydock_v0_mod=sqrt(2*real(v0_mod_))
-     if(.not.l_BS_ares_from_res) Haydock_v0_mod=sqrt(  real(v0_mod_))
+     Haydock_v0_mod=sqrt(Ares_fac*real(v0_mod_))
      !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
@@ -476,8 +480,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
      call K_dot_product(v0_mod_,Vn,Vnp1,1) 
      !       = (2*Re(<Vn|Vnp1>))^(1/2) by symmetry,
      !          where the dot_product is just on eh pair space
-     if (     l_BS_ares_from_res) Bf(it+1)=sqrt(2*real(v0_mod_,SP))
-     if (.not.l_BS_ares_from_res) Bf(it+1)=sqrt(  real(v0_mod_,SP))
+     Bf(it+1)=sqrt(Ares_fac*real(v0_mod_,SP))
      ! Simple test for INF
      if( Bf(it+1)==(Bf(it+1)+1._SP) ) call error('Bf=INF likely because some eigenvalue of the BSE is negative.')
      ! Tests for NaN

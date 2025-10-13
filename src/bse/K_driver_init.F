@@ -5,6 +5,12 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#if defined _SLEPC && !defined _NL
+#include <petsc/finclude/petscsys.h>
+#endif
+!
 subroutine K_driver_init(what,iq,Ken,Xk)
  !
  use pars,         ONLY:SP,schlen
@@ -183,8 +189,8 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  ! BSE_L_kind check
  !==============
- if (.not.STRING_match(BSE_L_kind,"bar").and..not.STRING_match(BSE_L_kind,"full")) &
- & call error('set Lkind = DEFAULT or BAR or FULL')
+ if (.not.STRING_match(BSE_L_kind,"bar").and..not.STRING_match(BSE_L_kind,"full").and..not.STRING_match(BSE_L_kind,"tilde")) &
+ &   call error('set Lkind = DEFAULT or BAR or FULL or TILDE')
  !
  BS_K_is_ALDA=l_alda_fxc
  if (l_alda_fxc) then
@@ -278,6 +284,12 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  BSS_slepc_pseudo_herm=BS_K_coupling .and. l_BS_ares_from_res .and. &
  &                     (.not.BSS_slepc_double_grp) .and. index(BSS_slepc_approach,"NonHerm")==0
+#if PETSC_VERSION_LT(3,22,0)
+ if (BSS_slepc_pseudo_herm) then
+   call warning(" Pseudo hermitian case. Link slepc >= 3.22 to improve solver efficiency")
+   BSS_slepc_pseudo_herm=.false.
+ endif 
+#endif
  !
 #endif
  !

@@ -28,7 +28,7 @@ module R_lattice
  real(SP)          :: k_grid_b(3,3)
  logical           :: Xk_grid_is_uniform
  logical           :: Xk_grid_new_mapping
- character(schlen) :: k_GRIDS_string="X S B C"
+ character(schlen) :: k_GRIDS_string="X S B C minus_q"
  integer           :: k_GRIDS_vector(4)=(/1,1,1,1/)
  !
  ! Q/K-sampling
@@ -68,10 +68,16 @@ module R_lattice
    integer           :: nibz
    integer           :: nbz
    integer,  allocatable :: nstar(:)      ! n° of points in the star
-   integer,  allocatable :: star(:,:)     ! ik,ikstar --> is     is sends ik in ikstar
-   integer,  allocatable :: sstar(:,:)    ! ik_bz     --> ik,is  is sends ik in ikbz
-   integer,  allocatable :: s_table(:,:)  ! ik,is     --> sym@k_bz  revers of sstar(2)
-   integer,  allocatable :: k_table(:,:)  ! ik,is     --> ik_bz     revers of sstar(1)
+     ! Below "is" can be any symmetry operation, while is_used
+   integer,  allocatable :: star(:,:)     ! ik,ikstar --> is_used      is_used sends ik in ikstar
+   integer,  allocatable :: sstar(:,:)    ! ik_bz     --> ik,is_used   is_used sends ik in ikbz
+                                          !               istar        added dimension 3, index in the star
+   integer,  allocatable :: s_table(:,:)  ! ik,is     --> is_used      revers of sstar(2)
+   integer,  allocatable :: k_table(:,:)  ! ik,is     --> ik_bz        revers of sstar(1)
+   integer,  allocatable :: g_table(:,:)  ! ik,is     --> ig_index
+   integer,  allocatable :: grp_table(:,:)! ik,is_grp --> is      table of syms from small group to full list
+   integer,  allocatable :: grp_table_m1(:,:)! ik,is  --> is_grp  table of syms from full list to small group
+   integer,  allocatable :: grp_nsym(:)   ! ik        --> is number of syms in the small group
    real(SP), allocatable :: pt(:,:)      
    real(SP), allocatable :: ptbz(:,:)    
    real(SP), allocatable :: weights(:)   
@@ -100,6 +106,7 @@ module R_lattice
  ! Q/K sampling shadow tables
  !
  real(SP),allocatable :: k_pt(:,:)
+ integer ,allocatable :: k_sstar(:,:)
  real(SP),allocatable :: q_pt(:,:)
  integer ,allocatable :: q_sstar(:,:)
  !
@@ -129,13 +136,16 @@ module R_lattice
  integer              :: G_m_G_maxval   ! Maximum value of G_m_G
  integer ,allocatable :: ng_in_shell(:) ! Number of G in each shell
  integer ,allocatable :: g_rot(:,:)
+ real(SP),allocatable :: g_phs(:,:)
  integer ,allocatable :: G_m_G(:,:)
  integer ,allocatable :: minus_G(:)
+ integer ,allocatable :: G_mod_indx(:)
  real(SP),allocatable :: g_vec(:,:)
  real(SP),allocatable :: E_of_shell(:)  ! Energy associated at each shell
  ! GPUs
  real(SP),allocatable, target DEV_ATTR :: g_vec_d(:,:)
  integer ,allocatable DEV_ATTR :: g_rot_d(:,:)
+ real(SP),allocatable DEV_ATTR :: g_phs_d(:,:)
  integer ,allocatable DEV_ATTR :: G_m_G_d(:,:)
  integer ,allocatable DEV_ATTR :: minus_G_d(:)
  !
@@ -394,7 +404,39 @@ module R_lattice
      endif
      !
    end subroutine bz_samp_duplicate
+   !
+   subroutine bz_samp_duplicate_nosymm(BZi, BZo)
+     type(bz_samp), intent(in)    :: BZi
+     type(bz_samp), intent(inout) :: BZo
+     integer :: ik
      !
+     BZo%nibz  = BZi%nbz
+     BZo%nbz   = BZi%nbz
+     BZo%units = BZi%units
+     BZo%description = BZi%description
+     !
+     YAMBO_ALLOC(BZo%pt,(BZo%nibz,3))
+     BZo%pt(:,:) = BZi%ptbz(:,:)
+     !
+     YAMBO_ALLOC(BZo%nstar,(BZo%nibz))
+     BZo%nstar=1
+     !
+     YAMBO_ALLOC(BZo%weights,(BZo%nibz))
+     BZo%weights=1._SP
+     !
+     YAMBO_ALLOC(BZo%star,(BZo%nibz,1))
+     BZo%star=1
+     !
+     YAMBO_ALLOC(BZo%sstar,(BZo%nbz,2))
+     do ik=1,BZo%nbz
+       BZo%sstar(ik,1)=ik
+       BZo%sstar(ik,2)=1
+     enddo
+     !
+     YAMBO_ALLOC(BZo%ptbz,(BZo%nbz,3))
+     BZo%ptbz=BZi%ptbz
+   end subroutine bz_samp_duplicate_nosymm
+   !
    subroutine bz_samp_duplicate_Fg(FGi,FGo,N_coarse)
      type(bz_fine_grid), intent(in)  ::FGi
      type(bz_fine_grid), intent(out) ::FGo

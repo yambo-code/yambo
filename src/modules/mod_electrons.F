@@ -17,6 +17,7 @@ module electrons
  implicit none
  !
  real(SP) :: nel
+ real(SP) :: nel_cond ! Number of electrons promoted in conduction (quasi-fermi distribution)
  real(SP) :: default_nel
  real(SP) :: spin_occ
  real(SP) :: filled_tresh
@@ -40,6 +41,8 @@ module electrons
  integer  :: n_spinor
  integer  :: n_spin_den
  logical  :: l_spin_orbit
+ !
+ integer, parameter  :: n_max_deg=4
  !
  ! Average magnetization density
  !

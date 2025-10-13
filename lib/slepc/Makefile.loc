@@ -50,14 +50,14 @@ configure: uncompress
 compile: uncompress configure
 	@if test -e $(PACKAGE) && ! test -f compiled.stamp ; then \
          echo "\t[$(PACKAGE)] compilation"; \
-         ( cd $(PACKAGE); $(make) -j1 SLEPC_DIR=$(PWD)/$(PACKAGE) PETSC_DIR=$(LIBPATH)  >> ${compdir}/log/compile_$(PACKAGE).log 2>&1 ) ; \
+         ( cd $(PACKAGE); $(make) $(MAKEFLAGS) SLEPC_DIR=$(PWD)/$(PACKAGE) PETSC_DIR=$(LIBPATH)  >> ${compdir}/log/compile_$(PACKAGE).log 2>&1 ) ; \
          touch compiled.stamp; \
         fi
 
 install: uncompress configure compile
 	@if ! test -f installed.stamp ; then \
          echo "\t[$(PACKAGE)] installation"; \
-         ( cd $(PACKAGE); $(make) -j1 SLEPC_DIR=$(PWD)/$(PACKAGE) PETSC_DIR=$(LIBPATH) install  >> ${compdir}/log/install_$(PACKAGE).log 2>&1 ); \
+         ( cd $(PACKAGE); $(make) $(MAKEFLAGS) SLEPC_DIR=$(PWD)/$(PACKAGE) PETSC_DIR=$(LIBPATH) install  >> ${compdir}/log/install_$(PACKAGE).log 2>&1 ); \
          touch installed.stamp; \
         fi
 

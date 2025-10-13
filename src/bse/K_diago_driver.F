@@ -33,7 +33,8 @@ subroutine K_diago_driver(iq,W,X_static)
 &                         l_BS_mespin,l_BS_meorb
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,BSS_resize_only,BSS_resize_and_save,BSS_n_eig_Input, &
 &                         BSS_write_eig_2_db,BSS_eh_W,BSS_n_eig,BS_E,BSS_slepc_pseudo_herm,write_bs_ev_par,&
-&                         BSS_ldiago_solver,BSS_first_eig,BSS_target_E,BSS_trange_E,BSS_er,BSS_slepc_precondition
+&                         BSS_ldiago_solver,BSS_first_eig,BSS_target_E,BSS_trange_E,BSS_er,BSS_slepc_precondition,&
+&                         load_Diago
  use X_m,            ONLY:X_t,X_OUTPUT_driver
  use electrons,      ONLY:n_sp_pol,n_spinor
  use frequency,      ONLY:w_samp
@@ -49,6 +50,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use timing_m,       ONLY:timing
  use parallel_int,   ONLY:PP_wait
 #if defined _SLEPC && !defined _NL
+ use petscsys
  use slepceps,       ONLY:SlepcInitialize
  use petscmat,       ONLY:PETSC_NULL_CHARACTER
  use petscmatdef,    ONLY:tMat
@@ -189,6 +191,8 @@ subroutine K_diago_driver(iq,W,X_static)
    !======================================
    if (io_err<0) then
      !
+     if (load_Diago) call error("Loading of ndb.BS_diago failed in load diago mode") 
+     !
      call K_components_folded_in_serial_arrays(iq)
      !
      ! Below two operations:
@@ -225,13 +229,17 @@ subroutine K_diago_driver(iq,W,X_static)
          ! 2. Here we create a distributed PETSC matrix from the BS_blks
          !    There are 2 cases
          ! control of hermitian / pseudo-hermitian / non hermitian is in part explicit here
+#if PETSC_VERSION_GE(3,22,0)
          if (BSS_slepc_pseudo_herm) then
            ! 2.1. Nest matrix uses pseudo-hermitian structure of BSE, only for the coupling case
            call K_stored_in_a_nest_matrix(i_BS_mat,iq,slepc_mat)
          else
+#endif
            ! 2.2. Single PETSc matrix, for resonant case or non-hermitian coupling
            call K_stored_in_a_slepc_matrix(i_BS_mat,iq,slepc_mat)
+#if PETSC_VERSION_GE(3,22,0)
          endif
+#endif
        endif        
      endif
 #endif
@@ -448,7 +456,8 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      call PP_wait()
 #if defined _SCALAPACK
-     if (l_ldiago .and. BSS_write_eig_2_db) call write_bs_ev_par(iq, i_BS_mat, BS_V_right, BS_V_left)
+     if (l_ldiago .and. BSS_write_eig_2_db) call write_bs_ev_par(iq, i_BS_mat, &
+&                             neigs_this_cpu, neig_shift, BS_V_right, BS_V_left)
 #endif
    endif
    !

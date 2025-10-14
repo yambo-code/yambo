@@ -564,7 +564,7 @@ call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level
  call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_nl_optics)
  call it('f',defs,'NoComprCOLL','[NL] Load collisions in double-precision and do not remove small elements (default false)',&
 &  verb_level=V_nl_optics)
- call it('f',defs,'UseSymm','[NL] Use full-symms for dipoles and residual-symms for polar/current (def false)', &
+ call it('f',defs,'NoUseSymm','[NL] Do not use residual-symms for polar/current (def false)', &
 &  verb_level=V_nl_optics)
  call it('f',defs,'EvalCurrent','[NL] Evaluate the current')
  call it('f',defs,'SaveVbhistory',  '[RT] Save the history of the wave-functions function',Verb_level=V_nl_optics)

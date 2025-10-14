@@ -38,7 +38,7 @@ subroutine NL_initialize(E,k)
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity,LSEX,&
 &                         l_eval_CURRENT,l_pump_and_probe,DephMult,l_velocity_IPA,n_angles,l_test_OSCLL,LHF,eval_OSCLL,  &
 &                         NL_ang_step,n_runs,NL_rot_axis,loop_on_frequencies,loop_on_angles,NL_initial_versor,max_angle
- use electric,       ONLY:l_force_SndOrd,l_res_symms
+ use electric,       ONLY:l_force_SndOrd,l_no_res_symms
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  use y_memory_alloc
@@ -64,7 +64,7 @@ subroutine NL_initialize(E,k)
  call parser('EvalCurrent' ,         l_eval_CURRENT)
  call parser('TestOSCLL',            l_test_OSCLL)
  call parser('NoComprCOLL',          l_no_compress_COLL)
- call parser('UseSymm',              l_res_symms)
+ call parser('NoUseSymm',            l_no_res_symms)
  call parser('SaveVbhistory',        SAVE_Vb_history)
  !call parser('SaveVbfloquet',        SAVE_Vb_floquet)
  call parser('VelGaugeNoDiam',       l_velocity_gauge_tmp)
@@ -573,5 +573,6 @@ subroutine NL_initialize(E,k)
  call msg( 'r', 'Induced Field              ',l_RT_induced_field)
  call msg( 'r', 'Force Snd Order Dipoles    ',l_force_SndOrd)
  call msg( 'r', 'Evaluate Current           ',l_eval_CURRENT)
+ call msg( 'r', 'Symmetrize current and pol ',.not.l_no_res_symms)
  !
 end subroutine NL_initialize

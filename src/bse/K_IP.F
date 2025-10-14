@@ -216,8 +216,18 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! Dichroism
      !
      if(l_BS_dichroism) then
+       ! The dicroism for an oriented sample (DD contribution only) should be
+       ! 1/2 (beta_xx + beta_yy) = 1/2 (x*m_x + y*m_y)
+       ! with
+       ! m_x = r_y*p_z-r_z*p_y
+       ! This follows from PhD thesis ...
        res_dich=(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_orb(1,i_T,1))+     &
        &         BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_orb(2,i_T,1)))/2._SP
+       ! The quadripolar term would be similar, but involving terms of the form
+       ! Q_yz = r_y*p_z+r_z*p_y
+       ! See eq. (45) of PRB 107, 224430 (2025)
+       ! To check why (i) the equations are "hermitianized", and
+       !              (ii) with "mixed gauge" r*p in place of r*r
        if(l_BS_trace) then
          ! x*L = DIP_x*DIP_orbital;
          res_dich=(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_orb(1,i_T,1))+     &

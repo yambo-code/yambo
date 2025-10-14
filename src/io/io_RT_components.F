@@ -150,7 +150,8 @@ integer function io_RT_components(what,ID)
      if (io_RT_components/=0) goto 1
    endif
    !
-   if (RT_do_IO("V_bands"))           call io_RT_components_TIME_points(ID,T_size,.FALSE.,(SAVE_Vb_history.or.SAVE_Vb_floquet),Vbands_RT_IO_t)
+   if (RT_do_IO("V_bands"))       &
+&      call io_RT_components_TIME_points(ID,T_size,.FALSE.,(SAVE_Vb_history.or.SAVE_Vb_floquet),Vbands_RT_IO_t)
    !
    if (RT_do_IO("G_lesser"))          call io_RT_components_TIME_points(ID,T_size,.FALSE.,.TRUE.,Gless_RT_IO_t)
    !

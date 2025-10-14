@@ -16,7 +16,7 @@ subroutine COLLISIONS_compress(COLL)
  !
  use pars,            ONLY:SP,DP,SP6,cZERO
  use collision_ext,   ONLY:COLLISIONS_element,COLL_bands,COLLISIONS_cutoff,COLLISIONS_CV_only,&
- &                         COLLISIONS_FEW_only,COLL_elec_bands,COLL_hole_bands
+ &                         COLL_bands_frozen
  use R_lattice,       ONLY:nXkibz
  use electrons,       ONLY:n_met_bands,n_full_bands,n_sp_pol
  use y_memory_alloc
@@ -52,19 +52,15 @@ subroutine COLLISIONS_compress(COLL)
  do i_kmq=1,nXkibz
    do ibp=COLL_bands(1),COLL_bands(2)
      !
-     if ( COLLISIONS_FEW_only .and. ibp<COLL_hole_bands(1) ) cycle
-     if ( COLLISIONS_FEW_only .and. ibp>COLL_hole_bands(2) .and. ibp<COLL_elec_bands(1) ) cycle
-     if ( COLLISIONS_FEW_only .and. ibp>COLL_elec_bands(2) ) cycle
+     if ( COLL_bands_frozen(ibp)==1 ) cycle
      !
      do ib=COLL_bands(1),COLL_bands(2)
        !
        if ( COLLISIONS_CV_only .and. (ib> n_met_bands(i_sp)  .and. ibp> n_met_bands(i_sp) ) ) cycle
        if ( COLLISIONS_CV_only .and. (ib<=n_full_bands(i_sp) .and. ibp<=n_full_bands(i_sp)) ) cycle
        !
-       if ( COLLISIONS_FEW_only .and. ib<COLL_hole_bands(1) ) cycle
-       if ( COLLISIONS_FEW_only .and. ib>COLL_hole_bands(2) .and. ib<COLL_elec_bands(1) ) cycle
-       if ( COLLISIONS_FEW_only .and. ib>COLL_elec_bands(2) ) cycle
-       !    
+       if ( COLL_bands_frozen(ib)==1 ) cycle
+       !
        ic=ic+1
        !
        if(     l_coll_SP) COLL%v3_c(ib,ibp,i_kmq,i_sp)=cmplx(COLL%v_c_SP(ic),kind=SP)

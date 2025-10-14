@@ -8,7 +8,7 @@
 subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  use debug,      ONLY:dbg
- use pars,       ONLY:SP,cZERO
+ use pars,       ONLY:SP,cZERO,rZERO
  use C_driver,   ONLY:code_branch
  use units,      ONLY:HA2EV,FS2AUT,kWCMm22AU
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
@@ -29,13 +29,13 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp,    &
-&                     molecule_position,l_0D,l_1D,l_2D,l_3D
+&                     molecule_position,l_0D,l_1D,l_2D,l_3D,Boltz_Temp
  use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_W_ng,RIM_n_rand_pts,RIM_sphe_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets,k_map,qindx_S_max_Go,RIMW_type,eps_env
- use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn
+ use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn,nel_cond
  use parallel_m, ONLY:ncpu,CPU_str_reset,CREATE_hosts_COMM
  use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
 &                     more_io_path,core_io_path,com_path,repfile,grid_paths,fat_log,exp_user
@@ -64,7 +64,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,use_PH_DbGd,EkplusQ_mode,gkkp_db,&
-&                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
+&                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,&
+&                     elph_bands
+ use EXCPH,      ONLY:Lin_path,Lout_path,EXCPH_states,EXCPH_sum,L_damping,EXC_q0,alphaQ, &
+&                     EXCPH_deltaE_treshold,EXCPH_kthresh
 #endif
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,G_mod_zero,zero_dfl
  use y_memory,   ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
@@ -78,8 +81,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     l_SC_nl_mix,SC_kind,SC_perturbation,SC_desc,SC_neq_kind,SC_last_coh_it
 #endif
 #if defined _SC || defined _RT || defined _QED || defined _NL
- use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff,COLLISIONS_CV_only,COLLISIONS_FEW_only, &
-&                         COLLISIONS_load_SP,COLLISIONS_compr,COLL_hole_bands,COLL_elec_bands
+ use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff,COLLISIONS_CV_only, &
+&                         COLLISIONS_load_SP,COLLISIONS_compr,COLL_bands_frozen_ch
  use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
@@ -90,7 +93,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     CACHE_OBS_steps,CACHE_OBS_steps_now,RT_NAN_found,SAVE_Vb_history, SAVE_Vb_floquet, Floquet_order
  use RT_lifetimes,ONLY:RT_life_extrap_times
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_deph_range,&
-&                     Gr_kind,two_alpha,RAD_LifeTime,Phase_LifeTime,RT_elec_bands,RT_hole_bands,&
+&                     Gr_kind,two_alpha,RAD_LifeTime,Phase_LifeTime,RT_bands_frozen_ch,&
 &                     NE_tot_time,NE_MEM_treshold,RT_eh_en,l_update_SOC,&
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,&
 &                     i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps,RT_step_manual_prefactor,&
@@ -103,7 +106,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
 #if defined _NL
  use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,NL_initial_versor,     &
-&                     NL_verb_name,NL_bands,NL_desc,n_angles,NL_rot_axis,NL_hole_bands,NL_elec_bands,max_angle
+&                     NL_verb_name,NL_bands,NL_desc,n_angles,NL_rot_axis,NL_bands_frozen_ch,max_angle
  use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _SC
@@ -255,10 +258,12 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  molecule_position=0._SP
  lattice='Unknown'
  Bose_Temp=-1./HA2EV
+ Boltz_Temp=0._SP
  l_3D=.TRUE.
  l_2D=.FALSE.
  l_1D=.FALSE.
  l_0D=.FALSE.
+ Boltz_Temp=0._SP
  !
  ! R_lattice
  !
@@ -313,7 +318,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  n_spinor=1
  n_spin_den=1
  l_spin_orbit       = .FALSE.
- filled_tresh       =0.00001_SP
+ filled_tresh       = 0.00001_SP
+ nel_cond=rZERO
  !
  ! Magnetization and density
  !
@@ -516,7 +522,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  GS_exx_SCREENING=0.0            ! no screening
  !
  l_BS_anomalous_Hall=.false.
- PL_weights=(/1._SP,1._SP,1._SP/)
+ PL_weights=(/1._SP,0._SP,0._SP/)
  !
 #if defined _ELPH 
  !
@@ -524,17 +530,30 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ph_modes=0
  elph_nb=0
+ elph_bands=-1
  elph_branches=0
  gsqF_energy_steps=2
  eval_G_using_KK=.FALSE.
  elph_Ham_bands=0
  elph_Ham_ik=1
  RES_tresh=0.01_SP
- DW_deltaE_treshold=1.E-6_SP/HA2EV   ! This is a cutoff on electronic energy differences
- FAN_deltaE_treshold=1.E-6_SP/HA2EV  ! This is a cutoff on phonon energies
+ DW_deltaE_treshold=1.E-6_SP/HA2EV    ! This is a cutoff on electronic energy differences
+ FAN_deltaE_treshold=1.E-6_SP/HA2EV   ! This is a cutoff on phonon energies
  use_PH_DbGd=.FALSE.
  EkplusQ_mode='interp' ! E(k+q) energies (interp | dftp )
  gkkp_db='gkkp'        ! gkkp_db ( gkkp | gkkp_expanded | genFroh )
+ !
+ ! EXC-PH
+ !
+ Lin_path ='none'
+ Lout_path='none'
+ EXCPH_states=(/1,1/)
+ EXCPH_sum=(/1,1/)
+ L_damping=0.0005/HA2EV ! set to 0.5 meV
+ EXCPH_deltaE_treshold=1.E-6_SP/HA2EV ! This is a cutoff for denominator in the exc-ph spectra
+ EXC_q0=(/0.0,0.0,0.0/)
+ alphaQ=rZERO
+ EXCPH_kthresh=-1. ! If negative, use all kpoints (turn positive only for debug)
  !
 #endif
  !
@@ -555,12 +574,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 # endif
  !
  COLLISIONS_CV_only=.FALSE.
- COLLISIONS_FEW_only=.FALSE.
  COLLISIONS_load_SP=.FALSE.
  COLLISIONS_compr  =.FALSE.
  !
- COLL_hole_bands=-1
- COLL_elec_bands=-1
+ COLL_bands_frozen_ch=""
  !
  H_potential="NONE"
  !
@@ -622,8 +639,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NE_time=0._SP
  NE_tot_time= 1000._SP*FS2AUT
  !
- RT_hole_bands=-1
- RT_elec_bands=-1
+ RT_bands_frozen_ch=""
  !
  NE_time_step_update_last_point = 1
  NE_time_step_update_jump       = 0._SP
@@ -706,8 +722,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NE_tot_time   =  -1._SP*FS2AUT 
  Integrator_name='INVINT'
  NL_bands      =(/0,0/)
- NL_hole_bands =-1
- NL_elec_bands =-1
+ NL_bands_frozen_ch=""
  NL_correlation="IPA"
  NL_er         =(/-1._SP,-1._SP/)/HA2EV
  n_frequencies =0

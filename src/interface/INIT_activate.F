@@ -15,7 +15,8 @@ subroutine INIT_activate()
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,l_rim_w,&
 &                         l_real_time,l_ppa,l_mpa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr,l_nl_p_and_p,l_X
+&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr,l_nl_p_and_p, &
+&                         l_EXCPH_gkkp,l_EXCPH_optics,l_EXCPH_lifetime,l_X
 #if defined _SC || defined _RT
  use hamiltonian,    ONLY:H_potential
 #endif
@@ -42,7 +43,7 @@ subroutine INIT_activate()
  !
  !Common
  !
- call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh NLogCPUs DBsIOoff DBsFRAGpm EvalMagn MEM_tresh DegFix')
+ call initactivate(1,'StdoHash Nelectro NelCond ElecTemp BoseTemp OccTresh NLogCPUs DBsIOoff DBsFRAGpm EvalMagn MEM_tresh DegFix')
  !
  !FFT
  !
@@ -147,7 +148,7 @@ subroutine INIT_activate()
  !
  !Col CUTOFF 
  !
- if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTRadius CUTCylLen CUTwsGvec CUTCol_test EpsEnv')
+ if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTRadius CUTwsGvec CUTCol_test EpsEnv')
  !
  !XX
  !
@@ -257,11 +258,11 @@ subroutine INIT_activate()
    call initactivate(1,'EvPolarization FrSndOrd')
 #endif
    !
-   call initactivate(1,'PL_weights')
+   call initactivate(1,'PL_weights EXCTemp')
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
-   call initactivate(1,'BSEQptR BSEBands BSEHoleBands BSEElecBands BSKCut BSKIOmode BSEEhEny BSehWind NoDiagSC')
+   call initactivate(1,'BSEQptR BSEBands BSEFrozenBands BSKCut BSKIOmode BSEEhEny BSehWind NoDiagSC')
    !
 #if defined _RT
    call initactivate(1,'RTOccMode ForceEqTrans')
@@ -460,6 +461,17 @@ subroutine INIT_activate()
  !
  if (l_elph_Hamiltonian) then
    call initactivate(1,'ElPhHBRnge ElPhModes ElPhHKpt GDamping REStresh')
+ endif
+ !
+ ! Exciton-phonon Self-energy
+ !
+ if (l_EXCPH_gkkp)     call initactivate(1,'ELPhExcStates ELPhExcSum LoutPath FANdEtresh EkpqShFact LDamping')
+ if (l_EXCPH_gkkp)     call initactivate(1,'ConstElph AbsElph AbsExc HoleContributionOnly ElectronContributionOnly MaxKShells')
+ if (l_EXCPH_lifetime) call initactivate(1,'BoseTemp ElPhModes EXCTemp AlphaQ ExcPhOffDiago')
+ if (l_EXCPH_lifetime) call initactivate(1,'NoMatrxEl KeepDeg ')
+ if (l_EXCPH_optics)  then
+   call initactivate(1,'EXCTemp AlphaQ ElPhModes PLqres DbGdOnlyPh DbGdWEIGHTs NoMatrxEl EnRngeXd DmRngeXd ETStpsXd')
+   call initactivate(1,'EXCPHdEtresh DbGdOnlyPh DbGdWEIGHTs NoMatrxEl EnRngeXd DmRngeXd ETStpsXd')
  endif
  !
 #endif

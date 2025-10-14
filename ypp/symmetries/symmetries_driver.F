@@ -11,16 +11,18 @@
 !
 subroutine symmetries_driver(E,Xk)
  !
- use pars,                ONLY:SP
+ use pars,                ONLY:SP,lchlen
  use xc_functionals,      ONLY:magn
  use electrons,           ONLY:levels,Spin_magn,n_spinor
  use FFT_m,               ONLY:fft_size
- use IO_m,                ONLY:rm_file
- use com,                 ONLY:msg,core_io_path,more_io_path
- use R_lattice,           ONLY:bz_samp,ng_closed,ng_vec,bz_samp_reset,bz_samp_duplicate
+ use IO_m,                ONLY:rm_file,cp_file,OP_RD_CL,NONE,DUMP
+ use IO_int,              ONLY:ver_is_gt_or_eq,io_control
+ use com,                 ONLY:msg,core_io_path,more_io_path,jobstr
+ use R_lattice,           ONLY:bz_samp,ng_closed,ng_vec,bz_samp_reset,bz_samp_duplicate,nqbz
  use D_lattice,           ONLY:nsym,atom_mass,atoms_map,n_atoms_species_max,n_atomic_species
  use wave_func,           ONLY:wf_ng,WF
  use stderr,              ONLY:intc
+ use LIVE_t,              ONLY:live_timing
  use interfaces,          ONLY:WF_load,WF_free,el_magnetization
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:REP,OP_WR_CL,VERIFY
@@ -41,7 +43,14 @@ subroutine symmetries_driver(E,Xk)
  logical               :: l_keep_k_grid
  !
  integer               :: old_nkpt,ID,io_old_SYMMs
+ character(lchlen)     :: core_io_path_save
  integer, external     :: io_full_SYMMs
+ !
+#if defined _YPP_ELPH
+ character(lchlen)  :: filename,infile,outfile,in_path
+ integer, external  :: io_ELPH
+ integer            :: iq,ID_gkkp,io_err
+#endif
  !
  YAMBO_ALLOC(old_dl_sop,(3,3,nsym))
  YAMBO_ALLOC(old_S_contains_TR,(nsym))
@@ -75,8 +84,6 @@ subroutine symmetries_driver(E,Xk)
  !
  ! Expansion of default k-points
  call k_ibz2bz(Xk,'i',.false.)
- YAMBO_FREE(Xk%pt)
- call k_reduce(Xk,.false.)
  !
  call fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,old_S_contains_TR)
  !
@@ -132,8 +139,55 @@ subroutine symmetries_driver(E,Xk)
  !
  ! Savel old symmetries on file
  ! ============================
+ core_io_path_save=core_io_path
+ core_io_path=more_io_path
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
  io_old_SYMMs=io_full_SYMMs(Xk,ID)
+ core_io_path=core_io_path_save
+ !
+#if defined _YPP_ELPH
+ !
+ ! Copy gkkp_expanded if presents
+ !
+ call section('=',"GKKP-databases")
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID_gkkp)
+ io_err=io_ELPH(ID_gkkp,'gkkp_expanded') 
+ !
+ if(io_err==0) then
+   !      
+    if (trim(jobstr)/='') then
+      in_path =trim(jobstr)//"/"
+   else
+      in_path='SAVE/'
+   endif
+   !
+   call live_timing('Copying gkkp files',nqbz+1)
+   !
+   do iq=0,nqbz
+     !
+     if(iq==0) then
+       filename ='ndb.elph_gkkp_expanded'
+     else
+       filename ='ndb.elph_gkkp_expanded_fragment_'//trim(intc(iq))
+     endif
+     infile=trim(in_path)//trim(filename)
+     !
+     outfile="./"//trim(more_io_path)//"/SAVE/"//trim(filename)
+     call cp_file(trim(infile),trim(outfile),io_err)
+     if(io_err/=0) call error(' Error copying the gkkp_expanded files')
+     !
+     call live_timing(steps=1)
+     !
+   enddo
+   !
+   call live_timing()
+   !
+ else
+   call msg('s','Electron-phonon DBs not present')
+ endif
+ !
+#endif
  !
  ! CLEAN
  !=======

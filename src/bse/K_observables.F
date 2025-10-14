@@ -15,7 +15,7 @@ subroutine K_observables(W,Xk)
  use X_m,          ONLY:global_gauge
  use R_lattice,    ONLY:bz_samp
  use com,          ONLY:exp_user
- use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,BSS_mode
+ use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,load_Diago,BSS_mode
  use BS,           ONLY:BS_dip_size,l_BS_anomalous_Hall,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,&
 &                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,l_BS_kerr_asymm,l_BS_esort_indx
@@ -111,6 +111,9 @@ subroutine K_observables(W,Xk)
 #if defined _SLEPC && !defined _NL
  run_Slepc     = STRING_match(BSS_mode,'s')
 #endif
+ !
+ load_Diago = STRING_match(BSS_mode,'l').and.run_Diago
+ !
  if (l_BS_photolum.and.run_Haydock) then
    call warning('PL currently implemented only using the diagonalization/inversion solver')
    run_Haydock  =.false.

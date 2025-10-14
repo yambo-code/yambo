@@ -9,7 +9,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  use drivers,       ONLY:infile_editing
  use pars,          ONLY:schlen,SP
- use electrons,     ONLY:levels,nel,filled_tresh
+ use electrons,     ONLY:levels,nel,filled_tresh,nel_cond
  use zeros,         ONLY:G_mod_zero
  use frequency,     ONLY:w_samp
  use it_tools,      ONLY:it
@@ -29,10 +29,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng,WF_load_mode
  use D_lattice,     ONLY:Tel,non_periodic_directions,molecule_position,Bose_Temp
+ use D_lattice,     ONLY:Boltz_Temp
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,RIM_W_ng,rimw_type,&
 &                        bz_samp,RIM_ng,RIM_epsm1,eps_env,RIM_id_epsm1_reference,&
-&                        RIM_n_rand_pts,RIM_sphe_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
- use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_core_bands,&
+&                        RIM_n_rand_pts,RIM_sphe_n_rand_pts,cyl_ph_radius,box_length,cut_geometry,ws_cutoff
+ use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_bands_frozen_ch,&
 &                        BS_n_g_W,BS_n_g_exch,BS_n_g_fxc,BSE_L_kind,BS_K_cutoff,BSK_IO_mode,BSE_dipole_geometry
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,BSS_target_E,BSS_trange_E,&
 &                        BSS_dr,BSS_er,BSS_E_dir,BSS_Q_dir,BSS_damp_reference,BSS_inversion_mode,&
@@ -51,8 +52,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use QP_m,          ONLY:QP_QED_ng
 #endif
 #if defined _SC || defined _RT || defined _QED
- use hamiltonian,   ONLY:H_potential
- use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands,COLL_hole_bands,COLL_elec_bands
+ use hamiltonian,   ONLY:H_potential,H_ref_bands_frozen
+ use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands,COLL_bands_frozen,COLL_bands_frozen_ch
 #endif
  use QP_m,          ONLY:SC_E_threshold
 #if defined _SC
@@ -60,7 +61,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use SC,            ONLY:SC_iterations,SC_up_W_iters,&
 &                        SC_rho_threshold,SC_cycle_mixing,&
 &                        SC_bands,SC_preconditioning,OEP_approx,&
-&                        SC_neq_kind,SC_mu,SC_last_coh_it
+&                        SC_neq_kind,SC_mu,SC_last_coh_it,&
+&                        SC_bands_frozen,SC_bands_frozen_ch
 #endif
 #if defined _RT
  use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,Gless_RESTART_RT_IO_t,Floquet_order,&
@@ -68,19 +70,19 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use RT_occupations,ONLY:RT_RTA_temp,RT_RTA_chem
  use RT_lifetimes,  ONLY:RT_life_extrap_times_INPUT
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
-&                        NE_tot_time,RT_bands,RT_hole_bands,RT_elec_bands,RT_deph_range,    &
+&                        NE_tot_time,RT_bands,RT_bands_frozen_ch,RT_deph_range,  &
 &                        RT_ave_dephasing,RT_eh_en,RT_scatt_tresh,Gr_kind,       &
 &                        NE_MEM_treshold,NE_time_step_update_jump_INPUT,         &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
 &                        NE_initial_time_step_update,NE_step_update_treshold,    &
-&                        RT_MAX_step,RAD_magnification,  &
+&                        RT_MAX_step,RAD_magnification,RT_bands_frozen,          &
 &                        RT_deph_deg_thresh,RT_step_manual_prefactor,NE_time_step_update_manual
  use fields,        ONLY:n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
 #if defined _NL
  use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha, &
-&                        NL_verb_name,n_angles,NL_rot_axis,NL_hole_bands,NL_elec_bands,max_angle
+&                        NL_verb_name,n_angles,NL_rot_axis,NL_bands_frozen,NL_bands_frozen_ch,max_angle
 #endif 
 #if defined _NL | defined _SC
  use fields,        ONLY:Efield
@@ -91,6 +93,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _ELPH 
  use ELPH,          ONLY:QP_PH_n_G_bands,elph_nQ_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
 &                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,E_kpq_sh_fact,gkkp_db
+ use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,Lout_path,L_damping,EXC_q0,alphaQ, &
+&                        EXCPH_deltaE_treshold,EXCPH_kthresh
+ use D_lattice,     ONLY:Boltz_Temp
 #endif
 #if defined _OPENMP
  use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads_NL, &
@@ -161,6 +166,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _ELPH 
  call it('r',defs,'el_ph_corr',    '[R] Electron-Phonon Correlation')   
+ call it('r',defs,'ExcGkkp',       '[R][EXCPH] Exciton-Phonon Matrix Elelements')
+ call it('r',defs,'ExcPhOptics',   '[R][EXCPH] Exciton-Phonon Optics')
+ call it('r',defs,'ExcPhLifeT',    '[R][EXCPH] Exciton-Phonon Life-Times')
 #endif
 #if defined _PHEL 
  call it('r',defs,'ph_el_corr',    '[R] Phonon-Electron Correlation')   
@@ -195,18 +203,24 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt)
  call it(defs,'Nelectro','Electrons number',nel,verb_level=V_general)
+ call it(defs,'NelCond' ,'Number of electrons in conduction (Quasi-Fermi distribution)',nel_cond,verb_level=V_general)
  call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_general)
  call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_general)
+#if defined _ELPH 
+ call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit)
+#else
  call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit,verb_level=V_general)
- call it(defs,'BoseCut', '[BOSE] Finite T Bose function cutoff',bose_E_cut,verb_level=V_general)
+#endif
+ call it(defs,'EXCTemp', 'Excitonic Temperature (for luminescence spectra and EXCPH)',Boltz_Temp,T_unit)
+ call it(defs,'BoseCut', 'Finite T Bose function cutoff',bose_E_cut,verb_level=V_general)
 #if defined _ELPH 
  call it('f',defs,'BSEscatt', '[KPT] Compute extended k/q scatering',verb_level=V_kpt)
- call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level=V_ph) 
+call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level=V_ph) 
  call it(defs,'EkpqShFact', '[ELPH] E(k+q) Interpolation shell factor (used only with double-grid)',E_kpq_sh_fact,verb_level=V_ph)
 #endif
  call it('f',defs,'WFbuffIO','[IO] Wave-functions buffered I/O',verb_level=V_io) 
  call it('f',defs,'NoDiagSC','New setup for non-diagonal supercells',verb_level=V_general) 
- call it('f',defs,'DegFix','Force the code to impose the energy levels to respect their degeneracy') 
+ call it('f',defs,'DegFix','Force the code to impose the energy levels to respect their degeneracy',verb_level=V_general) 
  !
  ! Parallel Setup
  !
@@ -293,10 +307,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSEmod',  '[BSE] resonant/retarded/coupling',BSE_mode,case="a")
  call it(defs,'Lkind',   '[BSE,X] bar(default)/full/tilde',BSE_L_kind,verb_level=V_resp)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
- call it(defs,'BSEHoleBands','[BSK] Bands range for Hole. If set, other bands are ignored in the hole channel',&
-&                                                                                            BS_core_bands(1:2),verb_level=V_resp)
- call it(defs,'BSEElecBands','[BSK] Bands range for Electrons. If set other bands are ignored in the electrons channel',&
-&                                                                                            BS_core_bands(3:4),verb_level=V_resp)
+ call it(defs,'BSEFrozenBands','[BSK] Bands expluded from BSE construction',BS_bands_frozen_ch,verb_level=V_resp)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSENGfxc','[BSK] Fxc components', BS_n_g_fxc,G_unit,verb_level=V_resp)
@@ -410,7 +421,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'CUTGeo',   '[CUT] Coulomb Cutoff geometry: box/cylinder/sphere/ws/slab X/Y/Z/XY..',cut_geometry)
  call it(defs,'CUTBox',   '[CUT] [au] Box sides',box_length)
  call it(defs,'CUTRadius','[CUT] [au] Sphere/Cylinder radius',cyl_ph_radius)
- call it(defs,'CUTCylLen','[CUT] [au] Cylinder length',cyl_length)
  call it(defs,'CUTwsGvec','[CUT] WS cutoff: number of G to be modified',ws_cutoff)
  call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_RL)
  !
@@ -426,8 +436,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! Real Time dynamics
  !
  call it(defs,'RTBands',    '[RT] Bands',RT_bands)
- call it(defs,'RTHoleBands','[RT] Active Bands range in valence',RT_hole_bands,Verb_level=V_real_time)
- call it(defs,'RTElecBands','[RT] Active Bands range in conduct',RT_elec_bands,Verb_level=V_real_time)
+ call it(defs,'RTFrozenBands','[RT] Frozen Bands list',RT_bands_frozen_ch,Verb_level=V_real_time)
  !
  ! This call is a temporary fix due to the multiple definition of energy ranges.
  ! The call is needed to align the different values based on the USER definition.
@@ -537,8 +546,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! Non-linear Optics
  !
  call it(defs,'NLBands',      '[NL] Bands range',NL_bands)
- call it(defs,'NLHoleBands',  '[NL] Active Bands range in valence',NL_hole_bands,Verb_level=V_nl_optics)
- call it(defs,'NLElecBands',  '[NL] Active Bands range in conduct',NL_elec_bands,Verb_level=V_nl_optics)
+ call it(defs,'NLFrozenBands','[NL] Frozen Bands list',NL_bands_frozen_ch,Verb_level=V_nl_optics)
  call it(defs,'NLverbosity',  '[NL] Verbosity level (low | high)',NL_verb_name) 
  call it(defs,'NLstep',       '[NL] Time step length',RT_step,unit=Time_unit(1),Verb_level=V_nl_optics)
  call it(defs,'NLtime',       '[NL] Simulation Time',NE_tot_time,unit=Time_unit(1))
@@ -685,9 +693,37 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _ELPH 
  call it(defs,'GphBRnge',  '[ELPH] G[W] bands range',QP_PH_n_G_bands)
  call it(defs,'ElPhModes', '[ELPH] Phonon modes included',elph_branches)
- call it(defs,'FANdEtresh','[ELPH] Energy treshold for Fan denominator',FAN_deltaE_treshold,verb_level=V_ph,unit=E_unit)
+ call it(defs,'FANdEtresh','[ELPH] Energy treshold for Fan denominator',FAN_deltaE_treshold,unit=E_unit)
  call it(defs,'DWdEtresh', '[ELPH] Energy treshold for DW denominator',DW_deltaE_treshold,verb_level=V_ph,unit=E_unit)
  call it(defs,'GkkpDB',    '[ELPH] GKKP database (gkkp | gkkp_expanded | genFroh )',gkkp_db,verb_level=V_ph)
+ !
+ call it(defs,'ELPhExcStates', '[EXCPH] Incoming (external) exciton states',EXCPH_states)
+ call it(defs,'ELPhExcSum',    '[EXCPH] Outgoing (virtual) exciton states',EXCPH_sum)
+ call it(defs,'LoutPath',      '[EXCPH] Path of the outgoing L',Lout_path)
+ call it(defs,'AlphaQ'       ,'[EXCPH] Excitonic band structure 2D distortion',alphaQ)
+ call it(defs,'EXCLongDr'     ,'[EXCPH] Electric field versor for the excitons',EXC_q0)
+ !
+ call it('f',defs,'DbGdOnlyPh'   , '[EXCPH] Use Double-Grid only for phonon energies (do not interpolate excitons)')
+ call it('f',defs,'ExtendOutput', '[EXCPH] Print additional output with q-resolved lifetimes and resonances')
+ call it('f',defs,'DbGdWEIGHTs', '[EXCPH] Use Double-grid also for satellite weights and renormalization')
+ call it('f',defs,'PLqres', '[EXCPH] Write contribution from each q-point')
+ !
+ ! Testing only zone <
+ call it('f',defs,'ConstElph' , '[EXCPH] Set all electron-phonon matrix elements to one (for testing purpose)')
+ call it('f',defs,'NoMatrxEl' , '[EXCPH] Set all  exciton-phonon matrix elements to one (for testing purpose)')
+ call it('f',defs,'KeepDeg'   , '[EXCPH] Keep degenerate states (for testing purpose)')
+ !
+ call it('f',defs,'AbsElph', '[EXCPH] Module of elph matrix elements (for testing purpose)')
+ call it('f',defs,'AbsExc',  '[EXCPH] Module of excitonic WFs (for testing purpose)')
+ call it('f',defs,'HoleContributionOnly', '[EXCPH] Hole channel only (for testing purpose)')
+ call it('f',defs,'ElectronContributionOnly',  '[EXCPH] Elec channel only (for testing purpose)')
+ call it(defs,'MaxKShells', '[EXCPH] K-sum up to a max shell within k-radius in IKU (for testing purpose)',EXCPH_kthresh)
+ ! Testing only zone >
+ !
+ call it(defs,'LDamping', '[EXCPH] Damping of exc-ph self-energy',L_damping,E_unit)
+ call it(defs,'EXCPHdEtresh','[ELPH] Energy treshold for exc-ph denominator',EXCPH_deltaE_treshold,unit=E_unit)
+ call it('f',defs,'ExcPhOffDiago', '[EXCPH] Exciton-Phonon off-diagonal self-energy')
+ !
  call it(defs,'ElPhHBRnge','[ELPH] Hamiltonian bands range',elph_Ham_bands)
  call it(defs,'ElPhHKpt',  '[ELPH] Hamiltonian k-point',elph_Ham_ik)
  call it(defs,'REStresh',  '[ELPH] Residual treshold to report in output files',RES_tresh)
@@ -729,8 +765,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! SC and RT common
  !
  call it(defs,'COLLBands',   '[COLL] Bands for the collisions',COLL_bands)
- call it(defs,'COLLHoleBands','[COLL] Active Bands range in valence',COLL_hole_bands,Verb_level=V_sc)
- call it(defs,'COLLElecBands','[COLL] Active Bands range in conduct',COLL_elec_bands,Verb_level=V_sc)
+ call it(defs,'COLLFrozenBands','[COLL] Frozen Bands list',COLL_bands_frozen_ch,Verb_level=V_sc)
  !
  call it(defs,'HXC_Potential',  '[SC] SC HXC Potential',H_potential,protect=.FALSE.,case="A")
  call it(defs,'COLLCut',        '[SC,RT] Cutoff on the collisions, 0=full 1=none (default =0.0005)',&
@@ -739,8 +774,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
 #endif
  !
-#if defined _RT
-#endif
  !
 #if defined _SC
  call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
@@ -748,6 +781,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
  !
  if (initmode==4) then
+   !
+   call LEVELS_frozen(en)
    call LEVELS_mirror("MIRROR_q",en,X,Dip,l_USER_fields)
    call LEVELS_mirror("MIRROR_bands",en,X,Dip,l_USER_fields)
  endif

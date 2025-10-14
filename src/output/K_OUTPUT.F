@@ -111,11 +111,13 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      endif
    enddo
    !
-   ! Eq.(1.12) PRB 48, 11705 (1993)
+   ! Eqs.(23a) and (48a) in PRB 95, 155203 (2017),
+   ! from Eq.(1.12) PRB 48, 11705 (1993)
    !
    A_drude=para_term_w0-diam_term_exact
    !
    if (trim(global_gauge)=='velocity') then
+     ! DS. Note. The sum rule imposition does not work if neq occupations are loaded. Not sure why.
      if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
      if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
      spectra(:,1)=spectra(:,1)-diam_term_used(2)
@@ -303,8 +305,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  ! PHOTOLUMINESCENCE
  !--------------------
  if (X_do_obs("PL")) then
-   tmp_var=PL
-   call ELEMENTAL_dump("PL",tmp_var)
+   call ELEMENTAL_dump_real("PL",PL(:,2:3))
  endif
  !
  if (STRING_match(WHAT,"close")) call X_OUTPUT_driver("close "//OBS)
@@ -445,5 +446,24 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      endif
      !
    end subroutine add_drude_term
+   !
+   subroutine ELEMENTAL_dump_real(OBS_local,F)
+     character(*) :: OBS_local
+     integer      :: iw,I
+     real(SP)     :: F(BSS_n_freqs,3)
+     real(SP)     :: data(4)
+     do iw=1,BSS_n_freqs
+       data(1 )=real(W%p(iw))
+       do I=1,3
+         data(I+1)=F(iw,I)
+       enddo
+       if (STRING_match(WHAT,"IP")) then
+         call X_OUTPUT_driver("WRITE "//OBS_local,data=(/data(1),data(3)/))
+       else
+         if (.not.l_last_col) call X_OUTPUT_driver("WRITE "//OBS_local,data=data(:3))
+         if (     l_last_col) call X_OUTPUT_driver("WRITE "//OBS_local,data=data(:4))
+       endif
+     enddo
+   end subroutine
    !
 end subroutine

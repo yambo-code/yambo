@@ -129,6 +129,8 @@ module YPPm
  character(1) ::p_format     
  character(1) ::mag_dir     
  character(3) ::p_dir        
+ character(7) ::elec_spin
+ character(7) ::hole_spin
  character(lchlen) ::output_fname 
  character(schlen) ::plot_title 
  character(schlen) ::V_value 
@@ -170,6 +172,8 @@ module YPPm
  real(SP)     ::EXCITON_Res_treshold
  real(SP)     ::EXCITON_weight_treshold   
  real(SP)     ::WF_multiplier   
+ logical      ::l_exc_occ_interp=.FALSE.
+ real(SP)     ::EXC_min
  character(schlen)    :: AVE_exc
  character(schlen)    :: state_ctl 
  integer              :: EXCITONS_n_user_states=0

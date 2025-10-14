@@ -186,10 +186,10 @@ module interfaces
    end subroutine
 #endif
    !
-   integer function eval_G_minus_G(iG,iGo,force_recompute,COMM)
+   integer function eval_G_minus_G(iG,iGo,opr_in,COMM)
      use parallel_m,      ONLY:yMPI_comm
      integer :: iG,iGo
-     logical,         optional :: force_recompute
+     character(1),    optional :: opr_in
      type(yMPI_comm), optional :: COMM
    end function
    !
@@ -333,6 +333,16 @@ module interfaces
      character(3),     intent(in)  :: mode
      type(tddft_wf_t), target, intent(inout) :: tddft_wf
    end function TDDFT_ALDA_eh_space_R_kernel
+   !
+   subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF,ssop,isref,igref)
+     use pars,          ONLY:SP
+     use wave_func,     ONLY:WAVEs
+     integer,              intent(in)    :: b_to_load(2)
+     integer,              intent(in)    :: ik,i_sp_pol,isymm,ig0
+     type (WAVEs), target, intent(inout) :: WF
+     complex(SP) DEV_ATTR, optional, intent(in) :: ssop(2,2)
+     integer,              optional, intent(in) :: isref,igref
+   end subroutine WF_symm_kpoint_g
    !
    subroutine WF_shift_kpoint(b_to_shift,nb_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
      use pars,          ONLY:SP

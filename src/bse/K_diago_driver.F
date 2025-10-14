@@ -28,10 +28,11 @@ subroutine K_diago_driver(iq,W,X_static)
  use stderr,         ONLY:intc
  use units,          ONLY:HA2EV
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
-&                         BS_res_ares_n_mat,l_BS_optics,l_BS_dichroism,l_BS_ares_from_res !,BS_Blocks_symmetrize_K,&
+&                         BS_res_ares_n_mat,l_BS_abs,l_BS_dichroism,l_BS_ares_from_res !,BS_Blocks_symmetrize_K,&
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,BSS_resize,BSS_n_eig_Input, &
 &                         BSS_write_eig_2_db,BSS_eh_W,BSS_n_eig,BS_E,BSS_slepc_pseudo_herm,write_bs_ev_par,&
-&                         BSS_ldiago_solver,BSS_first_eig,BSS_target_E,BSS_trange_E,BSS_er,BSS_slepc_precondition
+&                         BSS_ldiago_solver,BSS_first_eig,BSS_target_E,BSS_trange_E,BSS_er,BSS_slepc_precondition,&
+&                         load_Diago
  use X_m,            ONLY:X_t,X_OUTPUT_driver
  use electrons,      ONLY:n_sp_pol,n_spinor
  use frequency,      ONLY:w_samp
@@ -57,8 +58,6 @@ subroutine K_diago_driver(iq,W,X_static)
 &                         Slepc_v,BS_HAYVEC_free
 #endif
  use BS,             ONLY:l_BS_abs,l_BS_kerr,l_BS_kerr_asymm,l_BS_magnons,l_BS_photolum,l_BS_dichroism
- use MAGNONS,        ONLY:BSS_MAGN_free
- use PHOTOLUM,       ONLY:BSS_PL_free
 #if defined _SLEPC && !defined _NL
  use slepceps,       ONLY:SlepcInitialize
  use petscmat,       ONLY:PETSC_NULL_CHARACTER
@@ -130,8 +129,8 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  l_slepc     = index(BSS_mode,'s')/=0
 #if defined _SCALAPACK
- l_diago     = index(BSS_mode,'o')/=0 ! old diago
- l_ldiago    = index(BSS_mode,'d')/=0 
+ l_diago     = index(BSS_mode,'o')/=0.or.      l_BS_photolum ! old diago
+ l_ldiago    = index(BSS_mode,'d')/=0.and..not.l_BS_photolum 
 #else
  l_diago     = index(BSS_mode,'o')/=0 .or. index(BSS_mode,'d')/=0
 #endif
@@ -172,7 +171,7 @@ subroutine K_diago_driver(iq,W,X_static)
  if (.not.BSS_write_eig_2_db) call parser('WRbsWF',BSS_write_eig_2_db)
  call parser('BSSPertWidth',BSS_perturbative_width)
  !
- do i_BS_mat=1,BS_res_ares_n_mat
+ do i_BS_mat=1, BS_res_ares_n_mat
    !
    if(.not.BS_K_coupling) BS_mat_dim = BS_K_dim(i_BS_mat)
    if(     BS_K_coupling) BS_mat_dim = BS_H_dim
@@ -193,6 +192,8 @@ subroutine K_diago_driver(iq,W,X_static)
    ! Kernel and/or BSS components loading
    !======================================
    if (io_err<0) then
+     !
+     if (load_Diago) call error("Loading of ndb.BS_diago failed in load diago mode") 
      !
      call K_components_folded_in_serial_arrays(iq)
      !
@@ -230,13 +231,17 @@ subroutine K_diago_driver(iq,W,X_static)
          ! 2. Here we create a distributed PETSC matrix from the BS_blks
          !    There are 2 cases
          ! control of hermitian / pseudo-hermitian / non hermitian is in part explicit here
+#if PETSC_VERSION_GE(3,22,0)
          if (BSS_slepc_pseudo_herm) then
            ! 2.1. Nest matrix uses pseudo-hermitian structure of BSE, only for the coupling case
            call K_stored_in_a_nest_matrix(i_BS_mat,iq,slepc_mat)
          else
+#endif
            ! 2.2. Single PETSc matrix, for resonant case or non-hermitian coupling
            call K_stored_in_a_slepc_matrix(i_BS_mat,iq,slepc_mat)
+#if PETSC_VERSION_GE(3,22,0)
          endif
+#endif
        endif        
      endif
 #endif
@@ -252,8 +257,8 @@ subroutine K_diago_driver(iq,W,X_static)
      ! Diagonalization of the excitonic hamiltonian
      !==============================================
      if(l_diago) call live_timing('BSK diagonalize',1)
-     !
-     if (K_is_not_hermitian) then
+     ! 
+     if (K_is_not_hermitian) then !coupling
        !
 #if defined _SCALAPACK
        if (l_ldiago) then 
@@ -284,7 +289,7 @@ subroutine K_diago_driver(iq,W,X_static)
        endif
 #endif
        !
-     else
+     else !no coupling
        !
 #if defined _SCALAPACK
        if (l_ldiago) then
@@ -396,9 +401,9 @@ subroutine K_diago_driver(iq,W,X_static)
      if(l_BS_photolum) then
        if (l_ldiago) call error("PL not implemented in Ldiago solver")
        if (K_is_not_hermitian) then
-         call PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap)
+         call PL_diago_non_herm_residual(BS_V_left,BS_V_right,BS_R_PL,BS_overlap)
        else
-         call PL_diago_residual(BS_V_right,BS_V_right,BS_R_PL,K_is_not_hermitian)
+         call PL_diago_herm_residual(BS_V_right,BS_R_PL)
        endif
      endif
      !
@@ -434,7 +439,8 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      call PP_wait()
 #if defined _SCALAPACK
-     if (l_ldiago .and. BSS_write_eig_2_db) call write_bs_ev_par(iq, i_BS_mat, BS_V_right, BS_V_left)
+     if (l_ldiago .and. BSS_write_eig_2_db) call write_bs_ev_par(iq, i_BS_mat, &
+&                             neigs_this_cpu, neig_shift, BS_V_right, BS_V_left)
 #endif
    endif
    !
@@ -452,9 +458,6 @@ subroutine K_diago_driver(iq,W,X_static)
 #if defined _SLEPC && !defined _NL
  if(l_slepc) call K_slepc_local_free()
 #endif
- !
- call BSS_PL_free( )
- call BSS_MAGN_free( )
  !
  call timing(trim(Solver)//' Solver',OPR='stop')
  !

@@ -36,8 +36,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use hamiltonian,    ONLY:H_potential,H_kind
  use global_XC,      ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED
  use collision_ext,  ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,COLLISIONS_from_BSE,&
-&                        COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions,COLLISIONS_naming,&
-&                        COLLISIONS_FEW_only,COLL_hole_bands,COLL_elec_bands
+&                        COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions,COLLISIONS_naming
  use X_m,            ONLY:X_t
  use plasma,         ONLY:EH_gas
  use frequency,      ONLY:w_samp
@@ -74,8 +73,6 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! If I am calculating the collisions then I can use them
  !
  l_use_collisions=.TRUE.
- !
- COLLISIONS_FEW_only=all((/COLL_hole_bands/=-1,COLL_elec_bands/=-1/))
  !
  ! XC Potentials 
  !===============

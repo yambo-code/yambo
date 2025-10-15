@@ -571,10 +571,11 @@ subroutine NL_initialize(E,k)
      call msg( 'r', 'Rotation axis              ',NL_rot_axis)
    endif
  endif
- call msg( 'r', 'Use Dipoles                ',l_use_DIPOLES)
- call msg( 'r', 'Induced Field              ',l_RT_induced_field)
- call msg( 'r', 'Force Snd Order Dipoles    ',l_force_SndOrd)
- call msg( 'r', 'Evaluate Current           ',l_eval_CURRENT)
- call msg( 'r', 'Symmetrize current and pol ',.not.l_no_res_symms)
+ call msg( 'r', 'Use Dipoles                   ',l_use_DIPOLES)
+ call msg( 'r', 'Induced Field                 ',l_RT_induced_field)
+ call msg( 'r', 'Force Snd Order Dipoles       ',l_force_SndOrd)
+ call msg( 'r', 'Evaluate Current              ',l_eval_CURRENT)
+ call msg( 'r', 'Symmetrize current and pol    ',.not.l_no_res_symms)
+ call msg( 'r', 'Fast parallelization (vel-IPA)',l_velocity_IPA)
  !
 end subroutine NL_initialize

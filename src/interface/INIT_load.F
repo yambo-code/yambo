@@ -444,7 +444,7 @@ call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic QP_secant (HS)',Gr_kind,Verb_level=V_real_time)
  call it(defs,'RADLifeTime','[RT] Radiative life-time (if negative RADLifeTime=Phase_LifeTime)', &
-&         RAD_LifeTime,unit=Time_unit(1))
+&         RAD_LifeTime,unit=Time_unit(1),verb_level=V_nl_optics)
  call it(defs,'RADmagnific','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
  call it(defs,'PhLifeTime', '[RT] Constant Dephasing Time',Phase_LifeTime,unit=Time_unit(1))
  call it(defs,'DephTRange', '[RT] Time range in which Dephasing is applied',RT_deph_range,unit=Time_unit(1),Verb_level=V_real_time)

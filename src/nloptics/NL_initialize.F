@@ -104,8 +104,10 @@ subroutine NL_initialize(E,k)
     call warning('Berry phase turned off in velocity gauge')
     !
     ! Improve parallelization in the IPA case (each k-point is independent)
+    ! This parallelization is not compatible with wavefunction-IO for 
+    ! this reason I turn it off in pump-probe setup
     !
-    if(trim(NL_Correlation)=='IPA') then
+    if(trim(NL_Correlation)=='IPA'.and..not.l_pump_and_probe) then
       l_velocity_IPA=.TRUE.
       call msg('rs','Fast parallelization: velocity gauge + IPA ')
     endif

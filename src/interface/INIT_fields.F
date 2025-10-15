@@ -37,7 +37,6 @@ subroutine Afield_activate(i1)
      if(l_nl_p_and_p) then
 #endif
        call initactivate(1,field//'_Freq')
-       call initactivate(1,field//'_NFreqs')
 #if defined _NL
      endif
 #endif
@@ -88,13 +87,6 @@ subroutine Afield(defs,i_field)
    !
    call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
 &          Efield(i_field)%frequency,unit=E_unit,verb_level=V_field)
-#if defined _NL
-   call it(defs,trim(name)//'_NFreqs',          '[RT '//trim(name)//'] Frequency',&
-&          Efield(i_field)%n_frequencies,verb_level=V_real_time)
-#else
-   call it(defs,trim(name)//'_NFreqs',          '[RT '//trim(name)//'] Frequency',&
-&          Efield(i_field)%n_frequencies,verb_level=V_field)
-#endif
    call it(defs,trim(name)//'_DFreq',           '[RT '//trim(name)//'] Frequency step',&
 &          Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
    call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&

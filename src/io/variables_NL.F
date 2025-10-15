@@ -135,13 +135,9 @@ integer function variables_NL(ID)
 &         R0=Efield(i_Prb)%FWHM,CHECK=.true.,OP=(/"=="/),& 
 &         DESCRIPTOR=NL_desc)
 
-   call def_variable_elemental(ID,"Field_Freq_range_"//trim(intc(i_Prb)),2,SP,0)
-   call io_variable_elemental(ID,VAR="[FIELDs] Frequency range   ",TERMINATOR="[eV]",&
-&         R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV,& 
-&         DESCRIPTOR=NL_desc)
-
-   call def_variable_elemental(ID,"Field_Freq_steps_"//trim(intc(i_Prb)),1,IP_YIO,0)
-   call io_variable_elemental(ID,VAR="[FIELDs] Frequency steps",I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/),& 
+   call def_variable_elemental(ID,"Field_Freq_range_"//trim(intc(i_Prb)),1,SP,0)
+   call io_variable_elemental(ID,VAR="[FIELDs] Frequency         ",TERMINATOR="[eV]",&
+&         R0=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV,& 
 &         DESCRIPTOR=NL_desc)
 
    call def_variable_elemental(ID,"Field_Freq_step_"//trim(intc(i_Prb)),1,SP,0)

@@ -25,6 +25,7 @@
 !
 subroutine Afield_activate(i1)
      use stderr,         ONLY:intc
+&    use drivers,        ONLY:l_nl_p_and_p
      !
      implicit none
      !
@@ -32,8 +33,14 @@ subroutine Afield_activate(i1)
      !
      character(6)::field
      field='Field'//trim(intc(i1))
-     call initactivate(1,field//'_Freq')
-     call initactivate(1,field//'_NFreqs')
+ #if defined _NL
+     if(l_nl_p_and_p) then
+ #endif
+       call initactivate(1,field//'_Freq')
+       call initactivate(1,field//'_NFreqs')
+ #if defined _NL
+     endif
+ #endif
      call initactivate(1,field//'_DFreq')
      call initactivate(1,field//'_Int')
      call initactivate(1,field//'_Width')
@@ -74,8 +81,13 @@ subroutine Afield(defs,i_field)
    !
    call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
 &          Efield(i_field)%frequency,unit=E_unit)
+#if defined _NL
+   call it(defs,trim(name)//'_NFreqs',          '[RT '//trim(name)//'] Frequency',&
+&          Efield(i_field)%n_frequencies,verb_level=V_real_time)
+#else
    call it(defs,trim(name)//'_NFreqs',          '[RT '//trim(name)//'] Frequency',&
 &          Efield(i_field)%n_frequencies)
+#endif
    call it(defs,trim(name)//'_DFreq',           '[RT '//trim(name)//'] Frequency step',&
 &          Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
    call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&

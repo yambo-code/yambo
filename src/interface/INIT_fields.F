@@ -33,13 +33,7 @@ subroutine Afield_activate(i1)
      !
      character(6)::field
      field='Field'//trim(intc(i1))
-#if defined _NL
-     if(l_nl_p_and_p) then
-#endif
-       call initactivate(1,field//'_Freq')
-#if defined _NL
-     endif
-#endif
+     call initactivate(1,field//'_Freq')
      call initactivate(1,field//'_Int')
      call initactivate(1,field//'_Width')
      call initactivate(1,field//'_Chirp')

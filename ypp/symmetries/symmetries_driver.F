@@ -43,6 +43,7 @@ subroutine symmetries_driver(E,Xk)
  logical               :: l_keep_k_grid
  !
  integer               :: old_nkpt,ID,io_old_SYMMs
+ character(lchlen)     :: core_io_path_save
  integer, external     :: io_full_SYMMs
  !
 #if defined _YPP_ELPH
@@ -138,8 +139,11 @@ subroutine symmetries_driver(E,Xk)
  !
  ! Savel old symmetries on file
  ! ============================
+ core_io_path_save=core_io_path
+ core_io_path=more_io_path
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
  io_old_SYMMs=io_full_SYMMs(Xk,ID)
+ core_io_path=core_io_path_save
  !
 #if defined _YPP_ELPH
  !

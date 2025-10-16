@@ -553,9 +553,10 @@ subroutine NL_initialize(E,k)
  call msg( 'r', 'Damping                    ',NL_damping*HA2EV,"[eV]")
  call msg( 'r', 'Dephasing                  ',Phase_LifeTime*AUT2FS,"[fs]")
  call msg( 'r', 'Radiative LifeTime         ',RAD_LifeTime*AUT2FS,"[fs]")
- do i1=1,n_ext_fields
+ do i1=1,n_active_fields
    call msg( 'r', 'Efield                     '//trim(Efield(i1)%ef_name))
    call msg( 'r', 'Efield width               ',Efield(i1)%width*AUT2FS,"[fs]")
+   call msg( 'r', 'Efield frequency           ',Efield(i1)%frequency*HA2EV,"[eV]")
    call msg( 'r', 'Efield Amplitude      [V/m]',Efield(i1)%amplitude*AU2VMm1)
    call msg( 'r', 'Pond. Energy        [eV/mu]',Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency**2*HA2EV)
    call msg( 'r', 'Adiabatic param      [1/mu]',Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency**3)

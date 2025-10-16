@@ -168,9 +168,6 @@ integer function variables_RT_static(ID)
        call io_variable_elemental(ID,VAR=" [FIELDs] Chirp    ",R0=Efield(i1)%chirp,DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
        call io_variable_elemental(ID,VAR=" [FIELDs] Frequency range",R1=Efield(i1)%frequency,&
 &                                 DESCRIPTOR=RT_desc,UNIT=HA2EV,TERMINATOR="[eV]")
-       call io_variable_elemental(ID,VAR=" [FIELDs] Frequency steps",I0=Efield(i1)%n_frequencies,DESCRIPTOR=RT_desc)
-       call io_variable_elemental(ID,VAR=" [FIELDs] Frequency step",R0=Efield(i1)%W_step,&
-&                                 CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,UNIT=HA2EV,TERMINATOR="[eV]")
        call io_variable_elemental(ID,R0=Efield(i1)%t_initial,VAR=' [FIELDs] Initial time',&
 &                                 DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
        !                       

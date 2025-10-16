@@ -38,7 +38,6 @@ module fields
    integer  :: t_initial_indx    ! time index of extern field switch on  (input variable)
    real(SP) :: t_final
    integer  :: t_final_indx      ! time index of extern field switch off (computed in RT_Fluence)
-   integer  :: n_frequencies
    real(SP) :: frequency(2)
    real(SP) :: width
    real(SP) :: chirp
@@ -47,7 +46,6 @@ module fields
    real(SP) :: pi_kind
    real(SP) :: intensity
    real(SP) :: amplitude
-   real(SP) :: W_step
    real(SP) :: versor(3)
    real(SP) :: versor_circ(3)
  end type ext_field
@@ -110,9 +108,6 @@ module fields
      integer           ::i_f
      type(ext_field)   ::E_field
      field_frequency=E_field%frequency(1)
-     if (i_f<=1.or.E_field%n_frequencies<=1) return
-     field_frequency=E_field%frequency(1)+&
-&       (E_field%frequency(2)-E_field%frequency(1))/(E_field%n_frequencies-1)*(i_f-1)
    end function
    !
    integer function get_field_file_index(filename)
@@ -133,8 +128,6 @@ module fields
      E2%t_final=E1%t_final  
      E2%t_final_indx=E1%t_final_indx  
      E2%frequency=E1%frequency  
-     E2%n_frequencies=E1%n_frequencies  
-     E2%W_step=E1%W_step  
      E2%width=E1%width  
      E2%chirp=E1%chirp
      E2%FWHM=E1%FWHM
@@ -155,8 +148,6 @@ module fields
      E%t_final      =0._SP
      E%t_final_indx =0
      E%frequency    =0._SP
-     E%n_frequencies=1
-     E%W_step       =0._SP
      E%amplitude    =0._SP
      E%intensity    =0._SP
      E%fluence      =0._SP

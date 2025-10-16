@@ -469,11 +469,6 @@ subroutine RT_initialize(E,k,q,Dip)
    call msg( 'nr','---Fields---')
    call msg('r','Gauge                               ',trim(global_gauge))
    !
-   if (any(Efield(:)%W_step>0)) then
-     call msg('r','Pump/Probe periodicity',EtoT(E=maxval(Efield(:)%W_step))*AUT2FS,'[fs]')
-     call msg('r','Pump/Probe energy step',maxval(Efield(:)%W_step)*HA2EV,'[eV]')
-   endif
-   !
    do i1=1,n_ext_fields
      MSG_ch="Field#"//trim(intc(i1))
      call msg('r', trim(MSG_ch)//' field                       ',trim(Efield(i1)%ef_name))
@@ -486,7 +481,6 @@ subroutine RT_initialize(E,k,q,Dip)
      call msg('r', trim(MSG_ch)//' Fourier limited width       ',Efield(i1)%width*AUT2FS,'[fs]')
      call msg('r', trim(MSG_ch)//' Real time  width            ',sigma_eff*AUT2FS,'[fs]')
      call msg('r', trim(MSG_ch)//' start time                  ',Efield(i1)%t_initial*AUT2FS,'[fs]')
-     call msg('r', trim(MSG_ch)//' energy steps                ',Efield(i1)%n_frequencies)
      call msg('r', trim(MSG_ch)//' electric field              ',Efield(i1)%amplitude*AU2VMm1,'[V/m]')
      call msg('r', trim(MSG_ch)//' max intensity               ',Efield(i1)%intensity*AU2KWCMm2,'[kW/cm^2]')
      !

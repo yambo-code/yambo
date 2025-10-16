@@ -40,11 +40,7 @@ function RT_Rabi_frequency(En,i_field,l_print_rabi)
  len_gauge=trim(global_gauge)=="length"
  vel_gauge=trim(global_gauge)=="velocity"
  !
- effective_frequency=0._SP
- do i_fr=1,Efield(i_field)%n_frequencies
-   effective_frequency=effective_frequency+field_frequency(Efield(i_field),i_fr)
- enddo
- effective_frequency=effective_frequency/real(Efield(i_field)%n_frequencies,SP)
+ effective_frequency=Efield(i_field)%frequency(1)
  !
  RT_Rabi_frequency=rZERO
  E_dist=0.1_SP

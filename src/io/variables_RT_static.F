@@ -166,7 +166,7 @@ integer function variables_RT_static(ID)
 &                                 DESCRIPTOR=RT_desc,UNIT=AU2KWCMm2,TERMINATOR="[kWCMm2]")
        call io_variable_elemental(ID,VAR=" [FIELDs] Width    ",R0=Efield(i1)%width,DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
        call io_variable_elemental(ID,VAR=" [FIELDs] Chirp    ",R0=Efield(i1)%chirp,DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
-       call io_variable_elemental(ID,VAR=" [FIELDs] Frequency range",R1=Efield(i1)%frequency,&
+       call io_variable_elemental(ID,VAR=" [FIELDs] Frequency range",R0=Efield(i1)%frequency,&
 &                                 DESCRIPTOR=RT_desc,UNIT=HA2EV,TERMINATOR="[eV]")
        call io_variable_elemental(ID,R0=Efield(i1)%t_initial,VAR=' [FIELDs] Initial time',&
 &                                 DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")

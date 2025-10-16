@@ -37,11 +37,9 @@ subroutine Afield_activate(i1)
      if(l_nl_p_and_p) then
 #endif
        call initactivate(1,field//'_Freq')
-       call initactivate(1,field//'_NFreqs')
 #if defined _NL
      endif
 #endif
-     call initactivate(1,field//'_DFreq')
      call initactivate(1,field//'_Int')
      call initactivate(1,field//'_Width')
      call initactivate(1,field//'_Chirp')

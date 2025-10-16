@@ -38,7 +38,7 @@ module fields
    integer  :: t_initial_indx    ! time index of extern field switch on  (input variable)
    real(SP) :: t_final
    integer  :: t_final_indx      ! time index of extern field switch off (computed in RT_Fluence)
-   real(SP) :: frequency(2)
+   real(SP) :: frequency
    real(SP) :: width
    real(SP) :: chirp
    real(SP) :: FWHM
@@ -102,12 +102,6 @@ module fields
      real(SP), optional ::E
      if (present(T)) EtoT=2._SP*pi*Time_of(T,"fs")*FS2AUT
      if (present(E)) EtoT=2._SP*pi*Time_of(E,"fs")*FS2AUT
-   end function
-   !
-   real(SP) function field_frequency(E_field,i_f)
-     integer           ::i_f
-     type(ext_field)   ::E_field
-     field_frequency=E_field%frequency(1)
    end function
    !
    integer function get_field_file_index(filename)
@@ -203,7 +197,7 @@ module fields
          if (order==0) Divide_by_Field =  4._SP*cONE/Field%amplitude**2
        case('QSSIN') !Approximate relations/does not work yet
          sigma=Field%width
-         W_0=Field%frequency(1)
+         W_0=Field%frequency
          T_0=pi/W_0*(real(nint(W_0/pi*3._SP*sigma),SP))
          T = 2._SP*pi/W_0
          E_w= sqrt(pi/2._SP)*Field%amplitude*sigma*exp(-cI*W_0*T_0)*&

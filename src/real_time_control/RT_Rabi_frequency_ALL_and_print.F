@@ -15,7 +15,7 @@ subroutine RT_Rabi_frequency_ALL_and_print(En,i_field)
  use R_lattice,      ONLY:nkibz
  use electrons,      ONLY:n_sp_pol,levels
  use X_m,            ONLY:global_gauge
- use fields,         ONLY:Efield,field_frequency
+ use fields,         ONLY:Efield
  use real_time,      ONLY:RT_bands,RT_nbands
  use dipoles,        ONLY:DIP_iR,DIP_v
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_Xk_ibz_index
@@ -41,7 +41,7 @@ subroutine RT_Rabi_frequency_ALL_and_print(En,i_field)
  !
  call OUTPUT_driver('rabi_frequencies',action="append")
  !
- effective_frequency=Efield(i_field)%frequency(1)
+ effective_frequency=Efield(i_field)%frequency
  !
  do i_sp_pol=1,n_sp_pol
    do ik=1,nkibz

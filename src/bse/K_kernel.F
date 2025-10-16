@@ -100,7 +100,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP),   external :: TDDFT_ALDA_eh_space_G_kernel,TDDFT_ALDA_eh_space_G_kernel_coupling
  complex(SP),   external :: K_exchange_kernel,K_exchange_kernel_coupling
  !
- logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_bs_tddft_wf_in_loop,l_matrix_init,BS_blk_todo,&
+ logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_bs_tddft_wf_in_loop,l_matrix_init,BS_blk_todo,l_tddft_comp,&
  &             l_load_kernel,l_write_kernel,l_write_kernel_step,l_skip_phases,l_std_alg,l_dir_alg,l_tddft_gsum,l_tddft_rsum
  !
  ! I/O
@@ -368,12 +368,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    call TDDFT_ALDA_lower_cutoff(FXC_mode)
    !
-   if (l_tddft_gsum) then
-     YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
-     YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
-     YAMBO_ALLOC(tddft_wf%rhotwr_DP,(fft_size))
-   endif
-   !
    call WF_free(WF,keep_states_to_load=.true.)
    !
  endif
@@ -546,6 +540,15 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    ! TDDFT oscillators
    !----------------------
    if(iHxc==2 .and. l_tddft_gsum) then
+     !
+     l_tddft_comp = .not.(allocated(BS_T_grp(i_Tgrp_k)%O_tddft_L).and.allocated(BS_T_grp(i_Tgrp_k)%O_tddft_R))
+     !
+     if (l_tddft_comp) then
+       YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
+       YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
+       YAMBO_ALLOC(tddft_wf%rhotwr_DP,(fft_size))
+     endif
+     !
      if (.not.allocated( BS_T_grp(i_Tgrp_k)%O_tddft_L) ) then
        call TDDFT_oscillators_alloc_L(i_Tgrp_k)
        call TDDFT_ALDA_eh_space_G_collisions_L(iq,Xk,i_Tgrp_k,NG,l_bs_tddft_wf_in_loop,tddft_wf,mode_now)
@@ -554,6 +557,13 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        call TDDFT_oscillators_alloc_R(i_Tgrp_p)
        call TDDFT_ALDA_eh_space_G_collisions_R(iq,Xk,i_Tgrp_p,NG,l_bs_tddft_wf_in_loop,tddft_wf,mode_now)
      endif
+     !
+     if (l_tddft_comp) then
+       YAMBO_FREE(tddft_wf%WF_symm1)
+       YAMBO_FREE(tddft_wf%WF_symm2)
+       YAMBO_FREE(tddft_wf%rhotwr_DP)
+     endif
+     !
    endif
    !
    ! Correlation oscillators
@@ -923,9 +933,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    if (l_tddft_gsum) then
      call TDDFT_oscillators_free_L(BS_nT_grps)
      call TDDFT_oscillators_free_R(BS_nT_grps)
-     YAMBO_FREE(tddft_wf%rhotwr_DP)
-     YAMBO_FREE(tddft_wf%WF_symm1)
-     YAMBO_FREE(tddft_wf%WF_symm2)
    endif
    !
    if (l_bs_fxc) then

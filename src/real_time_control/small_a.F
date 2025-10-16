@@ -74,12 +74,12 @@ function small_a(T,dt,E_field,order,envelop_only)
   !
   real(SP)          ::damp_func,a,b,c,sarg,WT,Tl
   !
-  integer           ::i1,i_T,i_field,i_file,n_fields
+  integer           ::i1,i_fr,i_T,i_field,i_file,n_fields
   real(SP)          ::Tloc,T_0_fac,T_0,W_0,sigma,chirp,sigma_eff,s_sigma_chirp,c_sigma_chirp,der_fac, &
   &                   WtimesT,EXPf,fr_shift(2),W_field,W_field_m1,cos_wt,sin_wt
   complex(SP)       ::f_now,f_t(2),f0t,f1t,cZ,cS,exp_iwt,erfi_z
   character(schlen) ::field_defs(n_fields_defs_max)
-  logical           ::l_multi_phase,envelop_only_
+  logical           ::envelop_only_
   !
   ! Zeroing
   !
@@ -157,7 +157,6 @@ function small_a(T,dt,E_field,order,envelop_only)
   end select
   !
   ! Initial and relative phases control
-  l_multi_phase=.false.
   fr_shift(1)=0._SP
   fr_shift(2)=pi/2._SP
   do i1=1,n_fields_defs_max
@@ -335,9 +334,8 @@ function small_a(T,dt,E_field,order,envelop_only)
     !
     f_t(i_field)=f_t(i_field)+f_now
     !
-  eno
+  enddo
   !
   small_a=f_t
   !
 end function small_a
-!

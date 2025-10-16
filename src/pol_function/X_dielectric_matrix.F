@@ -18,7 +18,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  use DIPOLES,       ONLY:DIPOLE_t
  use ALLOC,         ONLY:X_ALLOC_elemental,DIPOLE_ALLOC_global
  use X_m,           ONLY:X_t,self_detect_E_range,X_poles,l_recalculate_X,l_write_disk_Xo,&
-&                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
+&                        l_X_terminator,X_terminator_Kind,X_mat,X_par,&
 &                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup,&
 &                        n_OPTICAL_dir_to_eval,X_par_average
  use LIVE_t,        ONLY:live_timing
@@ -308,7 +308,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
    !
    do iq_dir=1,n_OPTICAL_dir_to_eval
      !
-     call X_ALLOC_parallel(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
+     call X_ALLOC_parallel(X_par(iq_mem),X%ng,Xw%n_freqs,"X")
      !
      if (n_OPTICAL_dir_to_eval>1) call X_AVERAGE_setup("DIR-LOOP",iq_dir,X%q0)
      if (n_OPTICAL_dir_to_eval>1) X_what="("//trim(intc(iq_dir))//" of "//trim(intc(n_OPTICAL_dir_to_eval))//")"
@@ -371,8 +371,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
    !
    ! CLEAN (2)
    if (io_RESPONSE) call MATRIX_reset(X_par(iq_mem))
-   YAMBO_FREE(X_par_lower_triangle%blc)
-   call MATRIX_reset(X_par_lower_triangle)
    !
    if (use_X_DbGd) then
      YAMBO_FREE(X_DbGd_nkpt_at_q)

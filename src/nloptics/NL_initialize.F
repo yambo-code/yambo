@@ -229,7 +229,7 @@ subroutine NL_initialize(E,k)
  ! For short pulses field (PULSE, QSSIN, QSFIELD, SPULSE)
  ! calcualte the T_0
  !
- W_0=Efield(1)%frequency
+ W_0=Efield(1)%frequency(1)
  sigma=Efield(1)%width
  T_0=pi/W_0*(real(nint(W_0/pi*3._SP*sigma),SP))
  if(Efield(1)%ef_name=='SPULSE') T_0=sigma
@@ -297,10 +297,10 @@ subroutine NL_initialize(E,k)
      Sampling_Time=EtoT(E=NL_er(1))+5._SP*RT_step
      !
      if(n_active_fields>1) then
-       if((Efield(2)%ef_name/='none').and.Efield(2)%frequency>0._SP) &
-&         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(2)%frequency)+5._SP*RT_step/))
-       if((Efield(3)%ef_name/='none').and.Efield(3)%frequency>0._SP) &
-&         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(3)%frequency)+5._SP*RT_step/))
+       if((Efield(2)%ef_name/='none').and.Efield(2)%frequency(1)>0._SP) &
+&         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(2)%frequency(1))+5._SP*RT_step/))
+       if((Efield(3)%ef_name/='none').and.Efield(3)%frequency(1)>0._SP) &
+&         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(3)%frequency(1))+5._SP*RT_step/))
      endif
      !
      if (SAVE_Vb_floquet) then
@@ -553,13 +553,12 @@ subroutine NL_initialize(E,k)
  call msg( 'r', 'Damping                    ',NL_damping*HA2EV,"[eV]")
  call msg( 'r', 'Dephasing                  ',Phase_LifeTime*AUT2FS,"[fs]")
  call msg( 'r', 'Radiative LifeTime         ',RAD_LifeTime*AUT2FS,"[fs]")
- do i1=1,n_active_fields
+ do i1=1,n_ext_fields
    call msg( 'r', 'Efield                     '//trim(Efield(i1)%ef_name))
    call msg( 'r', 'Efield width               ',Efield(i1)%width*AUT2FS,"[fs]")
-   call msg( 'r', 'Efield Freq                ',Efield(i1)%frequency*HA2EV,"[eV]")
    call msg( 'r', 'Efield Amplitude      [V/m]',Efield(i1)%amplitude*AU2VMm1)
-   call msg( 'r', 'Pond. Energy        [eV/mu]',Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency**2*HA2EV)
-   call msg( 'r', 'Adiabatic param      [1/mu]',Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency**3)
+   call msg( 'r', 'Pond. Energy        [eV/mu]',Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency(1)**2*HA2EV)
+   call msg( 'r', 'Adiabatic param      [1/mu]',Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency(1)**3)
  enddo
  call msg( 'r', 'Efield T_0                 ',T_0*AUT2FS,"[fs]")
  if (.not.l_pump_and_probe) then

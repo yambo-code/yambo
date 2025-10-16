@@ -131,9 +131,13 @@ integer function io_NL(what,ID)
    call io_variable_elemental(ID_frag,VAR="[FIELDs] Damping           ",TERMINATOR="[fs]",&
 &         R0=Efield(i_Prb)%FWHM,CHECK=.true.,OP=(/"=="/))
 
-   call def_variable_elemental(ID_frag,"Field_Freq_range_"//trim(intc(i_Prb)),1,SP,0)
+   call def_variable_elemental(ID_frag,"Field_Freq_range_"//trim(intc(i_Prb)),2,SP,0)
    call io_variable_elemental(ID_frag,VAR="[FIELDs] Frequency range   ",TERMINATOR="[eV]",&
-&         R0=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV)
+&         R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV)
+
+   call def_variable_elemental(ID_frag,"Field_Freq_steps_"//trim(intc(i_Prb)),1,IP_YIO,0)
+   call io_variable_elemental(ID_frag,VAR="[FIELDs] Frequency steps", &
+&   I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/))
 
    call def_variable_elemental(ID_frag,"Field_Freq_step_"//trim(intc(i_Prb)),1,SP,0)
    call io_variable_elemental(ID_frag,VAR="[FIELDs] Frequency step    ",TERMINATOR="[eV]",&

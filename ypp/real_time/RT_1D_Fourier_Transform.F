@@ -131,7 +131,7 @@ subroutine RT_1D_Fourier_Chirp(FT,RT)
  FT%F_t=cZERO_DP
  dw=(FT%W(2)-FT%W(1))
  do i_w = 1, RT%W_n_steps
-   chirp_phase(i_w)=exp(-cI*ypp_chirp**2*(FT%W(i_w)-Efield(1)%frequency)**2)
+   chirp_phase(i_w)=exp(-cI*ypp_chirp**2*(FT%W(i_w)-Efield(1)%frequency(1))**2)
  enddo
  !
  if (l_live_timing) call live_timing('FT-CHIRP@'//trim(FT%title)//'',RT%T_n_steps*FT%N)

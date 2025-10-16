@@ -55,6 +55,7 @@ subroutine RT_X_LRR_real_field(en)
  n_freqs=1
  n_fields=1
  if(trim(Efield(i_Probe)%ef_pol)=="circular") n_fields=2
+ if(    Efield(i_Probe)%n_frequencies > 1   ) n_freqs=Efield(i_Probe)%n_frequencies
  !
  ! 1D FFT setup
  !--------------

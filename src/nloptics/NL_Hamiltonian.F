@@ -140,7 +140,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
       !This can be calculated once for each frequency, but I did not want to mess up NL_driver (MG)
       alpha_ = NL_LRC_alpha 
       if (Efield(1)%ef_name=='SOFTSIN'.or.Efield(1)%ef_name=='SIN') &
-      &     alpha_  = Alpha_ED(E,Efield(1)%frequency)
+      &     alpha_  = Alpha_ED(E,Efield(1)%frequency(1))
            E_vec_pot=E_vec_pot + alpha_*NL_P(1:3)
       !
     elseif(Correlation==LRC) then

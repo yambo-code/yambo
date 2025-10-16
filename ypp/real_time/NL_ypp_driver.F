@@ -124,7 +124,7 @@ subroutine NL_ypp_driver(en,k)
      RT_P_probe(:,i_f,i_d)=NL_P_t(:,i_d)
    enddo
    !
-   Probe_frequency(i_f)=Efield(i_Probe)%frequency
+   Probe_frequency(i_f)=Efield(i_Probe)%frequency(1)
    if(loop_on_angles) Probe_versors(:,i_f)=Efield(i_Probe)%versor(:)
    !
    if(io_Nonlinear_REF==0) then

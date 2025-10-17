@@ -204,8 +204,6 @@ subroutine NL_start_and_restart(E,k,Dip)
    RESTART = io_err(RT_return_db_ID("V_bands"))==0.and.io_err(RT_return_db_ID("OBSERVABLES"))==0
    !
  endif
- if(l_pump_and_probe.and..not.RESTART) & 
-&    call msg('s','RESTART point not found')
  !
  n_runs_todo=n_runs-count(runs_done)
  if(n_runs_todo/=n_runs) call msg('s','RESTART, remaining frequencies/angles ',n_runs_todo)

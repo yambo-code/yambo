@@ -220,11 +220,6 @@ subroutine NL_initialize(E,k)
  if(.not.l_pump_and_probe.and.Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
     call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only')
  !
- if(l_velocity_IPA.and.l_pump_and_probe) then
-   call warning('Fast parallelization in vel-gauge not compatible with p&p, turned off')
-   l_velocity_IPA=.false.
- endif
- !
  ! For short pulses field (PULSE, QSSIN, QSFIELD, SPULSE)
  ! calcualte the T_0
  !

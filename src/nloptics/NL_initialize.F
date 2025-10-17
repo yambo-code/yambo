@@ -107,10 +107,7 @@ subroutine NL_initialize(E,k)
     ! This parallelization is not compatible with wavefunction-IO for 
     ! this reason I turn it off in pump-probe setup
     !
-    if(trim(NL_Correlation)=='IPA'.and..not.l_pump_and_probe) then
-      l_velocity_IPA=.TRUE.
-      call msg('rs','Fast parallelization: velocity gauge + IPA ')
-    endif
+    if(trim(NL_Correlation)=='IPA') l_velocity_IPA=.TRUE.
     !
  endif
  !
@@ -225,6 +222,18 @@ subroutine NL_initialize(E,k)
  !
  if(.not.l_pump_and_probe.and.Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
     call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only')
+ !
+ if(l_pump_and_probe.and.l_velocity_IPA) then
+   !
+   ! Fast parallelization not compatible with RT-IO
+   !
+   l_velocity_IPA=.false.
+   !
+ elseif(.not.l_pump_and_probe.and.l_velocity_IPA) then
+   !
+   call msg('s','Fast parallelization for velociy-gauge + IPA')
+   !
+ endif
  !
  ! For short pulses field (PULSE, QSSIN, QSFIELD, SPULSE)
  ! calcualte the T_0

@@ -546,13 +546,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    call timing('X T_space Kernel sum',OPR='start')
    !
    ! GS Free variables, they are later allocated within each OMP loop
-   YAMBO_FREE(tddft_wf%WF_symm1)
-   YAMBO_FREE(tddft_wf%WF_symm2)
    if (l_tddft_rsum) then
+     YAMBO_FREE(tddft_wf%WF_symm1)
+     YAMBO_FREE(tddft_wf%WF_symm2)
      YAMBO_FREE(tddft_wf%rhotwr1)
      YAMBO_FREE(tddft_wf%rhotwr2)
-   else if (l_tddft_gsum) then
-     YAMBO_FREE(tddft_wf%rhotwr_DP)
    endif
    !
    ! Transition Loops
@@ -572,15 +570,15 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    call OPENMP_update(master_thread) 
    !
    !
-   ! Allocate variables tddft_wf variables neeeded within the OMP loop
-   YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
-   YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
+   ! GS Allocate tddft_wf variables neeeded within the OMP loop. 
+   !    It is necessary if using the subroutine TDDFT_ALDA_eh_space_R_kernel
+   !    Instead for TDDFT_ALDA_eh_space_G_kernel the allocation is later performed internally
    if (l_tddft_rsum) then
-     YAMBO_ALLOC(tddft_wf%rhotwr1,(fft_size*n_spinor*n_spinor))
-     YAMBO_ALLOC(tddft_wf%rhotwr2,(fft_size*n_spinor*n_spinor))
-   else if (l_tddft_gsum) then
-     YAMBO_ALLOC(tddft_wf%rhotwr_DP,(fft_size))
-   endif
+    YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
+    YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
+    YAMBO_ALLOC(tddft_wf%rhotwr1,(fft_size*n_spinor*n_spinor))
+    YAMBO_ALLOC(tddft_wf%rhotwr2,(fft_size*n_spinor*n_spinor))
+   end if
    !  
    !
    i_p_bz_last=0   ; i_k_bz_last=0

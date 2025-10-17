@@ -252,7 +252,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (.not.allocated(MPA_E_par)) allocate(MPA_E_par(1))
  if (.not.allocated(MPA_R_par)) allocate(MPA_R_par(1))
  !
- call MPA_ALLOC_parallel(MPA_E_par(1),MPA_R_par(1),X%ng,X%mpa_npoles,"CPU_ONLY")
+ call MPA_ALLOC_parallel(MPA_E_par(1),MPA_R_par(1),X%ng,2*X%mpa_npoles,"CPU_ONLY")
 
  !
  ! setting up a MPA-specific MPI parallelism

@@ -320,6 +320,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
  !
  if ( trim(ENVIRONMENT)=="Self_Energy" ) then 
    call OPENMP_set_threads(n_threads_in=n_threads_SE)
+   n_threads_SX=n_threads_SE
  else if ( trim(ENVIRONMENT)=="Sigma_X" ) then 
    call OPENMP_set_threads(n_threads_in=n_threads_SX)
  endif

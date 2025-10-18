@@ -446,9 +446,6 @@ subroutine NL_initialize(E,k)
  !
  if (l_pump_and_probe) eval_dG=.true.
  !
- ! I use density matrix for the dephasing  
- if(NL_damping>0._SP.or.Phase_LifeTime>0._SP) eval_dG=.true.
- !
  if(eval_COLLISIONS) then
    COLLISIONS_load_SP =.not.l_no_compress_COLL
    COLLISIONS_compr   =.not.l_no_compress_COLL

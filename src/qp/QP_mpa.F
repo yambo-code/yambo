@@ -259,11 +259,13 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! for the fitting of poles and residues, aimed at distributing
  ! G vectors. This parallelism is incompatible at present with the
  ! global G_parallelism of the self-energy
- !
- call PP_indexes_reset(px)
- l_para_G_MPA=.not.(PAR_COM_RL_INDEX%n_cpu>1)
+ ! 
+ ! 2025/10/19 DS: This is buggy. Switchin it off
+ !l_para_G_MPA=.not.(PAR_COM_RL_INDEX%n_cpu>1)
+ l_para_G_MPA=.false.
  !
  if (l_para_G_MPA) then
+    call PP_indexes_reset(px)
     call PARALLEL_index(px,uplim=X_cols(2:2),low_range=X_cols(1:1),&
 &                       COMM=PAR_COM_X_WORLD,CONSECUTIVE=.true.)
     ig_first=px%first_of_1D(PAR_COM_X_WORLD%cpu_id+1)
@@ -295,7 +297,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  endif
  !
  if(io_MULTIPOLE) then
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID2,COMM=local_yMPI_COMM,DO_IT=condition)
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID2,COMM=LOCAL_yMPI_COMM,DO_IT=condition)
    io_err=io_MPA(X,Xw,ID2)
    call IO_and_Messaging_switch("SAVE")
    call IO_and_Messaging_switch("+io_out",CONDITION=condition)
@@ -441,7 +443,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        MP_Qerr=MP_Qerr/X%ng**2
        cond_numQ(:)=cond_numQ(:)/X%ng**2
        !
-       call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iqibz,2*iqibz+1/),ID=ID2,COMM=local_yMPI_COMM,DO_IT=condition)
+       call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iqibz,2*iqibz+1/),ID=ID2,COMM=LOCAL_yMPI_COMM,DO_IT=condition)
        io_err=io_MPA(X,Xw,ID2)
        call msg('r',' :: PP cond fix/tot      ',PPcond_Qrate)
        call msg('r',' :: Mean np reduction    ',MPred_rate)

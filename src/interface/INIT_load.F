@@ -65,7 +65,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        SC_bands_frozen,SC_bands_frozen_ch
 #endif
 #if defined _RT
- use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,Gless_RESTART_RT_IO_t,     &
+ use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,Gless_RESTART_RT_IO_t,Floquet_order,&
 &                        CACHE_OBS_INTERVAL_time_INPUT,RT_BSE_Occ_Mode,Gless_RT_IO_t,Vbands_RT_IO_t
  use RT_occupations,ONLY:RT_RTA_temp,RT_RTA_chem
  use RT_lifetimes,  ONLY:RT_life_extrap_times_INPUT
@@ -568,6 +568,8 @@ call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level
 &  verb_level=V_nl_optics)
  call it('f',defs,'EvalCurrent','[NL] Evaluate the current')
  call it('f',defs,'SaveVbhistory',  '[RT] Save the history of the wave-functions function',Verb_level=V_nl_optics)
+ call it(defs,'FLOrder',  '[NL] Fourier Order of Floquet Analysis',Floquet_order, Verb_level=V_nl_optics)
+! call it('f',defs,'SaveVbfloquet',  '[RT] Save wave-functions for Floquet Analysis',Verb_level=V_nl_optics)
  !
 #endif
  !

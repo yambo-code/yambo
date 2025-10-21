@@ -15,23 +15,25 @@
 !! @param[out]      I_relax			relaxation matrix (distributed on k-points)
 !
 !
-subroutine NL_damping(E,ik,i_sp_pol,V_bands)
+subroutine NL_damping(E,ik,i_sp_pol,V_bands,I_relax)
  !
  ! Output: I_relax
  !
  use pars,           ONLY:SP,cI
  use zeros,          ONLY:zero_dfl
- use electrons,      ONLY:levels
+ use parallel_m,     ONLY:PAR_Xk_nibz
+ use electrons,      ONLY:levels,n_sp_pol
  use real_time,      ONLY:Phase_LifeTime,RAD_LifeTime
- use nl_optics,      ONLY:I_relax,NL_bands
+ use nl_optics,      ONLY:NL_bands
  use parallel_m,     ONLY:PAR_Xk_ibz_index
  use real_time,      ONLY:RT_deph_deg_thresh
  !
  implicit none
  !                      
- type(levels), intent(in) :: E
- integer,      intent(in) :: ik,i_sp_pol
- complex(SP),  intent(in) :: V_bands(NL_bands(2),E%nbf(i_sp_pol))
+ type(levels), intent(in)  :: E
+ integer,      intent(in)  :: ik,i_sp_pol
+ complex(SP),  intent(in)  :: V_bands(NL_bands(2),E%nbf(i_sp_pol))
+ complex(SP),  intent(out) :: I_relax(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),maxval(E%nbf),PAR_Xk_nibz,n_sp_pol)
  !
  ! Working Space
  !
@@ -68,9 +70,10 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
      if(Phase_LifeTime>zero_dfl) Gamma_ij=Gamma_ij+2._SP/Phase_LifeTime 
      !
      do ib=1,E%nbf(i_sp_pol)
-       I_relax(i1,i2,ib,ik_mem,i_sp_pol) = -cI*Gamma_ij*(conjg(V_bands(i2,ib))*V_bands(i1,ib))
-       I_relax(i2,i1,ib,ik_mem,i_sp_pol) = -conjg(I_relax(i1,i2,ib,ik_mem,i_sp_pol))
+       I_relax(i1,i2,:,ik_mem,i_sp_pol) = I_relax(i1,i2,:,ik_mem,i_sp_pol) &
+& -cI*Gamma_ij*(conjg(V_bands(i2,ib))*V_bands(i1,ib))
      enddo
+     I_relax(i2,i1,:,ik_mem,i_sp_pol) = -conjg(I_relax(i1,i2,:,ik_mem,i_sp_pol))
      !
    enddo
  enddo
@@ -82,7 +85,8 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
    do i1=NL_bands(1),NL_bands(2)
      !
      do ib=1,E%nbf(i_sp_pol)
-       I_relax(i1,i1,ib,ik_mem,i_sp_pol)=-cI*2._SP/RAD_LifeTime*(conjg(V_bands(i1,ib))*V_bands(i1,ib))
+       I_relax(i1,i1,:,ik_mem,i_sp_pol)=I_relax(i1,i1,:,ik_mem,i_sp_pol) &
+& -cI*2._SP/RAD_LifeTime*(conjg(V_bands(i1,ib))*V_bands(i1,ib))
      enddo
      !
      ! I need this additional part for the degenerate states 
@@ -90,9 +94,10 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
      do i2=i1+1,NL_bands(2)
        if ( abs(E%E(i1,ik,1)-E%E(i2,ik,1))>=RT_deph_deg_thresh ) cycle
          do ib=1,E%nbf(i_sp_pol)
-           I_relax(i1,i2,ib,ik_mem,i_sp_pol) = -cI*2._SP/RAD_LifeTime*(conjg(V_bands(i2,ib))*V_bands(i1,ib))
-           I_relax(i2,i1,ib,ik_mem,i_sp_pol) = -conjg(I_relax(i1,i2,ib,ik_mem,i_sp_pol))
+           I_relax(i1,i2,:,ik_mem,i_sp_pol) = I_relax(i1,i2,:,ik_mem,i_sp_pol) &
+& -cI*2._SP/RAD_LifeTime*(conjg(V_bands(i2,ib))*V_bands(i1,ib))
          enddo
+         I_relax(i2,i1,:,ik_mem,i_sp_pol) = -conjg(I_relax(i1,i2,:,ik_mem,i_sp_pol))
      enddo
      !
    enddo
@@ -102,7 +107,7 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
    !
 !$omp parallel do default(shared), private(ib)
    do ib=NL_bands(1),E%nbf(i_sp_pol)
-     I_relax(ib,ib,ib,ik_mem,i_sp_pol)=I_relax(ib,ib,ib,ik_mem,i_sp_pol)+cI*2._SP/RAD_LifeTime
+     I_relax(ib,ib,:,ik_mem,i_sp_pol)=I_relax(ib,ib,:,ik_mem,i_sp_pol)+cI*2._SP/RAD_LifeTime
    enddo
 !$omp end parallel do
    !

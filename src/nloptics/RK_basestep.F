@@ -13,7 +13,7 @@ subroutine RK_basestep(K_out,V_in,H_in,I_in,nbf)
   complex(SP), intent(in)  :: V_in(NL_bands(2),nbf)
   complex(SP), intent(out) :: K_out(NL_bands(2),nbf)
   complex(SP), intent(in)  :: H_in(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
-  complex(SP), intent(in)  :: I_in(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),nbf)
+  complex(SP), intent(in)  :: I_in(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
   !
   ! Workspace
   !
@@ -24,7 +24,7 @@ subroutine RK_basestep(K_out,V_in,H_in,I_in,nbf)
   !
 !$omp parallel do default(shared), private(ib,H)
   do ib=1,nbf
-    H = H_in + I_in(:,:,ib)
+    H = H_in + I_in
     K_out(NL_bands(1):,ib)=-cI*matmul(H,V_in(NL_bands(1):,ib))
   enddo
 !$omp end parallel do

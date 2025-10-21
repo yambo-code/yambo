@@ -37,7 +37,7 @@ subroutine NL_damping(E,ik,i_sp_pol,dG_lesser,I_relax)
  !
  ! Working Space
  !
- integer          :: ib,i1,i2,ik_mem
+ integer          :: i1,i2,ik_mem
  real(SP)         :: Gamma_ij
  !
  ! Damping
@@ -74,7 +74,7 @@ subroutine NL_damping(E,ik,i_sp_pol,dG_lesser,I_relax)
  !
  if(RAD_LifeTime>zero_dfl) then
    !      
-!$omp parallel do default(shared), private(i1,i2,ib)
+!$omp parallel do default(shared), private(i1,i2)
    do i1=NL_bands(1),NL_bands(2)
      !
      I_relax(i1,i1,ik_mem,i_sp_pol)=I_relax(i1,i1,ik_mem,i_sp_pol)-1._SP/RAD_LifeTime*dG_lesser(i1,i1,ik,i_sp_pol)

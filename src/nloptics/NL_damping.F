@@ -7,7 +7,7 @@
 !
 !> @brief Dephasing for the real-time dynamics 
 !!
-!! @param[in]       V_bands                     time-dependent valence bands
+!! @param[in]       dG_lesser                   variation of the G_lesser = G(t) - G^0
 !! @param[in]       ik				k-point index
 !! @param[in]       i_sp_pol			spin-polarization index
 !! @param[in]       E 	                        energies and life-time array

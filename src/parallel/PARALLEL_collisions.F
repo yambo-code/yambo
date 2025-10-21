@@ -134,7 +134,7 @@ subroutine PARALLEL_collisions( k, COLL_grp )
  use parallel_int,  ONLY:PARALLEL_live_message,PARALLEL_check_phase_space
  use collision_ext, ONLY:COLLISIONS_group,COLL_bands,COLLISIONS_CV_only
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q_bz,PAR_IND_QP,&
-&                        l_par_RT,l_par_SE,l_par_SC,l_par_NL
+&                        l_par_RT,l_par_SE,l_par_SX,l_par_SC,l_par_NL
  use hamiltonian,   ONLY:B_mat_index,B_mat_index_cv
  use electrons,     ONLY:n_met_bands,n_full_bands
  use R_lattice,     ONLY:bz_samp,qindx_S,nqbz
@@ -195,7 +195,7 @@ subroutine PARALLEL_collisions( k, COLL_grp )
    endif
    !
    ! l_par_SE is for LAMB
-   if (l_par_SE.or.l_par_SC) then
+   if (l_par_SE.or.l_par_SC.or.l_par_SX) then
      if (.not.PAR_IND_QP%element_1D(i_coll)) cycle
    endif
    !
@@ -205,7 +205,7 @@ subroutine PARALLEL_collisions( k, COLL_grp )
    !
    if (l_eval_collisions) then
      !
-     if ( (.not.l_par_SE) ) then
+     if ( (.not.l_par_SE).or.(.not.l_par_SX) ) then
        !
        do i_q=1,nqbz
          !

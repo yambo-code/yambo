@@ -98,8 +98,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use D_lattice,     ONLY:Boltz_Temp
 #endif
 #if defined _OPENMP
- use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads_NL, &
-&                        n_threads_OSCLL
+ use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_SX,n_threads_RT,n_threads_DIP,n_threads_K,&
+&                        n_threads_NL,n_threads_OSCLL
 #endif
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_test_H_dim
@@ -229,6 +229,7 @@ call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level
  call it(defs,'X_Threads',       '[OPENMP/X] Number of threads for response functions',n_threads_X,verb_level=V_parallel)
  call it(defs,'DIP_Threads',     '[OPENMP/X] Number of threads for dipoles',n_threads_DIP,verb_level=V_parallel)
  call it(defs,'OSCLL_Threads',    '[OPENMP/X] Number of threads for Oscillators',n_threads_OSCLL,verb_level=V_parallel)
+ call it(defs,'SX_Threads',      '[OPENMP/HF] Number of threads for the X self-energy',n_threads_SX,verb_level=V_parallel)
  call it(defs,'SE_Threads',      '[OPENMP/GW] Number of threads for self-energy',n_threads_SE,verb_level=V_parallel)
  call it(defs,'RT_Threads',      '[OPENMP/RT] Number of threads for real-time',n_threads_RT,verb_level=V_parallel)
  call it(defs,'NL_Threads',      '[OPENMP/NL] Number of threads for nl-optics',n_threads_NL,verb_level=V_parallel)
@@ -812,8 +813,10 @@ call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level
        if (i_s==9) possible_fields='(k) '        ! BZ
        if (i_s==10)possible_fields='(q,k,b) '    ! PH_SE
        if (i_s==11)possible_fields='(k,b) '      ! OSCLL
+       if (i_s==12)possible_fields='(q,g,qp,b)'  ! SX
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
+       !
        name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"
        call it(defs,trim(name),'[PARALLEL] CPUs for each role',&
 &              CPU_structure(i_s)%CPU_string,verb_level=V_parallel)

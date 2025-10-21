@@ -113,7 +113,7 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
      call IO_temporary_jobdir_and_strings("JOBSTR",Pump_path)
      call RT_OBSERVABLES_IO(what=what,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
      if (.not.IO_error) then
-       N_pump_frequencies= Efield(i_Pump)%n_frequencies
+       N_pump_frequencies=1
        call IO_desc_reset(Pump_RT_desc)
        call IO_desc_duplicate(RT_desc,Pump_RT_desc)
        if (N_pump_frequencies>1) call error('Pumps with multiple frequencies still not supported')
@@ -129,7 +129,7 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
      if (.not.STRING_same(Probe_path(i_f),"default")) call IO_temporary_jobdir_and_strings("JOBSTR",Probe_path(i_f))
      if (     STRING_same(Probe_path(i_f),"default")) call IO_temporary_jobdir_and_strings("ALL","RESTORE")
      call RT_OBSERVABLES_IO(what=what,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
-     N_probe_frequencies= Efield(i_Probe)%n_frequencies
+     N_probe_frequencies=1
    enddo
    !
    ! Pump & Probe comparison
@@ -168,13 +168,6 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
    ! I can use ANTIRES/RES probes with multiple frequencies only by using
    ! ProbeKey in the input file. This is because of the procedures defined in X_effective/X_inversion.
    !
-   if (Efield(i_Probe)%n_frequencies>1) then
-     if (X_order==1) call warning("Using multi-frequency probe")
-     if (X_order/=1) then
-       call warning("Multi-frequency probe not supported for NL optics")
-       IO_error=.TRUE.
-     endif
-   endif
    if (.not.IO_error)                   N_probes=1
    !
    ! If no Probes using the Keyword try using jobstr

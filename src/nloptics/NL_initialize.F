@@ -31,8 +31,8 @@ subroutine NL_initialize(E,k)
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field,l_NE_with_fields, &
 &                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential,RAD_LifeTime,&
 &                         l_velocity_gauge_corr,l_velocity_gauge_diam,G_MEM_steps,RT_nk,i_MEM_now
- use RT_control,     ONLY:SETUP_RT_IO_type,OBS_RT_IO_t,NE_i_start_time,RT_control_alloc,RT_control_free,l_NE_with_fields,&
-&                         SAVE_Vb_history,SAVE_G_history
+ use RT_control,     ONLY:OBS_RT_IO_t, NE_i_start_time, RT_control_alloc,RT_control_free,l_NE_with_fields,Vbands_RT_IO_t,&                         
+&                         SAVE_Vb_history,SAVE_G_history, SAVE_Vb_floquet, Vbands_IO_time, Floquet_order
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM,  &
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity,LSEX,&
@@ -66,6 +66,7 @@ subroutine NL_initialize(E,k)
  call parser('NoComprCOLL',          l_no_compress_COLL)
  call parser('NoUseSymm',            l_no_res_symms)
  call parser('SaveVbhistory',        SAVE_Vb_history)
+ !call parser('SaveVbfloquet',        SAVE_Vb_floquet)
  call parser('VelGaugeNoDiam',       l_velocity_gauge_tmp)
  call parser('UseDipoles',           l_use_DIPOLES)
  call parser('SaveGhistory',         SAVE_G_history)
@@ -81,6 +82,9 @@ subroutine NL_initialize(E,k)
  endif
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
+ !
+ Floquet_order = min(5,Floquet_order)
+ SAVE_Vb_floquet = (Floquet_order > 0)
  !
  ! Velocity gauge mode
  ! =======================================
@@ -100,11 +104,10 @@ subroutine NL_initialize(E,k)
     call warning('Berry phase turned off in velocity gauge')
     !
     ! Improve parallelization in the IPA case (each k-point is independent)
+    ! This parallelization is not compatible with wavefunction-IO for 
+    ! this reason I turn it off in pump-probe setup
     !
-    if(trim(NL_Correlation)=='IPA') then
-      l_velocity_IPA=.TRUE.
-      call msg('rs','Fast parallelization: velocity gauge + IPA ')
-    endif
+    if(trim(NL_Correlation)=='IPA') l_velocity_IPA=.TRUE.
     !
  endif
  !
@@ -220,10 +223,22 @@ subroutine NL_initialize(E,k)
  if(.not.l_pump_and_probe.and.Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
     call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only')
  !
+ if(l_pump_and_probe.and.l_velocity_IPA) then
+   !
+   ! Fast parallelization not compatible with RT-IO
+   !
+   l_velocity_IPA=.false.
+   !
+ elseif(.not.l_pump_and_probe.and.l_velocity_IPA) then
+   !
+   call msg('s','Fast parallelization for velociy-gauge + IPA')
+   !
+ endif
+ !
  ! For short pulses field (PULSE, QSSIN, QSFIELD, SPULSE)
  ! calcualte the T_0
  !
- W_0=Efield(1)%frequency(1)
+ W_0=Efield(1)%frequency
  sigma=Efield(1)%width
  T_0=pi/W_0*(real(nint(W_0/pi*3._SP*sigma),SP))
  if(Efield(1)%ef_name=='SPULSE') T_0=sigma
@@ -248,6 +263,29 @@ subroutine NL_initialize(E,k)
  endif
  !
  if(all(NL_er>0._SP).and.n_frequencies>=1) NL_estep=(NL_er(2)-NL_er(1))/real(n_frequencies,SP)
+ !
+ if (SAVE_Vb_floquet) then
+   if (.not.(Efield(1)%ef_name=='SOFTSIN'.or.Efield(1)%ef_name=='SIN')) then
+      call warning(' Floquet analysis implemented only for pure periodic signal. Switching it off ')
+      SAVE_Vb_floquet = .FALSE.
+   endif
+   if (NE_tot_time > 0._SP) then
+      call warning(' Recalculating time for Floquet analysis ')
+      NE_tot_time = -1._SP
+   endif
+   if ((Efield(2)%ef_name/='none').or.(Efield(3)%ef_name/='none')) then
+     call warning(' Floquet analysis only with one external field. Switching it off ')
+     SAVE_Vb_floquet = .FALSE.
+   endif
+   if (SAVE_Vb_history) then
+     call warning(' Floquet Analysis not compatible with saving WF history. Switching it off ')
+     SAVE_Vb_floquet = .FALSE.
+   endif
+   if (n_active_fields>1) then
+     call warning(' Floquet Analysis not compatible with multiple fieldis. Switching it off ')
+     SAVE_Vb_floquet = .FALSE.
+   endif
+ endif
  ! 
  ! Determine the total time from the damping or from T_0
  !
@@ -268,10 +306,17 @@ subroutine NL_initialize(E,k)
      Sampling_Time=EtoT(E=NL_er(1))+5._SP*RT_step
      !
      if(n_active_fields>1) then
-       if((Efield(2)%ef_name/='none').and.Efield(2)%frequency(1)>0._SP) &
-&         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(2)%frequency(1))+5._SP*RT_step/))
-       if((Efield(3)%ef_name/='none').and.Efield(3)%frequency(1)>0._SP) &
-&         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(3)%frequency(1))+5._SP*RT_step/))
+       if((Efield(2)%ef_name/='none').and.Efield(2)%frequency>0._SP) &
+&         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(2)%frequency)+5._SP*RT_step/))
+       if((Efield(3)%ef_name/='none').and.Efield(3)%frequency>0._SP) &
+&         Sampling_Time=maxval((/Sampling_Time,EtoT(E=Efield(3)%frequency)+5._SP*RT_step/))
+     endif
+     !
+     if (SAVE_Vb_floquet) then
+       Sampling_Time = 4._SP*EtoT(E=W_0)+5._SP*RT_step 
+       Vbands_RT_IO_t%INTERVAL_time_INPUT = (2._SP*pi/W_0)/(2._SP*Floquet_order + 1._SP)
+       Vbands_IO_time(1) = int(NE_tot_time/RT_step)
+       Vbands_IO_time(2) = int((NE_tot_time+2._SP*pi/W_0)/RT_step) 
      endif
      !
      NE_tot_time=NE_tot_time+Sampling_Time
@@ -291,7 +336,7 @@ subroutine NL_initialize(E,k)
    endif
    ! 
  else
-   call msg('s','Total simulation time read from input') 
+   call msg('s','Total simulation time read from input')
  endif
  !
  call msg('sr','Total simulation time       ',NE_tot_time*AUT2FS,"[fs]")
@@ -491,6 +536,7 @@ subroutine NL_initialize(E,k)
  !
  ! I/O steps
  !===========
+ !
  call RT_IO_type_time_steps("INIT")
  !
  call RT_control_alloc("all")
@@ -516,12 +562,13 @@ subroutine NL_initialize(E,k)
  call msg( 'r', 'Damping                    ',NL_damping*HA2EV,"[eV]")
  call msg( 'r', 'Dephasing                  ',Phase_LifeTime*AUT2FS,"[fs]")
  call msg( 'r', 'Radiative LifeTime         ',RAD_LifeTime*AUT2FS,"[fs]")
- do i1=1,n_ext_fields
+ do i1=1,n_active_fields
    call msg( 'r', 'Efield                     '//trim(Efield(i1)%ef_name))
    call msg( 'r', 'Efield width               ',Efield(i1)%width*AUT2FS,"[fs]")
+   call msg( 'r', 'Efield frequency           ',Efield(i1)%frequency*HA2EV,"[eV]")
    call msg( 'r', 'Efield Amplitude      [V/m]',Efield(i1)%amplitude*AU2VMm1)
-   call msg( 'r', 'Pond. Energy        [eV/mu]',Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency(1)**2*HA2EV)
-   call msg( 'r', 'Adiabatic param      [1/mu]',Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency(1)**3)
+   call msg( 'r', 'Pond. Energy        [eV/mu]',Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency**2*HA2EV)
+   call msg( 'r', 'Adiabatic param      [1/mu]',Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency**3)
  enddo
  call msg( 'r', 'Efield T_0                 ',T_0*AUT2FS,"[fs]")
  if (.not.l_pump_and_probe) then
@@ -534,10 +581,11 @@ subroutine NL_initialize(E,k)
      call msg( 'r', 'Rotation axis              ',NL_rot_axis)
    endif
  endif
- call msg( 'r', 'Use Dipoles                ',l_use_DIPOLES)
- call msg( 'r', 'Induced Field              ',l_RT_induced_field)
- call msg( 'r', 'Force Snd Order Dipoles    ',l_force_SndOrd)
- call msg( 'r', 'Evaluate Current           ',l_eval_CURRENT)
- call msg( 'r', 'Symmetrize current and pol ',.not.l_no_res_symms)
+ call msg( 'r', 'Use Dipoles                   ',l_use_DIPOLES)
+ call msg( 'r', 'Induced Field                 ',l_RT_induced_field)
+ call msg( 'r', 'Force Snd Order Dipoles       ',l_force_SndOrd)
+ call msg( 'r', 'Evaluate Current              ',l_eval_CURRENT)
+ call msg( 'r', 'Symmetrize current and pol    ',.not.l_no_res_symms)
+ call msg( 'r', 'Fast parallelization (vel-IPA)',l_velocity_IPA)
  !
 end subroutine NL_initialize

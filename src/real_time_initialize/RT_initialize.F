@@ -257,7 +257,7 @@ subroutine RT_initialize(E,k,q,Dip)
      !
      if( (field_defs(1)/='DELTA'.and.field_defs(1)/='GAUSS'.and.       &
 &         field_defs(1)/='RECT' .and.field_defs(1)/='FROM_FILE')       &
-&       .and. Efield(i1)%frequency(1)==0._SP)                          &
+&       .and. Efield(i1)%frequency==0._SP)                          &
 &      call error(trim(MSG_ch)//" field has zero frequency.")
      !
      if(Efield(i1)%intensity==0._SP) &
@@ -304,7 +304,7 @@ subroutine RT_initialize(E,k,q,Dip)
  !
  ! Check on the PROBE/PUMP frequencies
  !====================================
- call RT_Field_Commensurable_Frequencies()
+! call RT_Field_Commensurable_Frequencies()
  !
  if ( .not. l_NE_dynamics ) call error('No external fields nor manual pumping provided')
  !
@@ -469,30 +469,22 @@ subroutine RT_initialize(E,k,q,Dip)
    call msg( 'nr','---Fields---')
    call msg('r','Gauge                               ',trim(global_gauge))
    !
-   if (any(Efield(:)%W_step>0)) then
-     call msg('r','Pump/Probe periodicity',EtoT(E=maxval(Efield(:)%W_step))*AUT2FS,'[fs]')
-     call msg('r','Pump/Probe energy step',maxval(Efield(:)%W_step)*HA2EV,'[eV]')
-   endif
-   !
    do i1=1,n_ext_fields
      MSG_ch="Field#"//trim(intc(i1))
      call msg('r', trim(MSG_ch)//' field                       ',trim(Efield(i1)%ef_name))
      call msg('r', trim(MSG_ch)//' polarization                ',trim(Efield(i1)%ef_pol))
-     call msg('r', trim(MSG_ch)//' frequency range             ',(/Efield(i1)%frequency*HA2EV,&
+     call msg('r', trim(MSG_ch)//' frequency                   ',(/Efield(i1)%frequency*HA2EV,&
 &                  2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/),'[eV/fs]')
-     call msg('r', trim(MSG_ch)//' elemental oscillation       ',EtoT(E=Efield(i1)%frequency(2)-&
-&                                                                       Efield(i1)%frequency(1))*AUT2FS,'[fs]')
      sigma_eff=sqrt((Efield(i1)%width**4+Efield(i1)%chirp**4)/Efield(i1)%width**2)
      call msg('r', trim(MSG_ch)//' Fourier limited width       ',Efield(i1)%width*AUT2FS,'[fs]')
      call msg('r', trim(MSG_ch)//' Real time  width            ',sigma_eff*AUT2FS,'[fs]')
      call msg('r', trim(MSG_ch)//' start time                  ',Efield(i1)%t_initial*AUT2FS,'[fs]')
-     call msg('r', trim(MSG_ch)//' energy steps                ',Efield(i1)%n_frequencies)
      call msg('r', trim(MSG_ch)//' electric field              ',Efield(i1)%amplitude*AU2VMm1,'[V/m]')
      call msg('r', trim(MSG_ch)//' max intensity               ',Efield(i1)%intensity*AU2KWCMm2,'[kW/cm^2]')
      !
-     U_pond=Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency(1)**2
+     U_pond=Efield(i1)%amplitude**2/4._SP/Efield(i1)%frequency**2
      call msg('r', trim(MSG_ch)//' ponderomotive energy        ',U_pond*HA2EV,'[eV/mu]')
-     call msg('r', trim(MSG_ch)//' Adiabatic parameter         ',U_pond/Efield(i1)%frequency(1),'[1/mu]')
+     call msg('r', trim(MSG_ch)//' Adiabatic parameter         ',U_pond/Efield(i1)%frequency,'[1/mu]')
      !
      if( (field_defs(1)=='QSSIN') .or. (field_defs(1)=='GAUSS') .or. (field_defs(1)=='DELTA') ) then
        call msg('r', trim(MSG_ch)//' max fluence                 ',Efield(i1)%fluence*AU2KWCMm2,'[nJ/cm^2]')

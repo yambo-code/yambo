@@ -25,6 +25,7 @@
 !
 subroutine Afield_activate(i1)
      use stderr,         ONLY:intc
+     use drivers,        ONLY:l_nl_p_and_p
      !
      implicit none
      !
@@ -33,8 +34,6 @@ subroutine Afield_activate(i1)
      character(6)::field
      field='Field'//trim(intc(i1))
      call initactivate(1,field//'_Freq')
-     call initactivate(1,field//'_NFreqs')
-     call initactivate(1,field//'_DFreq')
      call initactivate(1,field//'_Int')
      call initactivate(1,field//'_Width')
      call initactivate(1,field//'_Chirp')
@@ -58,7 +57,7 @@ subroutine Afield(defs,i_field)
    use parser_m,      ONLY:parser
    use stderr,        ONLY:intc
    use it_m,          ONLY:E_unit,I_unit,Time_unit,V_real_time, &
-   &                       initmode,initdefs
+   &                       initmode,initdefs,V_nl_optics
    !
    implicit none
    !
@@ -69,33 +68,41 @@ subroutine Afield(defs,i_field)
    !
    character(10)      :: name
    logical            :: is_def
+   integer	      :: V_field
    !
    name='Field'//trim(intc(i_field))
    !
+   V_field=0  ! no verbosity
+#if defined _NL
+   if(i_field==3)  V_field=V_nl_optics
+#endif
+
+   !
    call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
-&          Efield(i_field)%frequency,unit=E_unit)
-   call it(defs,trim(name)//'_NFreqs',          '[RT '//trim(name)//'] Frequency',&
-&          Efield(i_field)%n_frequencies)
-   call it(defs,trim(name)//'_DFreq',           '[RT '//trim(name)//'] Frequency step',&
-&          Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
+&          Efield(i_field)%frequency,unit=E_unit,verb_level=V_field)
    call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
-&          Efield(i_field)%intensity,unit=I_unit)
+&          Efield(i_field)%intensity,unit=I_unit,verb_level=V_field)
    call it(defs,trim(name)//'_Width',           '[RT '//trim(name)//'] Width',&
-&          Efield(i_field)%width,unit=Time_unit(1))
+&          Efield(i_field)%width,unit=Time_unit(1),verb_level=V_field)
    call it(defs,trim(name)//'_Chirp',           '[RT '//trim(name)//'] Width',&
 &          Efield(i_field)%chirp,unit=Time_unit(1),verb_level=V_real_time)
    call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (overwrite width if set)',&
 &          Efield(i_field)%FWHM,unit=Time_unit(1),verb_level=V_real_time)
    call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|COS|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
-&          Efield(i_field)%ef_name)
+&          Efield(i_field)%ef_name,verb_level=V_field)
    call it(defs,trim(name)//'_pol',             '[RT '//trim(name)//'] Pol(linear|circular)',&
-&          Efield(i_field)%ef_pol)
+&          Efield(i_field)%ef_pol,verb_level=V_field)
    call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Versor',&
-&          Efield(i_field)%versor)
+&          Efield(i_field)%versor,verb_level=V_field)
    call it(defs,trim(name)//'_Dir_circ',        '[RT '//trim(name)//'] Versor_circ',&
 &          Efield(i_field)%versor_circ,verb_level=V_real_time)
+#if defined _NL
    call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
-&          Efield(i_field)%t_initial,unit=Time_unit(1))
+&          Efield(i_field)%t_initial,unit=Time_unit(1),verb_level=V_real_time)
+#else
+   call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
+&          Efield(i_field)%t_initial,unit=Time_unit(1),verb_level=V_field)
+#endif
    !
    if (initmode==4.and..not.infile_editing) then
      !

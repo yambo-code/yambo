@@ -15,7 +15,7 @@ function RT_Rabi_frequency(En,i_field,l_print_rabi)
  use R_lattice,      ONLY:nkibz
  use electrons,      ONLY:n_sp_pol,levels
  use X_m,            ONLY:global_gauge
- use fields,         ONLY:Efield,field_frequency
+ use fields,         ONLY:Efield
  use real_time,      ONLY:RT_bands,RT_nbands
  use dipoles,        ONLY:DIP_iR,DIP_v
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_Xk_ibz_index
@@ -40,11 +40,7 @@ function RT_Rabi_frequency(En,i_field,l_print_rabi)
  len_gauge=trim(global_gauge)=="length"
  vel_gauge=trim(global_gauge)=="velocity"
  !
- effective_frequency=0._SP
- do i_fr=1,Efield(i_field)%n_frequencies
-   effective_frequency=effective_frequency+field_frequency(Efield(i_field),i_fr)
- enddo
- effective_frequency=effective_frequency/real(Efield(i_field)%n_frequencies,SP)
+ effective_frequency=Efield(i_field)%frequency
  !
  RT_Rabi_frequency=rZERO
  E_dist=0.1_SP

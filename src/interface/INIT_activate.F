@@ -76,7 +76,11 @@ subroutine INIT_activate()
    call CPU_activate("X_and_IO")  ! Required for finite E-field, l_sc_exx, SC_up_W_iter
  endif
  !
- if ( (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) .and. .not.(l_sc_run.or.l_eval_collisions.or.l_phel_corr) ) then
+ if ( l_HF_and_locXC .and. .not.(l_sc_run.or.l_eval_collisions.or.l_phel_corr) ) then
+   call CPU_activate("SX")
+   call initactivate(1,'SX_Threads')
+ endif
+ if ( (l_gw0.or.l_cohsex.or.l_life) .and. .not.(l_sc_run.or.l_eval_collisions.or.l_phel_corr) ) then
    call CPU_activate("SE")
    call initactivate(1,'SE_Threads')
  endif
@@ -577,7 +581,7 @@ subroutine INIT_activate()
    call initactivate(1,'FFTGvecs NLBands NLHoleBands NLElecBands NLverbosity NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
    call initactivate(1,'TestOSCLL NoUseSymm VelGaugeNoDiam')
    if(.not.l_nl_p_and_p) call initactivate(1,'NLEnRange NLEnSteps NLrotaxis NLAngSteps NLMaxAng')
-   if(     l_nl_p_and_p) call initactivate(1,'IOtime IOCachetime SaveVbhistory')
+   if(     l_nl_p_and_p) call initactivate(1,'IOtime IOCachetime SaveVbhistory FLOrder')
    call initactivate(1,'NLDamping RADLifeTime UseDipoles FrSndOrd NoComprCOLL COLLCut EvalCurrent InducedField') 
    call initactivate(1,'TestOSCLL Gauge RADLifeTime HARRLvcs EXXRLvcs CORRLvcs') 
    call init_QP_ctl_switch('G')

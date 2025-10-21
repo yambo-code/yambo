@@ -34,11 +34,11 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  !
  type(levels), intent(in)  :: en
  complex(SP),  intent(in)  :: V_bands(NL_bands(2),maxval(en%nbf),QP_nk,n_sp_pol)
- complex(SP),  intent(out) :: dG(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk)
+ complex(SP),  intent(out) :: dG(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_sp_pol)
  !
  ! Work Space
  !
- integer :: i1,i2
+ integer :: i1,i2,is
  integer :: ik
  !
  if (n_sp_pol==2) call error(" NL_build_dG not coded for n_sp_pol==2")
@@ -49,16 +49,18 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  !
  dG=cZERO
  !
+ do is=1,n_sp_pol
  do ik=1,QP_nk
    if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
    do i1=NL_bands(1),NL_bands(2)             
 !$omp parallel do default(shared), private(i2)
      do i2=i1,NL_bands(2)
-       dG(i1,i2,ik)=Vstar_dot_V_omp(en%nbf(1),V_bands(i2,:,ik,1),V_bands(i1,:,ik,1))
-       dG(i2,i1,ik)=conjg(dG(i1,i2,ik))
+       dG(i1,i2,ik,is)=Vstar_dot_V_omp(en%nbf(1),V_bands(i2,:,ik,is),V_bands(i1,:,ik,is))
+       dG(i2,i1,ik,is)=conjg(dG(i1,i2,ik,is))
      enddo
 !$omp end parallel do
    enddo
+ enddo
  enddo
  !
  dG=cI*spin_occ*dG
@@ -67,7 +69,7 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  !
 !$omp parallel do default(shared), private(i1)
  do i1=NL_bands(1),en%nbf(1)
-   dG(i1,i1,:)=dG(i1,i1,:)-cI*spin_occ
+   dG(i1,i1,:,:)=dG(i1,i1,:,:)-cI*spin_occ
  enddo
 !$omp end parallel do
  !

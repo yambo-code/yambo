@@ -11,7 +11,7 @@
 !
 integer function io_MPA(X,Xw,ID)
  !
- use pars,          ONLY:SP,schlen
+ use pars,          ONLY:SP,IP_YIO,schlen
  use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,MPA_desc
  use frequency,     ONLY:w_samp
  use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_header,io_fragment,&
@@ -32,7 +32,7 @@ integer function io_MPA(X,Xw,ID)
  !
  !Work Space
  !
- integer           :: sec_size,i1,iq,io_com_save,io_err,ID_frag
+ integer           :: i1,iq,io_com_save,io_err,ID_frag
  logical           :: different_db_RL_order
  character(schlen) :: ch
  complex(SP),allocatable :: X_on_disk(:,:)
@@ -98,19 +98,17 @@ integer function io_MPA(X,Xw,ID)
  !
  if (any((/io_sec(ID,:)==2*iq/)) ) then
    !
-   sec_size=6
-   !
-   ch="FREQ_PARS_sec_iq"//trim(intc(iq))
-   !
    ! Important: once the file has been opend in PAR mode all the CPUs belonging to the COMM
    !            must go through the definitions of the variables although only one is writing
    !
    io_com_save=io_com(ID_frag)
    if (iq>2) io_com(ID_frag)=NONE
-   call def_variable_elemental(ID_frag,trim(ch),sec_size,SP,1,par_io_kind='independent')
    !
+   call def_variable_elemental(ID_frag,"Qpt_index",1,IP_YIO,1,par_io_kind='independent')
    call io_variable_elemental(ID_frag,  VAR=" :: Current Q-pt index     :",I0=iq)
-   call io_variable_elemental(ID_frag,  VAR=" :: Number of poles  :",I0=Xw%n_freqs/2,CHECK=.true.,OP=(/"=="/))
+   !
+   call def_variable_elemental(ID_frag,"N_freqs",1,IP_YIO,1,par_io_kind='independent')
+   call io_variable_elemental(ID_frag,  VAR=" :: Number of frequencies  :",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
    !
    call def_variable_elemental(ID_frag,"",0,0,1)
    io_MPA=io_status(ID_frag)
@@ -134,35 +132,15 @@ integer function io_MPA(X,Xw,ID)
    !
    ch="MPA_E_Q_"//trim(intc(iq))
    !
-   if(write_is_on(ID)) then
-#if defined _PAR_IO
-     call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP,par_io_kind='collective')
-#else
-     call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP,par_io_kind='independent')
-#endif
-     call  io_variable_bulk(ID_frag,1,C3=MPA_E_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,MPA_E_par(1)%rows(1),MPA_E_par(1)%cols(1),1/))
-     !
-   else if(read_is_on(ID)) then
-     call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
-     call  io_variable_bulk(ID_frag,1,C3=MPA_E_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,MPA_E_par(1)%rows(1),MPA_E_par(1)%cols(1),1/))
-   endif
+   call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,X%mpa_npoles/),SP,par_io_kind='collective')
+   call  io_variable_bulk(ID_frag,1,C3=MPA_E_par(1)%blc(:,:,:X%mpa_npoles),IPOS=(/1,MPA_E_par(1)%rows(1),MPA_E_par(1)%cols(1),1/))
    !
    ! residues @iq
    !
    ch="MPA_R_Q_"//trim(intc(iq))
    !
-   if(write_is_on(ID)) then
-#if defined _PAR_IO
-     call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP,par_io_kind='collective')
-#else
-     call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP,par_io_kind='independent')
-#endif
-     call  io_variable_bulk(ID_frag,1,C3=MPA_R_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,MPA_R_par(1)%rows(1),MPA_R_par(1)%cols(1),1/))
-     !
-   else if(read_is_on(ID)) then
-     call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
-     call  io_variable_bulk(ID_frag,1,C3=MPA_R_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,MPA_R_par(1)%rows(1),MPA_R_par(1)%cols(1),1/))
-   endif
+   call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,X%mpa_npoles/),SP,par_io_kind='collective')
+   call  io_variable_bulk(ID_frag,1,C3=MPA_R_par(1)%blc(:,:,:X%mpa_npoles),IPOS=(/1,MPA_R_par(1)%rows(1),MPA_R_par(1)%cols(1),1/))
    !
    if (read_is_on(ID) .and. different_db_RL_order) then 
      call error('[io_MPA] different_db_RL_order    not implemented')
@@ -194,12 +172,13 @@ end function
 !
 integer function variables_MPA(ID,local_desc,X)
  !
- use pars,          ONLY:schlen
+ use pars,          ONLY:schlen,IP_YIO
  use descriptors,   ONLY:IO_desc,IO_desc_reset
  use X_m,           ONLY:X_t
- use IO_int,        ONLY:io_elemental
+ use IO_int,        ONLY:def_variable_elemental,io_variable_elemental
  use IO_m,          ONLY:io_status
- implicit none
+ !
+ implicit  none
  !
  integer            ::ID
  type(IO_desc)      ::local_desc
@@ -210,13 +189,13 @@ integer function variables_MPA(ID,local_desc,X)
  character(schlen)   ::MPA_label
  !
  call IO_desc_reset(local_desc)
- MPA_label='MPA_'
  !
- call io_elemental(ID,VAR=trim(MPA_label)//"PARS_1",VAR_SZ=2,MENU=0)
- call io_elemental(ID,DB_I0=X%ng_db,&
-&     VAR="X matrix size         :",I0=X%ng,CHECK=.true.,OP=(/"<="/),DESCRIPTOR=local_desc)
- call io_elemental(ID,&
-&     VAR="MPA npoles            :",I0=X%mpa_npoles,MENU=0,DESCRIPTOR=local_desc)
+ call def_variable_elemental(ID,"X_ng",1,IP_YIO,1)
+ call io_variable_elemental(ID,DB_I0=X%ng_db,VAR="X matrix size :",I0=X%ng,&
+ &                           CHECK=.true.,OP=(/"<="/),DESCRIPTOR=local_desc)
+ !
+ call def_variable_elemental(ID,"MPA_npoles",1,IP_YIO,1)
+ call io_variable_elemental(ID,VAR="MPA number of npoles :",I0=X%mpa_npoles,DESCRIPTOR=local_desc)
  !
  variables_MPA=io_status(ID)
  !

@@ -36,7 +36,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  use matrix,        ONLY:PAR_matrix
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_COM_RL_INDEX,myid,PAR_COM_X_WORLD_RL_resolved
+ use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved,myid
  use parallel_int,  ONLY:PP_redux_wait
  use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,&
 &                        n_out_threads,n_inn_threads,OPENMP_locks_reset,n_threads_FFT
@@ -50,9 +50,9 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  use D_lattice,     ONLY:i_space_inv
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use DIPOLES,       ONLY:DIPOLE_t
- use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,X_lower_triangle_matrix_in_use,&
+ use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
 &                        self_detect_E_range,X_FILL_UP_matrix_only,use_X_DbGd,&
-&                        l_X_terminator,X_terminator_E,X_term_E,X_par_lower_triangle,drude_n_states
+&                        l_X_terminator,X_terminator_E,X_term_E,drude_n_states
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -76,23 +76,22 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  ! Work Space
  !
  character(schlen)    :: live_t_string
- integer              :: ig1,ig_row,ig_col,ig_row_transp,ig_col_transp,iw,n_poles,i_cg,i_bg,mutexid,ngrho,&
-&                        X_cols_transp(2),X_rows1,X_rows2,X_cols1,X_cols2,X_rows1_l,X_rows2_l,X_nrows_l,io_err
+ integer              :: ig1,ig2,iw,n_poles,i_cg,i_bg,mutexid,ngrho,&
+&                        X_rows1,X_rows2,X_cols1,X_cols2,X_nrows,io_err
  logical              :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)             :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff
  complex(SP)          :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),ctmp(1,1)
 
- complex(SP),allocatable, target          :: Xo_res(:,:)
- complex(SP),allocatable, target DEV_ATTR :: Xo_res_d(:,:)
+ complex(SP),allocatable, target DEV_ATTR :: Xo_res(:,:)
  complex(SP),allocatable DEV_ATTR :: work(:)
- complex(SP),pointer     DEV_ATTR :: Xo_res_p(:,:)
+ complex(SP),allocatable DEV_ATTR :: rhotw_mp_R(:,:), rhotw_mp_C(:,:)
  complex(SP),pointer     DEV_ATTR :: X_par_p(:,:,:)
- complex(SP),pointer     DEV_ATTR :: X_par_lowtri_p(:,:,:)
  complex(SP)          :: GreenF_iw
- integer              :: lda,lwork,PAR_COM_RL_INDEX_n_CPU
+ integer              :: lwork,ntx
  !
  integer, external    :: X_eh_setup
  type(elemental_collision), target :: Xo_scatt
+
  !
  ! Defaults & Setups
  !===================
@@ -101,12 +100,10 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  X_rows1=X_par%rows(1)
  X_rows2=X_par%rows(2)
+ X_nrows=X_par%rows(2)-X_par%rows(1)+1
  X_cols1=X_par%cols(1)
  X_cols2=X_par%cols(2)
- PAR_COM_RL_INDEX_n_CPU=PAR_COM_RL_INDEX%n_CPU
  !
- if (PAR_COM_RL_INDEX_n_CPU> 1) lda=size(X_par_lower_triangle%blc(:,1,1))
- if (PAR_COM_RL_INDEX_n_CPU==1) lda=size(X_par%blc(:,1,1))
  !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
  !=======================================================
@@ -183,10 +180,16 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  if (allocated(Xen%GreenF).and.current_iq==0) call X_GreenF_remap(X%ib,Xen,Xw)
  !
 #endif
+ 
  !
- ! Time-Rev is Spatial Inv => only half X is eval
- !                            ===================
- if (X_FILL_UP_matrix_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
+ ! AF: Despite one could exploit
+ !
+ ! Time-Rev is Spatial Inv to evaluate only half X
+ ! if (X_FILL_UP_matrix_only.and.current_iq==0) write(*,*) '[X] Upper matrix
+ ! triangle filled'
+ !
+ ! in the present version, the whole matrix is evaluated
+
  !
  ! omp settings and workspace
  !=================================
@@ -220,7 +223,6 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  if (coarse_grid_N>=n_out_threads) call live_timing(trim(live_t_string),coarse_grid_N/n_out_threads)
  !
  X_par_p => DEV_VAR(X_par%blc)
- if (X_lower_triangle_matrix_in_use)  X_par_lowtri_p => DEV_VAR(X_par_lower_triangle%blc)
 
  !
  ! OpenMP setup
@@ -228,21 +230,15 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  ! AF: note that DEV_OMP is switched off by the precompiler when _GPU is defined
  !
  !DEV_OMP parallel num_threads(n_out_threads) default(shared), &
- !DEV_OMP &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_res_p,Xo_scatt,ig_col,&
- !DEV_OMP &        ig1,ig_row_transp,iw,mutexid,work,lwork,&
- !DEV_OMP &        X_rows1_l,X_rows2_l,X_nrows_l,X_cols_transp)
+ !DEV_OMP &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,&
+ !DEV_OMP &        ig1,ig2,iw,mutexid,work,lwork,rhotw_mp_R,rhotw_mp_C,ntx)
  !
  call OPENMP_update(master_thread)
  !
  ! memory estimate and local alloc
  !=================================
  !
- YAMBO_ALLOC(Xo_res,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
- if (have_gpu) then
-   YAMBO_ALLOC_GPU(DEV_VAR(Xo_res),(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
- endif
- !
- Xo_res_p => DEV_VAR(Xo_res)
+ YAMBO_ALLOC_GPU(Xo_res,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
 
  !
  ! workspace used in X_irredux_residuals
@@ -250,8 +246,11 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  lwork=ngrho
  if (l_X_terminator) lwork=2*ngrho
+ YAMBO_ALLOC_GPU( work,(lwork))
  !
- YAMBO_ALLOC_GPU(work,(lwork))
+ ntx=maxval(bare_grid_N)
+ YAMBO_ALLOC_GPU( rhotw_mp_R,(X_par%rows(1):X_par%rows(2),ntx) )
+ YAMBO_ALLOC_GPU( rhotw_mp_C,(X_par%cols(1):X_par%cols(2),ntx) )
  !
  call elemental_collision_free(Xo_scatt)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
@@ -260,17 +259,19 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  ! Drude term
  !
  if (iq==1.and.master_thread.and.drude_n_states>0) then
+   !
    do i_cg = 1,coarse_grid_N
      Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
      if(.not.Drude_pole) cycle
      if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
      !
-     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res_p,Xo_scatt,work,lwork)
+     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,&
+&                             work,lwork,rhotw_mp_R,rhotw_mp_C,ntx)
      !
      ! AF:
      ! ctmp is allocated as ctmp(1,1) to be compliant with devxlib interfaces
      !
-     call devxlib_memcpy_d2h(ctmp,Xo_res_p,range1=[1,1],range2=[1,1])
+     call devxlib_memcpy_d2h(ctmp,Xo_res,range1=[1,1],range2=[1,1])
      !
      ! DALV: we must guarantee that ctmp is always 1 and that we enter the loop just
      !       once to avoid an inconsistency with the Drude frequency given by input
@@ -290,7 +291,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  ! MAIN LOOP
  !===========
  !
- !DEV_OMP do
+ !DEV_OMP do schedule(dynamic)
  !
  do i_cg = 1,coarse_grid_N
    !
@@ -306,7 +307,8 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
    !
    ! 1) First compute the residuals
    !================================
-   call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res_p,Xo_scatt,work,lwork)
+   call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,&
+&                           work,lwork,rhotw_mp_R,rhotw_mp_C,ntx)
    !
    ! 2) Then the frequency dependent term
    !=======================================
@@ -323,7 +325,9 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
    !
    ! 3) Finally multiply residual and frequency dependent term
    !===========================================================
-   !DEV_ACC_DEBUG data present(X_par_p,Xo_res_p,X_par_lowtri_p)
+   !
+   !DEV_ACC_DEBUG data present(X_par_p,Xo_res)
+   !
    freq_loop:&
    do iw=1,Xw%n_freqs
      !
@@ -336,33 +340,29 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
      !
      GreenF_iw=GreenF(iw)
      !
-     !DEV_ACC parallel loop collapse(2)
+     !DEV_ACC parallel loop collapse(2) async
      !DEV_CUF kernel do(2) <<<*,*>>>
-     !DEV_OMPGPU target map(present,alloc:X_par_p,Xo_res_p)
+     !DEV_OMPGPU target map(present,alloc:X_par_p,Xo_res)
      !DEV_OMPGPU teams loop collapse(2)
-     do ig_col=X_cols1,X_cols2
-       do ig1=X_rows1,X_rows2
-         if (ig1 <= ig_col) X_par_p(ig1,ig_col,iw)=X_par_p(ig1,ig_col,iw)+GreenF_iw*Xo_res_p(ig1,ig_col)
-       enddo
+     do ig2=X_cols1,X_cols2
+     do ig1=X_rows1,X_rows2
+       X_par_p(ig1,ig2,iw)=X_par_p(ig1,ig2,iw)+GreenF_iw*Xo_res(ig1,ig2)
+     enddo
      enddo
      !DEV_OMPGPU end target
      !
 #else
      !
-     do ig_col=X_cols1,X_cols2
+     do ig2=X_cols1,X_cols2
        !
 #  if defined _OPENMP
        if(n_threads_X>1) then
-         call OPENMP_compute_mutex(ig_col,mutexid)
+         call OPENMP_compute_mutex(ig2,mutexid)
          call omp_set_lock(omp_locks(mutexid))
        endif
 #  endif
        !
-       X_rows1_l = X_rows1
-       X_rows2_l = min(ig_col,X_rows2)
-       X_nrows_l = X_rows2_l-X_rows1_l+1 
-       !
-       call V_plus_alpha_V(X_nrows_l,GreenF(iw),Xo_res(X_rows1_l:X_rows2_l,ig_col),X_par%blc(X_rows1_l:X_rows2_l,ig_col,iw))
+       call V_plus_alpha_V(X_nrows,GreenF(iw),Xo_res(X_rows1:X_rows2,ig2),X_par%blc(X_rows1:X_rows2,ig2,iw))
        !
 #  if defined _OPENMP
        if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
@@ -371,89 +371,8 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
      !
 #endif
      !
-     if (.not.X_FILL_UP_matrix_only) then
-       !
-       ! ----    ----
-       ! -xxx    ----
-       ! ---- => -x--
-       ! ----    -x--
-       !
-#ifdef _GPU
-       !
-       if (PAR_COM_RL_INDEX_n_CPU>1) then
-         !
-         !DEV_ACC parallel loop collapse(2) 
-         !DEV_CUF kernel do(2)
-         !DEV_OMPGPU target map(present,alloc:X_par_lowtri_p,Xo_res_p)
-         !DEV_OMPGPU teams loop collapse(2)
-         do ig_col=X_cols1,X_cols2
-         do ig1=X_rows1,X_rows2
-           !
-           if (ig1 < ig_col) then
-             ig_row_transp = ig_col
-             X_par_lowtri_p(ig_row_transp,ig1,iw)=X_par_lowtri_p(ig_row_transp,ig1,iw) + &
-&                                                     GreenF_iw*conjg(Xo_res_p(ig1,ig_col))
-           endif
-           !
-         enddo
-         enddo
-         !DEV_OMPGPU end target
-         !
-       else
-         !
-         !DEV_ACC parallel loop collapse(2) 
-         !DEV_CUF kernel do(2)
-         !DEV_OMPGPU target map(present,alloc:X_par_p,Xo_res_p)
-         !DEV_OMPGPU teams loop collapse(2)
-         do ig_col=X_cols1,X_cols2
-         do ig1=X_rows1,X_rows2
-           !
-           if (ig1 < ig_col) then
-             ig_row_transp = ig_col
-             X_par_p(ig_row_transp,ig1,iw)=X_par_p(ig_row_transp,ig1,iw)+GreenF_iw*conjg(Xo_res_p(ig1,ig_col))
-           endif
-           !
-         enddo
-         enddo
-         !DEV_OMPGPU end target
-         !
-       endif
-#else
-       !
-       do ig_col=X_cols1,X_cols2
-         !
-#  if defined _OPENMP
-         if(n_threads_X>1) then
-           call OPENMP_compute_mutex(ig_col,mutexid)
-           call omp_set_lock(omp_locks(mutexid))
-         endif
-#  endif
-         !
-         X_rows1_l = X_rows1
-         X_rows2_l = min(ig_col-1,X_rows2)
-         X_nrows_l = X_rows2_l-X_rows1_l+1
-         !
-         ig_row_transp = ig_col
-         X_cols_transp = (/X_rows1_l,X_rows2_l/)
-         !
-         if (PAR_COM_RL_INDEX_n_CPU>1) then
-           call vv_caxpy(X_nrows_l,GreenF(iw),conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),1, & 
-&                        X_par_lower_triangle%blc(ig_row_transp,X_cols_transp(1),iw),lda)
-         else
-           call vv_caxpy(X_nrows_l,GreenF(iw),conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),1, &
-&                        X_par%blc(ig_row_transp,X_cols_transp(1),iw),lda)
-         endif
-         !
-#  if defined _OPENMP
-         if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
-#  endif
-         !
-       enddo
-#endif
-       !
-     endif
-     !
    enddo freq_loop
+   !
    !DEV_ACC_DEBUG end data
    !
    if (master_thread) call live_timing(steps=1)
@@ -464,10 +383,14 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! CLEAN
  !=======
- YAMBO_FREE_GPU(DEV_VAR(Xo_res))
+ YAMBO_FREE_GPU(Xo_res)
  YAMBO_FREE(Xo_res)
  YAMBO_FREE_GPU(work)
  YAMBO_FREE(work)
+ YAMBO_FREE_GPU(rhotw_mp_R)
+ YAMBO_FREE(rhotw_mp_R)
+ YAMBO_FREE_GPU(rhotw_mp_C)
+ YAMBO_FREE(rhotw_mp_C)
  call elemental_collision_free(Xo_scatt)
  !
  !DEV_OMP end parallel
@@ -488,87 +411,14 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  if (have_gpu) then
    call devxlib_memcpy_d2h(X_par%blc,DEV_VAR(X_par%blc))
-   if (X_lower_triangle_matrix_in_use) call devxlib_memcpy_d2h(X_par_lower_triangle%blc,DEV_VAR(X_par_lower_triangle%blc))
    YAMBO_FREE_GPU(DEV_VAR(X_par%blc))
-   YAMBO_FREE_GPU(DEV_VAR(X_par_lower_triangle%blc))
  endif
  !
  do iw=1,Xw%n_freqs
    call PP_redux_wait(X_par%blc(:,:,iw),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
-   if (X_lower_triangle_matrix_in_use) call PP_redux_wait(X_par_lower_triangle%blc(:,:,iw),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
  enddo
  !
  call timing(what//' (REDUX)',OPR='stop')
  !
- ! Populate the lower triangle/piece of Xo 
- !=========================================
- !
- if (.not.X_FILL_UP_matrix_only.and.PAR_COM_RL_INDEX%n_CPU==1) return
- !
- ! X_FILL_UP_matrix_only=.TRUE.
- !
- ! oooooo
- ! xooooo
- ! xxoooo
- ! ------
- ! ------
- ! ------
- !
- ! X_FILL_UP_matrix_only=.FALSE.
- !
- ! PAR_COM_RL_INDEX%n_CPU=1
- !
- ! oooooo
- ! oooooo
- ! oooooo
- ! oooooo
- ! oooooo
- ! oooooo
- !
- ! PAR_COM_RL_INDEX%n_CPU > 1
- !
- ! oooooo    xxx---
- ! xooooo    oxx---
- ! xxoooo    oox---
- ! ------ +  ooo---
- ! ------    ooo---
- ! ------    ooo---
- !
- ! "o" = calculated
- ! "x" = to be filled now
- !
- if (X_FILL_UP_matrix_only) then
-   !
-   !$omp parallel do default(shared), private(iw,ig_col,ig_row,ig_row_transp,ig_col_transp), collapse(2)
-   do iw=1,Xw%n_freqs
-   do ig_col=X_par%cols(1),X_par%cols(2)
-     ig_row_transp=ig_col
-     do ig_row=max(ig_col+1,X_par%rows(1)),X_par%rows(2)
-       ig_col_transp=ig_row
-       if (i_space_inv==1) X_par%blc(ig_row,ig_col,iw)=      X_par%blc(ig_row_transp,ig_col_transp,iw)
-       if (i_space_inv==0) X_par%blc(ig_row,ig_col,iw)=conjg(X_par%blc(ig_row_transp,ig_col_transp,iw))
-     enddo
-   enddo
-   enddo
-   !$omp end parallel do
-   !
- else if (PAR_COM_RL_INDEX%n_CPU>1) then
-   !
-   !$omp parallel do default(shared), private(iw,ig_col,ig_row,ig_row_transp,ig_col_transp), collapse(2)
-   do iw=1,Xw%n_freqs
-   do ig_col=X_par%cols(1),X_par%cols(2)
-     ig_row_transp=ig_col
-     do ig_row=max(ig_col,X_par%rows(1)),X_par%rows(2)
-       ig_col_transp=ig_row
-       ! FILL THE UPPER PART OF X_par_lower
-       X_par_lower_triangle%blc(ig_row_transp,ig_col_transp,iw)=X_par%blc(ig_row_transp,ig_col_transp,iw)
-       ! FILL THE LOWER PART OF X_par
-       X_par%blc(ig_row,ig_col,iw)                             =X_par_lower_triangle%blc(ig_row,ig_col,iw)
-     enddo
-   enddo
-   enddo
-   !$omp end parallel do
-   !
- endif
- !
 end subroutine
+

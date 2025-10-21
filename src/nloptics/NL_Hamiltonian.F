@@ -233,7 +233,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
    ! Damping: NL_damping fills the I_relax matrix 
    ! ================================================
-   call NL_damping(E,ik,i_sp_pol,V_bands(:,:E%nbf(i_sp_pol),ik,i_sp_pol),dG_lesser,I_relax)
+   call NL_damping(E,ik,i_sp_pol,dG_lesser,I_relax)
    !
    ! Store the Hamiltonian
    ! =====================

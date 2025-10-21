@@ -15,7 +15,7 @@
 !! @param[out]      I_relax			relaxation matrix (distributed on k-points)
 !
 !
-subroutine NL_damping(E,ik,i_sp_pol,V_bands,I_relax)
+subroutine NL_damping(E,ik,i_sp_pol,V_bands,dG_lesser,I_relax)
  !
  ! Output: I_relax
  !
@@ -26,6 +26,7 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands,I_relax)
  use real_time,      ONLY:Phase_LifeTime,RAD_LifeTime
  use nl_optics,      ONLY:NL_bands
  use parallel_m,     ONLY:PAR_Xk_ibz_index
+ use QP_m,           ONLY:QP_nk
  use real_time,      ONLY:RT_deph_deg_thresh
  !
  implicit none
@@ -33,6 +34,7 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands,I_relax)
  type(levels), intent(in)  :: E
  integer,      intent(in)  :: ik,i_sp_pol
  complex(SP),  intent(in)  :: V_bands(NL_bands(2),E%nbf(i_sp_pol))
+ complex(SP),  intent(in)  :: dG_lesser(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_sp_pol)
  complex(SP),  intent(out) :: I_relax(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),PAR_Xk_nibz,n_sp_pol)
  !
  ! Working Space

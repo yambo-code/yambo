@@ -27,7 +27,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,eval_dG, & 
-&                         NL_bands,VAL_BANDS,NL_P,LSEX,LHF,Wk_EQ
+&                         NL_bands,VAL_BANDS,NL_P,LSEX,LHF
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_Xk_ibz_index
  use wrapper_omp,    ONLY:M_plus_alpha_M_omp
@@ -140,7 +140,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
       !This can be calculated once for each frequency, but I did not want to mess up NL_driver (MG)
       alpha_ = NL_LRC_alpha 
       if (Efield(1)%ef_name=='SOFTSIN'.or.Efield(1)%ef_name=='SIN') &
-      &     alpha_  = Alpha_ED(E,Efield(1)%frequency(1))
+      &     alpha_  = Alpha_ED(E,Efield(1)%frequency)
            E_vec_pot=E_vec_pot + alpha_*NL_P(1:3)
       !
     elseif(Correlation==LRC) then
@@ -217,18 +217,9 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    else
      !
      ! Use Sm1_plus, Sm1_minus and V_bands to build the W operator
-     ! I split the W(E)*E operator as:
-     ! W(0)*E+[W(E)-W(0)]*E
-     ! becasue W(0) is at Equilibrium and can by symmetrized easily
      ! 
      call Build_W_operator(E,k,ik,i_sp_pol,V_bands(:,:E%nbf(i_sp_pol),:,i_sp_pol),Wk)
-     if(allocated(Wk_EQ)) then
-       !  This part of the operator is symmetriezed before the dynamics
-       call Apply_W_field(A_tot,Wk-Wk_EQ(:,:,:,i_sp_pol,ik_mem),H_nl_sc)
-       call RT_Apply_field(ik,i_sp_pol,H_nl_sc,A_tot)
-     else
-       call Apply_W_field(A_tot,Wk,H_nl_sc)
-     endif
+     call Apply_W_field(A_tot,Wk,H_nl_sc)
      !
    endif                                                         
    !

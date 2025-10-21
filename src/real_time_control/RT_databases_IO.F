@@ -11,7 +11,7 @@ subroutine RT_databases_IO(E,DO_IT)
  use RT_control,     ONLY:RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,Vbands_RT_IO_t,&
 &                         Gless_RESTART_RT_IO_t,CARR_RT_IO_t,CACHE_OBS_steps_now,CACHE_OBS_steps,    &
 &                         SAVE_G_history,NE_i_start_time,CACHE_OBS_last_point,Gless_RT_IO_t,RT_DB_ID,&
-&                         RT_return_db_ID,RT_DB_name,SAVE_Vb_history
+&                         RT_return_db_ID,RT_DB_name,SAVE_Vb_history, SAVE_Vb_floquet, Vbands_IO_time
 #if defined _ELPH_ITERATIVE
  use RT_lifetimes,   ONLY:l_RT_iterative_ELPH_lifetimes
 #endif
@@ -37,17 +37,18 @@ subroutine RT_databases_IO(E,DO_IT)
  implicit none
  !
  type(levels)      :: E
- logical           :: DO_IT
+ logical           :: DO_IT 
  !
  ! Work Space
  !
  integer           :: i_mem,io_OBS,io_carr,IO_ACT,i_time,i_db
  integer, external :: io_RT_components
- logical, external :: RT_do_it
+ logical, external :: RT_do_it,RT_Dynamics_is_over
  !
  ! ... G_lesser
  !
  integer           :: ik,G_IO_steps,io_G,io_Vb,i_cpu,i_G_db,i_G_k_db,i_G_RES_db,i_G_RES_k_db,idb_Vb,idb_Vb_k
+ logical           :: Start_sampling 
 #if defined _ELPH_ITERATIVE
  integer           :: io_THETA
 #endif
@@ -275,10 +276,18 @@ subroutine RT_databases_IO(E,DO_IT)
      io_Vb=io_RT_components("V_bands",RT_DB_ID(idb_Vb))
    endif
    !
-   if (RT_do_it('Vb').or.DO_IT) then
+   Start_sampling = .true.
+   if (SAVE_Vb_floquet) then 
+     if (NE_i_time < Vbands_IO_time(1).or.NE_i_time > Vbands_IO_time(2))  Start_sampling = .false. 
+     if (NE_i_time==NE_i_start_time.or.RT_Dynamics_is_over()) Start_sampling = .true.
+     if (NE_i_time ==  Vbands_IO_time(1)) Vbands_RT_IO_t%last_point =  Vbands_IO_time(1) - Vbands_RT_IO_t%INTERVAL_steps
+   endif
+   !
+   if ((RT_do_it('Vb').or.DO_IT) .and.Start_sampling) then
      !
-     if (.not.SAVE_Vb_history) Vbands_RT_IO_t%N=1
-     if (     SAVE_Vb_history) Vbands_RT_IO_t%N=Vbands_RT_IO_t%N+1
+     if ((.not.SAVE_Vb_history).and.(.not.SAVE_Vb_floquet)) Vbands_RT_IO_t%N=1
+     if (SAVE_Vb_history.or.SAVE_Vb_floquet) Vbands_RT_IO_t%N=Vbands_RT_IO_t%N+1 
+     !
      Vbands_RT_IO_t%Time(Vbands_RT_IO_t%N)=NE_time
      !
      IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,NE_i_time,NE_i_start_time,NE_steps)

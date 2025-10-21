@@ -33,7 +33,7 @@ module electric
  !
  ! Polarization
  !
- logical  :: l_res_symms=.FALSE.  ! Do not use resisual symmetries (default False)
+ logical  :: l_no_res_symms=.FALSE.  ! Do not use resisual symmetries (default False)
  !
  contains
    !

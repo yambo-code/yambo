@@ -45,7 +45,7 @@ module nl_optics
  !
  ! Initial Energies and Damping
  !------------
- complex(SP), allocatable :: I_relax(:,:,:,:,:)
+ complex(SP), allocatable :: I_relax(:,:,:,:)
  real(SP),    allocatable :: E_full(:,:,:)
  !
  ! For TDDFT, V_xc_0 stores the V_xc at equilibrium
@@ -238,7 +238,7 @@ module nl_optics
      if(fft_size>0) then
        YAMBO_ALLOC(VAL_BANDS,(fft_size,maxval(en%nbf),PAR_Xk_nibz,n_sp_pol))
      endif
-     YAMBO_ALLOC(I_relax,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),maxval(en%nbf),PAR_Xk_nibz,n_sp_pol))
+     YAMBO_ALLOC(I_relax,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),PAR_Xk_nibz,n_sp_pol))
      YAMBO_ALLOC(Ho_plus_Sigma,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),PAR_Xk_nibz,n_sp_pol))
      !
      if(Correlation==LSEX.or.Correlation==LHF) then

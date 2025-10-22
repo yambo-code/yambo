@@ -446,6 +446,9 @@ subroutine NL_initialize(E,k)
  !
  if (l_pump_and_probe) eval_dG=.true.
  !
+ ! The new dephasing is based on density matrix
+ if (Phase_LifeTime>0._SP) eval_dG=.true.
+ !
  if(eval_COLLISIONS) then
    COLLISIONS_load_SP =.not.l_no_compress_COLL
    COLLISIONS_compr   =.not.l_no_compress_COLL

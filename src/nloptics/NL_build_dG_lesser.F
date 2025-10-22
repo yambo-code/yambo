@@ -41,8 +41,6 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  integer :: i1,i2,is
  integer :: ik
  !
- if (n_sp_pol==2) call error(" NL_build_dG not coded for n_sp_pol==2")
- !
 #if defined _TIMING
  call timing('NL build_dG',OPR='start')
 #endif

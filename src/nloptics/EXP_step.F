@@ -13,7 +13,7 @@ subroutine EXP_step(K_out,V_in,H_in,I_in,nbf,dT)
   complex(SP), intent(in)  :: V_in(NL_bands(2),nbf)
   complex(SP), intent(out) :: K_out(NL_bands(2),nbf)
   complex(SP), intent(in)  :: H_in(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
-  complex(SP), intent(in)  :: I_in(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),nbf)
+  complex(SP), intent(in)  :: I_in(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
   real(SP),    intent(in)  :: dT
   !
   ! Work Space
@@ -27,7 +27,7 @@ subroutine EXP_step(K_out,V_in,H_in,I_in,nbf,dT)
 !$omp parallel do default(shared), private(ib,U,H)
   do ib=1,nbf
     !
-    H=H_in+I_in(:,:,ib)
+    H=H_in+I_in
     !
     call EXP_op(U,H,dT)
     !

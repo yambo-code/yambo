@@ -88,7 +88,12 @@ i?86*linux*)
        CPU_FLAG="-xHost"
        #CPU_FLAG=" "
        ;;
-      *2021* | *2022* | *2023* | *2024* | *2025* )
+      *2025* )
+       CPU_FLAG=" "
+       OMPFLAGS="-qopenmp"
+       FCMFLAG="-nofor-main"
+       ;;
+      *2021* | *2022* | *2023* | *2024* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp -parallel"
        FCMFLAG="-nofor-main"
@@ -338,7 +343,13 @@ aarch*linux* | arm*linux* )
        #CPU_FLAG="-xHost"
        CPU_FLAG=" "
        ;;
-      *2020* | *2021* | *2022* | *2023* | *2024* | *2025* )
+      *2025* )
+       CPU_FLAG=" "
+       OMPFLAGS="-qopenmp"
+       FCMFLAG="-nofor-main"
+       CFLAGS="-O2 -std=gnu99"
+       ;;
+      *2020* | *2021* | *2022* | *2023* | *2024* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp -parallel"
        FCMFLAG="-nofor-main"

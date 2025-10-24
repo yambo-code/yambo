@@ -69,12 +69,14 @@ if test x"$acx_libxc_ok" = xno ; then
   if test -d "$with_libxc_path"; then
      libxc_incdir="$with_libxc_path/include"
      libxc_libdir="$with_libxc_path/lib"
+     libxc_lib64dir="$with_libxc_path/lib64"
   fi
   if test -d "$with_libxc_includedir"; then libxc_incdir="$with_libxc_includedir" ; fi
   if test -d "$with_libxc_libdir";     then libxc_libdir="$with_libxc_libdir" ; fi
   #
   # dynamic linkage, separate Fortran interface
-  if test ! -z "$libxc_libdir"; then LIBXC_LIBS="-L$libxc_libdir -lxcf90 -lxcf03 -lxc"; fi
+  if test ! -z "$libxc_libdir";  then LIBXC_LIBS="-L$libxc_libdir -lxcf90 -lxcf03 -lxc"; fi
+  if test ! -z "$libxc_lib64dir"; then LIBXC_LIBS="-L$libxc_lib64dir $LIBXC_LIBS"; fi
   if test ! -z "$libxc_incdir"; then LIBXC_INCS="$IFLAG$libxc_incdir"; fi
   #
   if test ! -z "$with_libxc_libs" ; then LIBXC_LIBS="$with_libxc_libs" ; fi

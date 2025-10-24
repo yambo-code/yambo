@@ -27,8 +27,8 @@ CONFFLAGS=--prefix="$(LIBPATH)" $(petsc_flgs) \
          --with-shared-libraries=$(spetsc) \
          --with-blaslapack-lib="$(llapackpetsc) $(lblaspetsc)" \
          --with-scalar-type="complex" \
-         --with-precision="${yprecision}" 
-#         --with-mpi-dir=$(mpipath)
+         --with-precision="${yprecision}" \
+         --with-mpi-dir=$(mpipath)
 #
 # MAIN target
 #

@@ -26,7 +26,7 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
  !
  complex(SP), pointer DEV_ATTR :: WF_p(:,:,:)
  integer :: ik,is,ib,ibl,iwf
- integer :: i_g,i_spinor,min_ng
+ integer :: i_g,i_spinor
  !
  ik = Xk%sstar(ikbz,1)
  is = Xk%sstar(ikbz,2)
@@ -37,7 +37,6 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
  WF_k_out=cZERO
 #endif
  WF_p => DEV_VAR(WF%c)
- min_ng=minval((/wf_ng,wf_ng_1st_BZ/))
  !
  if(is==idt_index) then
    !  
@@ -48,9 +47,9 @@ subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,i_sp_pol,Xk,WF_k_out)
        !
 #if defined _GPU_LOC
        ! dev2dev
-       call devxlib_memcpy_d2d(WF_k_out(:min_ng,:,ibl),DEV_VAR(WF%c)(:min_ng,:,iwf))
+       call devxlib_memcpy_d2d(WF_k_out(:wf_ng,:,ibl),DEV_VAR(WF%c)(:,:,iwf))
 #else
-       WF_k_out(:min_ng,:,ibl)=WF_p(:min_ng,:,iwf)
+       WF_k_out(:wf_ng,:,ibl)=WF_p(:,:,iwf)
 #endif
        !
      enddo

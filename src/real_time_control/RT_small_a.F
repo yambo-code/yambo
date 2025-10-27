@@ -153,7 +153,7 @@ function small_a(T,dt,E_field,order,envelop_only)
       if(trim(field_defs(2))=="4SIGMA" .or. trim(field_defs(3))=="4SIGMA") T_0_fac=4._SP*sigma_eff
       if(trim(field_defs(2))=="5SIGMA" .or. trim(field_defs(3))=="5SIGMA") T_0_fac=5._SP*sigma_eff
       T_0=pi/W_0*(real(nint(W_0/pi*T_0_fac),SP))
-      if( index(field_defs(1),"PULSE")>0 ) T_0=T_0_fac
+      if( index(field_defs(1),"PULSE")>0.or.index(field_defs(1),"GAUSS")>0 ) T_0=T_0_fac
   end select
   !
   ! Initial and relative phases control

@@ -199,7 +199,14 @@ function small_a(T,dt,E_field,order,envelop_only)
     !
     select case( trim(field_defs(1)) )
     case('FROM_FILE')
+#if defined _NL
+      ! External field from file is compatible only with single-step integrator
+      ! like INVINT. For two-steps integrators CRANKNIC,RK2 etc. it has to be
+      ! interpolated (TO BE FONE)
+      i_T=nint((T-T_0)/dT)+1
+#else
       i_T=nint((T-T_0)/(dT/2._SP))+1
+#endif
       if (i_T<=0.or.envelop_only_) then
         f_now=0
       else

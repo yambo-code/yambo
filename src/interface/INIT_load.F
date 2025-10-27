@@ -27,11 +27,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        QP_G_er,QP_G_ir,QP_G_dr,QP_Sc_steps,QP_G_solver,&
 &                        QP_dSc_delta,QP_G_Zoom_treshold,GF_energy_range_mode
  use LIVE_t,        ONLY:nhash
- use wave_func,     ONLY:wf_ng,WF_load_mode
+ use wave_func,     ONLY:wf_ng,wf_ng_1st_BZ,WF_load_mode
  use D_lattice,     ONLY:Tel,non_periodic_directions,molecule_position,Bose_Temp
  use D_lattice,     ONLY:Boltz_Temp
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,RIM_W_ng,rimw_type,&
-&                        bz_samp,RIM_ng,RIM_epsm1,eps_env,RIM_id_epsm1_reference,&
+&                        bz_samp,RIM_ng,RIM_epsm1,eps_env,RIM_id_epsm1_reference,g_rot,&
 &                        RIM_n_rand_pts,RIM_sphe_n_rand_pts,cyl_ph_radius,box_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_bands_frozen_ch,&
 &                        BS_n_g_W,BS_n_g_exch,BS_n_g_fxc,BSE_L_kind,BS_K_cutoff,BSK_IO_mode,BSE_dipole_geometry
@@ -124,6 +124,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! Work Space
  !
+ integer  :: wf_ng_closed
 #if defined _RT
  integer  :: i_field
 #endif
@@ -186,16 +187,32 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call CPU_structure_load( )
 #endif
  !
- !================
- ! GPL VARIABLES
- !================ 
+ ! Cutoff on the density
+ ! ng_closed (cutoff on the density) should never be lower than wf_ng (cutoff on the WFs)
+ ! Indeed, the two cutofff should be correlated. However, it is not in the code
+ ! Here there is a simple check, just in case
+ call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',ng_closed,unit=G_unit,verb_level=V_RL)
+ if (ng_closed<wf_ng) then
+   wf_ng=ng_closed
+   wf_ng_1st_BZ=maxval(g_rot(:wf_ng,:))
+ endif
+ !
+ ! Here the it interface closes the value of wf_ng when initmode==2
+ ! Such operation is pointless, because WFs are defined w.r.t. spheres centered at k
+ ! The lowering of the cutoff for the WFs should be done accordingly.
+ ! Moreover, if the cutoff is not lowered, the closing may increase wf_ng
+ ! The if below is coded to prevent such issue
+ wf_ng_closed=wf_ng
+ call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng_closed,G_unit,verb_level=V_RL)
+ if (wf_ng_closed<wf_ng) then
+   wf_ng=wf_ng_closed
+   wf_ng_1st_BZ=maxval(g_rot(:wf_ng,:))
+ endif
  !
  ! Basics
  !
  call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)
- call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',ng_closed,unit=G_unit,verb_level=V_RL)
  call it(defs,'Gthresh' ,'[INI] Accuracy for energy shell separation [-1. automatic]',G_mod_zero,verb_level=V_RL)
- call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_RL) 
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
  call it(defs,'MolPos',  '[X/BSS] Molecule coord in supercell, 0.5 is the middle',molecule_position,verb_level=V_resp)
  call it(defs,'K_grids', '[KPT] Select the grids (X=response, S=sigma, C=collisions, B=bse) [default X S C B]',&

@@ -15,7 +15,7 @@ subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF,ssop,isref,igref)
  use pars,          ONLY:SP,cZERO
  use electrons,     ONLY:n_spinor
  use wave_func,     ONLY:WAVEs,wf_nc_k,DEV_VAR(wf_igk)
- use wave_func,     ONLY:wf_ng,wf_ng_1st_BZ
+ use wave_func,     ONLY:wf_ng
  use vec_operate,   ONLY:c2a
  use R_lattice,     ONLY:DEV_VAR(g_rot),DEV_VAR(G_m_G),&
  &                       k_pt,rl_sop,g_vec
@@ -32,7 +32,7 @@ subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF,ssop,isref,igref)
  !
  ! Work space
  !
- complex(SP)              DEV_ATTR :: WF_k_tmp(wf_ng_1st_BZ,n_spinor)
+ complex(SP)              DEV_ATTR :: WF_k_tmp(wf_ng,n_spinor)
  complex(SP), pointer     DEV_ATTR :: WF_p(:,:)
  complex(SP)              DEV_ATTR :: ssop_loc(2,2)
  integer                  DEV_ATTR :: wf_tab_loc(wf_ng,2)

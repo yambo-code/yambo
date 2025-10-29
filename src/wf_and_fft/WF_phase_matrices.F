@@ -25,7 +25,7 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  use D_lattice,         ONLY:nsym,i_time_rev,sop_tab,spin_sop
  use electrons,         ONLY:levels,n_max_deg
  use wave_func,         ONLY:WAVEs,io_WF_phases,WF_phases_b_map
- use wave_func,         ONLY:wf_ng_overlaps,wf_ng_1st_BZ,WF_copy,wf_nc_k
+ use wave_func,         ONLY:wf_ng_overlaps,wf_ng_1st_BZ,wf_ng,WF_copy,wf_nc_k
  use stderr,            ONLY:intc
  use electrons,         ONLY:n_spinor,n_sp_pol
  use wrapper,           ONLY:Vstar_dot_V
@@ -89,6 +89,10 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  !iGp=max(maxval(g0_idx(:,1)),maxval(g0_idx(:,2)))
  iGp=2*maxval(Xk%g_table)
  ng_tmp=eval_G_minus_G(wf_ng_1st_BZ,iGp)
+ !
+ ! Here I need to set wf_ng to a larger value, to allocate WFs
+ ! Of a size large enough to accomodate all possibile g-vectors
+ wf_ng=maxval(G_m_G)
  !
  nb=blim(2)-blim(1)+1
  !
@@ -229,7 +233,7 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
                i_wf_c=WF_k%index(ibc,ik,i_sp_pol)
                !
                WF_phases(iby_phase,ibc_phase,i_grp,isloop,istark)= &
-               & Vstar_dot_V(wf_ng_1st_BZ*n_spinor,WF_Rk_y%c(:,:,i_wf_y),WF_Rk_c%c(:,:,i_wf_c))
+               & Vstar_dot_V(wf_ng*n_spinor,WF_Rk_y%c(:,:,i_wf_y),WF_Rk_c%c(:,:,i_wf_c))
                !
              enddo
              charac(i_grp,isloop)=charac(i_grp,isloop)+WF_phases(iby_phase,iby_phase,i_grp,isloop,istark)
@@ -244,7 +248,7 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
          !    !if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib,ibp)-1 )) cycle
          !    !if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib,ibp,(/1,En%blim/))-1 )) cycle
          !    WF_phases(ibk,ibp,s_count,k_count,i_sp_pol)= &
-         !    & Vstar_dot_V(wf_ng_1st_BZ*n_spinor,WF_k%c(:,:,i_wf_k),WF_p_tmp%c(:,:,i_wf_p))
+         !    & Vstar_dot_V(wf_ng*n_spinor,WF_k%c(:,:,i_wf_k),WF_p_tmp%c(:,:,i_wf_p))
          !  enddo ! ibp
          !enddo ! ibk
          !

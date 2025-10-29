@@ -541,7 +541,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !----------------------
    if(iHxc==2 .and. l_tddft_gsum) then
      !
-     l_tddft_comp = .not.(allocated(BS_T_grp(i_Tgrp_k)%O_tddft_L).and.allocated(BS_T_grp(i_Tgrp_k)%O_tddft_R))
+     l_tddft_comp = .not.(allocated(BS_T_grp(i_Tgrp_k)%O_tddft_L).and.allocated(BS_T_grp(i_Tgrp_p)%O_tddft_R))
      !
      if (l_tddft_comp) then
        YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))

@@ -31,7 +31,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use D_lattice,     ONLY:Tel,non_periodic_directions,molecule_position,Bose_Temp
  use D_lattice,     ONLY:Boltz_Temp
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,RIM_W_ng,rimw_type,&
-&                        bz_samp,RIM_ng,RIM_epsm1,eps_env,RIM_id_epsm1_reference,g_rot,&
+&                        bz_samp,RIM_ng,RIM_epsm1,eps_env,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,RIM_sphe_n_rand_pts,cyl_ph_radius,box_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_bands_frozen_ch,&
 &                        BS_n_g_W,BS_n_g_exch,BS_n_g_fxc,BSE_L_kind,BS_K_cutoff,BSK_IO_mode,BSE_dipole_geometry
@@ -194,7 +194,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',ng_closed,unit=G_unit,verb_level=V_RL)
  if (ng_closed<wf_ng) then
    wf_ng=ng_closed
-   wf_ng_1st_BZ=maxval(g_rot(:wf_ng,:))
+   wf_ng_1st_BZ=ng_closed
  endif
  !
  ! Here the it interface closes the value of wf_ng when initmode==2
@@ -206,7 +206,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng_closed,G_unit,verb_level=V_RL)
  if (wf_ng_closed<wf_ng) then
    wf_ng=wf_ng_closed
-   wf_ng_1st_BZ=maxval(g_rot(:wf_ng,:))
+   wf_ng_1st_BZ=wf_ng_closed
  endif
  !
  ! Basics

@@ -48,7 +48,7 @@ subroutine fft_setup(iG_max_in,iGo_max,ONLY_SIZE)
  !
  ! Work Space
  !
- integer  :: i1,i2,i3,i4,iG_max,iv(3),ln(3),is,space_inv(3,3)
+ integer  :: i1,i2,i3,i4,iG_max,iv(3),ln(3),is,space_inv(3,3),wf_ng_closed
  real(SP) :: v1(3),M1(3,3),M2(3,3),mat(3,3),scal(3)
  real(SP), allocatable :: g_vec_rot(:,:)
  real(SP), allocatable DEV_ATTR :: g_vec_rot_d(:,:)
@@ -74,9 +74,15 @@ subroutine fft_setup(iG_max_in,iGo_max,ONLY_SIZE)
  g_vec_rot=transpose(matmul(mat,transpose(g_vec)))
  !
  iG_max=iG_max_in
- ! To check. Do I want a default up to ng_closed?
- !if (iG_max<=0) iG_max=ng_closed
- iG_max=max(iG_max,wf_ng)
+ ! 2025/10730:
+ ! I set a lower bound to wf_ng_closed which is defined here
+ ! We should discuss why we have a lower bound, and if we really need it
+ wf_ng_closed=wf_ng
+ call PARSER_close_G(wf_ng_closed,'tRL')
+ if (iG_max<wf_ng_closed) then
+   !call warning("Imposing wf_ng_closed as cutoff for fft size")
+   iG_max=wf_ng_closed
+ endif
  !
  !
 #ifdef _GPU

@@ -179,7 +179,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
        if (BS_K_coupling.and.l_BS_ares_from_res.and.iq==1) then
          ! In the coulping case at q=1 when there are 2 blocks per group
          ! See also src/bse/K_blocks.F and K_components_folded_in_serial_arrays.F
-	 ! Possibly to be extended also to i_G_shift==1
+         ! Possibly to be extended also to i_G_shift==1
          BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
        endif
        !

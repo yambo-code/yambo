@@ -248,8 +248,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        res_magn=res_magn*f_eh*Z_eh
        if (l_BS_esort.and.i_res_ares==1) then
          call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_magn(1),vtmpC)
-       if(n_spinor==2) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_magn(2),vtmpC)
-         endif
+         if(n_spinor==2) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_magn(2),vtmpC)
+       endif
      endif
      !
      if (l_BS_mespin) then
@@ -335,9 +335,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        endif
        !
        if (l_BS_photolum) then
-	 !
-	 ! I^PL = L<
-	 !  
+         !
+         ! I^PL = L<
+         !  
          PL(:,3)=PL(:,3) + PL_prefactor*res_PL(1)*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))/pi
          if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
            PL(:,3)=PL(:,3) + PL_prefactor*res_PL(2)*aimag(-1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC))))/pi

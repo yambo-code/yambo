@@ -207,10 +207,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,&
      !
    endif
    !
-   ! Filling the upper triangular part of the residual here ! 
-   !-------------^^^^^---------------------------------------
-   !   
-   ! AF: in this implementation we just store the data in rhotw_mp
+   ! AF: Here we store the data in rhotw_mp
    !     Later on, we multiply rhotw_mp*rhotw_mp^dag to build 
    !     the whole residue matrix (both upper and lower parts)
    !

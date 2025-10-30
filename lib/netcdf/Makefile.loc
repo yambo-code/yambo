@@ -19,7 +19,7 @@ include ../config/external_libs_defs.mk
 # Configure flags
 #
 CONFFLAGS=--prefix=$(LIBPATH) --libdir=$(LIBPATH)/lib \
-          --without-pic --enable-static --disable-shared --disable-dap  $(netcdf_opt) \
+          --without-pic --enable-static --disable-shared --disable-dap  $(netcdf_opt) --disable-libxml2 \
           CC="$(cc)" \
 	  CPP="$(cpp)" \
 	  CFLAGS="$(cflags)" \

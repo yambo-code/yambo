@@ -57,7 +57,7 @@ function small_a(T,dt,E_field,order,envelop_only)
   use stderr,    ONLY:STRING_split
   use wrapper,   ONLY:FADEVA
   use functions, ONLY:theta_function
-  use fields,    ONLY:ext_field,get_field_file_index,&
+  use fields,    ONLY:ext_field,get_field_file_index,field_from_file_dt,&
   &                   field_from_file,n_fields_defs_max
   !
   implicit none
@@ -199,14 +199,7 @@ function small_a(T,dt,E_field,order,envelop_only)
     !
     select case( trim(field_defs(1)) )
     case('FROM_FILE')
-#if defined _NL
-      ! External field from file is compatible only with single-step integrator
-      ! like INVINT. For two-steps integrators CRANKNIC,RK2 etc. it has to be
-      ! interpolated (TO BE FONE)
-      i_T=nint((T-T_0)/dT)+1
-#else
-      i_T=nint((T-T_0)/(dT/2._SP))+1
-#endif
+      i_T=nint((T-T_0)/field_from_file_dt)+1
       if (i_T<=0.or.envelop_only_) then
         f_now=0
       else

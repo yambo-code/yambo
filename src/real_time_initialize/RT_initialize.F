@@ -40,8 +40,8 @@ subroutine RT_initialize(E,k,q,Dip)
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_impose_E,DbGd_EE_percent,     &
 &                         l_RT_update_Energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
 &                         NE_time_step_update_jump,NE_initial_time_step_update,NE_i_time,     &
-&                         RAD_magnification,NE_step_update_treshold,Integrator_nsteps, &
-&                         NE_time_step_update_jump_INPUT,NE_initial_time_step_update,          &
+&                         RAD_magnification,NE_step_update_treshold,Integrator_nfrac,         &
+&                         NE_time_step_update_jump_INPUT,NE_initial_time_step_update,         &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,    &
 &                         l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
@@ -236,7 +236,7 @@ subroutine RT_initialize(E,k,q,Dip)
    Efield(i1)%ef_name=trim(Efield(i1)%ef_name)
    call STRING_split(Efield(i1)%ef_name,field_defs)
    if ( field_defs(1)/='FROM_FILE') cycle
-   call RT_load_field_from_file_init(field_defs(2),field_defs(3),Integrator_nsteps)
+   call RT_load_field_from_file_init(field_defs(2),field_defs(3),Integrator_nfrac)
  enddo
  !
  NE_i_last_field=0

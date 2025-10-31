@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_load_field_from_file_init(filename1,filename2,Integr_nsteps)
+subroutine RT_load_field_from_file_init(filename1,filename2,Integr_nfrac)
  !
  use pars,       ONLY:SP
  use com,        ONLY:com_path
@@ -31,7 +31,7 @@ subroutine RT_load_field_from_file_init(filename1,filename2,Integr_nsteps)
  implicit none
  !
  character(*), intent(in)   :: filename1,filename2
- integer,      intent(in)   :: Integr_nsteps
+ integer,      intent(in)   :: Integr_nfrac
  !
  integer :: n_time_steps1,n_time_steps2,ndt1
  real(SP):: dt1,dt2
@@ -57,7 +57,7 @@ subroutine RT_load_field_from_file_init(filename1,filename2,Integr_nsteps)
  !
  dt1=RT_step/field_from_file_dt
  if (abs(dt1-real(nint(dt1),SP))>1.E-5) call error(" Field time step non consistent with time step")
- if (mod(nint(dt1),Integr_nsteps)/=0) call error("Field time step not consistent with integrator")
+ if (mod(nint(dt1),Integr_nfrac)/=0) call error("Field time step not consistent with integrator")
  !
 end subroutine RT_load_field_from_file_init
 !

@@ -142,16 +142,17 @@ subroutine NL_initialize(E,k)
         Integr_steps=2
     case('RK4')
         Integrator=RK4
-        Integr_steps=4
+	! RT4 uses dt/2 and dt/3. So I need a factor 6
+        Integr_steps=6
     case('RK2EXP')
         Integrator=RK2EXP
         Integr_steps=2
     case('RK4EXP')
         Integrator=RK4EXP
-        Integr_steps=4
+        Integr_steps=6
     case('HEUN')
         Integrator=HEUN
-        Integr_steps=4
+        Integr_steps=0
         call error("HEUN integrator not yet available")
     case('INVINT')
         Integrator=INVINT

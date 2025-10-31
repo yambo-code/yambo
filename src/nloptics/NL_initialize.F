@@ -28,7 +28,7 @@ subroutine NL_initialize(E,k)
  use IO_m,           ONLY:io_GF
  use stderr,         ONLY:STRING_split
  use X_m,            ONLY:global_gauge
- use fields,         ONLY:Efield,Efield_strength,n_ext_fields_max,EtoT
+ use fields,         ONLY:Efield,Efield_strength,n_ext_fields_max,EtoT,field_from_file_dt
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field,l_NE_with_fields, &
 &                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential,RAD_LifeTime,&
 &                         l_velocity_gauge_corr,l_velocity_gauge_diam,G_MEM_steps,RT_nk,i_MEM_now
@@ -52,7 +52,7 @@ subroutine NL_initialize(E,k)
  ! Working space
  !
  real(SP) :: Time,W_0,T_0,sigma,E_dot_rot_axis 
- integer  :: i1,n_active_fields
+ integer  :: i1,n_active_fields,Integr_steps
  logical  :: l_velocity_gauge_tmp
  real(SP) :: Sampling_Time
  logical  :: l_no_compress_COLL
@@ -133,23 +133,32 @@ subroutine NL_initialize(E,k)
  select case (trim(Integrator_name))
     case('EULER')
         Integrator=EULER
+        Integr_steps=1
     case('EULEREXP')
         Integrator=EULEREXP
+        Integr_steps=1
     case('RK2')  
         Integrator=RK2
+        Integr_steps=2
     case('RK4')
         Integrator=RK4
+        Integr_steps=4
     case('RK2EXP')
         Integrator=RK2EXP
+        Integr_steps=2
     case('RK4EXP')
         Integrator=RK4EXP
+        Integr_steps=4
     case('HEUN')
         Integrator=HEUN
+        Integr_steps=4
         call error("HEUN integrator not yet available")
     case('INVINT')
         Integrator=INVINT
+        Integr_steps=1
     case('CRANKNIC')
         Integrator=CRANK_NICOLSON
+        Integr_steps=2
     case default
         call error("Unknow integrator")
  end select
@@ -175,8 +184,8 @@ subroutine NL_initialize(E,k)
    call STRING_split(Efield(i1)%ef_name,field_defs)
    if ( field_defs(1)/='FROM_FILE') cycle
    call RT_load_field_from_file_init(field_defs(2),field_defs(3))
-   if(Integrator/=INVINT) then
-     call error("External field from file compatible only with INVINT integrator!")
+   if(nint(field_from_file_dt/RT_step)/=Integr_steps) then
+     call error("Integrator not compatible with external field from file, change time-step!")
    endif
  enddo
  !
@@ -240,6 +249,10 @@ subroutine NL_initialize(E,k)
  if(.not.l_pump_and_probe.and.Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
     call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only')
  !
+ call STRING_split(Efield(1)%ef_name,field_defs)
+ if( field_defs(1)=='FROM_FILE'.and.l_pump_and_probe) &
+ & call error("Field from file only work in pump and probe")
+
  if(l_pump_and_probe.and.l_velocity_IPA) then
    !
    ! Fast parallelization not compatible with RT-IO

@@ -28,7 +28,7 @@ subroutine NL_initialize(E,k)
  use IO_m,           ONLY:io_GF
  use stderr,         ONLY:STRING_split
  use X_m,            ONLY:global_gauge
- use fields,         ONLY:Efield,Efield_strength,n_ext_fields_max,EtoT,field_from_file_dt
+ use fields,         ONLY:Efield,Efield_strength,n_ext_fields_max,EtoT
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field,l_NE_with_fields, &
 &                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential,RAD_LifeTime,&
 &                         l_velocity_gauge_corr,l_velocity_gauge_diam,G_MEM_steps,RT_nk,i_MEM_now
@@ -183,9 +183,7 @@ subroutine NL_initialize(E,k)
    Efield(i1)%ef_name=trim(Efield(i1)%ef_name)
    call STRING_split(Efield(i1)%ef_name,field_defs)
    if ( field_defs(1)/='FROM_FILE') cycle
-   call RT_load_field_from_file_init(field_defs(2),field_defs(3))
-   if(nint(field_from_file_dt/RT_step)/=Integr_steps) then
-     call error("Integrator not compatible with external field from file, change time-step!")
+   call RT_load_field_from_file_init(field_defs(2),field_defs(3),Integr_steps)
    endif
  enddo
  !

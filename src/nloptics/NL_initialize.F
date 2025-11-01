@@ -186,7 +186,6 @@ subroutine NL_initialize(E,k)
    call STRING_split(Efield(i1)%ef_name,field_defs)
    if ( field_defs(1)/='FROM_FILE') cycle
    call RT_load_field_from_file_init(field_defs(2),field_defs(3),Integr_steps)
-   endif
  enddo
  !
  n_active_fields=0

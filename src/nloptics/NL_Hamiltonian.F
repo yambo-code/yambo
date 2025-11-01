@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
-subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
+subroutine NL_Hamiltonian(E,k,q,X,Time,V_bands)
  !
  ! The subroutine calculate Ho + V + Sigma and the fields E_tot, E_ext, E_ks
  !
@@ -44,7 +44,6 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  real(SP),      intent(in)    :: Time
  type(X_t),     intent(in)    :: X
  complex(SP),   intent(in)    :: V_bands(NL_bands(2),maxval(E%nbf),QP_nk,n_sp_pol)
- integer,       intent(in)    :: i_time
  !
  ! Working Space
  !

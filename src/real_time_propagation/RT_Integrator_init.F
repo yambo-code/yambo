@@ -19,7 +19,8 @@ subroutine RT_Integrator_init()
 &                         l_RT_HEUN,l_RT_RK2,l_RT_RK4,l_RT_SIMPLE, &
 &                         Integrator_name,integrator_exp_order,    &
 &                         a_tableau,b_tableau,c_tableau,RWA_table, &
-&                         I1_matrix,Integrator_nsteps,RT_bands
+&                         I1_matrix,Integrator_nsteps,RT_bands,    &
+&                         Integrator_nfrac
  use y_memory_alloc
  !
  implicit none
@@ -100,6 +101,7 @@ subroutine RT_Integrator_init()
  !
  if (l_RT_SIMPLE) then
    Integrator_nsteps = 1
+   Integrator_nfrac = 1
    b_tableau(1) = 1._SP
    c_tableau(2) = 1._SP
    RWA_table(2) = 1._SP
@@ -107,6 +109,7 @@ subroutine RT_Integrator_init()
  !
  if (l_RT_RK2   ) then
    Integrator_nsteps = 2
+   Integrator_nfrac = 2
    c_tableau(2) = 1._SP/2._SP
    a_tableau(2) = 1._SP/2._SP
    b_tableau(1:2) = (/0._SP      ,1._SP      /)
@@ -115,6 +118,7 @@ subroutine RT_Integrator_init()
  !
  if (l_RT_HEUN  ) then
    Integrator_nsteps = 2
+   Integrator_nfrac = 2
    c_tableau(2) = 1._SP
    a_tableau(2) = 1._SP
    b_tableau(1:2) = (/1._SP/2._SP,1._SP/2._SP/)
@@ -123,6 +127,7 @@ subroutine RT_Integrator_init()
  !
  if (l_RT_RK4   ) then
    Integrator_nsteps = 4
+   Integrator_nfrac = 6
    c_tableau(2:4) = (/1._SP/2._SP,1._SP/2._SP,1._SP      /)
    a_tableau(2:4) = (/1._SP/2._SP,1._SP/2._SP,1._SP      /)
    b_tableau(1:4) = (/1._SP/6._SP,1._SP/3._SP,1._SP/3._SP,1._SP/6._SP/)

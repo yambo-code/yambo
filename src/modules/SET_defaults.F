@@ -101,7 +101,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     NE_time_step_update_last_point,NE_time_step_update_jump,NE_time_step_update_jump_INPUT, &
 &                     NE_initial_time_step_update,NE_step_update_treshold
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
-&                     A_tot,A_ind,A_ext,field_from_file_fname,field_from_file_steps
+&                     A_tot,A_ind,A_ext,field_from_file_fname,field_from_file_steps,      &
+&                     field_from_file_dt
  use plasma,     ONLY:PLASMA_redux_percent
 #endif
 #if defined _NL
@@ -617,6 +618,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  field_from_file_fname=""
  field_from_file_steps=0
+ field_from_file_dt=0._SP
  n_ext_fields=0
  do i1=1,n_ext_fields_max
    call Efield_reset(Efield(i1))
@@ -735,6 +737,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  field_from_file_fname=""
  field_from_file_steps=0
+ field_from_file_dt=0._SP
  do i1=1,n_ext_fields_max
    call Efield_reset(Efield(i1))
    Efield(i1)%t_initial=RT_step

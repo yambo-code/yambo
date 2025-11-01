@@ -173,8 +173,8 @@ subroutine RT_print_Elfield(i_field,mode,Elfield)
  !
  if (index(mode,"time")>0) then
    !
-   write(100+i_field,*) RT_conf%T_n_steps
-   write(200+i_field,*) RT_conf%T_n_steps
+   write(100+i_field,*) RT_conf%T_n_steps,RT_conf%delta_t
+   write(200+i_field,*) RT_conf%T_n_steps,RT_conf%delta_t
    !
    do i_t=1,RT_conf%T_n_steps
      Field_t=RT_conf%T_range(1)+(i_t-1)*RT_conf%delta_t   !-Efield%t_initial
@@ -193,8 +193,8 @@ subroutine RT_print_Elfield(i_field,mode,Elfield)
    !
  else if (index(mode,"freq")>0) then
    !
-   write(100+i_field,*) RT_conf%W_n_steps
-   write(200+i_field,*) RT_conf%W_n_steps
+   write(100+i_field,*) RT_conf%W_n_steps,RT_conf%delta_W
+   write(200+i_field,*) RT_conf%W_n_steps,RT_conf%delta_W
    !
    do i_w=1,RT_conf%W_n_steps
      Field_w=RT_conf%X_w_range(1)+(i_w-1)*RT_conf%delta_W

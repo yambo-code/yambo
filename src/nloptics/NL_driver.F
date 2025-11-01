@@ -308,7 +308,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
      NE_i_time=NE_i_time+1
      NE_time=real(NE_i_time-1,SP)*RT_step
      !
-     call NL_Hamiltonian(E,k,q,X(1),NE_time,NE_i_time,V_bands)
+     call NL_Hamiltonian(E,k,q,X(1),NE_time,V_bands)
      !
      ! I evaluate current after the Hamiltonian because I need
      ! time-dependent overlaps Sm1_plus, and Sm1_mins

@@ -129,7 +129,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
 #if defined _TIMING
  call timing('NL Integrator',OPR='stop')
 #endif
-   call NL_Hamiltonian(E,k,q,X,Time+RT_step/2._SP,i_time,K_all)
+   call NL_Hamiltonian(E,k,q,X,Time+RT_step/2._SP,K_all)
 #if defined _TIMING
  call timing('NL Integrator',OPR='start')
 #endif
@@ -172,7 +172,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
 #if defined _TIMING
  call timing('NL Integrator',OPR='stop')
 #endif
-   call NL_Hamiltonian(E,k,q,X,Time+RT_step/2._SP,i_time,K_all)
+   call NL_Hamiltonian(E,k,q,X,Time+RT_step/2._SP,K_all)
 #if defined _TIMING
  call timing('NL Integrator',OPR='start')
 #endif
@@ -214,7 +214,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
 #if defined _TIMING
  call timing('NL Integrator',OPR='stop')
 #endif
-   call NL_Hamiltonian(E,k,q,X,Time+RT_step/2._SP,i_time,K_all)
+   call NL_Hamiltonian(E,k,q,X,Time+RT_step/2._SP,K_all)
 #if defined _TIMING
  call timing('NL Integrator',OPR='start')
 #endif
@@ -261,7 +261,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
 #if defined _TIMING
  call timing('NL Integrator',OPR='stop')
 #endif
-   call NL_Hamiltonian(E,k,q,X,Time+RT_step*Heun_apar(1),i_time,V_tmp)
+   call NL_Hamiltonian(E,k,q,X,Time+RT_step*Heun_apar(1),V_tmp)
 #if defined _TIMING
  call timing('NL Integrator',OPR='start')
 #endif
@@ -285,7 +285,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
    !
    ! Recalculate H(t) using  V(t+2dt/3) 
    !
-   call NL_Hamiltonian(E,k,q,X,Time+RT_step*Heun_apar(2),i_time,V_tmp)
+   call NL_Hamiltonian(E,k,q,X,Time+RT_step*Heun_apar(2),V_tmp)
    !
    ! final step |V(t+dt)>
    !
@@ -337,7 +337,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
 #if defined _TIMING
  call timing('NL Integrator',OPR='stop')
 #endif
-   call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(1),i_time,V_tmp)
+   call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(1),V_tmp)
 #if defined _TIMING
  call timing('NL Integrator',OPR='start')
 #endif
@@ -364,7 +364,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
 #if defined _TIMING
  call timing('NL Integrator',OPR='stop')
 #endif
-   call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(2),i_time,V_tmp)
+   call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(2),V_tmp)
 #if defined _TIMING
  call timing('NL Integrator',OPR='start')
 #endif
@@ -391,7 +391,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
 #if defined _TIMING
  call timing('NL Integrator',OPR='stop')
 #endif
-   call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(3),i_time,V_tmp)
+   call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(3),V_tmp)
 #if defined _TIMING
  call timing('NL Integrator',OPR='start')
 #endif
@@ -443,7 +443,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
 #if defined _TIMING
  call timing('NL Integrator',OPR='stop')
 #endif
-   call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(1),i_time,V_tmp)
+   call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(1),V_tmp)
 #if defined _TIMING
  call timing('NL Integrator',OPR='start')
 #endif
@@ -470,7 +470,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
 #if defined _TIMING
  call timing('NL Integrator',OPR='stop')
 #endif
-   call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(2),i_time,V_tmp)
+   call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(2),V_tmp)
 #if defined _TIMING
  call timing('NL Integrator',OPR='start')
 #endif
@@ -497,7 +497,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
 #if defined _TIMING
  call timing('NL Integrator',OPR='stop')
 #endif
-   call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(3),i_time,V_tmp)
+   call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(3),V_tmp)
 #if defined _TIMING
  call timing('NL Integrator',OPR='start')
 #endif

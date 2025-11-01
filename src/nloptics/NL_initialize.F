@@ -142,12 +142,13 @@ subroutine NL_initialize(E,k)
         Integr_steps=2
     case('RK4')
         Integrator=RK4
-	! RT4 uses dt/2 and dt/3. So I need a factor 6
+	! RK4 uses dt/2 and dt/3. So I need a factor 6
         Integr_steps=6
     case('RK2EXP')
         Integrator=RK2EXP
         Integr_steps=2
     case('RK4EXP')
+	! RK4EXP uses dt/2 and dt/3. So I need a factor 6
         Integrator=RK4EXP
         Integr_steps=6
     case('HEUN')
@@ -250,7 +251,7 @@ subroutine NL_initialize(E,k)
  !
  call STRING_split(Efield(1)%ef_name,field_defs)
  if( field_defs(1)=='FROM_FILE'.and.l_pump_and_probe) &
- & call error("Field from file only work in pump and probe")
+ & call error("Field from file only works in pump and probe mode")
 
  if(l_pump_and_probe.and.l_velocity_IPA) then
    !

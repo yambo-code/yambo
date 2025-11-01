@@ -11,7 +11,7 @@
 !
 subroutine NL_initialize(E,k)
  ! 
- use pars,           ONLY:SP,DP,pi
+ use pars,           ONLY:SP,DP,pi,n_fields_defs_max,schlen
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
  use vec_operate,    ONLY:normalize_v,v_norm,cross_product
  use collision_ext,  ONLY:COLLISIONS_CV_only,COLL_bands_frozen,COLLISIONS_load_SP,COLLISIONS_compr
@@ -26,12 +26,13 @@ subroutine NL_initialize(E,k)
  use collision_ext,  ONLY:ng_oscll,COLLISIONS_cutoff
  use R_lattice,      ONLY:bz_samp,k_map
  use IO_m,           ONLY:io_GF
+ use stderr,         ONLY:STRING_split
  use X_m,            ONLY:global_gauge
- use fields,         ONLY:Efield,Efield_strength,n_ext_fields,n_ext_fields_max,EtoT
+ use fields,         ONLY:Efield,Efield_strength,n_ext_fields_max,EtoT
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field,l_NE_with_fields, &
 &                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential,RAD_LifeTime,&
 &                         l_velocity_gauge_corr,l_velocity_gauge_diam,G_MEM_steps,RT_nk,i_MEM_now
- use RT_control,     ONLY:OBS_RT_IO_t, NE_i_start_time, RT_control_alloc,RT_control_free,l_NE_with_fields,Vbands_RT_IO_t,&                         
+ use RT_control,     ONLY:OBS_RT_IO_t, RT_control_alloc,RT_control_free,l_NE_with_fields,Vbands_RT_IO_t,&                         
 &                         SAVE_Vb_history,SAVE_G_history, SAVE_Vb_floquet, Vbands_IO_time, Floquet_order
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM,  &
@@ -51,10 +52,11 @@ subroutine NL_initialize(E,k)
  ! Working space
  !
  real(SP) :: Time,W_0,T_0,sigma,E_dot_rot_axis 
- integer  :: i1,n_active_fields
+ integer  :: i1,n_active_fields,Integr_steps
  logical  :: l_velocity_gauge_tmp
  real(SP) :: Sampling_Time
  logical  :: l_no_compress_COLL
+ character(schlen)  :: field_defs(n_fields_defs_max)
  !
  ! Parser
  ! ============
@@ -131,23 +133,34 @@ subroutine NL_initialize(E,k)
  select case (trim(Integrator_name))
     case('EULER')
         Integrator=EULER
+        Integr_steps=1
     case('EULEREXP')
         Integrator=EULEREXP
+        Integr_steps=1
     case('RK2')  
         Integrator=RK2
+        Integr_steps=2
     case('RK4')
         Integrator=RK4
+	! RK4 uses dt/2 and dt/3. So I need a factor 6
+        Integr_steps=6
     case('RK2EXP')
         Integrator=RK2EXP
+        Integr_steps=2
     case('RK4EXP')
+	! RK4EXP uses dt/2 and dt/3. So I need a factor 6
         Integrator=RK4EXP
+        Integr_steps=6
     case('HEUN')
         Integrator=HEUN
+        Integr_steps=0
         call error("HEUN integrator not yet available")
     case('INVINT')
         Integrator=INVINT
+        Integr_steps=1
     case('CRANKNIC')
         Integrator=CRANK_NICOLSON
+        Integr_steps=2
     case default
         call error("Unknow integrator")
  end select
@@ -166,7 +179,14 @@ subroutine NL_initialize(E,k)
  ! Check Field
  ! =========================
  !
- ! This part of the code works with only one field
+ ! Initial check for fields defined from file
+ do i1=1,n_ext_fields_max
+   field_defs=""
+   Efield(i1)%ef_name=trim(Efield(i1)%ef_name)
+   call STRING_split(Efield(i1)%ef_name,field_defs)
+   if ( field_defs(1)/='FROM_FILE') cycle
+   call RT_load_field_from_file_init(field_defs(2),field_defs(3),Integr_steps)
+ enddo
  !
  n_active_fields=0
  !
@@ -174,6 +194,7 @@ subroutine NL_initialize(E,k)
    !
    Efield(i1)%ef_name=trim(Efield(i1)%ef_name)      
    if((Efield(i1)%ef_name=='none')) cycle
+   call STRING_split(Efield(i1)%ef_name,field_defs)
    !
    if(all(abs(Efield(i1)%versor(:))<epsilon(1.))) then
      call msg('rs',"External field "//intc(i1)//" versor is zero.")
@@ -196,6 +217,10 @@ subroutine NL_initialize(E,k)
    ! see definition of "step_case" in function "theta_function" in src/modules/mod_functions.F
    Efield(i1)%t_initial_indx=max(nint(Efield(i1)%t_initial/RT_step)+1,2)
    Efield(i1)%t_initial     =real(Efield(i1)%t_initial_indx-1)*RT_step
+   !
+   if ( field_defs(1)=='FROM_FILE') &
+&       call RT_load_field_from_file(field_defs(2),field_defs(3),i1)
+
    !
    call Check_symmetries(Efield(i1)%versor,"electric")
    !
@@ -223,6 +248,10 @@ subroutine NL_initialize(E,k)
  if(.not.l_pump_and_probe.and.Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
     call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only')
  !
+ call STRING_split(Efield(1)%ef_name,field_defs)
+ if( field_defs(1)=='FROM_FILE'.and.l_pump_and_probe) &
+ & call error("Field from file only works in pump and probe mode")
+
  if(l_pump_and_probe.and.l_velocity_IPA) then
    !
    ! Fast parallelization not compatible with RT-IO

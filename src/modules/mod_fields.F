@@ -55,6 +55,7 @@ module fields
  !
  real(SP), allocatable :: field_from_file(:,:,:)
  character(schlen)     :: field_from_file_fname(n_ext_fields_max)
+ real(SP)              :: field_from_file_dt
  integer               :: field_from_file_steps
  !
  ! Vector potential

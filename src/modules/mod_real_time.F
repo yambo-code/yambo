@@ -231,6 +231,7 @@ module real_time
  !
  integer  :: Integrator_step
  integer  :: Integrator_nsteps
+ integer  :: Integrator_nfrac
  integer  :: Integrator_exp_order
  !
  real(SP) :: a_tableau(4)

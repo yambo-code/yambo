@@ -351,6 +351,20 @@ end subroutine
 
 subroutine compute_rho_map(rho)
  !
+ ! This subroutine defines a grid of sub-points in the whole fft_size
+ ! where the density is bigger than a threshold rho_map_thresh.
+ ! rho_map_thresh has a default 1.e-7 and can be tuned from input.
+ ! The resulting grid has size rho_map_size << fft_size.
+ !
+ ! Doing a loop i1=1,rho_map_size the table rho_map(i1) gives the point
+ ! in the fft_size.
+ !
+ ! This can be useful for isolated systems, where there are region of space
+ ! which are empty. Accordingly, when performing real-space integrals involving
+ ! the wave-functions, only the points in the rho_map_size can be used, with
+ ! a significant speed-up. This was tested in TD-DFT calculations on isolated
+ ! molecules.
+ !
  use pars,          ONLY:SP
  use com,           ONLY:msg
  use FFT_m,         ONLY:fft_size

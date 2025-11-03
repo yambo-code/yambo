@@ -29,7 +29,7 @@ subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
  !
  type(bz_samp)    :: Xk,q
  type(levels)     :: Xen
- integer          :: BS_E_degs(BSS_n_eig),iq
+ integer          :: BS_E_degs(BSS_n_eig),iq,i_sp_v,i_sp_c
  !
  ! Workspace
  integer          :: j1,j2,i_l,i_l_grp,i_lambda,neh,i_spin,iv,ic,ikbz,ikibz,is,n_lambda_deg,S_indx(BS_H_dim),&
@@ -156,9 +156,10 @@ subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
      ikbz = BSS_eh_table(S_indx(neh),1)
      iv = BSS_eh_table(S_indx(neh),2)
      ic = BSS_eh_table(S_indx(neh),3)
-     i_spin= spin(BSS_eh_table(S_indx(neh),:))
-     if (i_spin==1) j1= 1
-     if (i_spin==2) j1=-1
+     i_sp_c=BSS_eh_table(S_indx(neh),4)
+     i_sp_v=BSS_eh_table(S_indx(neh),5)
+     if (i_sp_c==1) j1= 1                                               
+     if (i_sp_v==2) j1=-1      
      !
      ikibz = Xk%sstar(ikbz,1)
      is = Xk%sstar(ikbz,2)
@@ -168,7 +169,7 @@ subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
      isp = Xk%sstar(ikpbz,2)
      !
      amp_n_trans=amp_n_trans+1
-     amp_trans(amp_n_trans,1)=Xen%E(ic,ikibz,i_spin)-Xen%E(iv,ikp,i_spin)
+     amp_trans(amp_n_trans,1)=Xen%E(ic,ikibz,i_sp_c)-Xen%E(iv,ikp,i_sp_v)
      amp_trans(amp_n_trans,2)=A_weight(neh)
      !
      if (A_weight(neh)<EXCITON_weight_treshold) cycle

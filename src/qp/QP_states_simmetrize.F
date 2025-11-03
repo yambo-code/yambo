@@ -45,7 +45,7 @@ subroutine QP_states_simmetrize(en,what,V_real,V_complex,state_is_2do,warn_me)
  enddo
  !
  call sort(Eo_sorted,indx=Eo_sorted_index)
- call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,E_deg_treshold)
+ call degeneration_finder(QP_n_states,first_el,n_of_el,n_deg_grp,Er=Eo_sorted,deg_accuracy=E_deg_treshold)
  !
  if (present(state_is_2do)) then
    state_is_2do=.TRUE.

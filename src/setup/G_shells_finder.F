@@ -25,6 +25,7 @@ subroutine G_shells_finder()
 &                       g_vec,g_rot,E_of_shell,rl_sop,minus_G
  use R_lattice,    ONLY:DEV_VAR(g_rot),DEV_VAR(minus_G)
  use vec_operate,  ONLY:iku_v_norm,v_is_zero,sort,degeneration_finder
+ use wave_func,    ONLY:wf_nc_k,E_of_WFs
  use IO_int,       ONLY:io_control
  use IO_m,         ONLY:OP_RD_CL,OP_WR_CL,VERIFY
  use zeros,        ONLY:G_iku_zero,G_mod_zero
@@ -45,6 +46,8 @@ subroutine G_shells_finder()
  !
  integer           :: ID,io_err
  integer, external :: io_GROT
+ !
+ E_of_WFs=iku_v_norm(g_vec(wf_nc_k(1),:))**2/2._SP
  !
  ! I/O (read)
  !============
@@ -95,8 +98,8 @@ subroutine G_shells_finder()
  !
  if(G_mod_zero/=1.E-5) call msg('r','Shells accuracy on Gmod is ',G_mod_zero)
  !
- call degeneration_finder(G_mod,ng_closed,first_G_in_shell,ng_in_shell_TMP,n_g_shells,&
-&                         G_mod_zero,Include_single_values=.TRUE.)
+ call degeneration_finder(ng_closed,first_G_in_shell,ng_in_shell_TMP,n_g_shells,&
+&                        Er=G_mod,deg_accuracy=G_mod_zero,Include_single_values=.TRUE.)
  !
  ! Init
  !

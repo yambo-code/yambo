@@ -183,8 +183,8 @@ subroutine WF_map_perturbative_SOC(kpt,En)
    !
    call sort(E_sorted,indx=E_sort_map)
    !
-   call degeneration_finder(E_sorted,NB_to_map,first_el,n_of_el,n_deg_grp,&
-&                           SOC_split,Include_single_values=.true.)
+   call degeneration_finder(NB_to_map,first_el,n_of_el,n_deg_grp,&
+&                           Er=E_sorted,deg_accuracy=SOC_split,Include_single_values=.true.)
    !
    group_already_mapped=.false.
    !

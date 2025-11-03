@@ -96,8 +96,8 @@ subroutine DIPOLE_build_der_k(Xen,Xk,Dip,direction_is_todo)
      !
      ikbz=Xk%k_table(ik,1)
      !
-     call degeneration_finder(Xen%E(1:Dip%ib(2),ik,i_sp_pol),Dip%ib(2),&
-     &                           first_el_k,n_of_el_k,n_deg_grp_k,deg_thresh,Include_single_values=.true.)
+     call degeneration_finder(Dip%ib(2),first_el_k,n_of_el_k,n_deg_grp_k,&
+     &    Er=Xen%E(Dip%ib(1):Dip%ib_lim(1),ik,i_sp_pol),deg_accuracy=deg_thresh,Include_single_values=.true.)
      !
      deg_table_k=.false.
      do i_grp=1,n_deg_grp_k
@@ -269,8 +269,8 @@ subroutine zeroing_disconnected_blocks(Xen,Xk,nb,ikpbz,i_sp_pol,deg_table_k,deg_
  integer     :: ib,ibp,i_grp,first_el_k(nb(2)-nb(1)+1),n_of_el_k(nb(2)-nb(1)+1),n_deg_grp_k
  logical     :: deg_table_kp(nb(1):nb(2),nb(1):nb(2))
  !
- call degeneration_finder(Xen%E(nb(1):nb(2),Xk%sstar(ikpbz,1),i_sp_pol),nb(2)-nb(1)+1,&
- &                        first_el_k,n_of_el_k,n_deg_grp_k,deg_thresh,Include_single_values=.true.)
+ call degeneration_finder(nb(2)-nb(1)+1,first_el_k,n_of_el_k,n_deg_grp_k,&
+ &    Er=Xen%E(nb(1):nb(2),Xk%sstar(ikpbz,1),i_sp_pol),deg_accuracy=deg_thresh,Include_single_values=.true.)
  !
  deg_table_kp=.false.
  do i_grp=1,n_deg_grp_k

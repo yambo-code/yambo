@@ -342,14 +342,15 @@ contains
     use R_lattice,            only : g_vec, b, ng_vec
     use D_lattice,            only : alat, i_space_inv, i_time_rev
     use wave_func,            only : wf_nc_k, wf_igk, wf_ncx, wf_ng
+    use mod_com2y,            only : ecut_mult_factor
     !
     implicit none
     !
-    integer                       :: i1,i2,i3,n1,n2,n3,max_nx,max_ny,max_nz,npw,igv(3),igv_shift(3),max_size
+    integer                       :: i1,i2,i3,n1,n2,n3,max_nx,max_ny,max_nz,max_n(3),npw,igv(3),igv_shift(3),max_size
     integer                       :: g_lim(6), ig_wf, ng_vec_old, ig, ic, ik, varid
     integer,     allocatable      :: igk(:,:), igk_tmp(:,:), istwfk(:), inv_map_k(:,:), map_gamma(:,:,:)
     integer,     allocatable      :: G_mod_indx(:)
-    logical                       :: gamma_only,l_new
+    logical                       :: gamma_only,l_new,found_max_n(3)
     real(SP)                      :: ecut, ecut_low, ecut_max, norm_2, max_norm_2, b_transpose(3,3), g_vec_tmp1(3), k_shift(3)
     real(SP),    allocatable      :: G_mod(:), g_vec_tmp(:,:)
     integer,   allocatable, target :: reduced_coordinates_of_plane_waves(:,:,:)
@@ -424,6 +425,8 @@ contains
     !
     ecut=(ecut_low+ecut_max)/2._SP
     !
+    call msg("s","Starting generation of g-vectors up to",(/ecut*ecut_mult_factor/),"Ha")
+    !
     max_nx = 0
     max_ny = 0
     max_nz = 0
@@ -435,9 +438,29 @@ contains
     end do
     !write(*,*) max_nx, max_ny, max_nz
     !write(*,*) max_nx, max_ny, max_nz
-    n1 = 5*max_nx+10
-    n2 = 5*max_ny+10
-    n3 = 5*max_nz+10
+    !
+    !look for maximum needed n_i
+    max_n(1)=max_nx
+    max_n(2)=max_ny
+    max_n(3)=max_nz
+    found_max_n=.false.
+    !
+    do i1=1,3
+      do while(.not.found_max_n(i1))
+        max_n(i1)=max_n(i1)+1
+        if(i1==1) igv = [max_n(i1),0,0]
+        if(i1==2) igv = [0,max_n(i1),0]
+        if(i1==3) igv = [0,0,max_n(i1)]
+        g_vec_tmp1 = matmul(b_transpose,igv)
+        norm_2 = (g_vec_tmp1(1)**2 + g_vec_tmp1(2)**2 + g_vec_tmp1(3)**2)/2._SP
+        if (norm_2 > ecut*ecut_mult_factor) found_max_n(i1)=.true.
+      enddo
+    enddo
+    !
+    ! For safety increase by 10% and add 10
+    n1 = nint(1.1_SP*real(max_n(1),SP))+10
+    n2 = nint(1.1_SP*real(max_n(2),SP))+10
+    n3 = nint(1.1_SP*real(max_n(3),SP))+10
     !
     max_size = (2*n1+1)*(2*n2+1)*(2*n3+1)  !max possible number of components
     YAMBO_ALLOC( g_vec_tmp, (max_size,3) )
@@ -450,7 +473,7 @@ contains
           igv = [i1,i2,i3]
           g_vec_tmp1 = matmul(b_transpose,igv)
           norm_2 = (g_vec_tmp1(1)**2 + g_vec_tmp1(2)**2 + g_vec_tmp1(3)**2)/2._SP
-          if (norm_2 > ecut*4._SP) cycle
+          if (norm_2 > ecut*ecut_mult_factor) cycle
           max_norm_2=max(norm_2,max_norm_2)
           npw = npw+1
           igk_tmp(:,npw) = igv

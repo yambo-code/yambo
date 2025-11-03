@@ -17,7 +17,7 @@ subroutine setup(en,q,Xen,Ken,k,Xk)
  use drivers,        ONLY:l_setup
  use C_driver,       ONLY:code_bin
  use parser_m,       ONLY:parser
- use wave_func,      ONLY:wf_ng,wf_ncx,wf_igk
+ use wave_func,      ONLY:wf_ng,wf_ncx,wf_igk,wf_nc_k,E_of_WFs
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,atom_mass,atom_pos,atoms_map,&
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
@@ -254,8 +254,8 @@ subroutine setup(en,q,Xen,Ken,k,Xk)
  !
  call msg('r','nG shells         ',n_g_shells)
  call msg('r','nG charge         ',ng_closed)
- call msg('r','nG WFs            ',wf_ng)
- call msg('r','nC WFs            ',wf_ncx)
+ call msg('r','nG WFs            ',(/wf_ng,wf_nc_k(1)/))
+ call msg('rn','nC WFs           ',wf_ncx)
  !
  ! Indexes of -G. minus_G_index(iG)| G_{minus_G_index(iG)}=-G. When there is no Spatial inversion
  ! the map is built in G_shells_finder
@@ -264,18 +264,32 @@ subroutine setup(en,q,Xen,Ken,k,Xk)
  !
  n_to_print=min(800,n_g_shells)
  if (.not.fat_log) n_to_print=n_to_print/10
+ if (n_to_print>n_g_shells/2) n_to_print=n_g_shells
  !
- call msg('r','G-vecs. in first '//trim(intc(n_to_print))//' shells',' [ Number ] ')
+ call msg('r','G-vecs. in first (and last) '//trim(intc(n_to_print))//' shells',' [ Number ] ')
  do i1=1,n_to_print,9
    call msg('r',' ',ng_in_shell(i1:min(i1+8,n_to_print)) )
  enddo
- if (n_to_print<n_g_shells) call msg('r',"...")
+ if (n_to_print<n_g_shells) then
+   call msg('r',"...")
+   do i1=n_g_shells-n_to_print,n_g_shells,9
+     call msg('r',' ',ng_in_shell(i1:min(i1+8,n_g_shells)) )
+   enddo
+ endif
  !
- call msg('r','Shell energy in first '//trim(intc(n_to_print))//' shells',' [ mHa ] ')
+ call msg('nr','E charge         ',E_of_shell(n_g_shells),' [Ha]')
+ call msg('rn','E WFs            ',E_of_WFs              ,' [Ha]')
+ !
+ call msg('r','Shell energy in first (and last) '//trim(intc(n_to_print))//' shells',' [ mHa ] ')
  do i1=1,n_to_print,9
    call msg('r',' ',E_of_shell(i1:min(i1+8,n_to_print))*1000._SP)
  enddo
- if (n_to_print<n_g_shells) call msg('r',"...")
+ if (n_to_print<n_g_shells) then
+   call msg('r',"...")
+   do i1=n_g_shells-n_to_print,n_g_shells,9
+     call msg('r',' ',E_of_shell(i1:min(i1+8,n_g_shells))*1000._SP)
+   enddo
+ endif
  !
  wf_ng_1st_BZ=maxval(g_rot(:min(wf_ng,ng_closed),:))
  !

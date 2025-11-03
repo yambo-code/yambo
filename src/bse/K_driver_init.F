@@ -15,7 +15,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  use pars,         ONLY:SP,schlen
  use R_lattice,    ONLY:bz_samp
- use electrons,    ONLY:levels,n_sp_pol,n_spin
+ use electrons,    ONLY:levels,n_sp_pol,n_spin,get_spin_majority
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match,STRING_split
@@ -26,6 +26,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use BS,           ONLY:BSE_L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
 &                       BS_perturbative_SOC,l_BS_magnons,l_BS_photolum,BSK_IO_mode,l_BSE_kernel_full,&
 &                       BS_cpl_K_exchange,BS_n_g_exch,BS_res_K_exchange,BS_K_coupling,BS_res_ares_n_mat,&
+&                       BS_cpl_K_corr,BS_res_K_corr,&
 &                       BS_n_eh_spaces,l_BS_ares_from_res,BS_bands,BS_K_anti_resonant,l_BS_res_from_E
  use TDDFT,        ONLY:FXC_is_retarded,FXC_n_g_corr,l_Fxc_from_Vxc
  use drivers,      ONLY:l_col_cut,l_rpa_IP,l_alda_fxc,l_bs_fxc
@@ -182,6 +183,8 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    if (.not.BS_K_coupling) BS_res_ares_n_mat=2
  endif
  !
+ call get_spin_majority(Ken)
+ !
  ! In this case the anti-resonant space is used to build the coupling matrix
  if (BS_K_coupling.and.iq/=1) BS_n_eh_spaces=2
  !
@@ -256,6 +259,14 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  ! CORE Logicals
  !===============
  if (l_rpa_IP.and.STRING_match(BSE_mode,'coupling')) BSE_mode='retarded'
+ !
+ if (any((/BS_res_K_corr,BS_cpl_K_corr,BS_K_is_ALDA/)) ) then
+   if(l_BS_magnons.and.n_sp_pol==2) then
+     BS_res_K_exchange=.FALSE.
+     BS_cpl_K_exchange=.FALSE.
+     BS_n_g_exch=0
+   endif
+ endif
  !
  ! TR-ABS logicals
  !-----------------

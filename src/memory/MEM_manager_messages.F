@@ -7,7 +7,7 @@
 !
 subroutine MEM_manager_messages(what,adding,MEM_now_Kb,where)
  !
- use pars,         ONLY:lchlen
+ use pars,         ONLY:SP,lchlen
  use com,          ONLY:msg,fat_log
  use y_memory,       ONLY:TOT_MEM_Kb,TOT_MEM_Kb_MEMSTAT,TOT_MEM_Kb_SAVE,MEM_treshold,&
 &                       MEM_jump_treshold,mem_string,HOST_,DEV_
@@ -42,10 +42,10 @@ subroutine MEM_manager_messages(what,adding,MEM_now_Kb,where)
    msg_="[MEMORY]"
    if (     adding) msg_=trim(msg_)//" Alloc "//what
    if (.not.adding) msg_=trim(msg_)//"  Free "//what
-   msg_=trim(msg_)//"("//trim(mem_string(MEM_now_Kb))//")"
-   msg_=trim(msg_)//trim(label)//" TOTAL: "//trim(mem_string(TOT_MEM_Kb(where)))//" (traced)"
+   msg_=trim(msg_)//"("//trim(mem_string(real(MEM_now_Kb,SP)))//")"
+   msg_=trim(msg_)//trim(label)//" TOTAL: "//trim(mem_string(real(TOT_MEM_Kb(where),SP)))//" (traced)"
    if (TOT_MEM_Kb_MEMSTAT(where)>0) then
-     msg_=trim(msg_)//" "//trim(mem_string(TOT_MEM_Kb_MEMSTAT(where)))//" (memstat)"
+     msg_=trim(msg_)//" "//trim(mem_string(real(TOT_MEM_Kb_MEMSTAT(where),SP)))//" (memstat)"
    endif
    call msg("s",trim(msg_))
  endif
@@ -54,9 +54,9 @@ subroutine MEM_manager_messages(what,adding,MEM_now_Kb,where)
  if (deliver_a_msg) then
    call MEM_STAT_update( )
    msg_="[MEMORY] In use: "
-   msg_=trim(msg_)//trim(label)//" TOTAL: "//trim(mem_string(TOT_MEM_Kb(where)))//" (traced)"
+   msg_=trim(msg_)//trim(label)//" TOTAL: "//trim(mem_string(real(TOT_MEM_Kb(where),SP)))//" (traced)"
    if (TOT_MEM_Kb_MEMSTAT(where)>0) then
-     msg_=trim(msg_)//" "//trim(mem_string(TOT_MEM_Kb_MEMSTAT(where)))//" (memstat)"
+     msg_=trim(msg_)//" "//trim(mem_string(real(TOT_MEM_Kb_MEMSTAT(where),SP)))//" (memstat)"
    endif
    call msg("s",trim(msg_))
    TOT_MEM_Kb_SAVE(where)=TOT_MEM_Kb(where)

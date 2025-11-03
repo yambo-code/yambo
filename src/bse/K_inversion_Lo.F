@@ -46,7 +46,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo)
  !
  type(w_samp)     :: W_mins,W_plus
  integer          :: iw_ref,i_bsk,i_res,i_cpl,i_Lo_trans,ik_bz,iv,ic,iw,i_sp_c,i_sp_v,ik_ibz,&
- &                   i_res_ares,i_para,i_loop,n_loop,i_eps,i_Lo,transition(4)
+ &                   i_res_ares,i_para,i_loop,n_loop,i_eps,i_Lo,transition(5)
  complex(SP)      :: E_plus_W,residual
  complex(SP)      :: SF(W%n_freqs,2)
  character(schlen):: LT_title
@@ -125,7 +125,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo)
        !
        i_Lo_trans=i_res
        i_Lo      =1
-       transition=(/ik_bz,iv,ic,i_sp_c/)
+       transition=(/ik_bz,iv,ic,i_sp_c,i_sp_v/)
        !
        if (BS_n_eh_spaces==2) then
          if ( i_res_ares==1) i_Lo      =1

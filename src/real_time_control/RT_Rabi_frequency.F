@@ -70,8 +70,8 @@ function RT_Rabi_frequency(En,i_field,l_print_rabi)
    do ik=1,nkibz
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      ik_mem=PAR_Xk_ibz_index(ik)
-     call degeneration_finder(En%E(RT_bands(1):RT_bands(2),ik,i_sp_pol),RT_nbands,first_el,n_of_el,n_deg_grp, &
-     &                        0.0001_SP/HA2EV,Include_single_values=.true.)
+     call degeneration_finder(RT_nbands,first_el,n_of_el,n_deg_grp,Er=En%E(RT_bands(1):RT_bands(2),ik,i_sp_pol), &
+     &                        deg_accuracy=0.0001_SP/HA2EV,Include_single_values=.true.)
      do i_grp1=1,n_deg_grp
        ib1=first_el(i_grp1)+RT_bands(1)-1
        do i_grp2=i_grp1+1,n_deg_grp

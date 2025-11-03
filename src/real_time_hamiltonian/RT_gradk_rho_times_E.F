@@ -21,7 +21,7 @@ subroutine RT_gradk_rho_times_E_wrong(ik,i_sp_pol,H_nl_sc,dG_in,A_input,Xk,Xen)
  use real_time,      ONLY:l_length_grad_k,RT_bands
  use fields,         ONLY:gauge_field
  use real_time,      ONLY:RT_bands,NE_i_time,NE_i_last_field
- use vec_operate,    ONLY:k_periodic_idx,degeneration_finder
+ use vec_operate,    ONLY:k_periodic_idx
  use matrix_operate, ONLY:hermitian
  use DIPOLES,        ONLY:DIP_S,DIP_iR,l_force_SndOrd
  use electrons,      ONLY:levels,n_sp_pol
@@ -282,8 +282,8 @@ subroutine RT_gradk_rho_times_E(ik,i_sp_pol,H_nl_sc,dG_in,A_input,Xk,Xen)
  !
  ! define degeneration table at ik
  !
- call degeneration_finder(Xen%E(nb(1):nb(2),ik,i_sp_pol),nb(2)-nb(1)+1,&
- &                           first_el_k,n_of_el_k,n_deg_grp_k,deg_thresh,Include_single_values=.true.)
+ call degeneration_finder(nb(2)-nb(1)+1,first_el_k,n_of_el_k,n_deg_grp_k,&
+ &    Er=Xen%E(nb(1):nb(2),ik,i_sp_pol),deg_accuracy=deg_thresh,Include_single_values=.true.)
  !
  deg_table_k=.false.
  do i_grp=1,n_deg_grp_k

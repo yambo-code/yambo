@@ -60,7 +60,10 @@ subroutine K_IP_sort(what,I,N,Indexes,vI,El,vC)
  allocate(n_of_el(EDIM))
  !
  ! Threshold is 1meV
- call degeneration_finder(vR(:EDIM),EDIM,first_el,n_of_el,n_deg_grp,0.001_SP/HA2EV,Include_single_values=.TRUE.)
+ call degeneration_finder(EDIM,first_el,n_of_el,n_deg_grp,&
+ &    Er=vR(:EDIM),deg_accuracy=0.001_SP/HA2EV,Include_single_values=.TRUE.)
+ !
+ if (any(n_of_el(:)>18)) call warning("More than 18 degenerate transitions detected. Printing only first 18")
  !
  l_print_warning=.false.
  !

@@ -167,8 +167,8 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
        !
        wf_ng_eff = min(wf_ng_save,wf_ng_shifted)
        !
-       call degeneration_finder(Xen%E(Dip%ib(1):Dip%ib_lim(1),ik,i_sp_pol),Dip%ib_lim(1)-Dip%ib(1)+1,&
-       &                           first_el,n_of_el,n_deg_grp,Dip%Energy_threshold,Include_single_values=.true.)
+       call degeneration_finder(Dip%ib_lim(1)-Dip%ib(1)+1,first_el,n_of_el,n_deg_grp,&
+       &    Er=Xen%E(Dip%ib(1):Dip%ib_lim(1),ik,i_sp_pol),deg_accuracy=Dip%Energy_threshold,Include_single_values=.true.)
        !
        ! Notice that here I sum over the shifted subspace, assuming that it has equal or less degeneracies than the non shifted subspace
        !
@@ -534,8 +534,8 @@ subroutine DIPOLE_shifted_grids_as_derk(Xen,Xk,Dip)
       call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='G',&
  &           title='-Oscillators/G space/Shifted',force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
       !
-      call degeneration_finder(Xen%E(Dip%ib(1):Dip%ib_lim(1),ik,i_sp_pol),Dip%ib_lim(1)-Dip%ib(1)+1,&
-      &                           first_el,n_of_el,n_deg_grp,Dip%Energy_threshold,Include_single_values=.true.)
+      call degeneration_finder(Dip%ib_lim(1)-Dip%ib(1)+1,first_el,n_of_el,n_deg_grp,&
+      &    Er=Xen%E(Dip%ib(1):Dip%ib_lim(1),ik,i_sp_pol),deg_accuracy=Dip%Energy_threshold,Include_single_values=.true.)
       !
       deg_table_k=.false.
       do i_grp=1,n_deg_grp

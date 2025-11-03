@@ -21,7 +21,8 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  use units,         ONLY:HA2EV
  use YPPm,          ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,coo_out, &
 &                        BANDS_steps,INTERP_grid,K_transform,CIRCUIT_k,DOS_E_step, &
-&                        DOS_E_steps,DOS_broadening,USER_k,l_exc_occ_interp,EXC_min
+&                        DOS_E_steps,DOS_broadening,USER_k,l_exc_occ_interp,EXC_min,&
+&                        exc_kind
  use parser_m,      ONLY:parser
  use com,           ONLY:msg,of_open_close
  use stderr,        ONLY:intc
@@ -32,7 +33,6 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
 #if defined _YPP_ELPH
  use EXCPH,         ONLY:alphaQ
 #endif
-
  use y_memory_alloc
  !
  implicit none
@@ -66,7 +66,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  YAMBO_ALLOC(values,(EXCITONS_n_user_states+4))
  allocate(headings(EXCITONS_n_user_states+4))
  !
- ! Read and interpolate excitons dispersion
+ ! Read and interpolate excitons/magnons dispersion
  !
  ID_INTERP_EXC=1
  ID_INTERP_OCC=2
@@ -88,7 +88,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  !
  if(USER_k%nbz>0.and.BANDS_steps>0)  then
    !
-   call msg('s','Exciton bands')
+   call msg('s',exc_kind//' bands')
    !   
    YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,CIRCUIT_k%nibz))      
    call INTERPOLATION_BZ(K=CIRCUIT_k,NK=CIRCUIT_k%nbz,R1D=BSE_interp_E,ID=ID_INTERP_EXC)
@@ -128,7 +128,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  !
  if (GRID_interpolate) then
    !      
-   call msg('s','Exciton Grid')
+   call msg('s',exc_kind//' Grid')
    !
    GRID_q%description="INTERP"
    call INTERPOLATION_grid(GRID_q,'i',INTERP_grid)
@@ -145,7 +145,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  !
  if(l_prt_dos) then
    !      
-   call msg('s','Exciton Density of States')
+   call msg('s',exc_kind//' Density of States')
    !
    call electrons_dos_setup(BSE_interp_E, dos_E, (/1,EXCITONS_n_user_states/))
    !
@@ -182,7 +182,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
    subroutine print_DOS()
      implicit none
      ! 
-     file_name="excitons_dos"
+     file_name=trim(exc_kind)//"s_dos"
      call of_open_close(trim(file_name),'ot')
      headings(1)=" E [eV] "
      headings(2)=" Dos    "
@@ -209,7 +209,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
      headings(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=&
 &           (/"q_x ("//trim(coo_out)//")","q_y ("//trim(coo_out)//")","q_z ("//trim(coo_out)//")"/)
      !
-     file_name="excitons_interpolated"
+     file_name=trim(exc_kind)//"s_interpolated"
      call of_open_close(trim(file_name),'ot')
      call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
      call msg('o '//trim(file_name),"#")
@@ -271,7 +271,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
      headings(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=&
 &           (/"q_x ("//trim(coo_out)//")","q_y ("//trim(coo_out)//")","q_z ("//trim(coo_out)//")"/)
      !
-     file_name="excitons_built_in"
+     file_name=trim(exc_kind)//"s_built_in"
      call of_open_close(trim(file_name),'ot')
      call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
      call msg('o '//trim(file_name),"#")
@@ -324,7 +324,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
      headings(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=&
 &           (/"q_x ("//trim(coo_out)//")","q_y ("//trim(coo_out)//")","q_z ("//trim(coo_out)//")"/)
      !
-     file_name="excitons_interpolated_IBZ"
+     file_name=trim(exc_kind)//"s_interpolated_IBZ"
      call of_open_close(trim(file_name),'ot')
      call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
      call msg('o '//trim(file_name),"#")

@@ -128,8 +128,8 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
      call WF_load(WF_k,0,1,blim,(/ik,ik/),(/i_sp_pol,i_sp_pol/),&
      & space='G',title='-WF_phases',quiet=ifrag>1,keep_states_to_load=.true.)
      !
-     call degeneration_finder(En%E(blim(1):blim(2),ik,i_sp_pol),nb,&
-     &                           first_el,n_of_el,n_deg_grp,0.0001/HA2EV,Include_single_values=.true.)
+     call degeneration_finder(nb,first_el,n_of_el,n_deg_grp,Er=En%E(blim(1):blim(2),ik,i_sp_pol),&
+     &                deg_accuracy=0.0001/HA2EV,Include_single_values=.true.)
      !
      do i_grp=1,n_deg_grp
        do iby_phase=1,n_of_el(i_grp)

@@ -22,7 +22,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  use ALLOC,         ONLY:DIPOLE_ALLOC_global
  use stderr,        ONLY:STRING_match
  use interfaces,    ONLY:WF_load,WF_free
- use electrons,     ONLY:levels,spin
+ use electrons,     ONLY:levels,spin,i_spin_majority,i_spin_minority
  use X_m,           ONLY:X_t,global_gauge,i_G_shift
  use DIPOLES,       ONLY:DIPOLE_t
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_Q_dir,BSS_E_dir,BSS_P_dir
@@ -233,17 +233,18 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
          DIP_Splus = 0.5_SP*(DIP_expanded(1)+cI*DIP_expanded(2))  ! S+ for c\dn> transitions: <v\up|c\dn>
          DIP_Smins = 0.5_SP*(DIP_expanded(1)-cI*DIP_expanded(2))  ! S- for c\up> transitions: <v\dn|c\up>
          !
-         BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=conjg(DIP_Splus)   ! S- for |c\dn> trans: <c\dn|S-|v\up>(i_sp_pol_v) = conjg(<v\up|S+|c\dn>(i_sp_pol_c))
-         BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=conjg(DIP_Smins)   ! S+ for |c\up> trans: <c\dn|S+|v\up>(i_sp_pol_v) = conjg(<v\dn|S-|c\up>(i_sp_pol_c))
+         BS_T_grp(i_T_g)%dipoles_mag(i_spin_majority,i_T,1)=conjg(DIP_Splus)   ! S- for |c\dn> trans: <c\dn|S-|v\up>(i_sp_pol_v) = conjg(<v\up|S+|c\dn>(i_sp_pol_c))
+         BS_T_grp(i_T_g)%dipoles_mag(i_spin_minority,i_T,1)=conjg(DIP_Smins)   ! S+ for |c\up> trans: <c\dn|S+|v\up>(i_sp_pol_v) = conjg(<v\dn|S-|c\up>(i_sp_pol_c))
                                                                  !      or the right R residual associated to (eps_c\dn-eps_v\up)
                                                                  ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c) = conjg(<c\up|S+|v\dn>(i_sp_pol_v))
                                                                  ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c) = conjg(<c\dn|S-|v\up>(i_sp_pol_v))
          if (BS_K_coupling.and.l_BS_ares_from_res) then          ! This is the right A residual associated to (eps_v\up-eps_c\dn)
-           BS_T_grp(i_T_g)%dipoles_mag(1,i_T,2)=DIP_Smins        ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c)
-           BS_T_grp(i_T_g)%dipoles_mag(2,i_T,2)=DIP_Splus        ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c)
+           BS_T_grp(i_T_g)%dipoles_mag(i_spin_majority,i_T,2)=DIP_Smins        ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c)
+           BS_T_grp(i_T_g)%dipoles_mag(i_spin_minority,i_T,2)=DIP_Splus        ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c)
          endif
          !
-         endif
+       endif
+       !
        !
        ! Magnetoelectric spin part
        if (l_BS_mespin) then

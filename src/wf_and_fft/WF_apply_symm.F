@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS AF
 !
+! headers
+!
+#include<yambo_wfs.h>
+!
 subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
  !
  ! INCLUDED in: WF_apply_symm_incl.F 
@@ -17,8 +21,6 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
  use electrons,     ONLY:n_spinor
  use D_lattice,     ONLY:nsym,DEV_VAR(spin_sop),i_time_rev,idt_index
  use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_conjg_d
- !
-#include<yambo_wfs.h>
  !
  implicit none
  !

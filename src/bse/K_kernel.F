@@ -199,7 +199,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
    l_bs_tddft_wf_in_loop= ((iq==1) .and. (Xk%nbz>=1).and.(.not.trim(PARALLEL_default_mode)=="workload") ) .or. &
    &                      ((iq> 1) .and.                       trim(PARALLEL_default_mode)=="KQmemory" )
-   call msg('r','[BSE] ALDA        components ',BS_n_g_fxc)
+   call msg('r','[BSE] ALDA     components ',BS_n_g_fxc)
  endif
  !
  if (l_bs_corr) then
@@ -216,8 +216,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    call parser('SkipPhases',l_skip_phases)
    call msg('r','[BSE] Correlation components ',(/BS_n_g_W,O_ng/))
  endif
- !
- if (BS_K_is_ALDA) call msg('r','[BSE] ALDA     components ',BS_n_g_fxc)
  !
  call K_restart(iq,X,BS_ID(1),BS_ID(2),BS_ID(3),l_partial_kernel_loaded)
  ID_head =BS_ID(1)

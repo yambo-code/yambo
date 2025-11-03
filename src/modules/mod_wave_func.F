@@ -3,12 +3,13 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM DS
+! Authors (see AUTHORS file for details): AM DS AF
 !
 ! headers
 !
 #include <dev_defs.h>
 #include <y_memory.h>
+#include <yambo_wfs.h>
 !
 module wave_func
  !
@@ -25,12 +26,20 @@ module wave_func
    integer              :: sp_pol(2) ! sp_pol_range
    integer              :: N         ! states 
    character(1)         :: space
-   complex(SP), allocatable :: c(:,:,:)
-   integer    , allocatable :: index(:,:,:)
-   logical    , allocatable :: state(:,:,:)
-   logical                  :: to_load = .TRUE.
-   complex(SP), allocatable DEV_ATTR :: c_d(:,:,:)
+   WF_RSPACE(SP), allocatable :: r(:,:,:)
+   complex(SP),   allocatable :: c(:,:,:)
+   integer    ,   allocatable :: index(:,:,:)
+   logical    ,   allocatable :: state(:,:,:)
+   logical                    :: to_load = .TRUE.
+   WF_RSPACE(SP), allocatable DEV_ATTR :: r_d(:,:,:)
+   complex(SP),   allocatable DEV_ATTR :: c_d(:,:,:)
  end type WAVEs
+ !
+#if defined _GAMMA_ONLY
+ real(SP), parameter    :: wfZERO=0._SP
+#else
+ complex(SP), parameter :: wfZERO=cmplx(0._SP,0._SP)
+#endif
  !
  ! Buffered WFs
  !
@@ -79,6 +88,13 @@ module wave_func
  !
  integer,    allocatable:: wf_nc_k(:)
  !
+ ! Tho map to reduce fft_size
+ !
+ real(SP)               :: rho_map_thresh
+ integer                :: rho_map_size
+ integer,    allocatable:: rho_map(:)
+ integer,    allocatable:: rho_map_inv(:)
+ !
  ! Table correspondance G-vec <-> Components: G_ic = wf_igk(ic,ik)
  !
  integer,    allocatable:: wf_igk(:,:)
@@ -116,7 +132,6 @@ module wave_func
      type(WAVEs):: WF_in,WF_out
      logical :: lpres
      !
-     YAMBO_ALLOC_MOLD(WF_out%c,WF_in%c)
      YAMBO_ALLOC(WF_out%index,(WF_in%b(1):WF_in%b(2),WF_in%k(1):WF_in%k(2),WF_in%sp_pol(1):WF_in%sp_pol(2)))
      !
      WF_out%b      = WF_in%b
@@ -125,13 +140,27 @@ module wave_func
      WF_out%N      = WF_in%N
      WF_out%space  = WF_in%space
      WF_out%to_load= WF_in%to_load
-     WF_out%c      = WF_in%c
      WF_out%index  = WF_in%index
+     !
+     if (allocated(WF_in%c)) then
+       YAMBO_ALLOC_MOLD(WF_out%c,WF_in%c)
+       WF_out%c=WF_in%c
+     endif
+     if (allocated(WF_in%r)) then
+       YAMBO_ALLOC_MOLD(WF_out%r,WF_in%r)
+       WF_out%r=WF_in%r
+     endif
      !
      lpres=have_gpu.and.devxlib_mapped(DEV_VAR(WF_in%c))
 #ifdef _GPU
      if (lpres) then
        YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(WF_out%c),WF_in%c)
+     endif
+#endif
+     lpres=have_gpu.and.devxlib_mapped(DEV_VAR(WF_in%r))
+#ifdef _GPU
+     if (lpres) then
+       YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(WF_out%r),WF_in%r)
      endif
 #endif
    end subroutine

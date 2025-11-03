@@ -17,7 +17,6 @@ subroutine fft_setup(iG_max_in,iGo_max,ONLY_SIZE)
  use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv,i_time_rev,alat
  use R_lattice,      ONLY:b,g_vec,ng_closed
  use matrix_operate, ONLY:m3inv
- use wave_func,      ONLY:wf_ng
  use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_rot_r_inv,&
 &                         fft_norm,fft_g_table,fft_multiplier,modx,&
 &                         DEV_VAR(fft_g_table),DEV_VAR(fft_rot_r),DEV_VAR(fft_rot_r_inv)
@@ -25,6 +24,7 @@ subroutine fft_setup(iG_max_in,iGo_max,ONLY_SIZE)
 #if defined _FFTQE
  use fft_base,       ONLY:dffts
 #endif
+ use wave_func,      ONLY:wf_ng,rho_map_size,rho_map
  use timing_m,       ONLY:timing
  use gpu_m,          ONLY:have_gpu,gpu_devsync
  use devxlib,        ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memset_d
@@ -227,6 +227,7 @@ subroutine fft_setup(iG_max_in,iGo_max,ONLY_SIZE)
      i4=1
      cycle
    endif
+   if(.not.allocated(rho_map)) rho_map_size=fft_size
    !
    YAMBO_FREE_GPU(DEV_VAR(fft_rot_r))
    YAMBO_FREE(fft_rot_r)

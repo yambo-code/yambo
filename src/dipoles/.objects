@@ -1,7 +1,4 @@
-MAGN_objects = DIPOLE_orb_magn_forCD.o
-#if defined _RT
-MAGN_objects = DIPOLE_orbital_magnetization.o
-#endif
+MAGN_objects = DIPOLE_orbital_magnetization_cd.o DIPOLE_orbital_magnetization_rt.o
 #if defined _SC
 SC_objects = DIPOLE_SC_rotate.o
 #endif

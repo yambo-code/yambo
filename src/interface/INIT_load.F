@@ -27,7 +27,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        QP_G_er,QP_G_ir,QP_G_dr,QP_Sc_steps,QP_G_solver,&
 &                        QP_dSc_delta,QP_G_Zoom_treshold,GF_energy_range_mode
  use LIVE_t,        ONLY:nhash
- use wave_func,     ONLY:wf_ng,wf_ng_1st_BZ,WF_load_mode
+ use wave_func,     ONLY:wf_ng,wf_ng_1st_BZ,rho_map_thresh,WF_load_mode
  use D_lattice,     ONLY:Tel,non_periodic_directions,molecule_position,Bose_Temp
  use D_lattice,     ONLY:Boltz_Temp
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,RIM_W_ng,rimw_type,&
@@ -329,6 +329,7 @@ call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSENGfxc','[BSK] Fxc components', BS_n_g_fxc,G_unit,verb_level=V_resp)
+ call it(defs,'RhoMapThresh','[BSK] Density cutoff for <Fxc> integrals region',rho_map_thresh,verb_level=V_resp)
  call it(defs,'FxcMode', '[TDDFT] ("G-XXX" or "R-XXX" with XXX=def/full/cut_Gmax/cut_GmGp") ',FXC_mode,verb_level=V_resp)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  call it(defs,'BSKCut',  '[BSK] Cutoff on the BSE Kernel, 0=full 1=none',BS_K_cutoff,verb_level=V_resp)
@@ -338,7 +339,7 @@ call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level
  call it('f',defs,'NoCondSumRule' ,'[BSE/X] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
  call it('f',defs,'MetDamp' ,      '[BSE] Define '//slash//'w+=sqrt('//slash//'w*('//slash//'w+i'//slash//'eta))',verb_level=V_resp)
  call it(defs,'BSSmod',    '[BSS] (h)aydock/(d)iagonalization/(s)lepc/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
- call it(defs,'BSEprop',   '[BSS] Can be any among abs/jdos/kerr/asymm/anHAll/magn/dich/photolum/esrt',BSE_prop)
+ call it(defs,'BSEprop',   '[BSS] Can be any among abs/jdos/kerr/asymm/anHAll/magn/dich/photolum/esrt/MEspin/MEorb',BSE_prop)
  call it(defs,'BSEdips',   '[BSS] Can be "trace/none" or "xy/xz/yz" to define off-diagonal rotation plane',BSE_dipole_geometry)
  call it(defs,'BSSldiaLib','[BSS] Library used with ldiago solver `(s)calapack/(e)lpa`',BSS_ldiago_solver)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)

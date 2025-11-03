@@ -28,7 +28,7 @@ subroutine V_mean_potential(ik,i_sp_pol,WFo)
  !
  ! Work Space
  !
- integer    :: ib,ifft,ir,ibp
+ integer    :: ib,i_wf,ir,ibp
  complex(SP):: Sigma_times_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  !
  Sigma_Times_R=cZERO
@@ -56,16 +56,16 @@ subroutine V_mean_potential(ik,i_sp_pol,WFo)
    !
    do ibp=SC_bands(1),SC_bands(2)
      !
-     ifft=WFo%index(ibp,ik,1)
+     i_wf=WFo%index(ibp,ik,1)
      !
-     V_mean(:,ib)=V_mean(:,ib)+WFo%c(:,1,ifft)*Sigma_times_R(ibp,ib)
+     V_mean(:,ib)=V_mean(:,ib)+WFo%r(:,1,i_wf)*Sigma_times_R(ibp,ib)
      !
    enddo
    !
-   ifft=WFo%index(ib,ik,1)
+   i_wf=WFo%index(ib,ik,1)
    !
    do ir=1,fft_size
-     V_mean(ir,ib)=V_mean(ir,ib)/WFo%c(ir,1,ifft)
+     V_mean(ir,ib)=V_mean(ir,ib)/WFo%r(ir,1,i_wf)
    enddo
    !
  enddo

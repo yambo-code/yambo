@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
-subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
+subroutine Dipole_orbital_magnetization_cd(Xen,Xk,Dip)
  !
  ! This routine returns <L>
  !
@@ -15,11 +15,11 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
  use vec_operate,         ONLY:cross_product
  use R_lattice,           ONLY:bz_samp
- use DIPOLES,             ONLY:DIP_iR,DIP_orbital,DIPOLE_t
+ use DIPOLES,             ONLY:DIP_iR,DIP_orbital,DIPOLE_t,DIP_v
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
 &                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
- use timing_m,           ONLY:timing
+ use timing_m,            ONLY:timing
  !
  implicit none
  !
@@ -30,16 +30,15 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
  ! Work Space
  !
  integer                      :: ik,ic,iv,ib,i_sp_pol,n_LT_steps,ik_mem
- real(SP)                     :: Eb,Ev,Ec
- complex(SP)                  :: DIP_pos(3,2),DIP_tmp(3)
+ complex(SP)                  :: DIP_x_loc(3),DIP_v_loc(3)
  !
- call timing("DIPOLE_orbital_M",OPR="start")
+ call timing("DIPOLE_orbital_M_CD",OPR="start")
  !
  n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
 &                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
  !
- if (n_LT_steps>0) call live_timing('Orbital magnetization',n_LT_steps)
+ if (n_LT_steps>0) call live_timing('Orbital magnetization (CD)',n_LT_steps)
  !
  ! Main loop over k in IBZ
  !
@@ -53,39 +52,30 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
      !
      ik_mem=PAR_DIPk_ibz_index(ik)
      ! 
+     !> @var ib(1)  lowest valence, ib(2)     upper conduction
+     !> @var ib_lim(1) top valence, ib_lim(2) bottom conduction
+     !
      do iv=Dip%ib(1),Dip%ib_lim(1) 
        !
        if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
-       !
-       Ev=Xen%E(iv,ik,i_sp_pol)
-       if (allocated(Xen%Eo)) Ev=Xen%Eo(iv,ik,i_sp_pol)
        !
        do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
          !
          if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
          !
-         Ec=Xen%E(ic,ik,i_sp_pol)
-         if (allocated(Xen%Eo)) Ec=Xen%Eo(ic,ik,i_sp_pol)
-         !
          do ib=Dip%ib(1),Dip%ib(2)
            !
-           Eb=Xen%E(ib,ik,i_sp_pol)
-           if (allocated(Xen%Eo)) Eb=Xen%Eo(ib,ik,i_sp_pol)
+           ! conjg because of how cross_product is coded in mod_vec_operate.F
+           DIP_x_loc(:)=conjg(-cI*DIP_iR(:,ib,iv,ik_mem,i_sp_pol))
            !
-           if (iv< ib) DIP_pos(:,1)=conjg(-cI*DIP_iR(:,ib,iv,ik_mem,i_sp_pol))
-           if (iv>=ib) DIP_pos(:,1)=      -cI*DIP_iR(:,iv,ib,ik_mem,i_sp_pol)
-           if (ic< ib) DIP_pos(:,2)=conjg(-cI*DIP_iR(:,ib,ic,ik_mem,i_sp_pol))
-           if (ic>=ib) DIP_pos(:,2)=      -cI*DIP_iR(:,ic,ib,ik_mem,i_sp_pol)
+           DIP_v_loc(:)=DIP_v(:,ic,ib,ik_mem,i_sp_pol)
            !
-           DIP_tmp=-cI*cross_product(DIP_pos(:,1),DIP_pos(:,2))
+           DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)=&
+&                   DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)+cross_product(DIP_x_loc,DIP_v_loc)
            !
-           ! Local part
-           !
-           DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)+Eb*DIP_tmp
-           !
-           ! Itinerant part
-           !
-           DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,2)=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,2)+(Ev+Ec)/2._SP*DIP_tmp
+           ! DEBUG <
+           !write(*,*) "[DIP] writing DIP_orbital(..,ic,iv,ik,,) values"
+           ! DEBUG >
            !
          enddo
          !
@@ -100,6 +90,6 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
  !
  call live_timing()
  !
- call timing("DIPOLE_orbital_M",OPR="stop")
+ call timing("DIPOLE_orbital_M_CD",OPR="stop")
  !
-end subroutine Dipole_orbital_magnetization
+end subroutine Dipole_orbital_magnetization_cd

@@ -39,14 +39,18 @@ subroutine WF_free(WF,keep_fft,keep_states_to_load)
  if (pp_is_uspp) call PP_uspp_free()
  !
  if (have_gpu) then
-   if (.not. ( allocated(WF%c) .eqv. devxlib_mapped(DEV_VAR(WF%c)) ) ) &
-&    call error("[WF] inconsistent alloc of GPU wfcs")
+   if (.not. ( allocated(WF%c) .eqv. allocated(WF%c_d) ) ) &
+&    call error("[WF] inconsistent alloc of GPU wfcs in G/C sapce")
+   if (.not. ( allocated(WF%r) .eqv. allocated(WF%r_d) ) ) &
+&    call error("[WF] inconsistent alloc of GPU wfcs in R sapce")
  endif
  !
- if (.not.allocated(WF%c)) return
+ if (.not.(allocated(WF%c).or.allocated(WF%r))) return
  !
  YAMBO_FREE_GPU(DEV_VAR(WF%c))
  YAMBO_FREE(WF%c)
+ YAMBO_FREE_GPU(DEV_VAR(WF%r))
+ YAMBO_FREE(WF%r)
  YAMBO_FREE(WF%state)
  YAMBO_FREE(WF%index)
  !

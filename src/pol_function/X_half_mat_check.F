@@ -19,8 +19,6 @@ subroutine X_half_mat_check(Xen,Xk,Xw)
  type(bz_samp),intent(in)   :: Xk
  type(w_samp) ,intent(in)   :: Xw
  !
- call WF_spatial_inversion(Xen,Xk)
- !
  if (i_space_inv==1) then
    X_FILL_UP_matrix_only= .TRUE.
  else

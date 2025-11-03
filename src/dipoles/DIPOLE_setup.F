@@ -11,7 +11,8 @@ subroutine DIPOLE_setup(Dip)
  use DIPOLES,        ONLY:DIPOLE_t,x_space_obs,g_space_obs,covariant_obs,shifted_grids_obs,&
 &                         der_k_obs,specific_obs,eval_OVERLAPS
  use IO_m,           ONLY:io_DIP
- use BS,             ONLY:BSE_prop,l_BS_magnons,l_BS_dichroism,l_BS_photolum
+ use BS,             ONLY:BSE_prop,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
+&                         l_BS_mespin,l_BS_meorb
  use electrons,      ONLY:n_spin,n_spinor
  use parser_m,       ONLY:parser
  use stderr,         ONLY:STRING_same,STRING_match
@@ -46,12 +47,21 @@ subroutine DIPOLE_setup(Dip)
  l_BS_magnons=   (index(BSE_prop,'magn')/=0)
  l_BS_dichroism= (index(BSE_prop,'dich')/=0)
  l_BS_photolum=  (index(BSE_prop,'photolum')/=0)
+ l_BS_mespin=    (index(BSE_prop,'MEspin')/=0)
+ l_BS_meorb=     (index(BSE_prop,'MEorb')/=0)
  call parser('ImposeAsymBSE',l_flag)
  if(.not.l_flag) call parser('ImposeFullBSE',l_flag)
  !
  ! Bands ordering
  !----------------
- if (l_BS_dichroism.or.l_BS_magnons .or. l_BS_photolum .or. l_flag) Dip%bands_ordered=.false.
+ if (l_BS_dichroism.or. &
+&    l_BS_magnons  .or. &
+&    l_BS_photolum .or. &
+&    l_flag        .or. &
+&    l_BS_meorb) then
+  Dip%bands_ordered=.false.
+endif
+ !
 #if defined _SLEPC && !defined _NL
  !if ( index(BSS_mode,'s')/=0 )  Dip%bands_ordered=.false.
 #endif
@@ -136,17 +146,22 @@ subroutine DIPOLE_setup(Dip)
    if (STRING_match(Dip%computed,"spin").or.l_BS_magnons) g_space_obs=trim(g_space_obs)//" P_spinor"
 #endif
  endif
- ! ...M_spin, M_orb, M_iti, M_orb_CD
+ ! ...M_spin, M_orb (CD or RT version), M_iti
  specific_obs=""
  if (n_spin>1) then
-   if (STRING_match(Dip%computed,"spin").or.l_BS_magnons) specific_obs=" M_spin"
-   if (STRING_match(Dip%computed,"orb")) specific_obs=trim(specific_obs)//" M_orb M_it"
+   if (STRING_match(Dip%computed,"spin").or.&
+       l_BS_magnons.or.&
+       l_BS_mespin) specific_obs=" M_spin"
+   if (STRING_match(Dip%computed,"orb")) then 
+     specific_obs=trim(specific_obs)//" M_orbRT M_it"
+   endif
 #if defined _RT
    ! Always force all dipoles in real-time case
-   if (l_real_time) specific_obs=" M_spin M_orb M_it"
+   if (l_real_time) specific_obs=" M_spin M_orbRT M_it"
 #endif
  endif
- if (l_BS_dichroism) specific_obs=trim(specific_obs)//" M_CD_orb"
+ if (l_BS_dichroism) specific_obs=trim(specific_obs)//" M_orbCD"
+ if (l_BS_meorb) specific_obs=trim(specific_obs)//" M_orbRT M_it"
  ! 
  ! Computed components
  !---------------------

@@ -19,13 +19,14 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use BS_solvers,     ONLY:BSS_desc,BSS_free,BS_mat,run_Haydock,load_Diago,&
 &                         run_inversion,run_Diago,run_Slepc,BSS_kernel_IO_on_the_fly
  use BS,             ONLY:BS_K_has_been_calculated_loaded,BS_ID,BS_perturbative_SOC,&
-&                         l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_jdos
+&                         l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,&
+&                         l_BS_mespin,l_BS_meorb,l_BS_jdos
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_int,         ONLY:IO_and_Messaging_switch
  use linear_algebra, ONLY:INV,DIAGO
  use PHOTOLUM,       ONLY:BSS_PL_free
  use MAGNONS,        ONLY:BSS_MAGN_free
- use DICHROISM,      ONLY:BSS_DICH_free
+ use DICHROISM,      ONLY:BSS_DICH_free,BSS_MEspin_free,BSS_MEorb_free
  use y_memory_alloc
  !
  implicit none
@@ -120,6 +121,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    if (l_BS_kerr)    call K_Haydock(iq,W_bss,"kerr",Xk)
    if (l_BS_magnons) call K_Haydock(iq,W_bss,"magnons",Xk)
    if (l_BS_dichroism) call K_Haydock(iq,W_bss,"dichroism",Xk)
+   if (l_BS_mespin) call K_Haydock(iq,W_bss,"mespin",Xk)
+   if (l_BS_meorb) call K_Haydock(iq,W_bss,"meorb",Xk)
    !
  endif
  !

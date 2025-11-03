@@ -118,7 +118,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! Basical 
  !
  launch_me= .not.(l_slk_test.or.l_gpu_test)
- if(launch_me) call setup(en,Xen,Ken,k,Xk)
+ if(launch_me) call setup(en,q,Xen,Ken,k,Xk)
  !
  ! Update the default variables
  !

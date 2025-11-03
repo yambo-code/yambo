@@ -38,7 +38,6 @@ ypp/*/*.o_to_save
 *.f90
 *.i
 *.s
-*.swp*
 *dSYM
 *bk
 

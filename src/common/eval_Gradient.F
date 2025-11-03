@@ -25,14 +25,14 @@ subroutine eval_Gradient(f,f_gradient,ng_)
  use FFT_m,         ONLY:fftw_plan
 #endif
  use R_lattice,     ONLY:g_vec,ng_vec
- use wave_func,     ONLY:wf_ng
+ use wave_func,     ONLY:wf_ng,rho_map,rho_map_size
  use y_memory_alloc
  !
  implicit none
  !
  integer,          intent(in) ::ng_
- complex(SP),      intent(in) ::f(fft_size)
- complex(SP),      intent(out)::f_gradient(fft_size,3)
+ complex(SP),      intent(in) ::f(rho_map_size)
+ complex(SP),      intent(out)::f_gradient(rho_map_size,3)
  !
  ! Work Space 
  !
@@ -43,7 +43,8 @@ subroutine eval_Gradient(f,f_gradient,ng_)
  !
  f_gradient = cZERO
  !
- Vr=cmplx(f(:),kind=DP)
+ if(rho_map_size< fft_size) Vr(rho_map(:))=cmplx(f(:),kind=DP)
+ if(rho_map_size==fft_size) Vr(     :    )=cmplx(f(:),kind=DP)
  !
 #if defined _FFTW
  call dfftw_destroy_plan(fftw_plan)
@@ -65,7 +66,9 @@ subroutine eval_Gradient(f,f_gradient,ng_)
 #else
    call fft_3d(Vr,fft_dim,1)
 #endif
-   f_gradient(:,ic) = cmplx(Vr(:),kind=SP)
+   if(rho_map_size< fft_size) f_gradient(:,ic) = cmplx(Vr(rho_map(:)),kind=SP)
+   if(rho_map_size==fft_size) f_gradient(:,ic) = cmplx(Vr(        : ),kind=SP)
+   !
  enddo
  !
 end subroutine eval_Gradient
@@ -74,16 +77,17 @@ end subroutine eval_Gradient
 subroutine eval_Gradient_wf(wf,wf_gradient)
  !
  use pars,          ONLY:SP
- use FFT_m,         ONLY:fft_size,fft_g_table
+ use FFT_m,         ONLY:fft_g_table
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:n_spinor
+ use wave_func,     ONLY:rho_map_size
  !
  implicit none
  !
- complex(SP),      intent(in) ::wf(fft_size,n_spinor)
- complex(SP),      intent(out)::wf_gradient(fft_size,n_spinor,3)
+ complex(SP),      intent(in) ::wf(rho_map_size,n_spinor)
+ complex(SP),      intent(out)::wf_gradient(rho_map_size,n_spinor,3)
  !
- complex(SP) :: wf_tmp(fft_size,3)
+ complex(SP) :: wf_tmp(rho_map_size,3)
  !
  integer  :: i_spinor,ng_
  !
@@ -100,13 +104,14 @@ end subroutine eval_Gradient_wf
 subroutine eval_Gradient_rho_pot(Vrho,Vrho_gradient)
  !
  use pars,          ONLY:SP
- use FFT_m,         ONLY:fft_size,fft_g_table
+ use FFT_m,         ONLY:fft_g_table
  use R_lattice,     ONLY:g_vec,ng_vec
+ use wave_func,     ONLY:rho_map_size
  !
  implicit none
  !
- complex(SP),      intent(in) ::Vrho(fft_size)
- complex(SP),      intent(out)::Vrho_gradient(fft_size,3)
+ complex(SP),      intent(in) ::Vrho(rho_map_size)
+ complex(SP),      intent(out)::Vrho_gradient(rho_map_size,3)
  !
  integer :: ng_
  !

@@ -197,7 +197,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ! Main SETUP
  !============
  !
- call setup(en,Xen,Ken,k,Xk)
+ call setup(en,q,Xen,Ken,k,Xk)
  !
  call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.)
  !

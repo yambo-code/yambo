@@ -142,11 +142,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    !
    call DIPOLES_ppredux_and_symmetrize()
    !
-#if defined _RT
-   if (STRING_match(Dip%computed,"M_orb"))         call DIPOLE_orbital_magnetization(Xen,Xk,Dip)
-#else
-   if (STRING_match(Dip%computed,"M_CD_orb"))      call DIPOLE_orb_magn_forCD(Xen,Xk,Dip)
-#endif
+   if (STRING_match(Dip%computed,"M_orbRT"))       call DIPOLE_orbital_magnetization_rt(Xen,Xk,Dip)
+   !
+   if (STRING_match(Dip%computed,"M_orbCD"))       call DIPOLE_orbital_magnetization_cd(Xen,Xk,Dip) 
    !
    call DIPOLES_ppredux_and_symmetrize_orbt()
    !
@@ -297,10 +295,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
     integer  :: ic,iv,i_sp_pol,ik,ik_mem,i_dips,n_dips
     !
     n_dips=0
-    if (STRING_match(Dip%computed,"M_orb").and.STRING_match(Dip%computed,"M_it")) then
-      n_dips=2
-    else if (STRING_match(Dip%computed,"M_orb").or.STRING_match(Dip%computed,"M_CD_orb")) then
-      n_dips=1
+    if (STRING_match(Dip%computed,"M_orb")) then
+      if(     STRING_match(Dip%computed,"M_it")) n_dips=2
+      if(.not.STRING_match(Dip%computed,"M_it")) n_dips=1
     endif
     !
     do i_dips=1,n_dips

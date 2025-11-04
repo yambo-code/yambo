@@ -20,7 +20,7 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
  use parallel_m,    ONLY:myid
  use electrons,     ONLY:n_spinor
  use D_lattice,     ONLY:nsym,DEV_VAR(spin_sop),i_time_rev,idt_index
- use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_conjg_d
+ use devxlib,       ONLY:devxlib_conjg_d !,devxlib_memcpy_d2d
  !
  implicit none
  !
@@ -44,12 +44,25 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
  !
  if(isc(3)==idt_index) then
    !
-   ! dev2dev copy
-#ifdef _GPU_LOC   
-   call devxlib_memcpy_d2d(WF_symm,cmplx(WF_p,kind=SP))
-#else
-   WF_symm=cmplx(WF_p,kind=SP)
-#endif
+   ! 2025/11/04
+   ! In GAMMA ONLY mode WF_p is real and I cannot use the casting
+   ! inside the call to dexlib_memcpy_d2d.
+   ! To simplify the code (i.e. to avoid defined _GAMMA & _CUDA nested if)
+   ! I do an explicit loop. To check the efficiency compared to
+   ! call devxlib_memcpy_d2d(WF_symm,WF_p) 
+   !
+   !DEV_ACC_DEBUG data present(WF_p,WF_symm)
+   !DEV_ACC parallel loop
+   !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_OMPGPU target map(present,alloc:WF_p,WF_symm)
+   !DEV_OMPGPU teams loop
+   !DEV_OMP parallel do default(shared), private(ifft)
+   do ifft = 1, fft_size
+     WF_symm(ifft,1)=cmplx(WF_p(ifft,1),kind=SP)
+   enddo
+   !DEV_OMPGPU end target
+   !DEV_ACC_DEBUG end data
+   !
    return
    !
  endif

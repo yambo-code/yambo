@@ -95,8 +95,10 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  !Brackets
  !
- forall(i1=1:qp%n_states) Eqp_raxis(i1,1)=qp%E_bare(i1)
- forall(i1=1:qp%n_states) Eqp_raxis(i1,2)=Eqp_raxis(i1,1)+1./HA2EV
+ do concurrent (i1=1:qp%n_states) 
+   Eqp_raxis(i1,1)=qp%E_bare(i1)
+   Eqp_raxis(i1,2)=Eqp_raxis(i1,1)+1./HA2EV
+ enddo
  !
  QP_solver_state=1
  call W2Sc_local_call()
@@ -162,7 +164,9 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    call W_reset(Sc_W(i1))
    Sc_W(i1)%n_freqs=QP_dSc_steps
    YAMBO_ALLOC(Sc_W(i1)%p,(QP_dSc_steps))
-   forall (i2=1:QP_dSc_steps) Sc_W(i1)%p(i2)=Eqp_raxis(i1,1)+(i2-1)*QP_dSc_delta
+   do concurrent (i2=1:QP_dSc_steps) 
+     Sc_W(i1)%p(i2)=Eqp_raxis(i1,1)+(i2-1)*QP_dSc_delta
+   enddo
  enddo
  YAMBO_FREE(QP_solver_state)
  !
@@ -171,7 +175,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  do i1=1,QP_n_states
    do i2=1,QP_dSc_steps-1
      QP_dSc(i1,i2)=(QP_Sc(i1,i2+1)-QP_Sc(i1,i2))/QP_dSc_delta
-     Z(i2)=1./(1.-QP_dSc(i1,i2))
+     Z(i2)=1._SP/(1._SP-QP_dSc(i1,i2))
      Eqp(i2)=Eqp_raxis(i1,1)+cmplx(0.,real(Z(i2))*aimag(QP_Sc(i1,1)),SP)
    enddo
    qp%E(i1)=Eqp(1)

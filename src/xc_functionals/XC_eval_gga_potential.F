@@ -50,8 +50,10 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho,V_xc)
       ! thus I set fac to 2._SP to remove the extra 2
       if (is_xc/=2) fac=1._SP
       if (is_xc==2) fac=2._SP
-      forall(ic=1:3,ifft=1:fft_size) v_drho(ifft,ic) = v_drho(ifft,ic) + &
+      do concurrent (ic=1:3,ifft=1:fft_size) 
+        v_drho(ifft,ic) = v_drho(ifft,ic) + &
 &                                         2._SP/fac*real(v1sigma(is_xc,ifft),SP)*drho(ifft,is2,ic)
+      enddo
     end do
     !
     ! 1. this is done by FFTing, by doing the scalar

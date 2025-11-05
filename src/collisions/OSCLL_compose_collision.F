@@ -75,23 +75,19 @@ subroutine OSCLL_compose_collision(k,q,i_n,i_m,i_k,i_sp,COLL)
      !      
      do ig1=1,ng_oscll
        do ig2=1,ng_oscll
-!$OMP WORKSHARE	 
-	 forall(ibp=NL_bands(1):NL_bands(2),ib=NL_bands(1):NL_bands(2)) 
+         do concurrent (ibp=NL_bands(1):NL_bands(2),ib=NL_bands(1):NL_bands(2)) 
            COLL(ib,ibp,i_kmq,i_sp)=COLL(ib,ibp,i_kmq,i_sp)+OSCLL(i_n,ib ,ik_mem,i_sp,iqbz,ig2)* &
            &                            conjg(OSCLL(i_m,ibp,ik_mem,i_sp,iqbz,ig1))*W(iqbz,ig2,ig1) 
-         end forall
-!$OMP END WORKSHARE 
+         enddo
        enddo
      enddo
      !
    elseif(Correlation==LHF) then
     do ig1=1,ng_oscll
-!$OMP WORKSHARE	 
-      forall(ibp=NL_bands(1):NL_bands(2),ib=NL_bands(1):NL_bands(2)) 
+      do concurrent (ibp=NL_bands(1):NL_bands(2),ib=NL_bands(1):NL_bands(2)) 
         COLL(ib,ibp,i_kmq,i_sp)=COLL(ib,ibp,i_kmq,i_sp)+OSCLL(i_n,ib,ik_mem,i_sp,iqbz,ig1)* &
         &                          conjg(OSCLL(i_m,ibp,ik_mem,i_sp,iqbz,ig1))*W(iqbz,ig1,ig1) 
-      end forall
-!$OMP END WORKSHARE 
+      enddo
     enddo
    endif
    !

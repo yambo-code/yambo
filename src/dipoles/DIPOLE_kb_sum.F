@@ -108,7 +108,9 @@ subroutine DIPOLE_kb_sum(rho,pp_dim_yambo,ib_range,iv,ic,XX)
  !DEV_ACC_DEBUG end data
  !
  call devxlib_memcpy_d2h(drho_loc,drho)
- forall(i1=1:3) rho(i1)=rho(i1)+sum(drho_loc(:,i1,:))
+ do concurrent (i1=1:3) 
+   rho(i1)=rho(i1)+sum(drho_loc(:,i1,:))
+ enddo
  !
 end subroutine DIPOLE_kb_sum
 

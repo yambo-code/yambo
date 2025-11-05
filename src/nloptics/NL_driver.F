@@ -286,7 +286,9 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
      ! ================
      V_bands=cZERO
      do i_sp_pol=1,n_sp_pol
-       forall(i1=1:E%nbf(n_sp_pol)) V_bands(i1,i1,:,i_sp_pol)=cONE
+       do concurrent (i1=1:E%nbf(n_sp_pol)) 
+         V_bands(i1,i1,:,i_sp_pol)=cONE
+       end do
      enddo
      !
    endif

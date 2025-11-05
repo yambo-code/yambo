@@ -186,7 +186,9 @@ module global_XC
     !
     if (what=='E'.or.what=='G')         G_E_xc_string=      trim(G_E_xc_string)//"+"//STRING
     if (what=='X') then
-      forall(i_X=1:size(X_E_xc_string)) X_E_xc_string(i_X)= trim(X_E_xc_string(i_X))//"+"//STRING
+      do concurrent (i_X=1:size(X_E_xc_string)) 
+        X_E_xc_string(i_X)= trim(X_E_xc_string(i_X))//"+"//STRING
+      enddo
     endif
     if (what=='K')                      K_E_xc_string=      trim(K_E_xc_string)//"+"//STRING
     if (what=='WF')               loaded_WF_xc_string=trim(loaded_WF_xc_string)//"+"//STRING

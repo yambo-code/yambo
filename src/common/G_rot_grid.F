@@ -38,8 +38,16 @@ subroutine G_rot_grid(is,call_kind)
  !
  identity=reshape((/ 1._SP, 0._SP, 0._SP, 0._SP, 1._SP, 0._SP, 0._SP, 0._SP, 1._SP/),(/3,3/))
  !
- if(is>0) forall (i2=1:3,i3=1:3) rl_sop_local(i2,i3)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
- if(is<0) forall (i2=1:3,i3=1:3) rl_sop_local(i2,i3)=-identity(i2,i3)*alat(i2)/alat(i3)
+ if(is>0) then 
+   do concurrent (i2=1:3,i3=1:3) 
+     rl_sop_local(i2,i3)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
+   enddo
+ endif
+ if(is<0) then
+   do concurrent (i2=1:3,i3=1:3) 
+     rl_sop_local(i2,i3)=-identity(i2,i3)*alat(i2)/alat(i3)
+   enddo
+ endif
  !
  rl_sop_square=matmul(rl_sop_local,rl_sop_local)
  ! 

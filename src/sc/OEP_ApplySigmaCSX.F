@@ -109,7 +109,9 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
      call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
      io_err=io_X(X,Xw,ID)
      !
-     forall(i1=1:X%ng,i2=1:X%ng) PPaR(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2) ! Poles and Residuals
+     do concurrent (i1=1:X%ng,i2=1:X%ng) 
+       PPaR(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2) ! Poles and Residuals
+     enddo
      !
      PPaR_is_TR_rotated=.false.
      !
@@ -117,7 +119,9 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
    !
    if (iqs>nsym/(i_time_rev+1) .and. i_space_inv == 0 .and..not.PPaR_is_TR_rotated) then
      PPaR_is_TR_rotated=.true.
-     forall(i1=1:X%ng,i2=1:X%ng) PPaR_ws(i2,i1)=PPaR(i1,i2)
+     do concurrent (i1=1:X%ng,i2=1:X%ng) 
+       PPaR_ws(i2,i1)=PPaR(i1,i2)
+     enddo
      PPaR(:,:)=PPaR_ws(:,:)
    endif
    !

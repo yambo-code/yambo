@@ -75,6 +75,9 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
      if (allocated(X_mat)) return
      YAMBO_ALLOC(X_mat,(DIM(1),DIM(2),DIM(3)))
      X_mat=cZERO
+#ifdef _GPU
+     YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(X_mat),X_mat)
+#endif
    case('MEspin')
      if (allocated(X_mespin)) return
      YAMBO_ALLOC(X_mespin,(DIM(1),DIM(2)))
@@ -83,9 +86,6 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
      if (allocated(X_meorb)) return
      YAMBO_ALLOC(X_meorb,(DIM(1),DIM(2)))
      X_meorb = cZERO
-#ifdef _GPU
-     YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(X_mat),X_mat)
-#endif
    end select
    return
  endif

@@ -29,7 +29,7 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
  !
  WF_RSPACE(SP), pointer     DEV_ATTR :: WF_p(:,:)
  integer  :: i_wf
- integer  :: ifft,ifftp,isymm
+ integer  :: ifft,ifftp,isymm,i_spinor
  !
  i_wf=WF%index(isc(1),isc(2),isc(4))
  !
@@ -53,12 +53,14 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
    !
    !DEV_ACC_DEBUG data present(WF_p,WF_symm)
    !DEV_ACC parallel loop
-   !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_CUF kernel do(2) <<<*,*>>>
    !DEV_OMPGPU target map(present,alloc:WF_p,WF_symm)
    !DEV_OMPGPU teams loop
-   !DEV_OMP parallel do default(shared), private(ifft)
-   do ifft = 1, fft_size
-     WF_symm(ifft,1)=cmplx(WF_p(ifft,1),kind=SP)
+   !DEV_OMP parallel do default(shared), private(ifft,i_spinor)
+   do i_spinor = 1, n_spinor
+     do ifft = 1, fft_size
+       WF_symm(ifft,i_spinor)=cmplx(WF_p(ifft,i_spinor),kind=SP)
+     enddo
    enddo
    !DEV_OMPGPU end target
    !DEV_ACC_DEBUG end data

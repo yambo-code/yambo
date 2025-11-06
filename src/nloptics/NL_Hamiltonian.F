@@ -9,7 +9,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,V_bands)
  !
  ! The subroutine calculate Ho + V + Sigma and the fields E_tot, E_ext, E_ks
  !
- !   H_k=Ho_k+U_k+ V_k^H-V_k^H[rho_ref]+V_xc[rho]
+ !   H_k=Ho_k+U_k+ V_k^H[rho]-V_k^H[rho_ref]+V_xc[rho]
  !                                        
  use pars,           ONLY:SP,cZERO,pi,cONE
  use units,          ONLY:SPEED_OF_LIGHT

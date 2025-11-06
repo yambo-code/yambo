@@ -45,7 +45,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 ! use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size,&
 !&                        fftw_plan,cufft_plan,hipfft_plan,mklgpu_desc,DEV_VAR(fft_g_table)
  use wave_func,     ONLY:wf_nc_k,wf_igk,DEV_VAR(wf_igk),WF_buffer,rho_map,&
-&                        wf_ng,wf_norm_test,wf_ncx,io_WF,wf_b_indx,&
+&                        wf_ng,wf_norm_test,wf_ncx,io_WF,wf_b_indx,rho_map_size,&
 &                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,WAVEs,states_to_load
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:OP_RD,NONE,VERIFY,RD,RD_CL,DUMP
@@ -430,18 +430,18 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 #endif
               WF_N = WF%N
               !
-            if(allocated(rho_map)) then
-              !DEV_ACC_DEBUG data present(wfc_p,wf_DP)
-              !DEV_ACC parallel loop
-              !DEV_CUF kernel do(1)
-              !DEV_OMPGPU target map(present,alloc:wfc_p,wf_DP)
-              !DEV_OMPGPU teams loop
-              do ic=1,rho_map_size
-                wfr_p(ic,i_spinor,WF_N)=cmplx(DEV_VAR(wf_DP)(rho_map(ic)),kind=SP)*fft_norm
-              enddo
-              !DEV_OMPGPU end target
-              !DEV_ACC_DEBUG end data
-            else
+            !if(allocated(rho_map)) then
+            !  !DEV_ACC_DEBUG data present(wfc_p,wf_DP)
+            !  !DEV_ACC parallel loop
+            !  !DEV_CUF kernel do(1)
+            !  !DEV_OMPGPU target map(present,alloc:wfc_p,wf_DP)
+            !  !DEV_OMPGPU teams loop
+            !  do ic=1,rho_map_size
+            !    wfr_p(ic,i_spinor,WF_N)=cmplx(DEV_VAR(wf_DP)(rho_map(ic)),kind=SP)*fft_norm
+            !  enddo
+            !  !DEV_OMPGPU end target
+            !  !DEV_ACC_DEBUG end data
+            !else
               !DEV_ACC_DEBUG data present(wfc_p,wf_DP)
               !DEV_ACC parallel loop
               !DEV_CUF kernel do(1)
@@ -452,8 +452,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               enddo
               !DEV_OMPGPU end target
               !DEV_ACC_DEBUG end data
-            endif
-              !
+            !endif
+            !
             enddo  ! i_spinor
             !
          else
@@ -488,7 +488,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               !
               call fft_3d(wf_DP,fft_dim,+2)
 #endif
+#if !defined _GPU
               if(     allocated(rho_map)) WF%r(:,i_spinor,WF%N)=wfcmplx(wf_DP(rho_map(:)),kind=SP)*fft_norm
+#endif
               if(.not.allocated(rho_map)) WF%r(:,i_spinor,WF%N)=wfcmplx(wf_DP(:)         ,kind=SP)*fft_norm
               !
             enddo  ! i_spinor

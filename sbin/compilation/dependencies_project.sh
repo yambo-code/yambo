@@ -32,8 +32,15 @@ if [ ${#sources} -eq 2 ]; then
   continue 
 fi
 #
+if [ !  -f .objects ] ; then
+  #this is needed to avoid stc/tools where .objects.in exist in place of .objects
+  cd $BASE
+  continue 
+fi
+
 cp .objects objects.c
 $cpp $cppflags $precomp_flags objects.c  > no_pj.mk
+
 #
 # Projects 
 #==========

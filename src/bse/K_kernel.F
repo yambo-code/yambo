@@ -608,7 +608,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    !
    ! Allocate variables tddft_wf variables neeeded within the OMP loop
-   if (l_tddft_rsum) then
+   if (l_tddft_rsum.and.iHxc==2) then
      YAMBO_ALLOC(tddft_wf%WF_symm1,(rho_map_size,n_spinor))
      YAMBO_ALLOC(tddft_wf%WF_symm2,(rho_map_size,n_spinor))
      YAMBO_ALLOC(tddft_wf%rhotwr1,(rho_map_size*n_spinor*n_spinor))

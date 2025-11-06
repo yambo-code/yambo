@@ -75,7 +75,7 @@ subroutine V_Hartree(rho,vhr)
  !
 !$OMP WORKSHARE  
  vhr(:,1) = real(vhtmp,SP)
- !$OMP END WORKSHARE  
+!$OMP END WORKSHARE  
  if(n_spin==2) vhr(:,2)=vhr(:,1)
  !
  call timing('V_Hartree',OPR='stop')

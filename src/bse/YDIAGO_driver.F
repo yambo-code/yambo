@@ -30,7 +30,7 @@ subroutine YDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
   use openmp,         ONLY:n_threads_K
   use LIVE_t,         ONLY:live_timing
   use com,            ONLY:msg
-  use ydiago_interface
+  use ldiago_interface
   !
   implicit none
   !

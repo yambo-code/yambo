@@ -263,7 +263,7 @@ if test x"$enable_hdf5" = "xyes"; then
       compile_netcdf="no" ;
       AC_MSG_RESULT([already compiled]) ;
       #
-    elif test "$IO_LIB_VER" = "serial" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
+    elif test "$IO_LIB_VER" = "serial" &&  test "$mpibuild"  = "yes"   && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
       #
       compile_netcdf="no" ;
       IO_LIB_VER="parallel";

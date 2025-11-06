@@ -107,6 +107,15 @@ if ! test -d "$extlibs_path/${FCKIND}/${FC}/lib";     then mkdir    "$extlibs_pa
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/include"; then mkdir    "$extlibs_path/${FCKIND}/${FC}/include"; fi
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/bin";     then mkdir    "$extlibs_path/${FCKIND}/${FC}/bin";     fi
 #
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}";           then mkdir    "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}";            fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/lib";       then mkdir    "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/lib";        fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/include";   then mkdir    "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/include";    fi
+#
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/diago";                                 then mkdir    "$extlibs_path/${FCKIND}/${FC}/diago";                                  fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}";           then mkdir    "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}";            fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/lib";       then mkdir    "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/lib";        fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/include";   then mkdir    "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/include";    fi
+#
 if  test -d "$extlibs_path/${FCKIND}/${FC}" ; then
  BIN_LIBRARIES=$extlibs_path/${FCKIND}/${FC}/bin/* ;
  BIN_NETCDF=$extlibs_path/${FCKIND}/${FC}/${NETCDF_VER}/${IO_LIB_VER}/bin/* ;

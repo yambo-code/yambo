@@ -16,6 +16,7 @@
 # [EDITOR] @editor@
 # [ MAKE ] @MAKE@
 #
+# [@GAMMA_ONLY_check@] Gamma-only version of the code
 # [@DP_check@] Double precision
 # [@KEEP_OBJS_check@] Keep object files
 # [@TIME_profile_check@] Run-Time timing profile 
@@ -72,8 +73,8 @@
 #
 # > OTHERs: @DEVXLIB_info@
 #
-# [@YDIAGO_check@] Ydiago    : @YDIAGO_LIBS_R@
-#                 @YDIAGO_INCS_R@
+# [@LDIAGO_check@] Ldiago    : @LDIAGO_LIBS_R@
+#                 @LDIAGO_INCS_R@
 # [@LIBXC_check@] LibXC     : @LIBXC_LIBS_R@
 #                 @LIBXC_INCS_R@
 # [@DEVXLIB_check@] DevXlib   : @DEVXLIB_LIBS_R@
@@ -88,8 +89,8 @@
 # FC kind = @FCKIND@ @FCVERSION@
 # MPI kind= @MPIKIND@
 #
-# [ CPP ] @CPP@ @CPPFLAGS_yambo@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_elpa@ @def_magma@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@ @def_gpu@ @def_yaml@ @PW_CPP@
-# [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_elpa@ @def_magma@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@ @def_gpu@ @def_yaml@
+# [ CPP ] @CPP@ @CPPFLAGS_yambo@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_elpa@ @def_magma@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@ @def_gpu@ @def_yaml@ @def_gamma_only@ @PW_CPP@
+# [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_elpa@ @def_magma@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@ @def_gpu@ @def_yaml@ @def_gamma_only@
 # [ CC  ] @CC@ @CFLAGS@
 # [ FC  ] @FC@ @FCFLAGS@ @OPENMPLIBS@ @GPU_FLAGS@
 # [ FCUF] @FCUFLAGS@ @GPU_FLAGS@

@@ -693,8 +693,8 @@ YAML_INCS_R
 YAML_LIBS_R
 IOTK_INCS_R
 IOTK_LIBS_R
-YDIAGO_INCS_R
-YDIAGO_LIBS_R
+LDIAGO_INCS_R
+LDIAGO_LIBS_R
 MPI_info
 MPI_check
 LIBCUDA_check
@@ -707,7 +707,7 @@ SLEPC_info
 PETSC_info
 SLEPC_check
 PETSC_check
-YDIAGO_check
+LDIAGO_check
 ELPA_check
 SLK_check
 BLACS_check
@@ -730,6 +730,7 @@ CUDA_check
 MEM_profile_check
 TIME_profile_check
 KEEP_OBJS_check
+GAMMA_ONLY_check
 DP_check
 internal_magma
 compile_magma_fmodules
@@ -745,11 +746,12 @@ internal_devxlib
 compile_devxlib
 DEVXLIB_INCS
 DEVXLIB_LIBS
-with_ydiago_branch
-ydiago_opt
-YDIAGO_GPU_SUPPORT
-YDIAGO_INCS
-YDIAGO_LIBS
+with_ldiago_branch
+ldiago_opt
+compile_ldiago
+LDIAGO_GPU_SUPPORT
+LDIAGO_INCS
+LDIAGO_LIBS
 MKLGPU_LIBS
 LIBROCM_PATH
 LIBROCM_INCS
@@ -954,6 +956,8 @@ MKMF_PREFIX
 def_memory_profile
 def_uspp
 def_time_profile
+def_gamma_only
+enable_gamma_only
 build_precision
 def_dp
 enable_dp
@@ -1013,6 +1017,7 @@ enable_keep_objects
 enable_keep_src
 enable_keep_extlibs
 enable_dp
+enable_gamma_only
 enable_time_profile
 enable_uspp
 enable_memory_profile
@@ -1120,7 +1125,7 @@ with_rocm_libdir
 with_rocm_includedir
 with_rocm_path
 with_mklgpu_libs
-with_ydiago_branch
+with_ldiago_branch
 with_devxlib_libs
 with_devxlib_path
 with_devxlib_libdir
@@ -1778,6 +1783,7 @@ Optional Features:
   --enable-keep-src       Keep preprocessed.f90 file. Default is yes.
   --enable-keep-extlibs   Keep downloaded packages as tar.gz . Default is yes.
   --enable-dp             Double-precision build. Default is no.
+  --enable-gamma-only     Gamma only build. Default is no.
   --enable-time-profile   Extended timing profile of specific sections.
                           Default is yes.
   --enable-uspp           Enable Ultrasoft PP support
@@ -1918,7 +1924,7 @@ Optional Packages:
   --with-rocm-includedir=<path> Path to the rocm include directory
   --with-rocm-path=<path>       Path to rocm install directory
   --with-mklgpu-libs=<libs>     Use the MKLGPU library <libs>
-  --with-ydiago-branch=<branch> Use the <branch> of the ydiago repository.
+  --with-ldiago-branch=<branch> Use the <branch> of the ldiago repository.
   --with-devxlib-libs=<libs>    Use devxlib libraries <libs>
   --with-devxlib-path=<path>    Path to devxlib install directory
   --with-devxlib-libdir=<path>  Path to the devxlib lib directory
@@ -3561,6 +3567,20 @@ if test x"$build_precision" = "x"; then as_fn_error $? "Non correct specificatio
 
 #
 # ============================================================================
+# VERSION for gamma only case
+# Check whether --enable-gamma_only was given.
+if test ${enable_gamma_only+y}
+then :
+  enableval=$enable_gamma_only;
+fi
+
+def_gamma_only=""
+if test x"$enable_gamma_only" = "x";    then enable_gamma_only="no";   fi
+if test x"$enable_gamma_only" = "xyes"; then def_gamma_only="-D_GAMMA_ONLY";  fi
+
+
+#
+# ============================================================================
 #
 # Time Profiling (mod_timing)
 #
@@ -5081,6 +5101,7 @@ fi
 # version.m4 -> version.h
 
 cat << EOF > include/version/version.h
+#pragma once
 #define YAMBO_VERSION $SVERSION
 #define YAMBO_SUBVERSION $SSUBVERSION
 #define YAMBO_PATCHLEVEL $SPATCHLEVEL
@@ -7215,6 +7236,7 @@ INTELVERSION="unknown"
 FCKIND="unknown"
 case "${FC}" in
     *ftn*)
+      FCKIND="cray"
       FCVERSION=`$FC --version`
       ;;
     *abf90*)
@@ -7381,7 +7403,12 @@ i?86*linux*)
        CPU_FLAG="-xHost"
        #CPU_FLAG=" "
        ;;
-      *2021* | *2022* | *2023* | *2024* | *2025* )
+      *2025* )
+       CPU_FLAG=" "
+       OMPFLAGS="-qopenmp"
+       FCMFLAG="-nofor-main"
+       ;;
+      *2021* | *2022* | *2023* | *2024* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp -parallel"
        FCMFLAG="-nofor-main"
@@ -7631,7 +7658,13 @@ aarch*linux* | arm*linux* )
        #CPU_FLAG="-xHost"
        CPU_FLAG=" "
        ;;
-      *2020* | *2021* | *2022* | *2023* | *2024* | *2025* )
+      *2025* )
+       CPU_FLAG=" "
+       OMPFLAGS="-qopenmp"
+       FCMFLAG="-nofor-main"
+       CFLAGS="-O2 -std=gnu99"
+       ;;
+      *2020* | *2021* | *2022* | *2023* | *2024* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp -parallel"
        FCMFLAG="-nofor-main"
@@ -14520,7 +14553,7 @@ printf %s "checking for internal HDF5 library... " >&6; };
       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
 printf "%s\n" "already compiled" >&6; } ;
       #
-    elif test "$IO_LIB_VER" = "serial" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
+    elif test "$IO_LIB_VER" = "serial" &&  test "$mpibuild"  = "yes"  && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
       #
       compile_hdf5="no" ;
       IO_LIB_VER="parallel";
@@ -14964,7 +14997,7 @@ printf %s "checking for internal NETCDF library... " >&6; };
       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
 printf "%s\n" "already compiled" >&6; } ;
       #
-    elif test "$IO_LIB_VER" = "serial" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
+    elif test "$IO_LIB_VER" = "serial" &&  test "$mpibuild"  = "yes"   && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
       #
       compile_netcdf="no" ;
       IO_LIB_VER="parallel";
@@ -15715,12 +15748,14 @@ if test x"$acx_libxc_ok" = xno ; then
   if test -d "$with_libxc_path"; then
      libxc_incdir="$with_libxc_path/include"
      libxc_libdir="$with_libxc_path/lib"
+     libxc_lib64dir="$with_libxc_path/lib64"
   fi
   if test -d "$with_libxc_includedir"; then libxc_incdir="$with_libxc_includedir" ; fi
   if test -d "$with_libxc_libdir";     then libxc_libdir="$with_libxc_libdir" ; fi
   #
   # dynamic linkage, separate Fortran interface
-  if test ! -z "$libxc_libdir"; then LIBXC_LIBS="-L$libxc_libdir -lxcf90 -lxcf03 -lxc"; fi
+  if test ! -z "$libxc_libdir";  then LIBXC_LIBS="-L$libxc_libdir -lxcf90 -lxcf03 -lxc"; fi
+  if test ! -z "$libxc_lib64dir"; then LIBXC_LIBS="-L$libxc_lib64dir $LIBXC_LIBS"; fi
   if test ! -z "$libxc_incdir"; then LIBXC_INCS="$IFLAG$libxc_incdir"; fi
   #
   if test ! -z "$with_libxc_libs" ; then LIBXC_LIBS="$with_libxc_libs" ; fi
@@ -16625,31 +16660,45 @@ fi
 
 #
 
-# Check whether --with-ydiago-branch was given.
-if test ${with_ydiago_branch+y}
+# Check whether --with-ldiago-branch was given.
+if test ${with_ldiago_branch+y}
 then :
-  withval=$with_ydiago_branch;
+  withval=$with_ldiago_branch;
 else $as_nop
-  with_ydiago_branch=none
+  with_ldiago_branch=none
 fi
 
 #
-ac_config_files="$ac_config_files lib/ydiago/make_ydiago.inc:lib/ydiago/make_ydiago.inc.in"
+ac_config_files="$ac_config_files lib/ldiago/make_ldiago.inc:lib/ldiago/make_ldiago.inc.in"
 
 
-# GPU flags are passed to ydiago compilation only if elpa library is available
-if test ! x"$def_gpu" = "x" && test "$def_elpa" = "-D_ELPA" ; then
-  ydiago_opt="$def_gpu $def_elpa"
-  YDIAGO_GPU_SUPPORT="$GPU_SUPPORT"
+if test "$def_scalapack" = "-D_SCALAPACK" ; then
+
+  compile_ldiago="yes"
+
+  # GPU flags are passed to ldiago compilation only if elpa library is available
+  if test ! x"$def_gpu" = "x" && test "$def_elpa" = "-D_ELPA" ; then
+    ldiago_opt="$def_gpu $def_elpa"
+    LDIAGO_GPU_SUPPORT="$GPU_SUPPORT"
+  else
+    ldiago_opt="$def_elpa"
+    LDIAGO_GPU_SUPPORT="no_gpu"
+  fi
+
+  LDIAGO_LIBS="${extlibs_path}/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/lib/libldiago.a"
+  LDIAGO_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/include/"
+  #LDIAGO_LIBS="${compdir}/lib/libldiago.a"
+  #LDIAGO_INCS="$IFLAG${compdir}/include/"
+
 else
-  ydiago_opt="$def_elpa"
-  YDIAGO_GPU_SUPPORT="no_gpu"
+
+  compile_ldiago="no"
+  ldiago_opt=""
+  LDIAGO_LIBS=""
+  LDIAGO_INCS=""
+
 fi
 
-YDIAGO_LIBS="${extlibs_path}/${FCKIND}/${FC}/${YDIAGO_GPU_SUPPORT}/lib/libydiago.a"
-YDIAGO_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/${YDIAGO_GPU_SUPPORT}/include/"
-#YDIAGO_LIBS="${compdir}/lib/libydiago.a"
-#YDIAGO_INCS="$IFLAG${compdir}/include/"
 
 
 
@@ -17136,6 +17185,9 @@ fi
 DP_check="-"
 if test "$enable_dp" = "yes" ; then DP_check="X"; fi
 #
+GAMMA_ONLY_check="-"
+if test "$enable_gamma_only" = "yes" ; then GAMMA_ONLY_check="X"; fi
+#
 KEEP_OBJS_check="-"
 if test "$enable_keep_objects" = "yes" ; then KEEP_OBJS_check="X"; fi
 #
@@ -17247,10 +17299,14 @@ if test "$internal_blacs" = "yes" ; then
   if test "$compile_blacs" = "no" ; then BLACS_check="I"; fi
 fi
 #
-if test x"$with_ydiago_branch" = "xnone"; then
- YDIAGO_check="I";
+if test "$compile_ldiago" = "yes"; then
+  if test x"$with_ldiago_branch" = "xnone"; then
+    LDIAGO_check="I";
+  else
+    LDIAGO_check="G";
+  fi
 else
- YDIAGO_check="G";
+  LDIAGO_check="-";
 fi
 #
 PETSC_check="-"
@@ -17347,6 +17403,7 @@ fi
 
 
 
+
 #
 
 
@@ -17388,7 +17445,7 @@ fi
 # STRIPE [LIB] from paths
 #
 
-TMP1=`echo $YDIAGO_LIBS | sed 's/\//+/g'`
+TMP1=`echo $LDIAGO_LIBS | sed 's/\//+/g'`
 TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
 STRIPE=`echo $TMP3 | sed 's/+/\//g'`
@@ -17396,10 +17453,10 @@ if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
-#ACX_STRIPE_SUBPATH2($YDIAGO_LIBS,"LIB")
-YDIAGO_LIBS_R=$STRIPE
+#ACX_STRIPE_SUBPATH2($LDIAGO_LIBS,"LIB")
+LDIAGO_LIBS_R=$STRIPE
 
-TMP1=`echo $YDIAGO_INCS | sed 's/\//+/g'`
+TMP1=`echo $LDIAGO_INCS | sed 's/\//+/g'`
 TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
 STRIPE=`echo $TMP3 | sed 's/+/\//g'`
@@ -17407,8 +17464,8 @@ if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
 
-#ACX_STRIPE_SUBPATH2($YDIAGO_INCS,"INC")
-YDIAGO_INCS_R=$STRIPE
+#ACX_STRIPE_SUBPATH2($LDIAGO_INCS,"INC")
+LDIAGO_INCS_R=$STRIPE
 
 
 #
@@ -18615,7 +18672,7 @@ do
     "lib/fftqe/c_defs.h") CONFIG_HEADERS="$CONFIG_HEADERS lib/fftqe/c_defs.h:lib/fftqe/c_defs.h.in" ;;
     "lib/fftqe/fftqe_defs.h") CONFIG_FILES="$CONFIG_FILES lib/fftqe/fftqe_defs.h:lib/fftqe/fftqe_defs.h.in" ;;
     "lib/iotk/make_iotk.inc") CONFIG_FILES="$CONFIG_FILES lib/iotk/make_iotk.inc:lib/iotk/make_iotk.inc.in" ;;
-    "lib/ydiago/make_ydiago.inc") CONFIG_FILES="$CONFIG_FILES lib/ydiago/make_ydiago.inc:lib/ydiago/make_ydiago.inc.in" ;;
+    "lib/ldiago/make_ldiago.inc") CONFIG_FILES="$CONFIG_FILES lib/ldiago/make_ldiago.inc:lib/ldiago/make_ldiago.inc.in" ;;
     "lib/magma/make_magma.inc") CONFIG_FILES="$CONFIG_FILES lib/magma/make_magma.inc:lib/magma/make_magma.inc.in" ;;
     "include/headers/common/have_malloc.h") CONFIG_HEADERS="$CONFIG_HEADERS include/headers/common/have_malloc.h:include/headers/common/have_malloc.h.in" ;;
     "config/setup") CONFIG_FILES="$CONFIG_FILES config/setup" ;;
@@ -19322,6 +19379,15 @@ if ! test -d "$extlibs_path/${FCKIND}/${FC}";         then mkdir -p "$extlibs_pa
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/lib";     then mkdir    "$extlibs_path/${FCKIND}/${FC}/lib";     fi
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/include"; then mkdir    "$extlibs_path/${FCKIND}/${FC}/include"; fi
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/bin";     then mkdir    "$extlibs_path/${FCKIND}/${FC}/bin";     fi
+#
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}";           then mkdir    "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}";            fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/lib";       then mkdir    "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/lib";        fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/include";   then mkdir    "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/include";    fi
+#
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/diago";                                 then mkdir    "$extlibs_path/${FCKIND}/${FC}/diago";                                  fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}";           then mkdir    "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}";            fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/lib";       then mkdir    "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/lib";        fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/include";   then mkdir    "$extlibs_path/${FCKIND}/${FC}/diago/${LDIAGO_GPU_SUPPORT}/include";    fi
 #
 if  test -d "$extlibs_path/${FCKIND}/${FC}" ; then
  BIN_LIBRARIES=$extlibs_path/${FCKIND}/${FC}/bin/* ;

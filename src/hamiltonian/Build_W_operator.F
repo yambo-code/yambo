@@ -41,7 +41,9 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
  complex(SP) :: V_tmp(H_ref_bands(1):H_ref_bands(2),en%nbf(i_sp))
  complex(SP) :: alpha
  !
+!$OMP WORKSHARE  
  Wk=cZERO
+!$OMP END WORKSHARE  
  !
  ikbz=Xk%k_table(ik,1)
  !
@@ -84,7 +86,9 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
      ! <\phi_i | e^{iGr} | \phi_j >
      ! It works in principle but it requires big supercells
      !
+!$OMP WORKSHARE  
      Wop(:,:,:)=cZERO !DIP_S(H_ref_bands(1):,H_ref_bands(1):,id_red,ik,i_sp)*cI/(4._SP*pi)   
+!$OMP END WORKSHARE  
      !
    endif    
    !

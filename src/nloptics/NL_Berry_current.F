@@ -99,14 +99,18 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
        ik = Xk%sstar(ikbz,1)
        !
        if(max_step==1) then
+!$omp parallel do default(shared), private(iv), reduction(+:NL_J_red)
          do iv=1,en%nbf(isp)
            NL_J_red(id_red)=NL_J_red(id_red)+sum(VH_bands(:,iv,ik,isp)*delta_V_tilde(iv,:,1))
          enddo
+!$omp end parallel do
        elseif(max_step==2) then
+!$omp parallel do default(shared), private(iv), reduction(+:NL_J_red)
          do iv=1,en%nbf(isp)
            NL_J_red(id_red)=NL_J_red(id_red)+sum(VH_bands(:,iv,ik,isp) &
 &					    *(4._SP*delta_V_tilde(iv,:,1)-delta_V_tilde(iv,:,2)))/3._SP
          enddo
+!$omp end parallel do
        endif
        !
      enddo

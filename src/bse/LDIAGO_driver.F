@@ -157,6 +157,7 @@ endif
   !
   ! Allocate the 2D block cyclic matrix
   !
+#if defined _MPI
   ! First create a blacs grid
   call MPI_COMM_SIZE(MPI_COMM_WORLD, nProcs, ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD, my_rank, ierr)
@@ -182,8 +183,13 @@ endif
     ProcX = 1
     ProcY = 1
   endif
-  
+
   call msg("s","BLACS grid",(/ProcX,ProcY/))
+#else
+  ProcX=1
+  ProcY=1
+  blacs_blk_size = 1
+#endif
 
   mpi_comm = MPI_COMM_WORLD
 

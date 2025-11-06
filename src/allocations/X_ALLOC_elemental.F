@@ -116,6 +116,12 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
  if (STRING_match(WHAT,"JDOS").or.STRING_match(WHAT,"ALL")) then
    YAMBO_FREE(Joint_DOS)
  endif
+ if (STRING_match(WHAT,"MEspin").or.STRING_match(WHAT,"ALL")) then
+   YAMBO_FREE(X_mespin)
+ endif
+ if (STRING_match(WHAT,"MEorb").or.STRING_match(WHAT,"ALL")) then
+   YAMBO_FREE(X_meorb)
+ endif
  if (STRING_match(WHAT,"BS_E_SORTED").or.STRING_match(WHAT,"ALL")) then
    YAMBO_FREE(BS_E_sorted)
    YAMBO_FREE(BS_E_sorted_indx)

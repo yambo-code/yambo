@@ -72,7 +72,11 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  myid    = pid
  infile  = inf
  yambo   = 0
- iinf    = 0 
+ iinf    = 0
+ !
+#if defined _GPU && defined _GAMMA_ONLY
+ call error("Gamma only mode is not compatible with GPU porting")
+#endif 
  !
  ! ... Internal Defaults
  !

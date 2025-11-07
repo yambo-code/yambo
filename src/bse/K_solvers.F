@@ -95,6 +95,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  call BSS_MAGN_free( )
  call BSS_DICH_free( )
  call BSS_PL_free( )
+ call BSS_MEspin_free()
+ call BSS_MEorb_free()
  !
  ! CLEAN: BS_mat
  !

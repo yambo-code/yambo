@@ -171,10 +171,10 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,V_bands)
  ! Build the Hamiltonian
  ! =====================
  !
-!$OMP WORKSHARE  
+!$OMP PARALLEL WORKSHARE  
  Ho_plus_Sigma=cZERO
  I_relax      =cZERO
-!$OMP END WORKSHARE 
+!$OMP END PARALLEL WORKSHARE 
  !
  do i_sp_pol=1,n_sp_pol
   do ik=1,QP_nk

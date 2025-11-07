@@ -81,9 +81,9 @@ subroutine OSCLL_compose_vbands(V_input,H_nl_sc,k,q,E,i_k,i_sp_pol)
  !
  ! Remove equilibrium Sigma-sex
  !
-!$OMP WORKSHARE
+!$OMP PARALLEL WORKSHARE
  H_nl_sc=H_nl_sc-Sigma_SEX_EQ(:,:,i_sp_pol,ik_mem)
-!$OMP END WORKSHARE
+!$OMP END PARALLEL WORKSHARE
  !
  do i_n=NL_bands(1),NL_bands(2)
    do i_m=i_n,NL_bands(2)

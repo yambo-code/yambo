@@ -45,9 +45,9 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  call timing('NL build_dG',OPR='start')
 #endif
  !
-!$OMP WORKSHARE  
+!$OMP PARALLEL WORKSHARE  
  dG=cZERO
-!$OMP END WORKSHARE  
+!$OMP END PARALLEL WORKSHARE  
  !
  do is=1,n_sp_pol
  do ik=1,QP_nk
@@ -63,9 +63,9 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  enddo
  enddo
  !
-!$OMP WORKSHARE  
+!$OMP PARALLEL WORKSHARE  
  dG=cI*spin_occ*dG
-!$OMP END WORKSHARE  
+!$OMP END PARALLEL WORKSHARE  
  !
  call PP_redux_wait(dG,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  !

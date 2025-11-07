@@ -47,9 +47,9 @@ subroutine el_density_vbands(en,Xk,rho,VAL_BANDS)
  integer     :: i1,ik,is,rho_syms,ir,ik_mem
  real(SP)    :: rho_no_sym(fft_size)
  !
-!$OMP WORKSHARE  
+!$OMP PARALLEL WORKSHARE  
  rho_no_sym=rZERO
-!$OMP END WORKSHARE  
+!$OMP END PARALLEL WORKSHARE  
  !
  do ik=1,Xk%nibz
    !  
@@ -72,9 +72,9 @@ subroutine el_density_vbands(en,Xk,rho,VAL_BANDS)
  ! Simmetrization
  !
  rho_syms=nsym/(i_time_rev+1)
-!$OMP WORKSHARE  
+!$OMP PARALLEL WORKSHARE  
  rho(:)=rZERO
-!$OMP END WORKSHARE  
+!$OMP END PARALLEL WORKSHARE  
  ! 
 !$omp parallel do default(shared), private(ir), reduction(+:rho)
  do ir=1,fft_size

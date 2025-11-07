@@ -71,9 +71,9 @@ subroutine LSEX_potential(q,X,Xw)
  YAMBO_ALLOC(W,(q%nbz,ng_oscll,ng_oscll))
  iqref=0
  !
-!$OMP WORKSHARE 
+!$OMP PARALLEL WORKSHARE 
  W=cZERO
-!$OMP END WORKSHARE 
+!$OMP END PARALLEL WORKSHARE 
  ! 
  do iqbz=1,q%nbz
    !

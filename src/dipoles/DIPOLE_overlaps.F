@@ -102,9 +102,9 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  YAMBO_ALLOC_GPU(WF_ikp,    (wf_ng_overlaps,n_spinor,1))
  YAMBO_ALLOC_GPU(WF_ik,     (wf_ng_overlaps,n_spinor,Dip%ib(2)))
  !
-!$OMP WORKSHARE
+!$OMP PARALLEL WORKSHARE
  DIP_S=cZERO
-!$OMP END WORKSHARE
+!$OMP END PARALLEL WORKSHARE
  !
  call live_timing("Overlaps",PAR_IND_DIPk_bz%n_of_elements(PAR_IND_DIPk_bz_ID+1)*n_sp_pol)
  !

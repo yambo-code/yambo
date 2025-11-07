@@ -93,9 +93,9 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
        !
        do istep=1,max_step
          call Build_tilde_vbands(en,Xk,ikbz,isp,istep,id_red,V_bands(:,:en%nbf(isp),:,isp),V_tilde)
-!$OMP WORKSHARE  
+!$OMP PARALLEL WORKSHARE  
          delta_V_tilde(:,:,istep)=(V_tilde(:,:,1)-V_tilde(:,:,2))/dble(istep)
-!$OMP END WORKSHARE  
+!$OMP END PARALLEL WORKSHARE  
        enddo
        !
        ik = Xk%sstar(ikbz,1)

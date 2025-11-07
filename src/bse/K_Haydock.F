@@ -329,7 +329,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
      call K_multiply_by_V(V0,Vnp1,-1,iq,"all")
      call K_dot_product(v0_mod_,V0,Vnp1,1)
      !
-     Haydock_v0_mod=sqrt(Ares_fac*real(v0_mod_))
+     Haydock_v0_mod=sqrt(Ares_fac*real(v0_mod_,SP))
      !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle

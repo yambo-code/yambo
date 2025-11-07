@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<yambo_wfs.h>
+!
 subroutine WF_spatial_inversion(en,Xk)
  !
  ! Check if the Inversion is a DL symmetry operation either
@@ -23,8 +27,6 @@ subroutine WF_spatial_inversion(en,Xk)
  use interfaces,    ONLY:el_density_and_current
  !
  implicit none
- !
-#include<yambo_wfs.h>
  !
  type(levels) ::en
  type(bz_samp)::Xk

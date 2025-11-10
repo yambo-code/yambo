@@ -157,7 +157,9 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
        !
        ! Poles and Residuals
        !
-       forall(i1=1:X%ng) X_mat(i1,i1,1)=X_mat(i1,i1,1)+1._SP
+       do concurrent (i1=1:X%ng) 
+         X_mat(i1,i1,1)=X_mat(i1,i1,1)+1._SP
+       enddo
        !
 #if defined _OPENMP
 !$omp parallel do default(shared), private(i1,i2)

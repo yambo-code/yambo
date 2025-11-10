@@ -54,7 +54,9 @@ subroutine COLLISIONS_compose_nl(G_in)
  enddo
  enddo
  !
+!$OMP PARALLEL WORKSHARE  
  RT_Vnl_xc=cZERO
+!$OMP END PARALLEL WORKSHARE  
  !
  do i_coll=1,HXC_collisions%N
    !

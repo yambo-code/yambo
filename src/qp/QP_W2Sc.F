@@ -62,9 +62,11 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
      !
      ! 1st term: (spin_occ-f_os+fbose)
      !
-     forall(i_w=1:Xw%n_freqs) QP_W_here(i_w)=QP_W(i_qp_mem,i_q_mem,i_b_mem,i_w)*    &
+     do concurrent (i_w=1:Xw%n_freqs) 
+       QP_W_here(i_w)=QP_W(i_qp_mem,i_q_mem,i_b_mem,i_w)*    &
 &                        (spin_occ-E%f(os(1),os(2),os(3))+bose_f(real(Xw%p(i_w))))* &
 &                         bose_decay(real(Xw%p(i_w)))
+     enddo
      !
      call Kramers_Kronig(QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,          &
 &            real(Sc_W(i_qp)%p(:))-QP_time_order_sign*cI*aimag(Sc_W(i_qp)%p(:)),         &
@@ -72,9 +74,11 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
      !
      ! 2nd term: (f_os+fbose)
      !
-     forall(i_w=1:Xw%n_freqs) QP_W_here(i_w)=QP_W(i_qp_mem,i_q_mem,i_b_mem,i_w)* &
+     do concurrent (i_w=1:Xw%n_freqs) 
+       QP_W_here(i_w)=QP_W(i_qp_mem,i_q_mem,i_b_mem,i_w)* &
 &                         (E%f(os(1),os(2),os(3))+bose_f(real(Xw%p(i_w))))*      &
 &                         bose_decay(real(Xw%p(i_w)))
+     enddo
      !
      call Kramers_Kronig(-QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,         &
 &            -real(Sc_W(i_qp)%p(:))+cI*aimag(Sc_W(i_qp)%p(:)),              &
@@ -82,7 +86,9 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
      !
    enddo
    !
-   forall(i_w=1:Sc_W(i_qp)%n_freqs) QP_Sc(i_qp,i_w)=QP_Sc(i_qp,i_w)+dSc(i_w)
+   do concurrent (i_w=1:Sc_W(i_qp)%n_freqs) 
+     QP_Sc(i_qp,i_w)=QP_Sc(i_qp,i_w)+dSc(i_w)
+   enddo
    !
    deallocate(dSc)
    !

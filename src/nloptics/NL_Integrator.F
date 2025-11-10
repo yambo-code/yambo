@@ -96,14 +96,18 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
    !  
    do ik=1,QP_nk
      if(.not.PAR_IND_Xk_ibz%element_1D(ik)) then
+!$OMP PARALLEL WORKSHARE  
        V_bands(:,:,ik,:)=cZERO
+!$OMP END PARALLEL WORKSHARE  
        cycle
      endif
      ik_mem=PAR_Xk_ibz_index(ik)
      do is=1,n_sp_pol
        nb=E%nbf(is)
+!$OMP PARALLEL WORKSHARE  
        Ktmp=cZERO
        Ktmp(:,:nb)=V_bands(:,:nb,ik,is)
+!$OMP END PARALLEL WORKSHARE  
        call INVINT_step(V_bands(:,:nb,ik,is),Ktmp(:,:nb),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,ik_mem,is),nb,RT_step)
      enddo
    enddo
@@ -113,7 +117,9 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
    !  
    ! Evaluate V(t+dt/2)
    !
+!$OMP PARALLEL WORKSHARE  
    K_all=cZERO
+!$OMP END PARALLEL WORKSHARE  
    do ik=1,QP_nk
      if(.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle 
      ik_mem=PAR_Xk_ibz_index(ik)
@@ -140,7 +146,9 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
    K_all=V_bands
    do ik=1,QP_nk
      if(.not.PAR_IND_Xk_ibz%element_1D(ik)) then
+!$OMP PARALLEL WORKSHARE  
        V_bands(:,:,ik,:)=cZERO
+!$OMP END PARALLEL WORKSHARE  
        cycle
      endif
      ik_mem=PAR_Xk_ibz_index(ik)

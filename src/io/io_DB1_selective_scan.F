@@ -133,7 +133,9 @@ integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode
  !
  if (what=='all'.and.io_DB1_selective_scan>=0) then
    YAMBO_ALLOC(rl_sop,(3,3,nsym))
-   forall (i1=1:3,i2=1:3,is=1:nsym) rl_sop(i1,i2,is)=dl_sop(i1,i2,is)*alat(i1)/alat(i2) 
+   do concurrent (i1=1:3,i2=1:3,is=1:nsym) 
+     rl_sop(i1,i2,is)=dl_sop(i1,i2,is)*alat(i1)/alat(i2) 
+   enddo
  endif
  !
  core_io_path=core_io_path_save

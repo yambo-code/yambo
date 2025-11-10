@@ -72,7 +72,9 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
      !
      ! Overwrites the damping defined in FREQUENCIES_Green_Function
      !
-     forall(iw=1:QP_Sc_steps) Sc_local_W%p(iw)= real( Sc_local_W%p(iw)) + cmplx(0._SP,0.00001_SP/HA2EV)
+     do concurrent (iw=1:QP_Sc_steps) 
+       Sc_local_W%p(iw)= real( Sc_local_W%p(iw)) + cmplx(0._SP,0.00001_SP/HA2EV)
+     enddo
    endif
    !
    ib   =QP_table(i_qp,1)

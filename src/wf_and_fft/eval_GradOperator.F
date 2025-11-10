@@ -53,7 +53,9 @@ subroutine eval_GradOperator()
 #else
    call fft_3d(v,fft_dim,1)
 #endif
-   forall(i1=1:fft_size,i2=1:fft_size) Grad_R(i1,i2,ii) = v(R_m_R(i1,i2))/fft_size
+   do concurrent (i1=1:fft_size,i2=1:fft_size) 
+     Grad_R(i1,i2,ii) = v(R_m_R(i1,i2))/fft_size
+   enddo
    v = (0._DP,0._DP)
  end do
  !

@@ -65,7 +65,9 @@ subroutine WF_spatial_inversion(en,Xk)
    !
 #if !defined _OPENMP
    !
-   forall(i1=1:fft_size) cv(i1)=wfconjg(cmplx(WF%r(i1,i_spinor,1),kind=SP))*WF%r(i1,i_spinor,1)
+   do concurrent (i1=1:fft_size) 
+     cv(i1)=wfconjg(cmplx(WF%r(i1,i_spinor,1),kind=SP))*WF%r(i1,i_spinor,1)
+   enddo
    mv(1)=sum(rho_nsi(:)*cv(:))
    mv(2)=sum(rho_si(:)*cv(:))
    !

@@ -93,20 +93,26 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
        !
        do istep=1,max_step
          call Build_tilde_vbands(en,Xk,ikbz,isp,istep,id_red,V_bands(:,:en%nbf(isp),:,isp),V_tilde)
+!$OMP PARALLEL WORKSHARE  
          delta_V_tilde(:,:,istep)=(V_tilde(:,:,1)-V_tilde(:,:,2))/dble(istep)
+!$OMP END PARALLEL WORKSHARE  
        enddo
        !
        ik = Xk%sstar(ikbz,1)
        !
        if(max_step==1) then
+!$omp parallel do default(shared), private(iv), reduction(+:NL_J_red)
          do iv=1,en%nbf(isp)
            NL_J_red(id_red)=NL_J_red(id_red)+sum(VH_bands(:,iv,ik,isp)*delta_V_tilde(iv,:,1))
          enddo
+!$omp end parallel do
        elseif(max_step==2) then
+!$omp parallel do default(shared), private(iv), reduction(+:NL_J_red)
          do iv=1,en%nbf(isp)
            NL_J_red(id_red)=NL_J_red(id_red)+sum(VH_bands(:,iv,ik,isp) &
 &					    *(4._SP*delta_V_tilde(iv,:,1)-delta_V_tilde(iv,:,2)))/3._SP
          enddo
+!$omp end parallel do
        endif
        !
      enddo

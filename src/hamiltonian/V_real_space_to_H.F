@@ -53,8 +53,10 @@ subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
  V_mat=cZERO
  if(index(V_kind,"xc") >0) call Build_V_xc_mat(Vxc,V_mat)
  if(index(V_kind,"def")>0) then
-   forall(i_spinor=1:n_spinor) V_mat(:,i_sp_pol+i_spinor-1,i_sp_pol+i_spinor-1)= &
+   do concurrent (i_spinor=1:n_spinor) 
+     V_mat(:,i_sp_pol+i_spinor-1,i_sp_pol+i_spinor-1)= &
 &         V_mat(:,i_sp_pol+i_spinor-1,i_sp_pol+i_spinor-1)+V(:,i_sp_pol+i_spinor-1)
+   enddo
  endif
  !
  PAR_IND_local=.true.

@@ -124,8 +124,8 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  l_slepc     = index(BSS_mode,'s')/=0
 #if defined _SCALAPACK
- l_diago     = index(BSS_mode,'o')/=0.or. (     (l_BS_photolum.or.l_BS_magnons).and.(index(BSS_mode,'d')/=0))
- l_ldiago    = index(BSS_mode,'d')/=0.and. .not.(l_BS_photolum.or.l_BS_magnons)
+ l_diago     = index(BSS_mode,'o')/=0.or. (     l_BS_photolum.and.(index(BSS_mode,'d')/=0))
+ l_ldiago    = index(BSS_mode,'d')/=0.and. .not.l_BS_photolum
 #else
  l_diago     = index(BSS_mode,'o')/=0 .or. index(BSS_mode,'d')/=0
 #endif

@@ -15,7 +15,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  use pars,         ONLY:SP,schlen
  use R_lattice,    ONLY:bz_samp
- use electrons,    ONLY:levels,n_sp_pol,n_spin,get_spin_majority
+ use electrons,    ONLY:levels,n_sp_pol,n_spin
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match,STRING_split
@@ -182,8 +182,6 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    BS_n_eh_spaces=2
    if (.not.BS_K_coupling) BS_res_ares_n_mat=2
  endif
- !
- call get_spin_majority(Ken)
  !
  ! In this case the anti-resonant space is used to build the coupling matrix
  if (BS_K_coupling.and.iq/=1) BS_n_eh_spaces=2

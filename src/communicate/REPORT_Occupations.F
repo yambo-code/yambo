@@ -12,7 +12,8 @@ subroutine REPORT_Occupations(what,E)
  use D_lattice,     ONLY:Tel,T_holes,T_elecs,Bose_Temp,DL_vol
  use drivers,       ONLY:Finite_Tel
  use com,           ONLY:msg,COMPOSE_spin_msg
- use electrons,     ONLY:levels,n_sp_pol,nel,spin_string,spin_occ
+ use electrons,     ONLY:levels,n_sp_pol,nel,spin_string,spin_occ,&
+ &                       i_spin_majority
  use interfaces,    ONLY:OCCUPATIONS_Gaps
  !
  implicit none
@@ -54,6 +55,8 @@ subroutine REPORT_Occupations(what,E)
  call msg('r',COMPOSE_spin_msg(title,title_len,'Finite Temperature mode',0),Finite_Tel)
  call msg('r',COMPOSE_spin_msg(title,title_len,'El. density',0),(/nel/(DL_vol*BO2ANG**3*1.E-24)/),'[cm-3]')
  call msg('rn',COMPOSE_spin_msg(title,title_len,'Fermi Level',0),E%E_Fermi*HA2EV,'[eV]')
+ !
+ if (n_sp_pol==2) call msg('rn','Spin majority [UP] channel is ',i_spin_majority)
  !
  do i_sp_pol=1,n_sp_pol
    !

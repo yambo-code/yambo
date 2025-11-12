@@ -59,7 +59,7 @@ integer function io_BSS_Haydock(ID,iq,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,
    io_BSS_Haydock=io_status(ID)
    !
    if (io_BSS_Haydock<0) then
-     reached_treshold=0._SP
+     reached_treshold=100._SP
      goto 1
    endif
    !

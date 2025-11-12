@@ -36,15 +36,6 @@ void options_interfaces(struct options_struct *options, int *i_opt)
     options[*i_opt].bin = "p2y a2y c2y";
     options[*i_opt].yambo_string = "alat_f";
     options[*i_opt].section = "Interface";
-    *i_opt=*i_opt+1;
-    options[*i_opt].short_desc = 
-        "Multiply cutoff on wave--function for maximum number of g-vectors";
-    options[*i_opt].long_opt=  "ecut_factor";
-    options[*i_opt].short_opt='e';
-    options[*i_opt].float_var=1;
-    options[*i_opt].bin="a2y";
-    options[*i_opt].yambo_string="ecut_f";
-    options[*i_opt].section="Interface";
     *i_opt = *i_opt + 1;
     options[*i_opt].short_desc =
         "Force use of spatial Inv. instead of Time Rev.";

@@ -20,7 +20,6 @@ module mod_com2y
  integer :: ng_vec_abinit, wf_nb_io_user
  !
  real(SP):: alat_mult_factor
- real(SP):: ecut_mult_factor
  !
  contains
    !
@@ -49,12 +48,10 @@ module mod_com2y
      artificial_spin_pol  =index(in_string,'dupl')>0
      verboseIO            =index(in_string,'verb')>0
      !
-     alat_mult_factor=1._SP
-     ecut_mult_factor=4._SP
+     alat_mult_factor=1.
      wf_nb_io_user=0
      do i1=1,100
        if ( trim(str_piece(i1))=='alat_f')  read(str_piece(i1+1),*) alat_mult_factor
-       if ( trim(str_piece(i1))=='ecut_f')  read(str_piece(i1+1),*) ecut_mult_factor
        if ( trim(str_piece(i1))=='fragnb')  read(str_piece(i1+1),*) wf_nb_io_user
      enddo
      !

@@ -298,6 +298,16 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  !endif
 #endif
  !
+ if (BS_bands(2) < V_bands(2) ) then
+   call exp_user_warning("BS_bands(2) lower then number of metallic bands")
+   V_bands(2)=BS_bands(2)
+ endif
+ !
+ if (BS_bands(1) > C_bands(1) ) then
+   call exp_user_warning("BS_bands(1) greater then number of filled bands")
+   C_bands(1)=BS_bands(1)
+ endif
+ !
  do i_res_ares=1,BS_n_eh_spaces
    !
    do i_sp_c=1,n_sp_pol

@@ -264,6 +264,27 @@ subroutine error(mesg)
 end subroutine error
 !
 !
+subroutine exp_user_warning(mesg)
+ !
+ use com,          ONLY:exp_user
+ !
+ implicit none
+ !
+ character(*) :: mesg
+ !
+ if (exp_user) then
+   call warning(mesg)
+   call warning("Assuming experienced user and proceeding")
+ endif
+ !
+ if (.not.exp_user) then
+   call warning("Exp user error. Launch the code with -expuser to skip this ")
+   call error(mesg)
+ endif
+ !
+end subroutine exp_user_warning
+!
+!
 subroutine yambo_flush(unit)
   !
   !

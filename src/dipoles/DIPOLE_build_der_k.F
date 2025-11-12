@@ -97,7 +97,7 @@ subroutine DIPOLE_build_der_k(Xen,Xk,Dip,direction_is_todo)
      ikbz=Xk%k_table(ik,1)
      !
      call degeneration_finder(Dip%ib(2),first_el_k,n_of_el_k,n_deg_grp_k,&
-     &    Er=Xen%E(Dip%ib(1):Dip%ib_lim(1),ik,i_sp_pol),deg_accuracy=deg_thresh,Include_single_values=.true.)
+     &    Er=Xen%E(1:Dip%ib(2),ik,i_sp_pol),deg_accuracy=deg_thresh,Include_single_values=.true.)
      !
      deg_table_k=.false.
      do i_grp=1,n_deg_grp_k

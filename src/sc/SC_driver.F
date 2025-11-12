@@ -162,9 +162,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  if(.not.l_SC_RESTART.and.l_use_collisions) then
    !      
    H_rotation=cZERO
-   forall(i1=SC_bands(1):SC_bands(2))
+   do concurrent (i1=SC_bands(1):SC_bands(2))
      H_rotation(i1,i1,:,:)=1._SP
-   end forall
+   enddo
    !
  else if (.not.l_SC_cycle.and.l_SC_RESTART) then
    !
@@ -489,8 +489,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      if(.not.l_sc_electric) then
        !
-       forall (ib=SC_bands(2)+1:E%nb) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(2),:,:)-E_previous(SC_bands(2),:,:)
-       forall (ib=1:SC_bands(1)-1)    E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(1),:,:)-E_previous(SC_bands(1),:,:)
+       do concurrent (ib=SC_bands(2)+1:E%nb) 
+         E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(2),:,:)-E_previous(SC_bands(2),:,:)
+       enddo
+       do concurrent (ib=1:SC_bands(1)-1)    
+         E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(1),:,:)-E_previous(SC_bands(1),:,:)
+       enddo
        !
      endif
      !
@@ -848,7 +852,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
            ! 
            ! simmetrize the spreads summing over all possible degenerate bands
            !
-           forall (ibp=SC_bands(1):SC_bands(2)) WS_spread(ibp)=abs(H_rotation(ibp,ib,ik,i_sp_pol))**2*100._SP/HA2EV
+           do concurrent (ibp=SC_bands(1):SC_bands(2)) 
+             WS_spread(ibp)=abs(H_rotation(ibp,ib,ik,i_sp_pol))**2*100._SP/HA2EV
+           enddo
            !
            ibp=b_of_max_proj(ib,ik,i_sp_pol)
            spread(ib,ik,i_sp_pol)=WS_spread( ibp )

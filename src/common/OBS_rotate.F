@@ -37,7 +37,11 @@ subroutine OBS_rotate(R,O,N,direction)
  complex(SP) :: O_rot(N,N),R_(N,N)
  !
  if (direction ==  1) R_=R
- if (direction == -1) forall(i=1:N,j=1:N) R_(i,j)=conjg(R(j,i))
+ if (direction == -1) then 
+   do concurrent (i=1:N,j=1:N) 
+     R_(i,j)=conjg(R(j,i))
+   enddo
+ endif
  !
  ! [1] O_rot = (R_^{\dagger}) O
  !

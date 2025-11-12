@@ -97,7 +97,9 @@ subroutine cutoff_ws(q)
  !
  call PP_redux_wait(V_cut)
  !
- forall (iq=1:q%nibz,ig=1:wf_ng) bare_qpg(iq,ig)=sqrt(1.0_SP/V_cut(iq,ig))
+ do concurrent (iq=1:q%nibz,ig=1:wf_ng) 
+   bare_qpg(iq,ig)=sqrt(1.0_SP/V_cut(iq,ig))
+ enddo
  !
  ! cleanup
  !

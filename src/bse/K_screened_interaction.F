@@ -143,7 +143,9 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
        return
      endif
      !
-     forall(i_g2=1:X%ng) X_mat(i_g2,i_g2,1)=X_mat(i_g2,i_g2,1)+1._SP
+     do concurrent (i_g2=1:X%ng) 
+       X_mat(i_g2,i_g2,1)=X_mat(i_g2,i_g2,1)+1._SP
+     enddo
      !
      ! device <- host transfer
      if (have_gpu) call devxlib_memcpy_h2d(X_mat_p,X_mat)

@@ -137,7 +137,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    do i_qp=1,qp%n_states
      Sc_W(i_qp)%n_freqs=QP_dSc_steps
      YAMBO_ALLOC(Sc_W(i_qp)%p,(Sc_W(i_qp)%n_freqs))
-     forall (i_w=1:QP_dSc_steps) Sc_W(i_qp)%p(i_w)=qp%E_bare(i_qp)+(i_w-1)*QP_dSc_delta
+     do concurrent (i_w=1:QP_dSc_steps) 
+       Sc_W(i_qp)%p(i_w)=qp%E_bare(i_qp)+(i_w-1)*QP_dSc_delta
+     enddo
    enddo
    !
  else if (trim(QP_solver)=='g') then
@@ -698,7 +700,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          endif
          !
          ! DALV: here the grid is center in E0
-         forall (i_w=1:QP_dSc_steps) W_(i_w)=Sc_W(i_qp)%p(i_w)+cI*QP_G_damp
+         do concurrent  (i_w=1:QP_dSc_steps) 
+           W_(i_w)=Sc_W(i_qp)%p(i_w)+cI*QP_G_damp
+         enddo
          !
          E_kmq=E%E(ib,i_kmq,i_sp_pol)
          f_kmq=E%f(ib,i_kmq,i_sp_pol)
@@ -806,7 +810,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      if(l_ppa.and.l_GW_terminator) then
        !
        ! DALV: here the grid is center in E0
-       forall (i_w=1:QP_dSc_steps) W_(i_w)=Sc_W(i_qp)%p(i_w)+cI*QP_G_damp
+       do concurrent (i_w=1:QP_dSc_steps) 
+         W_(i_w)=Sc_W(i_qp)%p(i_w)+cI*QP_G_damp
+       enddo
        !
        do i_w=1,QP_dSc_steps
          !

@@ -37,9 +37,11 @@ subroutine Berry_polarization_NEQ(Xen,Xk,i_sp_pol,V_bands,Polarization)
  call timing('NL Berry Pol NEQ',OPR='start')
 #endif
  !
+!$OMP WORKSHARE  
  Sm1_minus=cZERO
  Sm1_plus =cZERO
  All_S_det=cZERO
+!$OMP END WORKSHARE  
  !
  if (i_sp_pol==1) Polarization=cZERO
  !

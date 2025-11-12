@@ -193,7 +193,11 @@ subroutine fft_setup(iG_max_in,iGo_max,ONLY_SIZE)
        v1=(g_vec_rot(i1,:)-g_vec_rot(i2,:))
        iv=nint(v1)
        !
-       if (i2==1.or.i1<=iG_max_in) forall(i3=1:3) ln(i3)=max(ln(i3),iv(i3))
+       if (i2==1.or.i1<=iG_max_in) then
+         do concurrent (i3=1:3) 
+           ln(i3)=max(ln(i3),iv(i3))
+         enddo
+       endif
 #  if defined _FFTQE
        if (i4>0.and..not.ONLY_SIZE) fft_g_table(i1,i2)=fft_setmap(iv,dffts)
 #  else
@@ -263,7 +267,9 @@ subroutine fft_setup(iG_max_in,iGo_max,ONLY_SIZE)
      if( is> nsym/(1+i_time_rev) .and. is<=nsym ) M1=matmul(-dl_sop(:,:,sop_inv(is)),transpose(a))
      if( is==nsym+1 )                             M1=matmul( space_inv,transpose(a))
      M2=matmul(b,M1)/2.0_SP/pi
-     forall (i1=1:3,i2=1:3) M2(i1,i2)=M2(i1,i2)*fft_dim(i1)/fft_dim(i2)
+     do concurrent  (i1=1:3,i2=1:3) 
+       M2(i1,i2)=M2(i1,i2)*fft_dim(i1)/fft_dim(i2)
+     enddo
      !
      do i1=0,fft_dim(1)-1
        do i2=0,fft_dim(2)-1

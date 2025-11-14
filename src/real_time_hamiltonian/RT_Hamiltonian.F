@@ -106,7 +106,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    !
    deallocate(delta_rho)
    !
-   if(n_spin>1 .and. eval_DFT) then
+   if(n_spin>1 .and. eval_DFT.and..not.l_use_Hxc_collisions) then
      allocate(delta_magn(fft_size,3))
      call el_magnetization_matrix(dG_in,E,k,delta_magn,RT_bands(1))
      magn_n=magn_reference+delta_magn
@@ -115,7 +115,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    !
    ! The Vxc term
    !--------------
-   if (eval_DFT) then
+   if (eval_DFT.and..not.l_use_Hxc_collisions) then
      call XC_potential_driver(E,k,WF_kind,WF_xc_functional,1)
      V_xc_sc=V_xc-REF_V_xc_sc
    endif
@@ -127,7 +127,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      allocate(V_scf(fft_size))
      V_scf=cZERO
      if(eval_HARTREE) V_scf=V_scf+V_Hartree_sc(:,1)
-     if(eval_DFT)     then
+     if(eval_DFT.and..not.l_use_Hxc_collisions)  then
        allocate(V_xc_mat(fft_size,n_spinor,n_spinor))
        call Build_V_xc_mat(V_xc_sc,V_xc_mat)
        V_scf=V_scf+V_xc_mat(:,1,1)+V_xc_mat(:,2,2)
@@ -171,6 +171,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    !
    call Build_dG_avg(dG_in,dG_avg)
    call COLLISIONS_compose_rt(dG_avg)
+   !
    !
    ! Add RT_Vnl_xc to Ho_plus_Sigma 
    !---------------------------------

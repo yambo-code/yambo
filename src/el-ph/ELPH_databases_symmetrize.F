@@ -9,7 +9,7 @@ subroutine ELPH_databases_symmetrize(mode,E,k,q,ik_bz,iq,n_bands,GKKP)
  ! 
  use pars,           ONLY:SP
  use units,          ONLY:HA2EV
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,deg_threshold
  use R_lattice,      ONLY:qindx_S,bz_samp
  use ELPH,           ONLY:ph_modes,PH_freqs_sq
  use vec_operate,    ONLY:degeneration_finder
@@ -39,7 +39,7 @@ subroutine ELPH_databases_symmetrize(mode,E,k,q,ik_bz,iq,n_bands,GKKP)
    ik_m_q   =k%sstar(qindx_S(ik,iq,1),1)
    !
    call degeneration_finder(n_bands(2),first_el(1,:),n_of_el(1,:),n_deg_grp(1),&
-   &                        Er=E%E(:n_bands(2),ik,1),    deg_accuracy=0.0001/HA2EV)
+   &                        Er=E%E(:n_bands(2),ik,1),    deg_accuracy=deg_threshold)
    call degeneration_finder(n_bands(2),first_el(2,:),n_of_el(2,:),n_deg_grp(2),&
    &                        Er=E%E(:n_bands(2),ik_m_q,1),deg_accuracy=0.0001/HA2EV)
    !

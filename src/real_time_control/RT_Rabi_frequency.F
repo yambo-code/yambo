@@ -13,7 +13,7 @@ function RT_Rabi_frequency(En,i_field,l_print_rabi)
  use pars,           ONLY:SP,rZERO,cZERO,cI
  use units,          ONLY:HA2EV,PS2AUT
  use R_lattice,      ONLY:nkibz
- use electrons,      ONLY:n_sp_pol,levels
+ use electrons,      ONLY:n_sp_pol,levels,deg_threshold
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:Efield
  use real_time,      ONLY:RT_bands,RT_nbands
@@ -71,7 +71,7 @@ function RT_Rabi_frequency(En,i_field,l_print_rabi)
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      ik_mem=PAR_Xk_ibz_index(ik)
      call degeneration_finder(RT_nbands,first_el,n_of_el,n_deg_grp,Er=En%E(RT_bands(1):RT_bands(2),ik,i_sp_pol), &
-     &                        deg_accuracy=0.0001_SP/HA2EV,Include_single_values=.true.)
+     &                        deg_accuracy=deg_threshold,Include_single_values=.true.)
      do i_grp1=1,n_deg_grp
        ib1=first_el(i_grp1)+RT_bands(1)-1
        do i_grp2=i_grp1+1,n_deg_grp

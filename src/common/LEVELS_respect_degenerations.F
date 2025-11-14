@@ -7,7 +7,7 @@
 !
 subroutine LEVELS_respect_degenerations(E,Dip,X)
  !
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,deg_threshold
  use stderr,        ONLY:intc
  use vec_operate,   ONLY:degeneration_finder
  use BS,            ONLY:BS_bands,BS_bands_frozen
@@ -129,7 +129,7 @@ subroutine LEVELS_respect_degenerations(E,Dip,X)
    !
    do ik=1,nkibz
      !
-     call degeneration_finder(n_bands,first_el,n_of_el,n_deg_grp,Er=E%E(:n_bands,ik,1),deg_accuracy=0.0001/HA2EV)
+     call degeneration_finder(n_bands,first_el,n_of_el,n_deg_grp,Er=E%E(:n_bands,ik,1),deg_accuracy=deg_threshold)
      !
      do i_g=1,n_deg_grp
        do i_c=1,2

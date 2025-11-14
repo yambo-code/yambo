@@ -133,7 +133,7 @@ subroutine K_diago_driver(iq,W,X_static)
 #if defined _NL
  if (l_ldiago) then
    ! The issue is present if yambo was configured in single precision
-   ! If the coufingure was done in double precision, the issue is not present
+   ! If the confingure was done in double precision, the issue is not present
    ! However, at this stage, it is not possible to know how the user configured yambo
    call warning("non-linear optics forces DP compilation and breaks Ldiago library interface in SP")
    l_ldiago = .false.

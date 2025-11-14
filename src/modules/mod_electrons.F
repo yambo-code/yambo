@@ -24,6 +24,7 @@ module electrons
  integer  :: n_bands
  integer  :: n_met_bands(2)
  integer  :: n_full_bands(2)
+ real(SP) :: deg_threshold ! Threshold for degenerate levels
  !
  ! Spin support
  !

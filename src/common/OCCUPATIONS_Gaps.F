@@ -8,7 +8,8 @@
 subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir,E_k_dir,E_k_ind)
  !
  use pars,          ONLY:SP
- use electrons,     ONLY:levels,n_sp_pol,filled_tresh,spin_occ
+ use electrons,     ONLY:levels,n_sp_pol,filled_tresh,spin_occ,&
+&                         get_spin_majority
  !
  implicit none
  !
@@ -75,6 +76,9 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir,E_k_dir,E_k_ind)
  !
  E%nbf=Nbf_
  E%nbm=Nbm_
+ !
+ call get_spin_majority(E)
+ !
 #if defined _RT
  if(all(E%nbc/=0)) then
    do i_sp_pol=1,n_sp_pol

@@ -21,8 +21,6 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  ! Generic diagonalization method to solve resonant and non resonant Hamiltonians.
  !
- ! 10/06/2015 Added by HM: Generic slepc method to solve 
- !
  use pars,           ONLY:SP
  use com,            ONLY:msg
  use stderr,         ONLY:intc
@@ -126,8 +124,8 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  l_slepc     = index(BSS_mode,'s')/=0
 #if defined _SCALAPACK
- l_diago     = index(BSS_mode,'o')/=0.or.      l_BS_photolum ! old diago
- l_ldiago    = index(BSS_mode,'d')/=0.and..not.l_BS_photolum 
+ l_diago     = index(BSS_mode,'o')/=0.or. (     l_BS_photolum.and.(index(BSS_mode,'d')/=0))
+ l_ldiago    = index(BSS_mode,'d')/=0.and. .not.l_BS_photolum
 #else
  l_diago     = index(BSS_mode,'o')/=0 .or. index(BSS_mode,'d')/=0
 #endif
@@ -135,7 +133,7 @@ subroutine K_diago_driver(iq,W,X_static)
 #if defined _NL
  if (l_ldiago) then
    ! The issue is present if yambo was configured in single precision
-   ! If the coufingure was done in double precision, the issue is not present
+   ! If the confingure was done in double precision, the issue is not present
    ! However, at this stage, it is not possible to know how the user configured yambo
    call warning("non-linear optics forces DP compilation and breaks Ldiago library interface in SP")
    l_ldiago = .false.
@@ -144,10 +142,10 @@ subroutine K_diago_driver(iq,W,X_static)
 #endif
  !
  if(l_diago) Solver="Diago"
+ if(l_ldiago) Solver="Ldiago" 
 #if defined _SLEPC && !defined _NL
  if(l_slepc) Solver="Slepc"
 #endif
- if(l_ldiago) Solver="Ldiago" 
  !
  call timing(trim(Solver)//' Solver',OPR='start')
  !

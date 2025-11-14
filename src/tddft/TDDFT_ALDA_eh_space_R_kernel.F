@@ -127,14 +127,22 @@ function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
        j_spinor_y=i_spinor
        do ip_spinor=1,n_spinor
          do jp_spinor=1,n_spinor
-           do irho=1,rho_map_size
-             if(     l_use_rho_map) ifft=rho_map(irho)
-             if(.not.l_use_rho_map) ifft=        irho
-             irhotw=irho+(i_spinor-1)*rho_map_size+(j_spinor-1)*n_spinor*rho_map_size
-             rhotwr2_p(irhotw)=rhotwr2_p(irhotw)+                        &
-             & F_xc_mat(ifft,i_spinor_y,j_spinor_y,ip_spinor,jp_spinor)* &
-             & WF_symm1_p(irho,ip_spinor)*conjg(WF_symm2_p(irho,jp_spinor))
-           enddo
+           if(     l_use_rho_map) then
+             do irho=1,rho_map_size
+               ifft=rho_map(irho)
+               irhotw=irho+(i_spinor-1)*rho_map_size+(j_spinor-1)*n_spinor*rho_map_size
+               rhotwr2_p(irhotw)=rhotwr2_p(irhotw)+                        &
+               & F_xc_mat(ifft,i_spinor_y,j_spinor_y,ip_spinor,jp_spinor)* &
+               & WF_symm1_p(irho,ip_spinor)*conjg(WF_symm2_p(irho,jp_spinor))
+             enddo
+           else
+             do ifft=1,rho_map_size
+               irhotw=ifft+(i_spinor-1)*rho_map_size+(j_spinor-1)*n_spinor*rho_map_size
+               rhotwr2_p(irhotw)=rhotwr2_p(irhotw)+                        &
+               & F_xc_mat(ifft,i_spinor_y,j_spinor_y,ip_spinor,jp_spinor)* &
+               & WF_symm1_p(irho,ip_spinor)*conjg(WF_symm2_p(irho,jp_spinor))
+             enddo
+           endif
          enddo
        enddo
      enddo

@@ -33,7 +33,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
  use DIPOLES,      ONLY:DIPOLE_t
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_ordered,PAR_IND_T_groups,&
 &                       PAR_IND_T_Haydock,PP_indexes_reset
- use electrons,    ONLY:levels,n_sp_pol
+ use electrons,    ONLY:levels,n_sp_pol,i_spin_majority
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
  use BS,           ONLY:l_BS_magnons,l_BS_photolum
@@ -88,9 +88,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
    !
    nColFG_in_T_group_now=1
    !
-   ! DS: WARNING
-   ! I cannot revert ik and i_sp_pol loop here ...
-   !
    do i_res_ares=1,BS_n_eh_spaces
      !
      i_T_group_start=i_T_group_now+1
@@ -124,7 +121,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
              i_sp_v=i_sp_c
              !
              if (l_BS_magnons.and.n_sp_pol==2) then
-               if(i_sp_c==1) cycle
+               if(i_sp_c==i_spin_majority) cycle
                i_sp_v=mod(i_sp_c,n_sp_pol)+1
              endif
              !
@@ -248,7 +245,7 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
 &                       l_BS_ares_from_res,BS_res_ares_n_mat,BS_bands,&
 &                       BS_n_eh_spaces,BS_bands_frozen
  use DIPOLES,      ONLY:DIPOLE_t
- use electrons,    ONLY:levels,n_sp_pol
+ use electrons,    ONLY:levels,n_sp_pol,i_spin_majority
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
  use BS,           ONLY:l_BS_magnons
@@ -305,7 +302,7 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
      i_sp_v=i_sp_c
      !
      if (l_BS_magnons.and.n_sp_pol==2) then
-       if(i_sp_c==1) cycle
+       if(i_sp_c==i_spin_majority) cycle
        i_sp_v=mod(i_sp_c,n_sp_pol)+1
      endif
      !

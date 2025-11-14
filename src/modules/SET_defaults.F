@@ -35,7 +35,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_W_ng,RIM_n_rand_pts,RIM_sphe_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets,k_map,qindx_S_max_Go,RIMW_type,eps_env
- use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn,nel_cond
+ use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,&
+&                     i_spin_majority,i_spin_minority,eval_magn,nel_cond,deg_threshold
  use parallel_m, ONLY:ncpu,CPU_str_reset,CREATE_hosts_COMM
  use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
 &                     more_io_path,core_io_path,com_path,repfile,grid_paths,fat_log,exp_user
@@ -318,9 +319,12 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  n_sp_pol=1
  n_spinor=1
  n_spin_den=1
+ i_spin_majority=1
+ i_spin_minority=n_sp_pol
  l_spin_orbit       = .FALSE.
  filled_tresh       = 0.00001_SP
  nel_cond=rZERO
+ deg_threshold	    =0.0001_SP/HA2EV
  !
  ! Magnetization and density
  !

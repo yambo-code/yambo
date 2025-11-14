@@ -15,7 +15,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_coh,l_sc_sex,l_sc_is_libDFT,l_eval_collisions,l_sc_hartree,&
 &                         l_sc_exx,l_sc_electric,l_sc_fock,l_use_collisions
- use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin,n_spinor
+ use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin,n_spinor,deg_threshold
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
  use SC,             ONLY:SC_bands,SC_iterations,SC_rho_threshold,E_convergence,      &
@@ -831,8 +831,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
          !
          ! Check for degenerate bands in the bare energies
          !
-         call degeneration_finder(E_reference%E(SC_bands(1):SC_bands(2),ik,i_sp_pol),&
-         &                             SC_nbands,first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
+         call degeneration_finder(SC_nbands,first_el,n_of_el,n_deg_grp,&
+         &                        Er=E_reference%E(SC_bands(1):SC_bands(2),ik,i_sp_pol),deg_accuracy=deg_threshold)
          !
          do ib=SC_bands(1),SC_bands(2)
            !

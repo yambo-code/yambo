@@ -24,7 +24,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use YPPm,                ONLY:l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_SOC_map,&
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,&
 &                              alat_used_for_output,l_QP_DB_expand,coo_out,coo_in,l_dipoles,&
-&                              DIPs_kind,l_sp_wf,l_mean_potential
+&                              DIPs_kind,l_sp_wf,l_mean_potential,l_magnons
 #if defined _YPP_RT
  use YPP_real_time,       ONLY:l_RealTime,l_RT_DBs,l_NL_X,l_NL_exc,l_RT_abs
 #endif
@@ -237,7 +237,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
 #endif
  !
- l_flag=l_excitons.or.(l_dipoles.and.trim(DIPs_kind)=="EXCITONIC")
+ l_flag=l_excitons.or.l_magnons.or.(l_dipoles.and.trim(DIPs_kind)=="EXCITONIC")
 #if defined _YPP_RT
  l_flag=l_flag.or.l_RT_abs
 #endif

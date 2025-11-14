@@ -134,15 +134,17 @@ void options_yambo(struct options_struct *options, int *i_opt)
     *i_opt = *i_opt + 1;
     options[*i_opt].short_desc = "BSE solver";
 #if defined _SLEPC && !defined _NL
-    strcpy(options[*i_opt].long_desc[0], "<string>=h/d/s/(p/f)i");
+    strcpy(options[*i_opt].long_desc[0], "<string>=h/d/o/s/(p/f)i");
 #else
-    strcpy(options[*i_opt].long_desc[0], "<string>=h/d/(p/f)i");
+    strcpy(options[*i_opt].long_desc[0], "<string>=h/d/o/(p/f)i");
 #endif
-    strcpy(options[*i_opt].long_desc[1], "(h)aydock/(d)iagonalization");
+    strcpy(options[*i_opt].long_desc[1], "(h)aydock");
     strcpy(options[*i_opt].long_desc[2],
+            "(d)iagonalization/(o)ld-diagonalization");
+    strcpy(options[*i_opt].long_desc[3],
            "(pi) perturbative inversion/ (fi) full inversion");
 #if defined _SLEPC && !defined _NL
-    strcpy(options[*i_opt].long_desc[2], "(s)lepc partial diagonalization");
+    strcpy(options[*i_opt].long_desc[4], "(s)lepc partial diagonalization");
 #endif
     options[*i_opt].long_opt = "Ksolver";
     options[*i_opt].short_opt = 'y';

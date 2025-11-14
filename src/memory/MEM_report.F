@@ -7,7 +7,7 @@
 !
 subroutine MEM_report( REPORT )
  !
- use pars,         ONLY:lchlen
+ use pars,         ONLY:SP,lchlen
  use y_memory,       ONLY:MEMs,N_MEM_elements,mem_string,MEM_element,MAX_MEM_Kb,N_MEM_SAVE_elements,&
 &                       LARGE_MEMs,MEM_treshold,MEM_SAVE_treshold,HOST_,DEV_
  use units,        ONLY:Kilobyte
@@ -28,8 +28,8 @@ subroutine MEM_report( REPORT )
    PREFIX=" "
    loc="r"
    call msg("r" ,"Memory Usage: global (Only MASTER cpu here). [O] stands for group 'O'")
-   call msg("rn","Memory treshold are:"//trim(mem_string(MEM_treshold))//" (basic treshold) "//&
-&                                       trim(mem_string(MEM_SAVE_treshold))//" (SAVEs treshold) ")
+   call msg("rn","Memory treshold are:"//trim(mem_string(real(MEM_treshold,SP)))//" (basic treshold) "//&
+&                                       trim(mem_string(real(MEM_SAVE_treshold,SP)))//" (SAVEs treshold) ")
  endif
  !
  ORPHAN_TOT=0
@@ -48,7 +48,7 @@ subroutine MEM_report( REPORT )
  !
  if (ORPHAN_TOT>0.and.fat_log) then
    if (loc=="r") call msg(loc,"")
-   WRITE(msg_,'(a8,a," : ",a,3x)') trim(PREFIX),"TOTAL not deallocated",trim(mem_string(ORPHAN_TOT))
+   WRITE(msg_,'(a8,a," : ",a,3x)') trim(PREFIX),"TOTAL not deallocated",trim(mem_string(real(ORPHAN_TOT,SP)))
    call msg(loc,msg_(1:len_trim(msg_)))
  endif
  !
@@ -62,12 +62,12 @@ subroutine MEM_report( REPORT )
  endif
  !
 #ifdef _GPU
- write(msg_,'(a8,a," : ",a,3x)') trim(PREFIX),  "Max memory used (HOST) ",trim(mem_string(MAX_MEM_Kb(HOST_)))
+ write(msg_,'(a8,a," : ",a,3x)') trim(PREFIX),  "Max memory used (HOST) ",trim(mem_string(real(MAX_MEM_Kb(HOST_),SP)))
  call msg("nr",msg_(1:len_trim(msg_)))
- write(msg_,'(a8,a," : ",a,3x)') trim(PREFIX),  "Max memory used (DEV)  ",trim(mem_string(MAX_MEM_Kb(DEV_)))
+ write(msg_,'(a8,a," : ",a,3x)') trim(PREFIX),  "Max memory used (DEV)  ",trim(mem_string(real(MAX_MEM_Kb(DEV_),SP)))
  call msg("r",msg_(1:len_trim(msg_)))
 #else
- write(msg_,'(a8,a," : ",a,3x)') trim(PREFIX),  "Max memory used  ",trim(mem_string(MAX_MEM_Kb(HOST_)))
+ write(msg_,'(a8,a," : ",a,3x)') trim(PREFIX),  "Max memory used  ",trim(mem_string(real(MAX_MEM_Kb(HOST_),SP)))
  call msg("nr",msg_(1:len_trim(msg_)))
 #endif
  !
@@ -90,7 +90,7 @@ subroutine MEM_report( REPORT )
        i_title=1
        !
        if (REPORT=="check") then
-         WRITE(msg_,'(a,1x,a," : ",a)') trim(PREFIX),trim(mem_string(MEM_now_kb,where))
+         WRITE(msg_,'(a,1x,a," : ",a)') trim(PREFIX),trim(mem_string(real(MEM_now_kb,SP),where))
          if (M%N>1.or.(M%N==1.and.trim(M%shelf)/=trim(M%name(1)))) then
            WRITE(msg_,'(2a)') trim(msg_),trim(M%name(i_el))//" "//trim(M%shelf)
          else
@@ -105,7 +105,7 @@ subroutine MEM_report( REPORT )
          else
            WRITE(msg_,'(a8,a27)') trim(PREFIX),trim(M%name(i_el))
          endif
-         WRITE(msg_,'(a," : ",a)') trim(msg_),trim(mem_string(MEM_now_kb,where))
+         WRITE(msg_,'(a," : ",a)') trim(msg_),trim(mem_string(real(MEM_now_kb,SP),where))
          if (len_trim(M%desc(i_el))>0) then
            WRITE(msg_,'(a,a)')  trim(msg_)," ("//trim(M%desc(i_el))//")"
          endif

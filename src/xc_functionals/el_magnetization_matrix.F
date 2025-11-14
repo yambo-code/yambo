@@ -54,8 +54,6 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  !
  if (n_spin==1) return
  !
- if (n_sp_pol==2) call error(' case n_sp_pol=2 not yet coded in yambo_rt')
- !
  l_WFs_on_the_fly=.not.allocated(WF%r)
  !
  if(lowest_band<RT_bands(1)) then
@@ -110,7 +108,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
    !  
  endif
  !
- i_sp_pol=1
+ do i_sp_pol=1,n_sp_pol
  do ik=1,Xk%nibz
    !
 #if !defined _YPP_RT
@@ -135,15 +133,22 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
        !
        f_occ=cZERO
        do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
-         if (ib1==ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,1)
-         if (ib1/=ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,1)*2._SP
+         if (ib1==ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,i_sp_pol)
+         if (ib1/=ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,i_sp_pol)*2._SP
          f_occ=f_occ*RTibz%weights(ik_RT)
        enddo
        !
-       i_wf1=WF%index(ib1,ik,1)
-       i_wf2=WF%index(ib2,ik,1)
+       i_wf1=WF%index(ib1,ik,i_sp_pol)
+       i_wf2=WF%index(ib2,ik,i_sp_pol)
        !
-       if (n_spinor==2) then
+       if (n_sp_pol==2) then
+         !
+         ! mz
+         !
+         cv(:,3)=cv(:,3)+(-1)**(i_sp_pol-1)*&
+         &       real(f_occ)*real(wfconjg(WF%r(:,1,i_wf1))*WF%r(:,1,i_wf2))
+         !
+       else if (n_spinor==2) then
          !
          ! mx
          !
@@ -169,6 +174,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
    !
    if (l_WFs_on_the_fly) call WF_free(WF,keep_fft=.true.)
    !
+ enddo
  enddo
  !
  call PP_redux_wait(cv)

@@ -41,7 +41,7 @@ subroutine ELPH_databases_symmetrize(mode,E,k,q,ik_bz,iq,n_bands,GKKP)
    call degeneration_finder(n_bands(2),first_el(1,:),n_of_el(1,:),n_deg_grp(1),&
    &                        Er=E%E(:n_bands(2),ik,1),    deg_accuracy=deg_threshold)
    call degeneration_finder(n_bands(2),first_el(2,:),n_of_el(2,:),n_deg_grp(2),&
-   &                        Er=E%E(:n_bands(2),ik_m_q,1),deg_accuracy=0.0001/HA2EV)
+   &                        Er=E%E(:n_bands(2),ik_m_q,1),deg_accuracy=deg_threshold)
    !
    do i_g=1,n_deg_grp(1)
      do i_np=n_bands(1),n_bands(2)
@@ -75,7 +75,7 @@ subroutine ELPH_databases_symmetrize(mode,E,k,q,ik_bz,iq,n_bands,GKKP)
    enddo
    !
    call degeneration_finder(ph_modes,first_el(1,:ph_modes),n_of_el(1,:ph_modes),n_deg_grp(1),&
-   &                        Er=ph_E,deg_accuracy=0.0001/HA2EV)
+   &                        Er=ph_E,deg_accuracy=deg_threshold)
    !
    do i_g=1,n_deg_grp(1)
      do i_c=1,2

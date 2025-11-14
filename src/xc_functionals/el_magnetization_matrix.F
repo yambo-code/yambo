@@ -77,7 +77,8 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
            !
            ! mz
            !
-           cv(:,3)=cv(:,3)+Xk%weights(ik)*(-1)**(i_sp_pol-1)*real(f_occ)*real(wfconjg(WF_tmp%r(:,1,i_wf1))*WF_tmp%r(:,1,i_wf1))
+           cv(:,3)=cv(:,3)+Xk%weights(ik)*(-1)**(i_sp_pol-1)*real(f_occ)*&
+&                      real(wfconjg(WF_tmp%r(:,1,i_wf1))*WF_tmp%r(:,1,i_wf1))
            !
          else if(n_spinor==2) then
            !

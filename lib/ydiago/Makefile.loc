@@ -1,0 +1,66 @@
+#
+#===============================
+# Yambo package
+#===============================
+#
+include ../../config/setup
+include ../archive/package.list
+#
+LIBNAME=libydiago.a
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
+PACKAGE=$(pkgname_Ydiago)
+#
+include ../config/external_libs_commons.mk
+include ../config/external_libs_defs.mk
+#
+#
+# MAIN target
+#
+all: $(LIBRARY)
+#
+uncompress:
+	@$(uncompress)
+
+configure: uncompress
+	@if ! test -e configured.stamp; then \
+	 rm -f ${compdir}/log/config_$(PACKAGE).log; \
+	 echo "\t[$(PACKAGE)] configuration"; \
+	 if test -e ${compdir}/lib/ydiago/make_ydiago.inc ; then \
+	   echo "cp ${compdir}/lib/ydiago/make_ydiago.inc ${compdir}/lib/ydiago/$(PACKAGE)/src/make.inc" >> ${compdir}/log/config_$(PACKAGE).log ; \
+	   cp ${compdir}/lib/ydiago/make_ydiago.inc ${compdir}/lib/ydiago/$(PACKAGE)/src/make.inc ; \
+	 fi ; \
+	 touch configured.stamp;\
+	fi
+#
+compile: uncompress configure
+	@if ! test -e compiled.stamp ; then \
+	  cd ${compdir}/lib/ydiago/$(PACKAGE)/src ; make ; \
+	  cd ${compdir}/lib/ydiago/ ; touch compiled.stamp; \
+	fi
+
+install: uncompress configure compile
+	@if ! test -e installed.stamp ; then \
+	 echo "\t[$(PACKAGE)] installation"; \
+	 echo "cp ${compdir}/lib/ydiago/$(PACKAGE)/src/libdiago.a $(LIBPATH)/lib/libydiago.a" >> ${compdir}/log/install_$(PACKAGE).log ; \
+	 echo "cp ${compdir}/lib/ydiago/$(PACKAGE)/src/ydiago_interface.mod $(LIBPATH)/include/" >> ${compdir}/log/install_$(PACKAGE).log ; \
+	 echo "chmod +x $(LIBPATH)/lib/libydiago.a" >> ${compdir}/log/install_$(PACKAGE).log ; \
+	 cp ${compdir}/lib/ydiago/$(PACKAGE)/src/libdiago.a ${compdir}/lib/libydiago.a ;\
+	 cp ${compdir}/lib/ydiago/$(PACKAGE)/src/ydiago_interface.mod ${compdir}/include/ ;\
+	 chmod +x ${compdir}/lib/libydiago.a ; \
+	 touch ${compdir}/config/stamps_and_lists/libydiago.a.stamp;\
+	 echo ydiago_interface >> ${compdir}/src/bse/modules.list;\
+	 touch installed.stamp;\
+	fi
+#
+$(LIBRARY): uncompress configure compile install
+#
+# cleaning
+#
+clean:
+	@$(clean_the_lib)
+#
+clean_all: clean
+	@$(rm_the_lib)
+#

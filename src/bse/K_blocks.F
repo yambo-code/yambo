@@ -19,9 +19,9 @@ subroutine K_blocks( )
  !  complex(SP), allocatable      :: mat(:,:)
  !end type BS_block
  !
- use pars,         ONLY:cZERO,SP,IP,IPL
- use parallel_m,   ONLY:PAR_IND_T_ordered,myid,ncpu
- use parallel_int, ONLY:PP_redux_wait,PARALLEL_live_message
+ use pars,         ONLY:SP,IP,IPL
+ use parallel_m,   ONLY:PAR_IND_T_ordered,myid,ncpu,PAR_COM_HOST
+ use parallel_int, ONLY:PP_wait,PP_redux_wait,PARALLEL_live_message
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
 &                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim,n_BS_blks_min,&
 &                       BS_n_eh_spaces,BS_res_ares_n_mat,BS_IO_dim,l_BS_ares_from_res
@@ -128,20 +128,6 @@ subroutine K_blocks( )
  !
  YAMBO_PAR_ALLOC_CHECK1(BS_MAT,(/TMP_SIZE/))
  !
- do iB=1,n_BS_blks
-   YAMBO_ALLOC(BS_blk(iB)%mat,(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
-   allocate(BS_blk(iB)%done(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
-   BS_blk(iB)%mat=cZERO
-   BS_blk(iB)%done(:,:)="f"
-   if (BS_blk(iB)%coordinate(1)==BS_blk(iB)%coordinate(2)) then
-    diag_size=minval(BS_blk(iB)%size(:))
-    allocate(BS_blk(iB)%table(5,diag_size))
-    allocate(BS_blk(iB)%E(diag_size))
-    BS_blk(iB)%E=-1._SP
-    BS_blk(iB)%table=0
-  endif
-enddo
- !
  ! Live Timing Blocks
  !====================
  !
@@ -169,3 +155,121 @@ enddo
  call PARALLEL_live_message("Kernel matrix elements",ENVIRONMENT="Response_T_space",LOADED_r=N_Ts_local,TOTAL_r=N_Ts_total)
  !
 end subroutine
+!
+!
+subroutine K_block_alloc( iB, mode )
+ !
+ use pars,         ONLY:SP,cZERO
+ use BS,           ONLY:BS_blk,l_BSE_kernel_complete
+ use BS_solvers,   ONLY:BSS_kernel_IO_on_the_fly
+ !
+#include<y_memory.h>
+ !
+ integer, intent(in) :: iB
+ character(*), intent(in) :: mode
+ !
+ integer :: diag_size
+ !
+ if (mode=="matonly") then
+   allocate(BS_blk(iB)%mat(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
+   return
+ endif
+ YAMBO_ALLOC(BS_blk(iB)%mat,(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
+ allocate(BS_blk(iB)%done(BS_blk(iB)%size(1),BS_blk(iB)%size(2)))
+ BS_blk(iB)%mat=cZERO
+ BS_blk(iB)%done(:,:)="f"
+ if (BS_blk(iB)%coordinate(1)==BS_blk(iB)%coordinate(2)) then
+   diag_size=minval(BS_blk(iB)%size(:))
+   allocate(BS_blk(iB)%table(5,diag_size))
+   allocate(BS_blk(iB)%E(diag_size))
+   BS_blk(iB)%E=-1._SP
+   BS_blk(iB)%table=0
+ endif
+ !
+end subroutine K_block_alloc
+!
+!
+subroutine K_block_free( iB, mode )
+ !
+ use BS,           ONLY:BS_blk,l_BSE_kernel_complete
+ use BS_solvers,   ONLY:BSS_kernel_IO_on_the_fly
+ !
+#include<y_memory.h>
+ !
+ integer, intent(in) :: iB
+ character(*), intent(in) :: mode
+ !
+ if (mode=="matonly") then
+   deallocate(BS_blk(iB)%mat)
+   return
+ endif
+ YAMBO_FREE(BS_blk(iB)%mat)
+ deallocate(BS_blk(iB)%done)
+ if (BS_blk(iB)%coordinate(1)==BS_blk(iB)%coordinate(2)) then
+   deallocate(BS_blk(iB)%table)
+   deallocate(BS_blk(iB)%E)
+ endif
+ !
+end subroutine K_block_free
+!
+!
+subroutine K_block_symmetrize(i_B)
+ use BS,           ONLY:BS_blk,l_BS_ares_from_res
+ implicit none
+ integer, intent(in) :: i_B
+ !
+ ! Symmetrize the DIAGONAL blocks only (i_Tk=i_Tp)
+ !
+ integer :: i_Tk,i_Tp,i_r,i_c
+ !
+ i_Tk  =BS_blk(i_B)%iT_k
+ i_Tp  =BS_blk(i_B)%iT_p
+ !
+ if (i_Tk/=i_Tp) return
+ !
+ select case(BS_blk(i_B)%mode)
+ case("R","A")
+   ! Resonant ("R") and anti-resonant ("A") parts are hermitian
+   do i_r=1,BS_blk(i_B)%size(1)
+     BS_blk(i_B)%mat(i_r,i_r) = real(BS_blk(i_B)%mat(i_r,i_r))
+     do i_c=i_r+1,BS_blk(i_B)%size(2)
+       BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
+     enddo
+   enddo
+ case("C","Q")
+   if (.not.l_BS_ares_from_res) return
+   ! Coupling ("C") and anti-coupling ("Q") are symmetric if l_BS_ares_from_res=.TRUE.
+   do i_r=1,BS_blk(i_B)%size(1)
+     !This gives fails with test-suite test Benzene 06_tddft_cpl
+     !BS_blk(i_B)%mat(i_r,i_r) = real(BS_blk(i_B)%mat(i_r,i_r))
+     do i_c=i_r+1,BS_blk(i_B)%size(2)
+       BS_blk(i_B)%mat(i_c,i_r) = BS_blk(i_B)%mat(i_r,i_c)
+     enddo
+   enddo
+ end select
+ !
+end subroutine K_block_symmetrize
+!
+!
+subroutine BS_blks_free(i_BS_mat)
+ use BS,           ONLY:BS_blk,n_BS_blks
+ implicit none
+ integer, intent(in) :: i_BS_mat
+ integer :: iB
+ do iB=1,n_BS_blks
+   if(i_BS_mat/=BS_blk(iB)%ira_k) cycle
+   if(.not.allocated(BS_blk(iB)%mat)) cycle
+   call K_block_free( iB, "all" )
+ enddo
+end subroutine
+!
+!
+subroutine BS_blks_symmetrize_K()
+ use BS,           ONLY:BS_blk,n_BS_blks
+ implicit none
+ integer :: i_B
+ do i_B=1,n_BS_blks
+   call K_block_symmetrize(i_B)
+ enddo
+end subroutine BS_blks_symmetrize_K
+

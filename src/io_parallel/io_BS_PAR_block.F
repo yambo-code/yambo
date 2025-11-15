@@ -15,10 +15,10 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  !
  use pars,          ONLY:IP,IPL,SP,schlen,max_io_vars_open
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
- use stderr,        ONLY:STRING_remove
- use BS,            ONLY:BS_blk,BSK_IO_mode,MAX_BSK_LIN_size,n_BS_blks_min,BS_K_dim
+ use stderr,        ONLY:STRING_split
+ use BS,            ONLY:BS_blk,BSK_IO_mode,MAX_BSK_LIN_size,n_BS_blks_min,BS_K_dim,BSK_IO_sum_value
  use timing_m,      ONLY:timing
- use IO_m,          ONLY:io_unit,netcdf_call,nf90_sync,variable_exist,&
+ use IO_m,          ONLY:io_unit,netcdf_call,nf90_sync,variable_exist,io_action,RD,WR,&
 &                        write_is_on,read_is_on,io_BS_K,YAMBO_CMPLX_NO_FILL
  use IO_int,        ONLY:io_variable_bulk
  !
@@ -32,13 +32,13 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  !
  integer, parameter :: n_max_tot_vars=6  ! see io_BS_PAR_init
  !
- character(schlen)   :: BSK_IO_local
+ character(schlen)   :: BSK_IO_local,BSK_IO_split(3)
  logical             :: lwrite(3),file_sync
  integer             :: x1,x2,VAR_IDs(2),ID_table,ID_energ,stat,ID_now(2)
  integer             :: n2,i1,i2,idx1,idx2,imax,i_rep(2),ilast
  integer(IPL)        :: idx
  !
- complex(SP), allocatable :: TMP_IO_VAR(:)
+ complex(SP), allocatable :: TMP_IO_VAR(:),mat_tmp(:,:)
  !
  if( (.not.io_BS_K) .and. trim(mode)=="full") return
  !
@@ -61,9 +61,12 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  x1=BS_blk(i_block)%coordinate(1)
  x2=BS_blk(i_block)%coordinate(2)
  !
- BSK_IO_local=trim(STRING_remove(BSK_IO_mode,"norestart"))
+ call STRING_split(BSK_IO_mode,BSK_IO_split)
+ BSK_IO_local=BSK_IO_split(1)
  if(index(mode,"compressed")/=0) BSK_IO_local=trim(mode)
  if(index(mode,"tableonly")/=0)  BSK_IO_local=trim(mode)
+ !
+ if (.not. allocated(BS_blk(i_block)%mat) ) call K_block_alloc(i_block,trim(mode))
  !
  select case(trim(BSK_IO_local))
  case("1D_linear","compressed_head","compressed_mat")
@@ -176,6 +179,15 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  case("2D_standard")
    ! 
    ! Write one block at a time in 2D
+   !
+   if (BSK_IO_sum_value.and.write_is_on(ID)) then
+     allocate(mat_tmp(BS_blk(i_block)%size(1),BS_blk(i_block)%size(2)))
+     io_action(ID)=RD
+     call io_variable_bulk(ID, VAR_IDs(1),  C2=mat_tmp , IPOS=(/1,x1,x2/) )
+     io_action(ID)=WR
+     BS_blk(i_block)%mat=BS_blk(i_block)%mat+mat_tmp
+     deallocate(mat_tmp)
+   endif
    !
    call io_variable_bulk(ID, VAR_IDs(1),  C2=BS_blk(i_block)%mat , IPOS=(/1,x1,x2/) )
    if(read_is_on(ID) .and. .not.trim(mode)=="matonly") then

@@ -142,9 +142,25 @@ subroutine DIPOLE_overlaps(Xk,Dip)
          ! Shift the wave-function by a G-vector if the neighbor is out of the BZ (USE_shifed_wf=.true.)
          shift=WF_shifts(ikbzp,:)
          if(USE_shifted_wf) then
+           !
+           ! In this case a points k+q is out of the BZ
+           ! now I have different possibilities:
+           ! 1) the original point ikbz that corresponds to (k+q) was
+           !    between 0-1, therefore I have to shift it to generate
+           !    the k+q => case WF_shifts==0
+           ! 2) the orignal points ikbz that corresponds to (k+q) was 
+           !    shifted in the opposite direction the two
+           !    shifts cancel out and I get shift==0 ==> WF_shifts==2
+           ! 3) the orignal points ibbz that corresponds to (k+q) was
+           !    already shifted in the right direction I keep this shift
+           !    case WF_shifts==1    
+           ! 
+           ! see also comments in src/bz_ops/k_map_nearest_by_dir.F 
+           ! 
            if(WF_shifts(ikbzp,id)==1) shift(id)=1
            if(WF_shifts(ikbzp,id)==0) shift(id)=1
            if(WF_shifts(ikbzp,id)==2) shift(id)=0
+           !
          endif
          !
          do ibp=1,Dip%ib(2) 

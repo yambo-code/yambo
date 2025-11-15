@@ -64,11 +64,12 @@ subroutine Build_tilde_vbands(en,Xk,ikbz,i_sp,istep,id_red,V_bands,V_tilde)
  !
  ! i,j indexes on all bands CMR basis
  !
+ ! Eqs. C11 and C13 in PRB 69, 085106(2004)
+ !     
  ! Vp(m,i) = \sum_{j} S(k,K+delta)_{i,j}   V(m,j)
  !
  ! Vm(m,i) = \sum_{j} S^H(k-delta,K)_{j,i} V(m,j)
  !
- ! 
  ! Build \tilde V(k+delta) - \tilde V(k-delta)
  ! ===========================================
  ! where \tilde V(k+delta,n,:) = \sum_m \tilde S^-1(k,k+delta)_{m,n} * Vp(m,:)

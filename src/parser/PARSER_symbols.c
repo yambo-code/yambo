@@ -83,7 +83,7 @@ int rmsym (char *sym_name)
 
 struct init_fntc{
 	char *fname;
-	gsl_complex (*fnct)();
+	gsl_complex (*fnct)(gsl_complex);
 };
 
 static struct init_fntc arith_fncts[] = {

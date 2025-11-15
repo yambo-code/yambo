@@ -31,9 +31,9 @@ subroutine YDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
   use LIVE_t,         ONLY:live_timing
   use com,            ONLY:msg
   use ydiago_interface
-  #if defined _MPI
+#if defined _MPI
   USE mpi
-  #endif
+#endif
   !
   implicit none
   !

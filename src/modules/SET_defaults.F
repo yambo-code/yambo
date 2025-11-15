@@ -45,7 +45,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,frag_WF
  use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,BSS_P_dir,BSS_E_dir,BSS_Q_dir,BSS_first_eig,&
-&                     Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,BSS_n_eig,&
+&                     Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,BSS_n_eig,BSS_n_eig_Input,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,BSS_target_E,&
 &                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH,BSS_desc,BSS_ydiago_solver,BSS_trange_E,&
 &                     BSS_kernel_IO_on_the_fly,BSS_kernel_stored_size,BSS_kernel_last_stored_block
@@ -469,6 +469,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  K_INV_EPS%max_treshold=40._SP
  BSS_n_freqs=100
  BSS_n_eig=0
+ BSS_n_eig_Input=0
  BSS_first_eig=1
  BSS_target_E=0._SP
  BSS_trange_E=-1._SP/HA2EV

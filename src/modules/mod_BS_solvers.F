@@ -55,6 +55,7 @@ module BS_solvers
  complex(SP)      :: BSS_Wd
  integer  :: BSS_n_freqs
  integer  :: BSS_n_eig            ! number of eigenvalues to find. Ydiago/Slepc
+ integer  :: BSS_n_eig_Input      ! number of eigenvalues requested in input. Ydiago/Slepc
  integer  :: BSS_first_eig        ! index of the first eigenvalue to find. Ydiago
  real(SP) :: BSS_target_E         ! find eigenvalues close to this energy. Slepc
  real(SP) :: BSS_trange_E(2)      ! find eigenvalues in this energy range. Ydiago
@@ -175,8 +176,8 @@ module BS_solvers
      complex(SP)        ,optional :: BS_mat(:,:)
      logical, optional            :: write_ev
    end function
-
-   subroutine write_bs_ev_par(iq, i_BS_mat, BS_VR, BS_VL, neigs_this_cpu, neig_shift)
+   !
+   subroutine write_bs_ev_par(iq, i_BS_mat, neigs_this_cpu, neig_shift, BS_VR, BS_VL)
      use pars,           ONLY:SP
      implicit none
      integer, intent(in)      :: i_BS_mat, iq, neigs_this_cpu, neig_shift

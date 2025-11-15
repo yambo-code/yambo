@@ -124,6 +124,16 @@ if test "$internal_blacs" = "yes" ; then
   if test "$compile_blacs" = "no" ; then BLACS_check="I"; fi
 fi
 #
+if test "$compile_ydiago" = "yes"; then
+  if test x"$with_ydiago_branch" = "xnone"; then
+    YDIAGO_check="I";
+  else
+    YDIAGO_check="G";
+  fi
+else
+  YDIAGO_check="-";
+fi
+#
 PETSC_check="-"
 PETSC_info=""
 if test "$internal_petsc" = "yes" ; then

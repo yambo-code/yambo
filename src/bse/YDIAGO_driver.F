@@ -31,6 +31,9 @@ subroutine YDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
   use LIVE_t,         ONLY:live_timing
   use com,            ONLY:msg
   use ydiago_interface
+  #if defined _MPI
+  USE mpi
+  #endif
   !
   implicit none
   !
@@ -97,7 +100,7 @@ subroutine YDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
       neig_tmp=neigs_range(2)-neigs_range(1)+1
       neigs_range_y(1) = neigs_range(1) 
       neigs_range_y(2) = neigs_range(2) 
-      ! DS: I need to divide by 2 the nnumber of requested eigenv in the
+      ! DS: I need to divide by 2 the number of requested eigenv in the
       ! coupling case, otherwise dimensions do not match
       if (BS_K_coupling) neigs_range_y(2) = neigs_range_y(1) + neig_tmp/2-1
       neigs_range_tmp = c_loc(neigs_range_y)
@@ -157,6 +160,7 @@ endif
   !
   ! Allocate the 2D block cyclic matrix
   !
+#if defined _MPI
   ! First create a blacs grid
   call MPI_COMM_SIZE(MPI_COMM_WORLD, nProcs, ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD, my_rank, ierr)
@@ -182,8 +186,13 @@ endif
     ProcX = 1
     ProcY = 1
   endif
-  
+
   call msg("s","BLACS grid",(/ProcX,ProcY/))
+#else
+  ProcX=1
+  ProcY=1
+  blacs_blk_size = 1
+#endif
 
   mpi_comm = MPI_COMM_WORLD
 
@@ -266,8 +275,6 @@ endif
     !
     ! Elpa always gives full spectrum
     neig_found = SL_H_dim/2 ! Only +ve eigenvalues computes and rest are retreived
-    if (solver_type_aux .eq. 's' .and. present(neigs_range)) then
-    endif
     !
     if (solver_type_aux .eq. 'e') then
 #if defined _ELPA

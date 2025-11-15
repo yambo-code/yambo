@@ -94,6 +94,7 @@ drocmlib    = @LIBROCM_PATH@
 devxlib_flgs= @DEVXLIB_FLAGS@
 devxlib_clib= @DEVXLIB_CUDALIBS@
 gpu_support = @GPU_SUPPORT@
+ydiago_gpu_support = @YDIAGO_GPU_SUPPORT@
 lfft        = @FFT_LIBS@
 ifft        = @FFT_INCS@
 liotk       = @IOTK_LIBS@

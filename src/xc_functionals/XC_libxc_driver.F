@@ -261,7 +261,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ORDER_NOW=ORDER
  if (l_Fxc_from_Vxc.and.ORDER==2) then
-   call msg('s',' Evaluating Fxc as numerical functional derivative of Vxc')
+   call msg('s',' Evaluating Fxc as numerical derivative of Vxc')
    PERT_FAC=1.000001_DP
    ORDER_NOW=1
    YAMBO_ALLOC(V_xc_pert,(fft_size,n_spin))
@@ -364,7 +364,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  if (l_Fxc_from_Vxc.and.ORDER==2) then
    do ifft=1,fft_size
-     if (abs(spin_rho_DP(1,ifft))<rho_map_thresh) cycle
+     if (abs(spin_rho_DP(1,ifft))<max(rho_map_thresh,1.E-8)) cycle
      F_xc(ifft,1,1)=real( real(V_xc_pert(ifft,1)-V_xc(ifft,1),DP)/(spin_rho_DP(1,ifft)*(PERT_FAC-1._DP)),SP)
    enddo
  endif

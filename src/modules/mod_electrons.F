@@ -24,6 +24,7 @@ module electrons
  integer  :: n_bands
  integer  :: n_met_bands(2)
  integer  :: n_full_bands(2)
+ real(SP) :: deg_threshold ! Threshold for degenerate levels
  !
  ! Spin support
  !
@@ -41,6 +42,9 @@ module electrons
  integer  :: n_spinor
  integer  :: n_spin_den
  logical  :: l_spin_orbit
+ !
+ integer  :: i_spin_majority
+ integer  :: i_spin_minority
  !
  integer, parameter  :: n_max_deg=4
  !
@@ -265,6 +269,23 @@ module electrons
      YAMBO_FREE(E%FG%W)
      YAMBO_FREE(E%FG%f)
      YAMBO_FREE(E%FG%df)
+     !
+   end subroutine
+   !
+   subroutine get_spin_majority(E)
+     !
+     type(levels),intent(in) ::E
+     integer :: nb_ref
+     !
+     nb_ref=maxval(E%nbm)
+     !
+     i_spin_majority=1
+     i_spin_minority=n_spin
+     if(n_sp_pol==2) then
+       if(E%E(nb_ref,1,1)<=E%E(nb_ref,1,2)) i_spin_majority=1
+       if(E%E(nb_ref,1,1)> E%E(nb_ref,1,2)) i_spin_majority=2
+       i_spin_minority=mod(i_spin_majority,n_sp_pol)+1
+     endif
      !
    end subroutine
    !

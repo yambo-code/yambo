@@ -21,7 +21,7 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
  ! This routine can be called from within Matrix_driver.F but should be kept in
  ! a separate source file for clarity.
  !
- use pars,          ONLY : SP,cI
+ use pars,          ONLY : SP,cI,schlen
  use units,         ONLY : HA2EV
  use com,           ONLY : msg
  use stderr,        ONLY : intc
@@ -87,6 +87,7 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
  !
  logical           :: l_precondition
  character(len=30) :: rowfmt
+ character(schlen) :: BSS_slepc_precondition_out
  !
  !
  call MatGetSize(M_slepc,Nsize,Msize,ierr)
@@ -223,7 +224,7 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
    !if (l_precondition) call PCSetType(pc,pckind,ierr)
  endif
  !
- BSS_slepc_precondition=trim(stkind)//"+"//trim(kspkind)//"+"//trim(pckind)
+ BSS_slepc_precondition_out=trim(stkind)//"+"//trim(kspkind)//"+"//trim(pckind)
  !
  if (BSS_slepc_extraction == 'ritz')              extr = EPS_RITZ
  if (BSS_slepc_extraction == 'harmonic')          extr = EPS_HARMONIC         
@@ -302,7 +303,7 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
  !
  call msg( 'sr', '[SLEPC] Approach                          ',BSS_slepc_approach)
  !
- call msg( 'sr', '[SLEPC] Precondition method               ',BSS_slepc_precondition)
+ call msg( 'sr', '[SLEPC] Precondition method               ',BSS_slepc_precondition_out)
  call msg( 'sr', '[SLEPC] Extraction method                 ',BSS_slepc_extraction)
  call msg( 'sr', '[SLEPC] Number of requested eigenvalues   ', n_eig ) 
  !

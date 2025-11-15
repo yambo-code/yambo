@@ -19,7 +19,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  use FFT_m,         ONLY:fft_dim,fft_size
  use com,           ONLY:msg,of_open_close
  use electrons,     ONLY:n_spinor,n_sp_pol
- use YPPm,          ONLY:v2plot,ncell,r_hole,l_free_hole,AVE_exc,&
+ use YPPm,          ONLY:v2plot,ncell,r_fixed,l_free_hole,AVE_exc,center_kind,&
 &                        nr,nr_tot,output_fname,l_average_eh,elec_spin,hole_spin,&
 &                        use_xcrysden,use_gnuplot,use_cube,plot_dim,&
 &                        EXCITONS_user_indexes,EXCITONS_n_user_states
@@ -43,12 +43,13 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  ! Workspace
  !
  type(PP_indexes)  :: px
- integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_lambda,j_lambda,i_sp_c,i_sp_v,ir,ir_hole,j1,&
+ logical           :: fixed_elec_plot,fixed_hole_plot
+ integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_lambda,j_lambda,i_sp_c,i_sp_v,ir,ir_fixed,j1,&
 &                     n_lambda_deg,BS_E_deg_done,neh1,iv1,ic1,ikbz1,ikibz1,i_sp_c1,i_sp_v1,is1,&
 &                     i_spin_hole,i_spin_elec,n1_lambda,n2_lambda
- integer           :: ikpbz,ikp,isp,i_spinor,j_spinor,rh_size,ir_hole_rlu(3)
+ integer           :: ikpbz,ikp,isp,i_spinor,j_spinor,rh_size,ir_fixed_rlu(3)
  character(schlen) :: exc_index_msg
- real(SP)          :: r_hole_rlu(3),k1(3),k2(3)
+ real(SP)          :: r_fixed_rlu(3),k1(3),k2(3)
  complex(SP)       :: B_coeff
  !
  integer,  allocatable :: rindex(:)
@@ -67,6 +68,11 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  !
  if (l_free_hole.or.l_average_eh) ncell=1
  !
+ fixed_hole_plot=trim(center_kind)=="Hole"
+ fixed_elec_plot=trim(center_kind)=="Electron"
+ !
+ if (.not.(fixed_hole_plot.or.fixed_elec_plot)) call error("Wrong CenterKind in input")
+ !
  call WF_load(WF,wf_ng,1,BS_bands,(/1,Xk%nibz/),space='R',title='-EXCWF')
  !
  call expand_grid()
@@ -80,20 +86,20 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    ! 
    ! [1] Bare position pushed in the smallest cell 
    ! 
-   call c2a(b_in=a,v_in=r_hole,v_out=r_hole_rlu,mode='kc2a')
+   call c2a(b_in=a,v_in=r_fixed,v_out=r_fixed_rlu,mode='kc2a')
    do j1=1,3
-     r_hole_rlu(j1)=r_hole_rlu(j1)-int(r_hole_rlu(j1))
+     r_fixed_rlu(j1)=r_fixed_rlu(j1)-int(r_fixed_rlu(j1))
    enddo
-   call c2a(b_in=a,v_in=r_hole_rlu,v_out=r_hole,mode='ka2c')
-   call msg('s',' Hole position in the DL cell      ',r_hole,"[c.c.]")
+   call c2a(b_in=a,v_in=r_fixed_rlu,v_out=r_fixed,mode='ka2c')
+   call msg('s',' '//center_kind(1:4)//' position in the DL cell      ',r_fixed,"[c.c.]")
    !
    ! [2] Bare position in the FFT grid
    !
-   call c2a(b_in=a,v_in=r_hole,v_out=r_hole_rlu,mode='kc2a')
-   ir_hole_rlu(:)=nint(r_hole_rlu(:)*fft_dim(:))
-   ir_hole=1+ir_hole_rlu(1)+ ir_hole_rlu(2)*nr(1)+ ir_hole_rlu(3)*nr(1)*nr(2)
-   if (ir_hole.lt.0) call error(' Hole coordinates in input must be positive') 
-   call msg('s','      position in the FFT grid     ',r_cell_cc(ir_hole,:),"[c.c.]")
+   call c2a(b_in=a,v_in=r_fixed,v_out=r_fixed_rlu,mode='kc2a')
+   ir_fixed_rlu(:)=nint(r_fixed_rlu(:)*fft_dim(:))
+   ir_fixed=1+r_fixed_rlu(1)+ r_fixed_rlu(2)*nr(1)+ r_fixed_rlu(3)*nr(1)*nr(2)
+   if (ir_fixed.lt.0) call error(' Fixed '//trim(center_kind)//' coordinates in input must be positive') 
+   call msg('s','      position in the FFT grid     ',r_cell_cc(ir_fixed,:),"[c.c.]")
    !
    ! [3] Translation in the center of the Big grid
    !
@@ -103,14 +109,14 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
      ! The number of cells is always odd so that the hole can
      ! be placed in the middle.
      !
-     ir_hole_rlu(j1)=ir_hole_rlu(j1)+ncell(j1)/2*fft_dim(j1)
+     ir_fixed_rlu(j1)=ir_fixed_rlu(j1)+ncell(j1)/2*fft_dim(j1)
      !
    enddo
-   ir_hole=1+ir_hole_rlu(1)+ir_hole_rlu(2)*nr(1)+ir_hole_rlu(3)*nr(1)*nr(2)
-   r_hole=r_cell_cc(ir_hole,:)
+   ir_fixed=1+ir_fixed_rlu(1)+ ir_fixed_rlu(2)*nr(1)+ ir_fixed_rlu(3)*nr(1)*nr(2)
+   r_fixed=r_cell_cc(ir_fixed,:)
    !
-   call msg('s','      translated position          ',r_hole,"[c.c.]")
-   call msg('s','                                   ',r_hole*BO2ANG,"[A]")
+   call msg('s','      translated position          ',r_fixed,"[c.c.]")
+   call msg('s','                                   ',r_fixed*BO2ANG,"[A]")
    !
  endif
  !
@@ -296,6 +302,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
      call PP_redux_wait(v2plot)
      !
    else
+     !   
      !
      call live_timing('ExcWF@'//trim(intc(j_lambda)),px%n_of_elements(myid+1))
      !
@@ -354,14 +361,24 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
            if (n_spinor==2 .and. i_spin_hole>0 .and. i_spinor /= i_spin_hole) cycle
            wf_vc(:,i_spinor,1) = wf_vc(:,i_spinor,1) + conjg(WF1(:,i_spinor))*WF2(:,i_spinor)
          enddo
-       else
+       else if (fixed_hole_plot) then
          do i_spinor=1,n_spinor
            if (n_spinor==2 .and. i_spin_hole>0 .and. i_spinor /= i_spin_hole) cycle
            do j_spinor=1,n_spinor
              if (n_spinor==2 .and. i_spin_elec>0 .and. j_spinor /= i_spin_elec) cycle
              if (n_spinor==2 .and. i_spin_elec==-10 .and. i_spinor/= j_spinor) cycle
              wf_vc(:,i_spinor,j_spinor) = wf_vc(:,i_spinor,j_spinor) + &
-             &      conjg(WF1(rindex(ir_hole),i_spinor))*WF2(:,j_spinor)
+             &      conjg(WF1(rindex(ir_fixed),i_spinor))*WF2(:,j_spinor)
+           enddo
+         enddo
+       else if (fixed_elec_plot) then
+         do i_spinor=1,n_spinor
+           if (n_spinor==2 .and. i_spin_hole>0 .and. i_spinor /= i_spin_hole) cycle
+           do j_spinor=1,n_spinor
+             if (n_spinor==2 .and. i_spin_elec>0 .and. j_spinor /= i_spin_elec) cycle
+             if (n_spinor==2 .and. i_spin_elec==-10 .and. i_spinor/= j_spinor) cycle
+             wf_vc(:,i_spinor,j_spinor) = wf_vc(:,i_spinor,j_spinor) + &
+             &      conjg(WF1(:,i_spinor))*WF2(rindex(ir_fixed),j_spinor)
            enddo
          enddo
        endif
@@ -410,9 +427,9 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
            enddo
          enddo
          !
-       else
+       else if (fixed_hole_plot) then
          ! 
-         kp_dot_r_h(1) = dot_product(r_cell_cc(ir_hole,:),k2(:))
+         kp_dot_r_h(1) = dot_product(r_cell_cc(ir_fixed,:),k2(:))
          !
          do i_spinor=1,n_spinor
            if (n_spinor==2 .and. i_spin_hole>0 .and. i_spinor /= i_spin_hole) cycle
@@ -426,6 +443,26 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
                phase(ir)=cmplx(cos(alpha(ir)),sin(alpha(ir)),kind=SP)
                wf_tmp(ir,i_spinor,j_spinor) = wf_tmp(ir,i_spinor,j_spinor)+&
                &  wf_tmp_uc(rindex(ir),i_spinor,j_spinor)*phase(ir)
+             enddo
+           enddo
+         enddo
+         !
+       else if (fixed_elec_plot) then
+         ! 
+         k_dot_r_e(1) = dot_product(r_cell_cc(ir_fixed,:),k1(:))
+         !
+         do i_spinor=1,n_spinor
+           if (n_spinor==2 .and. i_spin_hole>0 .and. i_spinor /= i_spin_hole) cycle
+           do j_spinor=1,n_spinor
+             if (n_spinor==2 .and. i_spin_elec>0 .and. j_spinor /= i_spin_elec) cycle
+             if (n_spinor==2 .and. i_spin_elec==-10 .and. i_spinor/= j_spinor) cycle
+             !$omp do
+              do ir=1,nr_tot
+                kp_dot_r_h(ir) =r_cell_cc(ir,1)*k2(1)+r_cell_cc(ir,2)*k2(2)+r_cell_cc(ir,3)*k2(3)
+                alpha(ir)=k_dot_r_e(1)-kp_dot_r_h(ir)
+                phase(ir)=cmplx(cos(alpha(ir)),sin(alpha(ir)),kind=SP)
+                wf_tmp(ir,i_spinor,j_spinor) = wf_tmp(ir,i_spinor,j_spinor)+&
+                &  BS_mat(neh,j_lambda)*wf_vc(rindex(ir),i_spinor,j_spinor)*phase(ir)
              enddo
            enddo
          enddo

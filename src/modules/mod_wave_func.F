@@ -74,6 +74,8 @@ module wave_func
  integer                :: wf_ng_overlaps ! For WFs shifted used by the overlaps
  integer                :: cutoff_ng      ! For G-vectors used in cutoff (if read, may be different from wf_ng)
  !
+ real(SP)               :: E_of_WFs
+ !
  ! Wave function derivatives
  !
  complex(SP), allocatable :: wf_x(:,:,:)

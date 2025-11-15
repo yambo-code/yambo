@@ -1293,6 +1293,9 @@ end module parallel_int
 
 
 module y_memory_alloc_par
+ use pars,         ONLY:IPL
  use parallel_m,   ONLY:PAR_COM_HOST
  use parallel_int, ONLY:PP_redux_wait,PP_wait
+ integer      :: isize_mem
+ integer(IPL) :: HOST_SIZE(1),LOCAL_SIZE(1)
 end module y_memory_alloc_par

@@ -23,7 +23,7 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
  use LIVE_t,            ONLY:live_timing
  use R_lattice,         ONLY:bz_samp,G_m_G,minus_G,g_vec,rl_sop
  use D_lattice,         ONLY:nsym,i_time_rev,sop_tab,spin_sop
- use electrons,         ONLY:levels,n_max_deg
+ use electrons,         ONLY:levels,n_max_deg,deg_threshold
  use wave_func,         ONLY:WAVEs,io_WF_phases,WF_phases_b_map
  use wave_func,         ONLY:wf_ng_overlaps,wf_ng_1st_BZ,wf_ng,WF_copy,wf_nc_k
  use stderr,            ONLY:intc
@@ -128,8 +128,8 @@ subroutine WF_phase_matrices(En,Xk,blim,klim)
      call WF_load(WF_k,0,1,blim,(/ik,ik/),(/i_sp_pol,i_sp_pol/),&
      & space='G',title='-WF_phases',quiet=ifrag>1,keep_states_to_load=.true.)
      !
-     call degeneration_finder(En%E(blim(1):blim(2),ik,i_sp_pol),nb,&
-     &                           first_el,n_of_el,n_deg_grp,0.0001/HA2EV,Include_single_values=.true.)
+     call degeneration_finder(nb,first_el,n_of_el,n_deg_grp,Er=En%E(blim(1):blim(2),ik,i_sp_pol),&
+     &                deg_accuracy=deg_threshold,Include_single_values=.true.)
      !
      do i_grp=1,n_deg_grp
        do iby_phase=1,n_of_el(i_grp)

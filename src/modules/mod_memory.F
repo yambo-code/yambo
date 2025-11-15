@@ -159,7 +159,7 @@ module y_memory
    !
    character(schlen) function mem_string(MEM,where)
      use stderr,       ONLY:intc,real2ch
-     integer :: MEM !in Kb
+     real(SP)          :: MEM !in Kb
      integer, optional :: where
      !
      character(64) :: where_str
@@ -170,12 +170,12 @@ module y_memory
        if (where==DEV_)  where_str="  Dev"
      endif
      !
-     if (MEM<1000) then
-       mem_string=trim(real2ch(real(MEM,SP)))//" [Kb]"
-     else if (MEM<1000000) then
-       mem_string=trim(real2ch(real(MEM,SP)/1000))//" [Mb]"
+     if (MEM<1000._SP) then
+       mem_string=trim(real2ch(MEM))//" [Kb]"
+     else if (MEM<1000000._SP) then
+       mem_string=trim(real2ch(MEM/1000._SP))//" [Mb]"
      else
-       mem_string=trim(real2ch(real(MEM,SP)/1000000))//" [Gb]"
+       mem_string=trim(real2ch(MEM/1000000._SP))//" [Gb]"
      endif
      mem_string=trim(mem_string)//trim(where_str)
    end function

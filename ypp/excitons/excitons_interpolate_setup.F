@@ -19,7 +19,9 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,BS_all_E,ID_INTERP_EXC,ID_IN
  use electrons,     ONLY:levels,nel_cond,E_reset
  use interpolate,   ONLY:INTERPOLATION_BZ,INTERP_obj,INTERPOLATION_coefficients
  use YPPm,          ONLY:BS_E,EXCITONS_user_indexes,EXCITONS_n_user_states,coo_out,K_transform,&
-&                        l_exc_occ_interp,EXCITONS_user_indexes,EXCITONS_n_user_states
+ &                       l_exc_occ_interp,EXCITONS_n_user_states,&
+ &                       l_magnons,BS_R_left,BS_R_right,BS_R_left_magn,BS_R_right_magn,exc_kind
+ use BS_solvers,    ONLY:BSS_n_eig
  use com,           ONLY:msg
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:OP_APP_CL,REP,OP_RD_CL
@@ -37,16 +39,23 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,BS_all_E,ID_INTERP_EXC,ID_IN
  ! Work space
  !
  type(levels)  ::E_QF
- integer :: iq,i_c,i_l,io_err,ID
+ integer :: iq,i_c,i_l,io_err,ID,EXC_n_states_ref,BSS_n_eig_ref,n_eig
  real(SP), allocatable    :: EXC_occ(:,:)
  real(SP), allocatable    :: values(:)
+ real(SP) :: Res(BSS_n_eig),BS_E_degs(BSS_n_eig)
  real(SP) :: tmp_q(3),E_fermi_h,E_fermi_e
  character(schlen), allocatable :: headings(:)
  integer, external  ::io_QINDX
  !
- ! Allocate arrays for all eigenvalues/eigenvectors
+ EXC_n_states_ref=EXCITONS_n_user_states
+ BSS_n_eig_ref=BSS_n_eig
  ! 
- call section('*','Excitons Interpolation')
+ do i_c=1,EXC_n_states_ref
+   i_l=EXCITONS_user_indexes(i_c)
+   BS_all_E(i_c,1)=BS_E(i_l)
+ enddo
+ !
+ call section('*',exc_kind//'s Interpolation')
  !
  if(nel_cond/=rZERO) then
    call msg('rs','Excitonic quasi-fermi distribution interpolation')
@@ -74,20 +83,25 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,BS_all_E,ID_INTERP_EXC,ID_IN
  !
  ! Read all eigenvalues and eigenvectors
  !
- do iq=1,q%nibz
-   call msg('s','Reading excitons at @ Q-index #',iq)
+ n_eig=BSS_n_eig
+ do iq=2,q%nibz
+   call msg('s','Reading '//exc_kind//'s at @ Q-index #',iq)
    call excitons_read(k,Xk,en,Xen,iq,"check",io_err)
    !
    if(l_exc_occ_interp) then
      call excitons_read(k,Xk,en,Xen,iq,"eigenvectors eigenvalues",io_err)
 #if defined _YPP_ELPH
-     call EXC_occupations(E_QF,Xk,q,iq,EXCITONS_n_user_states,EXCITONS_user_indexes,EXC_occ(:,iq))
+     call EXC_occupations(E_QF,Xk,q,iq,EXC_n_states_ref,EXCITONS_user_indexes,EXC_occ(:,iq))
 #endif
    else
      call excitons_read(k,Xk,en,Xen,iq,"eigenvalues",io_err)
    endif
    !
-   do i_c=1,EXCITONS_n_user_states
+   n_eig=min(n_eig,BSS_n_eig)
+   if (     l_magnons)  Res(:n_eig)=real(BS_R_left_magn(:n_eig,1)*BS_R_right_magn(:n_eig,1),SP)
+   if (.not.l_magnons)  Res(:n_eig)=real(BS_R_left(:n_eig)*BS_R_right(:n_eig),SP)
+   call excitons_get_user_states(BS_E_degs(:n_eig),Res(:n_eig),n_eig,.true.)
+   do i_c=1,EXC_n_states_ref
      i_l=EXCITONS_user_indexes(i_c)
      BS_all_E(i_c,iq)=BS_E(i_l)
    enddo
@@ -96,6 +110,9 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,BS_all_E,ID_INTERP_EXC,ID_IN
    !
  enddo
  !
+ EXCITONS_n_user_states=EXC_n_states_ref
+ BSS_n_eig=BSS_n_eig_ref
+ !
  if(report.eqv..true.) then
    !
    ! Write in the report the exciton energies
@@ -103,7 +120,7 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,BS_all_E,ID_INTERP_EXC,ID_IN
    YAMBO_ALLOC(values,(EXCITONS_n_user_states+4))
    allocate(headings(EXCITONS_n_user_states+4))
    !
-   call msg('nr','Excitons Energies:')
+   call msg('nr',exc_kind//'s Energies:')
    headings(1:3)=(/"q_x ("//trim(coo_out)//")","q_y ("//trim(coo_out)//")","q_z ("//trim(coo_out)//")"/)
    !
    do i_c=1,EXCITONS_n_user_states
@@ -130,7 +147,7 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,BS_all_E,ID_INTERP_EXC,ID_IN
  ! Fourier interpolation of exciton dispersion
  !
  call INTERPOLATION_BZ_setup(q)
- INTERP_obj(ID_INTERP_EXC)%what="excitons"
+ INTERP_obj(ID_INTERP_EXC)%what=exc_kind//"s"
  call INTERPOLATION_coefficients(R1D=BS_all_E,k=q,NK=q%nibz,ID=ID_INTERP_EXC,ID_obj=ID_INTERP_EXC)
  !
  if(l_exc_occ_interp) then

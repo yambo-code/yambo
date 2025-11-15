@@ -42,7 +42,7 @@ subroutine K_blocks(iq)
  !
  ! Work Space
  !
- integer(IPL) :: HOST_SIZE(1),TMP_SIZE,LOCAL_SIZE(1)
+ integer(IPL) :: TMP_SIZE(1)
  integer      :: i_T,j_T,i_T_start,j_T_start,i_block,diag_size,iB
  integer      :: i_res_ares,j_res_ares,n_blocks_per_grp,n_BS_blks_CPUs(ncpu)
  integer(IPL) :: local_steps
@@ -145,7 +145,7 @@ subroutine K_blocks(iq)
  !
  ! Allocate the blocks
  !
- YAMBO_PAR_ALLOC_CHECK1(BS_MAT,(/TMP_SIZE/))
+ YAMBO_PAR_ALLOC_CHECK1(BS_MAT,TMP_SIZE)
  !
  ! Live Timing Blocks
  !====================
@@ -173,7 +173,7 @@ subroutine K_blocks(iq)
  !
  call PARALLEL_live_message("Kernel matrix elements",ENVIRONMENT="Response_T_space",LOADED_r=N_Ts_local,TOTAL_r=N_Ts_total)
  !
-end subroutine
+end subroutine K_blocks
 !
 !
 subroutine K_block_alloc( iB, mode )

@@ -4,6 +4,7 @@
  excitons_degeneracy_average.o
  excitons_driver.o
  excitons_find_degeneracies.o
+ excitons_get_user_states.o
  excitons_interpolate_setup.o
  excitons_kinematics.o
  excitons_ph_ass_dos.o

@@ -143,6 +143,15 @@ void options_ypp(struct options_struct *options, int *i_opt)
     options[*i_opt].yambo_string = "excitons";
     options[*i_opt].section = "Plots";
     options[*i_opt].char_var = 1;
+    *i_opt=*i_opt+1;
+    options[*i_opt].short_desc="Magnonic properties";
+    options[*i_opt].long_opt="magnon";
+    options[*i_opt].short_opt='z';
+    options[*i_opt].bin="ypp";
+    strcpy(options[*i_opt].long_desc[0],"<string>=(s)ort,(sp)in,(a)mplitude,(w)ave,(i)nterpolate");
+    options[*i_opt].yambo_string="magnons";
+    options[*i_opt].section="Plots";
+    options[*i_opt].char_var=1;
     *i_opt = *i_opt + 1;
     options[*i_opt].short_desc = "Dipole properties";
     options[*i_opt].long_opt = "dipoles";

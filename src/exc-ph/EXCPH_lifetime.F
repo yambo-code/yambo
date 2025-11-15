@@ -106,8 +106,9 @@ subroutine EXCPH_lifetime(k,q,X)
  ! improve the quality of the interpolation at gamma in the case of double grid 
  ! (try to avoid unphysical splitting of degenerate states) 
  !
- call degeneration_finder(BS_all_E(EXCPH_states(1):EXCPH_states(2),1),n_exc_in,first_exc_grp,&
- &        n_of_exc_grp,n_deg_grp,0.001/HA2EV,Include_single_values=.true.)
+ call degeneration_finder(n_exc_in,first_exc_grp,n_of_exc_grp,n_deg_grp,&
+ &                       Er=BS_all_E(EXCPH_states(1):EXCPH_states(2),1),&
+ &                 deg_accuracy=0.001/HA2EV,Include_single_values=.true.)
  !
  do igrp=1,n_deg_grp
    j_alpha=first_exc_grp(igrp)+EXCPH_states(1)-1
@@ -241,8 +242,9 @@ subroutine EXCPH_lifetime(k,q,X)
  !
  ! Perform average
  !
- call degeneration_finder(real(BS_E_in(EXCPH_states(1):EXCPH_states(2))),n_exc_in,first_exc_grp, &
- &        n_of_exc_grp,n_deg_grp,0.001/HA2EV,Include_single_values=.true.)
+ call degeneration_finder(n_exc_in,first_exc_grp,n_of_exc_grp,n_deg_grp,&
+ &                    Er=real(BS_E_in(EXCPH_states(1):EXCPH_states(2))),&
+ &                 deg_accuracy=0.001/HA2EV,Include_single_values=.true.)
  !
  do igrp=1,n_deg_grp
    j_alpha=first_exc_grp(igrp)+EXCPH_states(1)-1

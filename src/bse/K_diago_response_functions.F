@@ -234,7 +234,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
    allocate(first_exc(EDIM)) 
    allocate(n_of_exc(EDIM))
    ! Threshold is 1meV
-   call degeneration_finder(vtmpR(i1:i1-1+EDIM),EDIM,first_exc,n_of_exc,n_deg_grp,0.001_SP/HA2EV,Include_single_values=.TRUE.)
+   call degeneration_finder(EDIM,first_exc,n_of_exc,n_deg_grp,&
+   &      Er=vtmpR(i1:i1-1+EDIM),deg_accuracy=0.001_SP/HA2EV,Include_single_values=.TRUE.)
    EDIM=min(BSS_n_eig-i1+1,1000)
    do i_VAR=1,nVAR
      BS_E_sorted(:,i_VAR,2)=cZERO

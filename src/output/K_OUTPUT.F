@@ -60,7 +60,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      if (.not.STRING_match(WHAT,"IP").and..not.BS_K_is_ALDA) out_string=trim(solver)//' bse'
      if (                                      BS_K_is_ALDA) out_string=trim(solver)//' alda bse'
    endif
-   call X_OUTPUT_driver(WHAT="keys"//OBS,IQ=iq,IG=i_G_shift,keys=trim(out_string))
+   call X_OUTPUT_driver(WHAT="keys "//OBS,IQ=iq,IG=i_G_shift,keys=trim(out_string))
    !
    call X_OUTPUT_driver("open "//OBS)
    !

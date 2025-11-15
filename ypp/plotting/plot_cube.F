@@ -11,7 +11,7 @@ subroutine plot_cube()
  use FFT_m,       ONLY:fft_dim 
  use C_driver,    ONLY:code_version
  use com,         ONLY:msg
- use YPPm,        ONLY:nr,v2plot,ncell,r_hole,l_free_hole,l_average_eh,&
+ use YPPm,        ONLY:nr,v2plot,ncell,r_fixed,l_free_hole,l_average_eh,&
 &                      l_norm_to_one,WF_multiplier,l_exc_wf,plot_title,output_string
  use D_lattice,   ONLY:n_atomic_species,n_atoms_species,a,atom_pos,Z_species,n_atoms
  use LIVE_t,      ONLY:live_timing
@@ -40,7 +40,7 @@ subroutine plot_cube()
  ! write the atoms position 
  !
  if ((.not.l_free_hole.and..not.l_average_eh).and.l_exc_wf) then
-   write(ch,'(2i5,3f10.5)') -1,-1,r_hole
+   write(ch,'(2i5,3f10.5)') -1,-1,r_fixed
    call msg(output_string,'',ch,INDENT=0,USE_TABS=.FALSE.)
  endif 
 

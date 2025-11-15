@@ -16,7 +16,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix_format,BSS_uses_DbGd,BSS_uses_FKE,BSS_ydiago_solver,&
 &                       BSS_slepc_pseudo_herm,BSS_slepc_double_grp,run_Slepc,BSS_mode,BSS_first_eig,&
 &                       l_abs_prop_chi_bse,l_eels_can_be_computed,l_eels_from_inversion,&
-&                       BSS_kernel_IO_on_the_fly,BSS_kernel_stored_size
+&                       BSS_kernel_IO_on_the_fly,BSS_kernel_stored_size,BSS_slepc_approach
  use BS,           ONLY:BSE_L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
 &                       BS_perturbative_SOC,l_BS_magnons,l_BS_photolum,BSK_IO_mode,&
 &                       BS_cpl_K_exchange,BS_n_g_exch,BS_res_K_exchange,BS_K_coupling,BS_res_ares_n_mat,&
@@ -251,15 +251,14 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  & call error("Wrong value of slepc matrix format: "//trim(BSS_slepc_matrix_format))
  !
  ! Special case, slepc with distributed matrix need to explicitly compute the anti-resonant block
- ! This was needed in the past. Now the older implementation can be imposed
- ! chosing shell-debug matric format
- l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (BSS_slepc_matrix_format=="shell-debug")
+ l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. BSS_slepc_matrix_format=="shell" & 
+ &                 .and. index(BSS_slepc_approach,"NonHerm")>0
  !
  BSS_slepc_double_grp=l_BS_ares_from_res.and.l_slepc_special
  if (l_slepc_special) l_BS_ares_from_res=.FALSE.
  !
  BSS_slepc_pseudo_herm=BS_K_coupling .and. l_BS_ares_from_res .and. &
- &                     (.not.BSS_slepc_double_grp) .and. index(BSS_slepc_matrix_format,"debug")==0
+ &                     (.not.BSS_slepc_double_grp) .and. index(BSS_slepc_approach,"NonHerm")==0
  !
 #endif
  !

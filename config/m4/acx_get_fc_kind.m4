@@ -11,6 +11,7 @@ INTELVERSION="unknown"
 FCKIND="unknown"
 case "${FC}" in
     *ftn*)
+      FCKIND="cray"
       FCVERSION=`$FC --version`
       ;;
     *abf90*)

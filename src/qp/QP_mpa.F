@@ -20,11 +20,12 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use com,           ONLY:msg
  use drivers,       ONLY:l_sc_run,l_RIM_W
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
-&                        PARALLEL_WF_distribute
+&                        PARALLEL_WF_distribute,PARALLEL_index
  use parser_m,      ONLY:parser
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PAR_COM_Q_A2A,PAR_COM_NULL,master_cpu,&
 &                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,yMPI_comm,COMM_copy,PAR_COM_RL_A2A,&
-&                        PAR_Q_ibz_index,n_WF_bands_to_load,myid,PAR_COM_X_WORLD,PAR_COM_RL_INDEX
+&                        PAR_Q_ibz_index,n_WF_bands_to_load,myid,PAR_COM_X_WORLD,PAR_COM_RL_INDEX,&
+&                        PP_indexes,PP_indexes_reset
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:manage_action,OP_RD_CL,OP_WR_CL,OP_APP_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
@@ -64,14 +65,19 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), allocatable          :: W_(:),dc(:)
  type(elemental_collision), target :: isc,iscp
  !
- type(w_samp)     :: Sc_W(qp%n_states)
- character(schlen):: ch,SECTION_name
+ type(w_samp)      :: Sc_W(qp%n_states)
+ character(schlen) :: ch,SECTION_name
  !
- integer          :: X_mpa_npoles,X_ng
- logical          :: X_is_TR_rotated,l_X_ALLOC_elemental,l_RIM_W_g
- real(SP)         :: E_kmq,f_kmq
- real(DP)         :: dp_dummy_r,dp_dummy_i
- complex(DP)      :: dp_dummy,ctmp,W_1,W_i
+ integer           :: X_mpa_npoles,X_ng
+ logical           :: X_is_TR_rotated,l_X_ALLOC_elemental,l_RIM_W_g,l_para_G_MPA
+ real(SP)          :: E_kmq,f_kmq
+ real(DP)          :: dp_dummy_r,dp_dummy_i
+ complex(DP)       :: W_1,W_i
+#ifdef _GPU
+ complex(DP)       :: dp_dummy,ctmp
+#else
+ complex(DP), allocatable :: dp_dummy(:),ctmp(:)
+#endif
  !
  complex(SP), pointer DEV_ATTR :: isc_rhotw_p(:)
  complex(SP), pointer DEV_ATTR :: iscp_rhotw_p(:)
@@ -81,7 +87,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! MPA variables
  !
- integer           :: i_np,ID2
+ integer           :: i_np,ID2,X_rows(2),X_cols(2),ig_first,ig_last
  logical           :: MPred,l_CPU_ONLY,condition,reset_permissions
  real(SP)          :: bose_PPA_E,MPred_rate,PPcond_rate,PPcond_Qrate,&
 &                     MP_err,MP_Qerr,cond_num(2),cond_numQ(2)
@@ -90,6 +96,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  integer, external :: io_X,io_MPA
  type(yMPI_comm)   :: LOCAL_yMPI_COMM
+ type(PP_indexes)  :: px
  !
  reset_permissions=.true.
  call COMM_copy(PAR_COM_NULL,LOCAL_yMPI_COMM)
@@ -225,17 +232,43 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  endif
  if (io_RESPONSE) call X_ALLOC_parallel(X_par(1),X%ng,2*X%mpa_npoles,"X")
  !
+ X_rows(1:2)=X_par(1)%rows(1:2)
+ X_cols(1:2)=X_par(1)%cols(1:2)
+ !
  YAMBO_ALLOC(W_,(QP_dSc_steps))
  YAMBO_ALLOC(dc,(QP_dSc_steps))
+#if ! defined _GPU
+ YAMBO_ALLOC(dp_dummy,(QP_dSc_steps))
+#endif
  !
  ! MPA workspace
  !
- if (.not.allocated(MPA_E_par).and.io_RESPONSE) allocate(MPA_E_par(1))
- if (.not.allocated(MPA_R_par).and.io_RESPONSE) allocate(MPA_R_par(1))
- if (io_RESPONSE) then
-   ! AF: GPU allocation is performed separately below
-   call MPA_ALLOC_parallel(MPA_E_par(1),MPA_R_par(1),X%ng,2*X%mpa_npoles,"CPU_ONLY")
+ ! AF: GPU allocation is performed separately below
+ !
+ if (.not.allocated(MPA_E_par)) allocate(MPA_E_par(1))
+ if (.not.allocated(MPA_R_par)) allocate(MPA_R_par(1))
+ !
+ call MPA_ALLOC_parallel(MPA_E_par(1),MPA_R_par(1),X%ng,X%mpa_npoles,"CPU_ONLY")
+
+ !
+ ! setting up a MPA-specific MPI parallelism
+ ! for the fitting of poles and residues, aimed at distributing
+ ! G vectors. This parallelism is incompatible at present with the
+ ! global G_parallelism of the self-energy
+ !
+ call PP_indexes_reset(px)
+ l_para_G_MPA=.not.(PAR_COM_RL_INDEX%n_cpu>1)
+ !
+ if (l_para_G_MPA) then
+    call PARALLEL_index(px,uplim=X_cols(2:2),low_range=X_cols(1:1),&
+&                       COMM=PAR_COM_X_WORLD,CONSECUTIVE=.true.)
+    ig_first=px%first_of_1D(PAR_COM_X_WORLD%cpu_id+1)
+    ig_last=px%last_of_1D(PAR_COM_X_WORLD%cpu_id+1)
+    !
+    X_cols(1)=max(X_cols(1),ig_first)
+    X_cols(2)=min(X_cols(2),ig_last)
  endif
+
  !
  !
  ! AF: the following line needs to be moved elsewhere
@@ -271,6 +304,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  Q_loop: do iqbz=iq_to_start,q%nbz 
    !
    if (.not.PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) cycle
+   !
    !
    isc%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
    iqibz=isc%qs(2)
@@ -321,6 +355,18 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      PPcond_Qrate=0._SP
      MP_Qerr=0._SP
      cond_numQ(:)=0._SP
+     !
+     MPA_R_par(1)%blc=0.0_SP
+     MPA_E_par(1)%blc=0.0_SP
+
+     !
+     ! reset dims according to =X_par(iq_mem)%cols/rows if SE_G parallelism is
+     ! active (thereby switching off l_para_G_MPA)
+     !
+     if (.not.l_para_G_MPA) then
+       X_rows=X_par(iq_mem)%rows
+       X_cols=X_par(iq_mem)%cols
+     endif
 
      !
      !$omp parallel default(shared),private(ig1,ig2,MPred,PPcond_rate,MP_err,cond_num,i_np,MPA_Xo,l_RIM_W_g), &
@@ -329,15 +375,20 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      YAMBO_ALLOC(MPA_Xo,(Xw%n_freqs))
      !
      !$omp do collapse(2)
-     do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
-      do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
+     do ig2=X_cols(1),X_cols(2)
+       do ig1=X_rows(1),X_rows(2)
          !
          l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
-         if(l_RIM_W_g) then
+         !
+         if (l_RIM_W_g) then
+           !
            MPA_Xo(1:Xw%n_freqs)=RIM_W(1:Xw%n_freqs,iqibz,ig1,ig2)/2._SP
+           !
          else
+           !
            !DALV: the multiplication by isc%gamp(ig1,ig2) is performed later
            MPA_Xo(1:Xw%n_freqs)=X_par(iq_mem)%blc(ig1,ig2,1:Xw%n_freqs)
+           !
          endif
          !
          MPred=.false.
@@ -349,10 +400,12 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                           MPA_R_par(1)%blc(ig1,ig2,:),MPA_E_par(1)%blc(ig1,ig2,:), &
 &                           Xw%mpa_solver, MPred,PPcond_rate,MP_err,cond_num)
          !
-         if(MPred) MPred_rate=MPred_rate+1._SP
-         PPcond_Qrate=PPcond_Qrate+PPcond_rate
-         MP_Qerr=MP_Qerr+MP_err
-         cond_numQ(:)=cond_numQ(:)+cond_num(:)
+         if (io_MULTIPOLE) then
+           if(MPred) MPred_rate=MPred_rate+1._SP
+           PPcond_Qrate=PPcond_Qrate+PPcond_rate
+           MP_Qerr=MP_Qerr+MP_err
+           cond_numQ(:)=cond_numQ(:)+cond_num(:)
+         endif
          !
        enddo
      enddo
@@ -362,12 +415,15 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      !$omp end parallel
      !
-     X_is_TR_rotated=.false.
+     ! AF: retrieve G_parallelism on MPA pole fitting,
+     !     if present
      !
-     MPred_rate=X%mpa_npoles-MPred_rate/X%ng**2
-     PPcond_Qrate=PPcond_Qrate/X%ng**2
-     MP_Qerr=MP_Qerr/X%ng**2
-     cond_numQ(:)=cond_numQ(:)/X%ng**2
+     if (l_para_G_MPA) then
+       call PP_redux_wait(MPA_R_par(1)%blc,COMM=PAR_COM_X_WORLD%COMM)
+       call PP_redux_wait(MPA_E_par(1)%blc,COMM=PAR_COM_X_WORLD%COMM)
+     endif
+     !
+     X_is_TR_rotated=.false.
      !
      call timing('GW(mpa)_poles',OPR='stop')
      call timing('GW(mpa)_poles_io',OPR='start')
@@ -375,6 +431,11 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! I/O MPA
      !
      if (io_MULTIPOLE) then
+       !
+       MPred_rate=X%mpa_npoles-MPred_rate/X%ng**2
+       PPcond_Qrate=PPcond_Qrate/X%ng**2
+       MP_Qerr=MP_Qerr/X%ng**2
+       cond_numQ(:)=cond_numQ(:)/X%ng**2
        !
        call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iqibz,2*iqibz+1/),ID=ID2,COMM=local_yMPI_COMM,DO_IT=condition)
        io_err=io_MPA(X,Xw,ID2)
@@ -400,7 +461,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    if (iqs>nsym/(i_time_rev+1) .and. (i_space_inv==0.or.mag_syms) .and..not.X_is_TR_rotated) then
      !
-     ! AF: note that X_par is nott transpose, so, when
+     ! AF: note that X_par is not transposed, so, when
      !     the ig1,ig2 indexes are distributed, only MPA_E_par/MPA_R_par
      !     have the right ranges for cols and rows
      !
@@ -467,11 +528,12 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
        f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
        !
+#if defined _GPU
+       !
        do i_w=1,QP_dSc_steps
          !
          dp_dummy_r = 0.0_DP
          dp_dummy_i = 0.0_DP
-         dp_dummy = 0.0_DP
          !
          W_1=W_(1)
          W_i=W_(i_w)
@@ -484,8 +546,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !DEV_OMPGPU &      map(tofrom:dp_dummy_r,dp_dummy_i)
          !DEV_OMPGPU teams loop collapse(3) private(i_np,ig1,ig2,bose_PPA_E,ctmp,l_RIM_W_g) &
          !DEV_OMPGPU &        reduction(+:dp_dummy_r,dp_dummy_i)
-         !DEV_OMP parallel do default(shared), private(i_np,ig1,ig2,bose_PPA_E,ctmp,l_RIM_W_g), &
-         !DEV_OMP &           reduction(+:dp_dummy), collapse(3)
          !
          do i_np=1,X_mpa_npoles
            do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
@@ -531,12 +591,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
                  !
                endif
                !
-#ifdef _GPU
                dp_dummy_r=dp_dummy_r+real(ctmp,DP)
                dp_dummy_i=dp_dummy_i+imag(ctmp)
-#else
-               dp_dummy=dp_dummy+ctmp
-#endif
                !
              enddo
            enddo
@@ -546,14 +602,96 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !DEV_ACC_DEBUG end data
          !DEV_OMP end parallel do
          !
-         if (have_gpu) dp_dummy=cmplx(dp_dummy_r,dp_dummy_i,kind=DP)
+         dp_dummy=cmplx(dp_dummy_r,dp_dummy_i,kind=DP)
          !
          dc(i_w) = cmplx(dp_dummy,KIND=SP)
          !
        enddo
        !
-       QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+dc(:QP_dSc_steps)
+#else
+       !-----------
+       ! CPU-only
+       !-----------
        !
+       !do i_w=1,QP_dSc_steps
+         !
+         dp_dummy(:) = 0.0_DP
+         !
+         !DEV_OMP parallel default(shared), private(i_np,ig1,ig2,bose_PPA_E,ctmp,l_RIM_W_g)
+         !
+         YAMBO_ALLOC(ctmp,(QP_dSc_steps))
+         !
+         !DEV_OMP do reduction(+:dp_dummy), collapse(2)
+         !
+         do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
+           do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
+             !
+             ctmp(:) = 0.0_SP
+             !
+             do i_np=1,X_mpa_npoles
+               !
+               ! DALV: inline bose_f function
+               bose_PPA_E=0._SP
+               !
+               if (real(MPA_E_par_p(ig1,ig2,i_np),SP)<0._SP) bose_PPA_E=-spin_occ
+               if (Finite_Tel) then
+                 if (real(MPA_E_par_p(ig1,ig2,i_np),SP)>epsilon(1._SP)) then
+                   if (real(MPA_E_par_p(ig1,ig2,i_np),SP)<=bose_E_cut*Bose_Temp) then
+                     bose_PPA_E=spin_occ*Bose_Temp/real(MPA_E_par_p(ig1,ig2,i_np),SP)
+                   endif 
+                   if (real(MPA_E_par_p(ig1,ig2,i_np),SP)> bose_E_cut*Bose_Temp) then
+                     bose_PPA_E=spin_occ/(exp(real(MPA_E_par_p(ig1,ig2,i_np),SP)/Bose_Temp)-1._SP)
+                   endif
+                 else
+                   bose_PPA_E=spin_occ*Bose_Temp/epsilon(1._SP)
+                 endif
+               endif
+               !
+               l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
+               !
+               if (l_RIM_W_g) then
+                 !
+                 ctmp(:) = ctmp(:) + & 
+&                          (sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np))) *MPA_R_par_p(ig1,ig2,i_np)) *&
+&                          ( (spin_occ-f_kmq+bose_PPA_E)/(W_(1)-E_kmq +sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np))) *&
+&                              MPA_E_par_p(ig1,ig2,i_np))+&
+&                          (f_kmq+bose_PPA_E)/(conjg(W_(1))-E_kmq -sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np))) *&
+&                              MPA_E_par_p(ig1,ig2,i_np)) )
+                 !
+               else
+                 !
+                 ! DALV: the factor isc%gamp(ig1,ig2) is included here
+                 ctmp(:) = ctmp(:) + & 
+&                          isc_gamp_p(ig1,ig2) *&
+&                          (sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np))) *MPA_R_par_p(ig1,ig2,i_np)) *&
+&                          ( (spin_occ-f_kmq+bose_PPA_E)/(W_(:)-E_kmq +sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np))) *&
+&                              MPA_E_par_p(ig1,ig2,i_np))+&
+&                          (f_kmq+bose_PPA_E)/(conjg(W_(:))-E_kmq -sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np))) *&
+&                              MPA_E_par_p(ig1,ig2,i_np)) )
+                 !
+               endif
+               !
+             enddo
+             !
+             dp_dummy(:)=dp_dummy(:) + ctmp(:) *isc_rhotw_p(ig1)*conjg(iscp_rhotw_p(ig2)) 
+             !
+           enddo
+         enddo
+         !
+         !DEV_OMP end do
+         !
+         YAMBO_FREE(ctmp)
+         !
+         !DEV_OMP end parallel
+         !
+         dc(:) = cmplx(dp_dummy,KIND=SP)
+         dc(:) = -4._DP/spin_occ*pi * dc(:)
+         !
+       !enddo
+       !
+#endif
+       !
+       QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+dc(:QP_dSc_steps)
        !
      enddo ! loop on scattering states
      !
@@ -576,6 +714,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  YAMBO_FREE(dc)
  YAMBO_FREE(W_)
+#if ! defined _GPU
+ YAMBO_FREE(dp_dummy)
+#endif
  !
  l_X_ALLOC_elemental=.true.
 #if defined _SC
@@ -597,6 +738,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  call MATRIX_reset(MPA_R_par(1))
  if(allocated(MPA_E_par)) deallocate(MPA_E_par)
  if(allocated(MPA_R_par)) deallocate(MPA_R_par)
+ if (l_para_G_MPA) call PP_indexes_reset(px)
  !
  call timing('GW(mpa)',OPR='stop')
  !

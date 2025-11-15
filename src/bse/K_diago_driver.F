@@ -126,9 +126,9 @@ subroutine K_diago_driver(iq,W,X_static)
  l_kerr_lft=l_BS_kerr_asymm.or.l_BS_dichroism
  l_kerr_rgt=l_BS_kerr      .or.l_BS_dichroism
  !
- l_diago     = index(BSS_mode,'o')/=0 ! old diago
+ l_diago     = index(BSS_mode,'o')/=0.or.      l_BS_photolum ! old diago
  l_slepc     = index(BSS_mode,'s')/=0
- l_ydiago    = index(BSS_mode,'d')/=0 
+ l_ydiago    = index(BSS_mode,'d')/=0.and..not.l_BS_photolum 
  !
 #if defined _NL
  if (l_ydiago) then
@@ -228,7 +228,7 @@ subroutine K_diago_driver(iq,W,X_static)
            ! 2.1. Nest matrix uses pseudo-hermitian structure of BSE, only for the coupling case
            call K_stored_in_a_nest_matrix(i_BS_mat,iq,slepc_mat)
          else
-           ! 2.2. Single PETSc matrix, for resonant case or coupling
+           ! 2.2. Single PETSc matrix, for resonant case or non-hermitian coupling
            call K_stored_in_a_slepc_matrix(i_BS_mat,iq,slepc_mat)
          endif
        endif        
@@ -420,7 +420,8 @@ subroutine K_diago_driver(iq,W,X_static)
      &                                                   BS_mat=BS_V_right,write_ev=.not.l_ydiago)
      !
      call PP_wait()
-     if (l_ydiago .and. BSS_write_eig_2_db) call write_bs_ev_par(iq, i_BS_mat, BS_V_right, BS_V_left)
+     if (l_ydiago .and. BSS_write_eig_2_db) call write_bs_ev_par(iq, i_BS_mat, &
+&                             neigs_this_cpu, neig_shift, BS_V_right, BS_V_left)
    endif
    !
    YAMBO_FREE(BS_E)
@@ -648,6 +649,8 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      ! Number of states to be computed
      !=================================
+     !
+     BSS_n_eig=BSS_n_eig_Input
      !
      if (l_slepc) then
        !

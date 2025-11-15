@@ -20,7 +20,7 @@ subroutine K_blocks( )
  !end type BS_block
  !
  use pars,         ONLY:SP,IP,IPL
- use parallel_m,   ONLY:PAR_IND_T_ordered,myid,ncpu,PAR_COM_HOST
+ use parallel_m,   ONLY:PAR_IND_T_ordered,myid,ncpu
  use parallel_int, ONLY:PP_wait,PP_redux_wait,PARALLEL_live_message
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
 &                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim,n_BS_blks_min,&

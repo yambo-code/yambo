@@ -10,6 +10,7 @@
 #include <stdio.h>
 
 #include "kind.h"
+#include "yambo_driver.h"
 
 struct yambo_seed_struct command_line(int argc, char *argv[],
                                       struct options_struct *options,
@@ -31,9 +32,3 @@ char *running_tool();
 char *running_project();
 char *running_libraries();
 char *runlevel(int *runid, int *id);
-void options_help(struct options_struct *options, int *i_opt);
-void options_control(struct options_struct *options, int *i_opt);
-void options_ypp(struct options_struct *options, int *i_opt);
-void options_yambo(struct options_struct *options, int *i_opt);
-void options_projects(struct options_struct *options, int *i_opt);
-void options_interfaces(struct options_struct *options, int *i_opt);

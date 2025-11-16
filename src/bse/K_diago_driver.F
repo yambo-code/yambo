@@ -126,13 +126,13 @@ subroutine K_diago_driver(iq,W,X_static)
  l_kerr_lft=l_BS_kerr_asymm.or.l_BS_dichroism
  l_kerr_rgt=l_BS_kerr      .or.l_BS_dichroism
  !
- #if defined _SCALAPACK
- l_diago     = index(BSS_mode,'o')/=0.or.      l_BS_photolum ! old diago
- l_ydiago    = index(BSS_mode,'d')/=0.and..not.l_BS_photolum
- #else
+#if defined _SCALAPACK
+ l_diago     = index(BSS_mode,'o')/=0.or. (     l_BS_photolum.and.(index(BSS_mode,'d')/=0))
+ l_ydiago    = index(BSS_mode,'d')/=0.and. .not.l_BS_photolum
+#else
  l_diago     = index(BSS_mode,'o')/=0 .or. index(BSS_mode,'d')/=0
- l_ydiago    = .false.
- #endif
+ l_ydiago    = .false. ! This must be set to false else u.b
+#endif
  l_slepc     = index(BSS_mode,'s')/=0
  !
 #if defined _NL

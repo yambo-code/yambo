@@ -25,8 +25,8 @@ if test "$def_scalapack" = "-D_SCALAPACK" ; then
     YDIAGO_GPU_SUPPORT="no_gpu"
   fi
 
-  YDIAGO_LIBS="${extlibs_path}/${FCKIND}/${FC}/diago/${YDIAGO_GPU_SUPPORT}/lib/libydiago.a"
-  YDIAGO_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/diago/${YDIAGO_GPU_SUPPORT}/include/"
+  YDIAGO_LIBS="${extlibs_path}/${FCKIND}/${FC}/${YDIAGO_GPU_SUPPORT}/lib/libydiago.a"
+  YDIAGO_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/${YDIAGO_GPU_SUPPORT}/include/"
   #YDIAGO_LIBS="${compdir}/lib/libydiago.a"
   #YDIAGO_INCS="$IFLAG${compdir}/include/"
 

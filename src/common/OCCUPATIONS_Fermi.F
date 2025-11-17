@@ -60,7 +60,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
  !       2        1        2         1      non collinear
  !       2        2        1         1          collinear
  !
- spin_occ=2.0_SP/real(n_spin,SP)
+ spin_occ=2.0_SP/real(n_spin)
  !
  ! All energies are stored in E_sorted...
  !
@@ -85,6 +85,8 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
  !
  ! First guess
  !
+ ! real(nel)/2.0_SP*real(n_spinor) is last occupied state
+ !
  ! n_b_full_guess not set when the system is metallic ...
  !
  ! n_b_full_guess is used to avoid spurious oscillations
@@ -96,12 +98,6 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
  if (nb_here>1) then
    !
    n_b_full_guess= nint( real(nel)/2.0_SP*real(n_spinor)+.1)
-   !
-   ! When there is a odd number of electrons (n_spin>1).
-   ! 
-   if (mod(nel,2._SP)/=0._SP) then
-     n_b_full_guess=nint( real(nel-1._SP)/2.0_SP*real(n_spinor)+.1)
-   endif
    !
    if (n_b_full_guess > 0 ) then
      if (n_b_full_guess+1 > nb_here ) then
@@ -119,6 +115,11 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
    endif
  endif
  !
+ ! ... or when there is a odd number of electrons (when n_sp_pol>1
+ ! the system can be semiconductive in the two channels).
+ ! 
+ if (mod(nel,2._SP)/=0._SP) n_b_full_guess=0
+ !
  ! Start Loop
  ! 
  i_trials=1
@@ -127,7 +128,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
  nel_diff_zero=1.E-5
  Fermi_is_converged=.false.
  !
- ! When the system is semiconductive it may happen the
+ ! BUG-fix [Andrea 1/6/2012]: when the system is semiconductive it may happen the
  ! Efermi falls below or above the CBM/VBM of the Double Grid energy levels. To avoid this
  ! a very small temperature is imposed forcing the Fermi level to fall within the
  ! gap.
@@ -144,9 +145,11 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
    group_size=max(1,int(n_total_states/500))
    E_save=E_sorted(1)
    LOOP1: do i1=1,n_total_states,group_size
-     E_save=E_sorted(i1)
-     if (i1<n_total_states) E_save=E_save+(E_sorted(i1+1)-E_sorted(i1))/10._SP
-     call ef2nel(Tel,E_save,n_of_el_from_zero(1),'both ')
+     if (i1>1) then
+       if (abs(E_sorted(i1)-E_save)<Tel_step) cycle LOOP1
+       if (abs(E_sorted(i1)-E_save)>Tel_step) E_save=E_sorted(i1)
+     endif
+     call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1),'both ')
      if (n_of_el_from_zero(1)<-nel_diff_zero) i_Ef(1)=i1
      if (n_of_el_from_zero(1)> nel_diff_zero) then
        i_Ef(2)=i1
@@ -162,9 +165,11 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
      !
      E_save=E_sorted(i_Ef(1))
      LOOP2: do i1=i_Ef(1),i_Ef(2)
-       E_save=E_sorted(i1)
-       if (i1<n_total_states) E_save=E_save+(E_sorted(i1+1)-E_sorted(i1))/10._SP
-       call ef2nel(Tel,E_save,n_of_el_from_zero(1),'both ')
+       if (i1>1) then
+         if (abs(E_sorted(i1)-E_save)<Tel_step) cycle LOOP2
+         if (abs(E_sorted(i1)-E_save)>Tel_step) E_save=E_sorted(i1)
+       endif
+       call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1),'both ')
        if (n_of_el_from_zero(1)<-nel_diff_zero) i_Ef_fine(1)=i1
        if (n_of_el_from_zero(1)> nel_diff_zero) then
          i_Ef_fine(2)=i1
@@ -179,16 +184,14 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
    ! 3. Is any level in the Ef_fine range ok?
    !
    do i1=i_Ef_fine(1),i_Ef_fine(2)
-     E_save=E_sorted(i1)
-     if (i1<n_total_states) E_save=E_save+(E_sorted(i1+1)-E_sorted(i1))/10._SP
-     call ef2nel(Tel,E_save,n_of_el_from_zero(1),'both ')
+     call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1),'both ')
      if (abs(n_of_el_from_zero(1))<nel_diff_zero.and.E_sorted(i1+1)-E_sorted(i1)>Tel_step) then
-       E%E_Fermi=(E_sorted(i1)+E_sorted(i1+1))/2._SP
-       Fermi_is_converged=.true.
+       E%E_Fermi=E_sorted(i1)
+       ! To Code!
+       !E%E_Fermi=(E_sorted(i1)+E_sorted(i1+1))/2.
        exit FERMI_LOOP
      endif
    enddo
-   !
    !
    ! 4. extend i_Ef_fine to include degenerate states
    !
@@ -227,14 +230,14 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
        exit FERMI_LOOP
      endif
      if (abs(Ef(1)-Ef(2))<1.E-8) exit FERMI_LOOP
-     E%E_Fermi=(Ef(1)+Ef(2))/2._SP
+     E%E_Fermi=(Ef(1)+Ef(2))/2.
      i_trials(2)=i_trials(2)+1
    enddo
    !
    if (Fermi_is_converged) exit FERMI_LOOP
    !
    Tel=Tel+Tel_step
-   if (i_trials(1)>100) nel_diff_zero=nel_diff_zero*10._SP
+   if (i_trials(1)>100) nel_diff_zero=nel_diff_zero*10.
    if (i_trials(1)==1000) call error('Impossible to converge the Fermi Level')
    !
  enddo FERMI_LOOP

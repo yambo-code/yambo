@@ -371,10 +371,10 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      enddo
    endif
    ! Remove low density points
-   do ifft=1,fft_size
-     if (abs(spin_rho_DP(1,ifft))>max(rho_map_thresh,1.E-8)) cycle
-     F_xc(ifft,1,1)=0._SP
-   enddo
+   !do ifft=1,fft_size
+   !  if (abs(spin_rho_DP(1,ifft))>max(rho_map_thresh,1.E-8)) cycle
+   !  F_xc(ifft,1,1)=0._SP
+   !enddo
  endif
  !
  if (EvaluateDGradient) then

@@ -1,29 +1,13 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM FP AC
+! Copyright (C) 2021 the YAMBO team
+!
+! Authors (see AUTHORS file for details): AM FP AC DS
 !
 ! headers
 !
 #include<y_memory.h>
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !> @brief Calculate exciton-dipole
 !!
@@ -42,7 +26,6 @@ subroutine EXC_dipole(Xk,E,q,X)
  use BS_solvers,     ONLY:BS_mat,BS_H_dim,BSS_Vnl_included,BSS_alloc,BSS_free
  use parallel_int,   ONLY:PARALLEL_global_indexes,PP_redux_wait,PARALLEL_index,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,     ONLY:PAR_IND_WF_b_and_k
- !
  use y_memory_alloc
  !
  implicit none
@@ -51,14 +34,12 @@ subroutine EXC_dipole(Xk,E,q,X)
  type(bz_samp), intent(in) :: Xk,q
  type(X_t),     intent(in) :: X
  !
- !
  ! Work Space
  !
- integer :: i_alpha,i_BS_mat
+ integer :: i_alpha,i_BS_mat,VB(2),CB(2)
  type(DIPOLE_t) :: DIPs
  !
  if(any(abs(EXC_q0(:))>epsilon(1.))) then
-   !
    !
    call DIPOLES_reset(DIPs)
    !
@@ -68,10 +49,10 @@ subroutine EXC_dipole(Xk,E,q,X)
    DIPs%ib          =BS_bands(1:2)
    DIPs%ib_lim(1)   =E%nbf(1)
    DIPs%ib_lim(2)   =E%nbf(1)+1
-!   
-!  Unfortunatelly BSS_Vnl_included and DIPs%computed 
-!  are not saved by the BS_solves I assume .TRUE. and 'R V P'
-!
+   !   
+   !  Unfortunatelly BSS_Vnl_included and DIPs%computed 
+   !  are not saved by the BS_solves I assume .TRUE. and 'R V P'
+   !
    DIPs%Vnl_included=.TRUE. 
    DIPs%computed    ='R V P'
    !
@@ -84,13 +65,13 @@ subroutine EXC_dipole(Xk,E,q,X)
    call PARALLEL_global_indexes(E,Xk,q,"Response_T_space",X=X)
    !
    ! ... EH space (no parallelization)
-   call K_Transitions_setup("K",1,E,Xk,DIPs)
-   ! 
+   call K_Transitions_dimensions(1,E,Xk,DIPs,VB,CB)
+   !
    !... Parallel distribution
    call PARALLEL_global_Response_T_transitions(Xk)
    !
    ! ... EH space (with parallelization) and Transition groups build-up
-   call K_Transitions_setup("T",1,E,Xk,DIPs)
+   call K_Transitions_setup(1,E,Xk,DIPs,VB,CB)
    !
    !... Blocks build-up
    call K_blocks()

@@ -505,7 +505,7 @@ subroutine RT_initialize(E,k,q,Dip)
      !
      use electrons,          ONLY:spin_occ,n_sp_pol
      !
-     integer :: ik,ik_RT_DbGd,ik_E_fg,ib
+     integer :: i_sp_pol,ik,ik_RT_DbGd,ik_E_fg,ib
      !
      if(.not.l_RT_eq_is_zero_temp) return
      !
@@ -528,29 +528,31 @@ subroutine RT_initialize(E,k,q,Dip)
      ! In case RT_apply has been used the reference is
      ! defined from the %fo occupations
      !
-     do ib=RT_bands(1),RT_bands(2)
-       do ik=1,k%nibz
-         do ik_RT_DbGd=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
+     do i_sp_pol=1,n_sp_pol
+     do ik=1,k%nibz
+       do ik_RT_DbGd=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
+         do ib=RT_bands(1),RT_bands(2)
            !
            if (l_RT_uses_E_FineGd) then
              ik_E_fg=RTibz%E_map(ik_RT_DbGd)
-             if(E%FG%E(ib,ik_E_fg,1)<=E%E_Fermi) then
-               E%FG%df(ib,ik_E_fg,1)=(E%FG%f(ib,ik_E_fg,1)-spin_occ)
+             if(E%FG%E(ib,ik_E_fg,i_sp_pol)<=E%E_Fermi) then
+               E%FG%df(ib,ik_E_fg,i_sp_pol)=(E%FG%f(ib,ik_E_fg,i_sp_pol)-spin_occ)
              else
-               E%FG%df(ib,ik_E_fg,1)= E%FG%f(ib,ik_E_fg,1)
+               E%FG%df(ib,ik_E_fg,i_sp_pol)= E%FG%f(ib,ik_E_fg,i_sp_pol)
              endif
            else
-             if(E%E(ib,ik,1)<=E%E_Fermi) then
-               E%df(ib,ik,1)=(E%f(ib,ik,1)-spin_occ)
-               E%fo(ib,ik,1)= spin_occ
+             if(E%E(ib,ik,i_sp_pol)<=E%E_Fermi) then
+               E%df(ib,ik,i_sp_pol)=(E%f(ib,ik,i_sp_pol)-spin_occ)
+               E%fo(ib,ik,i_sp_pol)= spin_occ
              else
-               E%df(ib,ik,1)= E%f(ib,ik,1)
-               E%fo(ib,ik,1)= 0._SP
+               E%df(ib,ik,i_sp_pol)= E%f(ib,ik,i_sp_pol)
+               E%fo(ib,ik,i_sp_pol)= 0._SP
              endif
            endif
            !
          enddo
        enddo
+     enddo
      enddo
      !
    end subroutine RT_adjust_equilibrium

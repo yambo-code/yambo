@@ -57,7 +57,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
          !
          if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
          !
-         f_occ=en%f(ib1,ik,1)
+         f_occ=en%f(ib1,ik,i_sp_pol)
          !
          i_wf1=WF_tmp%index(ib1,ik,i_sp_pol)
          do i_spinor=1,n_spinor         

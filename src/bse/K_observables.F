@@ -14,7 +14,6 @@ subroutine K_observables(W,Xk)
  use frequency,    ONLY:w_samp
  use X_m,          ONLY:global_gauge
  use R_lattice,    ONLY:bz_samp
- use com,          ONLY:exp_user
  use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,load_Diago,BSS_mode
  use BS,           ONLY:BS_dip_size,l_BS_anomalous_Hall,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,&
@@ -75,8 +74,7 @@ subroutine K_observables(W,Xk)
  endif
  if (l_BS_dichroism) then
    if (.not.(l_col_cut.and.Xk%nbz==1) ) then
-     if(.not.exp_user) call error(" Periodic system detected. Natural dichroism coded only for isolated systems")
-     if(     exp_user) call warning(" Periodic system detected. Natural dichroism coded only for isolated systems")
+     call exp_user_warning(" Periodic system detected. Natural dichroism coded only for isolated systems")
    endif
    if (.not.l_BS_trace) then
      !  NB: in the case without trace the quadripolar terms should be taken into account,

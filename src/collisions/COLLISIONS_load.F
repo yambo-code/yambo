@@ -26,6 +26,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use electrons,       ONLY:n_sp_pol
  use plasma,          ONLY:N_plasma_poles_global
  use hamiltonian,     ONLY:H_kind
+ use xc_functionals,  ONLY:GS_xc_kind
  use global_XC,       ONLY:H_SE_FOCK,H_SE_COH,H_SE_SEX,QP_SE_GW_NEQ,H_SE_HARTREE
  use collision_ext,   ONLY:HXC_COLL_element,COH_COLL_element,COLLISIONS_have_HARTREE,&
 &                          COH_collisions,HXC_collisions,COLLISIONS_group,COLLISIONS_naming, &
@@ -179,7 +180,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      call live_timing(trim(COLL%name)//' collisions I/O',COLL%PAR_N)
      !
      l_COH=(COLL%kind==H_SE_COH)
-     l_HXC=(COLL%kind==H_SE_FOCK.or.COLL%kind==H_SE_SEX.or.COLL%kind>=H_SE_HARTREE)
+     l_HXC=(COLL%kind==H_SE_FOCK.or.COLL%kind==H_SE_SEX.or.&
+     &      COLL%kind==GS_xc_KIND.or.COLL%kind>=H_SE_HARTREE)
 #if defined _QED
      l_QED=(COLL%kind==QP_SE_GW_QED)
 #endif

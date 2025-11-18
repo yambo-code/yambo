@@ -69,19 +69,21 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
    !
  endif
  !
-#ifdef _CUDA_LOC
+#ifdef _GPU_LOC
  if (allocated(rho_map)) call error(" rho map procedure not implemented with symmetries and cuda")
 #endif
  !
  if(n_spinor==1) then
    !
+#if !defined _GPU_LOC
    if (allocated(rho_map)) then
      !$omp parallel do default(shared), private(ifft,ifftp)
      do ifft = 1, rho_map_size
        ifftp=rho_map_inv(DEV_VAR(fft_rot_r)(rho_map(ifft),isymm))
        WF_symm(ifft,1)=cmplx(WF_p(ifftp,1),kind=SP)
      enddo
-   else 
+   else
+#endif
      !DEV_ACC_DEBUG data present(WF_p,WF_symm,fft_rot_r)
      !DEV_ACC parallel loop
      !DEV_CUF kernel do(1) <<<*,*>>>
@@ -94,22 +96,26 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
      enddo
      !DEV_OMPGPU end target
      !DEV_ACC_DEBUG end data
+#if !defined _GPU_LOC
    endif
+#endif
    !
  endif
  !
  if (n_spinor==2) then
    !
+#if !defined _GPU_LOC
    if (allocated(rho_map)) then
      !$omp parallel do default(shared), private(ifft,ifftp)
      do ifft = 1, rho_map_size
        ifftp=rho_map_inv(DEV_VAR(fft_rot_r)(rho_map(ifft),isymm))
-       WF_symm(ifft,1)=DEV_VAR(spin_sop)(1,1,isymm)*cmplx(WF_p(ifftp,1),kind=SP)+ &
-                       DEV_VAR(spin_sop)(1,2,isymm)*cmplx(WF_p(ifftp,2),kind=SP)
-       WF_symm(ifft,2)=DEV_VAR(spin_sop)(2,1,isymm)*cmplx(WF_p(ifftp,1),kind=SP)+ &
-                       DEV_VAR(spin_sop)(2,2,isymm)*cmplx(WF_p(ifftp,2),kind=SP)
+       WF_symm(ifft,1)=DEV_VAR(spin_sop)(1,1,isymm)*WF_p(ifftp,1)+ &
+                       DEV_VAR(spin_sop)(1,2,isymm)*WF_p(ifftp,2)
+       WF_symm(ifft,2)=DEV_VAR(spin_sop)(2,1,isymm)*WF_p(ifftp,1)+ &
+                       DEV_VAR(spin_sop)(2,2,isymm)*WF_p(ifftp,2)
      enddo
    else
+#endif
      !DEV_ACC_DEBUG data present(WF_p,WF_symm,fft_rot_r,spin_sop)
      !DEV_ACC parallel loop
      !DEV_CUF kernel do(1) <<<*,*>>>
@@ -118,14 +124,16 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
      !DEV_OMP parallel do default(shared), private(ifft,ifftp)
      do ifft = 1, fft_size
        ifftp=DEV_VAR(fft_rot_r)(ifft,isymm)
-       WF_symm(ifft,1)=DEV_VAR(spin_sop)(1,1,isymm)*cmplx(WF_p(ifftp,1),kind=SP)+ &
-                       DEV_VAR(spin_sop)(1,2,isymm)*cmplx(WF_p(ifftp,2),kind=SP)
-       WF_symm(ifft,2)=DEV_VAR(spin_sop)(2,1,isymm)*cmplx(WF_p(ifftp,1),kind=SP)+ &
-                     DEV_VAR(spin_sop)(2,2,isymm)*cmplx(WF_p(ifftp,2),kind=SP)
+       WF_symm(ifft,1)=DEV_VAR(spin_sop)(1,1,isymm)*WF_p(ifftp,1)+ &
+                       DEV_VAR(spin_sop)(1,2,isymm)*WF_p(ifftp,2)
+       WF_symm(ifft,2)=DEV_VAR(spin_sop)(2,1,isymm)*WF_p(ifftp,1)+ &
+                       DEV_VAR(spin_sop)(2,2,isymm)*WF_p(ifftp,2)
      enddo
      !DEV_OMPGPU end target
      !DEV_ACC_DEBUG end data
+#if !defined _GPU_LOC
    endif
+#endif
    !
  endif
  !

@@ -35,7 +35,6 @@ subroutine MPA_ALLOC_parallel(MPA_E_par,MPA_R_par,NG,NW,mode)
   !
   ! Type of allocation....
   !
-  !l_XUP      = index(mode,"XUP")>0
   l_CPU_ONLY = index(mode,"CPU_ONLY")>0
   !
   ! Initialization

@@ -29,24 +29,17 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
  !
  ! Work Space
  !
- logical :: l_XUP,l_PAR,l_CPU_ONLY
- !
- ! Reset...
- !
- call MATRIX_reset(X_par)
+ logical :: l_PAR,l_CPU_ONLY
  !
  ! Type of allocation....
  !
- l_XUP      = index(mode,"XUP")>0
- l_PAR      = index(mode,"X")>0.and.index(mode,"XUP")==0
+ l_PAR      = index(mode,"X")>0
  l_CPU_ONLY = index(mode,"CPU_ONLY")>0
  !
  ! Initialization
  !
- if (l_XUP) then
-   call MATRIX_init( "XUP", X_par, NG, NW )
- else if (l_PAR) then
-   call MATRIX_init( "X"  , X_par, NG, NW )
+ if (l_PAR) then
+   call MATRIX_init( "X", X_par, NG, NW )
  endif
  !
  X_rows = X_par%rows

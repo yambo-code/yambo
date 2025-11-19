@@ -122,16 +122,6 @@ subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
    !
  endif
  !
- if (M_in_kind=="XUP".and.X_FILL_UP_matrix_only) then
-   if (i_space_inv==0) call MATRIX_duplicate("+TC",M_in=M_in,INDEX_in=M_in%I,M_out=M_Xdn)
-   if (i_space_inv==1) call MATRIX_duplicate("+T" ,M_in=M_in,INDEX_in=M_in%I,M_out=M_Xdn)
-   call MATRIX_PAR_to_from_PAR(M_Xdn%blc(M_Xdn%rows(1):M_Xdn%rows(2),M_Xdn%cols(1):M_Xdn%cols(2),M_Xdn%I)  ,&
-&                              M_Xdn%rows, M_Xdn%cols,&
-&                              M_out%blc(M_out%rows(1):M_out%rows(2),M_out%cols(1):M_out%cols(2),M_out%I),&
-&                              M_out%rows,M_out%cols) 
-   call MATRIX_duplicate("free",M_out=M_Xdn)
- endif
- !
  call COMM_reset(TRANSFER_world)
  !
  call timing('MATRIX transfer ('//trim(PAR_to_PAR_comm_NAME)//')',OPR='stop')

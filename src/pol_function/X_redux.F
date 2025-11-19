@@ -17,7 +17,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  !
  ! More precisely the routine handles:
  !
- !  1. Xo(XUP/XDN/SER): INPUT
+ !  1. Xo(SER)        : INPUT
  !  2. Dyson(SER/SLK) : SOLVER
  !  3. X(PAR/SER)     : OUTPUT
  !

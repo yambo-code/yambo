@@ -36,7 +36,7 @@ module matrix
  !
  type PAR_matrix
    !
-   character(3) :: kind   ! "PAR" "SLK" "XUP" "XDN" "SER"
+   character(3) :: kind   ! "PAR" "SLK" "SER"
    !
    ! Dimensions
    integer :: I           ! Block element

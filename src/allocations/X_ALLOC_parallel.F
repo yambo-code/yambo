@@ -29,30 +29,26 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
  !
  ! Work Space
  !
- logical :: l_XUP,l_PAR,l_CPU_ONLY
- !
- ! Reset...
- !
- call MATRIX_reset(X_par)
+ logical :: l_PAR,l_CPU_ONLY,l_INI_ONLY
  !
  ! Type of allocation....
  !
- l_XUP      = index(mode,"XUP")>0
- l_PAR      = index(mode,"X")>0.and.index(mode,"XUP")==0
+ l_PAR      = index(mode,"X")>0
  l_CPU_ONLY = index(mode,"CPU_ONLY")>0
+ l_INI_ONLY = index(mode,"INIT_ONLY")>0
  !
  ! Initialization
  !
- if (l_XUP) then
-   call MATRIX_init( "XUP", X_par, NG, NW )
- else if (l_PAR) then
-   call MATRIX_init( "X"  , X_par, NG, NW )
+ if (l_PAR) then
+   call MATRIX_init( "X", X_par, NG, NW )
  endif
  !
  X_rows = X_par%rows
  !DEV_ACC update device(X_rows)
  X_cols = X_par%cols
  !DEV_ACC update device(X_cols)
+ !
+ if (l_INI_ONLY) return
  !
  YAMBO_ALLOC(X_par%blc,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),NW))
  X_par%blc=cZERO

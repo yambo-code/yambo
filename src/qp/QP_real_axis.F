@@ -71,7 +71,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  integer          :: i1,i2,i3,i4,i_or,iqbz,iqibz,ib,i_err,i_q_to_start,iqs,&
 &                    i_v,i_c,i_k,i_kmq,i_kmq_bz,i_kmq_Go,i_kmq_s,i_sp_pol,&
 &                    io_err,X_id,WID,IO_ACT,timing_steps,i_q_mem,X_range(2),i_qp,i_qp_mem,i_q_W_mem,i_b_mem
- integer          :: X_rows1,X_rows2,X_cols1,X_cols2
+ integer          :: X_rows1,X_rows2,X_cols1,X_cols2,n_freqs
  complex(SP)      :: lrhotw(X%ng),W_dummy
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
@@ -272,7 +272,18 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  !
  ! ALLOCATION (scattering_main)
  !
- call X_ALLOC_elemental('X',(/X%ng,X%ng,QP_n_W_freqs_redux/))
+ if (io_RESPONSE) then
+   !
+   call X_ALLOC_elemental('X',(/X%ng,X%ng,QP_n_W_freqs_redux/))
+   !
+   ! Replace X_mat with X_mat TO BE completed
+   ! At present X_par is not used
+   ! Here X_par is allocated just to define X_par(1)%rows
+   !
+   allocate(X_par(1))
+   call X_ALLOC_parallel(X_par(1),X%ng,Xw%n_freqs,"X INIT_ONLY")
+   !
+ endif
  !
  call elemental_collision_alloc(scattering_main,NG=X%ng,GAMP_NG=(/X%ng,X%ng/),TITLE="GW")
  call elemental_collision_alloc(scattering_prime,NG=X%ng,TITLE="GW")
@@ -301,6 +312,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=X_id)
    io_err=io_X(X,Xw,X_id)
  endif
+ !
  !
  do iqbz=i_q_to_start,q%nbz
    !
@@ -347,11 +359,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
        !
      endif
      !
-     if (l_life) then
-       call X_delta_part(X%ng,X_life_W(iqibz)%n_freqs,X_mat(:,:,X_range(1):X_range(2)),scattering_main%gamp)
-     else
-       call X_delta_part(X%ng,Xw%n_freqs,X_mat(:,:,X_range(1):X_range(2)),scattering_main%gamp)
-     endif
+     n_freqs=Xw%n_freqs
+     if (l_life) n_freqs=X_life_W(iqibz)%n_freqs
+     call X_delta_part(X%ng,n_freqs,X_mat(:,:,X_range(1):X_range(2)),scattering_main%gamp)
      !
      if (l_life) QP_n_W_freqs=0
      !
@@ -366,12 +376,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
      enddo
      X_is_TR_rotated=.true.
    endif
-   !
-   ! mapping of X_par from X_mat
-   ! TO BE completed (avoiding reference to X_mat in the following)
-   !
-   if (.not. allocated(X_par) ) allocate(X_par(1))
-   call X_ALLOC_parallel(X_par(1),X%ng,Xw%n_freqs,"X")
    !
    ! Useful when GPU porting will be introduced
    ! X_blc_p=> DEV_VAR(X_par%blc)
@@ -509,9 +513,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
      enddo bands_loop
    enddo qp_loop
    !
-   call MATRIX_reset(X_par(1))
-   deallocate(X_par)
-   !
    if (.not.l_life) then
      !
      QP_W_er(iqbz,:)=Xw%er
@@ -573,7 +574,10 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    enddo
  endif
  !
- if (allocated(X_par)) deallocate(X_par)
+ if (io_RESPONSE) then
+   call MATRIX_reset(X_par(1))
+   deallocate(X_par)
+ endif
  !
  call X_ALLOC_elemental('X')
  call WF_free(WF)

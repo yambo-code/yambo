@@ -312,15 +312,12 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
      !
      call X_irredux(iq,"Xo"//trim(X_what),X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
      !
-     if (l_write_disk_Xo.and.n_OPTICAL_dir_to_eval==1) then
-       call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
-       call elemental_IO( iq , .TRUE. )
-     endif
-     !
      if (.not.l_rpa_IP) call X_redux(iq,"X"//trim(X_what),X_par(iq_mem),Xw,X)
      !
      if (n_OPTICAL_dir_to_eval>1.and.iq_dir==1) call MATRIX_copy(X_par(iq_mem),X_par_average,.TRUE.)
      if (n_OPTICAL_dir_to_eval>1)               call X_AVERAGE_do_it("ACCUMULATE",X_par(iq_mem))
+     !
+     if (iq_dir<n_OPTICAL_dir_to_eval.and.io_RESPONSE) call MATRIX_reset(X_par(1))
      !
    enddo
    !
@@ -329,11 +326,12 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
      call X_AVERAGE_setup("CLOSE",iq,X%q0)
    endif
    !
-   ! X_par => X_mat
+   ! X_par => X_mat : this is needed when the I/O is off
    !
    call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
    !
    call elemental_IO( iq , .FALSE. )
+   call elemental_IO( iq , .TRUE. )
    !
    ! CLEAN (1)
    ! Frequencies must not be cleaned in the case of lifetimes calculations when the EM1d
@@ -346,7 +344,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
    endif
    !
    ! CLEAN (2)
-   if (io_RESPONSE) call MATRIX_reset(X_par(iq_mem))
+   if (io_RESPONSE) call MATRIX_reset(X_par(1))
    !
    if (use_X_DbGd) then
      YAMBO_FREE(X_DbGd_nkpt_at_q)

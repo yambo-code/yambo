@@ -249,6 +249,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if (K_is_not_hermitian) then
        !
+#if defined _SCALAPACK
        if (l_ydiago) then 
          ! BS_V_left are only referenced in non-hermitian case
          ! In coupling case, if the user requested n values,
@@ -260,6 +261,7 @@ subroutine K_diago_driver(iq,W,X_static)
          &                   solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
          BSS_n_eig = size(BS_E)
       endif
+#endif
       !
       if(l_diago) then
          ! call LINEAR_ALGEBRA_driver(DIAGO,M=BS_V_right,E_cmpl=BS_E,V_left=BS_V_left)
@@ -278,12 +280,14 @@ subroutine K_diago_driver(iq,W,X_static)
        !
      else
        !
+#if defined _SCALAPACK
        if (l_ydiago) then
          call YDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
 &                           neigs_range=neigs_range, eigvals_range=eigvals_range,   &
 &                           solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
          BSS_n_eig = size(BS_E)
        endif
+#endif
        !
        if(l_diago) then
          call LINEAR_ALGEBRA_driver(DIAGO,M=BS_V_right,E_real=BS_E_real)

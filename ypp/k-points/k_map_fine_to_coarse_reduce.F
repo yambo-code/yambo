@@ -14,6 +14,8 @@ logical function k_map_fine_to_coarse_reduce(FineGd_k)
  use zeros,               ONLY:k_rlu_zero
  use pars,                ONLY:SP
  use vec_operate,         ONLY:c2a,rlu_v_is_zero
+ use parallel_m,          ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,        ONLY:PP_wait,PP_redux_wait,PARALLEL_index
  use R_lattice,           ONLY:bz_samp
  use LIVE_t,              ONLY:live_timing
  use y_memory_alloc
@@ -25,13 +27,19 @@ logical function k_map_fine_to_coarse_reduce(FineGd_k)
  ! Work Space
  !
  integer :: ik,ip,unique(FineGd_k%nbz)
+ type(PP_indexes)     :: px
  real(SP):: v(3)
  !
  unique=1
  !
- call live_timing('Map Fine Grid to Reduced Coarse one',FineGd_k%nbz)
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/FineGd_k%nbz/))
+ call PP_wait()
+ !
+ call live_timing('Map Fine Grid to Reduced Coarse one',px%n_of_elements(myid+1))
  !
  do ik=1,FineGd_k%nbz
+   if (.not.px%element_1D(ik)) cycle
    call live_timing(steps=1)
    if (unique(ik)==0) cycle
    do ip=ik+1,FineGd_k%nbz
@@ -42,6 +50,8 @@ logical function k_map_fine_to_coarse_reduce(FineGd_k)
    enddo
  enddo
  ! 
+ call PP_redux_wait(unique,imode=2)
+ !
  call live_timing( )
  !
  k_map_fine_to_coarse_reduce=count(unique==1)==FineGd_k%nbz

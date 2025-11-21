@@ -56,7 +56,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  ! Expand the Coarse Grid 
  !========================
- ! call k_build_up_BZ_tables(Xk)
+ call k_build_up_BZ_tables(Xk)
  call k_ibz2bz(Xk,'i',.true.)
  !
  ! FineGd E to IBZ map

@@ -54,4 +54,5 @@
  LDIAGO_driver.o
  PL_diago_residual.o
  PL_via_perturbative_inversion.o
+ objects.o
 

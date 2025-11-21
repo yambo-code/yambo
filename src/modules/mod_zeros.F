@@ -55,11 +55,11 @@ module zeros
        allocate(tmp_arr(size(vector_,1)))
        do ic=1,3
          if (allocated(vector_rlu)) then
-           do concurrent (i1=1:nv) 
+           do i1=1,nv 
              tmp_arr(i1)=abs(vector_rlu(i1,ic))
            enddo
          else
-           do concurrent (i1=1:nv) 
+           do i1=1,nv 
              tmp_arr(i1)=abs(vector_(i1,ic))
            enddo
          endif

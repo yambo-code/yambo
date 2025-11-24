@@ -14,7 +14,7 @@ subroutine RT_EULER_step(dG_in,dG_out,ik,i_sp_pol,nbf,dT)
  !
  implicit none
  !
- integer,     intent(in)  :: ik,i_sp_pol,nbf(2)
+ integer,     intent(in)  :: ik,i_sp_pol,nbf
  real(SP),    intent(in)  :: dT
  complex(SP), intent(in)  :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP), intent(out) :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -31,7 +31,7 @@ subroutine RT_EULER_step(dG_in,dG_out,ik,i_sp_pol,nbf,dT)
    !
    G_k=dG_in+G_lesser_reference(:,:,ik,i_sp_pol)
    H_k=Ho_plus_Sigma(:,:,ik,i_sp_pol)
-   call RT_EULER_step_apply(G_k,H_k,dG_out,nbf(i_sp_pol),dT,"def")
+   call RT_EULER_step_apply(G_k,H_k,dG_out,nbf,dT,"def")
    !
    return
    !
@@ -47,7 +47,7 @@ subroutine RT_EULER_step(dG_in,dG_out,ik,i_sp_pol,nbf,dT)
  !
  G_k=G_lesser_reference(:,:,ik,i_sp_pol)
  !
- call RT_EULER_step_apply(G_k,H_k,dG_out,nbf(i_sp_pol),dT,"def")
+ call RT_EULER_step_apply(G_k,H_k,dG_out,nbf,dT,"def")
  !
  ! Then the rho1 term. This gives rho2.
  !
@@ -62,14 +62,14 @@ subroutine RT_EULER_step(dG_in,dG_out,ik,i_sp_pol,nbf,dT)
  ! Take in input only the cv channel
  !
  G_k=cZERO
- do ib1=RT_bands(1),nbf(i_sp_pol)
-   do ib2=nbf(i_sp_pol)+1,RT_bands(2)
+ do ib1=RT_bands(1),nbf
+   do ib2=nbf+1,RT_bands(2)
      G_k(ib1,ib2)=dG_in(ib1,ib2)
      G_k(ib2,ib1)=dG_in(ib2,ib1)
    enddo
  enddo
  !
- call RT_EULER_step_apply(G_k,H_k,dG_out,nbf(i_sp_pol),dT,"pop")
+ call RT_EULER_step_apply(G_k,H_k,dG_out,nbf,dT,"pop")
  !
  if( l_RT_RWA .and. (.not.l_RT_FRES) ) return
  !
@@ -80,7 +80,7 @@ subroutine RT_EULER_step(dG_in,dG_out,ik,i_sp_pol,nbf,dT)
  if(  l_RT_FRES  ) H_k=H_k+H_field(:,:,ik,i_sp_pol)
  G_k=dG_in+G_lesser_reference(:,:,ik,i_sp_pol)
  !
- call RT_EULER_step_apply(G_k,H_k,dG_out,nbf(i_sp_pol),dT,"add")
+ call RT_EULER_step_apply(G_k,H_k,dG_out,nbf,dT,"add")
  !
 end subroutine RT_EULER_step
 !

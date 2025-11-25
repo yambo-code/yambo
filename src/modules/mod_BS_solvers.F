@@ -162,24 +162,19 @@ module BS_solvers
      type(X_t), optional::X
    end function
    !
-   integer function io_BSS_diago(iq, i_BS_mat, ID, X_static, bsE, bsRl, bsRr, &
-       BsE_corr, bsL_magn, bsR_magn, bsL_kerr, bsR_kerr, bsR_dich, &
-       bsR_mespin, bsR_meorb, bsR_pl, BS_mat, write_ev)
+   integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,BsRr,BsE_corr,&
+   &                        bsL_magn,bsR_magn,bsL_kerr,bsR_kerr,bsR_dich,bsR_pl,&
+   &                        BS_mat,write_ev)
      use pars,          ONLY:SP
      use X_m,           ONLY:X_t
      implicit none
-     integer,                 intent(in)           :: iq, ID, i_BS_mat
-     type(X_t),               intent(in)        :: X_static
-     ! ----- Optional -----
-     complex(SP),    optional                   :: bsE(:)
-     real(SP),       pointer, optional          :: BsE_corr(:,:), bsR_pl(:,:)
-     complex(SP),    pointer, optional          :: bsL_kerr(:), bsR_kerr(:)
-     complex(SP),    pointer, optional          :: bsR_dich(:,:)
-     complex(SP),    pointer, optional          :: bsR_mespin(:,:), bsR_meorb(:,:)
-     complex(SP),    pointer, optional          :: bsL_magn(:,:), bsR_magn(:,:)
-     complex(SP),    pointer, optional          :: bsRl(:), bsRr(:)
-     complex(SP),    optional                   :: BS_mat(:,:)
-     logical,        optional                   :: write_ev
+     type(X_t),intent(in)         :: X_static
+     integer                      :: iq,ID,i_BS_mat
+     complex(SP)        ,optional :: bsE(:)
+     real(SP),   pointer,optional :: BsE_corr(:,:),bsR_pl(:,:)
+     complex(SP),pointer,optional :: bsL_kerr(:),bsR_kerr(:),bsR_dich(:,:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
+     complex(SP)        ,optional :: BS_mat(:,:)
+     logical, optional            :: write_ev
    end function
    !
    subroutine write_bs_ev_par(iq, i_BS_mat, neigs_this_cpu, neig_shift, BS_VR, BS_VL)

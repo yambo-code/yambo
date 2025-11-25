@@ -146,7 +146,7 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct options_str
     ++optind;
    }else{
     if (optarg == NULL) sprintf(dummy,"%s","help");
-    if (optarg != NULL) sprintf(dummy,"%c",optarg);
+    if (optarg != NULL) sprintf(dummy,"%s",optarg);
    }
    /* DEBUG 
    printf ("USAGE call %s \n",dummy);

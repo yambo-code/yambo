@@ -22,7 +22,7 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  !
  implicit none
  !
- type(X_t),intent(inout)        :: X_static
+ type(X_t),intent(in)        :: X_static
  integer                        :: iq,ID,i_BS_mat
  complex(SP)        , optional  :: bsE(:)
  real(SP)   ,pointer, optional  :: BsE_corr(:,:),bsR_pl(:,:)

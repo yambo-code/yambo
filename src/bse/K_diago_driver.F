@@ -91,36 +91,36 @@ subroutine K_diago_driver(iq,W,X_static)
  ! Excitonic hamiltonian, residuals independent
  !==============================================
  real(SP),allocatable    :: BS_E_real(:)
- real(SP)   ,pointer     :: BS_E_SOC_corr(:,:) => null()
+ real(SP)   ,pointer     :: BS_E_SOC_corr(:,:) !=> null()
  complex(SP),allocatable :: BS_corrections(:,:)
  !
  ! Coupling
  complex(SP),allocatable         :: BS_mat(:,:)
  complex(SP),allocatable, target :: BS_V_left(:,:)
  complex(SP),allocatable, target :: BS_V_right(:,:)
- complex(SP),pointer             :: BS_overlap(:,:)    => null()
+ complex(SP),pointer             :: BS_overlap(:,:)   ! => null()
  !
  ! Residuals, different for each response function
  !=================================================
- complex(SP),pointer     :: BS_R_left_abs(:)     => null()
- complex(SP),pointer     :: BS_R_right_abs(:)    => null()
+ complex(SP),pointer     :: BS_R_left_abs(:)     !=> null()
+ complex(SP),pointer     :: BS_R_right_abs(:)    !=> null()
  !
- real(SP),   pointer     :: BS_R_PL(:,:)         => null()
+ real(SP),   pointer     :: BS_R_PL(:,:)         !=> null()
  !
- complex(SP),pointer     :: BS_R_left_kerr(:)    => null()
- complex(SP),pointer     :: BS_R_right_kerr(:)   => null()
- complex(SP),pointer     :: BS_R_right_dich(:,:) => null()
+ complex(SP),pointer     :: BS_R_left_kerr(:)    !=> null()
+ complex(SP),pointer     :: BS_R_right_kerr(:)   !=> null()
+ complex(SP),pointer     :: BS_R_right_dich(:,:) !=> null()
  !
- complex(SP),pointer     :: BS_R_left_magn(:,:)  => null()
- complex(SP),pointer     :: BS_R_right_magn(:,:) => null()
+ complex(SP),pointer     :: BS_R_left_magn(:,:)  !=> null()
+ complex(SP),pointer     :: BS_R_right_magn(:,:) !=> null()
  !
  ! Temporary pointer 
- complex(SP),pointer     :: tmp_res_ptrR(:)     => null()
- complex(SP),pointer     :: tmp_res_ptrL(:)     => null()
+ complex(SP),pointer     :: tmp_res_ptrR(:)     !=> null()
  !
  ! I/O
  integer                 :: io_err,ID
  type(X_t),intent(in)    :: X_static
+ !
  !
  l_abs_res =l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism
  l_kerr_lft=l_BS_kerr_asymm.or.l_BS_dichroism
@@ -176,6 +176,18 @@ subroutine K_diago_driver(iq,W,X_static)
    if(.not.BS_K_coupling) BS_mat_dim = BS_K_dim(i_BS_mat)
    if(     BS_K_coupling) BS_mat_dim = BS_H_dim
    !
+   NULLIFY(BS_overlap)
+   NULLIFY(BS_E_SOC_corr)
+   NULLIFY(BS_R_right_abs)
+   NULLIFY(BS_R_left_abs)
+   NULLIFY(BS_R_right_kerr)
+   NULLIFY(BS_R_left_kerr)
+   NULLIFY(BS_R_right_dich)
+   NULLIFY(BS_R_right_magn)
+   NULLIFY(BS_R_left_magn)
+   NULLIFY(BS_R_PL)
+   NULLIFY(tmp_res_ptrR)
+   !
    call BSS_n_eig_init()
    !
    ! Allocation (BS_R and BS_E)
@@ -187,7 +199,7 @@ subroutine K_diago_driver(iq,W,X_static)
    !========================
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
    io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
-  &                    BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
+  &                    BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,bsR_pl=BS_R_PL)
    !
    ! Kernel and/or BSS components loading
    !======================================
@@ -325,7 +337,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
 #if defined _SCALAPACK
      if (l_ydiago) then
-       if (Input_n_eig>BSS_n_eig) call K_resize_variables()
+       if (Input_n_eig /= BSS_n_eig) call K_resize_variables()
      endif
 #endif
      !
@@ -427,7 +439,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
      io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
-     &     BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL,&
+     &     BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,bsR_pl=BS_R_PL,&
      &                                                   BS_mat=BS_V_right,write_ev=.not.l_ydiago)
      !
      call PP_wait()

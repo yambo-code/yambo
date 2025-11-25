@@ -327,7 +327,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs')
- call it(defs,'BSSNEig',       '[SLEPC/DIAGO] Number of eigenvalues to compute',BSS_n_eig)
+ call it(defs,'BSSNEig',       '[SLEPC/DIAGO] Number of eigenvalues to compute',BSS_n_eig_Input)
  call it(defs,'BSSFirstEig',  '[DIAGO] Index of the first eigenvalues to compute',BSS_first_eig,verb_level=V_resp)
  call it(defs,'BSSEnRange',   '[DIAGO] Target energy to find eigenvalues',BSS_trange_E,E_unit,verb_level=V_resp)
 #if defined _SLEPC && !defined _NL

@@ -35,7 +35,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
  if (ncpu>=8 ) n_par_la=4
  if (ncpu>=32) n_par_la=16
- if (ncpu>=64) n_par_la=36
+!if (ncpu>=64) n_par_la=36
  !
 #endif
  !

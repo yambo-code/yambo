@@ -41,6 +41,8 @@ subroutine EXCPH_lifetime(k,q,X)
  type(bz_samp) ::k,q
  type(X_t)     ::X
  !
+ real(SP), parameter :: deg_exc_thrs = 0.001/HA2EV
+ !
  ! Work space
  !
  integer  :: ID_exc_gkkp,ID_gkkp,io_err,IO_ACT
@@ -108,7 +110,7 @@ subroutine EXCPH_lifetime(k,q,X)
  !
  call degeneration_finder(n_exc_in,first_exc_grp,n_of_exc_grp,n_deg_grp,&
  &                       Er=BS_all_E(EXCPH_states(1):EXCPH_states(2),1),&
- &                 deg_accuracy=0.001/HA2EV,Include_single_values=.true.)
+ &                 deg_accuracy=deg_exc_thrs,Include_single_values=.true.)
  !
  do igrp=1,n_deg_grp
    j_alpha=first_exc_grp(igrp)+EXCPH_states(1)-1

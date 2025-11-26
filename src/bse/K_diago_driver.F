@@ -783,11 +783,13 @@ subroutine K_diago_driver(iq,W,X_static)
    subroutine K_slepc_local_free()
      !
      if (BSS_slepc_matrix_format=='shell') then
-       call BS_HAYVEC_free(Slepc_v%Vi)
-       call BS_HAYVEC_free(Slepc_v%Vo)
-       deallocate(Slepc_v%Vi)
-       deallocate(Slepc_v%Vo)
-       call PARALLEL_Haydock_VEC_COMMs('reset')
+       if(allocated(Slepc_v%Vi).and.allocated(Slepc_v%Vo)) then
+         call BS_HAYVEC_free(Slepc_v%Vi)
+         call BS_HAYVEC_free(Slepc_v%Vo)
+         deallocate(Slepc_v%Vi)
+         deallocate(Slepc_v%Vo)
+         call PARALLEL_Haydock_VEC_COMMs('reset')
+       endif
      endif
      !
      call SlepcFinalize(ierr)

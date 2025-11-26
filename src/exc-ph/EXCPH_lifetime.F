@@ -26,12 +26,13 @@ subroutine EXCPH_lifetime(k,q,X)
 &                         RESIDUALS_and_EIGENVALUES_alloc,RESIDUALS_and_EIGENVALUES_free,alphaQ, &
 &                         l_EXCPH_offdiago,EXCPH_Gkkp,EXC_LineWidth 
  use ELPH,           ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map
+ use BS_solvers,     ONLY:deg_exc_thrshld
  use vec_operate,    ONLY:degeneration_finder,iku_v_norm,iku_v_2D_norm
  use frequency,      ONLY:w_samp
  use stderr,         ONLY:intc
- use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
- use LIVE_t,        ONLY:live_timing
+ use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index
+ use LIVE_t,         ONLY:live_timing
  !
  use y_memory_alloc
  !
@@ -40,8 +41,6 @@ subroutine EXCPH_lifetime(k,q,X)
  type(levels)  ::E
  type(bz_samp) ::k,q
  type(X_t)     ::X
- !
- real(SP), parameter :: deg_exc_thrs = 0.001/HA2EV
  !
  ! Work space
  !
@@ -110,7 +109,7 @@ subroutine EXCPH_lifetime(k,q,X)
  !
  call degeneration_finder(n_exc_in,first_exc_grp,n_of_exc_grp,n_deg_grp,&
  &                       Er=BS_all_E(EXCPH_states(1):EXCPH_states(2),1),&
- &                 deg_accuracy=deg_exc_thrs,Include_single_values=.true.)
+ &                 deg_accuracy=deg_exc_thrshld,Include_single_values=.true.)
  !
  do igrp=1,n_deg_grp
    j_alpha=first_exc_grp(igrp)+EXCPH_states(1)-1

@@ -156,6 +156,9 @@ module BS_solvers
  complex(SP), allocatable :: BS_diagonal(:)
  complex(SP), allocatable :: BS_mat(:,:)
  !
+ ! Eigenvalues degeneracy treshold
+ real(SP) :: deg_exc_thrshld  
+ !
  interface 
    !
    integer function variables_BS(ID,iq,local_desc,CLOSE_the_menu,X)

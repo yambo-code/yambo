@@ -87,6 +87,7 @@ module y_memory
 &                             MEM_c1_d, MEM_c2_d, MEM_c3_d, MEM_c4_d, MEM_c5_d, MEM_c6_d,   &
 #  ifndef _DOUBLE
 &                             MEM_cd1_d,MEM_cd2_d,MEM_cd3_d,MEM_cd4_d,MEM_cd5_d,MEM_cd6_d,  &
+&                             MEM_rd1_d,MEM_rd2_d,MEM_rd3_d,MEM_rd4_d,MEM_rd5_d,MEM_rd6_d,  &
 #  endif
 #endif
 &                             MEM_i1,  MEM_i2,  MEM_i3,  MEM_i4,  MEM_i5,  MEM_i6,  MEM_i7, &
@@ -107,6 +108,7 @@ module y_memory
    module procedure &
 #  ifndef _DOUBLE
 &                             MEM_cd1_d,MEM_cd2_d,MEM_cd3_d,MEM_cd4_d,MEM_cd5_d,MEM_cd6_d,  &
+&                             MEM_rd1_d,MEM_rd2_d,MEM_rd3_d,MEM_rd4_d,MEM_rd5_d,MEM_rd6_d,  &
 #  endif
 &                             MEM_i1_d, MEM_i2_d, MEM_i3_d, MEM_i4_d, MEM_i5_d,             &
 &                             MEM_r1_d, MEM_r2_d, MEM_r3_d, MEM_r4_d, MEM_r5_d,             &
@@ -456,6 +458,7 @@ module y_memory
      complex(SP) DEV_ATTR ::c(:,:,:,:,:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1,1)),DEV_)
    end subroutine
+
 #ifndef _DOUBLE
    subroutine MEM_cd1_d(name,c)
      character(*)::name
@@ -487,6 +490,38 @@ module y_memory
      complex(DP) DEV_ATTR ::c(:,:,:,:,:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1,1)),DEV_)
    end subroutine
+
+   subroutine MEM_rd1_d(name,c)
+     character(*)::name
+     real(DP) DEV_ATTR ::c(:)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),kind(c(1)),DEV_)
+   end subroutine
+   subroutine MEM_rd2_d(name,c)
+     character(*)::name
+     real(DP) DEV_ATTR ::c(:,:)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),kind(c(1,1)),DEV_)
+   end subroutine
+   subroutine MEM_rd3_d(name,c)
+     character(*)::name
+     real(DP) DEV_ATTR ::c(:,:,:)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),kind(c(1,1,1)),DEV_)
+   end subroutine
+   subroutine MEM_rd4_d(name,c)
+     character(*)::name
+     real(DP) DEV_ATTR ::c(:,:,:,:)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),kind(c(1,1,1,1)),DEV_)
+   end subroutine
+   subroutine MEM_rd5_d(name,c)
+     character(*)::name
+     real(DP) DEV_ATTR ::c(:,:,:,:,:)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),kind(c(1,1,1,1,1)),DEV_)
+   end subroutine
+   subroutine MEM_rd6_d(name,c)
+     character(*)::name
+     real(DP) DEV_ATTR ::c(:,:,:,:,:,:)
+     call MEM_manager_alloc(name,size(c,KIND=IPL),kind(c(1,1,1,1,1,1)),DEV_)
+   end subroutine
+
 #endif
    ! end of GPU subroutines
    !

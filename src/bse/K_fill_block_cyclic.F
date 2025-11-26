@@ -13,7 +13,7 @@ subroutine K_fill_block_cyclic(i_BS_mat, diago_mat)
   !
   use pars,           ONLY:cI,cONE
   use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling,&
-  &                        BS_res_ares_n_mat,l_BS_ares_from_res, BS_blks_free
+  &                        BS_res_ares_n_mat,l_BS_ares_from_res
   use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width, &
   &                        run_inversion,run_Haydock
   use  gpu_m,         ONLY:have_cuda

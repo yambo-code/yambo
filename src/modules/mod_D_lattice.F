@@ -7,7 +7,7 @@
 !
 module D_lattice
  !
- use pars,        ONLY:SP,lchlen,cONE,cZERO,cI,schlen
+ use pars,        ONLY:LP,SP,lchlen,cONE,cZERO,cI,schlen
  use devxlib
  !
 #include<dev_defs.h>
@@ -43,6 +43,13 @@ module D_lattice
  integer, allocatable    :: sop_inv(:)
  integer, allocatable    :: irt(:,:,:)     ! (nsym,nat,n_at_species) gives the index of a rotated atomic position
  integer, allocatable    :: icell(:,:,:,:) ! (3,nsym,nat,n_at_species) gives the referene cell after a symm is operated
+ !
+ ! Full symmetries after removing them with ypp -y
+ integer  :: old_nsym
+ real(SP), allocatable :: old_dl_sop(:,:,:)
+ integer,  allocatable :: kpoints_map(:,:)
+ integer(LP),  allocatable :: old_S_contains_TR(:)
+ !                       
  ! device memory
  complex(SP),allocatable DEV_ATTR :: spin_sop_d(:,:,:)
  integer,    allocatable DEV_ATTR :: sop_inv_d(:)

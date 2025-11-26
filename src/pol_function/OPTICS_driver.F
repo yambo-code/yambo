@@ -17,7 +17,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use DIPOLES,       ONLY:DIPOLE_t
- use X_m,           ONLY:X_t,X_par,X_fxc,X_Double_Grid_setup,X_par_lower_triangle,&
+ use X_m,           ONLY:X_t,X_par,X_fxc,X_Double_Grid_setup,&
 &                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,use_X_DbGd,&
 &                        i_G_shift,Q_plus_G_sq_modulus
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
@@ -103,7 +103,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Response function parallel allocation
    call X_half_mat_check(Xen,Xk,wv)
    !
-   call X_ALLOC_parallel(X_par(1),X%ng,wv%n_freqs,"XUP")
+   call X_ALLOC_parallel(X_par(1),X%ng,wv%n_freqs,"X")
    !
    Macroscopic_CPU=X_par(1)%rows(1)<=i_G_shift.and.i_G_shift<=X_par(1)%rows(2).and.&
 &                  X_par(1)%cols(1)<=i_G_shift.and.i_G_shift<=X_par(1)%cols(2)
@@ -155,7 +155,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! CLEAN (each q)
    call FREQUENCIES_reset(wv,"all")
    call MATRIX_reset(X_par(1))
-   YAMBO_FREE(X_par_lower_triangle%blc)
    if (use_X_DbGd) then
      YAMBO_FREE(X_DbGd_nkpt_at_q_table)
      YAMBO_FREE(X_DbGd_nkpt_at_q)
@@ -165,7 +164,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  !
  ! CLEAN
  !
- call MATRIX_reset(X_par_lower_triangle)
  deallocate(X_par)
  call WF_free(WF)
  call PP_wait()

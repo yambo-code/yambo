@@ -9,7 +9,8 @@
 !
 !> @callgraph
 !> @callergraph
-subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
+subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,&
+&                              work,lwork,rhotw_mp_R,rhotw_mp_C,ntx)
  !
  ! This subroutine must be kept thread-safe, since it is used
  ! inside an external omp loop.
@@ -17,7 +18,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  ! intent(IN) and not modified.
  !
  use pars,          ONLY:SP,cZERO,cONE
- use wrapper,       ONLY:V_plus_alpha_V
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,X_poles_tab,l_X_terminator,X_cols,X_rows,drude_n_states
  use electrons,     ONLY:levels,spin_occ
@@ -28,7 +28,9 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  use R_lattice,     ONLY:qindx_X,bz_samp,q0_def_norm
  use vec_operate,   ONLY:v_norm
  use collision_el,  ONLY:elemental_collision
- use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_conjg_d,devxlib_memset_d
+ use parallel_m,    ONLY:PAR_COM_RL_INDEX
+ use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_conjg_d,devxlib_memset_d,&
+&                        devxlib_xGEMM_gpu
  !
  implicit none
  !
@@ -38,9 +40,11 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  type(X_t),    intent(in) :: X
  type(DIPOLE_t),intent(in):: Dip
  integer,      intent(in) :: i_cg,iq
- integer,      intent(in) :: lwork
+ integer,      intent(in) :: lwork,ntx
  complex(SP),  intent(out) DEV_ATTR :: Xo_res(X_rows(1):X_rows(2),X_cols(1):X_cols(2))
  complex(SP),       target DEV_ATTR :: work(lwork)
+ complex(SP)               DEV_ATTR :: rhotw_mp_R(X_rows(1):X_rows(2),ntx)
+ complex(SP)               DEV_ATTR :: rhotw_mp_C(X_cols(1):X_cols(2),ntx)
  !
  ! Work sapce
  !
@@ -49,7 +53,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  !
  complex(SP), pointer DEV_ATTR :: Xo_scatt_rhotw_p(:)
  complex(SP), pointer DEV_ATTR :: rhotw_save(:), rhotw_save2(:)
- integer      :: sop_inv_l,X_ng
+ integer      :: sop_inv_l,X_ng,nt
  complex(SP)  :: ctmp,Z_
  real(SP)     :: Z_eh_occ
  logical      :: l_X_term_vv
@@ -66,14 +70,11 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  isave     = 0
  n_poles   = sum(bare_grid_N(1:i_cg-1))
  Z_        = cONE
- Xo_res    = cZERO
  call devxlib_memset_d(Xo_res,cZERO)
  !
  ngrho     = Xo_scatt%ngrho
  !
  rhotw_save => work(1:ngrho)
- !
-! AF_FIX: the above line needs a fix
  if (l_X_terminator) rhotw_save2 => work(ngrho+1:2*ngrho)
  !
  loop_bare_grid: do i_bg = 1,bare_grid_N(i_cg)
@@ -205,34 +206,36 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
    !
    ! Filling the upper triangular part of the residual here ! 
    !-------------^^^^^---------------------------------------
+   !   
+   ! AF: in this implementation we just store the data in rhotw_mp
+   !     Later on, we multiply rhotw_mp*rhotw_mp^dag to build 
+   !     the whole residue matrix (both upper and lower parts)
    !
-#ifdef _GPU
-   !
-   !DEV_ACC_DEBUG data present(Xo_res,Xo_scatt_rhotw_p)
-   !DEV_ACC parallel loop collapse(2)
-   !DEV_CUF kernel do(2) <<<*,*>>>
-   !DEV_OMPGPU target map(present,alloc:Xo_res,Xo_scatt_rhotw_p)
-   !DEV_OMPGPU teams loop collapse(2)
-   do ig2=X_cols(1),X_cols(2)
-     do ig1=X_rows(1),X_rows(2)
-       if (ig1 <= ig2) then
-         Xo_res(ig1,ig2) = Xo_res(ig1,ig2) + Z_eh_occ*Xo_scatt_rhotw_p(ig2) &
-&                                          * conjg(Xo_scatt_rhotw_p(ig1))
-       endif
-     enddo
+   !DEV_ACC_DEBUG data present(rhotw_mp_R,Xo_scatt_rhotw_p)
+   !DEV_ACC parallel loop async
+   !DEV_CUF kernel do <<<*,*>>>
+   !DEV_OMPGPU target map(present,alloc:rhotw_mp_R,Xo_scatt_rhotw_p)
+   !DEV_OMPGPU teams loop
+   do ig1=X_rows(1),X_rows(2)
+     rhotw_mp_R(ig1,i_bg) = sqrt(Z_eh_occ) * conjg(Xo_scatt_rhotw_p(ig1))
    enddo
    !DEV_OMPGPU end target
    !DEV_ACC_DEBUG end data
    !
-#else
-   !DEV_OMP parallel do default(shared), private(ig2,ROWS)
-   do ig2=X_cols(1),X_cols(2)
-     ROWS=(/X_rows(1),min(ig2,X_rows(2))/)
-     call V_plus_alpha_V(ROWS(2)-ROWS(1)+1,Z_eh_occ*Xo_scatt%rhotw(ig2),&
-&                       conjg(Xo_scatt%rhotw(ROWS(1):ROWS(2))),Xo_res(ROWS(1):ROWS(2),ig2))
-   enddo
-   !
-#endif
+   if (PAR_COM_RL_INDEX%n_CPU>1) then
+     !
+     !DEV_ACC_DEBUG data present(rhotw_mp_C,Xo_scatt_rhotw_p)
+     !DEV_ACC parallel loop async
+     !DEV_CUF kernel do <<<*,*>>>
+     !DEV_OMPGPU target map(present,alloc:rhotw_mp_C,Xo_scatt_rhotw_p)
+     !DEV_OMPGPU teams loop
+     do ig1=X_cols(1),X_cols(2)
+       rhotw_mp_C(ig1,i_bg) = sqrt(Z_eh_occ) * conjg(Xo_scatt_rhotw_p(ig1))
+     enddo
+     !DEV_OMPGPU end target
+     !DEV_ACC_DEBUG end data
+     !
+   endif
 
    !
    ! add terminator specific corrections
@@ -282,34 +285,50 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
        call devxlib_conjg_d(Xo_scatt_rhotw_p)
      endif
      !
-#ifdef _GPU
      !DEV_ACC_DEBUG data present(Xo_res,Xo_scatt_rhotw_p,G_m_G)
      !DEV_ACC parallel loop collapse(2)
      !DEV_CUF kernel do(2) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:Xo_res,Xo_scatt_rhotw_p,G_m_G)
      !DEV_OMPGPU teams loop collapse(2)
+     !DEV_OMP parallel do default(shared), private(ig1,ig2)
      do ig2=X_cols(1),X_cols(2)
-       do ig1=ig_start,X_rows(2)
-         if (ig1 > ig2) cycle
-         Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt_rhotw_p(DEV_VAR(G_m_G)(ig2,ig1))
-       enddo
+     do ig1=ig_start,X_rows(2)
+        Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt_rhotw_p(DEV_VAR(G_m_G)(ig2,ig1))
+     enddo
      enddo
      !DEV_OMPGPU end target
      !DEV_ACC_DEBUG end data
-#else
-     !DEV_OMP parallel do default(shared), private(ig1,ig2)
-     do ig2=X_cols(1),X_cols(2)
-       do ig1=ig_start,min(ig2,X_rows(2))
-         Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt%rhotw(G_m_G(ig2,ig1))
-       enddo
-     enddo
-#endif
+     !
      ! dev2dev
      call devxlib_memcpy_d2d(Xo_scatt_rhotw_p,rhotw_save2)
      !
    endif
    !
  enddo loop_bare_grid
+ !
+ ! build the residues
+ !
+ nt = bare_grid_N(i_cg)
+ !
+ ! mm_cgemm_gpu
+ !
+ if (PAR_COM_RL_INDEX%n_CPU>1) then
+   !
+   call devxlib_xGEMM_gpu('N','C',X_rows(2)-X_rows(1)+1, X_cols(2)-X_cols(1)+1, nt, cONE, &
+&                         rhotw_mp_R, X_rows(2)-X_rows(1)+1, &
+&                         rhotw_mp_C, X_cols(2)-X_cols(1)+1, &
+&                         cONE, Xo_res, X_rows(2)-X_rows(1)+1 )
+   !
+ else
+   !
+   call devxlib_xGEMM_gpu('N','C',X_rows(2)-X_rows(1)+1, X_cols(2)-X_cols(1)+1, nt, cONE, &
+&                         rhotw_mp_R, X_rows(2)-X_rows(1)+1, &
+&                         rhotw_mp_R, X_cols(2)-X_cols(1)+1, &
+&                         cONE, Xo_res, X_rows(2)-X_rows(1)+1 )
+   !
+ endif
+ !
+ ! finalize
  !
  if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) then
     !DEV_ACC_DEBUG data present(Xo_res)

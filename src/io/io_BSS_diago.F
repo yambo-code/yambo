@@ -6,8 +6,8 @@
 ! Authors (see AUTHORS file for details): AM DS NM
 !
 integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
-&                             bsL_magn,bsR_magn,bsL_kerr,bsR_kerr,bsR_dich,bsR_pl,&
-&                             BS_mat,write_ev)
+&                             bsL_magn,bsR_magn,bsL_kerr,bsR_kerr,bsR_dich,&
+&                             bsR_pl,BS_mat,write_ev)
  !
  use pars,          ONLY:SP,schlen,IP
  use stderr,        ONLY:intc
@@ -22,11 +22,12 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  !
  implicit none
  !
- type(X_t),intent(inout)        :: X_static
+ type(X_t),intent(in)        :: X_static
  integer                        :: iq,ID,i_BS_mat
  complex(SP)        , optional  :: bsE(:)
  real(SP)   ,pointer, optional  :: BsE_corr(:,:),bsR_pl(:,:)
- complex(SP),pointer, optional  :: bsL_kerr(:),bsR_kerr(:),bsR_dich(:,:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
+ complex(SP),pointer, optional  :: bsL_kerr(:),bsR_kerr(:),bsR_dich(:,:),&
+&                                  bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
  complex(SP)        , optional  :: BS_mat(:,:)
  logical, optional              :: write_ev
  !
@@ -167,7 +168,8 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
    !
    ! Eigenstates (resonant only matrix)
    !
-   if (read_is_on(ID) .or. dump_ev) then 
+   if (read_is_on(ID) .or. dump_ev) then
+     if (.not.present(BS_mat)) call error(" io_BSS_diago: io of BS_mat without providing it in input")
     call io_bulk(ID,'BS_EIGENSTATES',VAR_SZ=(/2,BS_H_dim,BSS_n_eig/))
     call io_bulk(ID,C2=BS_mat,IPOS=(/1,1,1/))
    endif
@@ -180,11 +182,10 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  !
 end function
 
-subroutine write_bs_ev_par(iq, i_BS_mat, BS_VR, BS_VL)
+subroutine write_bs_ev_par(iq, i_BS_mat, neigs_this_cpu, neig_shift, BS_VR, BS_VL)
   !
   use pars,           ONLY:SP,schlen
   use BS,             ONLY:BS_K_dim, BS_H_dim,BS_K_coupling,BS_res_ares_n_mat
-  use parallel_m,     ONLY:par_distribute_set
   use BS_solvers,     ONLY:BSS_n_eig
   use IO_m,           ONLY:REP,OP_APP_CL,YAMBO_DEF_CHUNK
   use stderr,         ONLY:intc
@@ -194,10 +195,10 @@ subroutine write_bs_ev_par(iq, i_BS_mat, BS_VR, BS_VL)
   !
   implicit none
   !
-  integer, intent(in)      :: i_BS_mat, iq
+  integer, intent(in)      :: i_BS_mat, iq, neigs_this_cpu, neig_shift
   complex(SP),allocatable, target, optional ::BS_VR(:,:),BS_VL(:,:)
   ! workspace
-  integer :: SL_H_dim, neigs_this_cpu, neig_shift, ID, io_BSS_diago, chunksize(3), varid
+  integer :: SL_H_dim,  ID, io_BSS_diago, chunksize(3), varid
   character(schlen):: db_name
   character(schlen) :: dim_names(3)
 
@@ -215,8 +216,6 @@ subroutine write_bs_ev_par(iq, i_BS_mat, BS_VR, BS_VL)
   else
     db_name='BS_diago_Q'//trim(intc(iq))
   endif
-  !
-  call par_distribute_set(BSS_n_eig, neigs_this_cpu, neig_shift)
   !
   call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID,DO_IT=.TRUE.)
   

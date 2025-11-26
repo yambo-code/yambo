@@ -13,7 +13,7 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,BS_mat_dim,BS_mat,iq,what)
  use pars,           ONLY:SP,cI,cZERO,cONE
  use parallel_int,   ONLY:PP_redux_wait
  use BS,             ONLY:BS_K_coupling,n_BS_blks,BS_res_ares_n_mat,&
-&                         l_BS_ares_from_res,BS_blks_free
+&                         l_BS_ares_from_res
  use BS_solvers,     ONLY:BS_blk,BS_H_dim,BS_K_dim,&
 &                         BSS_perturbative_width,run_inversion,run_Haydock,&
 &                         BSS_eh_E,BSS_eh_W
@@ -61,7 +61,8 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,BS_mat_dim,BS_mat,iq,what)
        if (H_pos(1)+H_shift(1)>H_pos(2)+H_shift(2)) cycle
        if (l_BS_ares_from_res.and.H_pos(1)>H_pos(2)) cycle
        !
-       Mij=BS_blk(i_B)%mat(i_r,i_c)
+       if(     allocated(BS_blk(i_B)%mat)) Mij=BS_blk(i_B)%mat(i_r,i_c)
+       if(.not.allocated(BS_blk(i_B)%mat)) Mij=cZERO
        !
        ! Add energies to the diagonal
        !

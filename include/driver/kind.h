@@ -44,7 +44,7 @@ typedef struct options_struct
  int  short_opt;
  char *long_opt;
  char *short_desc;
- char long_desc[20][100];
+ char long_desc[20][128];
  char *bin;
  char *no_bin;
  char *yambo_string;

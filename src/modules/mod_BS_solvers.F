@@ -55,6 +55,7 @@ module BS_solvers
  complex(SP)      :: BSS_Wd
  integer  :: BSS_n_freqs
  integer  :: BSS_n_eig            ! number of eigenvalues to find. Ydiago/Slepc
+ integer  :: BSS_n_eig_Input      ! number of eigenvalues requested in input. Ydiago/Slepc
  integer  :: BSS_first_eig        ! index of the first eigenvalue to find. Ydiago
  real(SP) :: BSS_target_E         ! find eigenvalues close to this energy. Slepc
  real(SP) :: BSS_trange_E(2)      ! find eigenvalues in this energy range. Ydiago
@@ -65,9 +66,12 @@ module BS_solvers
  real(SP) :: BSS_E_dir(3)         ! Electric field
  real(SP) :: BSS_P_dir(3)         ! Induced polarization
  real(SP) :: BSS_Q_dir(3)         ! Field propagation direction
+ real(SP) :: BSS_kernel_stored_size
+ integer  :: BSS_kernel_last_stored_block
  logical  :: BSS_uses_DbGd
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
+ logical  :: BSS_kernel_IO_on_the_fly
  logical  :: BSS_perturbative_width
  logical  :: l_abs_prop_chi_bse=.TRUE.
  logical  :: l_eels_can_be_computed=.TRUE.
@@ -105,6 +109,7 @@ module BS_solvers
  real(SP)         :: BSS_slepc_tol           !tolerance for the iterative solver
  character(schlen):: BSS_slepc_matrix_format !matrix type ("shell","explicit","explicit-debug")
  logical          :: BSS_slepc_double_grp    !duplicate the number of groups for slepc shells solver
+ logical          :: BSS_slepc_pseudo_herm   !use a BSE specific solver designed for pseudo-hermitian matrices
  !
  ! Solvers (Inversion)
  !=========
@@ -171,11 +176,11 @@ module BS_solvers
      complex(SP)        ,optional :: BS_mat(:,:)
      logical, optional            :: write_ev
    end function
-
-   subroutine write_bs_ev_par(iq, i_BS_mat, BS_VR, BS_VL)
+   !
+   subroutine write_bs_ev_par(iq, i_BS_mat, neigs_this_cpu, neig_shift, BS_VR, BS_VL)
      use pars,           ONLY:SP
      implicit none
-     integer, intent(in)      :: i_BS_mat, iq
+     integer, intent(in)      :: i_BS_mat, iq, neigs_this_cpu, neig_shift
      complex(SP),allocatable, target, optional ::BS_VR(:,:),BS_VL(:,:)
    end subroutine write_bs_ev_par
    !

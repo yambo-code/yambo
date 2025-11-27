@@ -55,6 +55,7 @@ subroutine EXCPH_lifetime(k,q,X)
  real(SP) , allocatable :: EXC_life_of_q(:,:),EXC_pole_of_q(:,:)
  type(PP_indexes)::px
  !
+ ! Initialization
  call parser('NoMatrxEl',l_no_matrix_elements)
  call parser('KeepDeg',  l_keep_deg)
  call parser('ExtendOutput', l_extend_output)
@@ -89,17 +90,14 @@ subroutine EXCPH_lifetime(k,q,X)
  do iq=1,q%nibz
    call EXCPH_load_L(iq,X,'eigenvalues','Lout')
    BS_all_E(:,iq)=real(BS_E(:)) ! I suppose the BSE eigenvalues are real
-   !write(*,*) iq,BS_all_E(:,iq)
  enddo
  !
+ ! Apply 2D stretching if requested
  if(alphaQ/=rZERO) then
-   !      
    call msg('rs','Excitonic bands 2D stretching :',alphaQ)
-   !
    do iq=1,q%nibz
      BS_all_E(:,iq)=BS_all_E(:,iq)+alphaQ*iku_v_2D_norm(q%pt(iq,:3))
    enddo
-   !
  endif
  !
  ! Here we find the degenerations of the first n_exc_in values of BS_all_E at gamma
@@ -217,16 +215,16 @@ subroutine EXCPH_lifetime(k,q,X)
          ! write(100+i_alpha,*) i_alpha,EXC_LifeTime(i_alpha)
          ! DS Debug >
          !
-       enddo
+       enddo ! i_l
        !
-     enddo
+     enddo ! i_beta
      !
-   enddo
+   enddo ! i_alpha
    !
    call live_timing(steps=1)
    !
- enddo
- enddo
+ enddo ! i_start
+ enddo ! iq
  !
  call live_timing( )
  !
@@ -241,7 +239,7 @@ subroutine EXCPH_lifetime(k,q,X)
  !
  call PP_indexes_reset(px)
  !
- ! Perform average
+ ! Average lifetimes over degenerate groups (use input energies BS_E_in)
  !
  call degeneration_finder(n_exc_in,first_exc_grp,n_of_exc_grp,n_deg_grp,&
  &                    Er=real(BS_E_in(EXCPH_states(1):EXCPH_states(2))),&
@@ -258,6 +256,7 @@ subroutine EXCPH_lifetime(k,q,X)
    endif
  enddo
  !
+ ! Convert to final units          
  EXC_LifeTime=EXC_LifeTime*2._SP*pi/real(q%nbz,SP)
  if (l_EXCPH_offdiago) EXC_LineWidth=EXC_LineWidth*2._SP*pi/real(q%nbz,SP)
  !

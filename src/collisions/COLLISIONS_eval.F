@@ -59,7 +59,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! WorkSpace
  !
  logical       :: l_collisions_from_bse,l_tmp
- integer       :: ID,IO_err,IO_err_BS,IO_ACT,ID_head,ID_mat,ID_cmpr,&
+ integer       :: ID,IO_err_COLL,IO_err_BS,IO_ACT,ID_head,ID_mat,ID_cmpr,&
  &                BS_nk_bz,BS_nk_ibz
  character(20) :: PAR_ch,FREE_ch
  !
@@ -149,7 +149,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      call io_control(ACTION=RD_CL,COM=NONE,MODE=DUMP,ID=ID_head)
      IO_err_BS=io_BS_header(1,X(2),ID_head,"full")
      !
-     if (IO_err_BS==0) then 
+     if (IO_err_BS/=0) then
+        call error("Collisions from BSE, error while reading io_BS_header")
+     else
+     !if (IO_err_BS==0) then
        call set_BS_blks(Xk)
        call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,ID=ID_mat)
        IO_err_BS=io_BS_PAR_init(1,ID_mat,"full")
@@ -160,9 +163,11 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      deallocate(BS_kpt_bz)
      deallocate(BS_kpt_ibz)
      !
+     if (IO_err_BS/=0) call error("Collisions from BSE, error while reading io_BS_PAR")
+     !
    endif
    !
-   if (IO_err/=0) then
+   if (IO_err_COLL/=0) then
      !
      call COLLISIONS_HXC(X(2),Xk,E,k,q,Xw(2),IO_err_BS,ID_mat)
      !
@@ -191,7 +196,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
    call CHECK_and_ALLOC(P_collisions)
    !
-   if (IO_err/=0) then
+   if (IO_err_COLL/=0) then
      !
      call COLLISIONS_momentum(E,k,q)
      !
@@ -223,7 +228,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
    call CHECK_and_ALLOC(GW_NEQ_collisions)
    !
-   if (IO_err/=0) then 
+   if (IO_err_COLL/=0) then 
      !
      call COLLISIONS_NEQ_GW_static(X(2),Xk,E,k,q,Xw(2)) 
      !
@@ -258,7 +263,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      !
    endif
    !
-   if (IO_err==0) return
+   if (IO_err_COLL==0) return
    !
    FREE_ch="all"
    !
@@ -288,25 +293,25 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      !
      type(COLLISIONS_group) :: COLL_grp
      !
-     IO_err=-1
+     IO_err_COLL=-1
      !
      if (io_COLLs) then
        COLL_grp%IO_status=-1
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-       IO_err=io_COLLs_header(ID,COLL_grp)
+       IO_err_COLL=io_COLLs_header(ID,COLL_grp)
 #if defined _PAR_IO
        call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID)
-       io_err=io_COLLISIONS(ID,COLL_grp)
-       if(io_err==0) then
+       io_err_COLL=io_COLLISIONS(ID,COLL_grp)
+       if(io_err_COLL==0) then
          call warning(" Restarting from previous database")
          do i_coll=1,COLL_grp%N
            IO_ACT=manage_action(RD_CL_IF_END,i_coll,1,COLL_grp%N)
            call io_control(ACTION=IO_ACT,COM=REP,SEC=(/4/),ID=ID)
-           io_err=io_COLLISIONS(ID,COLL_grp,i_coll=i_coll)
+           io_err_COLL=io_COLLISIONS(ID,COLL_grp,i_coll=i_coll)
          enddo
        endif
 #endif
-       if (any(COLL_grp%IO_status/=1)) IO_err=-1
+       if (any(COLL_grp%IO_status/=1)) IO_err_COLL=-1
      endif
      !
      ! In case io_Colls is /=0 all CPU have to sincronize before starting
@@ -314,7 +319,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      !
      call PP_wait()
      !
-     if (IO_err==0) return
+     if (IO_err_COLL==0) return
      !
      if (io_COLLs) then
        call COLLISIONS_alloc_and_free(trim(COLL_grp%name),"collision","alloc",1)

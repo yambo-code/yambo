@@ -95,7 +95,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  !Brackets
  !
- do concurrent (i1=1:qp%n_states) 
+ do i1=1,qp%n_states 
    Eqp_raxis(i1,1)=qp%E_bare(i1)
    Eqp_raxis(i1,2)=Eqp_raxis(i1,1)+1./HA2EV
  enddo
@@ -164,7 +164,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    call W_reset(Sc_W(i1))
    Sc_W(i1)%n_freqs=QP_dSc_steps
    YAMBO_ALLOC(Sc_W(i1)%p,(QP_dSc_steps))
-   do concurrent (i2=1:QP_dSc_steps) 
+   do i2=1,QP_dSc_steps 
      Sc_W(i1)%p(i2)=Eqp_raxis(i1,1)+(i2-1)*QP_dSc_delta
    enddo
  enddo

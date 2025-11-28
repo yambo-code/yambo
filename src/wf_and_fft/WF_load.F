@@ -431,10 +431,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               WF_N = WF%N
               !
             !if(allocated(rho_map)) then
-            !  !DEV_ACC_DEBUG data present(wfc_p,wf_DP)
+            !  !DEV_ACC_DEBUG data present(wfr_p,wf_DP)
             !  !DEV_ACC parallel loop
             !  !DEV_CUF kernel do(1)
-            !  !DEV_OMPGPU target map(present,alloc:wfc_p,wf_DP)
+            !  !DEV_OMPGPU target map(present,alloc:wfr_p,wf_DP)
             !  !DEV_OMPGPU teams loop
             !  do ic=1,rho_map_size
             !    wfr_p(ic,i_spinor,WF_N)=cmplx(DEV_VAR(wf_DP)(rho_map(ic)),kind=SP)*fft_norm
@@ -442,10 +442,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
             !  !DEV_OMPGPU end target
             !  !DEV_ACC_DEBUG end data
             !else
-              !DEV_ACC_DEBUG data present(wfc_p,wf_DP)
+              !DEV_ACC_DEBUG data present(wfr_p,wf_DP)
               !DEV_ACC parallel loop
               !DEV_CUF kernel do(1)
-              !DEV_OMPGPU target map(present,alloc:wfc_p,wf_DP)
+              !DEV_OMPGPU target map(present,alloc:wfr_p,wf_DP)
               !DEV_OMPGPU teams loop
               do ic=1,fft_size
                 wfr_p(ic,i_spinor,WF_N)=cmplx(DEV_VAR(wf_DP)(ic),kind=SP)*fft_norm

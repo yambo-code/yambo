@@ -106,13 +106,21 @@ module functions
      ! From Mathworld
      ! https://mathworld.wolfram.com/LorentzianFunction.html
      !
-     use pars, ONLY:pi
+     use pars, ONLY:DP,pi
      real(SP), intent(in) :: x,damp
      real(SP) :: Lorentzian_func
      !
-     Lorentzian_func=1.0/pi*(0.5*damp)/(x**2+(0.5*damp)**2)
+     ! Double-precision temporaries
+     real(DP) :: xd, dd, val
      !
-   end
+     xd = real(x, DP)
+     dd = real(damp, DP)
+     !
+     val = (0.5_DP * dd) / (xd*xd + (0.5_DP*dd)**2) / real(pi, DP)
+     !
+     Lorentzian_func = real(val, SP)
+     !  
+   end function Lorentzian_func
    !
    ! Fermi functions
    !-----------------

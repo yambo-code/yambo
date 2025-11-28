@@ -39,10 +39,10 @@ subroutine WF_free(WF,keep_fft,keep_states_to_load)
  if (pp_is_uspp) call PP_uspp_free()
  !
  if (have_gpu) then
-   if (.not. ( allocated(WF%c) .eqv. allocated(WF%c_d) ) ) &
-&    call error("[WF] inconsistent alloc of GPU wfcs in G/C sapce")
-   if (.not. ( allocated(WF%r) .eqv. allocated(WF%r_d) ) ) &
-&    call error("[WF] inconsistent alloc of GPU wfcs in R sapce")
+   if (.not. ( allocated(WF%c) .eqv. devxlib_mapped(DEV_VAR(WF%c)) ) ) &
+&    call error("[WF] inconsistent alloc of GPU wfcs in G/C space")
+   if (.not. ( allocated(WF%r) .eqv. devxlib_mapped(DEV_VAR(WF%r)) ) ) &
+&    call error("[WF] inconsistent alloc of GPU wfcs in R space")
  endif
  !
  if (.not.(allocated(WF%c).or.allocated(WF%r))) return

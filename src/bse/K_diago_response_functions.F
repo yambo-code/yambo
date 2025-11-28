@@ -22,7 +22,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  use LIVE_t,         ONLY:live_timing
  use BS,             ONLY:BS_perturbative_SOC,BS_res_ares_n_mat,l_BS_abs,l_BS_jdos,l_BS_esort,&
 &                         BS_K_anti_resonant,l_BS_ares_from_res,BS_K_coupling
- use BS_solvers,     ONLY:BSS_n_eig,Co_factor
+ use BS_solvers,     ONLY:BSS_n_eig,Co_factor,deg_exc_thrshld
  use R_lattice,      ONLY:bare_qpg,q0_def_norm
  use units,          ONLY:HA2EV
  use vec_operate,    ONLY:degeneration_finder,sort
@@ -235,7 +235,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
    allocate(n_of_exc(EDIM))
    ! Threshold is 1meV
    call degeneration_finder(EDIM,first_exc,n_of_exc,n_deg_grp,&
-   &      Er=vtmpR(i1:i1-1+EDIM),deg_accuracy=0.001_SP/HA2EV,Include_single_values=.TRUE.)
+   &      Er=vtmpR(i1:i1-1+EDIM),deg_accuracy=deg_exc_thrshld,Include_single_values=.TRUE.)
    EDIM=min(BSS_n_eig-i1+1,1000)
    do i_VAR=1,nVAR
      BS_E_sorted(:,i_VAR,2)=cZERO

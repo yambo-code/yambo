@@ -26,7 +26,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use stderr,         ONLY:intc
  use units,          ONLY:HA2EV
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
-&                         BS_res_ares_n_mat,l_BS_ares_from_res,&
+&                         BS_res_ares_n_mat,l_BS_ares_from_res,BS_nT_grps,&
 &                         l_BS_abs,l_BS_kerr,l_BS_kerr_asymm,l_BS_magnons,l_BS_photolum,l_BS_dichroism,&
 &                         l_BS_mespin,l_BS_meorb
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,BSS_resize_only,BSS_resize_and_save,BSS_n_eig_Input, &
@@ -46,6 +46,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use IO_m,           ONLY:REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
+ use parallel_m,     ONLY:CPU_structure
  use parallel_int,   ONLY:PP_wait
 #if defined _SLEPC && !defined _NL
  use petscsys
@@ -55,7 +56,7 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  use interfaces,     ONLY:MATRIX_slepc
  use BS_solvers,     ONLY:BSS_slepc_approach,BSS_slepc_matrix_format,&
-&                         Slepc_v,BS_HAYVEC_free
+&                         Slepc_v,BS_HAYVEC_free,BS_HAYVEC_alloc
 #endif
  use y_memory_alloc
  !
@@ -218,6 +219,8 @@ subroutine K_diago_driver(iq,W,X_static)
 #if defined _SLEPC && !defined _NL
      if(l_slepc) then
        !
+       call K_slepc_local_init()
+       !
        if (index(BSS_slepc_matrix_format,"shell")>0) then
          ! 1. Here we will define a PetscShell matrix and define the matrix-vector multiplication
          ! using the K_multiply_by_V function used in the Haydock method
@@ -318,10 +321,9 @@ subroutine K_diago_driver(iq,W,X_static)
 #if defined _SLEPC && !defined _NL
      !
      if (l_slepc) then
+       call K_slepc_local_free()
        ! BSS_n_eig could be lowered by MATRIX_slepc
        if (BSS_n_eig_before_solver>BSS_n_eig) call K_slepc_resize_variables()
-       ! Destroy the matrix
-       call MatDestroy(slepc_mat,ierr)
      endif
      !
 #endif
@@ -459,20 +461,20 @@ subroutine K_diago_driver(iq,W,X_static)
 #endif
    endif
    !
+   ! CLEAN
+   !
    YAMBO_FREE(BS_E)
    call local_free( )
    !
  enddo
  !
+#if defined _SLEPC && !defined _NL
+ if (l_slepc) call SlepcFinalize(ierr)
+#endif
+ !
  ! Initialize & write the output file 
  !====================================
  call K_OUTPUT(iq,W,"open dump close "//trim(Solver),"ALL")
- !
- ! CLEAN
- !
-#if defined _SLEPC && !defined _NL
- if(l_slepc) call K_slepc_local_free()
-#endif
  !
  call timing(trim(Solver)//' Solver',OPR='stop')
  !
@@ -708,6 +710,9 @@ subroutine K_diago_driver(iq,W,X_static)
      endif
 #endif
      !
+     ! LA for old diago solver
+     if (l_diago) call PARALLEL_assign_LA_COMMs("Response_T_space",DIAGO,CPU_structure(4)%nCPU_lin_algebra_DIAGO)
+     !
    end subroutine K_local_init
    !
    subroutine BSS_n_eig_init()
@@ -780,6 +785,20 @@ subroutine K_diago_driver(iq,W,X_static)
    !
 #if defined _SLEPC && !defined _NL
    !
+   subroutine K_slepc_local_init()
+     integer          :: domk(BS_nT_grps)
+     !
+     if (BSS_slepc_matrix_format=='shell') then
+       call PARALLEL_Haydock_VEC_COMMs('assign')
+       allocate(Slepc_v%Vi(BS_nT_grps))
+       allocate(Slepc_v%Vo(BS_nT_grps))
+       domk=1
+       call BS_HAYVEC_alloc(Slepc_v%Vi,domk)
+       call BS_HAYVEC_alloc(Slepc_v%Vo,domk)
+     endif
+     !
+   end subroutine K_slepc_local_init
+   !
    subroutine K_slepc_local_free()
      !
      if (BSS_slepc_matrix_format=='shell') then
@@ -790,7 +809,9 @@ subroutine K_diago_driver(iq,W,X_static)
        call PARALLEL_Haydock_VEC_COMMs('reset')
      endif
      !
-     call SlepcFinalize(ierr)
+     ! Destroy the matrix
+     call MatDestroy(slepc_mat,ierr)
+     !
    end subroutine K_slepc_local_free
 #endif
    !

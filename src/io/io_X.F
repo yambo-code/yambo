@@ -229,8 +229,10 @@ integer function io_X(X,Xw,ID)
      endif
      !
      if (allocated(X_par)) then
-       call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
-       call  io_variable_bulk(ID_frag,1,C3=X_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,X_par(1)%rows(1),X_par(1)%cols(1),1/))
+       if(allocated(X_par(1)%blc)) then
+         call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
+         call  io_variable_bulk(ID_frag,1,C3=X_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,X_par(1)%rows(1),X_par(1)%cols(1),1/))
+       endif
      endif
      !
    endif
@@ -248,6 +250,7 @@ integer function io_X(X,Xw,ID)
      endif
      !
      if (allocated(X_par)) then
+      if(allocated(X_par(1)%blc)) then
        YAMBO_ALLOC(X_on_disk,(X_par(1)%rows(1):X_par(1)%rows(2),X_par(1)%cols(1):X_par(1)%cols(2)))
        do i1=1,Xw%n_freqs
          !
@@ -263,6 +266,7 @@ integer function io_X(X,Xw,ID)
      endif
      !
      YAMBO_FREE(X_on_disk)
+    endif
    endif
    !
  endif

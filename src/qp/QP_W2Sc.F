@@ -62,7 +62,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
      !
      ! 1st term: (spin_occ-f_os+fbose)
      !
-     do concurrent (i_w=1:Xw%n_freqs) 
+     do i_w=1,Xw%n_freqs 
        QP_W_here(i_w)=QP_W(i_qp_mem,i_q_mem,i_b_mem,i_w)*    &
 &                        (spin_occ-E%f(os(1),os(2),os(3))+bose_f(real(Xw%p(i_w))))* &
 &                         bose_decay(real(Xw%p(i_w)))
@@ -74,7 +74,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
      !
      ! 2nd term: (f_os+fbose)
      !
-     do concurrent (i_w=1:Xw%n_freqs) 
+     do i_w=1,Xw%n_freqs 
        QP_W_here(i_w)=QP_W(i_qp_mem,i_q_mem,i_b_mem,i_w)* &
 &                         (E%f(os(1),os(2),os(3))+bose_f(real(Xw%p(i_w))))*      &
 &                         bose_decay(real(Xw%p(i_w)))
@@ -86,7 +86,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
      !
    enddo
    !
-   do concurrent (i_w=1:Sc_W(i_qp)%n_freqs) 
+   do i_w=1,Sc_W(i_qp)%n_freqs 
      QP_Sc(i_qp,i_w)=QP_Sc(i_qp,i_w)+dSc(i_w)
    enddo
    !

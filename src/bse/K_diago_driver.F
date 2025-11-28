@@ -468,6 +468,10 @@ subroutine K_diago_driver(iq,W,X_static)
    !
  enddo
  !
+#if defined _SLEPC && !defined _NL
+ if (l_slepc) call SlepcFinalize(ierr)
+#endif
+ !
  ! Initialize & write the output file 
  !====================================
  call K_OUTPUT(iq,W,"open dump close "//trim(Solver),"ALL")
@@ -807,7 +811,6 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      ! Destroy the matrix
      call MatDestroy(slepc_mat,ierr)
-     call SlepcFinalize(ierr)
      !
    end subroutine K_slepc_local_free
 #endif

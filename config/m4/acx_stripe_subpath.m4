@@ -15,3 +15,14 @@ if [[ -z "${1// }" ]]; then
  STRIPE="$STRIPE ($2)"
 fi
 ])
+
+AC_DEFUN([ACX_STRIPE_SUBPATH2],
+[
+TMP1=`echo $1 | sed 's/\//+/g'`
+TMP2=`echo $compdir | sed 's/\//+/g'`
+TMP3=`echo $TMP1 | sed "s/$TMP2/\(CMP\)/g"`
+STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+if [[ -z "${1// }" ]]; then
+ STRIPE="$STRIPE ($2)"
+fi
+])

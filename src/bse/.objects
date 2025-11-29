@@ -6,7 +6,7 @@ SLEPC_objects = K_stored_in_a_slepc_matrix.o K_shell_matrix.o K_stored_in_a_nest
 PARIO_objects = K_compress.o
 #endif
 #if defined _SCALAPACK
-SLK_objects = K_inversion_do_it_SLK.o
+SLK_objects = K_inversion_do_it_SLK.o K_fill_block_cyclic.o YDIAGO_driver.o
 #endif
 objs =	K_blocks.o K_driver_init.o K_dipoles.o K_IP.o K_IP_sort.o \
         K_Transitions_setup.o K_Transition_check.o \

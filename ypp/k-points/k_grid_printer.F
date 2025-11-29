@@ -40,14 +40,20 @@ subroutine k_grid_printer(nk,k,coo_in,form,wk,coo_out)
  do ik=1,nk
    !
    v=k(ik,:)
+   ! Transform points in iku from coo_in.
    if (trim(coo_in)=="rlu") call c2a(v_in=v,mode="ka2i")
    if (trim(coo_in)=="cc")  call c2a(v_in=v,mode="kc2i")
+   if (trim(coo_in)=="alat") then
+     v=v/(alat_used_for_output/2./pi)
+     call c2a(v_in=v,mode="kc2i")
+   endif
    !
    weight=1._SP
    if (present(wk)) then
     weight=wk(ik)
    endif
    !
+   ! Transform points from iku to coo_out
    if (present(coo_out)) then
      if (trim(coo_out)=="rlu")  call c2a(v_in=v,mode="ki2a")
      if (trim(coo_out)=="cc" )  call c2a(v_in=v,mode="ki2c")

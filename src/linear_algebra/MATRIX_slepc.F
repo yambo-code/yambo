@@ -26,7 +26,7 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
  use com,           ONLY : msg
  use stderr,        ONLY : intc
  use BS_solvers,    ONLY : BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_maxit,&
- &                         BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_precondition,&
+ &                         BSS_slepc_tol,BSS_target_E,BSS_slepc_precondition,&
  &                         BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_mpd,&
  &                         BSS_slepc_pseudo_herm
  !
@@ -235,8 +235,8 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
  !
  call EPSSetExtraction(eps, extr, ierr)
  !
- if (BSS_slepc_target_E/=0._SP.or.l_precondition) then
-   target_energy=BSS_slepc_target_E
+ if (BSS_target_E/=0._SP.or.l_precondition) then
+   target_energy=BSS_target_E
    call EPSSetTarget(eps,target_energy,ierr)
    call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)
  else
@@ -300,7 +300,7 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
  call msg( 'sr', '[SLEPC] Extraction method                 ',BSS_slepc_extraction)
  call msg( 'sr', '[SLEPC] Number of requested eigenvalues   ', n_eig ) 
  !
- if (BSS_slepc_target_E/=0._SP.or.l_precondition) then
+ if (BSS_target_E/=0._SP.or.l_precondition) then
    call msg( 'nsr', '[SLEPC] Criterion is target energy        ', real(target_energy,SP)*HA2EV,'[eV]')
  else
    call msg( 'nsr', '[SLEPC] Criterion is smaller eigenvalues')

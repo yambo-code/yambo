@@ -195,9 +195,15 @@ subroutine k_grids(en,k,Xk,q)
  !
  if (l_shifted_grid) then
    !
+   call section('=',"== Built-in IBZ K-grid ["//trim(coo_out)//"] ==")
+   YAMBO_ALLOC(BZ_weights,(Xk%nibz))
+   BZ_weights(:)=Xk%weights(:)*real(Xk%nbz,SP)
+   call k_grid_printer(Xk%nibz,Xk%pt,'iku',"PW",wk=BZ_weights)
+   YAMBO_FREE(BZ_weights)
+   !
    ! Generate shifted k-points set for dipole calculation
    !
-  call section('=',"== Shifted grids generator ==")
+   call section('=',"== Shifted grids generator ==")
    !================================================
    !
    if(any(abs(U_q_shifts)/=0._SP)) then
@@ -222,7 +228,7 @@ subroutine k_grids(en,k,Xk,q)
        !
        i2 = i2 + 1
        !
-       ! Convert U_q_shifts[iku] to coo_in
+       ! Convert U_q_shifts[iku] to coo_out
        !
        call K_transform(q0,trim(coo_in))
        !
@@ -241,7 +247,7 @@ subroutine k_grids(en,k,Xk,q)
          !
        enddo
        !
-       call k_grid_printer(Xk%nibz,k_plus_q,trim(coo_out),"none")
+       call k_grid_printer(Xk%nibz,k_plus_q,trim(coo_out),"PW")
        !
      enddo
       !

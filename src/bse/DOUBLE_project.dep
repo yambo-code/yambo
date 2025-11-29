@@ -30,6 +30,7 @@
  K_eps_interpolate.o
  K_exchange_collisions.o
  K_exchange_kernel.o
+ K_fill_block_cyclic.o
  K_inversion_Lo.o
  K_inversion_do_it_SLK.o
  K_inversion_do_it_full.o
@@ -52,4 +53,5 @@
  K_stored_in_a_slepc_matrix.o
  PL_diago_residual.o
  PL_via_perturbative_inversion.o
+ YDIAGO_driver.o
 

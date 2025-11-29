@@ -94,7 +94,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP),   external :: TDDFT_ALDA_eh_space_G_kernel
  complex(SP),   external :: K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
- logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_bs_tddft_wf_in_loop,l_matrix_init,BS_blk_todo,&
+ logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_bs_tddft_wf_in_loop,l_matrix_init,BS_blk_todo,l_tddft_comp,&
  &             l_load_kernel,l_write_kernel,l_write_kernel_step,l_skip_phases,l_std_alg,l_dir_alg,l_tddft_gsum,l_tddft_rsum
  !
  ! I/O
@@ -333,16 +333,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    QP_ng_Vxc=BS_n_g_fxc
    !
-   if (l_tddft_rsum) then
-     YAMBO_ALLOC(tddft_wf%rhotwr1,(fft_size*n_spinor*n_spinor))
-     YAMBO_ALLOC(tddft_wf%rhotwr2,(fft_size*n_spinor*n_spinor))
-   else if (l_tddft_gsum) then
-     YAMBO_ALLOC(tddft_wf%rhotwr_DP,(fft_size))
-   endif
-   !
-   YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
-   YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
-   !
    YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
    if(l_BS_magnons .or. n_spinor==2 .or. l_Fxc_from_Vxc) then
      YAMBO_ALLOC(V_xc,(fft_size,n_spin))
@@ -526,6 +516,15 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    ! TDDFT oscillators
    !----------------------
    if(iHxc==2 .and. l_tddft_gsum) then
+     !
+     l_tddft_comp = .not.(allocated(BS_T_grp(i_Tgrp_k)%O_tddft_L).and.allocated(BS_T_grp(i_Tgrp_p)%O_tddft_R))
+     !
+     if (l_tddft_comp) then
+       YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
+       YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
+       YAMBO_ALLOC(tddft_wf%rhotwr_DP,(fft_size))
+     endif
+     !
      if (.not.allocated( BS_T_grp(i_Tgrp_k)%O_tddft_L) ) then
        call TDDFT_oscillators_alloc_L(i_Tgrp_k)
        call TDDFT_ALDA_eh_space_G_collisions_L(iq,Xk,i_Tgrp_k,NG,l_bs_tddft_wf_in_loop,tddft_wf,mode_now)
@@ -534,6 +533,13 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        call TDDFT_oscillators_alloc_R(i_Tgrp_p)
        call TDDFT_ALDA_eh_space_G_collisions_R(iq,Xk,i_Tgrp_p,NG,l_bs_tddft_wf_in_loop,tddft_wf,mode_now)
      endif
+     !
+     if (l_tddft_comp) then
+       YAMBO_FREE(tddft_wf%WF_symm1)
+       YAMBO_FREE(tddft_wf%WF_symm2)
+       YAMBO_FREE(tddft_wf%rhotwr_DP)
+     endif
+     !
    endif
    !
    ! Correlation oscillators
@@ -544,14 +550,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
    !
    call timing('X T_space Kernel sum',OPR='start')
-   !
-   ! GS Free variables, they are later allocated within each OMP loop
-   if (l_tddft_rsum) then
-     YAMBO_FREE(tddft_wf%WF_symm1)
-     YAMBO_FREE(tddft_wf%WF_symm2)
-     YAMBO_FREE(tddft_wf%rhotwr1)
-     YAMBO_FREE(tddft_wf%rhotwr2)
-   endif
    !
    ! Transition Loops
    !------------------
@@ -570,16 +568,13 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    call OPENMP_update(master_thread) 
    !
    !
-   ! GS Allocate tddft_wf variables neeeded within the OMP loop. 
-   !    It is necessary if using the subroutine TDDFT_ALDA_eh_space_R_kernel
-   !    Instead for TDDFT_ALDA_eh_space_G_kernel the allocation is later performed internally
-   if (l_tddft_rsum) then
-    YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
-    YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
-    YAMBO_ALLOC(tddft_wf%rhotwr1,(fft_size*n_spinor*n_spinor))
-    YAMBO_ALLOC(tddft_wf%rhotwr2,(fft_size*n_spinor*n_spinor))
-   end if
-   !  
+   ! Allocate tddft_wf variables neeeded within the OMP loop
+   if (l_tddft_rsum.and.iHxc==2) then
+     YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
+     YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
+     YAMBO_ALLOC(tddft_wf%rhotwr1,(fft_size*n_spinor*n_spinor))
+     YAMBO_ALLOC(tddft_wf%rhotwr2,(fft_size*n_spinor*n_spinor))
+   endif
    !
    i_p_bz_last=0   ; i_k_bz_last=0
    i_pmq_bz_last=0 ; i_kmq_bz_last=0
@@ -603,7 +598,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t".and.l_BSE_restart) cycle
        !
-       H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+& 
+       H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+&
        &              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
        H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
        &              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1)
@@ -828,6 +823,17 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    !DEV_OMP end do
    !
+   if(iHxc==2) then
+     !
+     if (l_tddft_rsum) then
+       YAMBO_FREE(tddft_wf%rhotwr1)
+       YAMBO_FREE(tddft_wf%rhotwr2)
+       YAMBO_FREE(tddft_wf%WF_symm1)
+       YAMBO_FREE(tddft_wf%WF_symm2)
+     endif
+     !
+   endif
+   !
    if (iHxc==3) then
      YAMBO_FREE_GPU(O1)
      YAMBO_FREE_GPU(O2)
@@ -880,16 +886,10 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if(iHxc==2) then
    !
-   if (l_tddft_rsum) then
-     YAMBO_FREE(tddft_wf%rhotwr1)
-     YAMBO_FREE(tddft_wf%rhotwr2)
-   else if (l_tddft_gsum) then
+   if (l_tddft_gsum) then
      call TDDFT_oscillators_free_L(BS_nT_grps)
      call TDDFT_oscillators_free_R(BS_nT_grps)
-     YAMBO_FREE(tddft_wf%rhotwr_DP)
    endif
-   YAMBO_FREE(tddft_wf%WF_symm1)
-   YAMBO_FREE(tddft_wf%WF_symm2)
    !
    if (l_bs_fxc) then
      YAMBO_FREE(F_xc_gspace)

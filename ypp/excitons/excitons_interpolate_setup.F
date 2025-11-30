@@ -101,6 +101,9 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,BS_all_E,ID_INTERP_EXC,ID_IN
    if (     l_magnons)  Res(:n_eig)=real(BS_R_left_magn(:n_eig,1)*BS_R_right_magn(:n_eig,1),SP)
    if (.not.l_magnons)  Res(:n_eig)=real(BS_R_left(:n_eig)*BS_R_right(:n_eig),SP)
    call excitons_get_user_states(BS_E_degs(:n_eig),Res(:n_eig),n_eig,.true.)
+   if(EXC_n_states_ref>size(EXCITONS_user_indexes)) then
+     call error("Degenerate excitons please increase the State range to : 1-"//intc(EXC_n_states_ref))
+   endif
    do i_c=1,EXC_n_states_ref
      i_l=EXCITONS_user_indexes(i_c)
      BS_all_E(i_c,iq)=BS_E(i_l)

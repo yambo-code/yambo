@@ -23,7 +23,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 &                         l_BS_mespin,l_BS_meorb,l_BS_jdos
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_int,         ONLY:IO_and_Messaging_switch
- use linear_algebra, ONLY:INV,DIAGO
  use PHOTOLUM,       ONLY:BSS_PL_free
  use MAGNONS,        ONLY:BSS_MAGN_free
  use DICHROISM,      ONLY:BSS_DICH_free,BSS_MEspin_free,BSS_MEorb_free
@@ -69,25 +68,11 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! Diagonalization
  !
- if (run_Diago) then 
-   !
-   call PARALLEL_assign_LA_COMMs("Response_T_space",DIAGO,CPU_structure(4)%nCPU_lin_algebra_DIAGO)
-   !
-   call K_diago_driver(iq,W_bss,X_static)
-   !
- endif
- !
- if (run_Slepc) call K_diago_driver(iq,W_bss,X_static)
+ if (run_Diago .or. run_Slepc) call K_diago_driver(iq,W_bss,X_static)
  !
  ! Inversion
  !
- if (run_inversion) then 
-   !
-   call PARALLEL_assign_LA_COMMs("Response_T_space",INV,CPU_structure(4)%nCPU_lin_algebra_INV)
-   !
-   call K_inversion_driver(iq,W_bss,Ken,Xk,q)
-   !
- endif
+ if (run_inversion) call K_inversion_driver(iq,W_bss,Ken,Xk,q)
  !
  ! CLEAN: diago/invertion workspace
  !

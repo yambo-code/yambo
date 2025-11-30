@@ -85,7 +85,7 @@ subroutine LSEX_potential(q,X,Xw)
    !
    ! The bare exchange v
    !
-   do concurrent (ig1=1:X%ng)
+   do ig1=1,X%ng
      W(iqbz,ig1,ig1)=-4._SP/spin_occ*pi*isc%gamp(ig1,ig1)
    enddo
    !
@@ -106,9 +106,9 @@ subroutine LSEX_potential(q,X,Xw)
      !
      !  Screened part of the exchange  \tilde W = W - v
      !
-     do concurrent (ig1=1:X%ng,ig2=1:X%ng)
+     forall(ig1=1:X%ng,ig2=1:X%ng)
        W(iqbz,ig1,ig2)=W(iqbz,ig1,ig2)-4._SP/spin_occ*pi*X_mat(ig1,ig2,1)*isc%gamp(ig1,ig2)
-     enddo
+     end forall
      !
    endif
    !

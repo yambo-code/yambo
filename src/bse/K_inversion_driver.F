@@ -23,7 +23,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use com,            ONLY:isec,msg
  use LIVE_t,         ONLY:live_timing
  use parallel_int,   ONLY:PP_wait,PP_redux_wait,PARALLEL_index,PARALLEL_live_message
- use parallel_m,     ONLY:PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,PAR_COM_SLK_INDEX_local
+ use parallel_m,     ONLY:PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,PAR_COM_SLK_INDEX_local,&
+&                         CPU_structure
+ use linear_algebra, ONLY:INV
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:REP,NONE,OP_WR_CL
  use matrix,         ONLY:MATRIX_reset
@@ -76,6 +78,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  endif
  !
  call timing('Inversion Solver',OPR='start')
+ !
+ call PARALLEL_assign_LA_COMMs("Response_T_space",INV,CPU_structure(4)%nCPU_lin_algebra_INV)
  !
  ! Sectioning
  !============

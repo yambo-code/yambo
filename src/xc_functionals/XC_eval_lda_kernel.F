@@ -33,7 +33,7 @@ subroutine XC_eval_lda_kernel(v1rho,v2rho2)
      do is1 = 1,n_sp_pol
        do is2 = 1,n_sp_pol
          is_xc = xc_spin_map1(is1,is2)
-         do concurrent (ifft=1:fft_size) 
+         do ifft=1,fft_size 
            F_xc(ifft,is1,is2) = F_xc(ifft,is1,is2) + real(v2rho2(is_xc,ifft),SP)
          enddo
        enddo
@@ -57,7 +57,7 @@ subroutine XC_eval_lda_kernel(v1rho,v2rho2)
    do is1 = 1,n_spinor
      do is2 = 1,n_spinor
        is_xc = xc_spin_map1(is1,is2)
-       do concurrent (ifft=1:fft_size) 
+       do ifft=1,fft_size
          F_xc(ifft,is1,is2) = F_xc(ifft,is1,is2) + real(v2rho2(is_xc,ifft),SP)
        enddo
      enddo

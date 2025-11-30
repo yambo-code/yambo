@@ -91,6 +91,30 @@ module vec_operate
      !
    end function iku_v_norm
    !
+   real(SP) function iku_v_2D_norm(v,inside_bz)
+     !
+     ! shifted in the BZ if inside_bz is set to true, ak2bz=|k|
+     !
+     use D_lattice,      ONLY:alat
+     real(SP), intent(in)           :: v(3)
+     logical,  intent(in), optional :: inside_bz
+     !
+     real(SP) :: u(3)
+     logical  :: inside_bz_
+     !
+     inside_bz_=.false.
+     if(present(inside_bz)) inside_bz_=inside_bz
+     !
+     u(:)=v(:)
+     if(inside_bz_) call k2bz(v_in=u)
+     !
+     u(1:2)=u(1:2)*2._SP*pi/alat(1:2)
+     u(3)=0._SP
+     iku_v_2D_norm=sqrt(dot_product(u,u))
+     !
+   end function iku_v_2D_norm
+
+   !
    real(SP) function rlu_v_norm(k,inside_bz) 
      !
      ! Input k is rlu 
@@ -189,8 +213,10 @@ module vec_operate
      ! Cross product
      !
      U_cross=rZERO
-     forall (i=1:3,j=1:3) U_cross(i,j) = axis(i)*axis(j)
-     R=R+(1.0-cos(angle))*U_cross
+     do concurrent (i=1:3,j=1:3) 
+       U_cross(i,j) = axis(i)*axis(j)
+     enddo
+     R=R+(1.0_SP-cos(angle))*U_cross
      !
      axis_rotation=matmul(R,vec)
      !
@@ -565,7 +591,11 @@ module vec_operate
      if (present(arrout)) arrout=l_arrout
      if (.not.present(arrout)) arrin=l_arrout
      if (present(indx)) indx=l_indx
-     if (present(indx_m1)) forall( i=1:n) indx_m1(l_indx(i))=i
+     if (present(indx_m1)) then
+       do concurrent ( i=1:n) 
+         indx_m1(l_indx(i))=i
+       enddo
+     endif
      deallocate(l_indx,l_arrout)
    end subroutine r_sort
    !
@@ -664,12 +694,16 @@ module vec_operate
      if (     present(arrout) ) arrout=l_arrout
      if (.not.present(arrout) ) arrin =l_arrout
      if (     present(indx)   ) indx  =l_indx
-     if (     present(indx_m1)) forall( i=1:n) indx_m1(l_indx(i))=i
+     if (     present(indx_m1)) then
+       do concurrent ( i=1:n) 
+         indx_m1(l_indx(i))=i
+       enddo
+     endif
      deallocate(l_indx,l_arrout)
    end subroutine i_sort
    !
-   subroutine degeneration_finder(E,n,first_deg_el,deg_elmnts,deg_grps,&
-&                                 deg_accuracy,Include_single_values)
+   subroutine degeneration_finder(n,first_deg_el,deg_elmnts,deg_grps,&
+&                                 Ei,Er,deg_accuracy,Include_single_values)
      !
      ! Assumes energy are sorted
      !
@@ -682,14 +716,15 @@ module vec_operate
      !
      integer, intent(in)  :: n
      integer, intent(out) :: first_deg_el(n),deg_elmnts(n),deg_grps
-     real(SP),intent(in)  :: E(n),deg_accuracy
+     integer, intent(in),optional  :: Ei(n)
+     real(SP),intent(in),optional  :: Er(n),deg_accuracy
      logical, optional    :: Include_single_values
      !
      ! Work Space
      !
-     integer :: iref,i1
+     integer :: iref,i1,E_diff_i(2)
      real(SP):: E_diff(2)
-     logical :: l_flag,l_singles
+     logical :: l_flag,l_singles,l_check
      !
      deg_grps=0
      first_deg_el=0
@@ -698,18 +733,37 @@ module vec_operate
      l_singles=.FALSE.
      if (present(Include_single_values)) l_singles=Include_single_values
      !
+     if( (.not.(present(deg_accuracy).and.present(Er))) .and. .not. present(Ei) ) then
+       call error(" deg finder called without Er nor Ei")
+     endif
+     !
      iref=1
      !
      do while (iref < n ) 
        !
        if (l_singles) then
          !
-         E_diff=2._SP*deg_accuracy
+         if(present(deg_accuracy).and.present(Er)) then
+           !
+           E_diff=2._SP*deg_accuracy
+           !
+           if (deg_grps>0) E_diff(1)=abs(Er(iref)-Er(first_deg_el(deg_grps)))
+           if (iref<n    ) E_diff(2)=abs(Er(iref)-Er(iref+1))
+           !
+           l_check=all(E_diff>=deg_accuracy)
+           !
+         else if( present(Ei) ) then
+           !
+           E_diff=-1
+           !
+           if (deg_grps>0) E_diff_i(1)=Ei(iref)-Ei(first_deg_el(deg_grps))
+           if (iref<n    ) E_diff_i(2)=Ei(iref)-Ei(iref+1)
+           !
+           l_check=all(E_diff_i==0)
+           !
+         endif
          !
-         if (deg_grps>0) E_diff(1)=abs(E(iref)-E(first_deg_el(deg_grps)))
-         if (iref<n    ) E_diff(2)=abs(E(iref)-E(iref+1))
-         !
-         if (all(E_diff>=deg_accuracy)) then
+         if (l_check) then
            deg_grps=deg_grps+1
            first_deg_el(deg_grps)=iref
            deg_elmnts(deg_grps)=1
@@ -721,7 +775,10 @@ module vec_operate
        !
        do i1=iref+1,n
          !
-         if (abs(E(iref)-E(i1))<deg_accuracy) then
+         if(present(deg_accuracy).and.present(Er)) l_check=abs(Er(iref)-Er(i1))<deg_accuracy
+         if(                          present(Ei)) l_check=    Ei(iref)-Ei(i1) ==0
+         !
+         if (l_check) then
            if (l_flag) then
              deg_grps=deg_grps+1
              first_deg_el(deg_grps)=iref
@@ -742,7 +799,10 @@ module vec_operate
      if(deg_grps> 0) i1=first_deg_el(deg_grps)
      if(deg_grps==0) i1=1
      !
-     if(l_singles .and.  abs(E(n)-E(i1))>deg_accuracy) then
+     if(present(deg_accuracy).and.present(Er)) l_check=abs(Er(n)-Er(i1)) > deg_accuracy
+     if(                          present(Ei)) l_check=    Ei(n)-Ei(i1) /=0
+     !
+     if(l_singles .and. l_check) then
        deg_grps=deg_grps+1
        first_deg_el(deg_grps)=n
        deg_elmnts(deg_grps)=1

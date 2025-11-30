@@ -16,32 +16,37 @@ subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
  !                 =conjg(BSS_dipoles(j))*BS_V_right(j,i)
  !
  use pars,           ONLY:SP,cZERO
+ use stderr,         ONLY:intc
  use wrapper_omp,    ONLY:V_dot_V_omp
  use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset,ncpu
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,         ONLY:live_timing
  use X_m,            ONLY:global_gauge
  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_Z,BSS_eh_f,BSS_dipoles_opt
- use BS,             ONLY:BS_K_dim,BS_H_dim,BS_K_coupling
+ use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,&
+ &                        l_BS_res_from_E,BS_not_const_eh_f
  use MAGNONS,        ONLY:BSS_dipoles_magn
- use DICHROISM,      ONLY:BSS_dipoles_dich
+ use DICHROISM,      ONLY:BSS_dipoles_dich,BSS_dipoles_mespin,BSS_dipoles_meorb
  !
  implicit none
  !
  character(*),intent(in)  :: mode
  integer,     intent(in)  :: i_BS_mat, neigs_this_cpu, neig_shift
  complex(SP), allocatable,         intent(in)  :: BS_E(:)
- complex(SP), pointer,             intent(out) :: BS_R_right(:)
+ complex(SP), pointer,             intent(inout) :: BS_R_right(:)
  complex(SP), target, allocatable, intent(in)  :: BS_V_right(:,:)
  !
  ! Workspace
  !
  type(PP_indexes)     :: px
  integer                  :: i1, i_lambda, neig_total, SL_H_dim, res_range(2), &
- &                           n_steps, step_shift, res_shift, i_res
+ &                           n_steps, step_shift, res_shift, i_res, n_size
  logical                  :: velocity_correction,l_duplicate_mem_par
  !
  complex(SP), allocatable :: tmp_res(:), BS_R_tmp(:) 
+ !
+ if (l_BS_res_from_E.and.BS_not_const_eh_f) &
+ & call error(" To be fixed, since sqrt of BSS_eh_f takes a conjg and it should not")
  !
  ! Sanity checks
  if (.not. allocated(BS_E)) return 
@@ -49,8 +54,15 @@ subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
  !
  neig_total = size(BS_E)
  !
- if (size(BS_R_right)       /= neig_total)     call error("Size mismatch between eigvals and R.residuals.")
- if (size(BS_V_right,dim=2) /= neigs_this_cpu) call error("Size mismatch between eigvecs and R.residuals.")
+ n_size=size(BS_R_right)
+ if (n_size /= neig_total) &
+ &  call error("Different size for energ. ("//trim(intc(neig_total))//")"// &
+ &             " and Rres. ("//trim(intc(n_size))//"), mode= "//trim(mode))
+ !
+ n_size=size(BS_V_right,dim=2)
+ if (n_size /= neigs_this_cpu) &
+ &  call error("Different size for eigen. ("//trim(intc(neig_total))//")"// &
+ &             " and Rres. ("//trim(intc(n_size))//"), mode= "//trim(mode))
  !
  velocity_correction=(index(mode,"opt")>0).and.(trim(global_gauge)=="velocity")
  !
@@ -91,6 +103,10 @@ subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
  if(trim(mode)=="dic2") tmp_res=BSS_dipoles_dich(2,res_range(1):res_range(2)) 
  if(trim(mode)=="mag1") tmp_res=BSS_dipoles_magn(1,res_range(1):res_range(2))
  if(trim(mode)=="mag2") tmp_res=BSS_dipoles_magn(2,res_range(1):res_range(2))
+ if(trim(mode)=="mespin1") tmp_res=BSS_dipoles_mespin(1,res_range(1):res_range(2)) 
+ if(trim(mode)=="mespin2") tmp_res=BSS_dipoles_mespin(2,res_range(1):res_range(2)) 
+ if(trim(mode)=="meorb1") tmp_res=BSS_dipoles_meorb(1,res_range(1):res_range(2)) 
+ if(trim(mode)=="meorb2") tmp_res=BSS_dipoles_meorb(2,res_range(1):res_range(2)) 
  !
  tmp_res = conjg(tmp_res)*sqrt(cmplx(BSS_eh_f(res_range(1):res_range(2)),kind=SP)) 
  if (allocated(BSS_eh_Z)) tmp_res=tmp_res*sqrt(BSS_eh_Z(res_range(1):res_range(2)))

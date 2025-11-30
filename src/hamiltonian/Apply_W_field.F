@@ -9,7 +9,7 @@ subroutine Apply_W_field(A_input,Wk,H_nl_sc)
  !
  use pars,           ONLY:SP,cZERO
  use units,          ONLY:SPEED_OF_LIGHT
- use hamiltonian,    ONLY:H_ref_bands
+ use hamiltonian,    ONLY:H_ref_bands,H_ref_bands_frozen
  use fields,         ONLY:gauge_field
  !
  implicit none
@@ -20,16 +20,19 @@ subroutine Apply_W_field(A_input,Wk,H_nl_sc)
  !
  ! Work Space
  !
- integer :: i1,id
+ integer :: i1,i2,id
  complex(SP) :: E_vec_pot(3)
  !
  E_vec_pot=-A_input%vecpot_vel/SPEED_OF_LIGHT
  !
- !$omp parallel do default(shared), private(i1,id)
+ !$omp parallel do default(shared), private(i1,i2,id)
  do i1=H_ref_bands(1),H_ref_bands(2)
-   do id=1,3
-     H_nl_sc(i1,H_ref_bands(1):H_ref_bands(2))=H_nl_sc(i1,H_ref_bands(1):H_ref_bands(2))-         &
-     &                                               E_vec_pot(id)*Wk(id,i1,H_ref_bands(1):H_ref_bands(2))
+   if ( H_ref_bands_frozen(i1)==1 ) cycle
+   do i2=H_ref_bands(1),H_ref_bands(2)
+     if ( H_ref_bands_frozen(i2)==1 ) cycle
+     do id=1,3
+       H_nl_sc(i1,i2)=H_nl_sc(i1,i2)+E_vec_pot(id)*Wk(id,i1,i2)
+     enddo
    enddo
  enddo
  !$omp end parallel do

@@ -5,13 +5,17 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-#include<dev_defs.h>
+! headers
 !
-subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
+#include<dev_defs.h>
+#include<y_memory.h>
+!
+!
+subroutine fft_setup(iG_max_in,iGo_max,ONLY_SIZE)
  !
  use pars,           ONLY:SP,pi
  use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv,i_time_rev,alat
- use R_lattice,      ONLY:b,g_vec,ng_vec
+ use R_lattice,      ONLY:b,g_vec,ng_closed
  use matrix_operate, ONLY:m3inv
  use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_rot_r_inv,&
 &                         fft_norm,fft_g_table,fft_multiplier,modx,&
@@ -20,7 +24,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 #if defined _FFTQE
  use fft_base,       ONLY:dffts
 #endif
- use wave_func,      ONLY:wf_ng
+ use wave_func,      ONLY:wf_ng,rho_map_size,rho_map
  use timing_m,       ONLY:timing
  use gpu_m,          ONLY:have_gpu,gpu_devsync
  use devxlib,        ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memset_d
@@ -29,18 +33,22 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use mkl_dfti_omp_offload
  use FFT_m,          ONLY:mklgpu_desc
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
- integer :: iG_max,iGo_max,ierr
+ integer :: iG_max_in,iGo_max,ierr
  logical :: ONLY_SIZE
+ !
+ ! External function
+ !
 #if defined _FFTQE
  integer, external :: fft_setmap
 #endif
  !
  ! Work Space
  !
- integer  :: i1,i2,i3,i4,iv(3),ln(3),is,space_inv(3,3)
+ integer  :: i1,i2,i3,i4,iG_max,iv(3),ln(3),is,space_inv(3,3),wf_ng_closed
  real(SP) :: v1(3),M1(3,3),M2(3,3),mat(3,3),scal(3)
  real(SP), allocatable :: g_vec_rot(:,:)
  real(SP), allocatable DEV_ATTR :: g_vec_rot_d(:,:)
@@ -65,6 +73,18 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  YAMBO_ALLOC_MOLD(g_vec_rot,g_vec)
  g_vec_rot=transpose(matmul(mat,transpose(g_vec)))
  !
+ iG_max=iG_max_in
+ ! 2025/10730:
+ ! I set a lower bound to wf_ng_closed which is defined here
+ ! We should discuss why we have a lower bound, and if we really need it
+ wf_ng_closed=wf_ng
+ call PARSER_close_G(wf_ng_closed,'tRL')
+ if (iG_max<wf_ng_closed) then
+   !call warning("Imposing wf_ng_closed as cutoff for fft size")
+   iG_max=wf_ng_closed
+ endif
+ !
+ !
 #ifdef _GPU
  YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec_rot),g_vec_rot)
 #endif
@@ -74,11 +94,11 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    YAMBO_FREE_GPU(DEV_VAR(fft_g_table))
    YAMBO_FREE(fft_g_table)
    !
-   YAMBO_ALLOC(fft_g_table,(max(iG_max,wf_ng),iGo_max))
+   YAMBO_ALLOC(fft_g_table,(iG_max,iGo_max))
    fft_g_table=0
    !
    if (have_gpu) then
-     YAMBO_ALLOC_GPU(DEV_VAR(fft_g_table),(max(iG_max,wf_ng),iGo_max))
+     YAMBO_ALLOC_GPU(DEV_VAR(fft_g_table),(iG_max,iGo_max))
      call devxlib_memset_d(DEV_VAR(fft_g_table),val=0)
    endif
    !
@@ -104,7 +124,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    fft_dim_1 = fft_dim(1)
    fft_dim_2 = fft_dim(2)
    fft_dim_3 = fft_dim(3)
-   i1_max = min(max(iG_max,wf_ng),ng_vec)
+   i1_max = min(iG_max,ng_closed)
    !
    YAMBO_ALLOC(ivec_GmG,(iGo_max,i1_max,3))
    YAMBO_ALLOC_GPU(DEV_VAR(ivec_GmG),(iGo_max,i1_max,3))
@@ -123,7 +143,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
        iv_2 = nint(DEV_VAR(g_vec_rot)(i1,2) - DEV_VAR(g_vec_rot)(i2,2))
        iv_3 = nint(DEV_VAR(g_vec_rot)(i1,3) - DEV_VAR(g_vec_rot)(i2,3))
        !
-       if (i2==1.or.i1<=iG_max) then
+       if (i2==1.or.i1<=iG_max_in) then
          DEV_VAR(ivec_GmG)(i2,i1,1)=iv_1
          DEV_VAR(ivec_GmG)(i2,i1,2)=iv_2
          DEV_VAR(ivec_GmG)(i2,i1,3)=iv_3
@@ -167,13 +187,17 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    YAMBO_FREE(ivec_GmG)
    !
 #else
-   do i1=1,min(max(iG_max,wf_ng),ng_vec)
+   do i1=1,min(iG_max,ng_closed)
      do i2=1,iGo_max
        !
        v1=(g_vec_rot(i1,:)-g_vec_rot(i2,:))
        iv=nint(v1)
        !
-       if (i2==1.or.i1<=iG_max) forall(i3=1:3) ln(i3)=max(ln(i3),iv(i3))
+       if (i2==1.or.i1<=iG_max_in) then
+         do concurrent (i3=1:3) 
+           ln(i3)=max(ln(i3),iv(i3))
+         enddo
+       endif
 #  if defined _FFTQE
        if (i4>0.and..not.ONLY_SIZE) fft_g_table(i1,i2)=fft_setmap(iv,dffts)
 #  else
@@ -207,6 +231,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      i4=1
      cycle
    endif
+   if(.not.allocated(rho_map)) rho_map_size=fft_size
    !
    YAMBO_FREE_GPU(DEV_VAR(fft_rot_r))
    YAMBO_FREE(fft_rot_r)
@@ -242,7 +267,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      if( is> nsym/(1+i_time_rev) .and. is<=nsym ) M1=matmul(-dl_sop(:,:,sop_inv(is)),transpose(a))
      if( is==nsym+1 )                             M1=matmul( space_inv,transpose(a))
      M2=matmul(b,M1)/2.0_SP/pi
-     forall (i1=1:3,i2=1:3) M2(i1,i2)=M2(i1,i2)*fft_dim(i1)/fft_dim(i2)
+     do concurrent  (i1=1:3,i2=1:3) 
+       M2(i1,i2)=M2(i1,i2)*fft_dim(i1)/fft_dim(i2)
+     enddo
      !
      do i1=0,fft_dim(1)-1
        do i2=0,fft_dim(2)-1

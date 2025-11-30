@@ -14,7 +14,8 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
  use electrons,     ONLY:n_spinor
  use PHOTOLUM,      ONLY:PL
  use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,BS_K_coupling,&
-&                        l_BS_photolum,l_BS_abs,l_BS_jdos,l_BS_esort_indx,l_BS_esort
+&                        l_BS_photolum,l_BS_abs,l_BS_jdos,l_BS_esort_indx,l_BS_esort,&
+&                        l_BS_mespin,l_BS_meorb
  use BS_solvers,    ONLY:l_abs_prop_chi_bse,l_eels_can_be_computed
  use stderr,         ONLY:STRING_match,STRING_split,intc,STRING_remove
  use OUTPUT,         ONLY:OUTPUT_driver
@@ -55,6 +56,8 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
    call ELEMENTAL_init(14,"CD","Dichroism","dichroism")
    call ELEMENTAL_init(15,"Spm","Magnons (S+-)","magnons")
    call ELEMENTAL_init(16,"Smp","Magnons (S-p)","magnons")
+   call ELEMENTAL_init(17,"MEspin","Magnetoelectric (spin)",  "mespin")
+   call ELEMENTAL_init(18,"MEorb" ,"Magnetoelectric (orbital)","meorb")
  endif
  !
  if (STRING_match(WHAT,"INIT")) then
@@ -88,6 +91,8 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
    if (l_BS_magnons) call X_obs_onoff("+ Spm")
    if (l_BS_magnons.and.n_spinor==2) call X_obs_onoff("+ Smp")
    if (l_BS_dichroism) call X_obs_onoff("+ CD")
+   if (l_BS_mespin) call X_obs_onoff("+ MEspin")
+   if (l_BS_meorb)  call X_obs_onoff("+ MEorb")
    !
    !...solvers specific
    if (present(solver)) then
@@ -102,7 +107,8 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
        endif
      endif
      if (STRING_match(solver,"Inversion")) call X_obs_onoff("- Esort E_IP E_INDX_IP kerr magnons jdos")
-     if (STRING_match(solver,"Haydock")) call X_obs_onoff("- Esort jdos E_IP E_INDX_IP")
+     !if (STRING_match(solver,"Haydock")) call X_obs_onoff("- Esort E_IP E_INDX_IP")
+     if (STRING_match(solver,"Haydock")) call X_obs_onoff("- Esort E_IP E_INDX_IP jdos")
      if (STRING_match(solver,"Diago").or.STRING_match(solver,"Slepc")) call X_obs_onoff("- E_IP E_INDX_IP")
    endif
    !
@@ -143,7 +149,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
    endif
    if (X_do_obs("PL")) then
      X_obs(5)%N_columns=3
-     X_obs(5)%COL_header(1)   = 'E'
+     X_obs(5)%COL_header(1)   = 'E [eV]'
      X_obs(5)%COL_header(2:3) = (/'PL  ','PL_o'/)
    endif
    !

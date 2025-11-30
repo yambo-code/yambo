@@ -5,14 +5,19 @@
 !
 ! Authors (see AUTHORS file for details): AM DS NM
 !
+! headers
+!
+#include <y_memory.h>
+!
 module BS_solvers
  !
  use descriptors,    ONLY:IO_desc
  use pars,           ONLY:SP,schlen,lchlen
  use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_dim,BS_H_dim,BS_block,n_BS_blks,BS_blk
  use matrix,         ONLY:PAR_matrix
+ use y_memory_alloc
  !
-#include <y_memory.h>
+ implicit none
  !
  ! Epsilon factor
  !==================
@@ -54,11 +59,11 @@ module BS_solvers
  character(schlen):: BSS_mode
  complex(SP)      :: BSS_Wd
  integer  :: BSS_n_freqs
- integer  :: BSS_n_eig            ! number of eigenvalues to find. Ydiago/Slepc
- integer  :: BSS_n_eig_Input      ! number of eigenvalues requested in input. Ydiago/Slepc
- integer  :: BSS_first_eig        ! index of the first eigenvalue to find. Ydiago
+ integer  :: BSS_n_eig            ! number of eigenvalues to find. Ldiago/Slepc
+ integer  :: BSS_n_eig_Input      ! number of eigenvalues requested in input. Ldiago/Slepc
+ integer  :: BSS_first_eig        ! index of the first eigenvalue to find. Ldiago
  real(SP) :: BSS_target_E         ! find eigenvalues close to this energy. Slepc
- real(SP) :: BSS_trange_E(2)      ! find eigenvalues in this energy range. Ydiago
+ real(SP) :: BSS_trange_E(2)      ! find eigenvalues in this energy range. Ldiago
  real(SP) :: BSS_er(2)
  real(SP) :: BSS_dr(2)
  real(SP) :: BSS_damp_reference
@@ -80,12 +85,13 @@ module BS_solvers
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.
  logical  :: run_Diago=.FALSE.
+ logical  :: load_Diago=.FALSE.
  logical  :: run_Slepc=.FALSE.
  !
  ! Solvers (Diago)
  !=========
  logical  :: BSS_write_eig_2_db
- character(1) :: BSS_ydiago_solver     ! "s" for scalapack / "e" for elpa
+ character(1) :: BSS_ldiago_solver     ! "s" for scalapack / "e" for elpa
  !
  ! Solvers (Haydock)
  !=========
@@ -137,6 +143,7 @@ module BS_solvers
  ! Solvers (Temporary (LARGE) arrays to be used in solvers ONLY)
  !=========
  integer    , allocatable :: BSS_eh_table(:,:)
+ integer    , allocatable :: BSS_eh_table_m1(:,:,:,:,:)
  real(SP)   , allocatable :: BSS_eh_E(:)
  real(SP)   , allocatable :: BSS_eh_f(:)
  real(SP)   , allocatable :: BSS_eh_W(:)
@@ -148,6 +155,9 @@ module BS_solvers
  complex(SP), allocatable :: BS_E(:)
  complex(SP), allocatable :: BS_diagonal(:)
  complex(SP), allocatable :: BS_mat(:,:)
+ !
+ ! Eigenvalues degeneracy treshold
+ real(SP) :: deg_exc_thrshld  
  !
  interface 
    !
@@ -163,8 +173,8 @@ module BS_solvers
    end function
    !
    integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,BsRr,BsE_corr,&
-   &                        bsL_magn,bsR_magn,bsL_kerr,bsR_kerr,bsR_dich,bsR_pl,&
-   &                        BS_mat,write_ev)
+   &                        bsL_magn,bsR_magn,bsL_kerr,bsR_kerr,bsR_dich,&
+   &                        bsR_mespin,bsR_meorb,bsR_pl,BS_mat,write_ev)
      use pars,          ONLY:SP
      use X_m,           ONLY:X_t
      implicit none
@@ -172,11 +182,13 @@ module BS_solvers
      integer                      :: iq,ID,i_BS_mat
      complex(SP)        ,optional :: bsE(:)
      real(SP),   pointer,optional :: BsE_corr(:,:),bsR_pl(:,:)
-     complex(SP),pointer,optional :: bsL_kerr(:),bsR_kerr(:),bsR_dich(:,:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
+     complex(SP),pointer,optional :: bsL_kerr(:),bsR_kerr(:),bsR_dich(:,:),&
+&                                    bsR_mespin(:,:),bsR_meorb(:,:),bsL_magn(:,:),&
+&                                    bsR_magn(:,:),bsRl(:),bsRr(:)
      complex(SP)        ,optional :: BS_mat(:,:)
      logical, optional            :: write_ev
    end function
-   !
+
    subroutine write_bs_ev_par(iq, i_BS_mat, neigs_this_cpu, neig_shift, BS_VR, BS_VL)
      use pars,           ONLY:SP
      implicit none
@@ -196,18 +208,26 @@ module BS_solvers
    !
  end interface
  !
- interface BSS_resize
+ interface BSS_resize_and_save
    module procedure resizeR1
    module procedure resizeR1p, resizeR2p
    module procedure resizeC1,  resizeC2
    module procedure resizeC1p, resizeC2p
    module procedure resizeC22p
  end interface
+ !
+ interface BSS_resize_only
+   module procedure resize_onlyR1
+   module procedure resize_onlyR1p, resize_onlyR2p
+   module procedure resize_onlyC1,  resize_onlyC2
+   module procedure resize_onlyC1p, resize_onlyC2p
+   module procedure resize_onlyC22p
+ end interface
 
  !
  contains
    !
-   ! Start BSS_resize interface
+   ! Start BSS_resize_and_save interface
    !
    subroutine resizeR1(VAR_R1)
      !
@@ -227,7 +247,7 @@ module BS_solvers
      real(SP)                         :: TMP_R1(BSS_n_eig)
      !
      TMP_R1=VAR_R1(:BSS_n_eig)
-     deallocate(VAR_R1)
+     deallocate(VAR_R1); nullify(VAR_R1)
      allocate(VAR_R1(BSS_n_eig))
      VAR_R1=TMP_R1
      !
@@ -296,7 +316,7 @@ module BS_solvers
      dim1=size(VAR_C2,2)
      allocate(TMP_C2(BSS_n_eig,dim1))
      TMP_C2=VAR_C2(:BSS_n_eig,:)
-     deallocate(VAR_C2)
+     deallocate(VAR_C2); nullify(VAR_C2)
      allocate(VAR_C2(BSS_n_eig,dim1))
      VAR_C2=TMP_C2
      !
@@ -315,7 +335,67 @@ module BS_solvers
      !
    end subroutine resizeC22p
    !
-   ! End BSS_resize interface
+   ! End BSS_resize_and_save interface
+   !
+   !
+   ! Start BSS_resize_only interface
+   !
+   subroutine resize_onlyR1(VAR_R1)
+     real(SP), allocatable, intent(inout) :: VAR_R1(:)
+     deallocate(VAR_R1)
+     allocate(VAR_R1(BSS_n_eig))
+   end subroutine resize_onlyR1
+   !
+   subroutine resize_onlyR1p(VAR_R1)
+     real(SP), pointer, intent(inout) :: VAR_R1(:)
+     deallocate(VAR_R1); nullify(VAR_R1)
+     allocate(VAR_R1(BSS_n_eig))
+   end subroutine resize_onlyR1p
+   !
+   subroutine resize_onlyR2p(VAR_R2)
+     real(SP), pointer, intent(inout) :: VAR_R2(:,:)
+     integer :: dim1
+     dim1=size(VAR_R2(:,1))
+     deallocate(VAR_r2); nullify(VAR_R2)
+     allocate(VAR_R2(dim1,BSS_n_eig))
+   end subroutine resize_onlyR2p
+   !
+   subroutine resize_onlyC1(VAR_C1)
+     complex(SP), allocatable, intent(inout) :: VAR_C1(:)
+     deallocate(VAR_C1)
+     allocate(VAR_C1(BSS_n_eig))
+   end subroutine resize_onlyC1
+   !
+   subroutine resize_onlyC1p(VAR_C1)
+     complex(SP), pointer, intent(inout) :: VAR_C1(:)
+     deallocate(VAR_C1); nullify(VAR_C1)
+     allocate(VAR_C1(BSS_n_eig))
+   end subroutine resize_onlyC1p
+   !
+   subroutine resize_onlyC2(VAR_C2)
+     complex(SP), allocatable, intent(inout) :: VAR_C2(:,:)
+     integer :: dim1
+     dim1=size(VAR_C2,2)
+     deallocate(VAR_C2)
+     allocate(VAR_C2(BSS_n_eig,dim1))
+   end subroutine resize_onlyC2
+   !
+   subroutine resize_onlyC2p(VAR_C2)
+     complex(SP), pointer, intent(inout) :: VAR_C2(:,:)
+     integer :: dim1
+     dim1=size(VAR_C2,2)
+     deallocate(VAR_C2); nullify(VAR_C2)
+     allocate(VAR_C2(BSS_n_eig,dim1))
+   end subroutine resize_onlyC2p
+   !
+   subroutine resize_onlyC22p(VAR_C22,both)
+     logical, intent(in)                 :: both
+     complex(SP), pointer, intent(inout) :: VAR_C22(:,:)
+     deallocate(VAR_C22); nullify(VAR_C22)
+     allocate(VAR_C22(BSS_n_eig,BSS_n_eig))
+   end subroutine resize_onlyC22p
+   !
+   ! End BSS_resize_only interface
    !
    subroutine BSS_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO

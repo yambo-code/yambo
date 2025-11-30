@@ -137,12 +137,12 @@ integer function io_DIPOLES(Dip,ID)
    if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_orbital(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol,2),IPOS=DIP_ipos)
  endif
  !
- if (STRING_match(Dip%computed,"M_orb")) then
+ if (STRING_match(Dip%computed,"M_orbRT")) then
    !
    ! Orbital magnetization
    !
    VAR_ID=5
-   VAR_name='DIP_orbital'
+   VAR_name='DIP_orbital_RT'
    if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
    if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_orbital(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol,1),IPOS=DIP_ipos)
    !
@@ -183,12 +183,12 @@ integer function io_DIPOLES(Dip,ID)
    !
  endif
  !
- if (STRING_match(Dip%computed,"M_CD_orb")) then
+ if (STRING_match(Dip%computed,"M_orbCD")) then
    !
    ! Orbital magnetization
    !
    VAR_ID=9
-   VAR_name='DIP_Orbital'
+   VAR_name='DIP_Orbital_CD'
    if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
    if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_orbital(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol,1),IPOS=DIP_ipos)
    !

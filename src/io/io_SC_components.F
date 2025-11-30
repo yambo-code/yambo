@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_SC_components(what,E_sc,ID)
  !
  ! what can be E WF V OBSERVABLES (J,P,D...) G
@@ -23,7 +27,9 @@ integer function io_SC_components(what,E_sc,ID)
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:levels,n_sp_pol,n_spin
  use timing_m,      ONLY:timing
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  integer, intent(in)      :: ID
  type(levels)             :: E_sc
@@ -162,8 +168,9 @@ integer function io_SC_components(what,E_sc,ID)
      !
      E_tmp=E_tmp+E_sc%E(SC_bands(2),:,:)
      !
-     forall (ib=SC_bands(2)+1:bands_to_load) &
-     & E_sc%E(ib,:,:)=E_sc%E(ib,:,:)+ E_tmp(:,:)
+     do concurrent (ib=SC_bands(2)+1:bands_to_load) 
+       E_sc%E(ib,:,:)=E_sc%E(ib,:,:)+ E_tmp(:,:)
+     enddo
      !
      YAMBO_FREE(E_tmp)
      !

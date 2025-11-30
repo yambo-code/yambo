@@ -46,12 +46,18 @@ int parse_block_complex(char *name, int l, int col, gsl_complex *r);
 int parse_block_string(char *name, int l, int col, char **r);
 
 /* from parse_exp.c */
-typedef struct parse_result{
-  union {
-	  gsl_complex c;
-		char *s;
-	} value;
-	enum {PR_CMPLX, PR_STR} type;
+typedef struct parse_result
+{
+    union
+    {
+        gsl_complex c;
+        char *s;
+    } value;
+    enum
+    {
+        PR_CMPLX,
+        PR_STR
+    } type;
 } parse_result;
 
 int parse_exp(char *exp, parse_result *t);

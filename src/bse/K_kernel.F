@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM DS AF
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+!
 subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! K = <2V-W> for n_spin=1; K=<V-W> for n_spin>1
@@ -26,16 +31,17 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use X_m,           ONLY:X_t
  use interfaces,    ONLY:el_density_and_current
  use QP_m,          ONLY:QP_ng_Vxc
- use BS_solvers,    ONLY:BSS_kernel_last_stored_block
+ use BS_solvers,    ONLY:BSS_kernel_last_stored_block,load_Diago
  use BS,            ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,BS_ID,&
-&                        BS_res_K_exchange,BS_Block_size,BS_n_g_W,&
+&                        BS_res_K_exchange,BS_Block_size,l_BSE_kernel_full,BS_n_g_W,&
 &                        O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
-&                        BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
+&                        BS_K_dim,BS_K_is_ALDA,BS_K_coupling,BS_cpl_K_exchange,&
 &                        BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                        WF_phase,n_BS_blks,BS_blk,BS_T_grp,BSK_IO_mode,BSK_IO_sum_value,&
-&                        BS_nT_grps,l_BS_ares_from_res,BS_K_has_been_calculated_loaded,&
+&                        BS_nT_grps,BS_n_eh_spaces,BS_K_has_been_calculated_loaded,&
 &                        l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
-&                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val,l_BS_magnons
+&                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val,l_BS_magnons,&
+&                        l_BS_ares_from_res
  use collision_el,  ONLY:elemental_collision_free
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:REP,OP_WR,RD,WR,WR_CL,OP_APP,io_BS_K,deliver_IO_error_message
@@ -43,7 +49,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
 &                        FXC_mode,tddft_wf_t,l_Fxc_from_Vxc
  use xc_functionals,ONLY:V_xc,F_xc,F_xc_mat,magn,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
- use wave_func,     ONLY:WF
+ use wave_func,     ONLY:WF,rho_map,rho_map_thresh,rho_map_size
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
  use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme,PARALLEL_default_mode,master_cpu
@@ -51,9 +57,9 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use MAGNONS,       ONLY:BSS_MAGN_free
  use PHOTOLUM,      ONLY:BSS_PL_free
  use parser_m,      ONLY:parser
+ use y_memory_alloc
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ implicit none
  !
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q
@@ -91,8 +97,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP), allocatable DEV_ATTR :: O1(:),O2(:),O_times_W(:)
  !
  complex(SP),   external :: K_correlation_kernel_std,K_correlation_kernel_dir
- complex(SP),   external :: TDDFT_ALDA_eh_space_G_kernel
- complex(SP),   external :: K_exchange_kernel_resonant,K_exchange_kernel_coupling
+ complex(SP),   external :: TDDFT_ALDA_eh_space_G_kernel,TDDFT_ALDA_eh_space_G_kernel_coupling
+ complex(SP),   external :: K_exchange_kernel,K_exchange_kernel_coupling
  !
  logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_bs_tddft_wf_in_loop,l_matrix_init,BS_blk_todo,l_tddft_comp,&
  &             l_load_kernel,l_write_kernel,l_write_kernel_step,l_skip_phases,l_std_alg,l_dir_alg,l_tddft_gsum,l_tddft_rsum
@@ -123,6 +129,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  ! K/S Table
  !
  call k_build_up_BZ_tables(Xk)
+ !
+ if (load_Diago) then
+   call msg('s','[BSE] Kernel calculation skipped, trying to load ndb.BS_diago directly ')
+   return
+ endif
  !
  ! Titles
  !========
@@ -188,7 +199,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
    l_bs_tddft_wf_in_loop= ((iq==1) .and. (Xk%nbz>=1).and.(.not.trim(PARALLEL_default_mode)=="workload") ) .or. &
    &                      ((iq> 1) .and.                       trim(PARALLEL_default_mode)=="KQmemory" )
-   call msg('r','[BSE] ALDA        components ',BS_n_g_fxc)
+   call msg('r','[BSE] ALDA     components ',BS_n_g_fxc)
  endif
  !
  if (l_bs_corr) then
@@ -211,10 +222,10 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  ID      =BS_ID(2)
  ID_compr=BS_ID(3)
  !
- if( l_BSE_kernel_complete ) return
+ if( l_BSE_kernel_complete) return
  !
  io_QINDX_err=0
- if (l_bs_corr) io_QINDX_err=qindx_B_init(qindx_ID,qindx_ID_frag)
+ if (l_bs_corr) io_QINDX_err=qindx_B_init(qindx_ID,qindx_ID_frag,"minus_q")
  if(io_QINDX_err/=0) call error('Error reading qindx_B database ')
  !
  ! Screened interaction
@@ -300,7 +311,9 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  l_matrix_init=.true.
  l_load_kernel=.true.
  l_write_kernel=.false.
+#if defined _MPI
  l_write_kernel_step= index(BSK_IO_mode,"write_all_steps")/=0
+#endif
  !
  if (l_write_kernel_step) then
    call warning("Experimental mode, IO at every step. Restart not possible")
@@ -331,7 +344,14 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT",keep_states_to_load=.true.)
    !
-   QP_ng_Vxc=BS_n_g_fxc
+   ! This part could be done just by the master bypassing the PAR_IND_WF_linear ...
+   !
+   if(rho_map_thresh>0._SP) then
+     YAMBO_ALLOC(rho,(fft_size))
+     call el_density_and_current(Ken,Xk,rho=rho)
+     call compute_rho_map(rho)
+     YAMBO_FREE(rho)
+   endif
    !
    YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
    if(l_BS_magnons .or. n_spinor==2 .or. l_Fxc_from_Vxc) then
@@ -342,7 +362,15 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    if(n_spin>1) then
      YAMBO_ALLOC(magn,(fft_size,3))
    endif
+   !
+   ! In principle here there is a factor 4 between the energy cutoff on the potential and the one of the kernel
+   ! The following line, or something similar, should be used here and before
+   !QP_nG=G_index_energy_factor(BS_n_g_fxc,0.25_SP)
+   ! However in practice the one on the kernel is never set 4 the potential, i.e. 16 times the one onf the WFs
+   !
+   QP_ng_Vxc=BS_n_g_fxc
    call XC_potential_driver(Ken,Xk,WF_kind,WF_xc_functional,2)
+   !
    YAMBO_ALLOC(F_xc_mat,(fft_size,n_spin,n_spin,n_spin,n_spin))
    call Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
    YAMBO_FREE(F_xc)
@@ -455,8 +483,19 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  block_loop:&
  do i_block=1,n_BS_blks
    !
+   ! BS_blk(i_block)%mode can have 4 values: "R", "C", "A", "Q"
+   ! - The resonant block "R" is always computed
+   ! - The coupling block "C":
+   !   (i)  It is computed using the indexes of the resonant block when BS_n_eh_space=1
+   !        In this case some relations are used, which holds at q=0 only and 
+   !        if l_BS_ares_from_res=.true.
+   !   (ii) It is directly computed using the indexes of the coupling block BS_n_eh_space=2
+   !        In this case the code switches to mode_now="F"(ull) and standard relations are used
+   ! - The anti-resonant "A" and anti-coupling "Q" blocks are expliciltly needed only when l_BS_ares_from_res=.false.
+   !   also in this case the code switches to mode_now="F"(ull) and standard relations are used
+   !
    mode_now=BS_blk(i_block)%mode
-   if (.not.l_BS_ares_from_res) mode_now="F"
+   if (BS_n_eh_spaces==2) mode_now="F"
    !
    if (iHxc==1) l_write_kernel=.not.(BS_K_is_ALDA.or.l_bs_corr)
    if (iHxc==2) l_write_kernel=.not. l_bs_corr
@@ -520,8 +559,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      l_tddft_comp = .not.(allocated(BS_T_grp(i_Tgrp_k)%O_tddft_L).and.allocated(BS_T_grp(i_Tgrp_p)%O_tddft_R))
      !
      if (l_tddft_comp) then
-       YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
-       YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
+       YAMBO_ALLOC(tddft_wf%WF_symm1,(rho_map_size,n_spinor))
+       YAMBO_ALLOC(tddft_wf%WF_symm2,(rho_map_size,n_spinor))
        YAMBO_ALLOC(tddft_wf%rhotwr_DP,(fft_size))
      endif
      !
@@ -568,12 +607,12 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    call OPENMP_update(master_thread) 
    !
    !
-   ! Allocate tddft_wf variables neeeded within the OMP loop
+   ! Allocate variables tddft_wf variables neeeded within the OMP loop
    if (l_tddft_rsum.and.iHxc==2) then
-     YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
-     YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
-     YAMBO_ALLOC(tddft_wf%rhotwr1,(fft_size*n_spinor*n_spinor))
-     YAMBO_ALLOC(tddft_wf%rhotwr2,(fft_size*n_spinor*n_spinor))
+     YAMBO_ALLOC(tddft_wf%WF_symm1,(rho_map_size,n_spinor))
+     YAMBO_ALLOC(tddft_wf%WF_symm2,(rho_map_size,n_spinor))
+     YAMBO_ALLOC(tddft_wf%rhotwr1,(rho_map_size*n_spinor*n_spinor))
+     YAMBO_ALLOC(tddft_wf%rhotwr2,(rho_map_size*n_spinor*n_spinor))
    endif
    !
    i_p_bz_last=0   ; i_k_bz_last=0
@@ -598,12 +637,23 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t".and.l_BSE_restart) cycle
        !
-       H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+&
-       &              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
-       H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
-       &              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1)
+       ! H_pos defines the position inside the full bse matrix when
+       ! l_BS_ares_from_res.  Otherwise it defines the position inside the R/C blocks
        !
-       if (H_pos(1)>H_pos(2)) cycle
+       H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk
+       H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp
+       !
+       if (.not.l_BS_ares_from_res) then
+       H_pos(1) = H_pos(1)+(BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
+       H_pos(2) = H_pos(2)+(BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1)
+       endif
+       !
+       ! When l_BS_ares_from_res=.false., the full coupling block, and
+       ! the upper part of the anti-resonant blocks are also computed
+       !
+       ! When l_BSE_kernel_full the full blocks are computed
+       !
+       if (H_pos(1)>H_pos(2) .and. .not. l_BSE_kernel_full) cycle
        !
        i_k_bz  = BS_T_grp(i_Tgrp_k)%table(i_Tk,1) 
        i_p_bz  = BS_T_grp(i_Tgrp_p)%table(i_Tp,1) 
@@ -722,13 +772,13 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        select case (mode_now)
        !
-       case ("R","A","F")
+       case ("R","F")
          !
          ! :::RESONANT/ANTI-RESONANT TERM:::
          !===================================
          !
          ! Exchange
-         if (iHxc==1) H_x=K_exchange_kernel_resonant(iq, BS_n_g_exch,               &
+         if (iHxc==1) H_x=K_exchange_kernel(iq, BS_n_g_exch,               &
 &                                   BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
          !
          ! ALDA
@@ -752,10 +802,16 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
 &                                   BS_n_g_W,O1,O2,O_times_W)
          endif
          !         
-       case ("C","Q")
+       case ("C")
          !
          ! :::COUPLING TERM:::
          !=============================
+         ! 
+         ! This implementation is used only at iq=1 when l_BS_ares_from_res=.true.
+         ! It uses only hald of the BS_T_grps, saving memory & cpu time for the oscillators
+         ! Otherwise the exchange and tddft implementation are not corret
+         ! The correlation imlpementation instead should be correct (since iv,ic
+         ! indexes are properly inverted).
          !
          ! Exchange
          if (iHxc==1) H_x=K_exchange_kernel_coupling(iq, BS_n_g_exch,              &
@@ -764,12 +820,15 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          ! ALDA
          if (iHxc==2) then
            if(l_tddft_rsum)     H_x=H_x+TDDFT_ALDA_eh_space_R_kernel(is_k,os_k,is_p,os_p,tddft_wf,'CPL')
-           if(l_tddft_gsum)     H_x=H_x+TDDFT_ALDA_eh_space_G_kernel(BS_n_g_fxc,&
+           if(l_tddft_gsum)     H_x=H_x+TDDFT_ALDA_eh_space_G_kernel_coupling(BS_n_g_fxc,&
 &                                 BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
          endif
          !
          ! Correlations
          if (iHxc==3) then
+           ! To check for magnons
+           ! When doing correlation i invert i_c_p and i_v_p
+           ! Here also i_p_sp_pol_c and i_p_sp_pol_v are inverted ...
            if (l_std_alg)       H_c=K_correlation_kernel_std(i_block,i_p,i_pmq, &
 &                                 i_k_s,i_kp_s,i_c_k,i_v_p,i_kmq_s,i_kp_mq_s,i_v_k,i_c_p,    &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
@@ -809,12 +868,12 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        i_p_sp_pol_v=BS_T_grp(i_Tgrp_p)%table(i_Tp,5) 
 
        if (H_pos(1)==H_pos(2)) then
-         BS_blk(i_block)%table(:,i_Tk)=BS_T_grp(i_Tgrp_k)%table(i_Tk,:)
-         BS_blk(i_block)%E(i_Tk)      =BS_T_grp(i_Tgrp_k)%E(i_Tk,1)
+         BS_blk(i_block)%table(:,i_Tp)=BS_T_grp(i_Tgrp_p)%table(i_Tp,:)
+         BS_blk(i_block)%E(i_Tp)      =BS_T_grp(i_Tgrp_p)%E(i_Tp,1)
          if (mode_now=="C") then
            ! Swap c and v
-           BS_blk(i_block)%table(2,i_Tk)=BS_T_grp(i_Tgrp_k)%table(i_Tk,3)
-           BS_blk(i_block)%table(3,i_Tk)=BS_T_grp(i_Tgrp_k)%table(i_Tk,2)
+           BS_blk(i_block)%table(2,i_Tp)=BS_T_grp(i_Tgrp_p)%table(i_Tp,3)
+           BS_blk(i_block)%table(3,i_Tp)=BS_T_grp(i_Tgrp_p)%table(i_Tp,2)
          endif
        endif
        !
@@ -890,6 +949,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      call TDDFT_oscillators_free_L(BS_nT_grps)
      call TDDFT_oscillators_free_R(BS_nT_grps)
    endif
+   !
+   if(rho_map_thresh>0._SP) deallocate(rho_map)
    !
    if (l_bs_fxc) then
      YAMBO_FREE(F_xc_gspace)

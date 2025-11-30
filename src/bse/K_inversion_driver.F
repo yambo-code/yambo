@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_inversion_driver(iq,W,E,k,q) 
  !
  use pars,           ONLY:SP
@@ -19,7 +23,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use com,            ONLY:isec,msg
  use LIVE_t,         ONLY:live_timing
  use parallel_int,   ONLY:PP_wait,PP_redux_wait,PARALLEL_index,PARALLEL_live_message
- use parallel_m,     ONLY:PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,PAR_COM_SLK_INDEX_local
+ use parallel_m,     ONLY:PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,PAR_COM_SLK_INDEX_local,&
+&                         CPU_structure
+ use linear_algebra, ONLY:INV
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:REP,NONE,OP_WR_CL
  use matrix,         ONLY:MATRIX_reset
@@ -36,8 +42,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use stderr,         ONLY:intc
  use descriptors,    ONLY:IO_desc_add
  use PHOTOLUM,       ONLY:BSS_PL_free,PL
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(w_samp) :: W
  integer      :: iq
@@ -62,7 +69,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! I/O
  !
- integer           :: i_err,ID,Lo_dim,Lo_n_loop
+ integer           :: i_err,ID,Lo_dim
  integer, external :: io_BSS_invert
  !
  if (BS_res_ares_n_mat>1) then
@@ -71,6 +78,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  endif
  !
  call timing('Inversion Solver',OPR='start')
+ !
+ call PARALLEL_assign_LA_COMMs("Response_T_space",INV,CPU_structure(4)%nCPU_lin_algebra_INV)
  !
  ! Sectioning
  !============
@@ -155,7 +164,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !===========================================================================
  Lo_dim=1
  if (BS_K_anti_resonant.and.l_BS_ares_from_res) Lo_dim=2
- Lo_n_loop=Lo_dim
  !
  ! In the PL case we need, in addition to the standard GF, also some additional L_k^(r)(w) A_k(w) L_k^(a)(w), where
  ! L^(a/r) are deduced from the standard components.
@@ -167,7 +175,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  YAMBO_ALLOC(Lo,(BS_H_dim,W%n_freqs,Lo_dim))
  !
- call K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
+ call K_inversion_Lo(iq,W,E,k,Lo_dim,Lo)
  !
  ! Initialize & write the output file 
  !====================================
@@ -186,7 +194,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 &                              TOTAL=W%n_freqs,NCPU=PAR_COM_SLK_INDEX_local%n_CPU)
    call live_timing('Perturbative inversion ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
    !
-   call K_inversion_engine("any",1,W%n_freqs,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
+   call K_inversion_engine("any",1,W%n_freqs,PAR_IND_freqs,W,Lo,Lo_dim,.FALSE.)
    !
    call PP_redux_wait(K_INV_EPS%err,COMM=PAR_COM_SLK_INDEX_local%COMM)
    call PP_redux_wait(Resp_ii(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
@@ -199,7 +207,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
    K_INV_EPS%spectra(:,1)=Resp_ii(:,2)
    if (l_BS_photolum) then
-     K_INV_PL%spectra(:,1)=PL(:,2)
+     K_INV_PL%spectra(:,1)=cmplx(PL(:,2),0._SP,kind=SP)
      !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,3,4/),ID=ID)
      i_err=io_BSS_invert(iq,W,ID)
@@ -251,7 +259,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! I/O [after full inversion]
  !=====
  K_INV_EPS%spectra(:,1)=Resp_ii(:,2)
- if (l_BS_photolum) K_INV_PL%spectra(:,1)=PL(:,2)
+ if (l_BS_photolum) K_INV_PL%spectra(:,1)=cmplx(PL(:,2),0._SP,kind=SP)
  !
  if (l_BS_photolum) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3,4/),ID=ID)
@@ -294,7 +302,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
        !
        iw=TYP%iw_full(i1)
        !
-       call K_inversion_engine(TYP%what,iw,1,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.TRUE.)
+       call K_inversion_engine(TYP%what,iw,1,PAR_IND_freqs,W,Lo,Lo_dim,.TRUE.)
        !
        call live_timing(steps=1)
        !

@@ -5,17 +5,22 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_IP_sort(what,I,N,Indexes,vI,El,vC)
  !
  use pars,          ONLY:SP,cZERO
  use parallel_m,    ONLY:PAR_COM_eh_INDEX,PAR_COM_Xk_ibz_INDEX
  use X_m,           ONLY:BS_E_sorted,N_BS_E_sorted,BS_E_sorted_indx
  use BS,            ONLY:BS_H_dim,l_BS_esort_indx
+ use BS_solvers,    ONLY:deg_exc_thrshld
  use vec_operate,   ONLY:sort,degeneration_finder
- use units,         ONLY:HA2EV
  use parallel_int,  ONLY:PP_redux_wait
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  character(*)  ::what
  integer       ::I,N,Indexes(5),vI(BS_H_dim,5)
@@ -55,7 +60,10 @@ subroutine K_IP_sort(what,I,N,Indexes,vI,El,vC)
  allocate(n_of_el(EDIM))
  !
  ! Threshold is 1meV
- call degeneration_finder(vR(:EDIM),EDIM,first_el,n_of_el,n_deg_grp,0.001_SP/HA2EV,Include_single_values=.TRUE.)
+ call degeneration_finder(EDIM,first_el,n_of_el,n_deg_grp,&
+ &    Er=vR(:EDIM),deg_accuracy=deg_exc_thrshld,Include_single_values=.TRUE.)
+ !
+ if (any(n_of_el(:)>18)) call warning("More than 18 degenerate transitions detected. Printing only first 18")
  !
  l_print_warning=.false.
  !

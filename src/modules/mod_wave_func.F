@@ -3,16 +3,22 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM DS
+! Authors (see AUTHORS file for details): AM DS AF
+!
+! headers
+!
+#include <dev_defs.h>
+#include <y_memory.h>
+#include <yambo_wfs.h>
 !
 module wave_func
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,schlen
  use devxlib,        ONLY:devxlib_mapped
  use gpu_m,          ONLY:have_gpu
+ use y_memory_alloc
  !
-#include <dev_defs.h>
-#include <y_memory.h>
+ implicit none
  !
  type WAVEs 
    integer              :: b(2)      ! band range 
@@ -20,12 +26,20 @@ module wave_func
    integer              :: sp_pol(2) ! sp_pol_range
    integer              :: N         ! states 
    character(1)         :: space
-   complex(SP), allocatable :: c(:,:,:)
-   integer    , allocatable :: index(:,:,:)
-   logical    , allocatable :: state(:,:,:)
-   logical                  :: to_load = .TRUE.
-   complex(SP), allocatable DEV_ATTR :: c_d(:,:,:)
+   WF_RSPACE(SP), allocatable :: r(:,:,:)
+   complex(SP),   allocatable :: c(:,:,:)
+   integer    ,   allocatable :: index(:,:,:)
+   logical    ,   allocatable :: state(:,:,:)
+   logical                    :: to_load = .TRUE.
+   WF_RSPACE(SP), allocatable DEV_ATTR :: r_d(:,:,:)
+   complex(SP),   allocatable DEV_ATTR :: c_d(:,:,:)
  end type WAVEs
+ !
+#if defined _GAMMA_ONLY
+ real(SP), parameter    :: wfZERO=0._SP
+#else
+ complex(SP), parameter :: wfZERO=cmplx(0._SP,0._SP)
+#endif
  !
  ! Buffered WFs
  !
@@ -39,6 +53,7 @@ module wave_func
  ! Real components ?
  !
  logical                :: real_wavefunctions
+ character(schlen)      :: WF_load_mode="all"   ! "all"/"on-the-fly"/"on-the-fly-kq"
  !
  ! Bands block size
  !
@@ -54,10 +69,12 @@ module wave_func
  !
  ! Max Num. of G-VECTORS for the WFs maxval(wf_igk) > wf_ncx
  !
- integer                :: wf_ng          ! For WFs in the    IBZ
+ integer                :: wf_ng          ! For WFs in the    IBZ (may be later overwritten, e.g. by io_COL_CUT)
  integer                :: wf_ng_1st_BZ   ! For WFs in the 1st BZ
  integer                :: wf_ng_overlaps ! For WFs shifted used by the overlaps
  integer                :: cutoff_ng      ! For G-vectors used in cutoff (if read, may be different from wf_ng)
+ !
+ real(SP)               :: E_of_WFs
  !
  ! Wave function derivatives
  !
@@ -73,11 +90,23 @@ module wave_func
  !
  integer,    allocatable:: wf_nc_k(:)
  !
+ ! Tho map to reduce fft_size
+ !
+ real(SP)               :: rho_map_thresh
+ integer                :: rho_map_size
+ integer,    allocatable:: rho_map(:)
+ integer,    allocatable:: rho_map_inv(:)
+ !
  ! Table correspondance G-vec <-> Components: G_ic = wf_igk(ic,ik)
  !
  integer,    allocatable:: wf_igk(:,:)
  integer,    allocatable DEV_ATTR :: wf_igk_d(:,:)
  logical                :: wf_norm_test
+ !
+ ! Wave function phases
+ !
+ integer,     allocatable :: WF_phases_b_map(:,:,:,:)
+ complex(SP), allocatable :: WF_phases(:,:,:,:,:)
  !
  interface
    !
@@ -87,21 +116,14 @@ module wave_func
      complex(SP), optional :: wf(:,:,:)
    end function
    !
-   function WF_symm(ifft,isc)
+   integer function io_WF_phases(nb,ik,istark,i_sp_pol,ID,nsz,WF_phases)
      use pars,        ONLY: SP
-     use electrons,   ONLY: n_spinor
-     integer             :: ifft,isc(4)
-     complex(SP),dimension(n_spinor) :: WF_symm
-   end function
-   !
-#if defined _GPU
-   function WF_symm_gpu(ifft,isc)
-     use pars,        ONLY: SP
-     use electrons,   ONLY: n_spinor
-     integer             :: ifft,isc(4)
-     complex(SP),dimension(n_spinor) DEV_ATTR :: WF_symm_gpu
-   end function
-#endif
+     use electrons,   ONLY: n_max_deg
+     use D_lattice,   ONLY: nsym
+     integer               :: nb(2),ik,istark,i_sp_pol,ID
+     integer, intent(in)   :: nsz(5)
+     complex(SP), optional :: WF_phases(:,:,:,:,:)
+   end function io_WF_phases
    !
  end interface 
  !
@@ -112,7 +134,6 @@ module wave_func
      type(WAVEs):: WF_in,WF_out
      logical :: lpres
      !
-     YAMBO_ALLOC_MOLD(WF_out%c,WF_in%c)
      YAMBO_ALLOC(WF_out%index,(WF_in%b(1):WF_in%b(2),WF_in%k(1):WF_in%k(2),WF_in%sp_pol(1):WF_in%sp_pol(2)))
      !
      WF_out%b      = WF_in%b
@@ -121,13 +142,27 @@ module wave_func
      WF_out%N      = WF_in%N
      WF_out%space  = WF_in%space
      WF_out%to_load= WF_in%to_load
-     WF_out%c      = WF_in%c
      WF_out%index  = WF_in%index
+     !
+     if (allocated(WF_in%c)) then
+       YAMBO_ALLOC_MOLD(WF_out%c,WF_in%c)
+       WF_out%c=WF_in%c
+     endif
+     if (allocated(WF_in%r)) then
+       YAMBO_ALLOC_MOLD(WF_out%r,WF_in%r)
+       WF_out%r=WF_in%r
+     endif
      !
      lpres=have_gpu.and.devxlib_mapped(DEV_VAR(WF_in%c))
 #ifdef _GPU
      if (lpres) then
        YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(WF_out%c),WF_in%c)
+     endif
+#endif
+     lpres=have_gpu.and.devxlib_mapped(DEV_VAR(WF_in%r))
+#ifdef _GPU
+     if (lpres) then
+       YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(WF_out%r),WF_in%r)
      endif
 #endif
    end subroutine

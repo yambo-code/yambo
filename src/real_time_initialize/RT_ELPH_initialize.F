@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_ELPH_initialize(E,k,q)
  ! 
  use parser_m,       ONLY:parser
@@ -13,8 +17,9 @@ subroutine RT_ELPH_initialize(E,k,q)
  use drivers,        ONLY:l_elph_scatt,l_phel_scatt
  use R_lattice,      ONLY:bz_samp
  use ELPH,           ONLY:PH_freqs_sq,PH_W_debye,GKKP_ep_sq,GKKP_pe_sq,l_GKKP_expanded_DB_exists,elph_nQ
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)             :: E
  type(bz_samp),intent(in) :: k,q
@@ -33,7 +38,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! El-Ph databases check
  !=======================
- call ELPH_databases_check(RT_bands(2))
+ call ELPH_databases_check(RT_bands)
  if (.not.l_GKKP_expanded_DB_exists) then
    call warning('ELPH (expanded) database not found and/or incompatible OR QP widths not provided. E-P scattering switched off')
    l_elph_scatt   =.FALSE.

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): PM AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine QED_Sigma_c(E,k,q,qp)
  !
  use pars,                ONLY:SP,pi,cI,rZERO
@@ -12,7 +16,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use drivers,             ONLY:l_elel_corr,l_use_collisions,l_elph_corr,l_elphoton_scatt
  use electrons,           ONLY:levels,spin_occ,n_met_bands
  use D_lattice,           ONLY:DL_vol
- use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,RL_vol,RIM_n_rand_pts
+ use R_lattice,           ONLY:qindx_S,bz_samp,nqbz,RL_vol,RIM_sphe_n_rand_pts
  use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_Sc,QP_QED_ng,QP_nb,QP_states_simmetrize,&
 &                              QP_dSc,QP_time_order_sign,QP_table,QP_n_states
  use IO_m,                ONLY:io_COLLs
@@ -28,8 +32,9 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use parallel_m,          ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PAR_IND_Q_ibz,PAR_nQ_ibz,PAR_nQP
  use functions,           ONLY:theta_function
  use timing_m,            ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)              ::E
  type(bz_samp)             ::k,q
@@ -67,7 +72,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! RIM 
  !=====
- if (RIM_n_rand_pts==0) RIM_n_rand_pts=1000000
+ if (RIM_sphe_n_rand_pts==0) RIM_sphe_n_rand_pts=1000000
  !
  call k_ibz2bz(q,'i',.TRUE.)
  !

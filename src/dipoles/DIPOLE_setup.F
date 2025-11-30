@@ -9,9 +9,10 @@ subroutine DIPOLE_setup(Dip)
  !
  use drivers,        ONLY:l_real_time,l_sc_run,l_nl_optics
  use DIPOLES,        ONLY:DIPOLE_t,x_space_obs,g_space_obs,covariant_obs,shifted_grids_obs,&
-&                         specific_obs,eval_OVERLAPS
+&                         der_k_obs,specific_obs,eval_OVERLAPS
  use IO_m,           ONLY:io_DIP
- use BS,             ONLY:BSE_prop,l_BS_magnons,l_BS_dichroism,l_BS_photolum
+ use BS,             ONLY:BSE_prop,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
+&                         l_BS_mespin,l_BS_meorb
  use electrons,      ONLY:n_spin,n_spinor
  use parser_m,       ONLY:parser
  use stderr,         ONLY:STRING_same,STRING_match
@@ -25,6 +26,7 @@ subroutine DIPOLE_setup(Dip)
  !
  ! Work Space
  !
+ logical           :: l_flag
 #if defined _NL
  logical           :: l_dip_appr_from_user
 #endif
@@ -45,10 +47,21 @@ subroutine DIPOLE_setup(Dip)
  l_BS_magnons=   (index(BSE_prop,'magn')/=0)
  l_BS_dichroism= (index(BSE_prop,'dich')/=0)
  l_BS_photolum=  (index(BSE_prop,'photolum')/=0)
+ l_BS_mespin=    (index(BSE_prop,'MEspin')/=0)
+ l_BS_meorb=     (index(BSE_prop,'MEorb')/=0)
+ call parser('ImposeAsymBSE',l_flag)
+ if(.not.l_flag) call parser('ImposeFullBSE',l_flag)
  !
  ! Bands ordering
  !----------------
- if (l_BS_dichroism.or.l_BS_magnons .or. l_BS_photolum) Dip%bands_ordered=.false.
+ if (l_BS_dichroism.or. &
+&    l_BS_magnons  .or. &
+&    l_BS_photolum .or. &
+&    l_flag        .or. &
+&    l_BS_meorb) then
+  Dip%bands_ordered=.false.
+endif
+ !
 #if defined _SLEPC && !defined _NL
  !if ( index(BSS_mode,'s')/=0 )  Dip%bands_ordered=.false.
 #endif
@@ -97,6 +110,10 @@ subroutine DIPOLE_setup(Dip)
    covariant_obs="S R V"
    if (Dip%force_v_g_space) covariant_obs="S R"
    eval_OVERLAPS=.true.
+ else if (STRING_same(Dip%approach,"derk")) then
+   der_k_obs="S R V"
+   if (Dip%force_v_g_space) der_k_obs="S R"
+   eval_OVERLAPS=.true.
  else if (STRING_same(Dip%approach,"shifted grids")) then
    shifted_grids_obs="R V"
    if (Dip%force_v_g_space) shifted_grids_obs="R"
@@ -114,9 +131,11 @@ subroutine DIPOLE_setup(Dip)
 #if defined _RT
  if (l_real_time) then
    g_space_obs=trim(g_space_obs)//" P2"
+ else
+#endif
+   if (STRING_match(Dip%computed,"p2")) g_space_obs=trim(g_space_obs)//" P2"
+#if defined _RT
  endif
-#else
- if (STRING_match(Dip%computed,"p2")) g_space_obs=trim(g_space_obs)//" P2"
 #endif
  !
  ! ... P_spinor
@@ -127,23 +146,29 @@ subroutine DIPOLE_setup(Dip)
    if (STRING_match(Dip%computed,"spin").or.l_BS_magnons) g_space_obs=trim(g_space_obs)//" P_spinor"
 #endif
  endif
- ! ...M_spin, M_orb, M_iti, M_orb_CD
+ ! ...M_spin, M_orb (CD or RT version), M_iti
  specific_obs=""
  if (n_spin>1) then
-   if (STRING_match(Dip%computed,"spin").or.l_BS_magnons) specific_obs=" M_spin"
-   if (STRING_match(Dip%computed,"orb")) specific_obs=trim(specific_obs)//" M_orb M_it"
+   if (STRING_match(Dip%computed,"spin").or.&
+       l_BS_magnons.or.&
+       l_BS_mespin) specific_obs=" M_spin"
+   if (STRING_match(Dip%computed,"orb")) then 
+     specific_obs=trim(specific_obs)//" M_orbRT M_it"
+   endif
 #if defined _RT
    ! Always force all dipoles in real-time case
-   if (l_real_time) specific_obs=" M_spin M_orb M_it"
+   if (l_real_time) specific_obs=" M_spin M_orbRT M_it"
 #endif
  endif
- if (l_BS_dichroism) specific_obs=trim(specific_obs)//" M_CD_orb"
+ if (l_BS_dichroism) specific_obs=trim(specific_obs)//" M_orbCD"
+ if (l_BS_meorb) specific_obs=trim(specific_obs)//" M_orbRT M_it"
  ! 
  ! Computed components
  !---------------------
  Dip%computed=" "
  if (len_trim(x_space_obs  )    >0) Dip%computed=trim(x_space_obs)//" [X-space]"
- if (len_trim(covariant_obs)    >0) Dip%computed=trim(covariant_obs)//" [covarian]"
+ if (len_trim(covariant_obs)    >0) Dip%computed=trim(covariant_obs)//" [covariant]"
+ if (len_trim(der_k_obs)        >0) Dip%computed=trim(der_k_obs)//" [derk]"
  if (len_trim(shifted_grids_obs)>0) Dip%computed=trim(shifted_grids_obs)//" [shift-grids]"
  if (len_trim(Dip%computed)==0) then
    Dip%computed=trim(g_space_obs)//" [G-space]"

@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM AF 
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine X_redux(iq,what,X_par,Xw,X)
  !
@@ -13,7 +17,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  !
  ! More precisely the routine handles:
  !
- !  1. Xo(XUP/XDN/SER): INPUT
+ !  1. Xo(SER)        : INPUT
  !  2. Dyson(SER/SLK) : SOLVER
  !  3. X(PAR/SER)     : OUTPUT
  !
@@ -41,8 +45,9 @@ subroutine X_redux(iq,what,X_par,Xw,X)
                          devxlib_memcpy_d2h
  use devxlib_async, ONLY:devxlib_async_synchronize
  use gpu_m
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(PAR_matrix) :: X_par
  type(X_t)        :: X

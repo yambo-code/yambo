@@ -5,19 +5,25 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_Integrator_init()
  ! 
  use pars,           ONLY:SP,cONE,cZERO
  use com,            ONLY:msg
  use stderr,         ONLY:intc
- use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV,            &
+ use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV,l_RT_FRES,  &
 &                         l_RT_RWA,l_RT_ACC,l_RT_DIAG,l_RT_PERT,   &
 &                         l_RT_HEUN,l_RT_RK2,l_RT_RK4,l_RT_SIMPLE, &
 &                         Integrator_name,integrator_exp_order,    &
 &                         a_tableau,b_tableau,c_tableau,RWA_table, &
-&                         I1_matrix,Integrator_nsteps,RT_bands
+&                         I1_matrix,Integrator_nsteps,RT_bands,    &
+&                         Integrator_nfrac
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer  :: ib
  !
@@ -61,8 +67,11 @@ subroutine RT_Integrator_init()
  l_RT_DIAG=  l_RT_INV                 .and. &
 &           index(Integrator_name,'DIAG' )/=0.or.index(Integrator_name,'diag' )/=0
  !
- l_RT_PERT= (l_RT_EULER.and.l_RT_RWA) .and. &
-&           index(Integrator_name,'PERT'  )/=0.or.index(Integrator_name,'pert' )/=0
+ l_RT_PERT=  l_RT_EULER               .and. &
+&           index(Integrator_name,'PERT' )/=0.or.index(Integrator_name,'pert' )/=0
+ !
+ l_RT_FRES=  l_RT_PERT               .and. &
+&           index(Integrator_name,'FRES' )/=0.or.index(Integrator_name,'fres' )/=0
  !
  ! d) Reset integrator name
  !
@@ -80,6 +89,7 @@ subroutine RT_Integrator_init()
  if (l_RT_ACC   ) Integrator_name = trim(Integrator_name)//" + ACC"
  if (l_RT_DIAG  ) Integrator_name = trim(Integrator_name)//" + DIAG"
  if (l_RT_PERT  ) Integrator_name = trim(Integrator_name)//" + PERT"
+ if (l_RT_FRES  ) Integrator_name = trim(Integrator_name)//" + FRES"
  !
  call msg('s','Integrator '//trim(Integrator_name))
  !
@@ -91,6 +101,7 @@ subroutine RT_Integrator_init()
  !
  if (l_RT_SIMPLE) then
    Integrator_nsteps = 1
+   Integrator_nfrac = 1
    b_tableau(1) = 1._SP
    c_tableau(2) = 1._SP
    RWA_table(2) = 1._SP
@@ -98,6 +109,7 @@ subroutine RT_Integrator_init()
  !
  if (l_RT_RK2   ) then
    Integrator_nsteps = 2
+   Integrator_nfrac = 2
    c_tableau(2) = 1._SP/2._SP
    a_tableau(2) = 1._SP/2._SP
    b_tableau(1:2) = (/0._SP      ,1._SP      /)
@@ -106,6 +118,7 @@ subroutine RT_Integrator_init()
  !
  if (l_RT_HEUN  ) then
    Integrator_nsteps = 2
+   Integrator_nfrac = 2
    c_tableau(2) = 1._SP
    a_tableau(2) = 1._SP
    b_tableau(1:2) = (/1._SP/2._SP,1._SP/2._SP/)
@@ -114,6 +127,7 @@ subroutine RT_Integrator_init()
  !
  if (l_RT_RK4   ) then
    Integrator_nsteps = 4
+   Integrator_nfrac = 6
    c_tableau(2:4) = (/1._SP/2._SP,1._SP/2._SP,1._SP      /)
    a_tableau(2:4) = (/1._SP/2._SP,1._SP/2._SP,1._SP      /)
    b_tableau(1:4) = (/1._SP/6._SP,1._SP/3._SP,1._SP/3._SP,1._SP/6._SP/)

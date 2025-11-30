@@ -40,18 +40,22 @@ subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par,iq)
  if(.not.BSS_Slepc_double_grp) alpha=-real(iter_par,SP)*cI
  if(     BSS_Slepc_double_grp) alpha=-real(iter_par,SP)
  !
- forall(i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g)) Vo(i_g)%fragment = cZERO
+ do concurrent (i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g))
+   Vo(i_g)%fragment = cZERO
+ enddo
  !
  do i_B=1,n_BS_blks
    !
    i_Tk  =BS_blk(i_B)%iT_k
    i_Tp  =BS_blk(i_B)%iT_p
    !
+#if defined _PAR_IO
    if (i_B>BSS_kernel_last_stored_block) then
      call io_control(ACTION=RD,ID=BS_ID(2))
      call io_BS_PAR_block(iq,i_B,BS_ID(2),"matonly")
      call K_block_symmetrize(i_B)
    endif
+#endif
    !
    select case(BS_blk(i_B)%mode)
    case("R")

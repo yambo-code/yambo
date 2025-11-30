@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine NL_ypp_driver(en,k)
  !
  use YPP_real_time,  ONLY:X_order,RT_conf,RT_time,Pol,l_skip_OBS_IO,Pump_path
@@ -22,8 +26,9 @@ subroutine NL_ypp_driver(en,k)
  use stderr,         ONLY:intc,real2ch
  use RT_control,     ONLY:OBS_RT_IO_t
  use LIVE_t,         ONLY:live_timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)  :: en
  type(bz_samp) :: k
@@ -119,7 +124,7 @@ subroutine NL_ypp_driver(en,k)
      RT_P_probe(:,i_f,i_d)=NL_P_t(:,i_d)
    enddo
    !
-   Probe_frequency(i_f)=Efield(i_Probe)%frequency(1)
+   Probe_frequency(i_f)=Efield(i_Probe)%frequency
    if(loop_on_angles) Probe_versors(:,i_f)=Efield(i_Probe)%versor(:)
    !
    if(io_Nonlinear_REF==0) then
@@ -215,13 +220,13 @@ subroutine NL_ypp_driver(en,k)
          !
          if(.not.runs_ok(i_f)) cycle
          !
-         if (i_order==1) then
-           Susceptibility(i_order,i_f,1)=4._SP*pi*dot_product( Efield(i_Probe)%versor(:),X_effective(i_order,i_f,:) )*&
-&                                        Divide_by_Field(Efield(i_Probe),i_order)
-	   Susceptibility(i_order,i_f,2:3)=cZERO
-         else 
+!         if (i_order==1) then
+!           Susceptibility(i_order,i_f,1)=4._SP*pi*dot_product( Efield(i_Probe)%versor(:),X_effective(i_order,i_f,:) )*&
+!&                                        Divide_by_Field(Efield(i_Probe),i_order)
+!	   Susceptibility(i_order,i_f,2:3)=cZERO
+!         else 
            Susceptibility(i_order,i_f,:)=X_effective(i_order,i_f,:)*Divide_by_Field(Efield(i_Probe),i_order)
-         end if
+!         end if
          !
        enddo
        ! 
@@ -400,6 +405,12 @@ subroutine NL_ypp_driver(en,k)
        !
        call DESC_write('o probe','#',NL_desc)
        !
+       if (X_order==1) then
+         call msg('o probe','#')
+         call msg('o probe','#',"xhi_ab(\omega)")
+         call msg('o probe','#',"multiply by 4 \pi and field versor to compare with epsilon")
+         call msg('o probe','#')
+       endif
        call msg('o probe','#')
        call msg('o probe','#',headings(1:n_headings,i_order),INDENT=0,USE_TABS=.TRUE.)
        call msg('o probe','#')

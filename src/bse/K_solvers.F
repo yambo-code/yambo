@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM IMA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  use stderr,         ONLY:intc
@@ -12,18 +16,19 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_t
- use BS_solvers,     ONLY:BSS_desc,BSS_free,BS_mat,run_Haydock,&
+ use BS_solvers,     ONLY:BSS_desc,BSS_free,BS_mat,run_Haydock,load_Diago,&
 &                         run_inversion,run_Diago,run_Slepc,BSS_kernel_IO_on_the_fly
- use BS,             ONLY:BS_K_has_been_calculated_loaded,BS_ID,&
-&                         l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism
+ use BS,             ONLY:BS_K_has_been_calculated_loaded,BS_ID,BS_perturbative_SOC,&
+&                         l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,&
+&                         l_BS_mespin,l_BS_meorb,l_BS_jdos
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_int,         ONLY:IO_and_Messaging_switch
- use linear_algebra, ONLY:INV,DIAGO
  use PHOTOLUM,       ONLY:BSS_PL_free
  use MAGNONS,        ONLY:BSS_MAGN_free
- use DICHROISM,      ONLY:BSS_DICH_free
+ use DICHROISM,      ONLY:BSS_DICH_free,BSS_MEspin_free,BSS_MEorb_free
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels) ::Ken
  type(bz_samp)::Xk,q
@@ -33,11 +38,18 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  logical :: l_partial_kernel_loaded
  !
- ! If the BS database was not loaded in memory, call K_restart
+ if ( (run_Haydock.or.run_inversion) .and. BS_perturbative_SOC) &
+ &  call error("Perturbative SOC requires eigenvectors. Use diago or slec solver")
  !
- if (.not. BS_K_has_been_calculated_loaded ) call K_restart(iq,X_static,BS_ID(1),BS_ID(2),BS_ID(3),l_partial_kernel_loaded)
- !
- if (.not. BS_K_has_been_calculated_loaded ) call error("Something went wrong in K_restart, cannot proceed with solver")
+ if (.not. load_Diago) then
+   !
+   ! If the BS database was not loaded in memory, call K_restart
+   !
+   if (.not. BS_K_has_been_calculated_loaded ) call K_restart(iq,X_static,BS_ID(1),BS_ID(2),BS_ID(3),l_partial_kernel_loaded)
+   !
+   if (.not. BS_K_has_been_calculated_loaded ) call error("Something went wrong in K_restart, cannot proceed with solver")
+   !
+ endif
  !
  call section('-','BSE solver(s) @q'//trim(intc(iq)))
  !
@@ -56,25 +68,11 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! Diagonalization
  !
- if (run_Diago) then 
-   !
-   call PARALLEL_assign_LA_COMMs("Response_T_space",DIAGO,CPU_structure(4)%nCPU_lin_algebra_DIAGO)
-   !
-   call K_diago_driver(iq,W_bss,X_static)
-   !
- endif
- !
- if (run_Slepc) call K_diago_driver(iq,W_bss,X_static)
+ if (run_Diago .or. run_Slepc) call K_diago_driver(iq,W_bss,X_static)
  !
  ! Inversion
  !
- if (run_inversion) then 
-   !
-   call PARALLEL_assign_LA_COMMs("Response_T_space",INV,CPU_structure(4)%nCPU_lin_algebra_INV)
-   !
-   call K_inversion_driver(iq,W_bss,Ken,Xk,q)
-   !
- endif
+ if (run_inversion) call K_inversion_driver(iq,W_bss,Ken,Xk,q)
  !
  ! CLEAN: diago/invertion workspace
  !
@@ -82,6 +80,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  call BSS_MAGN_free( )
  call BSS_DICH_free( )
  call BSS_PL_free( )
+ call BSS_MEspin_free()
+ call BSS_MEorb_free()
  !
  ! CLEAN: BS_mat
  !
@@ -103,10 +103,13 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    ! A possible alternative could be to use the algorithm with Cf
    ! from both the left and the right hand side to get from a single Haydock loop
    !
+   !if (l_BS_jdos)    call K_Haydock(iq,W_bss,"jdos",Xk)
    if (l_BS_abs)     call K_Haydock(iq,W_bss,"optics",Xk)
    if (l_BS_kerr)    call K_Haydock(iq,W_bss,"kerr",Xk)
    if (l_BS_magnons) call K_Haydock(iq,W_bss,"magnons",Xk)
    if (l_BS_dichroism) call K_Haydock(iq,W_bss,"dichroism",Xk)
+   if (l_BS_mespin) call K_Haydock(iq,W_bss,"mespin",Xk)
+   if (l_BS_meorb) call K_Haydock(iq,W_bss,"meorb",Xk)
    !
  endif
  !

@@ -34,13 +34,16 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
  !
  integer :: i1,i2,im,id,id_red
  integer :: ikbz,istep,max_step
+ !
  complex(SP) :: Wop(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),2)
  complex(SP) :: V_tilde(en%nbf(i_sp),H_ref_bands(1):H_ref_bands(2),2)
  complex(SP) :: delta_V_tilde(en%nbf(i_sp),H_ref_bands(1):H_ref_bands(2))
  complex(SP) :: V_tmp(H_ref_bands(1):H_ref_bands(2),en%nbf(i_sp))
- complex(SP) :: E_vec_pot(3),alpha
+ complex(SP) :: alpha
  !
+!$OMP PARALLEL WORKSHARE  
  Wk=cZERO
+!$OMP END PARALLEL WORKSHARE  
  !
  ikbz=Xk%k_table(ik,1)
  !
@@ -83,7 +86,9 @@ subroutine Build_W_operator(en,Xk,ik,i_sp,V_bands,Wk)
      ! <\phi_i | e^{iGr} | \phi_j >
      ! It works in principle but it requires big supercells
      !
+!$OMP PARALLEL WORKSHARE  
      Wop(:,:,:)=cZERO !DIP_S(H_ref_bands(1):,H_ref_bands(1):,id_red,ik,i_sp)*cI/(4._SP*pi)   
+!$OMP END PARALLEL WORKSHARE  
      !
    endif    
    !

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine XCo_local(E,Xk)
  !
  ! Local V_xc
@@ -36,8 +40,9 @@ subroutine XCo_local(E,Xk)
  use SC,            ONLY:load_SC_components,SC_fft_size,compatible_SC_DB
 #endif
  use timing_m,      ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels) ::E       
  type(bz_samp)::Xk
@@ -129,7 +134,7 @@ subroutine XCo_local(E,Xk)
        endif
        !
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-       if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 )) cycle
+       if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1) )) cycle
        !
      else
 #endif
@@ -147,11 +152,11 @@ subroutine XCo_local(E,Xk)
      ! 
      !$omp parallel do default(shared), private(ifft)
      do ifft=1,fft_size
-       c_ws(ifft,1)=V_xc(ifft,1)*WF%c(ifft,1,iwfp)
+       c_ws(ifft,1)=V_xc(ifft,1)*WF%r(ifft,1,iwfp)
      enddo
      !$omp end parallel do
      !
-     QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
+     QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,cmplx(WF%r(:,:,iwf),kind=SP),c_ws(:,:))
      !
      if (pp_is_uspp) then
        call PP_vloc_augment(QP_Vxc(i1),V_xc,ik,ib,ibp)
@@ -189,7 +194,7 @@ subroutine XCo_local(E,Xk)
 #if defined _RT
      if (l_real_time) then
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-       if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 )) cycle
+       if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1) )) cycle
      else
 #endif
        if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
@@ -202,9 +207,9 @@ subroutine XCo_local(E,Xk)
        iwf =WF%index(ib,ik,i_sp_pol)
        iwfp=WF%index(ibp,ik,i_sp_pol)
        !
-       c_ws(:,1)=V_xc_mat(:,i_sp_pol,i_sp_pol)*WF%c(:,1,iwfp)
+       c_ws(:,1)=V_xc_mat(:,i_sp_pol,i_sp_pol)*WF%r(:,1,iwfp)
        !
-       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
+       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,cmplx(WF%r(:,:,iwf),kind=SP),c_ws(:,:))
        !
        if (pp_is_uspp) then
          call error('[PPs] USPP: nspin=2 and n_spinor=1 not implemented')
@@ -215,10 +220,10 @@ subroutine XCo_local(E,Xk)
        iwf=WF%index(ib,ik,1)
        iwfp=WF%index(ibp,ik,1)
        !
-       c_ws(:,1)=V_xc_mat(:,1,1)*WF%c(:,1,iwfp)+V_xc_mat(:,1,2)*WF%c(:,2,iwfp)
-       c_ws(:,2)=V_xc_mat(:,2,1)*WF%c(:,2,iwfp)+V_xc_mat(:,2,2)*WF%c(:,2,iwfp)
+       c_ws(:,1)=V_xc_mat(:,1,1)*WF%r(:,1,iwfp)+V_xc_mat(:,1,2)*WF%r(:,2,iwfp)
+       c_ws(:,2)=V_xc_mat(:,2,1)*WF%r(:,2,iwfp)+V_xc_mat(:,2,2)*WF%r(:,2,iwfp)
        !
-       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
+       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,cmplx(WF%r(:,:,iwf),kind=SP),c_ws(:,:))
        !
        if (pp_is_uspp) then
          call error('[PPs] USPP: nspin=2 and n_spinor>1 not implemented')

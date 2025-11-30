@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AC
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine LSEX_potential(q,X,Xw) 
  !
  ! Construct the screeend potential W(G=G'=0,q)
@@ -28,8 +32,9 @@ subroutine LSEX_potential(q,X,Xw)
  use collision_ext,       ONLY:ng_oscll
  use stderr,              ONLY:intc
  use parallel_int,        ONLY:PP_wait
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp), intent(in) :: q
  type(w_samp)              :: Xw
@@ -60,15 +65,15 @@ subroutine LSEX_potential(q,X,Xw)
  if(Correlation==LSEX) then
    call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID)
    io_err=io_X(X,Xw,ID)
-   if (io_err<0) call error('Incomplete and/or broken tatic diel. fun. database')
+   if (io_err<0) call error('Incomplete and/or broken static diel. fun. database')
  endif
  !
  YAMBO_ALLOC(W,(q%nbz,ng_oscll,ng_oscll))
  iqref=0
  !
-!$OMP WORKSHARE 
+!$OMP PARALLEL WORKSHARE 
  W=cZERO
-!$OMP END WORKSHARE 
+!$OMP END PARALLEL WORKSHARE 
  ! 
  do iqbz=1,q%nbz
    !
@@ -80,11 +85,9 @@ subroutine LSEX_potential(q,X,Xw)
    !
    ! The bare exchange v
    !
-!$OMP WORKSHARE 
-   forall(ig1=1:X%ng)
+   do ig1=1,X%ng
      W(iqbz,ig1,ig1)=-4._SP/spin_occ*pi*isc%gamp(ig1,ig1)
-   end forall
-!$OMP END WORKSHARE 
+   enddo
    !
    if(Correlation==LSEX) then
      !      
@@ -103,11 +106,9 @@ subroutine LSEX_potential(q,X,Xw)
      !
      !  Screened part of the exchange  \tilde W = W - v
      !
-!$OMP WORKSHARE 
      forall(ig1=1:X%ng,ig2=1:X%ng)
-         W(iqbz,ig1,ig2)=W(iqbz,ig1,ig2)-4._SP/spin_occ*pi*X_mat(ig1,ig2,1)*isc%gamp(ig1,ig2)
+       W(iqbz,ig1,ig2)=W(iqbz,ig1,ig2)-4._SP/spin_occ*pi*X_mat(ig1,ig2,1)*isc%gamp(ig1,ig2)
      end forall
-!$OMP END WORKSHARE 
      !
    endif
    !

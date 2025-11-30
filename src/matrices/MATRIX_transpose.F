@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine MATRIX_transpose( operation, M_in, M_out )
  !
  ! performs the transpose (or transpose conjugate) of a distributed
@@ -16,7 +20,9 @@ subroutine MATRIX_transpose( operation, M_in, M_out )
  !
  use interfaces,     ONLY:MATRIX_duplicate
  use matrix,         ONLY:PAR_matrix,MATRIX_reset
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  character(*)               :: operation
  type(PAR_matrix), optional :: M_in

@@ -32,6 +32,7 @@ module pars
  !
  !...RT
  integer, parameter :: n_ext_fields_max=4
+ integer, parameter :: n_fields_defs_max=6
  !
  !...Input file analyze
  integer, parameter :: n_max_DB_IO_off_fields=20
@@ -42,10 +43,10 @@ module pars
  integer, parameter :: n_debugs_max=100
  ! 
  !...Output Files/Report File
- integer,parameter  :: max_n_ofs=1000
- integer,parameter  :: max_open_ofs=1000
- integer,parameter  :: repfile_index=1001
- integer,parameter  :: logfile_index=1002
+ integer,parameter  :: max_n_ofs=10000
+ integer,parameter  :: max_open_ofs=10000
+ integer,parameter  :: repfile_index=10001
+ integer,parameter  :: logfile_index=10002
  !
  !...I/O
  integer, parameter :: max_io_units=40
@@ -95,7 +96,7 @@ module pars
  ! STRINGs
  !=========
  integer, parameter  :: schlen=100
- integer, parameter  :: lchlen=300
+ integer, parameter  :: lchlen=500
  integer, parameter  :: msg_len=50
  integer, parameter  :: DB_menu_length=30+msg_len
  !

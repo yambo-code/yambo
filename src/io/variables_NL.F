@@ -15,8 +15,7 @@ integer function variables_NL(ID)
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx
  use real_time,     ONLY:Integrator_name,NE_steps,RT_step,l_RT_induced_field,RT_bands,RAD_LifeTime
  use electric,      ONLY:l_force_SndOrd
- use fields,        ONLY:n_ext_fields
- use fields,        ONLY:Efield
+ use fields,        ONLY:n_ext_fields,Efield
  use IO_m,          ONLY:io_status
  use IO_int,        ONLY:io_variable_elemental,def_variable_elemental,ver_is_gt_or_eq
  use descriptors,   ONLY:IO_desc_reset
@@ -136,18 +135,9 @@ integer function variables_NL(ID)
 &         R0=Efield(i_Prb)%FWHM,CHECK=.true.,OP=(/"=="/),& 
 &         DESCRIPTOR=NL_desc)
 
-   call def_variable_elemental(ID,"Field_Freq_range_"//trim(intc(i_Prb)),2,SP,0)
-   call io_variable_elemental(ID,VAR="[FIELDs] Frequency range   ",TERMINATOR="[eV]",&
-&         R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV,& 
-&         DESCRIPTOR=NL_desc)
-
-   call def_variable_elemental(ID,"Field_Freq_steps_"//trim(intc(i_Prb)),1,IP_YIO,0)
-   call io_variable_elemental(ID,VAR="[FIELDs] Frequency steps",I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/),& 
-&         DESCRIPTOR=NL_desc)
-
-   call def_variable_elemental(ID,"Field_Freq_step_"//trim(intc(i_Prb)),1,SP,0)
-   call io_variable_elemental(ID,VAR="[FIELDs] Frequency step    ",TERMINATOR="[eV]",&
-&         R0=Efield(i_Prb)%W_step,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV,& 
+   call def_variable_elemental(ID,"Field_Freq_"//trim(intc(i_Prb)),1,SP,0)
+   call io_variable_elemental(ID,VAR="[FIELDs] Frequency    ",TERMINATOR="[eV]",&
+&         R0=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV,& 
 &         DESCRIPTOR=NL_desc)
 
    call def_variable_elemental(ID,"Field_Initial_time_"//trim(intc(i_Prb)),1,SP,0)

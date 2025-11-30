@@ -5,18 +5,23 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+#include<yambo_wfs.h>
+!
 subroutine WF_alloc(WF,k_extrema_only)
  !
- use pars,          ONLY:cZERO
- use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx
- use FFT_m,         ONLY:fft_size
+ use pars,          ONLY:cZERO,SP
+ use wave_func,     ONLY:WAVEs,wfZERO,states_to_load,wf_ng,wf_ncx,rho_map_size
  use electrons,     ONLY:n_spinor
  use parallel_int,  ONLY:PARALLEL_live_message
  use gpu_m,         ONLY:have_gpu
  use devxlib,       ONLY:devxlib_memset_d
+ use y_memory_alloc
  !
-#include<dev_defs.h>
-#include<y_memory.h>
+ implicit none
  !
  type(WAVEs)           :: WF
  logical, intent(in)   :: k_extrema_only
@@ -57,20 +62,29 @@ subroutine WF_alloc(WF,k_extrema_only)
  !
  call PARALLEL_live_message("Wave-Function states",LOADED=N_loaded,TOTAL=N_total)
  !
- if (WF%space=='R')  wf_grid_size=fft_size
+ if (WF%space=='R')  wf_grid_size=rho_map_size
  if (WF%space=='G')  wf_grid_size=wf_ng
  if (WF%space=='C')  wf_grid_size=wf_ncx
  if (WF%space=='B')  wf_grid_size=wf_ncx
  !
- YAMBO_ALLOC(WF%c,(wf_grid_size,n_spinor,WF%N))
- if (have_gpu) then
-   YAMBO_ALLOC_GPU(DEV_VAR(WF%c),(wf_grid_size,n_spinor,WF%N))
+ if (WF%space=='R')  then
+   YAMBO_ALLOC(WF%r,(wf_grid_size,n_spinor,WF%N))
+   if (have_gpu) then
+     YAMBO_ALLOC_GPU(DEV_VAR(WF%r),(wf_grid_size,n_spinor,WF%N))
+   endif
+   WF%r=wfcmplx(wfZERO,kind=SP)
+   if (have_gpu) call devxlib_memset_d(DEV_VAR(WF%r),wfZERO)
+ else
+   YAMBO_ALLOC(WF%c,(wf_grid_size,n_spinor,WF%N))
+   if (have_gpu) then
+     YAMBO_ALLOC_GPU(DEV_VAR(WF%c),(wf_grid_size,n_spinor,WF%N))
+   endif
+   WF%c=cZERO
+   if (have_gpu) call devxlib_memset_d(DEV_VAR(WF%c),cZERO)
  endif
  !
  YAMBO_ALLOC(WF%index,(WF%b(2),WF%k(2),WF%sp_pol(2)))
- !
- WF%c=cZERO
- if (have_gpu) call devxlib_memset_d(DEV_VAR(WF%c),cZERO)
+ !AMBO_ALLOC(WF%index,(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%sp_pol(1):WF%sp_pol(2)))
  !
  WF%index=0
  !

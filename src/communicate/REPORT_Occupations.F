@@ -12,7 +12,8 @@ subroutine REPORT_Occupations(what,E)
  use D_lattice,     ONLY:Tel,T_holes,T_elecs,Bose_Temp,DL_vol
  use drivers,       ONLY:Finite_Tel
  use com,           ONLY:msg,COMPOSE_spin_msg
- use electrons,     ONLY:levels,n_sp_pol,nel,spin_string,spin_occ
+ use electrons,     ONLY:levels,n_sp_pol,nel,spin_string,spin_occ,&
+ &                       i_spin_majority
  use interfaces,    ONLY:OCCUPATIONS_Gaps
  !
  implicit none
@@ -44,8 +45,7 @@ subroutine REPORT_Occupations(what,E)
  !
  ! Initial Report
  !
- if (n_sp_pol==1) call msg('r',title(1:title_len)//"=== General ===")
- if (n_sp_pol==2) call msg('r',title(1:title_len)//"=== Spin Independent ===")
+ call msg('r',title(1:title_len)//"=== General ===")
  if (T_elecs==T_holes) call msg('r',COMPOSE_spin_msg(title,title_len,'Electronic Temperature',0),&
 &                                                                (/Tel*HA2EV,Tel*HA2KEL/),'[eV K]')
  if (T_elecs/=T_holes) call msg('r',COMPOSE_spin_msg(title,title_len,'Holes / Elecs Temp',0),    &
@@ -58,7 +58,7 @@ subroutine REPORT_Occupations(what,E)
  do i_sp_pol=1,n_sp_pol
    !
    if (n_sp_pol==2) then
-     call msg('r',title(1:title_len)//"=== Spin "//spin_string(i_sp_pol)//" channel ===")
+     call msg('r',title(1:title_len)//"=== Gaps and Widths in "//spin_string(i_sp_pol)//" channel ===")
    else
      call msg('r',title(1:title_len)//"=== Gaps and Widths ===")
    endif
@@ -94,6 +94,8 @@ subroutine REPORT_Occupations(what,E)
    call msg('r',' ')
    !
  enddo
+ !
+ if (n_sp_pol==2) call msg('rn','Spin majority channel is '//spin_string(i_spin_majority)//" channel")
  !
  if (n_sp_pol==2) then
    if (all(Nbf==Nbm).and.all(Nbf>0)) then

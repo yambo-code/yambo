@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  use pars,          ONLY:SP
@@ -22,8 +26,9 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  use IO_m,          ONLY:OP_RD_CL,OP_RD,RD_CL,&
 &                        NONE,OP_WR_CL,REP,VERIFY
  use frequency,     ONLY:w_samp
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(w_samp) ::W
  integer      ::ik1,ik2,O_x_dim,iq
@@ -105,14 +110,22 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  YAMBO_ALLOC(O2x_qpg,(BS_nT_at_k(ik2),FXC_n_g_corr))
  YAMBO_ALLOC(blk_Eo,(2,O_x_dim))
  !
- forall(i1=1:FXC_n_g_corr) conjg_O1x_qpg(i1,:BS_nT_at_k(ik1))=conjg(O1x(i1,:BS_nT_at_k(ik1)))*bare_qpg(iq,i1)
- forall(i2=1:FXC_n_g_corr) O2x_qpg(:BS_nT_at_k(ik2),i2)=O2x(i2,:BS_nT_at_k(ik2))*bare_qpg(iq,i2)
+ do i1=1,FXC_n_g_corr 
+   conjg_O1x_qpg(i1,:BS_nT_at_k(ik1))=conjg(O1x(i1,:BS_nT_at_k(ik1)))*bare_qpg(iq,i1)
+ enddo
+ do i2=1,FXC_n_g_corr 
+   O2x_qpg(:BS_nT_at_k(ik2),i2)=O2x(i2,:BS_nT_at_k(ik2))*bare_qpg(iq,i2)
+ enddo
  !
  ! Kernel diagonal and simmetrization
  !
  if (ik1==ik2) then
-   forall(i1=1:BS_nT_at_k(ik1)) FXC_K_diagonal(blk_pos(1)+i1)=real(BS_mat(i1,i1))
-   forall(i1=1:BS_nT_at_k(ik1)) BS_mat(i1,i1)=(0.,0.)
+   do i1=1,BS_nT_at_k(ik1) 
+     FXC_K_diagonal(blk_pos(1)+i1)=real(BS_mat(i1,i1))
+   enddo
+   do i1=1,BS_nT_at_k(ik1) 
+     BS_mat(i1,i1)=(0._SP,0._SP)
+   enddo
    do i1=1,BS_nT_at_k(ik1)
      do i2=i1+1,BS_nT_at_k(ik1)
        BS_mat(i2,i1)=conjg(BS_mat(i1,i2))
@@ -122,20 +135,31 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! BS diagonal + Non interacting energies and widths
  !
- forall(i1=1:BS_nT_at_k(ik1)) blk_Eo(1,i1)=BSS_eh_E(blk_pos(1)+i1)+&
+ do i1=1,BS_nT_at_k(ik1) 
+   blk_Eo(1,i1)=BSS_eh_E(blk_pos(1)+i1)+&
 &                                          FXC_K_diagonal(blk_pos(1)+i1)
- forall(i2=1:BS_nT_at_k(ik2)) blk_Eo(2,i2)=BSS_eh_E(blk_pos(2)+i2)+&
+ enddo
+ do i2=1,BS_nT_at_k(ik2)
+   blk_Eo(2,i2)=BSS_eh_E(blk_pos(2)+i2)+&
 &                                          FXC_K_diagonal(blk_pos(2)+i2)
+ enddo
  !
  if (allocated(BSS_eh_W)) then
-   forall(i1=1:BS_nT_at_k(ik1)) blk_Eo(1,i1)=blk_Eo(1,i1)+(0.,1.)*BSS_eh_W(blk_pos(1)+i1)
-   forall(i2=1:BS_nT_at_k(ik2)) blk_Eo(1,i2)=blk_Eo(1,i2)+(0.,1.)*BSS_eh_W(blk_pos(2)+i2)
+   do i1=1,BS_nT_at_k(ik1) 
+     blk_Eo(1,i1)=blk_Eo(1,i1)+(0.,1.)*BSS_eh_W(blk_pos(1)+i1)
+   enddo
+   do i2=1,BS_nT_at_k(ik2) 
+     blk_Eo(1,i2)=blk_Eo(1,i2)+(0.,1.)*BSS_eh_W(blk_pos(2)+i2)
+   enddo
  endif
  !
  ! Projectors
  !
- forall(i1=1:BS_nT_at_k(ik1),i2=1:BS_nT_at_k(ik2)) &
-&      BS_mat(i1,i2)=BS_mat(i1,i2)*Fb2x1(blk_Eo(1,i1),blk_Eo(2,i2),E_same_treshold)
+ do i1=1,BS_nT_at_k(ik1)
+   do i2=1,BS_nT_at_k(ik2) 
+     BS_mat(i1,i2)=BS_mat(i1,i2)*Fb2x1(blk_Eo(1,i1),blk_Eo(2,i2),E_same_treshold)
+   enddo
+ enddo
  !
  ! Degenerations:
  !
@@ -216,13 +240,21 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
    ! Upper diagonal block contribution
    !
    if (FXC_is_retarded) then 
-     forall(i1=1:BS_nT_at_k(ik1)) wk1(i1,:)=right_R(i1,:)*(&
+     do i1=1,BS_nT_at_k(ik1) 
+       wk1(i1,:)=right_R(i1,:)*(&
 &          1._SP/(W%p(iw)-blk_Eo(1,i1))+1._SP/(-W%p(iw)-blk_Eo(1,i1)) )
-     forall(i2=1:BS_nT_at_k(ik2)) wk2(:,i2)= left_R(:,i2)*(&
+     enddo
+     do i2=1,BS_nT_at_k(ik2) 
+       wk2(:,i2)= left_R(:,i2)*(&
 &          1._SP/(W%p(iw)-blk_Eo(2,i2))+1._SP/(-W%p(iw)-blk_Eo(2,i2)) )
+     enddo
    else
-     forall(i1=1:BS_nT_at_k(ik1)) wk1(i1,:)=right_R(i1,:)/(W%p(iw)-blk_Eo(1,i1))
-     forall(i2=1:BS_nT_at_k(ik2)) wk2(:,i2)= left_R(:,i2)/(W%p(iw)-blk_Eo(2,i2))
+     do i1=1,BS_nT_at_k(ik1) 
+       wk1(i1,:)=right_R(i1,:)/(W%p(iw)-blk_Eo(1,i1))
+     enddo
+     do i2=1,BS_nT_at_k(ik2) 
+       wk2(:,i2)= left_R(:,i2)/(W%p(iw)-blk_Eo(2,i2))
+     enddo
    endif
    !
    F_xc_gspace(:,:,iw)=F_xc_gspace(:,:,iw)+Co*(matmul(conjg_O1x_qpg,wk1)+matmul(wk2,O2x_qpg))
@@ -231,18 +263,30 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
    !
    if (ik1/=ik2) then
      if (FXC_is_retarded) then 
-       forall(i1=1:BS_nT_at_k(ik1)) wk1(i1,:)=right_R(i1,:)*(&
+       do i1=1,BS_nT_at_k(ik1) 
+         wk1(i1,:)=right_R(i1,:)*(&
 &          1._SP/(-conjg(W%p(iw))-blk_Eo(1,i1))+1._SP/(conjg(W%p(iw))-blk_Eo(1,i1)) )
-       forall(i2=1:BS_nT_at_k(ik2)) wk2(:,i2)= left_R(:,i2)*(&
+       enddo
+       do i2=1,BS_nT_at_k(ik2) 
+         wk2(:,i2)= left_R(:,i2)*(&
 &          1._SP/(-conjg(W%p(iw))-blk_Eo(2,i2))+1._SP/(conjg(W%p(iw))-blk_Eo(2,i2)) )
+       enddo
      else
-       forall(i1=1:BS_nT_at_k(ik1)) wk1(i1,:)=right_R(i1,:)/(conjg(W%p(iw))-blk_Eo(1,i1))
-       forall(i2=1:BS_nT_at_k(ik2)) wk2(:,i2)= left_R(:,i2)/(conjg(W%p(iw))-blk_Eo(2,i2))
+       do i1=1,BS_nT_at_k(ik1) 
+         wk1(i1,:)=right_R(i1,:)/(conjg(W%p(iw))-blk_Eo(1,i1))
+       enddo
+       do i2=1,BS_nT_at_k(ik2) 
+         wk2(:,i2)= left_R(:,i2)/(conjg(W%p(iw))-blk_Eo(2,i2))
+       enddo
      endif
      !
      FXC_temp=Co*(matmul(conjg_O1x_qpg,wk1)+matmul(wk2,O2x_qpg))
      !
-     forall(i1=1:FXC_n_g_corr,i2=1:FXC_n_g_corr) F_xc_gspace(i1,i2,iw)=F_xc_gspace(i1,i2,iw)+conjg(FXC_temp(i2,i1))
+     do i1=1,FXC_n_g_corr
+       do i2=1,FXC_n_g_corr 
+         F_xc_gspace(i1,i2,iw)=F_xc_gspace(i1,i2,iw)+conjg(FXC_temp(i2,i1))
+       enddo
+     enddo
    endif
    !
    call PP_redux_wait(F_xc_gspace(:,:,iw))

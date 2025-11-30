@@ -13,9 +13,9 @@ function RT_Rabi_frequency(En,i_field,l_print_rabi)
  use pars,           ONLY:SP,rZERO,cZERO,cI
  use units,          ONLY:HA2EV,PS2AUT
  use R_lattice,      ONLY:nkibz
- use electrons,      ONLY:n_sp_pol,levels
+ use electrons,      ONLY:n_sp_pol,levels,deg_threshold
  use X_m,            ONLY:global_gauge
- use fields,         ONLY:Efield,field_frequency
+ use fields,         ONLY:Efield
  use real_time,      ONLY:RT_bands,RT_nbands
  use dipoles,        ONLY:DIP_iR,DIP_v
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_Xk_ibz_index
@@ -40,11 +40,7 @@ function RT_Rabi_frequency(En,i_field,l_print_rabi)
  len_gauge=trim(global_gauge)=="length"
  vel_gauge=trim(global_gauge)=="velocity"
  !
- effective_frequency=0._SP
- do i_fr=1,Efield(i_field)%n_frequencies
-   effective_frequency=effective_frequency+field_frequency(Efield(i_field),i_fr)
- enddo
- effective_frequency=effective_frequency/real(Efield(i_field)%n_frequencies,SP)
+ effective_frequency=Efield(i_field)%frequency
  !
  RT_Rabi_frequency=rZERO
  E_dist=0.1_SP
@@ -74,8 +70,8 @@ function RT_Rabi_frequency(En,i_field,l_print_rabi)
    do ik=1,nkibz
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      ik_mem=PAR_Xk_ibz_index(ik)
-     call degeneration_finder(En%E(RT_bands(1):RT_bands(2),ik,i_sp_pol),RT_nbands,first_el,n_of_el,n_deg_grp, &
-     &                        0.0001_SP/HA2EV,Include_single_values=.true.)
+     call degeneration_finder(RT_nbands,first_el,n_of_el,n_deg_grp,Er=En%E(RT_bands(1):RT_bands(2),ik,i_sp_pol), &
+     &                        deg_accuracy=deg_threshold,Include_single_values=.true.)
      do i_grp1=1,n_deg_grp
        ib1=first_el(i_grp1)+RT_bands(1)-1
        do i_grp2=i_grp1+1,n_deg_grp

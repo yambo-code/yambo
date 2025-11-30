@@ -42,13 +42,14 @@ module YPP_interfaces
      logical, optional,intent(in) :: USE_the_DbGd,QUIET,FORCE_occ
    end subroutine electrons_dos_elemental
    !
-   subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
+   subroutine excitons_sort_and_report(iq,Res,BS_E,BS_E_SOC_corr,EXC_spin)
      use pars,          ONLY:SP
      use BS_solvers,    ONLY:BSS_n_eig
      use YPPm,          ONLY:EXCITON_spin
      implicit none
      integer                      :: iq
-     complex(SP)                  :: BS_R(BSS_n_eig),BS_E(BSS_n_eig)
+     real(SP)                     :: Res(BSS_n_eig)
+     complex(SP)                  :: BS_E(BSS_n_eig)
      real(SP), optional, pointer  :: BS_E_SOC_corr(:,:)
      type(EXCITON_spin),optional  :: EXC_spin
    end subroutine

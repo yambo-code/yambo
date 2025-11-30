@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): MG
 !
+! headers
+!
+#include<y_memory.h>
+#include<yambo_wfs.h>
+!
 subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  !
  !  Exchange KLI/CEDA
@@ -37,8 +42,10 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  use stderr,          ONLY:intc
  !
  ! I/O
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
+ !
  real(SP),    intent(out):: Vkli(fft_size)
  real(SP),    intent(in) :: Vslt(fft_size),rho(fft_size)
  complex(SP), intent(in) :: U(nkibz,maxval(n_met_bands),fft_size)
@@ -47,7 +54,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  !
  ! Work Space
  !
- integer                  :: i1,ik,iv1,iv2,is,ig1,ig2,ifft,offt
+ integer                  :: i1,ik,iv1,iv2,is,ig1,ig2,i_wf,o_wf
  real(SP)                 :: EWeight, Prefactor
  complex(SP), allocatable :: rhotw_sum(:),rhotw_sum_TR(:),rho_xc(:),&
 &                            Vkli_RL(:),Ko(:,:),rhotw_prd(:,:),rhotw_rs(:)
@@ -109,13 +116,13 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
      if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+ E%E_Fermi 
      do iv2 = 1, iv1!E%nbf(1)
        if (l_oep_kli.and.(iv2.ne.iv1)) cycle
-       ifft=WF%index(iv1,ik,1)
-       offt=WF%index(iv2,ik,1)
+       i_wf=WF%index(iv1,ik,1)
+       o_wf=WF%index(iv2,ik,1)
        rhotw_sum = (0._SP,0._SP)
        rhotw_sum_TR = (0._SP,0._SP)
        Prefactor = 1.0_SP
        if (iv1.ne.iv2) Prefactor = 2.0_SP
-       SigmaXC = dot_product(WF%c(:,1,ifft),U(ik,iv2,:)) 
+       SigmaXC = dot_product(WF%r(:,1,i_wf),U(ik,iv2,:)) 
        do i1 = 1,k%nstar(ik)
          is  = k%star(ik,i1)
          l_is_TR = is>nsym/(i_time_rev+1)
@@ -124,8 +131,8 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
          isc%qs = (/1,1,1/)
          call scatter_Bamp(isc)
          !
-         !rhotw_ds(:)=conjg(WF%c(fft_rot_r(:,is),1,ifft))*WF%c(fft_rot_r(:,is),1,offt)/EWeight
-         rhotw_ds(:)=WF%c(fft_rot_r(:,is),1,ifft)*conjg(WF%c(fft_rot_r(:,is),1,offt))/EWeight
+         !rhotw_ds(:)=conjg(WF%r(fft_rot_r(:,is),1,i_wf))*WF%r(fft_rot_r(:,is),1,o_wf)/EWeight
+         rhotw_ds(:)=WF%r(fft_rot_r(:,is),1,i_wf)*wfconjg(WF%r(fft_rot_r(:,is),1,o_wf))/EWeight
          !
          rhotw_ds = rhotw_ds/(rho*real(fft_size,SP)) 
          rhotw_rs = cZERO
@@ -146,8 +153,10 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
          rhotw_rs(1:QP_ng_Sx) = rhotw_ds(fft_g_table(1:QP_ng_Sx,1))
          !forall(ig1=2:QP_ng_Sx,ig2=2:QP_ng_Sx) rhotw_prd(ig1,ig2) = rhotw_prd(ig1,ig2) + &
          !  & Prefactor*E%f(iv1,ik,1)*conjg(rhotw_rs(ig1))*isc%rhotw(ig2)
-         forall(ig1=2:QP_ng_Sx,ig2=2:QP_ng_Sx) rhotw_prd(ig1,ig2) = rhotw_prd(ig1,ig2) + &
+         do concurrent (ig1=2:QP_ng_Sx,ig2=2:QP_ng_Sx) 
+           rhotw_prd(ig1,ig2) = rhotw_prd(ig1,ig2) + &
            & Prefactor*E%f(iv1,ik,1)*rhotw_rs(ig1)*isc%rhotw(ig2)
+         enddo
          !
          if (l_is_TR) then
            !rhotw_sum_TR(1:QP_ng_Sx-1)=rhotw_sum_TR(1:QP_ng_Sx-1)+rhotw_rs(2:QP_ng_Sx)

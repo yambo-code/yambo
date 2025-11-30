@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): CA DS
 !
-subroutine RT_INV_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
+subroutine RT_INV_step_accurate(dG_old,dG_inp,dG_out,ik,i_sp_pol,deltaT)
  !
  ! The last term in the following come from the fact that G0=G_reference
  ! is not included in G(t) nor in G(t+dt)
@@ -31,7 +31,7 @@ subroutine RT_INV_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  implicit none
  !
- integer,     intent(in)  :: ik
+ integer,     intent(in)  :: ik,i_sp_pol
  real(SP),    intent(in)  :: deltaT
  complex(SP), intent(in)  :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP), intent(in)  :: dG_inp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -49,22 +49,22 @@ subroutine RT_INV_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  complex(SP), pointer :: vec_dG_out(:)
  !
- H1_k=-cI*2*deltaT*Ho_plus_Sigma(:,:,ik,1)
- H2_k=+cI*2*deltaT*Ho_plus_Sigma(:,:,ik,1)
+ H1_k=-cI*2*deltaT*Ho_plus_Sigma(:,:,ik,i_sp_pol)
+ H2_k=+cI*2*deltaT*Ho_plus_Sigma(:,:,ik,i_sp_pol)
  !
- call M_by_M_omp('n','n',RT_nbands,H1_k,G_lesser_reference(:,:,ik),M1_tmp)
- call M_by_M_omp('n','n',RT_nbands,G_lesser_reference(:,:,ik),H2_k,M2_tmp)
+ call M_by_M_omp('n','n',RT_nbands,H1_k,G_lesser_reference(:,:,ik,i_sp_pol),M1_tmp)
+ call M_by_M_omp('n','n',RT_nbands,G_lesser_reference(:,:,ik,i_sp_pol),H2_k,M2_tmp)
  G_com=M1_tmp+M2_tmp
  !
- H1_k=I1_matrix-cI*deltaT*Ho_plus_Sigma(:,:,ik,1)
- H2_k=I1_matrix+cI*deltaT*Ho_plus_Sigma(:,:,ik,1)
+ H1_k=I1_matrix-cI*deltaT*Ho_plus_Sigma(:,:,ik,i_sp_pol)
+ H2_k=I1_matrix+cI*deltaT*Ho_plus_Sigma(:,:,ik,i_sp_pol)
  !
  call M_by_M_omp('n','n',RT_nbands,H1_k,dG_old,M1_tmp)
  call M_by_M_omp('n','n',RT_nbands,dG_old,H2_k,M2_tmp)
  dG_out=G_com+M1_tmp+M2_tmp
  !
  !*******************************************************
- !U_k=Ho_plus_Sigma(:,:,ik,1)
+ !U_k=Ho_plus_Sigma(:,:,ik,i_sp_pol)
  !call SERIAL_HERMITIAN_diagonalization(RT_nbands,U_k,En)
  !!
  !! Generate the matrix  

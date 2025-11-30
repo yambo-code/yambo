@@ -16,17 +16,17 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
  use stderr,        ONLY:STRING_same
  use QP_m,          ONLY:QP_n_G_bands
 #if defined _SC 
- use SC,            ONLY:SC_bands
+ use SC,            ONLY:SC_bands,SC_bands_frozen
 #endif
 #if defined _RT || defined _QED || defined _NL
- use real_time,     ONLY:RT_bands
+ use real_time,     ONLY:RT_bands,RT_bands_frozen
 #endif
 #if defined _SC || defined _RT || defined _QED || defined _NL
- use collision_ext, ONLY:COLL_bands
- use hamiltonian,   ONLY:H_ref_bands
+ use collision_ext, ONLY:COLL_bands,COLL_bands_frozen
+ use hamiltonian,   ONLY:H_ref_bands,H_ref_bands_frozen
 #endif
 #if defined _NL
- use nl_optics,      ONLY:NL_bands
+ use nl_optics,      ONLY:NL_bands,NL_bands_frozen
 #endif
  !
  implicit none
@@ -35,9 +35,10 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
  type(levels)   ::E
  type(DIPOLE_t) ::Dip
  type(X_t)      ::X(5) 
- logical        ::l_USER_field(16)
+ logical        ::l_USER_field(16),dip_bands_defined
  !
- integer :: i1,SCATT_bands(2),DIP_bands(2)
+ integer :: i1,SCATT_bands(2),SCATT_hole_bands(2),DIP_bands(2)
+ logical :: SCATT_bands_frozen(E%nb)
  !
  if (STRING_same(what,"USER_fields")) then
    !
@@ -81,17 +82,24 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
    ! Bands (Electronic levels)
    !---------------------------
    SCATT_bands=-1
+   SCATT_bands_frozen=.false.
    do i1=8,12
      if(.not.(l_USER_field(i1))) cycle
      !
 #if defined _RT || defined _QED || defined _NL
-     if(i1==8) SCATT_bands=RT_bands
+     if(i1==8) then
+       SCATT_bands=RT_bands
+       SCATT_bands_frozen=RT_bands_frozen
+     endif
 #endif
 #if defined _SC
      if(i1==9) SCATT_bands=SC_bands
 #endif
 #if defined _NL
-     if(i1==10) SCATT_bands=NL_bands
+     if(i1==10) then
+       SCATT_bands=NL_bands
+       SCATT_bands_frozen=NL_bands_frozen
+     endif
 #endif
 #if defined _SC 
      if(i1==11) then
@@ -102,7 +110,9 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
 #if defined _RT || defined _QED || defined _NL
      if(i1==11) then
        RT_bands   =COLL_bands
+       RT_bands_frozen=COLL_bands_frozen
        SCATT_bands=COLL_bands
+       SCATT_bands_frozen=COLL_bands_frozen
      endif
 #endif
 #if defined _QED
@@ -113,32 +123,39 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
    ! Bands (Dipoles)
    !----------------
    DIP_bands=-1
-   do i1=1,6
+   dip_bands_defined=.false.
+   ! Start from input if present
+   if( l_USER_field(6) )  call def_dip_bands(Dip%ib)
+   !
+   ! Test scatt bands
+   if( all((/SCATT_bands/=-1/) ) ) call def_dip_bands(SCATT_bands)
+   !
+   ! Test other fields
+   do i1=1,5
      if(.not.(l_USER_field(i1))) cycle
-     if(i1< 6) DIP_bands=X(i1)%ib
-     if(i1==6) DIP_bands=Dip%ib
+     call def_dip_bands(X(i1)%ib)
    enddo
-   if (all((/DIP_bands<0/))) then
-     if(     l_USER_field(7) ) DIP_bands=BS_bands
-     if(.not.l_USER_field(7) ) DIP_bands=SCATT_bands
+   !
+   if( l_USER_field(7) ) call def_dip_bands(BS_bands)
 #if defined _RT || defined _QED || defined _NL
-     if(     l_USER_field(8) ) DIP_bands=RT_bands
+   if( l_USER_field(8) ) call def_dip_bands(RT_bands)
 #endif
 #if defined _NL
-     if(     l_USER_field(10)) DIP_bands=NL_bands
+   if( l_USER_field(10)) call def_dip_bands(NL_bands)
 #endif
-   endif
    !
    ! Any negative bands?
    !---------------------
    call fix_me(SCATT_bands)
    call fix_me(DIP_bands)
    !
-   ! Now MIRROR in related bands ranges!
+   ! Now MIRROR in related bands ranges
    !------------------------------------
 #if defined _SC || defined _RT || defined _QED || defined _NL
    COLL_bands =SCATT_bands
+   COLL_bands_frozen=SCATT_bands_frozen
    H_ref_bands=SCATT_bands     
+   H_ref_bands_frozen=SCATT_bands_frozen
 #endif
    Dip%ib=DIP_bands
    !
@@ -154,4 +171,103 @@ subroutine LEVELS_mirror(what,E,X,Dip,l_USER_field)
      if (bands(2)<0) bands(2)=E%nb
    end subroutine
    !
+   subroutine def_dip_bands(bands_in)
+       integer, intent(in)    :: bands_in(2)
+       if (dip_bands_defined) then
+          DIP_bands(1)=min(DIP_bands(1),bands_in(1))
+          DIP_bands(2)=max(DIP_bands(2),bands_in(2))
+       else
+          dip_bands_defined=.true.
+          DIP_bands=bands_in
+       endif
+   end subroutine def_dip_bands
+   !
 end subroutine
+!
+!
+subroutine LEVELS_frozen(en)
+ !
+ use electrons,     ONLY:levels
+ use BS,            ONLY:BS_bands,BS_bands_frozen,BS_bands_frozen_ch
+#if defined _SC 
+ use SC,            ONLY:SC_bands,SC_bands_frozen,SC_bands_frozen_ch
+#endif
+#if defined _RT || defined _QED || defined _NL
+ use real_time,     ONLY:RT_bands,RT_bands_frozen,RT_bands_frozen_ch
+#endif
+#if defined _SC || defined _RT || defined _QED || defined _NL
+ use collision_ext, ONLY:COLL_bands,COLL_bands_frozen,COLL_bands_frozen_ch
+ use hamiltonian,   ONLY:H_ref_bands,H_ref_bands_frozen
+#endif
+#if defined _NL
+ use nl_optics,      ONLY:NL_bands,NL_bands_frozen,NL_bands_frozen_ch
+#endif
+ !
+ implicit none
+ !
+ type(levels), intent(in) :: en          
+ !
+ if(allocated(BS_bands_frozen)) deallocate(BS_bands_frozen)
+ allocate(BS_bands_frozen(BS_bands(1):BS_bands(2)))
+ call LEVELS_frozen_local(BS_bands,BS_bands_frozen,BS_bands_frozen_ch,"BSE",BS_bands(2)-BS_bands(1)+1)
+ !
+#if defined _SC || defined _RT || defined _NL
+ if(allocated(H_ref_bands_frozen)) deallocate(H_ref_bands_frozen)
+ allocate(H_ref_bands_frozen(en%nb))
+ H_ref_bands_frozen=0
+ if(allocated(COLL_bands_frozen)) deallocate(COLL_bands_frozen)
+ allocate(COLL_bands_frozen(en%nb))
+ call LEVELS_frozen_local((/1,COLL_bands(2)/),COLL_bands_frozen,COLL_bands_frozen_ch,"COLL",en%nb)
+#endif
+#if defined _RT
+ if(allocated(RT_bands_frozen)) deallocate(RT_bands_frozen)
+ allocate(RT_bands_frozen(en%nb))
+ call LEVELS_frozen_local((/1,RT_bands(2)/),RT_bands_frozen,RT_bands_frozen_ch,"RT",en%nb)
+#endif
+#if defined _SC
+ if(allocated(SC_bands_frozen)) deallocate(SC_bands_frozen)
+ allocate(SC_bands_frozen(en%nb))
+ call LEVELS_frozen_local((/1,SC_bands(2)/),SC_bands_frozen,SC_bands_frozen_ch,"SC",en%nb)
+#endif
+#if defined _NL
+ if(allocated(NL_bands_frozen)) deallocate(NL_bands_frozen)
+ allocate(NL_bands_frozen(en%nb))
+ call LEVELS_frozen_local((/1,NL_bands(2)/),NL_bands_frozen,NL_bands_frozen_ch,"NL",en%nb)
+#endif
+ !
+end subroutine LEVELS_frozen
+!
+!
+subroutine LEVELS_frozen_local(TMP_bands,TMP_bands_frozen,TMP_bands_frozen_ch,TMP_kind,nb)
+ !
+ use pars,          ONLY:LP,schlen
+ use parser_m,      ONLY:parser
+ use stderr,        ONLY:STRING_split,intc
+ !
+ implicit none
+ !
+ integer,           intent(in)  :: TMP_bands(2),nb
+ character(schlen), intent(in)  :: TMP_bands_frozen_ch
+ character(*),      intent(in)  :: TMP_kind
+ integer(LP),       intent(out) :: TMP_bands_frozen(nb)
+ !
+ integer :: ib1,ib2
+ logical :: l_freeze_bands
+ character(schlen) :: TMP_bands_frozen_list(nb)
+ !
+ TMP_bands_frozen=0
+ !
+ call parser(trim(TMP_kind)//'FrozenBands', l_freeze_bands)
+ if (l_freeze_bands) then
+   call STRING_split(TMP_bands_frozen_ch,TMP_bands_frozen_list)
+   ib1=1
+   do ib2=TMP_bands(1),TMP_bands(2)
+     !write(*,*) ib1,ib2,trim(intc(ib2))," ",trim(TMP_bands_frozen_list(ib1)),&
+     !&                  trim(intc(ib2))==trim(TMP_bands_frozen_list(ib1))
+     if( .not. trim(intc(ib2))==trim(TMP_bands_frozen_list(ib1)) ) cycle
+     TMP_bands_frozen(ib2-TMP_bands(1)+1)=1
+     ib1=ib1+1
+   enddo
+ endif
+ !
+end subroutine LEVELS_frozen_local

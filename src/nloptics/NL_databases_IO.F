@@ -9,7 +9,7 @@ subroutine NL_databases_IO(i_f,read_or_write)
  !
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:REP,OP_WR_CL,VERIFY,OP_APP_CL,OP_RD_CL         
- use nl_optics,     ONLY:ID
+ use nl_optics,     ONLY:ID,NL_P_t
  use parallel_m,    ONLY:master_cpu
  !
  implicit none

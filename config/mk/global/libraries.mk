@@ -12,7 +12,11 @@ ifeq ($(wildcard config/mk/global/defs.mk),config/mk/global/defs.mk)
 endif
 include lib/archive/package.list
 #
-INT_LIBS      = qe_pseudo slatec math77 local
+ifeq ($(do_magma_fmodules),yes)
+  INT_LIBS = qe_pseudo slatec math77 local magma_fmodules
+else
+  INT_LIBS      = qe_pseudo slatec math77 local
+endif
 YAMBO_INT_LIBS= Yio 
 YLIBIO        = modules Yio
 YLIBIO_LD     = $(YLIBIO)
@@ -22,14 +26,14 @@ YLIBIO_LD     = $(YLIBIO)
 #
 BASIC_LIBS   = driver tools modules memory allocations matrices linear_algebra parallel parser communicate output common timing Yio io $(IO_MODE) \
                xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
-BASIC_LIBS_LD= driver tools memory allocations communicate modules matrices linear_algebra bz_ops parallel parser output common timing Yio io $(IO_MODE) \
+BASIC_LIBS_LD= driver tools memory allocations communicate modules matrices linear_algebra Yio io $(IO_MODE) common bz_ops parallel parser output timing \
                xc_functionals interface stop_and_restart wf_and_fft coulomb
 
 MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse
 MAIN_LIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse
 
-PJ_PHLIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function el-ph qp acfdt bse
-PJ_PHLIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_function el-ph qp acfdt bse
+PJ_PHLIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function el-ph exc-ph qp acfdt bse
+PJ_PHLIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_function el-ph bse exc-ph qp acfdt
 
 PJ_SCLIBS    = $(MAIN_LIBS) collisions hamiltonian sc
 PJ_SCLIBS_LD = $(MAIN_LIBS_LD) hamiltonian collisions sc
@@ -80,10 +84,10 @@ YPPNL_LIBS_LD      = $(YPPRT_LIBS_LD)
 #
 YPP_MAIN_LIBS      = $(BASIC_LIBS) interpolate qp_control setup interface tddft dipoles pol_function qp bse
 YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) interpolate qp_control setup interface tddft dipoles pol_function qp bse
+YPPPH_MAIN_LIBS    = $(YPP_MAIN_LIBS) el-ph exc-ph
+YPPPH_MAIN_LIBS_LD = $(YPP_MAIN_LIBS_LD) el-ph exc-ph
 YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) collisions hamiltonian sc
 YPPSC_MAIN_LIBS_LD = $(YPP_MAIN_LIBS_LD) collisions hamiltonian sc
-YPPPH_MAIN_LIBS    = $(YPP_MAIN_LIBS)
-YPPPH_MAIN_LIBS_LD = $(YPP_MAIN_LIBS_LD)
 YPPRT_MAIN_LIBS    = $(BASIC_LIBS) real_time_control interpolate qp_control setup interface \
                      dipoles pol_function qp bse collisions hamiltonian 
 YPPRT_MAIN_LIBS_LD = $(BASIC_LIBS_LD) real_time_control interpolate qp_control setup interface \

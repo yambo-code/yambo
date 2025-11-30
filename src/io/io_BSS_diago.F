@@ -7,7 +7,7 @@
 !
 integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
 &                             bsL_magn,bsR_magn,bsL_kerr,bsR_kerr,bsR_dich,&
-&                             bsR_pl,BS_mat,write_ev)
+&                             bsR_mespin,bsR_meorb,bsR_pl,BS_mat,write_ev)
  !
  use pars,          ONLY:SP,schlen,IP
  use stderr,        ONLY:intc
@@ -22,12 +22,13 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  !
  implicit none
  !
- type(X_t),intent(in)        :: X_static
+ type(X_t),intent(inout)        :: X_static
  integer                        :: iq,ID,i_BS_mat
  complex(SP)        , optional  :: bsE(:)
  real(SP)   ,pointer, optional  :: BsE_corr(:,:),bsR_pl(:,:)
  complex(SP),pointer, optional  :: bsL_kerr(:),bsR_kerr(:),bsR_dich(:,:),&
-&                                  bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
+&                                  bsR_mespin(:,:),bsR_meorb(:,:),bsL_magn(:,:),&
+&                                  bsR_magn(:,:),bsRl(:),bsRr(:)
  complex(SP)        , optional  :: BS_mat(:,:)
  logical, optional              :: write_ev
  !
@@ -140,6 +141,20 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
      if(associated(bsR_dich)) then
        call io_bulk(ID,'BS_DICH_Residuals',VAR_SZ=(/2,BSS_n_eig,2/))
        call io_bulk(ID,C2=bsR_dich)
+     endif
+   endif
+   !
+   if(present(bsR_mespin)) then
+     if(associated(bsR_mespin)) then
+       call io_bulk(ID,'BS_MEspin_Residuals',VAR_SZ=(/2,BSS_n_eig,2/))
+       call io_bulk(ID,C2=bsR_mespin)
+     endif
+   endif
+   !
+   if(present(bsR_meorb)) then
+     if(associated(bsR_meorb)) then
+       call io_bulk(ID,'BS_MEorb_Residuals',VAR_SZ=(/2,BSS_n_eig,2/))
+       call io_bulk(ID,C2=bsR_meorb)
      endif
    endif
    !

@@ -5,14 +5,19 @@
 !
 ! Authors (see AUTHORS file for details): MB, AF
 !
+! headers
+!
+#include <y_memory.h>
+!
 subroutine MPA_ALLOC_parallel(MPA_E_par,MPA_R_par,NG,NW,mode)
   !
   use pars,          ONLY:SP,DP,cZERO,cONE,cI
   use matrix,        ONLY:MATRIX_reset,PAR_matrix
   use parallel_int,  ONLY:PARALLEL_live_message
   use gpu_m,         ONLY:have_gpu
+  use y_memory_alloc
   !
-#include <y_memory.h>
+  implicit none
   !
   type(PAR_matrix) :: MPA_E_par,MPA_R_par
   integer          :: NG,NW
@@ -30,7 +35,6 @@ subroutine MPA_ALLOC_parallel(MPA_E_par,MPA_R_par,NG,NW,mode)
   !
   ! Type of allocation....
   !
-  !l_XUP      = index(mode,"XUP")>0
   l_CPU_ONLY = index(mode,"CPU_ONLY")>0
   !
   ! Initialization

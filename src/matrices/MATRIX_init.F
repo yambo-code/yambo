@@ -5,6 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include <dev_defs.h>
+#include <y_memory.h>
+!
 subroutine MATRIX_init( what, M_par, N, Nb)
  !
  ! I initialize a general parallel matrix here. Note the meaning of the two COMMS: INTRA and INTER.
@@ -21,8 +26,9 @@ subroutine MATRIX_init( what, M_par, N, Nb)
  use matrix,         ONLY:PAR_matrix,MATRIX_reset
  use parallel_m,     ONLY:COMM_copy,PAR_COM_SLK,PAR_COM_SLK_INDEX_local,&
 &                         PAR_COM_RL_INDEX,PAR_COM_RL_A2A,ncpu
-#include <dev_defs.h>
-#include <y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  character(*)           :: what
  type(PAR_matrix)       :: M_par
@@ -31,9 +37,7 @@ subroutine MATRIX_init( what, M_par, N, Nb)
  ! Work Space
  !
  integer              :: M,i_c,N_rows
- integer, allocatable :: rows(:,:),cols(:,:)
  !
- call MATRIX_reset(M_par)
  !DEV_ACC enter data copyin(M_par)
  !
  ! COMMs
@@ -41,7 +45,7 @@ subroutine MATRIX_init( what, M_par, N, Nb)
  if (what=="SLK") then
    call COMM_copy(PAR_COM_SLK_INDEX_local, M_par%INTRA_comm)
    call COMM_copy(PAR_COM_SLK,             M_par%INTER_comm)
- else if (what=="XUP".or.what=="XDN".or.what=="X".or.what=="MPA") then
+ else if (what=="X".or.what=="MPA") then
    call COMM_copy(PAR_COM_RL_A2A,   M_par%INTRA_comm)
    call COMM_copy(PAR_COM_RL_INDEX, M_par%INTER_comm)
  endif
@@ -68,34 +72,7 @@ subroutine MATRIX_init( what, M_par, N, Nb)
  endif
 #endif
  !
- ! Response function. Only upper triangle is distributed.
- !
- if (what=="XUP") then
-   !
-   allocate(rows(M_par%INTER_comm%n_CPU,2))
-   allocate(cols(M_par%INTER_comm%n_CPU,2))
-   M_par%kind="XUP"
-   M= ( (N**2-N)/2 + N )/M_par%INTER_comm%n_CPU
-   cols(1,:)=(/1,N/)
-   rows(1,:)=(/1,UPPER_solver(N)/)
-   do i_c=2,M_par%INTER_comm%n_CPU
-     cols(i_c,:)=(/rows(i_c-1,2)+1,N/)
-     N_rows=UPPER_solver( cols(i_c,2)- cols(i_c,1)+1 )
-     rows(i_c,:)=rows(i_c-1,2)+(/1,N_rows/)
-     if (N_rows==0) rows(i_c,2)=N
-   enddo
-   M_par%I     = 1
-   M_par%Nb    = Nb
-   M_par%N     = N
-   M_par%rows  = rows(M_par%INTER_comm%CPU_id+1,:)
-   M_par%cols  = cols(M_par%INTER_comm%CPU_id+1,:)
-   call rows_and_cols_setup()
-   deallocate(rows,cols)
-   return
-   !
- endif
- !
- ! Entire Matrix
+ ! Response function. Entire Matrix
  !
  if (what=="X".or.what=="PAR".or.what=="MPA") then
    !
@@ -122,11 +99,5 @@ subroutine MATRIX_init( what, M_par, N, Nb)
      M_par%BLCrows  = M_par%rows
      M_par%BLCcols  = M_par%cols
    end subroutine
-   !
-   integer function UPPER_solver(N)
-     integer :: N
-     UPPER_solver=nint( (real(N,SP)+.5_SP)-sqrt( (real(N)+0.5_SP)**2 - 2._SP*real(M,SP) ) )+1
-     if (  (real(N,SP)+.5_SP)**2 - 2._SP*real(M,SP) < 0 ) UPPER_solver=0
-   end function
    !
 end subroutine

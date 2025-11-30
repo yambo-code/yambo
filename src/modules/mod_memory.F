@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<dev_defs.h>
+!
 module y_memory
  !
  use pars,          ONLY:SP,schlen,IP,IPL,DP,LP,SP6,N_MEM_max,N_MEM_SAVE_max,&
@@ -12,7 +16,6 @@ module y_memory
  use openmp,        ONLY:master_thread
  use iso_c_binding, ONLY:c_int
  !
-#include<dev_defs.h>
  !
  implicit none
  !
@@ -156,7 +159,7 @@ module y_memory
    !
    character(schlen) function mem_string(MEM,where)
      use stderr,       ONLY:intc,real2ch
-     integer :: MEM !in Kb
+     real(SP)          :: MEM !in Kb
      integer, optional :: where
      !
      character(64) :: where_str
@@ -167,12 +170,12 @@ module y_memory
        if (where==DEV_)  where_str="  Dev"
      endif
      !
-     if (MEM<1000) then
-       mem_string=trim(real2ch(real(MEM,SP)))//" [Kb]"
-     else if (MEM<1000000) then
-       mem_string=trim(real2ch(real(MEM,SP)/1000))//" [Mb]"
+     if (MEM<1000._SP) then
+       mem_string=trim(real2ch(MEM))//" [Kb]"
+     else if (MEM<1000000._SP) then
+       mem_string=trim(real2ch(MEM/1000._SP))//" [Mb]"
      else
-       mem_string=trim(real2ch(real(MEM,SP)/1000000))//" [Gb]"
+       mem_string=trim(real2ch(MEM/1000000._SP))//" [Gb]"
      endif
      mem_string=trim(mem_string)//trim(where_str)
    end function
@@ -556,3 +559,15 @@ module y_memory
      call MEM_manager_alloc(name,size(l,KIND=IPL),kind(l(1,1,1,1,1,1)),HOST_)
    end subroutine
 end module y_memory
+
+
+module y_memory_alloc
+#if defined _OPENACC || defined _OPENMP_GPU
+ use pars,         ONLY:IPL
+ use y_memory,     ONLY:MEM_err,MEM_msg,MEM_count,MEM_count_d,MEM_global_mesg,IPL
+ use devxlib,      ONLY:devxlib_map,devxlib_unmap,devxlib_mapped,devxlib_memcpy_h2d
+#else
+ use pars,         ONLY:IPL
+ use y_memory,     ONLY:MEM_err,MEM_msg,MEM_count,MEM_global_mesg
+#endif
+end module y_memory_alloc

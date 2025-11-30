@@ -5,28 +5,32 @@
 !
 ! Authors (see AUTHORS file for details): DS AF
 !
+! headers
+!
+#include<yambo_wfs.h>
+!
 subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
  !
  ! INCLUDED in: WF_apply_symm_incl.F 
  !
  use pars,          ONLY:SP
- use wave_func,     ONLY:WF
+ use wave_func,     ONLY:WF,rho_map_size,rho_map,rho_map_inv
  use FFT_m,         ONLY:DEV_VAR(fft_rot_r),fft_size
  use stderr,        ONLY:intc
  use parallel_m,    ONLY:myid
  use electrons,     ONLY:n_spinor
  use D_lattice,     ONLY:nsym,DEV_VAR(spin_sop),i_time_rev,idt_index
- use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_conjg_d
+ use devxlib,       ONLY:devxlib_conjg_d !,devxlib_memcpy_d2d
  !
  implicit none
  !
  integer,     intent(in)  :: isc(4)
- complex(SP), intent(out) DEV_ATTR :: WF_symm(fft_size,n_spinor)
+ complex(SP), intent(out) DEV_ATTR :: WF_symm(rho_map_size,n_spinor)
  !
- complex(SP), pointer     DEV_ATTR :: WF_p(:,:,:)
+ WF_RSPACE(SP), pointer     DEV_ATTR :: WF_p(:,:)
  integer  :: i_wf
- integer  :: ifft,isymm
-
+ integer  :: ifft,ifftp,isymm,i_spinor
+ !
  i_wf=WF%index(isc(1),isc(2),isc(4))
  !
 #if defined _MPI
@@ -35,53 +39,101 @@ subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
 &                         ' ID'//trim(intc(myid)))
 #endif
  !
- WF_p => DEV_VAR(WF%c)
+ WF_p => DEV_VAR(WF%r)(:,:,i_wf)
  isymm = isc(3)
  !
  if(isc(3)==idt_index) then
    !
-   ! dev2dev copy
-#ifdef _GPU_LOC   
-   call devxlib_memcpy_d2d(WF_symm,DEV_VAR(WF%c)(:,:,i_wf))
-#else
-   WF_symm=WF%c(:,:,i_wf)
-#endif
+   ! 2025/11/04
+   ! In GAMMA ONLY mode WF_p is real and I cannot use the casting
+   ! inside the call to dexlib_memcpy_d2d.
+   ! To simplify the code (i.e. to avoid defined _GAMMA & _CUDA nested if)
+   ! I do an explicit loop. To check the efficiency compared to
+   ! call devxlib_memcpy_d2d(WF_symm,WF_p) 
+   !
+   !DEV_ACC_DEBUG data present(WF_p,WF_symm)
+   !DEV_ACC parallel loop
+   !DEV_CUF kernel do(2) <<<*,*>>>
+   !DEV_OMPGPU target map(present,alloc:WF_p,WF_symm)
+   !DEV_OMPGPU teams loop
+   !DEV_OMP parallel do default(shared), private(ifft,i_spinor)
+   do i_spinor = 1, n_spinor
+     do ifft = 1, fft_size
+       WF_symm(ifft,i_spinor)=cmplx(WF_p(ifft,i_spinor),kind=SP)
+     enddo
+   enddo
+   !DEV_OMPGPU end target
+   !DEV_ACC_DEBUG end data
+   !
    return
    !
  endif
  !
+#ifdef _GPU_LOC
+ if (allocated(rho_map)) call error(" rho map procedure not implemented with symmetries and cuda")
+#endif
+ !
  if(n_spinor==1) then
    !
-   !DEV_ACC_DEBUG data present(WF_p,WF_symm,fft_rot_r)
-   !DEV_ACC parallel loop
-   !DEV_CUF kernel do(1) <<<*,*>>>
-   !DEV_OMPGPU target map(present,alloc:WF_p,WF_symm,fft_rot_r)
-   !DEV_OMPGPU teams loop
-   !DEV_OMP parallel do default(shared), private(ifft)
-   do ifft = 1, fft_size
-     WF_symm(ifft,1)=WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),1,i_wf)
-   enddo
-   !DEV_OMPGPU end target
-   !DEV_ACC_DEBUG end data
+#if !defined _GPU_LOC
+   if (allocated(rho_map)) then
+     !$omp parallel do default(shared), private(ifft,ifftp)
+     do ifft = 1, rho_map_size
+       ifftp=rho_map_inv(DEV_VAR(fft_rot_r)(rho_map(ifft),isymm))
+       WF_symm(ifft,1)=cmplx(WF_p(ifftp,1),kind=SP)
+     enddo
+   else
+#endif
+     !DEV_ACC_DEBUG data present(WF_p,WF_symm,fft_rot_r)
+     !DEV_ACC parallel loop
+     !DEV_CUF kernel do(1) <<<*,*>>>
+     !DEV_OMPGPU target map(present,alloc:WF_p,WF_symm,fft_rot_r)
+     !DEV_OMPGPU teams loop
+     !DEV_OMP parallel do default(shared), private(ifft,ifftp)
+     do ifft = 1, fft_size
+       ifftp=DEV_VAR(fft_rot_r)(ifft,isymm)
+       WF_symm(ifft,1)=cmplx(WF_p(ifftp,1),kind=SP)
+     enddo
+     !DEV_OMPGPU end target
+     !DEV_ACC_DEBUG end data
+#if !defined _GPU_LOC
+   endif
+#endif
    !
  endif
  !
  if (n_spinor==2) then
    !
-   !DEV_ACC_DEBUG data present(WF_p,WF_symm,fft_rot_r,spin_sop)
-   !DEV_ACC parallel loop
-   !DEV_CUF kernel do(1) <<<*,*>>>
-   !DEV_OMPGPU target map(present,alloc:WF_p,WF_symm,fft_rot_r,spin_sop)
-   !DEV_OMPGPU teams loop
-   !DEV_OMP parallel do default(shared), private(ifft)
-   do ifft = 1, fft_size
-     WF_symm(ifft,1)=DEV_VAR(spin_sop)(1,1,isymm)*WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),1,i_wf)+ &
-                     DEV_VAR(spin_sop)(1,2,isymm)*WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),2,i_wf)
-     WF_symm(ifft,2)=DEV_VAR(spin_sop)(2,1,isymm)*WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),1,i_wf)+ &
-                     DEV_VAR(spin_sop)(2,2,isymm)*WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),2,i_wf)
-   enddo
-   !DEV_OMPGPU end target
-   !DEV_ACC_DEBUG end data
+#if !defined _GPU_LOC
+   if (allocated(rho_map)) then
+     !$omp parallel do default(shared), private(ifft,ifftp)
+     do ifft = 1, rho_map_size
+       ifftp=rho_map_inv(DEV_VAR(fft_rot_r)(rho_map(ifft),isymm))
+       WF_symm(ifft,1)=DEV_VAR(spin_sop)(1,1,isymm)*WF_p(ifftp,1)+ &
+                       DEV_VAR(spin_sop)(1,2,isymm)*WF_p(ifftp,2)
+       WF_symm(ifft,2)=DEV_VAR(spin_sop)(2,1,isymm)*WF_p(ifftp,1)+ &
+                       DEV_VAR(spin_sop)(2,2,isymm)*WF_p(ifftp,2)
+     enddo
+   else
+#endif
+     !DEV_ACC_DEBUG data present(WF_p,WF_symm,fft_rot_r,spin_sop)
+     !DEV_ACC parallel loop
+     !DEV_CUF kernel do(1) <<<*,*>>>
+     !DEV_OMPGPU target map(present,alloc:WF_p,WF_symm,fft_rot_r,spin_sop)
+     !DEV_OMPGPU teams loop
+     !DEV_OMP parallel do default(shared), private(ifft,ifftp)
+     do ifft = 1, fft_size
+       ifftp=DEV_VAR(fft_rot_r)(ifft,isymm)
+       WF_symm(ifft,1)=DEV_VAR(spin_sop)(1,1,isymm)*WF_p(ifftp,1)+ &
+                       DEV_VAR(spin_sop)(1,2,isymm)*WF_p(ifftp,2)
+       WF_symm(ifft,2)=DEV_VAR(spin_sop)(2,1,isymm)*WF_p(ifftp,1)+ &
+                       DEV_VAR(spin_sop)(2,2,isymm)*WF_p(ifftp,2)
+     enddo
+     !DEV_OMPGPU end target
+     !DEV_ACC_DEBUG end data
+#if !defined _GPU_LOC
+   endif
+#endif
    !
  endif
  !

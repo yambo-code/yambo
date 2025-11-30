@@ -23,6 +23,7 @@ function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
  !
  use pars,           ONLY:SP,pi,cZERO
  use FFT_m,          ONLY:fft_size
+ use wave_func,      ONLY:rho_map_size,rho_map
  use xc_functionals, ONLY:F_xc_mat
  use BS,             ONLY:l_BS_magnons
  use wrapper_omp,    ONLY:V_dot_V_omp
@@ -41,7 +42,8 @@ function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
  ! 
  ! Work Space
  !
- integer     :: i_spinor,j_spinor,ip_spinor,jp_spinor,ifft,irhotw,&
+ logical     :: l_use_rho_map
+ integer     :: i_spinor,j_spinor,ip_spinor,jp_spinor,ifft,irho,irhotw,&
  &              is_yambo,os_yambo,i_spinor_y,j_spinor_y,isp_loc(4),osp_loc(4)
  !
  complex(SP), pointer :: rhotwr1_p(:)
@@ -68,6 +70,7 @@ function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
  rhotwr2_p =cZERO
  !
  ! Use pointers both for CUDA and to avoid continuous allocation and de-allocation
+ l_use_rho_map=allocated(rho_map)
  !
  !
  call WF_apply_symm(is,WF_symm1_p)
@@ -78,9 +81,9 @@ function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
  if(n_spinor==2) then
    do i_spinor=1,n_spinor
      do j_spinor=1,n_spinor
-       do ifft=1,fft_size
-         irhotw=ifft+(i_spinor-1)*fft_size+(j_spinor-1)*n_spinor*fft_size
-         rhotwr1_p(irhotw)=conjg(WF_symm1_p(ifft,i_spinor))*WF_symm2_p(ifft,j_spinor)
+       do irho=1,rho_map_size
+         irhotw=irho+(i_spinor-1)*rho_map_size+(j_spinor-1)*n_spinor*rho_map_size
+         rhotwr1_p(irhotw)=conjg(WF_symm1_p(irho,i_spinor))*WF_symm2_p(irho,j_spinor)
        enddo
      enddo
    enddo
@@ -99,7 +102,8 @@ function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
  call WF_apply_symm(osp_loc,WF_symm2_p)
  !
  if( n_spin==1 ) then
-   rhotwr2_p(:)=F_xc_mat(:,1,1,1,1)*WF_symm1_p(:,1)*conjg(WF_symm2_p(:,1))
+   if (     l_use_rho_map) rhotwr2_p(:)=F_xc_mat(rho_map(:),1,1,1,1)*WF_symm1_p(:,1)*conjg(WF_symm2_p(:,1))
+   if (.not.l_use_rho_map) rhotwr2_p(:)=F_xc_mat(:,1,1,1,1)*WF_symm1_p(:,1)*conjg(WF_symm2_p(:,1))
  endif
  !
  if(n_sp_pol==2) then
@@ -111,7 +115,8 @@ function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
    is_yambo=os(4)
    os_yambo=is(4)
    ! To check/fix the spinorial version 
-   rhotwr2_p(:)=F_xc_mat(:,is_yambo,os_yambo,isp(4),osp(4))*WF_symm1_p(:,1)*conjg(WF_symm2_p(:,1))
+   if (     l_use_rho_map) rhotwr2_p(:)=F_xc_mat(rho_map(:),is_yambo,os_yambo,isp(4),osp(4))*WF_symm1_p(:,1)*conjg(WF_symm2_p(:,1))
+   if (.not.l_use_rho_map) rhotwr2_p(:)=F_xc_mat(:,is_yambo,os_yambo,isp(4),osp(4))*WF_symm1_p(:,1)*conjg(WF_symm2_p(:,1))
  endif
  !
  if(n_spinor==2) then
@@ -122,12 +127,22 @@ function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
        j_spinor_y=i_spinor
        do ip_spinor=1,n_spinor
          do jp_spinor=1,n_spinor
-           do ifft=1,fft_size
-             irhotw=ifft+(i_spinor-1)*fft_size+(j_spinor-1)*n_spinor*fft_size
-             rhotwr2_p(irhotw)=rhotwr2_p(irhotw)+                        &
-             & F_xc_mat(ifft,i_spinor_y,j_spinor_y,ip_spinor,jp_spinor)* &
-             & WF_symm1_p(ifft,ip_spinor)*conjg(WF_symm2_p(ifft,jp_spinor))
-           enddo
+           if(     l_use_rho_map) then
+             do irho=1,rho_map_size
+               ifft=rho_map(irho)
+               irhotw=irho+(i_spinor-1)*rho_map_size+(j_spinor-1)*n_spinor*rho_map_size
+               rhotwr2_p(irhotw)=rhotwr2_p(irhotw)+                        &
+               & F_xc_mat(ifft,i_spinor_y,j_spinor_y,ip_spinor,jp_spinor)* &
+               & WF_symm1_p(irho,ip_spinor)*conjg(WF_symm2_p(irho,jp_spinor))
+             enddo
+           else
+             do ifft=1,rho_map_size
+               irhotw=ifft+(i_spinor-1)*rho_map_size+(j_spinor-1)*n_spinor*rho_map_size
+               rhotwr2_p(irhotw)=rhotwr2_p(irhotw)+                        &
+               & F_xc_mat(ifft,i_spinor_y,j_spinor_y,ip_spinor,jp_spinor)* &
+               & WF_symm1_p(irho,ip_spinor)*conjg(WF_symm2_p(irho,jp_spinor))
+             enddo
+           endif
          enddo
        enddo
      enddo
@@ -136,7 +151,7 @@ function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
  !
  ! SUM
  !=====
- H_x=V_dot_V_omp(fft_size*n_spinor*n_spinor,rhotwr1_p,rhotwr2_p)
+ H_x=V_dot_V_omp(rho_map_size*n_spinor*n_spinor,rhotwr1_p,rhotwr2_p)
  !
  ! tddft_alda_r_space should be mutiplied by X, it is mutiplied by Co in K
  ! X  = fft_size*spin_occ/DL_vol/Nq 

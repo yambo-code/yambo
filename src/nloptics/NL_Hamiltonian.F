@@ -5,11 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
-subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
+subroutine NL_Hamiltonian(E,k,q,X,Time,V_bands)
  !
  ! The subroutine calculate Ho + V + Sigma and the fields E_tot, E_ext, E_ks
  !
- !   H_k=Ho_k+U_k+ V_k^H-V_k^H[rho_ref]+V_xc[rho]
+ !   H_k=Ho_k+U_k+ V_k^H[rho]-V_k^H[rho_ref]+V_xc[rho]
  !                                        
  use pars,           ONLY:SP,cZERO,pi,cONE
  use units,          ONLY:SPEED_OF_LIGHT
@@ -22,12 +22,12 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use X_m,            ONLY:global_gauge,X_t
  use fields,         ONLY:A_ext,A_tot,Efield
  use real_time,      ONLY:eval_DFT,eval_HARTREE,l_RT_induced_Field,rho_reference,&
-&                         Ho_plus_Sigma,RT_Vnl_xc,RT_nbands         
+&                         Ho_plus_Sigma,RT_Vnl_xc,RT_nbands,dG_lesser
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
-&                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG, & 
-&                         NL_bands,VAL_BANDS,NL_P,LSEX,LHF,Wk_EQ
+&                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,eval_dG, & 
+&                         NL_bands,VAL_BANDS,NL_P,LSEX,LHF
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_Xk_ibz_index
  use wrapper_omp,    ONLY:M_plus_alpha_M_omp
@@ -44,7 +44,6 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  real(SP),      intent(in)    :: Time
  type(X_t),     intent(in)    :: X
  complex(SP),   intent(in)    :: V_bands(NL_bands(2),maxval(E%nbf),QP_nk,n_sp_pol)
- integer,       intent(in)    :: i_time
  !
  ! Working Space
  !
@@ -89,7 +88,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !
  ! Evaluate the G_lesser for current/polarization and collisions
  ! ======================================================
- if(eval_dG)              call NL_build_dG_lesser(E,V_bands,dG)
+ if(eval_dG) call NL_build_dG_lesser(E,V_bands,dG_lesser)
  !
  ! Evaluate the Polarization 
  ! ===================================================================
@@ -117,7 +116,9 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !
  call RT_Ext_fields_sum(A_ext,Time)
  !
- A_tot=A_ext
+ A_tot%vecpot    =A_ext%vecpot    
+ A_tot%vecpot_vel=A_ext%vecpot_vel
+ A_tot%vecpot_acc=A_ext%vecpot_acc
  !
  E_ext=-A_ext%vecpot_vel/SPEED_OF_LIGHT
  !
@@ -138,7 +139,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
       !This can be calculated once for each frequency, but I did not want to mess up NL_driver (MG)
       alpha_ = NL_LRC_alpha 
       if (Efield(1)%ef_name=='SOFTSIN'.or.Efield(1)%ef_name=='SIN') &
-      &     alpha_  = Alpha_ED(E,Efield(1)%frequency(1))
+      &     alpha_  = Alpha_ED(E,Efield(1)%frequency)
            E_vec_pot=E_vec_pot + alpha_*NL_P(1:3)
       !
     elseif(Correlation==LRC) then
@@ -163,17 +164,17 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
     !
  endif
  !
- ! Calculate collisions
- ! =======================================
- if(l_use_Hxc_collisions) call COLLISIONS_compose_nl(dG)
+ ! Calculate collisions if doing TD-SEX or TD-HF
+ ! =============================================
+ if(l_use_Hxc_collisions) call COLLISIONS_compose_nl(dG_lesser)
  !
  ! Build the Hamiltonian
  ! =====================
  !
-!$OMP WORKSHARE  
+!$OMP PARALLEL WORKSHARE  
  Ho_plus_Sigma=cZERO
  I_relax      =cZERO
-!$OMP END WORKSHARE 
+!$OMP END PARALLEL WORKSHARE 
  !
  do i_sp_pol=1,n_sp_pol
   do ik=1,QP_nk
@@ -215,22 +216,13 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    else
      !
      ! Use Sm1_plus, Sm1_minus and V_bands to build the W operator
-     ! I split the W(E)*E operator as:
-     ! W(0)*E+[W(E)-W(0)]*E
-     ! becasue W(0) is at Equilibrium and can by symmetrized easily
      ! 
      call Build_W_operator(E,k,ik,i_sp_pol,V_bands(:,:E%nbf(i_sp_pol),:,i_sp_pol),Wk)
-     if(allocated(Wk_EQ)) then
-       !  This part of the operator is symmetriezed before the dynamics
-       call Apply_W_field(A_tot,Wk-Wk_EQ(:,:,:,i_sp_pol,ik_mem),H_nl_sc)
-       call RT_Apply_field(ik,i_sp_pol,H_nl_sc,A_tot)
-     else
-       call Apply_W_field(A_tot,Wk,H_nl_sc)
-     endif
+     call Apply_W_field(A_tot,Wk,H_nl_sc)
      !
    endif                                                         
    !
-!   if(Correlation==LSEX.or.Correlation==LHF) call OSCLL_compose_nl(dG,H_nl_sc,k,q,E,ik,i_sp_pol)
+!   if(Correlation==LSEX.or.Correlation==LHF) call OSCLL_compose_nl(dG_lesser,H_nl_sc,k,q,E,ik,i_sp_pol)
    if(Correlation==LSEX.or.Correlation==LHF) call OSCLL_compose_vbands(V_bands,H_nl_sc,k,q,E,ik,i_sp_pol)
    !
    if(l_use_Hxc_collisions) then
@@ -240,7 +232,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
    ! Damping: NL_damping fills the I_relax matrix 
    ! ================================================
-   call NL_damping(E,ik,i_sp_pol,V_bands(:,:E%nbf(i_sp_pol),ik,i_sp_pol))
+   call NL_damping(E,ik,i_sp_pol,dG_lesser,I_relax)
    !
    ! Store the Hamiltonian
    ! =====================

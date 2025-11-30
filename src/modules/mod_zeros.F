@@ -55,9 +55,13 @@ module zeros
        allocate(tmp_arr(size(vector_,1)))
        do ic=1,3
          if (allocated(vector_rlu)) then
-           forall(i1=1:nv) tmp_arr(i1)=abs(vector_rlu(i1,ic))
+           do i1=1,nv 
+             tmp_arr(i1)=abs(vector_rlu(i1,ic))
+           enddo
          else
-           forall(i1=1:nv) tmp_arr(i1)=abs(vector_(i1,ic))
+           do i1=1,nv 
+             tmp_arr(i1)=abs(vector_(i1,ic))
+           enddo
          endif
          call sort(tmp_arr)
          zero_(ic)=zero_dfl

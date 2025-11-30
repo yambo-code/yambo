@@ -23,6 +23,8 @@
  OCCUPATIONS_Extend_Double_Grid.o
  OCCUPATIONS_Fermi.o
  OCCUPATIONS_Gaps.o
+ OCCUPATIONS_Merge.o
+ OCCUPATIONS_Quasi_Fermi.o
  QP_state_group.o
  QP_state_print.o
  QPartilize.o
@@ -30,7 +32,6 @@
  crystal_lattice.o
  eval_G_minus_G.o
  eval_Gradient.o
- eval_Gradient_cpu.o
  eval_Gradient_gpu.o
  f_build_ext.o
  spline_fit.o

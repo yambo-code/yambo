@@ -5,7 +5,12 @@
 !
 ! Authors (see AUTHORS file for details): AM HM DS
 !
-subroutine K_blocks( )
+! headers
+!
+#include<y_memory.h>
+#include<parallel_memory.h>
+!
+subroutine K_blocks(iq)
  !
  ! Create and Fill the BSK blocks
  !
@@ -26,16 +31,20 @@ subroutine K_blocks( )
 &                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim,n_BS_blks_min,&
 &                       BS_n_eh_spaces,BS_res_ares_n_mat,BS_IO_dim,l_BS_ares_from_res
  use com,          ONLY:msg
+ use y_memory_alloc
+ use y_memory_alloc_par
  !
-#include<parallel_memory.h>
+ implicit none
+ !
+ integer, intent(in)      :: iq
  !
  complex(SP), allocatable :: BS_MAT(:)
  !
  ! Work Space
  !
- integer(IPL) :: TMP_SIZE
+ integer(IPL) :: TMP_SIZE(1)
  integer      :: i_T,j_T,i_T_start,j_T_start,i_block,diag_size,iB
- integer      :: i_res_ares,j_res_ares,n_new_blocks,n_BS_blks_CPUs(ncpu)
+ integer      :: i_res_ares,j_res_ares,n_blocks_per_grp,n_BS_blks_CPUs(ncpu)
  integer(IPL) :: local_steps
  real(SP)     :: N_Ts_total,N_Ts_local
  !
@@ -43,8 +52,8 @@ subroutine K_blocks( )
  ! and the anti-res block can be derived from the res. In this case
  ! only the resonant transitions are included and we need for each pair 2 blocks
  !
- n_new_blocks=1
- if (BS_K_coupling.and.l_BS_ares_from_res) n_new_blocks=2
+ n_blocks_per_grp=1
+ if (BS_K_coupling.and.l_BS_ares_from_res.and.iq==1) n_blocks_per_grp=2
  !
  ! Count the blocks
  n_BS_blks=0
@@ -53,10 +62,15 @@ subroutine K_blocks( )
      !
      i_res_ares=BS_T_grp(i_T)%i_res_ares
      j_res_ares=BS_T_grp(j_T)%i_res_ares
+     !
+     ! Without coupling only R (and A if not l_BS_ares_from_res) are computed
      if((.not.BS_K_coupling) .and. i_res_ares/=j_res_ares) cycle
      !
+     ! With coupling and l_BS_ares_from_res only A and C are computed
+     if (l_BS_ares_from_res.and.i_res_ares>1) cycle
+     !
      if (.not.PAR_IND_T_ordered%element_2D(i_T,j_T)) cycle
-     n_BS_blks=n_BS_blks+n_new_blocks
+     n_BS_blks=n_BS_blks+n_blocks_per_grp
      !
    enddo
  enddo
@@ -78,18 +92,23 @@ subroutine K_blocks( )
      !
      i_res_ares=BS_T_grp(i_T)%i_res_ares
      j_res_ares=BS_T_grp(j_T)%i_res_ares
+     !
+     ! Without coupling only R (and A if not l_BS_ares_from_res) are computed
      if((.not.BS_K_coupling) .and. i_res_ares/=j_res_ares) cycle
+     !
+     ! With l_BS_ares_from_res only R (and C if coupling) are computed
+     if (l_BS_ares_from_res.and.i_res_ares>1) cycle
      !
      i_T_start=BS_T_grp(i_T)%i_T_ref
      j_T_start=BS_T_grp(j_T)%i_T_ref
      !
      if (.not.PAR_IND_T_ordered%element_2D(i_T,j_T)) cycle
      !
-     do i_block=1,n_new_blocks
+     do i_block=1,n_blocks_per_grp
        iB = n_BS_blks + i_block
        BS_blk(iB)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
        TMP_SIZE=TMP_SIZE+int(BS_T_grp(i_T)%size*BS_T_grp(j_T)%size,IPL)
-       if (l_BS_ares_from_res) then
+       if (l_BS_ares_from_res.and.BS_n_eh_spaces==1) then
          if (i_block==1) BS_blk(iB)%mode="R"
          if (i_block==2) BS_blk(iB)%mode="C"
        else
@@ -114,7 +133,7 @@ subroutine K_blocks( )
        BS_blk(iB)%coordinate=(/sum(BS_T_grp(i_T_start:i_T-1)%size)+1,sum(BS_T_grp(j_T_start:j_T-1)%size)+1/)
      enddo
      !
-     n_BS_blks=n_BS_blks+n_new_blocks
+     n_BS_blks=n_BS_blks+n_blocks_per_grp
      !
    enddo
  enddo
@@ -126,7 +145,7 @@ subroutine K_blocks( )
  !
  ! Allocate the blocks
  !
- YAMBO_PAR_ALLOC_CHECK1(BS_MAT,(/TMP_SIZE/))
+ YAMBO_PAR_ALLOC_CHECK1(BS_MAT,TMP_SIZE)
  !
  ! Live Timing Blocks
  !====================
@@ -154,7 +173,7 @@ subroutine K_blocks( )
  !
  call PARALLEL_live_message("Kernel matrix elements",ENVIRONMENT="Response_T_space",LOADED_r=N_Ts_local,TOTAL_r=N_Ts_total)
  !
-end subroutine
+end subroutine K_blocks
 !
 !
 subroutine K_block_alloc( iB, mode )
@@ -162,8 +181,9 @@ subroutine K_block_alloc( iB, mode )
  use pars,         ONLY:SP,cZERO
  use BS,           ONLY:BS_blk,l_BSE_kernel_complete
  use BS_solvers,   ONLY:BSS_kernel_IO_on_the_fly
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer, intent(in) :: iB
  character(*), intent(in) :: mode
@@ -193,8 +213,9 @@ subroutine K_block_free( iB, mode )
  !
  use BS,           ONLY:BS_blk,l_BSE_kernel_complete
  use BS_solvers,   ONLY:BSS_kernel_IO_on_the_fly
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer, intent(in) :: iB
  character(*), intent(in) :: mode

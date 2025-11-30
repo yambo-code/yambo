@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  ! 
  ! Calculates and stores on file the dielectric matrix.
@@ -32,8 +36,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  use interfaces,    ONLY:WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset,MATRIX_copy
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)  ::Xen 
  type(bz_samp) ::Xk,q
@@ -61,6 +66,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  ! Check if there is a Efield directions average to be done
  !
  call X_AVERAGE_setup("INIT",-1,X%q0)
+ !
+ ! Some check
+ !
+ if(X%ib(2)>Xen%nb) call warning("More bands required in X than available in the current SAVE.")
  !
  l_X_terminator = X_terminator_Kind/='none'
  if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') then
@@ -185,13 +194,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
      call FREQUENCIES_reset(Xw,"all")
      if (X%iq(1)==X%iq(2)) X_dielectric_matrix=X%iq(1)
      return
+   else
+     if(X%ib(2)>Xen%nb) call error("Too many bands required in X. Run DFT with more bands!") 
    endif
    !
  endif
- !
- ! Some check
- !
- if(X%ib(2)>Xen%nb) call error("Too many bands required in X. Run DFT with more bands!")
  !
  ! Parallel distribution
  !=======================
@@ -205,9 +212,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  if (.not.io_RESPONSE) X_MEM_n_tot_freqs=X_MEM_n_freqs*PAR_nQ_ibz
  if (.not.allocated(X_par)) then
    if (     io_RESPONSE) allocate(X_par(1))
-!#if !defined _PAR_IO
-!   if (     io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_tot_freqs/))
-!#endif
    if (.not.io_RESPONSE) allocate(X_par(PAR_nQ_ibz))
    if (.not.io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_tot_freqs/))
  endif
@@ -308,15 +312,12 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
      !
      call X_irredux(iq,"Xo"//trim(X_what),X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
      !
-     if (l_write_disk_Xo.and.n_OPTICAL_dir_to_eval==1) then
-       call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
-       call elemental_IO( iq , .TRUE. )
-     endif
-     !
      if (.not.l_rpa_IP) call X_redux(iq,"X"//trim(X_what),X_par(iq_mem),Xw,X)
      !
      if (n_OPTICAL_dir_to_eval>1.and.iq_dir==1) call MATRIX_copy(X_par(iq_mem),X_par_average,.TRUE.)
      if (n_OPTICAL_dir_to_eval>1)               call X_AVERAGE_do_it("ACCUMULATE",X_par(iq_mem))
+     !
+     if (iq_dir<n_OPTICAL_dir_to_eval.and.io_RESPONSE) call MATRIX_reset(X_par(1))
      !
    enddo
    !
@@ -325,32 +326,12 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
      call X_AVERAGE_setup("CLOSE",iq,X%q0)
    endif
    !
-   ! DS MERGE <
-   ! The following lines were after the call to X_redux and before the call to io_X before the merge
-   ! I moved them here after the merge
-   !
-   ! allocation of X_mat
-   if (io_RESPONSE.and..not.allocated(X_mat)) then
-#if ! defined _PAR_IO
-     call X_ALLOC_elemental('X',(/X%ng,X%ng,Xw%n_freqs/))
-#endif
-   endif
-   !
-   ! DS MERGE >
-   !
-   ! X_par => X_mat
+   ! X_par => X_mat : this is needed when the I/O is off
    !
    call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
    !
    call elemental_IO( iq , .FALSE. )
-   !
-   ! X_mat (and other few quantities) deallocate
-   !
-   if (io_RESPONSE.and.allocated(X_mat)) then
-#if ! defined _PAR_IO
-     call X_ALLOC_elemental('X')
-#endif
-   endif
+   call elemental_IO( iq , .TRUE. )
    !
    ! CLEAN (1)
    ! Frequencies must not be cleaned in the case of lifetimes calculations when the EM1d
@@ -363,7 +344,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
    endif
    !
    ! CLEAN (2)
-   if (io_RESPONSE) call MATRIX_reset(X_par(iq_mem))
+   if (io_RESPONSE) call MATRIX_reset(X_par(1))
    !
    if (use_X_DbGd) then
      YAMBO_FREE(X_DbGd_nkpt_at_q)
@@ -377,9 +358,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  ! CLEAN (3)
  !
  if (io_RESPONSE) then
-#if !defined _PAR_IO
-   YAMBO_FREE(X_mat)
-#endif
    deallocate(X_par)
  endif
  if (allocated(F_xc_gspace)) then

@@ -255,6 +255,7 @@ m4_include([config/m4/iotk.m4])
 m4_include([config/m4/etsf_io.m4])
 m4_include([config/m4/scalapack.m4])
 m4_include([config/m4/petsc_slepc.m4])
+m4_include([config/m4/magma.m4])
 m4_include([config/m4/libcuda.m4])
 m4_include([config/m4/device_xlib.m4])
 #
@@ -303,11 +304,14 @@ ACX_LIBCUDA
 # CUDA
 AC_SET_GPU
 # ============================================================================
+# Diago library
+AC_LDIAGO
+# ============================================================================
 # Device XLIB
 ACX_DEVXLIB
 # ============================================================================
-# Yambo Libs
-AC_YDIAGO
+# MAGMA
+AC_MAGMA_SETUP
 # ============================================================================
 # Prepare the REPORT file variables
 ACX_REPORT()

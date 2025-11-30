@@ -138,7 +138,7 @@ end subroutine of_open_close
 subroutine write_the_logo(unit_,comment_)
  !
  use LIVE_t,       ONLY:LIVE_message
- use LOGO,         ONLY:pickup_a_logo,logo_line,n_logo_lines
+ use LOGO,         ONLY:pickup_a_lumen_logo,logo_line,n_logo_lines
  use pars,         ONLY:schlen
  !
  implicit none
@@ -148,7 +148,7 @@ subroutine write_the_logo(unit_,comment_)
  character(schlen)::space_,ch ! Work Space
  integer          ::i1        !
  !
- call pickup_a_logo(unit_)
+ call pickup_a_lumen_logo(unit_)
  !
  if (unit_<0) return
  !
@@ -262,6 +262,27 @@ subroutine error(mesg)
  stop
  !
 end subroutine error
+!
+!
+subroutine exp_user_warning(mesg)
+ !
+ use com,          ONLY:exp_user
+ !
+ implicit none
+ !
+ character(*) :: mesg
+ !
+ if (exp_user) then
+   call warning(mesg)
+   call warning("Assuming experienced user and proceeding")
+ endif
+ !
+ if (.not.exp_user) then
+   call warning("Exp user error. Launch the code with -expuser to skip this ")
+   call error(mesg)
+ endif
+ !
+end subroutine exp_user_warning
 !
 !
 subroutine yambo_flush(unit)

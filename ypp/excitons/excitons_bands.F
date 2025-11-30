@@ -5,38 +5,47 @@
 !
 ! Authors (see AUTHORS file for details): CA
 !
+! headers
+!
+#include<y_memory.h> 
+!
 subroutine excitons_bands(k,Xk,en,Xen,q)
  !
  use pars,          ONLY:SP,schlen,rZERO
  use LIVE_t,        ONLY:live_timing
  use R_lattice,     ONLY:bz_samp
+ use D_lattice,     ONLY:Boltz_Temp
  use interpolate,   ONLY:INTERPOLATION_BZ
- use electrons,     ONLY:levels
- use functions,     ONLY:Fermi_fnc_derivative
+ use electrons,     ONLY:levels,nel_cond
+ use functions,     ONLY:Fermi_fnc_derivative,boltzman_f
  use units,         ONLY:HA2EV
  use YPPm,          ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,coo_out, &
 &                        BANDS_steps,INTERP_grid,K_transform,CIRCUIT_k,DOS_E_step, &
-&                        DOS_E_steps,DOS_broadening,USER_k
+&                        DOS_E_steps,DOS_broadening,USER_k,l_exc_occ_interp,EXC_min,&
+&                        exc_kind
  use parser_m,      ONLY:parser
  use com,           ONLY:msg,of_open_close
  use stderr,        ONLY:intc
- use vec_operate,   ONLY:iku_v_norm
+ use vec_operate,   ONLY:iku_v_2D_norm,iku_v_norm
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
-
+#if defined _YPP_ELPH
+ use EXCPH,         ONLY:alphaQ
+#endif
+ use y_memory_alloc
  !
-#include<y_memory.h> 
+ implicit none
  !
  type(bz_samp) ::Xk,k,q
  type(levels)  ::Xen,en
  !
  ! Work space
  !
- integer :: iq,i_c,i_l,ID_INTERP_EXC,i_E
- real(SP), allocatable    :: BSE_interp_E(:,:),values(:)
+ integer :: iq,i_c,i_l,ID_INTERP_EXC,ID_INTERP_OCC,i_E
+ real(SP), allocatable    :: BSE_interp_E(:,:),EXC_occ_interp(:,:),values(:)
  type(bz_samp)            :: GRID_q
- character(schlen)        :: file_name
+ character(schlen)        :: file_name,file_name2
  character(schlen), allocatable :: headings(:)
  logical                  :: BANDS_built_in,GRID_interpolate,l_prt_dos
  real(SP)                 :: tmp_q(3)
@@ -57,10 +66,21 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  YAMBO_ALLOC(values,(EXCITONS_n_user_states+4))
  allocate(headings(EXCITONS_n_user_states+4))
  !
- ! Read and interpolate excitons dispersion
+ ! Read and interpolate excitons/magnons dispersion
  !
  ID_INTERP_EXC=1
- call excitons_interpolate_setup(k,Xk,en,Xen,q,BS_all_E,ID_INTERP_EXC,.TRUE.)
+ ID_INTERP_OCC=2
+ call excitons_interpolate_setup(k,Xk,en,Xen,q,BS_all_E,ID_INTERP_EXC,ID_INTERP_OCC,.TRUE.)
+ !
+ ! Check exciton occupations
+ !
+ if(Boltz_Temp/=rZERO.and.EXC_min/=rZERO) then
+   call msg('rs','Boltzman occupation for the excitons')
+   if(nel_cond/=rZERO) call error('NelCond /= 0 not compatible with Boltzman occupation ')
+   l_exc_occ_interp=.true.
+ endif
+ !
+ if(nel_cond/=rZERO.and.Boltz_Temp/=rZERO) call warning('Excitonic Occupation, EXCTemp ignored, use ElecTemp!')
  !
  ! Interpolate and write on disk
  !
@@ -68,10 +88,35 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  !
  if(USER_k%nbz>0.and.BANDS_steps>0)  then
    !
-   call msg('s','Exciton bands')
+   call msg('s',exc_kind//' bands')
    !   
    YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,CIRCUIT_k%nibz))      
    call INTERPOLATION_BZ(K=CIRCUIT_k,NK=CIRCUIT_k%nbz,R1D=BSE_interp_E,ID=ID_INTERP_EXC)
+   !
+#if defined _YPP_ELPH
+   if(alphaQ/=rZERO) then
+     call msg('rs','Excitonic 2D bands stretching :',alphaQ)
+      do iq=1,CIRCUIT_k%nibz
+        BSE_interp_E(:,iq)=BSE_interp_E(:,iq)+alphaQ*iku_v_2D_norm(CIRCUIT_k%pt(iq,:3))
+      enddo
+   endif
+#endif
+   !
+   if(l_exc_occ_interp) then
+     YAMBO_ALLOC(EXC_occ_interp,(EXCITONS_n_user_states,CIRCUIT_k%nibz))      
+     if(nel_cond/=rZERO) then
+        ! Excitonic occupations are interpolated     
+        call INTERPOLATION_BZ(K=CIRCUIT_k,NK=CIRCUIT_k%nbz,R1D=EXC_occ_interp,ID=ID_INTERP_OCC)
+     else
+        ! Boltzman occupations are directly calculated
+        do iq=1,CIRCUIT_k%nibz
+          do i_c=1,EXCITONS_n_user_states
+            EXC_occ_interp(i_c,iq)=boltzman_f(BSE_interp_E(i_c,iq)-EXC_min)
+          enddo
+        enddo
+        !
+     endif
+   endif
    !
    call print_interpolated_BANDS()
    !
@@ -83,7 +128,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  !
  if (GRID_interpolate) then
    !      
-   call msg('s','Exciton Grid')
+   call msg('s',exc_kind//' Grid')
    !
    GRID_q%description="INTERP"
    call INTERPOLATION_grid(GRID_q,'i',INTERP_grid)
@@ -100,7 +145,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  !
  if(l_prt_dos) then
    !      
-   call msg('s','Exciton Density of States')
+   call msg('s',exc_kind//' Density of States')
    !
    call electrons_dos_setup(BSE_interp_E, dos_E, (/1,EXCITONS_n_user_states/))
    !
@@ -137,7 +182,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
    subroutine print_DOS()
      implicit none
      ! 
-     file_name="excitons_dos"
+     file_name=trim(exc_kind)//"s_dos"
      call of_open_close(trim(file_name),'ot')
      headings(1)=" E [eV] "
      headings(2)=" Dos    "
@@ -164,10 +209,17 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
      headings(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=&
 &           (/"q_x ("//trim(coo_out)//")","q_y ("//trim(coo_out)//")","q_z ("//trim(coo_out)//")"/)
      !
-     file_name="excitons_interpolated"
+     file_name=trim(exc_kind)//"s_interpolated"
      call of_open_close(trim(file_name),'ot')
      call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
      call msg('o '//trim(file_name),"#")
+     !
+     if(l_exc_occ_interp) then
+       file_name2="excitons_occupation"
+       call of_open_close(trim(file_name2),'ot')
+       call msg('o '//trim(file_name2),"#",headings,INDENT=0,USE_TABS=.true.)
+       call msg('o '//trim(file_name2),"#")
+     endif
      !
      values=0._SP
      !
@@ -181,8 +233,16 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
        values(1+1:EXCITONS_n_user_states+1)=BSE_interp_E(:,iq)*HA2EV
        values(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=tmp_q
        call msg('o '//trim(file_name),' ',values,INDENT=0,USE_TABS=.true.)
+       !
+       if(l_exc_occ_interp) then
+         values(1+1:EXCITONS_n_user_states+1)=abs(EXC_occ_interp(:,iq))
+         values(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=tmp_q
+         call msg('o '//trim(file_name2),' ',values,INDENT=0,USE_TABS=.true.)
+       endif
+       !
      enddo
      call of_open_close(trim(file_name))
+     if(l_exc_occ_interp) call of_open_close(trim(file_name2))
      !
    end subroutine print_interpolated_BANDS
    ! 
@@ -211,7 +271,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
      headings(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=&
 &           (/"q_x ("//trim(coo_out)//")","q_y ("//trim(coo_out)//")","q_z ("//trim(coo_out)//")"/)
      !
-     file_name="excitons_built_in"
+     file_name=trim(exc_kind)//"s_built_in"
      call of_open_close(trim(file_name),'ot')
      call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
      call msg('o '//trim(file_name),"#")
@@ -264,7 +324,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
      headings(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=&
 &           (/"q_x ("//trim(coo_out)//")","q_y ("//trim(coo_out)//")","q_z ("//trim(coo_out)//")"/)
      !
-     file_name="excitons_interpolated_IBZ"
+     file_name=trim(exc_kind)//"s_interpolated_IBZ"
      call of_open_close(trim(file_name),'ot')
      call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
      call msg('o '//trim(file_name),"#")

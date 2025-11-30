@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine ELPH_databases_grids_map(k,q)
  !
  use drivers,        ONLY:l_phel_corr
@@ -14,8 +18,9 @@ subroutine ELPH_databases_grids_map(k,q)
 &                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
  use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp) ::k,q
  !
@@ -54,8 +59,15 @@ subroutine ELPH_databases_grids_map(k,q)
  call k_ibz2bz(q,'i',.false.)
  do i1=1,nQ
    do i2=1,elph_nQ
-     if (l_GKKP_expanded_DB_exists) call c2a(v_in=q%ptbz(i1,:)+PH_qpt(i2,:),v_out=v,mode="ki2a")
-     if (l_GKKP_DB_exists)          call c2a(v_in=q%pt(i1,:)+PH_qpt(i2,:),v_out=v,mode="ki2a")
+     ! For abinit I may need a -1 ?!
+     !call c2a(v_in=q%ptbz(i1,:)+PH_qpt(i2,:),v_out=v,mode="ki2a")
+     ! For pwscf no need for -1 (see comment below)
+     call c2a(v_in=q%ptbz(i1,:)-PH_qpt(i2,:),v_out=v,mode="ki2a")
+     ! DS comment 2022/04/23:
+     ! - these if are useless, if l_GKKP_DB_exists the code exits before (see return)
+     ! - why the -q here? This is already fixed by DB_Q_map. The Q_io_map should use +q. See again standard case above.
+     !if (l_GKKP_expanded_DB_exists) call c2a(v_in=q%ptbz(i1,:)+PH_qpt(i2,:),v_out=v,mode="ki2a")
+     !if (l_GKKP_DB_exists)          call c2a(v_in=q%pt(i1,:)+PH_qpt(i2,:),v_out=v,mode="ki2a")
      if (rlu_v_is_zero(v,zero_=k_rlu_zero)) Q_io_map(i1)=i2
    enddo
  enddo
@@ -72,7 +84,7 @@ subroutine ELPH_databases_grids_map(k,q)
      if (rlu_v_is_zero(v,zero_=k_rlu_zero)) K_io_map(i1)=i2
    enddo
  enddo
- call k_ibz2bz(k,'i',.false.)
+ call k_ibz2bz(k,'d',.false.)
  if (any(K_io_map==0)) call error('K-points do not match')
  !
 end subroutine

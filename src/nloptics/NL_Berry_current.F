@@ -28,7 +28,7 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  use parallel_int,   ONLY:PP_redux_wait
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:NL_bands
- use electric,       ONLY:l_res_symms,l_force_SndOrd
+ use electric,       ONLY:l_no_res_symms,l_force_SndOrd
  !
  implicit none           
  !
@@ -84,12 +84,8 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
      Nperpend=k_map%max_kdir(id2)*k_map%max_kdir(id3)       
      !
      max_step=1
-! 
-!    Using higher order for the k-derivative gives a worst result
-!    when compared with dP/dt for this reason this line is commented
-!
-    if(k_map%max_kdir(id_red)>=6.and..not.l_force_SndOrd) max_step=2
-!
+     ! 
+     ! Using higher order for the k-derivative gives a worst result
      !
      do ikbz=1,nXkbz
        !
@@ -97,20 +93,26 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
        !
        do istep=1,max_step
          call Build_tilde_vbands(en,Xk,ikbz,isp,istep,id_red,V_bands(:,:en%nbf(isp),:,isp),V_tilde)
+!$OMP PARALLEL WORKSHARE  
          delta_V_tilde(:,:,istep)=(V_tilde(:,:,1)-V_tilde(:,:,2))/dble(istep)
+!$OMP END PARALLEL WORKSHARE  
        enddo
        !
        ik = Xk%sstar(ikbz,1)
        !
        if(max_step==1) then
+!$omp parallel do default(shared), private(iv), reduction(+:NL_J_red)
          do iv=1,en%nbf(isp)
            NL_J_red(id_red)=NL_J_red(id_red)+sum(VH_bands(:,iv,ik,isp)*delta_V_tilde(iv,:,1))
          enddo
+!$omp end parallel do
        elseif(max_step==2) then
+!$omp parallel do default(shared), private(iv), reduction(+:NL_J_red)
          do iv=1,en%nbf(isp)
            NL_J_red(id_red)=NL_J_red(id_red)+sum(VH_bands(:,iv,ik,isp) &
 &					    *(4._SP*delta_V_tilde(iv,:,1)-delta_V_tilde(iv,:,2)))/3._SP
          enddo
+!$omp end parallel do
        endif
        !
      enddo
@@ -119,7 +121,7 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
    !
    ! Notice that the 2.0 originates from H i\der_k +i \der_k H = 2 * Re[H i\der_k]
    !
-   NL_J_red(id_red)=2.0*spin_occ*real(NL_J_red(id_red),SP)/dble(Nperpend)
+   NL_J_red(id_red)=2.0_SP*spin_occ*real(NL_J_red(id_red),SP)/dble(Nperpend)
    !
  enddo
  !
@@ -129,13 +131,13 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  ! 
 !$omp parallel do default(shared), private(id)
  do id=1,3
-   NL_J(id)=-sum(NL_J_red(:)*a(:,id))/(4.0*pi)
+   NL_J(id)=sum(NL_J_red(:)*a(:,id))/(4.0_SP*pi)
  enddo
 !$omp end parallel do
  !
  ! Apply residual symmetries
  !
- if(nsym>1.and.l_res_symms) then
+ if(nsym/=1.and..not.l_no_res_symms) then
    NL_J_symm=cZERO
    do is=1,nsym/(i_time_rev+1) ! Time-reversal is never present 
      NL_J_symm(:)=NL_J_symm(:)+matmul(dl_sop(:,:,is),NL_J)

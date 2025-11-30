@@ -20,9 +20,10 @@ objects.mk
 ##################
 config/compilation_helper.sh.inc
 lib/archive/git.list
-
 # Compiled source #
 ###################
+src/*/*.o_to_save
+ypp/*/*.o_to_save
 *.com
 *.class
 *.dll
@@ -37,13 +38,13 @@ lib/archive/git.list
 *.f90
 *.i
 *.s
-*.swp*
 *dSYM
 *bk
 
 # source #
 ##########
 lib/archive/Ydriver
+lib/archive/Ydriver-src
 lib/yambo/Ydriver/yambo/include/editor.h
 lib/yambo/Ydriver/yambo/include/version.h
 include/version/version.h
@@ -63,7 +64,7 @@ include/system/*
 lib/install/make_iotk.inc
 lib/iotk/make.sys
 lib/iotk/make_iotk.inc
-lib/ydiago/make_ydiago.inc
+lib/ldiago/make_ldiago.inc
 lib/yambo
 lib/*/*stamp
 lib/*/package-installed
@@ -83,7 +84,7 @@ lib/*/petsc-*
 lib/*/slepc-*
 lib/*/futile*
 lib/*/yaml*
-lib/*/Ydiago*
+lib/*/Ldiago*
 lib/*/devicexlib*
 lib/hdf5/hdf5*
 lib/external/*
@@ -136,6 +137,11 @@ nohup.out
 autom4te.cache
 
 #Scripts
+compile_yambo_gcc
 gfortran*.sh
 pgi*.sh
 nvidia*.sh
+git_nmd.sh
+
+#Configuation files
+.vscode/*.json

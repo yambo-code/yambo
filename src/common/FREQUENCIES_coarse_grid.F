@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
  !
  ! Input
@@ -31,8 +35,9 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
  use com,         ONLY:msg
  use frequency,   ONLY:bare_grid_N,coarse_grid_N,coarse_grid_Pt,ordered_grid_index,coarse_grid_index
  use vec_operate, ONLY:sort
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  character(*),intent(in) :: title
  integer,intent(in)      :: npts
@@ -78,8 +83,10 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
    coarse_grid_N=npts
    bare_grid_N=1
    coarse_grid_Pt=bg_pt
-   forall ( i_bg=1:npts) ordered_grid_index(i_bg)=i_bg
-   forall ( i_bg=1:npts) coarse_grid_index(i_bg)=i_bg
+   do concurrent ( i_bg=1:npts) 
+     ordered_grid_index(i_bg)=i_bg
+     coarse_grid_index(i_bg) =i_bg
+   enddo
    return
  endif
  !
@@ -172,7 +179,9 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
      i_vec(i_bg)=i_cg
    enddo
  enddo
- forall(i_bg=1:npts) coarse_grid_index(i_bg)=i_vec( ordered_grid_index(i_bg) )
+ do concurrent (i_bg=1:npts) 
+   coarse_grid_index(i_bg)=i_vec( ordered_grid_index(i_bg) )
+ enddo
  YAMBO_FREE(i_vec)
  !
  if(.not.trim(title)=='COLL') then

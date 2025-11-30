@@ -75,26 +75,22 @@ subroutine OSCLL_compose_vbands(V_input,H_nl_sc,k,q,E,i_k,i_sp_pol)
  !
  ! Build Oscillators for the time-dependent valence bands
  !
-!$OMP WORKSHARE
-forall(iv=1:E%nbf(i_sp_pol),iqbz=1:q%nbz,i_n=NL_bands(1):NL_bands(2),ig1=1:ng_oscll)
-   OSCLL_val(iv,i_n,ig1,iqbz)=sum(OSCLL(i_n,:,ik_mem,iqbz,ig1)*V_kmq(NL_bands(1):,iv,iqbz))
- end forall
-!$OMP END WORKSHARE
+ do concurrent (iv=1:E%nbf(i_sp_pol),iqbz=1:q%nbz,i_n=NL_bands(1):NL_bands(2),ig1=1:ng_oscll)
+   OSCLL_val(iv,i_n,ig1,iqbz)=sum(OSCLL(i_n,:,ik_mem,i_sp_pol,iqbz,ig1)*V_kmq(NL_bands(1):,iv,iqbz))
+ enddo
  !
  ! Remove equilibrium Sigma-sex
  !
-!$OMP WORKSHARE
+!$OMP PARALLEL WORKSHARE
  H_nl_sc=H_nl_sc-Sigma_SEX_EQ(:,:,i_sp_pol,ik_mem)
-!$OMP END WORKSHARE
+!$OMP END PARALLEL WORKSHARE
  !
  do i_n=NL_bands(1),NL_bands(2)
    do i_m=i_n,NL_bands(2)
     !
-!$OMP WORKSHARE
-    forall(iqbz=1:q%nbz,ig1=1:ng_oscll,ig2=1:ng_oscll)
+    do concurrent (iqbz=1:q%nbz,ig1=1:ng_oscll,ig2=1:ng_oscll)
       OSCLL_sum(iqbz,ig1,ig2)=dot_product(OSCLL_val(:,i_m,ig2,iqbz),OSCLL_val(:,i_n,ig2,iqbz))
-    end forall
-!$OMP END WORKSHARE
+    enddo
     !
 #if defined _DOUBLE
     H_nl_sc(i_n,i_m)=H_nl_sc(i_n,i_m)+spin_occ*ZDOTU(q%nbz*ng_oscll**2,OSCLL_sum,1,W,1)

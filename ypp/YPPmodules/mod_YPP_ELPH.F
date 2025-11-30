@@ -5,19 +5,25 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 module YPP_ELPH
  !
  use pars,                ONLY:SP,schlen,DP
  use D_lattice,           ONLY:n_atoms
  use R_lattice,           ONLY:nkbz
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  logical :: l_phonons
  logical :: l_eliashberg
  logical :: l_atomic_amplitude
  logical :: l_ph_ass_dos
  logical :: l_gkkp_expand
+ logical :: l_gkkp_expand_only_k
  integer :: elph_steps
  real(SP):: elph_gamma_broad
  real(SP):: ph_broad
@@ -29,6 +35,7 @@ module YPP_ELPH
  ! ...GKKP I/O
  logical :: l_gkkp
  logical :: l_gkkp_db
+ logical :: l_gkkp_sngl
  logical :: l_gkkp_dg
  logical :: l_gkkp_plot
  logical :: l_use_qindxB
@@ -104,7 +111,7 @@ module YPP_ELPH
  !
  contains
    !
-   subroutine ELPH_DB_alloc()  
+   subroutine ELPH_DB_alloc()
      YAMBO_ALLOC(DB_Q_map,(DB_nq))
      DB_Q_map=0
      YAMBO_ALLOC(DB_K_map,(nkbz))

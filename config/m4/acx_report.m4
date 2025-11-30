@@ -13,6 +13,9 @@ AC_DEFUN([ACX_REPORT],
 DP_check="-"
 if test "$enable_dp" = "yes" ; then DP_check="X"; fi
 #
+GAMMA_ONLY_check="-"
+if test "$enable_gamma_only" = "yes" ; then GAMMA_ONLY_check="X"; fi
+#
 KEEP_OBJS_check="-"
 if test "$enable_keep_objects" = "yes" ; then KEEP_OBJS_check="X"; fi
 #
@@ -124,14 +127,14 @@ if test "$internal_blacs" = "yes" ; then
   if test "$compile_blacs" = "no" ; then BLACS_check="I"; fi
 fi
 #
-if test "$compile_ydiago" = "yes"; then
-  if test x"$with_ydiago_branch" = "xnone"; then
-    YDIAGO_check="I";
+if test "$compile_ldiago" = "yes"; then
+  if test x"$with_ldiago_branch" = "xnone"; then
+    LDIAGO_check="I"; 
   else
-    YDIAGO_check="G";
+    LDIAGO_check="G"; 
   fi
 else
-  YDIAGO_check="-";
+  LDIAGO_check="-"; 
 fi
 #
 PETSC_check="-"
@@ -158,6 +161,14 @@ LIBXC_check="E"
 if test "$internal_libxc" = "yes" ; then
   if test "$compile_libxc" = "yes"; then LIBXC_check="C"; fi
   if test "$compile_libxc" = "no" ; then LIBXC_check="I"; fi
+fi
+#
+MAGMA_check="-"
+if test "$internal_magma" = "yes" ; then
+  if test "$compile_magma" = "yes" ; then MAGMA_check="C"; fi
+  if test "$compile_magma" = "no"  ; then MAGMA_check="I"; fi
+elif test "$enable_magma" = "yes" ; then
+  MAGMA_check="E"
 fi
 #
 DEVXLIB_check="E"
@@ -217,6 +228,7 @@ if test "$hdf5" = "yes" ; then
 fi
 #
 AC_SUBST(DP_check)
+AC_SUBST(GAMMA_ONLY_check)
 AC_SUBST(KEEP_OBJS_check)
 AC_SUBST(TIME_profile_check)
 AC_SUBST(MEM_profile_check)
@@ -242,6 +254,7 @@ AC_SUBST(LAPACK_check)
 AC_SUBST(BLACS_check)
 AC_SUBST(SLK_check)
 AC_SUBST(ELPA_check)
+AC_SUBST(LDIAGO_check)
 AC_SUBST(PETSC_check)
 AC_SUBST(SLEPC_check)
 AC_SUBST(PETSC_info)
@@ -251,6 +264,7 @@ AC_SUBST(YDB_check)
 AC_SUBST(YPY_check)
 #
 AC_SUBST(LIBXC_check)
+AC_SUBST(MAGMA_check)
 AC_SUBST(DEVXLIB_check)
 AC_SUBST(LIBCUDA_check)
 AC_SUBST(MPI_check)
@@ -258,12 +272,14 @@ AC_SUBST(MPI_info)
 #
 # STRIPE [LIB] from paths
 #
-ACX_STRIPE_SUBPATH2($YDIAGO_LIBS,"LIB")
-YDIAGO_LIBS_R=$STRIPE
-ACX_STRIPE_SUBPATH2($YDIAGO_INCS,"INC")
-YDIAGO_INCS_R=$STRIPE
-AC_SUBST(YDIAGO_LIBS_R)
-AC_SUBST(YDIAGO_INCS_R)
+ACX_STRIPE_SUBPATH($LDIAGO_LIBS,"LIB")
+#ACX_STRIPE_SUBPATH2($LDIAGO_LIBS,"LIB")
+LDIAGO_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($LDIAGO_INCS,"INC")
+#ACX_STRIPE_SUBPATH2($LDIAGO_INCS,"INC")
+LDIAGO_INCS_R=$STRIPE
+AC_SUBST(LDIAGO_LIBS_R)
+AC_SUBST(LDIAGO_INCS_R)
 #
 ACX_STRIPE_SUBPATH($IOTK_LIBS,"LIB")
 IOTK_LIBS_R=$STRIPE
@@ -349,6 +365,13 @@ ELPA_INCS_R=$STRIPE
 AC_SUBST(ELPA_LIBS_R)
 AC_SUBST(ELPA_INCS_R)
 #
+ACX_STRIPE_SUBPATH($MAGMA_LIBS,"LIB")
+MAGMA_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($MAGMA_INCS,"INC")
+MAGMA_INCS_R=$STRIPE
+AC_SUBST(MAGMA_LIBS_R)
+AC_SUBST(MAGMA_INCS_R)
+#
 ACX_STRIPE_SUBPATH($BLACS_LIBS,"LIB")
 BLACS_LIBS_R=$STRIPE
 ACX_STRIPE_SUBPATH($BLACS_INCS,"INC")
@@ -369,6 +392,13 @@ ACX_STRIPE_SUBPATH($SLEPC_INCS,"INC")
 SLEPC_INCS_R=$STRIPE
 AC_SUBST(SLEPC_LIBS_R)
 AC_SUBST(SLEPC_INCS_R)
+#
+ACX_STRIPE_SUBPATH($MAGMA_LIBS,"LIB")
+MAGMA_LIBS_R=$STRIPE
+ACX_STRIPE_SUBPATH($MAGMA_INCS,"INC")
+MAGMA_INCS_R=$STRIPE
+AC_SUBST(MAGMA_LIBS_R)
+AC_SUBST(MAGMA_INCS_R)
 #
 ACX_STRIPE_SUBPATH($LIBXC_LIBS,"LIB")
 LIBXC_LIBS_R=$STRIPE

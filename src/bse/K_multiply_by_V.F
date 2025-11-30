@@ -46,7 +46,9 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par,iq,mode)
  !
  if(BSS_uses_FKE) FG_factor_c = cmplx(FG_factor,0._SP)
  !
- forall(i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g)) Vo(i_g)%fragment = cZERO
+ do concurrent (i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g))
+   Vo(i_g)%fragment = cZERO
+ enddo
  !
  do i_B=1,n_BS_blks
    !
@@ -55,11 +57,13 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par,iq,mode)
    ColsFG_Tk = size(Vi(i_Tk)%fragment,2)
    ColsFG_Tp = size(Vi(i_Tp)%fragment,2)
    !
+#if defined _PAR_IO
    if (i_B>BSS_kernel_last_stored_block) then
      call io_control(ACTION=RD,ID=BS_ID(2))
      call io_BS_PAR_block(iq,i_B,BS_ID(2),"matonly")
      call K_block_symmetrize(i_B)
    endif
+#endif
    !
    select case(BS_blk(i_B)%mode)
    case("R")

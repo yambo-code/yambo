@@ -13,7 +13,7 @@ subroutine WF_and_dipole_dimensions(X,Xk)
  use X_m,          ONLY:X_t
  use wave_func,    ONLY:wf_ng
  use QP_m,         ONLY:QP_ng_Sx,QP_ng_SH,QP_ng_Vxc,QP_n_G_bands,COHSEX_use_empties
- use R_lattice,    ONLY:qindx_S,G_m_G,bz_samp,qindx_S_max_Go
+ use R_lattice,    ONLY:qindx_S,G_m_G_maxval,bz_samp,qindx_S_max_Go
  use interfaces,   ONLY:eval_G_minus_G
  use hamiltonian,  ONLY:H_ref_bands,WF_Go_indx,WF_G_max,l_sc_XC_is_local
 #if defined _RT || defined _NL
@@ -61,7 +61,7 @@ subroutine WF_and_dipole_dimensions(X,Xk)
      !
      X(2)%ng=eval_G_minus_G(X(2)%ng,0)
      !
-     WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
+     WF_G_max=max(QP_ng_Sx,G_m_G_maxval)
      if (l_real_time.and..not.(l_sc_exx.or.l_sc_srpa)) WF_G_max=wf_ng
      !
      ! [07/07/2016] Modified these two lines to avoid the annoying QP_n_G_bands in the input.
@@ -80,12 +80,19 @@ subroutine WF_and_dipole_dimensions(X,Xk)
    !
  endif
  !
- ! The following lines should be unified moving eval_HARTREE and eval_DFT 
- ! inside the hamoltonian module and using them also with yambo_sc
+ ! Instead of setting a WF_G_max, it would be better to directly load the WFs with the proper cutoff 
  !
 #if defined _RT || defined _NL
+ !
+ ! If I'm running TD-HARTREE with lower cutoff, I likely to not put the Vxc cutoff in input
+ ! The DFT subroutines are called just to evaluate the equilibrium term with QP_ng_Vxc at the defaul (=mximum) 
+ ! since WF_load is done with QP_ng_SH this makes the code crash. This prevents the code from crashing
+ ! 
+ if (eval_HARTREE.and..not.eval_DFT) QP_ng_Vxc=QP_ng_SH
+ !
  if (eval_HARTREE.or.eval_energy.or.l_velocity_gauge_corr.or..not.l_RT_is_WFfree) WF_G_max=max(QP_ng_SH, WF_G_max)
  if (eval_DFT    .or.eval_energy.or.l_velocity_gauge_corr) WF_G_max=max(QP_ng_Vxc,WF_G_max)
+ !
 #endif
  !
 #if defined _SC

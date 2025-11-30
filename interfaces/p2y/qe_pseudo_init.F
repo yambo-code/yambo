@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AF IM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine qe_pseudo_init()
  !
  use pars,              ONLY: DP, pi_DP
@@ -30,8 +34,9 @@ subroutine qe_pseudo_init()
  use gvecw,             ONLY: qe_ecutwfc => ecutwfc, qe_gcutw => gcutw
  !
  use matrix_inversion,  ONLY: invmat
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  real(DP), parameter :: Ha2Ry=2.0_DP
  character(14)       :: subname="qe_pseudo_init"

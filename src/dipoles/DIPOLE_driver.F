@@ -22,17 +22,22 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  ! 4) covariant approach    --> computes <nk|r|mk> in reciprocal space as <nk|partial_k|mk>
  !                              takes into account the phases. symmetries not yet implemented 
  !                              and then <v> as <r>*DeltaE
+ ! 4) der_k approach        --> computes <nk|r|mk> in reciprocal space as <nk|partial_k|mk>
+ !                              takes into account the phases. symmetries not yet implemented 
+ !                              and then <v> as <r>*DeltaE
  !
- ! Note that <P> is ALWAYS calculated using the g_space approach
+ ! Note that <P/v> are ALWAYS calculated using the g_space approach
  !
  use drivers,        ONLY:l_optics
  use pars,           ONLY:SP,schlen
+ use com,            ONLY:msg
  use electrons,      ONLY:levels,n_sp_pol
  use IO_m,           ONLY:io_DIP
  use R_lattice,      ONLY:bz_samp
- use DIPOLES,        ONLY:DIPOLE_t,DIP_iR,x_space_obs,g_space_obs,covariant_obs,shifted_grids_obs,&
-&                         Vnl_commutator_warning,DIP_P,DIP_v,DIP_spin,DIP_orbital,P_square
- use ALLOC,          ONLY:DIPOLE_ALLOC_global
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_v,DIP_spin,DIP_orbital,P_square,&
+&                         x_space_obs,g_space_obs,covariant_obs,der_k_obs,shifted_grids_obs,&
+&                         Vnl_commutator_warning,eval_OVERLAPS,l_force_SndOrd
+ use ALLOC,          ONLY:DIPOLE_ALLOC_global,DIPOLE_ALLOC_elemental
  use IO_int,         ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_A2A,&
 &                         PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
@@ -51,8 +56,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  ! Work Space
  !
- integer           :: ik,io_err
- character(schlen) :: msg
+ integer           :: ik,io_err,io_err_Overlaps
+ character(schlen) :: message
  logical           :: l_warning,direction_is_todo(3)
  !
  call section('*','Dipoles')
@@ -77,9 +82,15 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  io_err=-1
  call DIPOLE_IO(Xk,Xen,Dip,'check',io_err,'DIP')
  !
+ io_err_Overlaps=-1
+ if (eval_OVERLAPS) then
+   call OVERLAPS_IO(Xk,Xen,Dip,'check',io_err_Overlaps,'DIP')
+   if (io_err_Overlaps==0)  call OVERLAPS_IO(Xk,Xen,Dip,'read',io_err_Overlaps,'DIP')
+ endif
+ !
  ! In case dipoles were not found/ok then I need to compute them
  !==============================================================
- if (io_err/=0) then
+ if (io_err/=0 .or. (eval_Overlaps.and.io_err_Overlaps/=0) ) then
    !
    ! I/O privilegies: temporarly switch it on
    !
@@ -95,15 +106,33 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    !
    call PARALLEL_WF_index(COMM=PAR_COM_DIPk_ibz_A2A)
    !
+ endif
+ !
+ ! Overlaps (DIP_S)
+ !
+ if (eval_Overlaps.and.io_err_Overlaps/=0) then
+   !
+   ! Notice that DIP_S is defined in the BZ
+   !
+   call DIPOLE_ALLOC_elemental('DIP_S',(/Dip%ib(2),Dip%ib(2),6,Xk%nbz/))
+   !
+   call DIPOLE_overlaps(Xk,Dip)
+   !
+ endif
+ !
+ if (io_err/=0) then
+   !
+   ! <R>, <V>, <P>, <P_spinor>, <P^2>
+   !
    ! Allocation
    !
    call DIPOLE_ALLOC_global(Dip,PAR_DIPk_nibz)
    !
-   ! <R>, <V>, <P>, <P_spinor>, <P^2> S_overlap
-   !
    if (len_trim(shifted_grids_obs)>0)              call DIPOLE_shifted_grids(Xen,Xk,Dip)
    !
    if (len_trim(covariant_obs)>0)                  call DIPOLE_covariant(Xen,Xk,Dip,direction_is_todo)
+   !
+   if (len_trim(der_k_obs)>0)                      call DIPOLE_build_der_k(Xen,Xk,Dip,direction_is_todo)
    !
    if (len_trim(x_space_obs)>0)                    call DIPOLE_x_real_space(Xen,Xk,Dip,direction_is_todo)
    !
@@ -113,17 +142,17 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    !
    call DIPOLES_ppredux_and_symmetrize()
    !
-#if defined _RT
-   if (STRING_match(Dip%computed,"M_orb"))         call DIPOLE_orbital_magnetization(Xen,Xk,Dip)
-#else
-   if (STRING_match(Dip%computed,"M_CD_orb"))      call DIPOLE_orb_magn_forCD(Xen,Xk,Dip)
-#endif
+   if (STRING_match(Dip%computed,"M_orbRT"))       call DIPOLE_orbital_magnetization_rt(Xen,Xk,Dip)
+   !
+   if (STRING_match(Dip%computed,"M_orbCD"))       call DIPOLE_orbital_magnetization_cd(Xen,Xk,Dip) 
    !
    call DIPOLES_ppredux_and_symmetrize_orbt()
    !
    ! If the calculation of the dipoles is very short the I/O is switched off
    !
    call DIPOLE_IO(Xk,Xen,Dip,'write',io_err,'DIP')
+   !
+   if (eval_Overlaps.and.io_err_Overlaps/=0)        call OVERLAPS_IO(Xk,Xen,Dip,'write',io_err_Overlaps,'DIP')
    !
    ! I/O privilegies: RESTORE to previous values
    !
@@ -138,10 +167,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  ! Warn about missing [Sigma,r] commutator
  !
  if (      Dip%Vnl_included .and.l_warning.and.(len_trim(g_space_obs)>0.or.Dip%force_v_g_space)) then
-   msg=' [r,Vnl^pseudo] included in'
-   if (.not.len_trim(g_space_obs)>0) msg=trim(msg)//' velocity dipoles.'
-   if (     len_trim(g_space_obs)>0) msg=trim(msg)//' position and velocity dipoles.'
-   call warning(trim(msg))
+   message='[r,Vnl^pseudo] included in'
+   if (.not.len_trim(g_space_obs)>0) message=trim(message)//' velocity dipoles.'
+   if (     len_trim(g_space_obs)>0) message=trim(message)//' position and velocity dipoles.'
+   call msg('s',trim(message))
    call warning(' In case H contains other non local terms, these are neglected ')
    Vnl_commutator_warning=.TRUE.
  endif
@@ -149,10 +178,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  ! Warn about missing [Vnl,r] commutator
  !
  if ((.not.Dip%Vnl_included).and.l_warning) then
-   msg=' [r,Vnl^pseudo] not included in'
-   if (.not.len_trim(g_space_obs)>0) msg=trim(msg)//' velocity dipoles'
-   if (     len_trim(g_space_obs)>0) msg=trim(msg)//' position and velocity dipoles'
-   call warning(trim(msg))
+   message=' [r,Vnl^pseudo] not included in'
+   if (.not.len_trim(g_space_obs)>0) message=trim(message)//' velocity dipoles'
+   if (     len_trim(g_space_obs)>0) message=trim(message)//' position and velocity dipoles'
+   call warning(trim(message))
    call warning(' In case H contains other non local terms, also these are neglected ')
    Vnl_commutator_warning=.TRUE.
  endif
@@ -161,6 +190,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  if (.not.io_DIP) return
  !
+ ! Overlaps
+ call DIPOLE_ALLOC_elemental('DIP_S')
+ !
+ ! Dipoles
  call DIPOLE_ALLOC_global()
  !
  contains
@@ -262,10 +295,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
     integer  :: ic,iv,i_sp_pol,ik,ik_mem,i_dips,n_dips
     !
     n_dips=0
-    if (STRING_match(Dip%computed,"M_orb").and.STRING_match(Dip%computed,"M_it")) then
-      n_dips=2
-    else if (STRING_match(Dip%computed,"M_orb").or.STRING_match(Dip%computed,"M_CD_orb")) then
-      n_dips=1
+    if (STRING_match(Dip%computed,"M_orb")) then
+      if(     STRING_match(Dip%computed,"M_it")) n_dips=2
+      if(.not.STRING_match(Dip%computed,"M_it")) n_dips=1
     endif
     !
     do i_dips=1,n_dips

@@ -15,7 +15,11 @@ module gpu_m
   use devxlib_linalg
   use devxlib_async,     ONLY:devxlib_async2stream
 #if defined _GPU && defined _CUDA
+# if defined __GFORTRAN__
+  use cusolverdn_y
+# else
   use cusolverdn
+# endif
 #endif
 #if defined _CUDAF
   use cufft

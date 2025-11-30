@@ -5,8 +5,6 @@
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
-#include<dev_defs.h>
-!
 !> @brief Load wave-function in different forms
 !!
 !! @param[in]       iG_in                       max-number of G-vectors
@@ -15,14 +13,20 @@
 !! @param[in]       kpts_to_load                k-points range 
 !! @param[in]       k_extrema_only              k-points, load only !first and last in range
 !! @param[in]       sp_pol_to_load              spin-polarization range 
-!! @param[in]       space                       R = real-space,  G = G-space, C = ?, B = ?
+!! @param[in]       space                       R=real-space,G=G-space,C=k-centred,B=buff.-mode
 !! @param[in]       title                       purpose of the wave-function loading
 !! @param[in]       impose_free_and_alloc       force deallocation of already loaded WF
 !! @param[in]       force_WFo                   do not rotate the WF (for yambo_sc)
 !! @param[in]       keep_states_to_load         keep (.TRUE.) or not (.FALSE.) states already loaded
 !! @param[in]       quiet                       turn off report and log for the WF_laod
 !!
-!! @param[out]      WF                  Wave-function object
+!! @param[out]      WF                          Wave-function object
+!
+! headers
+!
+#include<dev_defs.h>
+#include<y_memory.h>
+#include<yambo_wfs.h>
 !
 subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load,k_extrema_only,&
 &                  space,title,impose_free_and_alloc,force_WFo,keep_states_to_load,quiet)
@@ -30,7 +34,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  ! Load and (eventually) FFTs the wavefunctions
  !
  use iso_fortran_env
- use pars,          ONLY:SP,DP,schlen,cZERO_DP
+ use pars,          ONLY:SP,DP,schlen,cZERO,cZERO_DP
  use com,           ONLY:msg,core_io_path,fat_log
  use vec_operate,   ONLY:c2a
  use stderr,        ONLY:intc
@@ -40,8 +44,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use FFT_m
 ! use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size,&
 !&                        fftw_plan,cufft_plan,hipfft_plan,mklgpu_desc,DEV_VAR(fft_g_table)
- use wave_func,     ONLY:wf_nc_k,wf_igk,DEV_VAR(wf_igk),WF_buffer,&
-&                        wf_ng,wf_norm_test,wf_ncx,io_WF,wf_b_indx,&
+ use wave_func,     ONLY:wf_nc_k,wf_igk,DEV_VAR(wf_igk),WF_buffer,rho_map,&
+&                        wf_ng,wf_norm_test,wf_ncx,io_WF,wf_b_indx,rho_map_size,&
 &                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,WAVEs,states_to_load
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:OP_RD,NONE,VERIFY,RD,RD_CL,DUMP
@@ -56,8 +60,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use gpu_m,         ONLY:have_gpu, gpu_devsync, gpu_getstat
  use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memcpy_d2d,&
                          devxlib_allocated,devxlib_memset_d
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
  type(WAVEs), target   :: WF
@@ -86,7 +91,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  complex(DP), allocatable DEV_ATTR :: wf_DP_d(:)
  complex(SP), allocatable DEV_ATTR :: wf_disk_d(:,:,:)
- complex(SP), pointer     DEV_ATTR :: wfc_p(:,:,:)
+ WF_RSPACE(SP),   pointer DEV_ATTR :: wfr_p(:,:,:)
  integer :: WF_N
  !
  ! I/O
@@ -279,7 +284,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    YAMBO_ALLOC_GPU(DEV_VAR(wf_DP),(wf_grid_size))
  endif
  !
- wfc_p => DEV_VAR(WF%c)
+ wfr_p => DEV_VAR(WF%r)
  WF_N = WF%N
  !
  !
@@ -425,17 +430,30 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 #endif
               WF_N = WF%N
               !
-              !DEV_ACC_DEBUG data present(wfc_p,wf_DP)
+            !if(allocated(rho_map)) then
+            !  !DEV_ACC_DEBUG data present(wfr_p,wf_DP)
+            !  !DEV_ACC parallel loop
+            !  !DEV_CUF kernel do(1)
+            !  !DEV_OMPGPU target map(present,alloc:wfr_p,wf_DP)
+            !  !DEV_OMPGPU teams loop
+            !  do ic=1,rho_map_size
+            !    wfr_p(ic,i_spinor,WF_N)=cmplx(DEV_VAR(wf_DP)(rho_map(ic)),kind=SP)*fft_norm
+            !  enddo
+            !  !DEV_OMPGPU end target
+            !  !DEV_ACC_DEBUG end data
+            !else
+              !DEV_ACC_DEBUG data present(wfr_p,wf_DP)
               !DEV_ACC parallel loop
               !DEV_CUF kernel do(1)
-              !DEV_OMPGPU target map(present,alloc:wfc_p,wf_DP)
+              !DEV_OMPGPU target map(present,alloc:wfr_p,wf_DP)
               !DEV_OMPGPU teams loop
-              do ic=1,wf_grid_size
-                wfc_p(ic,i_spinor,WF_N)=cmplx(DEV_VAR(wf_DP)(ic),kind=SP)*fft_norm
+              do ic=1,fft_size
+                wfr_p(ic,i_spinor,WF_N)=cmplx(DEV_VAR(wf_DP)(ic),kind=SP)*fft_norm
               enddo
               !DEV_OMPGPU end target
               !DEV_ACC_DEBUG end data
-              !
+            !endif
+            !
             enddo  ! i_spinor
             !
          else
@@ -470,7 +488,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               !
               call fft_3d(wf_DP,fft_dim,+2)
 #endif
-              WF%c(:,i_spinor,WF%N)=cmplx(wf_DP(:),kind=SP)*fft_norm
+#if !defined _GPU
+              if(     allocated(rho_map)) WF%r(:,i_spinor,WF%N)=wfcmplx(wf_DP(rho_map(:)),kind=SP)*fft_norm
+#endif
+              if(.not.allocated(rho_map)) WF%r(:,i_spinor,WF%N)=wfcmplx(wf_DP(:)         ,kind=SP)*fft_norm
               !
             enddo  ! i_spinor
 #ifdef _GPU
@@ -493,7 +514,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    call msg('rns', '[WF] Copying WF data from GPU device')
    if(WF%space=='R') then
      ! dev2host
-     call devxlib_memcpy_d2h(WF%c, DEV_VAR(WF%c))
+     call devxlib_memcpy_d2h(WF%r, DEV_VAR(WF%r))
    else
      ! host2dev
      call devxlib_memcpy_h2d( DEV_VAR(WF%c), WF%c)
@@ -566,7 +587,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    if (WF%space=='G') wf_grid_size=wf_ng
    do i_sp_pol=WF%sp_pol(1),WF%sp_pol(2)
      do ikibz=WF%k(1),WF%k(2)
-       call WF_rotate(ikibz,i_sp_pol,WF,wf_grid_size)
+       call WF_rotate(ikibz,i_sp_pol,WF,wf_grid_size,WF%space)
      enddo
    enddo
    !
@@ -590,8 +611,14 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      !
      if ( WF%index(ib1,1,1)==0 .or. WF%index(ib2,1,1)==0 ) cycle
      !
-     N=size(WF%c(:,:,WF%index(ib1,1,1)))
-     c=Vstar_dot_V_gpu( N, DEV_VAR(WF%c)(:,:,WF%index(ib1,1,1)), DEV_VAR(WF%c)(:,:,WF%index(ib2,1,1)) )
+     c=cZERO
+     if (WF%space=='R') then
+       N=size(WF%r(:,:,WF%index(ib1,1,1)))
+       c=Vstar_dot_V_gpu( N, DEV_VAR(WF%r)(:,:,WF%index(ib1,1,1)), DEV_VAR(WF%r)(:,:,WF%index(ib2,1,1)) )
+     else
+       N=size(WF%c(:,:,WF%index(ib1,1,1)))
+       c=Vstar_dot_V_gpu( N, DEV_VAR(WF%c)(:,:,WF%index(ib1,1,1)), DEV_VAR(WF%c)(:,:,WF%index(ib2,1,1)) )
+     endif
      !
      if (abs(c)>mxdp) mxdp=abs(c)
      if (abs(c)<mndp) mndp=abs(c)

@@ -5,16 +5,21 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_diagonal(iq,what)
  !
  use pars,           ONLY:SP,cZERO,cI
  use parser_m,       ONLY:parser
  use BS_solvers,     ONLY:BS_mat,BSS_eh_f,BSS_eh_E,K_diago_in_BS_mat,BSS_eh_W,BS_diagonal,K_slk
- use BS,             ONLY:BS_K_dim,BSE_mode,BS_H_dim
+ use BS,             ONLY:BS_K_dim,BSE_mode,BS_H_dim,BS_n_eh_spaces
  use SLK_m,          ONLY:SLK_POOL
  use parallel_int,   ONLY:PP_redux_wait
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer,       intent(in) :: iq
  character(*)              :: what
@@ -113,17 +118,22 @@ subroutine K_diagonal(iq,what)
    !
    if (.not.K_diago_in_BS_mat) then
      !
-     YAMBO_ALLOC(BS_diagonal,(BS_K_dim(1)))
-     BS_diagonal=cZERO
+     if (BS_n_eh_spaces==1) then
+       YAMBO_ALLOC(BS_diagonal,(BS_K_dim(1)))
+       BS_diagonal=cZERO
+     else
+       YAMBO_ALLOC(BS_diagonal,(BS_H_dim))
+       BS_diagonal=cZERO
+     endif
      !
      if (rows(1)<=rows(2)) then
        do i_r=rows(1),rows(2)
          !
          if (K_slk%kind=="SLK") then
-           if (.not.cpl(i_r).and.SLK_POOL%ID==0) BS_diagonal(i_r)=K_slk%blc(i_r,i_r,1)
+           if ( ((.not.cpl(i_r)).or.BS_n_eh_spaces==1).and.SLK_POOL%ID==0) BS_diagonal(i_r)=K_slk%blc(i_r,i_r,1)             
            K_slk%blc(i_r,i_r,1)=cZERO
          else
-           if (.not.cpl(i_r)) BS_diagonal(i_r)=BS_mat(i_r,i_r)
+           if ( ((.not.cpl(i_r)).or.BS_n_eh_spaces==1).and.SLK_POOL%ID==0) BS_diagonal(i_r)=BS_mat(i_r,i_r)
            BS_mat(i_r,i_r)=cZERO
          endif
        enddo

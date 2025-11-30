@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine ELPH_eliashberg_dos(k,en,q)
  !
  use pars,                ONLY:SP,schlen,pi
@@ -15,7 +19,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use YPPm,                ONLY:l_dos
  use YPP_ELPH,            ONLY:elph_steps,elph_Ef,elph_gamma_broad,&
 &                              ph_broad,l_eliashberg
- use ELPH,                ONLY:ph_modes,elph_nb,GKKP,PH_freqs_sq,PH_freqs,&
+ use ELPH,                ONLY:ph_modes,elph_bands,GKKP,PH_freqs_sq,PH_freqs,&
 &                              PH_W_debye,elph_nQ,elph_use_q_grid,&
 &                              GKKP,setup_k_plus_q_levels,use_PH_DbGd
  use IO_int,              ONLY:io_control
@@ -25,8 +29,9 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use parallel_m,          ONLY:PP_indexes,myid
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 
  use functions,           ONLY:Fermi_fnc_derivative
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  type(levels) ::en
  type(bz_samp)::k,q
  !
@@ -210,7 +215,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    call of_open_close(o_file_name,'ot')
    call msg('o eli','#',' Eliashberg Function & Gamma factors',INDENT=0)
    call msg('o eli','#','',INDENT=0)
-   call msg('o eli',         '#  Bands              ',elph_nb,INDENT=0)
+   call msg('o eli',         '#  Bands              ',elph_bands,INDENT=0)
    call msg('o eli','#','',INDENT=0)
    do iq=1,nq_todo
      write (ch,'(a,i6.6,a)') '# Gamma (',iq,') [GHz]'
@@ -282,8 +287,8 @@ subroutine ELPH_eliashberg_dos(k,en,q)
      iibz1=k%sstar(i1,1)
      if (elph_use_q_grid) iibz2=k%sstar(qindx_X(iq,i1,1),1)
      !
-     do ib1=1,elph_nb
-       do ib2=1,elph_nb
+     do ib1=elph_bands(1),elph_bands(2)
+       do ib2=elph_bands(1),elph_bands(2)
          !        
          Ek  =en%E(ib1,iibz1,1)+Ef_diff
          !
@@ -313,8 +318,8 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    !
    ! Gamma factors symmetrization
    !
-   call degeneration_finder(abs(PH_freqs_sq(iq,:)),ph_modes,first_el,n_of_el,&
-&                           n_deg_grp,1.E-10_SP)
+   call degeneration_finder(ph_modes,first_el,n_of_el,n_deg_grp,&
+&                           Er=abs(PH_freqs_sq(iq,:)),deg_accuracy=1.E-10_SP)
    do i1=1,n_deg_grp
      !
      sym_gamma=0._SP

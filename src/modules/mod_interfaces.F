@@ -7,6 +7,8 @@
 !
 ! headers
 !
+#include<dev_defs.h>
+!
 #if defined _SLEPC && !defined _NL
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
@@ -16,8 +18,6 @@
 #endif
 !
 module interfaces
- !
-#include<dev_defs.h>
  !
  implicit none
  !
@@ -111,7 +111,7 @@ module interfaces
      !
    end subroutine
    !
-  subroutine YDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
+  subroutine LDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
     & neigs_this_cpu, neig_shift, neigs_range, eigvals_range, &
     & BS_VL, BS_overlap, solver_type, elpasolver)
     use pars,           ONLY:SP
@@ -127,7 +127,7 @@ module interfaces
     character, optional                :: solver_type
     integer,  optional                 :: elpasolver
     complex(SP),pointer,optional       :: BS_overlap(:,:)
-  end subroutine YDIAGO_driver
+  end subroutine LDIAGO_driver
 
    subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
      use pars,           ONLY:SP
@@ -176,8 +176,6 @@ module interfaces
      !
      use pars,           ONLY:SP,schlen
      use petscmatdef,    ONLY:tmat
-#include <petsc/finclude/petscsys.h>
-#include <petsc/finclude/petscmat.h>
      Mat                         :: M_slepc      ! matrix to diagonalize of stype from slepc
      integer                     :: n_eig        ! number of eigenvalues to compute
      complex(SP)                 :: V_right(:,:) ! right eigenvalues
@@ -188,10 +186,10 @@ module interfaces
    end subroutine
 #endif
    !
-   integer function eval_G_minus_G(iG,iGo,force_recompute,COMM)
+   integer function eval_G_minus_G(iG,iGo,opr_in,COMM)
      use parallel_m,      ONLY:yMPI_comm
      integer :: iG,iGo
-     logical,         optional :: force_recompute
+     character(1),    optional :: opr_in
      type(yMPI_comm), optional :: COMM
    end function
    !
@@ -232,7 +230,8 @@ module interfaces
    end subroutine 
    !
    subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
-     &                                  BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
+     &                                   BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,&
+     &                                   BS_R_right_mespin,BS_R_right_meorb,BS_R_PL)
      use BS_solvers,    ONLY:BSS_n_eig
      use pars,          ONLY:SP
      use frequency,     ONLY:w_samp
@@ -242,7 +241,8 @@ module interfaces
      complex(SP), pointer, intent(in) :: BS_R_left_abs(:),BS_R_right_abs(:)
      real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
      complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
-     complex(SP), pointer, intent(in) :: BS_R_left_kerr(:),BS_R_right_kerr(:),BS_R_right_dich(:,:)
+     complex(SP), pointer, intent(in) :: BS_R_left_kerr(:),BS_R_right_kerr(:),BS_R_right_dich(:,:), &
+                                       & BS_R_right_mespin(:,:),BS_R_right_meorb(:,:)
      real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
    end subroutine
    !
@@ -253,7 +253,7 @@ module interfaces
      character(*),intent(in)  :: mode
      integer,     intent(in)  :: i_BS_mat, neigs_this_cpu, neig_shift
      complex(SP), allocatable,         intent(in)  :: BS_E(:)
-     complex(SP), pointer,             intent(out) :: BS_R_right(:)
+     complex(SP), pointer,             intent(inout) :: BS_R_right(:)
      complex(SP), target, allocatable, intent(in)  :: BS_V_right(:,:)
    end subroutine K_diago_R_res
    !
@@ -264,7 +264,7 @@ module interfaces
      character(*),intent(in)  :: mode
      integer,     intent(in)  :: i_BS_mat, neigs_this_cpu, neig_shift
      complex(SP), allocatable,         intent(in)  :: BS_E(:)
-     complex(SP), pointer,             intent(out) :: BS_R_left(:)
+     complex(SP), pointer,             intent(inout) :: BS_R_left(:)
      complex(SP), target, allocatable, intent(in)  :: BS_V_left(:,:)
      complex(SP), pointer, optional,   intent(in)  :: BS_Overlap(:,:) 
    end subroutine K_diago_L_res
@@ -278,12 +278,7 @@ module interfaces
    !
    subroutine K_diago_perturbative(pert_dim, what, i_BS_mat, &
     &           BS_corrections, BS_VR, neigs_this_cpu, neig_shift, BS_VL, BS_Overlap) 
-     use pars,           ONLY:SP,cZERO
-     use wrapper_omp,    ONLY:V_dot_V_omp
-     use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
-     use LIVE_t,         ONLY:live_timing
-     use BS_solvers,     ONLY:BSS_eh_E_SOC_corr,BSS_eh_W,BSS_eh_E,BSS_n_eig
- 	  use BS,             ONLY:BS_K_coupling,BS_K_dim,BS_H_dim
+     use pars,           ONLY:SP
      implicit none
      integer,     intent(in)                   :: pert_dim
      character(3),intent(in)                   :: what
@@ -340,6 +335,16 @@ module interfaces
      character(3),     intent(in)  :: mode
      type(tddft_wf_t), target, intent(inout) :: tddft_wf
    end function TDDFT_ALDA_eh_space_R_kernel
+   !
+   subroutine WF_symm_kpoint_g(b_to_load,ik,i_sp_pol,isymm,ig0,WF,ssop,isref,igref)
+     use pars,          ONLY:SP
+     use wave_func,     ONLY:WAVEs
+     integer,              intent(in)    :: b_to_load(2)
+     integer,              intent(in)    :: ik,i_sp_pol,isymm,ig0
+     type (WAVEs), target, intent(inout) :: WF
+     complex(SP) DEV_ATTR, optional, intent(in) :: ssop(2,2)
+     integer,              optional, intent(in) :: isref,igref
+   end subroutine WF_symm_kpoint_g
    !
    subroutine WF_shift_kpoint(b_to_shift,nb_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
      use pars,          ONLY:SP

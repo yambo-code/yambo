@@ -21,7 +21,7 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
  ! This routine can be called from within Matrix_driver.F but should be kept in
  ! a separate source file for clarity.
  !
- use pars,          ONLY : SP,cI
+ use pars,          ONLY : SP,cI,schlen
  use units,         ONLY : HA2EV
  use com,           ONLY : msg
  use stderr,        ONLY : intc
@@ -87,6 +87,7 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
  !
  logical           :: l_precondition
  character(len=30) :: rowfmt
+ character(schlen) :: BSS_slepc_precondition_out
  !
  !
  call MatGetSize(M_slepc,Nsize,Msize,ierr)
@@ -223,7 +224,7 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
    !if (l_precondition) call PCSetType(pc,pckind,ierr)
  endif
  !
- BSS_slepc_precondition=trim(stkind)//"+"//trim(kspkind)//"+"//trim(pckind)
+ BSS_slepc_precondition_out=trim(stkind)//"+"//trim(kspkind)//"+"//trim(pckind)
  !
  if (BSS_slepc_extraction == 'ritz')              extr = EPS_RITZ
  if (BSS_slepc_extraction == 'harmonic')          extr = EPS_HARMONIC         
@@ -269,6 +270,7 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
  !Set monitor
  call EPSMonitorSet(eps,MyEPSMonitor,0,PETSC_NULL_FUNCTION,ierr)
  !
+#if PETSC_VERSION_GE(3,22,0)
  if(present(V_left).and.BSS_slepc_pseudo_herm.and.epskind==EPSKRYLOVSCHUR) then
    ! Default Shao used in case input is mispelled or not set
    epsbsetype=EPS_KRYLOVSCHUR_BSE_SHAO
@@ -283,20 +285,25 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
  !
  ! Fix the BSS_slepc_approach string
  if (epskind==EPSKRYLOVSCHUR) BSS_slepc_approach="Krylov-Schur"
+#endif
  !
  if(present(V_left)) then
+#if PETSC_VERSION_GE(3,22,0)
    if(BSS_slepc_pseudo_herm.and.epskind==EPSKRYLOVSCHUR) then
      if(epsbsetype==EPS_KRYLOVSCHUR_BSE_SHAO)         BSS_slepc_approach=trim(BSS_slepc_approach)//"+Shao" 
      if(epsbsetype==EPS_KRYLOVSCHUR_BSE_GRUNING)      BSS_slepc_approach=trim(BSS_slepc_approach)//"+Gruning" 
      if(epsbsetype==EPS_KRYLOVSCHUR_BSE_PROJECTEDBSE) BSS_slepc_approach=trim(BSS_slepc_approach)//"+ProjectedBSE"
    else
+#endif
      BSS_slepc_approach=trim(BSS_slepc_approach)//"+NonHermitian"
+#if PETSC_VERSION_GE(3,22,0)
    endif
+#endif
  endif
  !
  call msg( 'sr', '[SLEPC] Approach                          ',BSS_slepc_approach)
  !
- call msg( 'sr', '[SLEPC] Precondition method               ',BSS_slepc_precondition)
+ call msg( 'sr', '[SLEPC] Precondition method               ',BSS_slepc_precondition_out)
  call msg( 'sr', '[SLEPC] Extraction method                 ',BSS_slepc_extraction)
  call msg( 'sr', '[SLEPC] Number of requested eigenvalues   ', n_eig ) 
  !
@@ -376,12 +383,21 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
      call VecScatterEnd(vs,xup,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
      call VecScatterEnd(vs2,xdown,vout2,INSERT_VALUES,SCATTER_FORWARD,ierr)
      !
+#if PETSC_VERSION_LT(3,23,0)
      call VecGetArrayReadF90(vout,xsr,ierr)
      V_right(1:Nsize/2, i_eig+1) = cmplx(xsr,kind=SP)
      call VecRestoreArrayReadF90(vout,xsr,ierr)
      call VecGetArrayReadF90(vout2,xsr,ierr)
      V_right(Nsize/2+1:Nsize, i_eig+1) = cmplx(xsr,kind=SP)
      call VecRestoreArrayReadF90(vout2,xsr,ierr)
+#else
+     call VecGetArrayRead(vout,xsr,ierr)
+     V_right(1:Nsize/2, i_eig+1) = cmplx(xsr,kind=SP)
+     call VecRestoreArrayRead(vout,xsr,ierr)
+     call VecGetArrayRead(vout2,xsr,ierr)
+     V_right(Nsize/2+1:Nsize, i_eig+1) = cmplx(xsr,kind=SP)
+     call VecRestoreArrayRead(vout2,xsr,ierr)
+#endif
      !
      call VecRestoreSubVector(xr,is(1),xup,ierr)
      call VecRestoreSubVector(xr,is(2),xdown,ierr)
@@ -396,12 +412,21 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
        call VecScatterEnd(vs,xup,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
        call VecScatterEnd(vs2,xdown,vout2,INSERT_VALUES,SCATTER_FORWARD,ierr)
        !
+#if PETSC_VERSION_LT(3,23,0)
        call VecGetArrayReadF90(vout,xsr_left,ierr)
        V_left(1:Nsize/2, i_eig+1) = cmplx(xsr_left,kind=SP)
        call VecRestoreArrayReadF90(vout,xsr_left,ierr)
        call VecGetArrayReadF90(vout2,xsr_left,ierr)
        V_left(Nsize/2+1:Nsize, i_eig+1) = cmplx(xsr_left,kind=SP)
        call VecRestoreArrayReadF90(vout2,xsr_left,ierr)
+#else
+       call VecGetArrayRead(vout,xsr_left,ierr)
+       V_left(1:Nsize/2, i_eig+1) = cmplx(xsr_left,kind=SP)
+       call VecRestoreArrayRead(vout,xsr_left,ierr)
+       call VecGetArrayRead(vout2,xsr_left,ierr)
+       V_left(Nsize/2+1:Nsize, i_eig+1) = cmplx(xsr_left,kind=SP)
+       call VecRestoreArrayRead(vout2,xsr_left,ierr)
+#endif
        !
        call VecRestoreSubVector(xr_left,is(1),xup,ierr)
        call VecRestoreSubVector(xr_left,is(2),xdown,ierr)
@@ -412,10 +437,17 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
      call VecScatterBegin(vs,xr,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
      call VecScatterEnd(vs,xr,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
      !
+#if PETSC_VERSION_LT(3,23,0)
      call VecGetArrayReadF90(vout,xsr,ierr)
      V_right(:, i_eig+1) = cmplx(xsr,kind=SP)
      !if (BSS_slepc_double_grp) V_right(BS_K_dim(1)+1:,i_eig+1)=cI*V_right(BS_K_dim(1)+1:,i_eig+1)
      call VecRestoreArrayReadF90(vout,xsr,ierr)
+#else
+     call VecGetArrayRead(vout,xsr,ierr)
+     V_right(:, i_eig+1) = cmplx(xsr,kind=SP)
+     !if (BSS_slepc_double_grp) V_right(BS_K_dim(1)+1:,i_eig+1)=cI*V_right(BS_K_dim(1)+1:,i_eig+1)
+     call VecRestoreArrayRead(vout,xsr,ierr)
+#endif
      !
      if (present(V_left)) then
        !save the left eigenvectors
@@ -423,10 +455,17 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
        call VecScatterBegin(vs,xr_left,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
        call VecScatterEnd(vs,xr_left,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
        !
+#if PETSC_VERSION_LT(3,23,0)
        call VecGetArrayReadF90(vout,xsr_left,ierr)
        V_left(:, i_eig+1) = cmplx(xsr_left,kind=SP)
        !if (BSS_slepc_double_grp) V_left(BS_K_dim(1)+1:,i_eig+1) =cI*V_left(BS_K_dim(1)+1:,i_eig+1)
        call VecRestoreArrayReadF90(vout,xsr_left,ierr)
+#else
+       call VecGetArrayRead(vout,xsr_left,ierr)
+       V_left(:, i_eig+1) = cmplx(xsr_left,kind=SP)
+       !if (BSS_slepc_double_grp) V_left(BS_K_dim(1)+1:,i_eig+1) =cI*V_left(BS_K_dim(1)+1:,i_eig+1)
+       call VecRestoreArrayRead(vout,xsr_left,ierr)
+#endif
      endif
    endif
    !

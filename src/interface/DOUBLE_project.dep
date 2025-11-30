@@ -9,6 +9,7 @@
  INIT_activate.o
  INIT_barriers.o
  INIT_check_databases.o
+ INIT_fields.o
  INIT_input_file.o
  INIT_load.o
  INIT_q_points.o

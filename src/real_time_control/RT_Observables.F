@@ -14,7 +14,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,n_sp_pol
  use real_time,      ONLY:RT_nk,RT_bands
  use fields,         ONLY:A_tot
  use timing_m,       ONLY:timing
@@ -23,7 +23,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  type(levels),  intent(inout) :: en
  type(bz_samp), intent(in)    :: k
- complex(SP),   intent(in)    :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP),   intent(in)    :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol)
  real(SP),      intent(inout) :: OBSERVABLES(25)
  !
  ! Workspace

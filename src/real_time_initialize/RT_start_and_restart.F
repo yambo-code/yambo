@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_start_and_restart(E,k,q)
  !
  ! This subroutine initialize some variables and restart from SC
@@ -50,8 +54,9 @@ subroutine RT_start_and_restart(E,k,q)
  use parallel_m,     ONLY:PAR_G_k_range,PAR_IND_Xk_ibz
  use parallel_int,   ONLY:PP_wait,PP_redux_wait
  use RT_output_m,    ONLY:RT_desc,TIME_STEP_desc,Gr_desc
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)      :: E
  type(bz_samp)     :: k,q
@@ -74,24 +79,26 @@ subroutine RT_start_and_restart(E,k,q)
  ! The Equilibrium Hamiltonian
  !=========================
  H_EQ=cZERO
+ do i_sp_pol=1,n_sp_pol
  do ik=1,nXkibz
    if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
    do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
      do ib=RT_bands(1),RT_bands(2)
        if (ik_RT/=RTibz%k_range(ik,1)) then
          iE_fg=RTibz%E_map(ik_RT)
-         H_EQ(ib,ib,ik_RT,1)=E_reference%FG%E(ib,iE_fg,1)
+         H_EQ(ib,ib,ik_RT,i_sp_pol)=E_reference%FG%E(ib,iE_fg,i_sp_pol)
        else
-         H_EQ(ib,ib,ik_RT,1)=E_reference%E(ib,ik,1)
+         H_EQ(ib,ib,ik_RT,i_sp_pol)=E_reference%E(ib,ik,i_sp_pol)
        endif
      enddo
    enddo
  enddo
+ enddo
  !
  if(.not.l_RT_is_WFfree) then
    !
-   call              el_density_matrix(G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2)),E,k,rho_reference,1)
-   if(n_spin>1) call el_magnetization_matrix(G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2)),E,k,magn_reference,1)
+   call el_density_matrix(G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2),:),E,k,rho_reference,1)
+   if(n_spin>1) call el_magnetization_matrix(G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2),:),E,k,magn_reference,1)
    !
    call Bare_Hamiltonian(E,k,k)
    !
@@ -119,7 +126,7 @@ subroutine RT_start_and_restart(E,k,q)
  ! Perform a first I/O to check which DBs are present.
  !=====================================================
  RESTART=.FALSE.
- do i_db=1,N_RT_databases
+ do i_db=1,N_RT_databases-2
    COM_MODE=NONE
    if (i_db==RT_return_db_ID("ANY_G")) COM_MODE=REP
    call io_control(ACTION=OP_RD_CL,COM=COM_MODE,SEC=(/1/),MODE=VERIFY,ID=RT_DB_ID(i_db))
@@ -171,7 +178,7 @@ subroutine RT_start_and_restart(E,k,q)
    !
    !AMBO_FREE(RT_TIME_status)
    !
-   ! I use G_lesser(:,:,:) to reconstruct everything
+   ! I use G_lesser to reconstruct everything
    ! Note that the databases must be loaded at the RESTART time (NE_time)
    !
    i_db=RT_return_db_ID("G_lesser_RESTART_K_section")
@@ -190,7 +197,7 @@ subroutine RT_start_and_restart(E,k,q)
    ! The G_lesser must be now rebuild from the reference (T=0) and latest dG components
    !
    do i_mem=1,G_MEM_steps
-     G_lesser(:,:,:,i_mem)=G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2))+dG_lesser(:,:,:,i_mem)
+     G_lesser(:,:,:,:,i_mem)=G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2),:)+dG_lesser(:,:,:,:,i_mem)
    enddo
    !
 #if defined _ELPH_ITERATIVE
@@ -250,7 +257,7 @@ subroutine RT_start_and_restart(E,k,q)
  ! Initialize the Vector Potential
  !=================================
  !
- if (l_NE_with_fields) call RT_propagate_fields(E,k,A_tot,A_tot,dG_lesser(:,:,:,1),NE_time-RT_step,RT_step)
+ if (l_NE_with_fields) call RT_propagate_fields(E,k,A_tot,A_tot,dG_lesser(:,:,:,:,1),NE_time-RT_step,RT_step)
  !
  ! Pseudo potential terms needed for velocity gauge
  !==================================================

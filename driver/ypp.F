@@ -24,13 +24,13 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use YPPm,                ONLY:l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_SOC_map,&
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,&
 &                              alat_used_for_output,l_QP_DB_expand,coo_out,coo_in,l_dipoles,&
-&                              DIPs_kind,l_sp_wf,l_mean_potential
+&                              DIPs_kind,l_sp_wf,l_mean_potential,l_magnons
 #if defined _YPP_RT
  use YPP_real_time,       ONLY:l_RealTime,l_RT_DBs,l_NL_X,l_NL_exc,l_RT_abs
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq, &
-&                              l_gkkp_dg,l_gkkp_plot,l_gkkp_db
+&                              l_gkkp_dg,l_gkkp_plot,l_gkkp_db,l_gkkp_sngl
 #endif
 #if defined _YPP_SC
  ! DS This is needed otherwise ypp_sc fails if compiling after ypp_ph and later yambo_sc
@@ -170,7 +170,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  else
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
  endif
- i_err=io_QINDX(k,q,ID)
+ i_err=io_QINDX(k,q,ID,"minus_q")
  if(i_err/=0) call error(' Error reading K-point grid, please run setup again!')
  !
  ! Rim energies and kpts
@@ -197,7 +197,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ! Main SETUP
  !============
  !
- call setup(en,Xen,Ken,k,Xk)
+ call setup(en,q,Xen,Ken,k,Xk)
  !
  call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.)
  !
@@ -237,7 +237,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
 #endif
  !
- l_flag=l_excitons.or.(l_dipoles.and.trim(DIPs_kind)=="EXCITONIC")
+ l_flag=l_excitons.or.l_magnons.or.(l_dipoles.and.trim(DIPs_kind)=="EXCITONIC")
 #if defined _YPP_RT
  l_flag=l_flag.or.l_RT_abs
 #endif
@@ -254,7 +254,8 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  if ((l_gkkp.and..not.l_excitons).or.l_phonons) then
    ! =====     ========
-   if (l_gkkp)                call ELPH_databases(k,en,q)
+   if (l_gkkp_db)             call ELPH_databases(k,en,q)
+   if (l_gkkp_sngl)           call ELPH_sngl_db(k,en,q)
    if (l_eliashberg.or.l_dos) call ELPH_eliashberg_dos(k,en,q)
    if (l_atomic_amplitude)    call ELPH_atomic_amplitude(q)
    if (l_gkkp_dg)             call ELPH_double_grid(k,en,q)

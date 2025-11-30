@@ -5,13 +5,17 @@
 !
 ! Authors (see AUTHORS file for details): AM MG
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
  use pars,           ONLY:SP,schlen,cZERO,rZERO
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_coh,l_sc_sex,l_sc_is_libDFT,l_eval_collisions,l_sc_hartree,&
 &                         l_sc_exx,l_sc_electric,l_sc_fock,l_use_collisions
- use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin,n_spinor
+ use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin,n_spinor,deg_threshold
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
  use SC,             ONLY:SC_bands,SC_iterations,SC_rho_threshold,E_convergence,      &
@@ -48,8 +52,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use collision_ext,  ONLY:COH_COLL_element,HXC_COLL_element,COLLISIONS_have_HARTREE
  use electrons,      ONLY:Spin_magn
  use electric,       ONLY:ELECTRIC_alloc,ELECTRIC_free,W_electric
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels) ::E
  type(bz_samp)::k,q,Xk
@@ -157,9 +162,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  if(.not.l_SC_RESTART.and.l_use_collisions) then
    !      
    H_rotation=cZERO
-   forall(i1=SC_bands(1):SC_bands(2))
+   do concurrent (i1=SC_bands(1):SC_bands(2))
      H_rotation(i1,i1,:,:)=1._SP
-   end forall
+   enddo
    !
  else if (.not.l_SC_cycle.and.l_SC_RESTART) then
    !
@@ -219,7 +224,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        IO_ACT=manage_action(RD_CL_IF_END,i_frag,1,QP_nk*n_sp_pol)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1+i_frag/),ID=ID(2))
        io_WF=io_SC_components('WF',E,ID(2))
-       call WF_rotate(ik,i_sp_pol,WFo,fft_size)
+       call WF_rotate(ik,i_sp_pol,WFo,fft_size,"R")
      enddo
    enddo
    !
@@ -391,7 +396,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
          ! I/O [H_nl_sc]
          !
          IO_ACT=manage_action(WR_CL_IF_END,i_frag,1,QP_nk*n_sp_pol)
-	 call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/i_frag+1/),ID=ID(3))
+         call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/i_frag+1/),ID=ID(3))
          io_V=io_SC_components('V',E,ID(3))
          !
          ! Mixing for non-local self-energies
@@ -455,7 +460,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        ! New wave functions 
        !====================
        !
-       call WF_rotate(ik,i_sp_pol,WFo,fft_size)
+       call WF_rotate(ik,i_sp_pol,WFo,fft_size,"R")
        !
        if (l_NSC_shot) call live_timing(steps=1)
        ! 
@@ -484,8 +489,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      if(.not.l_sc_electric) then
        !
-       forall (ib=SC_bands(2)+1:E%nb) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(2),:,:)-E_previous(SC_bands(2),:,:)
-       forall (ib=1:SC_bands(1)-1)    E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(1),:,:)-E_previous(SC_bands(1),:,:)
+       do concurrent (ib=SC_bands(2)+1:E%nb) 
+         E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(2),:,:)-E_previous(SC_bands(2),:,:)
+       enddo
+       do concurrent (ib=1:SC_bands(1)-1)    
+         E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(1),:,:)-E_previous(SC_bands(1),:,:)
+       enddo
        !
      endif
      !
@@ -528,7 +537,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
          call WF_load(WF,WF_G_max,WF_Go_indx,SC_bands,(/1,nkibz/),title='-SC',force_WFo=.true.)
          !
          do ik=1,QP_nk
-           call WF_rotate(ik,i_sp_pol,WFo,fft_size)
+           call WF_rotate(ik,i_sp_pol,WFo,fft_size,"R")
          enddo
          !
        endif
@@ -822,8 +831,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
          !
          ! Check for degenerate bands in the bare energies
          !
-         call degeneration_finder(E_reference%E(SC_bands(1):SC_bands(2),ik,i_sp_pol),&
-         &                             SC_nbands,first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
+         call degeneration_finder(SC_nbands,first_el,n_of_el,n_deg_grp,&
+         &                        Er=E_reference%E(SC_bands(1):SC_bands(2),ik,i_sp_pol),deg_accuracy=deg_threshold)
          !
          do ib=SC_bands(1),SC_bands(2)
            !
@@ -843,7 +852,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
            ! 
            ! simmetrize the spreads summing over all possible degenerate bands
            !
-           forall (ibp=SC_bands(1):SC_bands(2)) WS_spread(ibp)=abs(H_rotation(ibp,ib,ik,i_sp_pol))**2*100._SP/HA2EV
+           do concurrent (ibp=SC_bands(1):SC_bands(2)) 
+             WS_spread(ibp)=abs(H_rotation(ibp,ib,ik,i_sp_pol))**2*100._SP/HA2EV
+           enddo
            !
            ibp=b_of_max_proj(ib,ik,i_sp_pol)
            spread(ib,ik,i_sp_pol)=WS_spread( ibp )

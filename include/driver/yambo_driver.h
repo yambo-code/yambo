@@ -1,13 +1,23 @@
 /*
   License-Identifier: GPL
- 
+
   Copyright (C) 2019 The Yambo Team
- 
+
   Authors (see AUTHORS file for details): AM
 */
+#pragma once
+
+#include "kind.h"
+
 int load_environments(char *file_name);
-void options_control(struct options_struct options[],int *i_opt);
-void options_yambo(struct options_struct options[],int *i_opt);
-void options_projects(struct options_struct options[],int *i_opt);
-void options_interfaces(struct options_struct options[],int *i_opt);
-void options_ypp(struct options_struct options[],int *i_opt);
+
+typedef void OptionsFn(struct options_struct *options, int *i_opt);
+
+// Declare all option handler functions
+extern OptionsFn options_control;
+extern OptionsFn options_yambo;
+extern OptionsFn options_projects;
+extern OptionsFn options_interfaces;
+extern OptionsFn options_ypp;
+extern OptionsFn options_help;
+

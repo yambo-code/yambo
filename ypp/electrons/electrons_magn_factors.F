@@ -18,6 +18,8 @@ subroutine electrons_magn_factors(kpts,bands,magn_factors)
  !
  implicit none
  !
+#include<yambo_wfs.h>
+ !
  integer,       intent(in)  :: kpts(2),bands(2)
  real(SP),      intent(out) :: magn_factors(bands(1):bands(2),kpts(1):kpts(2),3)
  !
@@ -46,14 +48,14 @@ subroutine electrons_magn_factors(kpts,bands,magn_factors)
      if( .not. px%element_2D(ik-kpts(1)+1,ib-bands(1)+1) ) cycle
      i_wf=WF%index(ib,ik,1)
      ! x
-     magn_factors(ib,ik,1)=real(Vstar_dot_V_omp( fft_size, WF%c(:, 1,i_wf), WF%c(:,2,i_wf) ),SP) &
-&                         +real(Vstar_dot_V_omp( fft_size, WF%c(:, 2,i_wf), WF%c(:,1,i_wf) ),SP)
+     magn_factors(ib,ik,1)=real(Vstar_dot_V_omp( fft_size, WF%r(:,1,i_wf), WF%r(:,2,i_wf) ),SP) &
+&                         +real(Vstar_dot_V_omp( fft_size, WF%r(:,2,i_wf), WF%r(:,1,i_wf) ),SP)
      ! y
-     magn_factors(ib,ik,2)=aimag(Vstar_dot_V_omp( fft_size, WF%c(:,1,i_wf), WF%c(:,2,i_wf) )) &
-&                         -aimag(Vstar_dot_V_omp( fft_size, WF%c(:,2,i_wf), WF%c(:,1,i_wf) ))
+     magn_factors(ib,ik,2)=wfaimag(Vstar_dot_V_omp( fft_size, WF%r(:,1,i_wf), WF%r(:,2,i_wf) )) &
+&                         -wfaimag(Vstar_dot_V_omp( fft_size, WF%r(:,2,i_wf), WF%r(:,1,i_wf) ))
      ! z
-     magn_factors(ib,ik,3)=real(Vstar_dot_V_omp( fft_size, WF%c(:,1,i_wf), WF%c(:,1,i_wf) ),SP) &
-&                         -real(Vstar_dot_V_omp( fft_size, WF%c(:,2,i_wf), WF%c(:,2,i_wf) ),SP)
+     magn_factors(ib,ik,3)=real(Vstar_dot_V_omp( fft_size, WF%r(:,1,i_wf), WF%r(:,1,i_wf) ),SP) &
+&                         -real(Vstar_dot_V_omp( fft_size, WF%r(:,2,i_wf), WF%r(:,2,i_wf) ),SP)
      !
      call live_timing(steps=1)
    enddo

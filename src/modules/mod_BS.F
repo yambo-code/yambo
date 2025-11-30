@@ -5,19 +5,25 @@
 !
 ! Authors (see AUTHORS file for details): AM MG
 !
-module BS
- !
- use pars,          ONLY: IP,IPL,SP,schlen,lchlen
- use collision_el,  ONLY: elemental_collision
- use gpu_m,         ONLY: have_gpu
- !
+! headers
+!
 #include<dev_defs.h>
 #include<y_memory.h>
+!
+module BS
+ !
+ use pars,          ONLY: IP,IPL,LP,SP,schlen,lchlen
+ use collision_el,  ONLY: elemental_collision
+ use gpu_m,         ONLY: have_gpu
+ use y_memory_alloc
+ !
+ implicit none
  !
  ! Modes and logicals
  !====================
  logical :: l_BSE_minimize_memory
  logical :: l_BSE_kernel_complete
+ logical :: l_BSE_kernel_full=.FALSE.
  logical :: l_BSE_restart
  logical :: BS_W_is_diagonal=.FALSE.
  logical :: BS_K_coupling=.FALSE.
@@ -37,6 +43,7 @@ module BS
  character(schlen) :: BSE_dipole_geometry="none"
  character(schlen) :: BSK_mode
  character(schlen) :: BSK_IO_mode
+ character(schlen) :: BS_bands_frozen_ch=""
  !
  ! Dipoles tracing 
  !=================
@@ -58,6 +65,8 @@ module BS
  logical :: l_BS_optics
  logical :: l_BS_esort
  logical :: l_BS_esort_indx
+ logical :: l_BS_mespin
+ logical :: l_BS_meorb
  !
  ! Dimensions
  !=============
@@ -77,21 +86,33 @@ module BS
  real(SP):: BS_K_cutoff
  real(SP),allocatable :: BS_K_cutoff_done(:)
  real(SP),allocatable :: BSqpts(:,:)
+ real(SP),allocatable :: BS_kpt_bz(:,:)
+ real(SP),allocatable :: BS_kpt_ibz(:,:)
+ integer,allocatable :: BS_K_io_map(:)
+ integer(LP),allocatable :: BS_bands_frozen(:)
  !
  ! Resonant/Antiresonant handling
  !================================
  !
- ! The BS kernel, in general, is composed of two resonant (K_r,R and K_c,R) and two anti-resonant (K_r,A and K_c,A) 
- ! blocks.
+ ! The the "standard" convention for the BSE kernel is
  !
- !      |  K_r,R(q)          cI*K_c,R(q)  |  
- !  K = |                                 | (1)
- !      | cI*K_c,A(q)        K_r,A^*(q)   |
+ !      |   K_R(q)       K_C(q)  |     |   K_R(q)          K_C(q)       |  
+ !  K = |                        |  =  |                                |  (1a)
+ !      |   K_Q(q)       K_A(q)  |     | -K_C^\dag(-q)   -K_R^\dag(-q)  |
+ ! 
+ ! Here we use the one with the square root of the occupation factors
+ ! The BS kernel, in general, is composed of resonant K_R, couplnig K_C, anti-resonant K_A and anti-coupling K_Q) blocks.
+ !
+ !       |   K_R(q)         cI*Kt_C(q)  |      |   K_R(q)           cI*Kt_C(q)       |
+ !  Kt = |                              |  =   |                                     |  (1b)
+ !       |  cI*Kt_Q(q)         K_A(q)   |      | -[cI*Kt_C(-q)]^\dag   -K_R^\dag(-q) |
+ !
  !
  ! In general we have
  !
- !  K_c,A(q) = - (K_c,R(-q))^*   (2)
- !  K_r,A(q) = - (K_r,R(-q))^*   (3)
+ !  K_Q(q)  = -K_C(-q)^\dag   (2a)
+ !  Kt_Q(q) =  Kt_C(-q)^\dag  (2b)  [ This means cI*Kt_Q(q) = -[cI*K_C(-q)]^* ]
+ !  K_A(q)  = -K_R(-q)^\dag   (3)
  !
  ! But in some cases (2) and (3) do not hold
  !
@@ -99,7 +120,7 @@ module BS
  !  - n_spinor==2 and q/=1
  !  - magnons
  !
- ! ONLY in these cases and when we need the entire matrix (l_BS_anti_resonant=.TRUE.) we have
+ ! Only in these cases and when we need the entire matrix (l_BS_anti_resonant=.TRUE.) we have
  !
  !  l_BS_ares_from_res=.FALSE.
  !
@@ -109,8 +130,8 @@ module BS
  !
  ! In addition
  !
- ! --> no coupling = 2 BSE matrices (K_r,R(q) and K_r,A^*(q)) --> BS_res_ares_n_mat=2
- ! -->    coupling = 1 BSE matrix with all 4 blocks  in (1)   --> BS_res_ares_n_mat=1
+ ! --> no coupling = 2 BSE matrices (K_R(q) and K_A^*(q))  --> BS_res_ares_n_mat=2
+ ! -->    coupling = 1 BSE matrix with all 4 blocks in (1) --> BS_res_ares_n_mat=1
  !
  ! Summary
  !=========
@@ -127,8 +148,10 @@ module BS
  !     |_l_BS_ares_from_res=.FALSE. 2                  2
  !
  logical :: l_BS_ares_from_res=.TRUE. 
- integer :: BS_res_ares_n_mat=1
- integer :: BS_n_eh_spaces=1 
+ logical :: l_BS_res_from_E
+ integer :: BS_res_ares_n_mat
+ integer :: BS_res_ares_n_grps
+ integer :: BS_n_eh_spaces
  !
  ! Live Timing
  !=============
@@ -186,8 +209,9 @@ module BS
    complex(SP), allocatable      :: Z(:)
    ! For dipoles the anti-resonant component is always stored
    complex(SP), allocatable      :: dipoles_opt(:,:,:)         ! (/x,y,z ; i_Tr ;   2)
-   complex(SP), allocatable      :: dipoles_dic(:,:,:)         ! (/x,y,z ; i_Tr ;   2) 
+   complex(SP), allocatable      :: dipoles_orb(:,:,:)         ! (/x,y,z ; i_Tr ;   2) 
    complex(SP), allocatable      :: dipoles_mag(:,:,:)         ! (/S+,S-,Sz ; i_Tr; 2)
+   complex(SP), allocatable      :: dipoles_spin(:,:,:)        ! (/x,y,z ; i_Tr ;   2) 
    !
    ! Exchange Oscillators
    !
@@ -229,9 +253,15 @@ module BS
    ! Matrix Block
    !--------------
    complex(SP), allocatable      :: mat(:,:)
-   character,   allocatable      :: done(:,:)
-   integer,     allocatable      :: table(:,:)
+   character, allocatable        :: done(:,:)
+   integer, allocatable          :: table(:,:)
    real(SP),    allocatable      :: E(:)
+   !
+   ! For collisions only
+   !--------------------
+   integer                       :: zise(2)       ! dual of %size
+   integer                       :: poordinate(2) ! dual of %coordinate
+   complex(SP), allocatable      :: tam(:,:)      ! dual of %mat
    !
    ! Oscillators...
    !
@@ -285,15 +315,19 @@ module BS
      integer :: nT,nDIP
      !
      nT=BS_T_grp(iT)%size
-     nDIP=2/BS_n_eh_spaces
+     nDIP=1
+     if(l_BS_ares_from_res) nDIP=2
      !
      YAMBO_ALLOC(BS_T_grp(iT)%dipoles_opt,(BS_dip_size,nT,nDIP))
      BS_T_grp(iT)%dipoles_opt=cZERO
      if(l_BS_magnons) then
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_mag,(2,nT,nDIP))
      endif
-     if(l_BS_dichroism) then
-       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_dic,(BS_dip_size,nT,nDIP))
+     if(l_BS_mespin) then
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_spin,(BS_dip_size,nT,nDIP))
+     endif
+     if(l_BS_dichroism.or.l_BS_meorb) then
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_orb,(BS_dip_size,nT,nDIP))
      endif
      YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,5))
      YAMBO_ALLOC(BS_T_grp(iT)%E,(nT,dom_k_T_group))
@@ -330,8 +364,11 @@ module BS
        if (l_BS_magnons) then
          YAMBO_FREE(BS_T_grp(iT)%dipoles_mag)
        endif
-       if (l_BS_dichroism) then
-         YAMBO_FREE(BS_T_grp(iT)%dipoles_dic)
+       if (l_BS_dichroism.or.l_BS_meorb) then
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_orb)
+       endif
+       if (l_BS_mespin) then
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_spin)
        endif
        YAMBO_FREE(BS_T_grp(iT)%table)
        YAMBO_FREE(BS_T_grp(iT)%E)

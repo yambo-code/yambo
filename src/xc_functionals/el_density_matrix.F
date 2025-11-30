@@ -26,6 +26,8 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  !
  implicit none
  !
+#include<yambo_wfs.h>
+ !
  type(bz_samp), intent(in)  :: Xk
  complex(SP),   intent(in)  :: G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2),n_sp_pol)
  integer,       intent(in)  :: lowest_band
@@ -55,11 +57,11 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
          !
          if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
          !
-         f_occ=en%f(ib1,ik,1)
+         f_occ=en%f(ib1,ik,i_sp_pol)
          !
          i_wf1=WF_tmp%index(ib1,ik,i_sp_pol)
          do i_spinor=1,n_spinor         
-           rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF_tmp%c(:,i_spinor,i_wf1))**2)
+           rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF_tmp%r(:,i_spinor,i_wf1))**2)
          enddo
          !
        enddo
@@ -85,7 +87,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
        do ib2=ib1,RT_bands(2)
          !
 #if !defined _YPP_RT
-         if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1)-1 )) cycle
+         if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1) )) cycle
 #endif
          !
          f_occ=cZERO
@@ -98,7 +100,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
          i_wf1=WF%index(ib1,ik,i_sp_pol)
          i_wf2=WF%index(ib2,ik,i_sp_pol)
          do i_spinor=1,n_spinor
-           rho_no_sym(:)=rho_no_sym(:)+real(f_occ*WF%c(:,i_spinor,i_wf1)*conjg(WF%c(:,i_spinor,i_wf2)),SP)
+           rho_no_sym(:)=rho_no_sym(:)+real(f_occ*WF%r(:,i_spinor,i_wf1)*wfconjg(WF%r(:,i_spinor,i_wf2)),SP)
          enddo
          !
        enddo

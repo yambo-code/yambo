@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine electrons_driver(Xk,Xen,Xq)
  !
  Use stderr,         ONLY:intc,STRING_same
@@ -21,8 +25,9 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use interfaces,     ONLY:WF_load,WF_free
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use interpolate,    ONLY:INTERP_mode
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp) ::Xk,Xq
  type(levels)  ::Xen

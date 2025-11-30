@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine G_rot_grid(is,call_kind)
  !
  use pars,         ONLY:SP
@@ -12,7 +16,9 @@ subroutine G_rot_grid(is,call_kind)
  use D_lattice,    ONLY:dl_sop,alat
  use zeros,        ONLY:G_iku_zero
  use vec_operate,  ONLY:v_is_zero
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  integer               :: is
  character(*)          :: call_kind
@@ -32,8 +38,16 @@ subroutine G_rot_grid(is,call_kind)
  !
  identity=reshape((/ 1._SP, 0._SP, 0._SP, 0._SP, 1._SP, 0._SP, 0._SP, 0._SP, 1._SP/),(/3,3/))
  !
- if(is>0) forall (i2=1:3,i3=1:3) rl_sop_local(i2,i3)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
- if(is<0) forall (i2=1:3,i3=1:3) rl_sop_local(i2,i3)=-identity(i2,i3)*alat(i2)/alat(i3)
+ if(is>0) then 
+   do concurrent (i2=1:3,i3=1:3) 
+     rl_sop_local(i2,i3)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
+   enddo
+ endif
+ if(is<0) then
+   do concurrent (i2=1:3,i3=1:3) 
+     rl_sop_local(i2,i3)=-identity(i2,i3)*alat(i2)/alat(i3)
+   enddo
+ endif
  !
  rl_sop_square=matmul(rl_sop_local,rl_sop_local)
  ! 

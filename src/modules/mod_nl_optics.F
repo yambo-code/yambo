@@ -5,15 +5,19 @@
 !
 ! Authors (see AUTHORS file for details): MG AC
 !
+! headers
+!
+#include<y_memory.h>
+!
 module nl_optics
  !
  use descriptors,     ONLY:IO_desc
- use pars,            ONLY:SP,schlen,lchlen
+ use pars,            ONLY:SP,LP,schlen,lchlen
  use electrons,       ONLY:levels
- use real_time,       ONLY:NE_steps
- use R_lattice,       ONLY:bz_samp
+ use real_time,       ONLY:NE_steps,dG_lesser
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! Long range correction field
  !
@@ -41,7 +45,7 @@ module nl_optics
  !
  ! Initial Energies and Damping
  !------------
- complex(SP), allocatable :: I_relax(:,:,:,:,:)
+ complex(SP), allocatable :: I_relax(:,:,:,:)
  real(SP),    allocatable :: E_full(:,:,:)
  !
  ! For TDDFT, V_xc_0 stores the V_xc at equilibrium
@@ -55,15 +59,12 @@ module nl_optics
  ! WFs and Density
  !
  ! Bands in terms of Kohn-Sham orbitals
- complex(SP), allocatable :: V_bands(:,:,:,:)  ! time-dependent valence bands
+ complex(SP), allocatable, target :: V_bands(:,:,:,:)  ! time-dependent valence bands
  ! 
  ! Time-dependent Valence bands in real-space
  complex(SP), allocatable :: VAL_BANDS(:,:,:,:)
  !
  real(SP),    allocatable :: full_rho(:)       ! density of all bands from 1:SC_bands(2)
- !
- ! Density matrix
- complex(SP), allocatable :: dG(:,:,:) 
  !
  ! Sigma sex at equilibrium (for oscillators)
  complex(SP), allocatable :: Sigma_SEX_EQ(:,:,:,:)
@@ -128,6 +129,9 @@ module nl_optics
  logical  :: Loop_on_frequencies
  logical  :: Loop_on_angles
  !
+ character(schlen)       :: NL_bands_frozen_ch
+ integer(LP), allocatable:: NL_bands_frozen(:)
+ !
  ! Velocity gauge in indepdent particle
  !     
  logical :: l_velocity_IPA=.FALSE.
@@ -151,10 +155,6 @@ module nl_optics
  logical  :: l_eval_CURRENT  ! Evaluate current using the commutator v=[H,r] and the IP formulation
  logical  :: l_test_OSCLL    ! Test collisions built using OSCLLs vs standard Collisions
  !
- ! Wk operator at equilibrium 
- !
- complex(SP), allocatable :: Wk_EQ(:,:,:,:,:)
- !     
  ! IO variables
  !
  real(SP),     allocatable :: NL_P_t(:,:)
@@ -193,14 +193,14 @@ module nl_optics
      !
      if(Correlation==TDDFT.or.Correlation==JGM) then
        YAMBO_ALLOC(V_xc_0,(fft_size,n_spin))
-     endif          
+     endif
      !
      if(l_use_Hxc_collisions) then
        YAMBO_ALLOC(RT_Vnl_xc,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_sp_pol))
      endif          
      !
      if(eval_dG) then
-       YAMBO_ALLOC(dG,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk))
+       YAMBO_ALLOC(dG_lesser,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_sp_pol,1))
      endif
      !
      ! Reference energies
@@ -238,15 +238,13 @@ module nl_optics
      if(fft_size>0) then
        YAMBO_ALLOC(VAL_BANDS,(fft_size,maxval(en%nbf),PAR_Xk_nibz,n_sp_pol))
      endif
-     YAMBO_ALLOC(I_relax,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),maxval(en%nbf),PAR_Xk_nibz,n_sp_pol))
+     YAMBO_ALLOC(I_relax,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),PAR_Xk_nibz,n_sp_pol))
      YAMBO_ALLOC(Ho_plus_Sigma,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),PAR_Xk_nibz,n_sp_pol))
      !
      if(Correlation==LSEX.or.Correlation==LHF) then
        YAMBO_ALLOC(Sigma_SEX_EQ,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_sp_pol,PAR_Xk_nibz))
      endif          
      !  
-     YAMBO_ALLOC(Wk_EQ,(3,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_sp_pol,PAR_Xk_nibz))
-     !
    end subroutine NL_alloc_k_distributed
    !
    subroutine NL_free
@@ -270,10 +268,7 @@ module nl_optics
      YAMBO_FREE(V_xc_0)
      YAMBO_FREE(VAL_BANDS)
      !
-     if(.not.l_use_DIPOLES) then
-       call ELECTRIC_free()
-       YAMBO_FREE(Wk_EQ)
-     endif
+     if(.not.l_use_DIPOLES) call ELECTRIC_free()
      !
      YAMBO_FREE(NL_P_t)
      YAMBO_FREE(NL_J_t)
@@ -281,15 +276,11 @@ module nl_optics
      YAMBO_FREE(E_ext_t)
      YAMBO_FREE(E_ks_t)
      !	
-     if(eval_dG) then
-       YAMBO_FREE(dG)
-     endif
-     !
      if(l_use_Hxc_collisions) then
        YAMBO_FREE(RT_Vnl_xc)
      endif
      if(eval_dG) then
-       YAMBO_FREE(dG)
+       YAMBO_FREE(dG_lesser)
      endif
      !
      if(Correlation==LSEX.or.Correlation==LHF) then

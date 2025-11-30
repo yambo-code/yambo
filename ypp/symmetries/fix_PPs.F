@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): CA DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR)
  !
  use pars,                ONLY:LP,SP,lchlen
@@ -14,7 +18,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
 &                              OP_APP,cp_file,OP_RD_CL,RD_CL,RD,DUMP
  use electrons,           ONLY:n_sp_pol
  use pseudo,              ONLY:pp_kb,pp_kbd,pp_kbs,n_atomic_species,PP_alloc_pwscf,&
-&                              pp_n_l_times_proj_max,PP_free,PP_alloc_abinit,Vnl
+&                              pp_n_l_times_proj_max,PP_free,PP_alloc_abinit
  use LIVE_t,              ONLY:live_timing
  use DIPOLES,             ONLY:DIPOLE_t
  use stderr,              ONLY:intc
@@ -25,8 +29,9 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  use YPP_symm,            ONLY:wf_nc_k_save,wf_igk_save,wf_nc_k_reduced,wf_igk_reduced,&
 &                              wf_nc_k_new,wf_igk_new,&
 &                              wf_nc_k_new,wf_ncx_new,wf_ncx_save
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels),intent(in)  :: E
  !
@@ -44,12 +49,11 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  type(DIPOLE_t)        :: Dip
  character(lchlen)     :: core_io_path_save,fragment_name,fragment_name_new
  integer               :: n_steps,ID
- integer               :: ierr,io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
+ integer               :: ierr,io_KB_abinit_err,io_KB_pwscf_err
  !
  real(SP),allocatable     :: pp_kb_store(:,:,:,:,:)
  real(SP),allocatable     :: pp_kbd_store(:,:,:,:,:)
  real(SP),allocatable     :: pp_kbs_store(:,:)
- complex(SP), allocatable :: Vnl_store(:,:,:,:,:)
  !
  ! Dummies
  !
@@ -61,13 +65,11 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  !
  integer, external :: io_KB_abinit
  integer, external :: io_KB_pwscf
- integer, external :: io_Vnl
  !
  ! Check the presence of PPs DBs
  !
  n_steps=k%nibz-k_save%nibz
  !
- io_Vnl_err     =-1
  io_KB_abinit_err=-1
  io_KB_pwscf_err =-1
  !
@@ -75,9 +77,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  Dip%ib=(/1,E%nb/)       ! full bands range
  Dip%ng=1                ! to overcome check for io
  nkibz=k_save%nibz
- !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
- io_Vnl_err=io_Vnl(Dip,E,ID)
  !
  ! Check for the KB pwscf DB 
  if(.not.io_KB_abinit_err==0) then
@@ -91,11 +90,10 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    io_KB_abinit_err=io_KB_abinit(ID)
  endif
  !
- if(io_KB_abinit_err/=0.and.io_KB_pwscf_err/=0.and.io_Vnl_err/=0) return
+ if(io_KB_abinit_err/=0.and.io_KB_pwscf_err/=0) return
  !
  if(io_KB_abinit_err==0)   call section('=',"PseudoPotentials KB (Abinit)")
  if(io_KB_pwscf_err ==0)   call section('=',"PseudoPotentials KB (PWscf) ")
- if(io_Vnl_err==0)         call section('=',"PseudoPotentials old (PWscf)")
  !
  ! Read PP DBs
  !
@@ -153,19 +151,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    !
    pp_kbs_store=pp_kbs
    !
- endif
- !
- if(io_Vnl_err==0) then
-   YAMBO_ALLOC(Vnl_store,(3,E%nb,maxval(E%nbm),k_save%nibz,n_sp_pol))
-   Vnl_store=(0._SP,0._SP)
-   !
-   call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
-   io_Vnl_err=io_Vnl(Dip,E,ID)
-   !
-   Vnl_store=Vnl
-   !
-   YAMBO_FREE(Vnl)
-   !   
  endif
  !
  core_io_path_save=core_io_path
@@ -374,41 +359,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      YAMBO_FREE(pp_kbs_store)
      !
      call PP_free()
-     !
-     if(n_steps>0) call live_timing()
-     !
-   endif
-   !
-   if(io_Vnl_err==0) then 
-     !
-     YAMBO_ALLOC(Vnl,(3,E%nb,maxval(E%nbm),k%nibz,n_sp_pol))
-     !
-     Vnl(1:3, 1:E%nb, 1:maxval(E%nbm), 1:k_save%nibz, 1:n_sp_pol)=&
-  &       Vnl_store(1:3, 1:E%nb, 1:maxval(E%nbm), 1:k_save%nibz, 1:n_sp_pol)
-     !
-     if(n_steps>0) call live_timing('PPs rotation',n_steps)
-     !
-     do ik=k_save%nibz+1,k%nibz
-       !
-       ik_save=kpoints_map(1,ik)
-       is=kpoints_map(2,ik)
-       !
-       forall(ib=1:E%nb,ibm=1:maxval(E%nbm),i_spin=1:n_sp_pol) &
-  &          Vnl(:,ib,ibm,ik,i_spin) = matmul( old_dl_sop(:,:,is), Vnl_store(:,ib,ibm,ik_save,i_spin) ) 
-       ! Vnl is invariant under T-rev as iR and p ??
-       if ( S_contains_TR(is) ==1 ) Vnl(:,:,:,ik,:)=conjg( Vnl(:,:,:,ik,:) )
-       !
-       call live_timing(steps=1)
-       !
-     enddo
-     !
-     Dip%ng=wf_ng
-     !
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)      
-     io_Vnl_err=io_Vnl(Dip,E,ID)
-     !
-     YAMBO_FREE(Vnl)
-     YAMBO_FREE(Vnl_store)
      !
      if(n_steps>0) call live_timing()
      !

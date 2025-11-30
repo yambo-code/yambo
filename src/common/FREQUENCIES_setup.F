@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine FREQUENCIES_setup(W)
  !
  ! %er %dr %n_freqs -> %p
@@ -12,7 +16,9 @@ subroutine FREQUENCIES_setup(W)
  use pars,          ONLY:SP,cI
  use frequency,     ONLY:w_samp
  use parser_m,      ONLY:parser
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  type(w_samp):: W 
  ! 
@@ -68,7 +74,9 @@ subroutine FREQUENCIES_setup(W)
  !
  delta_w=(W%er(2)-W%er(1))/(W%n_freqs-1)
  !
- forall(i1=1:W%n_freqs-1) W%p(i1+1)=cmplx(W%er(1)+delta_w*real(i1,SP),0.,SP)
+ do concurrent (i1=1:W%n_freqs-1) 
+   W%p(i1+1)=cmplx(W%er(1)+delta_w*real(i1,SP),0.,SP)
+ enddo
  !
  do i1=1,W%n_freqs
    W%p(i1)=real(W%p(i1))+FREQUENCIES_damping(W,real(W%p(i1)))*cI

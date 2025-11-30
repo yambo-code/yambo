@@ -12,10 +12,11 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  use X_m,          ONLY:global_gauge
  use DIPOLES,      ONLY:DIPOLE_t
  use electrons,    ONLY:levels,n_sp_pol,filled_tresh,spin_occ
- use BS,           ONLY:BS_not_const_eh_f,BS_perturbative_SOC,BS_eh_en,l_BS_magnons,l_BS_photolum
+ use BS,           ONLY:BS_not_const_eh_f,BS_perturbative_SOC,BS_eh_en,&
+                        l_BS_magnons,l_BS_photolum,l_BS_res_from_E
 #if defined _RT
- use drivers,      ONLY:l_rt_carriers_in_use
- use RT_control,   ONLY:NEQ_Residuals,NEQ_Kernel,EQ_Transitions,EQ_NoOcc
+ use drivers,      ONLY:l_rt_carriers_in_use,l_rpa_IP
+ use RT_control,   ONLY:NEQ_Residuals,NEQ_Kernel,EQ_Transitions,ALL_NoOcc,EQ_NoOcc
 #endif
  !
  implicit none
@@ -23,7 +24,7 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  type(levels),   intent(in) :: Ken
  type(DIPOLE_t), intent(in) :: Dip
  integer,        intent(in) :: iq,ik,ikp,iv,ic,i_sp_c,i_res_ares
- real(SP),       intent(out):: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
+ real(SP),       intent(out):: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL(2)
  !
  ! Work Space
  !
@@ -41,7 +42,7 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  !
  ! Small energy transitions. Dipoles in length gauge are not defined
  if ((.not.l_BS_magnons).and.iq==1) then
-   if ( abs(Eo_eh) < Dip%Energy_treshold .and. trim(global_gauge)=="length") K_Transition_check=.FALSE.
+   if ( abs(Eo_eh) < Dip%Energy_threshold .and. trim(global_gauge)=="length") K_Transition_check=.FALSE.
  endif
  ! Null energy transitions are always removed
  if ( abs(E_eh) == 0._SP )  K_Transition_check=.FALSE.
@@ -61,6 +62,7 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  ! Occupations Factors
  !=====================
  !
+ ! f_res = (fv-fc) [ f_ares = (fc-fv) ]
  f_eh_REF =(Ken%f(iv,ikp,i_sp_v)-Ken%f(ic,ik ,i_sp_c))/spin_occ
  f_eh     =f_eh_REF
  f_eh_RES =f_eh_REF
@@ -76,6 +78,7 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
    !
    if (     EQ_Transitions) f_eh_REF=f_eh_EQ
    if (.not.NEQ_Kernel    ) f_eh    =f_eh_EQ
+   ! NEQ_Residuals means we have in input ndb.RT_carriers
    if (.not.NEQ_Residuals ) f_eh_RES=f_eh_EQ
    !
  endif
@@ -89,38 +92,58 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
    f_h = (spin_occ-Ken%f(iv,ikp,i_sp_v))/spin_occ
  endif
  !
- if ( E_eh>=0._SP ) f_eh_PL =  Ken%f(ic,ikp,i_sp_c)*(spin_occ-Ken%f(iv,ik ,i_sp_v))/spin_occ/spin_occ
- if ( E_eh< 0._SP ) f_eh_PL = -Ken%f(iv,ik ,i_sp_v)*(spin_occ-Ken%f(ic,ikp,i_sp_c))/spin_occ/spin_occ
+ !  f< =  fc(1-fv)
+ f_eh_PL(1) =  Ken%f(ic,ikp,i_sp_c)*(spin_occ-Ken%f(iv,ik ,i_sp_v))/spin_occ/spin_occ
+ !  f> =  fv(1-fc)
+ f_eh_PL(2) =  Ken%f(iv,ik ,i_sp_v)*(spin_occ-Ken%f(iv,ikp,i_sp_c))/spin_occ/spin_occ
+ !
+ !!  f< =  fc(1-fv)
+ !if ( E_eh>=0._SP ) f_eh_PL =  Ken%f(ic,ikp,i_sp_c)*(spin_occ-Ken%f(iv,ik ,i_sp_v))/spin_occ/spin_occ
+ !! -f> = -fv(1-fc)
+ !! Here we put a minus to mimic what happens in the retarded functions
+ !if ( E_eh< 0._SP ) f_eh_PL = -Ken%f(iv,ik ,i_sp_v)*(spin_occ-Ken%f(ic,ikp,i_sp_c))/spin_occ/spin_occ
  !
 #if defined _RT
- if(EQ_NoOcc) then
-   f_eh_REF=1._SP
-   f_eh    =1._SP
-   f_eh_RES=1._SP
-   f_eh_EQ =1._SP
-   f_e     =1._SP
-   f_h     =1._SP
+ if(EQ_NoOcc.or.ALL_NoOcc) then
+   f_eh_REF=spin_occ
+   f_eh    =spin_occ
+   f_eh_RES=spin_occ
+   f_eh_EQ =spin_occ
+   f_e     =spin_occ
+   f_h     =spin_occ
  endif
 #endif
  !
  ! A 0.001 % fractional occupation swiches on the particular treatment of finite temp. BSE 
  if ( abs(abs(f_eh_REF)-1._SP)> filled_tresh ) BS_not_const_eh_f=.TRUE.
  !
- ! f_eh<0 transitions are included in the anti-resonant part
- if ( f_eh_REF*(-1._SP)**(i_res_ares-1)< 0._SP ) K_Transition_check=.FALSE.
+ if (l_BS_res_from_E) then
+   !
+   ! E_eh<0 transitions are included in the anti-resonant part
+   if ( E_eh*(-1._SP)**(i_res_ares-1)< 0._SP ) K_Transition_check=.FALSE.
+   !
+   if ( E_eh==0._SP .and. f_eh_REF*(-1._SP)**(i_res_ares-1)<0._SP ) K_Transition_check=.FALSE.
+   !
+ else
+   !
+   ! f_eh<0 transitions are included in the anti-resonant part
+   if ( f_eh_REF*(-1._SP)**(i_res_ares-1)< 0._SP ) K_Transition_check=.FALSE.
+   !
+   !   f_eh=0 transitions give no contribution to absorption at the IP level
+   ! and they do not mix with others neither since the kernel is weighted by f_eh
+   !   However they contribute to the JDOS. We need to take only the E>0 component,
+   ! since the E<0 component is then accounted for by the anti-resonant part
+   if ( f_eh_REF==0._SP .and. E_eh*(-1._SP)**(i_res_ares-1)<0._SP ) K_Transition_check=.FALSE.
+   !
+ endif
  !
- !   f_eh=0 transitions give no contribution to absorption at the IP level
- ! and they do not mix with others neither since the kernel is weighted by f_eh
- !   However they contribute to the JDOS. We need to take only the E>0 component,
- ! since the E<0 component is then accounted for by the anti-resonant part
- if ( f_eh_REF==0._SP .and. E_eh*(-1._SP)**(i_res_ares-1)<0._SP ) K_Transition_check=.FALSE.
  !   f_eh_RES=0 transitions give issue in PL. Removed in this case
  if (l_BS_photolum .and. f_eh_RES==0._SP) K_Transition_check=.FALSE.
  !
 #if defined _RT
  !
  ! In case of population inversion, it may be problematic if f_eh>0. and f_eh_RES<0.
- if ( f_eh_REF*f_eh<0._SP .or. f_eh_REF*f_eh_RES<0._SP ) then
+ if ( (f_eh_REF*f_eh<0._SP .or. f_eh_REF*f_eh_RES<0._SP) .and. .not.l_rpa_IP) then
     call error(' I cannot split the R and K BSE contribution.'//&
 &              ' ACTION: Use the same occupations in K and R.')
  endif
@@ -142,5 +165,9 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  !
  if (any((/abs(E_eh)<BS_eh_en(1).and.BS_eh_en(1)>0._SP,&
 &          abs(E_eh)>BS_eh_en(2).and.BS_eh_en(2)>0._SP/))) K_Transition_check=.FALSE.
+ !
+#if defined _RT
+ if(ALL_NoOcc) K_Transition_check=All_NoOcc
+#endif
  !
 end function

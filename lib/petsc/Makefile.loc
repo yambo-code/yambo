@@ -19,7 +19,7 @@ include ../config/external_libs_defs.mk
 #
 PETSC_ARCH=yambo_${yprecision}_complex
 CONFFLAGS=--prefix="$(LIBPATH)" $(petsc_flgs) \
-         FOPTFLAGS="-O1" COPTFLAGS="-O2" \
+         FOPTFLAGS="-O1" COPTFLAGS="-O2" CXXOPTFLAGS="-O2" \
          --PETSC_ARCH=${PETSC_ARCH} \
          --with-ssl=0 \
          --with-x=0 \
@@ -29,7 +29,7 @@ CONFFLAGS=--prefix="$(LIBPATH)" $(petsc_flgs) \
          --with-blaslapack-lib="$(llapackpetsc) $(lblaspetsc)" \
          --with-scalar-type="complex" \
          --with-precision="${yprecision}" \
-         --with-mpi-dir=$(mpipath)
+	 --with-mpi-dir=$(mpipath)
 #
 # MAIN target
 #
@@ -63,7 +63,7 @@ configure: uncompress
 compile: uncompress configure
 	@if test -d $(PACKAGE) && ! test -f compiled.stamp ; then \
          echo "\t[$(PACKAGE)] compilation"; \
-         ( cd $(PACKAGE);  $(make) -j1 PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) >> ${compdir}/log/compile_$(PACKAGE).log 2>&1 ) ; \
+         ( cd $(PACKAGE);  $(make) $(MAKEFLAGS) PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) >> ${compdir}/log/compile_$(PACKAGE).log 2>&1 ) ; \
          touch compiled.stamp; \
         fi
 

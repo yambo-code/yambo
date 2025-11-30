@@ -1,0 +1,18 @@
+{
+    "recommendations": [
+      // Fortran language support
+      "krvajal.vscode-fortran-support",  
+      // Linting, IntelliSense, debugging (GDB)
+      "ms-vscode.cpptools",
+      // Python tests and helpers
+      "ms-python.python",
+      "ms-python.vscode-pylance",
+      // Debug (LLDB alternative)
+      "vadimcn.vscode-lldb",
+      // Color-coded comments (TODO, FIXME, etc.)
+      "aaron-bond.better-comments",
+      // Format Fortran code with fprettify
+      "fortran-lang.fortran-fprettify"
+    ]
+  }
+  

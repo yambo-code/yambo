@@ -5,18 +5,23 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
 #include<dev_defs.h>
+#include<y_memory.h>
+!
 !
 subroutine X_ALLOC_elemental(WHAT,DIM)
  !
  use pars,          ONLY:rZERO,cZERO
  use X_m,           ONLY:Resp_ii,Resp_ij,Epsilon_ii,Joint_DOS,BS_E_sorted,BS_E_sorted_indx, &
-&                        Epsilon_ij,X_magnons,X_dichroism,                  &
+&                        Epsilon_ij,X_magnons,X_dichroism,X_mespin,X_meorb,&
 &                        X_fxc,EEL,Alpha,X_mat,DEV_VAR(X_mat),X_drude_term,X_RLcomp_ig
  use PHOTOLUM,      ONLY:PL
  use stderr,        ONLY:STRING_match
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  character(*)      :: WHAT
  integer, optional :: DIM(:)
@@ -73,6 +78,14 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
 #ifdef _GPU
      YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(X_mat),X_mat)
 #endif
+   case('MEspin')
+     if (allocated(X_mespin)) return
+     YAMBO_ALLOC(X_mespin,(DIM(1),DIM(2)))
+     X_mespin = cZERO
+   case('MEorb')
+     if (allocated(X_meorb)) return
+     YAMBO_ALLOC(X_meorb,(DIM(1),DIM(2)))
+     X_meorb = cZERO
    end select
    return
  endif
@@ -102,6 +115,12 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
  endif
  if (STRING_match(WHAT,"JDOS").or.STRING_match(WHAT,"ALL")) then
    YAMBO_FREE(Joint_DOS)
+ endif
+ if (STRING_match(WHAT,"MEspin").or.STRING_match(WHAT,"ALL")) then
+   YAMBO_FREE(X_mespin)
+ endif
+ if (STRING_match(WHAT,"MEorb").or.STRING_match(WHAT,"ALL")) then
+   YAMBO_FREE(X_meorb)
  endif
  if (STRING_match(WHAT,"BS_E_SORTED").or.STRING_match(WHAT,"ALL")) then
    YAMBO_FREE(BS_E_sorted)

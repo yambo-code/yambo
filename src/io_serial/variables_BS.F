@@ -12,10 +12,10 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  use drivers,       ONLY:l_td_hf
  use X_m,           ONLY:X_t
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts,cut_geometry
- use BS,            ONLY:BS_identifier,BS_K_dim,BS_bands,&
+ use BS,            ONLY:BS_identifier,BS_K_dim,BS_bands,BSE_L_kind,&
 &                        BS_K_coupling,BS_res_K_exchange,BS_res_K_corr,&
 &                        BS_n_g_exch,BS_n_g_W,BS_eh_en,BS_eh_win,BS_W_is_diagonal,&
-&                        BS_K_is_ALDA,BS_cpl_K_exchange,BSE_L_kind,&
+&                        BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                        BS_cpl_K_corr,BSqpts,BS_perturbative_SOC
  use IO_m,          ONLY:io_status,variable_exist,write_is_on
  use IO_int,        ONLY:ver_is_gt_or_eq,def_variable_elemental,io_variable_elemental

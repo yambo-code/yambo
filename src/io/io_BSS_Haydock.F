@@ -15,6 +15,7 @@ integer function io_BSS_Haydock(ID,iq,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,
  use stderr,        ONLY:intc
  use BS,            ONLY:BS_identifier
  use BS_solvers,    ONLY:BSS_q0,Haydock_v0_mod,HAYVEC_size
+ use X_m,           ONLY:i_G_shift
  use IO_m,          ONLY:io_status,io_sec
  use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header
  use timing_m,      ONLY:timing
@@ -42,7 +43,7 @@ integer function io_BSS_Haydock(ID,iq,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,
    io_BSS_Haydock=io_header(ID,XC_KIND="K_E force",GAUGE=.TRUE.,IMPOSE_GAUGE=.TRUE.)
    if (io_BSS_Haydock<0) goto 1
    !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
+   call io_elemental(ID,VAR="PARS",VAR_SZ=7,MENU=0)
    call io_elemental(ID,VAR=&
 &       " BSK Identifier                   ",I0=BS_identifier,CHECK=.TRUE.,OP=(/"=="/))
    call io_elemental(ID,VAR=&
@@ -51,12 +52,14 @@ integer function io_BSS_Haydock(ID,iq,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,
 &       " Haydock reached Treshold         ",R0=reached_treshold,DB_R0=reached_treshold)
    call io_elemental(ID,VAR=&
 &       " Field direction                  ",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
+   call io_elemental(ID,VAR=&
+&       " G-shift                          ",I0=i_G_shift,CHECK=.true.,OP=(/"=="/))
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    io_BSS_Haydock=io_status(ID)
    !
    if (io_BSS_Haydock<0) then
-     reached_treshold=0._SP
+     reached_treshold=100._SP
      goto 1
    endif
    !

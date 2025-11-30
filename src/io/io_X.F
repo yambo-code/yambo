@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function io_X(X,Xw,ID)
  !
  use pars,          ONLY:SP,schlen
@@ -21,8 +25,9 @@ integer function io_X(X,Xw,ID)
 &                        IO_OUTDATED_DB,frag_RESPONSE,IO_NO_DATABASE,io_mode,DUMP
  use stderr,        ONLY:intc,STRING_same
  use timing_m,      ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(X_t)   :: X
  type(w_samp):: Xw
@@ -224,8 +229,10 @@ integer function io_X(X,Xw,ID)
      endif
      !
      if (allocated(X_par)) then
-       call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
-       call  io_variable_bulk(ID_frag,1,C3=X_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,X_par(1)%rows(1),X_par(1)%cols(1),1/))
+       if(allocated(X_par(1)%blc)) then
+         call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
+         call  io_variable_bulk(ID_frag,1,C3=X_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,X_par(1)%rows(1),X_par(1)%cols(1),1/))
+       endif
      endif
      !
    endif
@@ -243,6 +250,7 @@ integer function io_X(X,Xw,ID)
      endif
      !
      if (allocated(X_par)) then
+      if(allocated(X_par(1)%blc)) then
        YAMBO_ALLOC(X_on_disk,(X_par(1)%rows(1):X_par(1)%rows(2),X_par(1)%cols(1):X_par(1)%cols(2)))
        do i1=1,Xw%n_freqs
          !
@@ -258,6 +266,7 @@ integer function io_X(X,Xw,ID)
      endif
      !
      YAMBO_FREE(X_on_disk)
+    endif
    endif
    !
  endif

@@ -127,7 +127,7 @@ AC_ARG_WITH(rocm_path, [AS_HELP_STRING([--with-rocm-path=<path>],
             [Path to rocm install directory],[32])])
 #
 AC_ARG_WITH(mklgpu_libs, [AS_HELP_STRING([--with-mklgpu-libs=<libs>], 
-            [Use librocm library <libs>],[32])])
+            [Use the MKLGPU library <libs>],[32])])
 
 use_int_cuda_libs="no"
 use_gpu_libs="no"

@@ -337,6 +337,7 @@ subroutine INIT_read_command_line(rstr,init_)
        V_is_defined=INIT_read_command_line_potentials(V_string,"f")
        V_is_defined=INIT_read_command_line_potentials(V_string,"h")
        V_is_defined=INIT_read_command_line_potentials(V_string,"cvonly")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"kbse")
        !
      endif
 #endif
@@ -357,6 +358,7 @@ subroutine INIT_read_command_line(rstr,init_)
        V_is_defined=INIT_read_command_line_potentials(V_string,"f")
        V_is_defined=INIT_read_command_line_potentials(V_string,"h")
        V_is_defined=INIT_read_command_line_potentials(V_string,"cvonly")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"kbse")
        !
      endif
 #endif
@@ -403,6 +405,20 @@ subroutine INIT_read_command_line(rstr,init_)
      endif
 #endif
      !
+#if defined _ELPH
+     !
+     ! Exciton-phonon
+     !
+     if ( trim(rstr_piece(i1)) == 'excph' ) then
+       !
+       call initactivate(1,'ExcGkkp')
+       if ( trim(rstr_piece(i1+1)) == 'o'   ) call initactivate(1,'ExcPhOptics') 
+       if ( trim(rstr_piece(i1+1)) == 'l'   ) call initactivate(1,'ExcPhLifeT')  
+       !
+     endif
+     !
+#endif
+
 #if defined _NL
      !
      ! NL
@@ -426,8 +442,9 @@ subroutine INIT_read_command_line(rstr,init_)
      ! COLLISIONS
      !
      if (runlevel_is_on('collisions')) then
-       if ( l_elel_scatt.or.trim(H_potential)=='COH+SEX'.or.&
-&               trim(H_potential)=='COH'.or.trim(H_potential)=='SEX' ) call initactivate(1,'em1s')
+       if ( l_elel_scatt.or.index(H_potential,'SEX')>0 .or.&
+&                           index(H_potential,'COH')>0 ) call initactivate( 1,'em1s')
+       if ( index(H_potential,'KBSE')>0 )                call initactivate(-1,'em1s') 
      endif
      !
 #endif

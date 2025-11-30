@@ -3,7 +3,11 @@
 !
 ! Copyright (C) 2012 The Yambo Team
 !
-! Authors (see AUTHORS file for details): DS AM IMA
+! Authors (see AUTHORS file for details): DS AM IMA TG
+!
+! headers
+!
+#include<y_memory.h>
 !
 subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
@@ -18,12 +22,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use electrons,     ONLY:levels,spin_occ,spin,nel,n_sp_pol,n_spinor
  use X_m,           ONLY:Resp_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        X_drude_term,global_gauge,N_BS_E_sorted,i_G_shift,&
-&                        skip_cond_sum_rule,X_magnons,Resp_ij,X_dichroism
+&                        skip_cond_sum_rule,X_magnons,Resp_ij,X_dichroism,X_mespin,X_meorb
  use BS_solvers,    ONLY:Co_factor,diam_term_exact,para_term_w0,BSS_Wd,BSS_mode,BSS_uses_DbGd,FG_factor
  use BS,            ONLY:BS_T_grp,BS_nkFGbz_in_Tgrp,BS_nT_grps,BS_perturbative_SOC,&
 &                        BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_H_dim,l_BS_kerr_asymm,&
 &                        l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
-&                        BS_K_anti_resonant,l_BS_ares_from_res
+&                        BS_K_anti_resonant,l_BS_ares_from_res,l_BS_mespin,l_BS_meorb
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_COM_Xk_ibz_INDEX
@@ -32,8 +36,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use BS_solvers,    ONLY:B_Hall
  use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
  use units,         ONLY:SPEED_OF_LIGHT
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer       ::iq
  type(levels)  ::Ken
@@ -44,14 +49,14 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Work space
  !
  integer           ::i_T_g,i_T,n_SOC,i_pert_SOC,i_res_ares,i_sort,nVAR,Indexes(5)
- real(SP)          ::f_eh,f_eh_PL,res_PL
+ real(SP)          ::f_eh,f_eh_PL(2),res_PL(2)
  logical           ::dip_v,dip_r
  complex(SP)       ::res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),Z_eh,E_eh,g_fac
  !
  integer       :: i_ColFG
  complex(SP), allocatable :: E_DbGd(:)
  !
- complex(SP)       ::P_weighted(3),res_kerr,res_magn(2),res_dich
+ complex(SP)       ::P_weighted(3),res_kerr,res_magn(2),res_dich,res_mespin,res_meorb
  integer,        allocatable :: vtmpI(:,:)
  complex(SP),    allocatable :: vtmpC(:,:)
  !
@@ -122,6 +127,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    if (.not.PAR_IND_T_groups%element_1D(i_T_g)) cycle
    !
    i_res_ares=BS_T_grp(i_T_g)%i_res_ares
+   !
+   if (l_BS_ares_from_res .and. i_res_ares==2) cycle
    !
    do i_T=1,BS_T_grp(i_T_g)%size
      !
@@ -195,21 +202,37 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
        ! Note that res_PL is always positive as f_eh_PL>0
        !
-       f_eh_PL=BS_T_grp(i_T_g)%f_PL(i_T,1)
-       P_weighted(:)=BS_T_grp(i_T_g)%dipoles_opt(:,i_T,1)*PL_weights(:)
-       res_PL=real(dot_product(P_weighted,P_weighted)*f_eh_PL*Z_eh*E_eh)
+       f_eh_PL=BS_T_grp(i_T_g)%f_PL(i_T,:)
+       res_PL(1)=abs(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))**2
+       if(l_BS_trace) then
+         res_PL(1)=abs(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))**2+ &
+                  +abs(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1))**2+ &
+                  +abs(BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1))**2
+       endif
+       res_PL(1)=res_PL(1)*f_eh_PL(1)*Z_eh*E_eh
+       res_PL(2)=res_PL(1)*f_eh_PL(2)*Z_eh*E_eh
      endif
      !
      ! Dichroism
      !
      if(l_BS_dichroism) then
-       res_dich=(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(1,i_T,1))+     &
-       &         BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(2,i_T,1)))/2._SP
+       ! The dicroism for an oriented sample (DD contribution only) should be
+       ! 1/2 (beta_xx + beta_yy) = 1/2 (x*m_x + y*m_y)
+       ! with
+       ! m_x = r_y*p_z-r_z*p_y
+       ! This follows from PhD thesis ...
+       res_dich=(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_orb(1,i_T,1))+     &
+       &         BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_orb(2,i_T,1)))/2._SP
+       ! The quadripolar term would be similar, but involving terms of the form
+       ! Q_yz = r_y*p_z+r_z*p_y
+       ! See eq. (45) of PRB 107, 224430 (2025)
+       ! To check why (i) the equations are "hermitianized", and
+       !              (ii) with "mixed gauge" r*p in place of r*r
        if(l_BS_trace) then
          ! x*L = DIP_x*DIP_orbital;
-         res_dich=(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(1,i_T,1))+     &
-         &         BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(2,i_T,1))+     &
-         &         BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(3,i_T,1)))/3._SP
+         res_dich=(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_orb(1,i_T,1))+     &
+         &         BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_orb(2,i_T,1))+     &
+         &         BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_orb(3,i_T,1)))/3._SP
        endif
        res_dich=res_dich*f_eh*Z_eh/(q0_def_norm)
        if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_dich,vtmpC)
@@ -225,11 +248,44 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        res_magn=res_magn*f_eh*Z_eh
        if (l_BS_esort.and.i_res_ares==1) then
          call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_magn(1),vtmpC)
-	 if(n_spinor==2) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_magn(2),vtmpC)
+         if(n_spinor==2) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_magn(2),vtmpC)
        endif
      endif
      !
-     if ( abs(real(E_plus_W0)) < Dip%Energy_treshold .and. iq==1 .and. dip_r ) then
+     if (l_BS_mespin) then
+
+       ! Magnetoelectric spin part
+       res_mespin=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_spin(1,i_T,1))
+       if(l_BS_trace) then
+         ! x*sigma = DIP_x*DIP_spin;
+         res_mespin=(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_spin(1,i_T,1))+     &
+         &           BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_spin(2,i_T,1))+     &
+         &           BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_spin(3,i_T,1)))/3._SP
+       endif
+       res_mespin=res_mespin*f_eh*Z_eh/(q0_def_norm)
+       if (l_BS_esort.and.i_res_ares==1) then 
+         call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_mespin,vtmpC)
+       endif
+     endif
+
+     if (l_BS_meorb) then
+       ! Orbital part
+       res_meorb=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_orb(1,i_T,1))
+       if(l_BS_trace) then
+         ! x*L = DIP_x*DIP_orbital;
+         res_meorb=(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_orb(1,i_T,1))+     &
+         &          BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_orb(2,i_T,1))+     &
+         &          BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_orb(3,i_T,1)))/3._SP
+       endif
+       res_meorb=res_meorb*f_eh*Z_eh/(q0_def_norm)
+
+       if (l_BS_esort.and.i_res_ares==1) then 
+         call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_meorb,vtmpC)
+       endif
+
+     endif
+     !
+     if ( abs(real(E_plus_W0)) < Dip%Energy_threshold .and. iq==1 .and. dip_r ) then
        res_abs =0._SP
        res_kerr=0._SP
        res_PL  =0._SP
@@ -279,9 +335,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        endif
        !
        if (l_BS_photolum) then
-         PL(:,3)=PL(:,3) +PL_prefactor*res_PL*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))/pi
+         !
+         ! I^PL = L<
+         !  
+         PL(:,3)=PL(:,3) + PL_prefactor*res_PL(1)*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))/pi
          if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
-           PL(:,3)=PL(:,3)-PL_prefactor*res_PL*aimag(-1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC))))/pi
+           PL(:,3)=PL(:,3) + PL_prefactor*res_PL(2)*aimag(-1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC))))/pi
          endif
        endif
        !
@@ -301,6 +360,19 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          endif
        endif
        !
+       if (l_BS_mespin) then
+           X_mespin(:,3)=X_mespin(:,3)-res_mespin/(W_bss%p(:)-E_plus_W(i_pert_SOC))
+           if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
+             X_mespin(:,3)=X_mespin(:,3)+conjg(res_mespin)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+           endif
+       endif
+       !
+       if (l_BS_meorb) then
+           X_meorb(:,3)=X_meorb(:,3)-res_meorb/(W_bss%p(:)-E_plus_W(i_pert_SOC))
+           if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
+             X_meorb(:,3)=X_meorb(:,3)+conjg(res_meorb)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+           endif
+       endif
      enddo
      !
      deallocate(E_DbGd)
@@ -355,6 +427,14 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
  endif
  !
+ if(l_BS_mespin) then
+   call PP_redux_wait( X_mespin(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ endif
+ if(l_BS_meorb) then
+   call PP_redux_wait( X_meorb(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
+ endif
+
+ !
  ! Factors and more
  !==================
  !
@@ -374,15 +454,25 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !  beta_ij=-((i*hbar*me)/(omega*qe^2))*G_ij;
    !  DeltaN=((8*pi*N*omega/(3*c))*Tr(beta_ij);
    !  N = molecular density = ??
-   !  SPEED_OF_LIGHT =  c in a.u.
    !
-   X_dichroism(:,3)=X_dichroism(:,3)*(cI/SPEED_OF_LIGHT)*Co_factor/(4._SP*pi)   !  this is (omega/c)*beta, with beta=-((i*hbar*me)/(omega*qe^2))*G_ij
+   !  Yambo atomic units
+   !  SPEED_OF_LIGHT =  c in a.u.
+   !  hbar=1 ; me=1 ; qe=1 => beta=-i/omega*G_{ij}
+   !
+   !  this is (omega/c)*beta=-i/c*G_{ij}
+   !
+   X_dichroism(:,3)=X_dichroism(:,3)*(cI/SPEED_OF_LIGHT)*Co_factor/(4._SP*pi)
    !
  endif
  !
  if (l_BS_magnons) X_magnons(:,:,3)=X_magnons(:,:,3)*Co_factor/(4._SP*pi)
  !
- if (     l_rpa_IP) call K_OUTPUT(iq,W_bss,"open dump IP close reset","optics kerr magnons PL dichroism")
+ if (l_BS_mespin) X_mespin(:,3)=X_mespin(:,3)*(-1._SP*Co_factor/(8._SP*pi))
+ !
+ if (l_BS_meorb) X_meorb(:,3)=X_meorb(:,3)*(-1._SP*Co_factor/(8._SP*pi))
+ !
+ if (     l_rpa_IP) call K_OUTPUT(iq,W_bss,"open dump IP close reset","optics kerr magnons PL dichroism &
+&                                                                      mespin meorb")
  call K_OUTPUT(iq,W_bss,"open dump close reset bare","E_IP E_INDX_IP")
  !
  ! Clean

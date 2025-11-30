@@ -15,6 +15,7 @@ subroutine NL_test_collisions(k,q)
  use R_lattice,      ONLY:nXkibz,bz_samp,qindx_S
  use collision_ext,  ONLY:HXC_COLL_element,HXC_collisions
  use nl_optics,      ONLY:NL_bands
+ use electrons,      ONLY:n_sp_pol
  use com,            ONLY:msg
  !
  implicit none
@@ -22,10 +23,10 @@ subroutine NL_test_collisions(k,q)
  type(bz_samp), intent(in)  :: k,q
  !
  integer :: i_kmq,i_qp,ib,ibp,i_coll,i_coll_mem
- integer :: i_k,i_n,i_m,i_spin
+ integer :: i_k,i_n,i_m,i_spin,i_sp
  integer :: ic1
- complex(SP) :: COLL(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),nXkibz)
- complex(SP) :: COLL_OSCLL(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),nXkibz)
+ complex(SP) :: COLL(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),nXkibz,n_sp_pol)
+ complex(SP) :: COLL_OSCLL(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),nXkibz,n_sp_pol)
  ! 
  real(SP) :: max_diff,diff
  !
@@ -50,22 +51,24 @@ subroutine NL_test_collisions(k,q)
    !
    COLL=cZERO
    !
+   do i_sp=1,n_sp_pol
    do i_kmq=1,nXkibz
      !
      do ibp=NL_bands(1),NL_bands(2)
        do ib=NL_bands(1),NL_bands(2)
-         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)=="t") then
-           COLL(ib,ibp,i_kmq)=HXC_COLL_element(i_coll_mem)%v_c(ic1)
+         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq,i_sp)=="t") then
+           COLL(ib,ibp,i_kmq,i_sp)=HXC_COLL_element(i_coll_mem)%v_c(ic1)
            ic1=ic1+1
          endif
          !
-         diff=abs(COLL(ib,ibp,i_kmq)-COLL_OSCLL(ib,ibp,i_kmq))
-         write(*,'(6i5,2e14.6)') i_k,i_m,i_n,i_kmq,ib,ibp,abs(COLL(ib,ibp,i_kmq)),abs(COLL_OSCLL(ib,ibp,i_kmq))
+         diff=abs(COLL(ib,ibp,i_kmq,i_sp)-COLL_OSCLL(ib,ibp,i_kmq,i_sp))
+         write(*,'(7i5,2e14.6)') i_sp,i_k,i_m,i_n,i_kmq,ib,ibp,abs(COLL(ib,ibp,i_kmq,i_sp)),abs(COLL_OSCLL(ib,ibp,i_kmq,i_sp))
          if(max_diff<=diff) max_diff=diff
          !
        enddo
      enddo
      !
+   enddo
    enddo
    !
  enddo 

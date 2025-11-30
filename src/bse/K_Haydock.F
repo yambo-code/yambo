@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM MG DS IMA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_Haydock(iq,W,OBS,Xk)
  !
  use pars,           ONLY:SP,schlen,cI,cZERO,cONE
@@ -30,8 +34,9 @@ subroutine K_Haydock(iq,W,OBS,Xk)
  use timing_m,       ONLY:timing
  use descriptors,    ONLY:IO_desc_add
  use R_lattice,      ONLY:bz_samp
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(w_samp), intent(in) :: W
  integer,      intent(in) :: iq
@@ -52,7 +57,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
  !
  real(SP)           ::reached_threshold
  real(SP)           ::Bf(Haydock_iterMAX+1),Af(Haydock_iterMAX)
- integer            ::ItParity,Cf_size,Haydock_n_converged,Haydock_required_converged
+ integer            ::ItParity,Cf_size,Ares_fac,Haydock_n_converged,Haydock_required_converged
  complex(SP)        ::v0_mod_
  character(schlen)  ::dumb_ch
  logical            ::impose_pseudo_herm_scheme,use_left_and_right,velocity_correction,tmp_converged
@@ -85,15 +90,21 @@ subroutine K_Haydock(iq,W,OBS,Xk)
  use_left_and_right=.false.
  scheme="hermitian"
  if(BS_K_Coupling.or.impose_pseudo_herm_scheme) scheme="pseudo-herm"
- use_left_and_right=trim(OBS)=="kerr".or.trim(OBS)=="dichroism"
+ use_left_and_right=trim(OBS)=="kerr".or.&
+&                   trim(OBS)=="dichroism".or.&
+&                   trim(OBS)=="mespin".or.&
+&                   trim(OBS)=="meorb"
  velocity_correction= trim(global_gauge)=="velocity" .and. (trim(OBS)=="optics" .or. trim(OBS)=="kerr")
  !
  if (isec(2)/=0) sec="="
  if (isec(2)==0) sec="+"
  call section(sec,'Haydock Solver in the '//trim(OBS)//' basis @q'//trim(intc(iq))//" using the "//trim(scheme)//" scheme")
  !
- if (     l_BS_ares_from_res) HAYVEC_size = BS_K_dim(1)
- if (.not.l_BS_ares_from_res) then
+ if (l_BS_ares_from_res) then
+   Ares_fac=2
+   HAYVEC_size = BS_K_dim(1)
+ else
+   Ares_fac=1
    if(.not.BS_K_coupling) HAYVEC_size = BS_K_dim(1)
    if(     BS_K_coupling) HAYVEC_size = BS_H_dim
  endif
@@ -127,6 +138,10 @@ subroutine K_Haydock(iq,W,OBS,Xk)
    allocate(W0(BS_nT_grps))
    call BS_HAYVEC_alloc(W0,BS_nkFGbz_in_Tgrp)
  endif
+ !
+ ! For the coupling case if A = -R* (l_BS_ares_from_res=.TRUE.), V0 = (u0, -iu0*)
+ ! At each iteration however the relation changes V1= (u1, iu1*),
+ ! this is why the ItParity is needed 
  !
  ItParity=1
  it_on_disk=0
@@ -227,9 +242,12 @@ subroutine K_Haydock(iq,W,OBS,Xk)
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
    do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_g)
+     if (trim(OBS)=="jdos")        V0(i_g)%fragment(:,i_ColFG) = 1._SP
      if (trim(OBS)=="optics")      V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
      if (trim(OBS)=="kerr")        V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(2,:,1)
-     if (trim(OBS)=="dichroism")   V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_dic(1,:,1)
+     if (trim(OBS)=="dichroism")   V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_orb(1,:,1)
+     if (trim(OBS)=="mespin")      V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_spin(1,:,1)
+     if (trim(OBS)=="meorb")       V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_orb(1,:,1)
      if (trim(OBS)=="magnons")     V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
      V0(i_g)%fragment(:,i_ColFG) = V0(i_g)%fragment(:,i_ColFG)*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
    enddo
@@ -268,7 +286,11 @@ subroutine K_Haydock(iq,W,OBS,Xk)
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
      do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_g)
        if (trim(OBS)=="kerr") W0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
-       if (trim(OBS)=="dichroism") W0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)/q0_def_norm
+       if (trim(OBS)=="dichroism".or.&
+&          trim(OBS)=="mespin".or.&
+&          trim(OBS)=="meorb") then 
+         W0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)/q0_def_norm
+       endif
        W0(i_g)%fragment(:,i_ColFG) = W0(i_g)%fragment(:,i_ColFG)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
      enddo
      if(velocity_correction) V_tmp(i_g)%fragment = W0(i_g)%fragment/BS_T_grp(i_g)%E
@@ -302,15 +324,12 @@ subroutine K_Haydock(iq,W,OBS,Xk)
      !
      Cf= cZERO
      !
+     ! First K_multiply_by_V is with parity=-1 in pseudo-hermitian case
+     !
      call K_multiply_by_V(V0,Vnp1,-1,iq,"all")
      call K_dot_product(v0_mod_,V0,Vnp1,1)
      !
-     ! For the coupling case if A = -R* (l_BS_ares_from_res=.FALSE.), V0 = (u0, -iu0*)
-     ! At each iteration however the relation changes V1= (u1, iu1*),
-     ! this is why the ItParity is needed 
-     !
-     if(     l_BS_ares_from_res) Haydock_v0_mod=sqrt(2*real(v0_mod_))
-     if(.not.l_BS_ares_from_res) Haydock_v0_mod=sqrt(  real(v0_mod_))
+     Haydock_v0_mod=sqrt(Ares_fac*real(v0_mod_,SP))
      !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
@@ -461,8 +480,7 @@ subroutine K_Haydock(iq,W,OBS,Xk)
      call K_dot_product(v0_mod_,Vn,Vnp1,1) 
      !       = (2*Re(<Vn|Vnp1>))^(1/2) by symmetry,
      !          where the dot_product is just on eh pair space
-     if (     l_BS_ares_from_res) Bf(it+1)=sqrt(2*real(v0_mod_,SP))
-     if (.not.l_BS_ares_from_res) Bf(it+1)=sqrt(  real(v0_mod_,SP))
+     Bf(it+1)=sqrt(Ares_fac*real(v0_mod_,SP))
      ! Simple test for INF
      if( Bf(it+1)==(Bf(it+1)+1._SP) ) call error('Bf=INF likely because some eigenvalue of the BSE is negative.')
      ! Tests for NaN

@@ -10,7 +10,6 @@
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h>
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
 !
@@ -24,7 +23,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,iq,slepc_mat)
  !
  use pars,           ONLY:cI,cONE,lchlen
  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling,&
- &                        BS_res_ares_n_mat,l_BS_ares_from_res,BS_ID
+ &                        BS_res_ares_n_mat,l_BSE_kernel_full,l_BS_ares_from_res,BS_ID
  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width,&
  &                        run_inversion,run_Haydock,BSS_kernel_last_stored_block
  use IO_int,         ONLY:io_control
@@ -48,6 +47,8 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,iq,slepc_mat)
  PetscErrorCode      :: ierr
  !
  call timing('BSE mat slepc redist',OPR='start')
+ !
+ if (l_BSE_kernel_full) call error("Slepc with matrix not coded with full BSE mode")
  !
  if(     BS_K_coupling) SL_H_dim=BS_H_dim
  if(.not.BS_K_coupling) SL_H_dim=BS_K_dim(i_BS_mat)

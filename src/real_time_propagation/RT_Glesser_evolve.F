@@ -14,7 +14,7 @@ subroutine RT_Glesser_evolve(En,kpt,dG_old,dG_in,dG_out,dT,dTp)
  !  T0+dt = T+dt'
  !
  use pars,           ONLY:SP,cZERO
- use electrons,      ONLY:levels,spin_occ
+ use electrons,      ONLY:levels,spin_occ,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_G_k_range
  use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV, &
@@ -27,31 +27,32 @@ subroutine RT_Glesser_evolve(En,kpt,dG_old,dG_in,dG_out,dT,dTp)
  type(levels),   intent(in) :: En
  !
  real(SP),       intent(in) :: dT,dTp
- complex(SP),    intent(in) :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
- complex(SP),    intent(in) :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
- complex(SP),   intent(out) :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
+ complex(SP),    intent(in) :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2),n_sp_pol)
+ complex(SP),    intent(in) :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2),n_sp_pol)
+ complex(SP),   intent(out) :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2),n_sp_pol)
  !
  ! Work space
  !
  logical :: l_RT_STD
- integer :: ik
+ integer :: ik,i_sp
  !
  dG_out=cZERO
  !
  l_RT_STD=.not.(l_RT_ACC.or.l_RT_DIAG)
  !
+ do i_sp=1,n_sp_pol
  do ik=1,RT_nk
    !
    if( .not.PAR_IND_Xk_ibz%element_1D(RTibz%k_map(ik)) ) cycle
    !
-   if (l_RT_EXP.and.l_RT_ACC ) call RT_EXP_step_accurate(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
-   if (l_RT_EXP.and.l_RT_STD ) call RT_EXP_step_std(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
+   if (l_RT_EXP.and.l_RT_ACC ) call RT_EXP_step_accurate(dG_old(:,:,ik,i_sp),dG_in(:,:,ik,i_sp),dG_out(:,:,ik,i_sp),ik,i_sp,dT)
+   if (l_RT_EXP.and.l_RT_STD ) call RT_EXP_step_std(dG_old(:,:,ik,i_sp),dG_in(:,:,ik,i_sp),dG_out(:,:,ik,i_sp),ik,i_sp,dT)
    !
-   if (l_RT_EULER            ) call RT_EULER_step(dG_in(:,:,ik),dG_out(:,:,ik),ik,En%nbf,dT)
+   if (l_RT_EULER            ) call RT_EULER_step(dG_in(:,:,ik,i_sp),dG_out(:,:,ik,i_sp),ik,i_sp,En%nbf,dT)
    !
-   if (l_RT_INV.and.l_RT_ACC ) call RT_INV_step_accurate(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
-   if (l_RT_INV.and.l_RT_DIAG) call RT_INV_step_diago(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
-   if (l_RT_INV.and.l_RT_STD ) call RT_INV_step_std(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
+   if (l_RT_INV.and.l_RT_ACC ) call RT_INV_step_accurate(dG_old(:,:,ik,i_sp),dG_in(:,:,ik,i_sp),dG_out(:,:,ik,i_sp),ik,i_sp,dT)
+   if (l_RT_INV.and.l_RT_DIAG) call RT_INV_step_diago(dG_old(:,:,ik,i_sp),dG_in(:,:,ik,i_sp),dG_out(:,:,ik,i_sp),ik,i_sp,dT)
+   if (l_RT_INV.and.l_RT_STD ) call RT_INV_step_std(dG_old(:,:,ik,i_sp),dG_in(:,:,ik,i_sp),dG_out(:,:,ik,i_sp),ik,i_sp,dT)
    !
    ! Here the term G(T0) [dG_old] is added to dG(t)
    !
@@ -59,25 +60,26 @@ subroutine RT_Glesser_evolve(En,kpt,dG_old,dG_in,dG_out,dT,dTp)
    !
    ! Dephasing is integrated analitically in this case.
    !
-   if(     l_RT_RWA)           call RT_apply_RWA(ik,En,kpt,dT,dTp,dG_out(:,:,ik),dG_old(:,:,ik))
+   if(     l_RT_RWA)           call RT_apply_RWA(ik,i_sp,En,kpt,dT,dTp,dG_out(:,:,ik,i_sp),dG_old(:,:,ik,i_sp))
    !
-   if(.not.l_RT_RWA)           call RT_Dephasing_step(dG_out(:,:,ik),dG_old(:,:,ik),ik,dT)
+   if(.not.l_RT_RWA)           call RT_Dephasing_step(dG_out(:,:,ik,i_sp),dG_old(:,:,ik,i_sp),ik,i_sp,dT)
    !
    ! Carriers relaxation step:
    !
    ! G(T0+dt) = G(T0) - i dt * Sigma_relax(T)
    !
-   call RT_Scattering_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
+   call RT_Scattering_step(dG_old(:,:,ik,i_sp),dG_in(:,:,ik,i_sp),dG_out(:,:,ik,i_sp),ik,i_sp,dT)
    !
-   call RT_G_symmetrization(dG_out(:,:,ik),ik)
+   call RT_G_symmetrization(dG_out(:,:,ik,i_sp),ik,i_sp)
    !
+ enddo
  enddo
  !
  contains
    !
-   subroutine RT_G_symmetrization(G_inout,ik)
+   subroutine RT_G_symmetrization(G_inout,ik,i_sp)
      !
-     integer,     intent(in)    :: ik
+     integer,     intent(in)    :: ik,i_sp
      complex(SP), intent(inout) :: G_inout(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
      !
      integer                :: ib,ibp
@@ -88,11 +90,11 @@ subroutine RT_Glesser_evolve(En,kpt,dG_old,dG_in,dG_out,dT,dTp)
        !
        G_inout(ib,ib)=cmplx(0._SP,aimag(G_inout(ib,ib)))
        !
-       E_occ_tmp= aimag(G_inout(ib,ib))+            aimag(G_lesser_reference(ib,ib,ik))
-       H_occ_tmp=-aimag(G_inout(ib,ib))+ ( spin_occ-aimag(G_lesser_reference(ib,ib,ik)) )
+       E_occ_tmp= aimag(G_inout(ib,ib))+            aimag(G_lesser_reference(ib,ib,ik,i_sp))
+       H_occ_tmp=-aimag(G_inout(ib,ib))+ ( spin_occ-aimag(G_lesser_reference(ib,ib,ik,i_sp)) )
        !
-       if ( E_occ_tmp<0._SP .or. H_occ_tmp>spin_occ ) G_inout(ib,ib)=                      G_lesser_reference(ib,ib,ik)
-       if ( H_occ_tmp<0._SP .or. E_occ_tmp>spin_occ ) G_inout(ib,ib)=cmplx(0._SP,spin_occ)-G_lesser_reference(ib,ib,ik)
+       if ( E_occ_tmp<0._SP .or. H_occ_tmp>spin_occ ) G_inout(ib,ib)=                      G_lesser_reference(ib,ib,ik,i_sp)
+       if ( H_occ_tmp<0._SP .or. E_occ_tmp>spin_occ ) G_inout(ib,ib)=cmplx(0._SP,spin_occ)-G_lesser_reference(ib,ib,ik,i_sp)
        !
        do ibp=ib+1,RT_bands(2)
          !

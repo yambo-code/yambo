@@ -5,9 +5,13 @@
 !
 ! Authors (see AUTHORS file for details): AM DV DS
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine excitons_read(k,Xk,en,Xen,iq,what,io_err)
  !
- use pars,          ONLY:pi
+ use pars,          ONLY:SP,pi
  use R_lattice,     ONLY:bz_samp
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_reset
@@ -17,9 +21,13 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what,io_err)
  use IO_m,          ONLY:OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig
  use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_K_coupling,BSqpts
- use YPPm,          ONLY:BS_R_left,BS_R_right,BS_E,BS_E_SOC_corr,BS_R_PL,BS_R_kerr,Xbsk   
+ use YPPm,          ONLY:BS_R_left,BS_R_right,BS_R_left_kerr,BS_R_right_kerr,&
+ &                       BS_R_left_magn,BS_R_right_magn,BS_R_right_dich,&
+ &                       BS_E,BS_E_SOC_corr,BS_R_PL,Xbsk,MAGNON_Res_threshold,&
+ &                       l_magnons
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp) ::Xk,k
  type(levels)  ::Xen,en
@@ -84,13 +92,19 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what,io_err)
    YAMBO_ALLOC_P(BS_R_right,(BSS_n_eig))
    YAMBO_ALLOC_P(BS_R_left,(BSS_n_eig))
    YAMBO_ALLOC(BS_E,(BSS_n_eig))
+   if (l_magnons) then
+     YAMBO_ALLOC_P(BS_R_right_magn,(BSS_n_eig,2))
+     YAMBO_ALLOC_P(BS_R_left_magn,(BSS_n_eig,2))
+   endif
    if(en%nb_SOC/=0) then
      YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BSS_n_eig))
    endif
    !
    do i_sec=1,2
      call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/i_sec/),ID=io_ID)
-     io_err=io_BSS_diago(iq,1,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BsE_corr=BS_E_SOC_corr,bsR_kerr=BS_R_kerr,bsR_pl=BS_R_PL)
+     io_err=io_BSS_diago(iq,1,io_ID,Xbsk,bsE=BS_E,bsRl=BS_R_left,bsRr=BS_R_right,BsE_corr=BS_E_SOC_corr,&
+     &       bsL_kerr=BS_R_left_kerr,bsR_kerr=BS_R_right_kerr,bsR_dich=BS_R_right_dich,   &
+             bsL_magn=BS_R_left_magn,bsR_magn=BS_R_right_magn,bsR_pl=BS_R_PL)
      if (io_err/=0) then
        if(i_sec==1) then
          call warning('Error reading SEC1 in ndb.BSS_diago, this can be due to the missing ndb.dipoles or ndb.ems1')
@@ -114,12 +128,11 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what,io_err)
    !
    ! Loading tables and eigenvectors
    !
-   YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,3+n_sp_pol-1))
+   YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,5))
    YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/3/),ID=io_ID)
-   io_err=io_BSS_diago(iq,1,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,&
-   &                   BsE_corr=BS_E_SOC_corr,bsR_kerr=BS_R_kerr,bsR_pl=BS_R_PL,BS_mat=BS_mat)
+   io_err=io_BSS_diago(iq,1,io_ID,Xbsk,BS_mat=BS_mat)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC 3, not compatible with ypp input')
    !
    ! Create the anti-resonant part of the eh_table
@@ -145,6 +158,8 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what,io_err)
    !
    YAMBO_FREE_P(BS_R_left)
    YAMBO_FREE_P(BS_R_right)
+   YAMBO_FREE_P(BS_R_left_magn)
+   YAMBO_FREE_P(BS_R_right_magn)
    YAMBO_FREE(BS_E)
    YAMBO_FREE(BSS_eh_table)
    YAMBO_FREE(BS_mat)

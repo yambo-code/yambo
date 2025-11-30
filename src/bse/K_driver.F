@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM IMA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  use pars,           ONLY:IP
@@ -19,7 +23,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0,&
 &                         BSS_Q_dir,BSS_E_dir
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_res_K_corr,BS_n_g_W,BS_cpl_K_corr,&
-&                         BS_Blocks_and_Transitions_free,BSqpts,O_ng,BS_iq_now
+&                         BS_Blocks_and_Transitions_free,BSqpts,O_ng,BSE_L_kind,BS_iq_now,&
+&                         BS_kpt_bz,BS_kpt_ibz
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded
  use drivers,        ONLY:l_rpa_IP,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PAR_IND_WF_b_and_k,PAR_K_scheme,PARALLEL_default_mode
@@ -27,8 +32,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use interfaces,     ONLY:eval_G_minus_G
  use vec_operate,    ONLY:v_norm
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free,G_m_G_maxval,q0_def_norm
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
@@ -45,7 +51,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  ! I/O
  !
  integer, allocatable :: qindx_B_max_CPU(:)
- integer              :: io_err,ID
+ integer              :: io_err,ID,ik
  integer, external    :: io_QINDX
  !
  call section('*','Bethe Salpeter Equation driver')
@@ -59,6 +65,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !=========================
  call K_driver_init("init",1,Ken,Xk)
  !
+ call msg('s','[BSE] Response kind is: ',trim(BSE_L_kind))
  ! q0 renormalization and field direction
  !
  BSS_E_dir(:) = BSS_E_dir(:)/v_norm(BSS_E_dir)
@@ -105,7 +112,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    ! here qindx_B is allocated
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
-   io_err=io_QINDX(Xk,q,ID)
+   io_err=io_QINDX(Xk,q,ID,'minus_q')
    !
    YAMBO_ALLOC(qindx_B_max_CPU,(PAR_K_scheme%COM_ibz_INDEX%n_CPU))
    qindx_B_max_CPU=0
@@ -115,6 +122,17 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    YAMBO_FREE(qindx_B_max_CPU)
    !
  endif
+ !
+ YAMBO_ALLOC(BS_kpt_ibz,(3,Xk%nibz))
+ do ik=1,Xk%nibz
+   BS_kpt_ibz(:,ik)=Xk%pt(ik,:)
+ enddo
+ call k_ibz2bz(Xk,'i',.false.)
+ YAMBO_ALLOC(BS_kpt_bz,(3,Xk%nbz))
+ do ik=1,Xk%nbz
+   BS_kpt_bz(:,ik)=Xk%ptbz(ik,:)
+ enddo
+ call k_ibz2bz(Xk,'d',.false.)
  !
  ! Tranferred momentum
  !======================
@@ -180,7 +198,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call K_Transitions_setup(iq,Ken,Xk,Dip,VB,CB)
    !
    !... Blocks build-up
-   if (.not.l_rpa_IP) call K_blocks()
+   if (.not.l_rpa_IP) call K_blocks(iq)
    !
    ! Wave Functions distribution 
    !=============================
@@ -239,6 +257,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators,RESET=.TRUE.)
  !
  YAMBO_FREE(BSqpts)
+ YAMBO_FREE(BS_kpt_bz)
+ YAMBO_FREE(BS_kpt_ibz)
  call qindx_free('B')
  !
 end subroutine

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV, COMM, COMM_name)
  !
  ! General, multi-purpose M <-> M transfer
@@ -17,7 +21,9 @@ subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  use D_lattice,      ONLY:i_space_inv
  use matrix,         ONLY:PAR_matrix,I_do_SND,I_do_RCV,TRANSFER_world,PAR_to_PAR_comm_NAME
  use timing_m,       ONLY:timing
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  !
  type(PAR_matrix), optional :: M_in
  type(PAR_matrix), optional :: M_out
@@ -114,16 +120,6 @@ subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
 &                              M_out%blc(M_out%rows(1):M_out%rows(2),M_out%cols(1):M_out%cols(2),M_out%I),&
 &                              M_out%rows,M_out%cols) 
    !
- endif
- !
- if (M_in_kind=="XUP".and.X_FILL_UP_matrix_only) then
-   if (i_space_inv==0) call MATRIX_duplicate("+TC",M_in=M_in,INDEX_in=M_in%I,M_out=M_Xdn)
-   if (i_space_inv==1) call MATRIX_duplicate("+T" ,M_in=M_in,INDEX_in=M_in%I,M_out=M_Xdn)
-   call MATRIX_PAR_to_from_PAR(M_Xdn%blc(M_Xdn%rows(1):M_Xdn%rows(2),M_Xdn%cols(1):M_Xdn%cols(2),M_Xdn%I)  ,&
-&                              M_Xdn%rows, M_Xdn%cols,&
-&                              M_out%blc(M_out%rows(1):M_out%rows(2),M_out%cols(1):M_out%cols(2),M_out%I),&
-&                              M_out%rows,M_out%cols) 
-   call MATRIX_duplicate("free",M_out=M_Xdn)
  endif
  !
  call COMM_reset(TRANSFER_world)

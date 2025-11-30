@@ -1,0 +1,6 @@
+[fprettify]
+indent = 6
+whitespace_only = true
+case = upper
+strict_indent = false
+align_comments = true

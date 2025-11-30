@@ -51,7 +51,7 @@ subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
  use LIVE_t,        ONLY:live_timing
  use vec_operate,   ONLY:v_norm
  use D_lattice,     ONLY:alat
- use R_lattice,     ONLY:RIM_n_rand_pts
+ use R_lattice,     ONLY:RIM_sphe_n_rand_pts
  implicit none
  !
  integer,  intent(in)    :: Np,power
@@ -62,11 +62,11 @@ subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
  ! Work Space
  !
  integer   :: ip,ir,N_out,N_in,ic
- real(SP)  :: v_rand(3),qr(RIM_n_rand_pts,3),sphere_vol,box_vol,pt_cc(3)
+ real(SP)  :: v_rand(3),qr(RIM_sphe_n_rand_pts,3),sphere_vol,box_vol,pt_cc(3)
  integer            :: iseed(8)
  real(DP), external :: dlaran
  !
- if (RIM_n_rand_pts==0)then
+ if (RIM_sphe_n_rand_pts==0)then
    do ip=1,Np
      p_weight(ip)=0.
      pt_cc=points(ip,:)*2.*pi/alat(:)
@@ -92,8 +92,8 @@ subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
  N_in=1
  N_out=0
  !
- call live_timing('Random points',RIM_n_rand_pts)
- loop: do while(.not.N_in==RIM_n_rand_pts+1)
+ call live_timing('Random points',RIM_sphe_n_rand_pts)
+ loop: do while(.not.N_in==RIM_sphe_n_rand_pts+1)
    !
    do ic=1,3
      v_rand(ic)=( 2.*dlaran(iseed(4:))-1. )*radius*1.2
@@ -115,14 +115,14 @@ subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
  sphere_vol=4./3.*pi*radius**3.
  !
  call msg('r', 'Sphere volume       [au]',sphere_vol)
- call msg('rn','Integrated volume   [au]',box_vol*real(RIM_n_rand_pts)/real(N_out))
+ call msg('rn','Integrated volume   [au]',box_vol*real(RIM_sphe_n_rand_pts)/real(N_out))
  !
  call live_timing('Integrals',Np)
  !
  do ip=1,Np
    p_weight(ip)=0.
    pt_cc=points(ip,:)*2.*pi/alat(:)
-   do ir=1,RIM_n_rand_pts
+   do ir=1,RIM_sphe_n_rand_pts
      p_weight(ip)=p_weight(ip)+1./v_norm(qr(ir,:)+pt_cc(:))**power*box_vol/real(N_out)
    enddo
    p_weight(ip)=p_weight(ip)/sphere_vol/real(Np)

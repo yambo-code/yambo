@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM CA MG
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine RT_X_qssin
  !
  use YPP_real_time,  ONLY:RT_P_t,RT_conf,Use_FFT,i_t_start,i_t_end
@@ -12,11 +16,13 @@ subroutine RT_X_qssin
  use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1
  use com,            ONLY:error
  use RT_control,     ONLY:RT_output
- use fields,         ONLY:Efield,small_a
+ use fields,         ONLY:Efield
+ use fields_int,     ONLY:small_a
  use functions,      ONLY:theta_function
  use LIVE_t,         ONLY:live_timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! Work Space
  !
@@ -48,8 +54,8 @@ subroutine RT_X_qssin
  YAMBO_ALLOC(E_t,(RT_conf%T_n_steps))
  do i_t=1,RT_conf%T_n_steps
    Field_time=(i_t-1)*RT_conf%delta_T-Efield(i_Probe)%t_initial
-   A_of_t =small_a(Field_time,Efield(i_Probe),0)
-   E_of_t =small_a(Field_time,Efield(i_Probe),1)
+   A_of_t =small_a(Field_time,RT_conf%delta_T,Efield(i_Probe),0)
+   E_of_t =small_a(Field_time,RT_conf%delta_T,Efield(i_Probe),1)
    theta  =theta_function(Field_time,RT_conf%delta_T,0)
    delta  =theta_function(Field_time,RT_conf%delta_T,1)
    select case(Efield(i_Probe)%ef_pol)

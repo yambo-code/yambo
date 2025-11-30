@@ -4,11 +4,15 @@
 ! Copyright (C) 2018 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): CA
+!
+! headers
+!
+#include<y_memory.h>
 ! 
 integer function io_OSCLL(q,ID)
  !
  use pars,          ONLY:SP,schlen,IP_YIO
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,n_sp_pol
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use R_lattice,     ONLY:nXkibz,bz_samp
  use QP_m,          ONLY:QP_nk
@@ -22,8 +26,9 @@ integer function io_OSCLL(q,ID)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer     ::ID
  type(bz_samp), intent(in) :: q
@@ -83,7 +88,7 @@ integer function io_OSCLL(q,ID)
  !
  if (read_is_on(ID)) then
    if(.not.allocated(OSCLL)) then
-     YAMBO_ALLOC(OSCLL,(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),PAR_Xk_nibz,q%nbz,ng_oscll))
+     YAMBO_ALLOC(OSCLL,(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),PAR_Xk_nibz,n_sp_pol,q%nbz,ng_oscll))
    endif
  endif
  !
@@ -107,7 +112,7 @@ integer function io_OSCLL(q,ID)
      io_OSCLL=io_status(ID)
      if (io_OSCLL/=0) goto 1
      !
-     if (read_is_on(ID)) OSCLL(ib,:,ik_mem,:,ig)=disk_data
+     if (read_is_on(ID)) OSCLL(ib,:,ik_mem,i_sp_pol,:,ig)=disk_data
      !
    enddo
  enddo

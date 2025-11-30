@@ -5,21 +5,26 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine setup(en,Xen,Ken,k,Xk)
+! headers
+!
+#include <y_memory.h>
+!#include <netcdf.inc>
+!
+subroutine setup(en,q,Xen,Ken,k,Xk)
  !
  use pars,           ONLY:SP,pi,schlen
  use units,          ONLY:Da2AU
  use drivers,        ONLY:l_setup
  use C_driver,       ONLY:code_bin
  use parser_m,       ONLY:parser
- use wave_func,      ONLY:wf_ng,wf_ncx,wf_igk
+ use wave_func,      ONLY:wf_ng,wf_ncx,wf_igk,wf_nc_k,E_of_WFs
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,atom_mass,atom_pos,atoms_map,&
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
 &                         symmetry_group_table,mag_syms,idt_index,symmetry_equiv_atoms
- use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,FineGd_desc,&
+ use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,FineGd_desc,g_rot,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed,bz_samp_duplicate_Fg,MAX_kpts_to_report
  use com,            ONLY:msg,fat_log
  use stderr,         ONLY:intc
@@ -43,16 +48,16 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! For I/O debug, see below
  !use IO_m,           ONLY:netcdf_call
 #endif
+ use y_memory_alloc
  !
-#include <y_memory.h>
+ implicit none
  !
  ! For I/O debug, see below
 #if defined _HDF5_IO
-!#include <netcdf.inc>
 #endif
  !
  type(levels)    ::en,Xen,Ken
- type(bz_samp)   ::k,Xk
+ type(bz_samp)   ::q,k,Xk
  !
  ! Work Space
  !
@@ -182,7 +187,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  YAMBO_ALLOC(rl_sop,(3,3,nsym))
  !
  do is=1,nsym
-   forall (i2=1:3,i3=1:3) rl_sop(i2,i3,is)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
+   do concurrent (i2=1:3,i3=1:3) 
+     rl_sop(i2,i3,is)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
+   enddo
  enddo
  !
  ! Indentity index
@@ -242,14 +249,15 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call G_shells_finder()
  !
  if ( wf_ng > maxval(wf_igk) ) then
-   call warning("wf_ng > maxval(wf_igk), probably because FFTGvecs in input. Reducing it")
+   call msg("r","wf_ng > maxval(wf_igk), likely because FFTGvecs was set in input.")
+   call msg("rn","Reducing wf_ng from "//trim(intc(wf_ng))//" to "//trim(intc(maxval(wf_igk))))
    wf_ng=maxval(wf_igk)
  endif
  !
  call msg('r','nG shells         ',n_g_shells)
  call msg('r','nG charge         ',ng_closed)
- call msg('r','nG WFs            ',wf_ng)
- call msg('r','nC WFs            ',wf_ncx)
+ call msg('r','nG WFs            ',(/wf_ng,wf_nc_k(1)/))
+ call msg('rn','nC WFs           ',wf_ncx)
  !
  ! Indexes of -G. minus_G_index(iG)| G_{minus_G_index(iG)}=-G. When there is no Spatial inversion
  ! the map is built in G_shells_finder
@@ -258,25 +266,34 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  n_to_print=min(800,n_g_shells)
  if (.not.fat_log) n_to_print=n_to_print/10
+ if (n_to_print>n_g_shells/2) n_to_print=n_g_shells
  !
- call msg('r','G-vecs. in first '//trim(intc(n_to_print))//' shells',' [ Number ] ')
+ call msg('r','G-vecs. in first (and last) '//trim(intc(n_to_print))//' shells',' [ Number ] ')
  do i1=1,n_to_print,9
    call msg('r',' ',ng_in_shell(i1:min(i1+8,n_to_print)) )
  enddo
- if (n_to_print<n_g_shells) call msg('r',"...")
+ if (n_to_print<n_g_shells) then
+   call msg('r',"...")
+   do i1=n_g_shells-n_to_print,n_g_shells,9
+     call msg('r',' ',ng_in_shell(i1:min(i1+8,n_g_shells)) )
+   enddo
+ endif
  !
- call msg('r','Shell energy in first '//trim(intc(n_to_print))//' shells',' [ mHa ] ')
+ call msg('nr','E charge         ',E_of_shell(n_g_shells),' [Ha]')
+ call msg('rn','E WFs            ',E_of_WFs              ,' [Ha]')
+ !
+ call msg('r','Shell energy in first (and last) '//trim(intc(n_to_print))//' shells',' [ mHa ] ')
  do i1=1,n_to_print,9
    call msg('r',' ',E_of_shell(i1:min(i1+8,n_to_print))*1000._SP)
  enddo
- if (n_to_print<n_g_shells) call msg('r',"...")
+ if (n_to_print<n_g_shells) then
+   call msg('r',"...")
+   do i1=n_g_shells-n_to_print,n_g_shells,9
+     call msg('r',' ',E_of_shell(i1:min(i1+8,n_g_shells))*1000._SP)
+   enddo
+ endif
  !
- ! First simplified implementation of wf_ng_1st_BZ & wf_ng_2st_BZ
- ! A more correct implementation would involve a rotation of the shells
- ! and the evaluation of the resulting wf_ng
- !
- wf_ng_1st_BZ=wf_ng
- call PARSER_close_G(wf_ng_1st_BZ,'tRL')
+ wf_ng_1st_BZ=maxval(g_rot(:min(wf_ng,ng_closed),:))
  !
  call section('=','K-grid lattice')
  !=================================
@@ -401,6 +418,14 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Once the occupations have been evaluated I dump Xen in Ken
  !
  call E_duplicate(Xen,Ken)
+ ! 
+ ! Test Spatial Inversion for WFs
+ ! Notice that the variable i_space_inv is already defined by
+ ! atoms_spatial_inversion()
+ call WF_spatial_inversion(en,k,q)
+ !
+ ! Magnetization
+ call eval_Mtot(en,k)
  !
 #if defined _SC
  K_kind=X_kind

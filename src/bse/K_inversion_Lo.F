@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
-subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo) 
+! headers
+!
+#include<y_memory.h>
+!
+subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo) 
  !
  use pars,           ONLY:SP,cZERO,cI,pi,rZERO,schlen
  use R_lattice,      ONLY:bz_samp
@@ -28,20 +32,21 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
 #endif
  use BS,             ONLY:l_BS_photolum
  use PHOTOLUM,       ONLY:BSS_PL_f,BSS_dipoles_PL,PL,PL_prefactor
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(w_samp),  intent(inout) :: W
  type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k
- integer,       intent(in)    :: iq,Lo_dim,Lo_n_loop
+ integer,       intent(in)    :: iq,Lo_dim
  complex(SP),   intent(out)   :: Lo(BS_H_dim,W%n_freqs,Lo_dim)
  !
  ! Work Space
  !
  type(w_samp)     :: W_mins,W_plus
  integer          :: iw_ref,i_bsk,i_res,i_cpl,i_Lo_trans,ik_bz,iv,ic,iw,i_sp_c,i_sp_v,ik_ibz,&
- &                   i_res_ares,i_para,i_loop,n_loop,i_eps,i_Lo,transition(4)
+ &                   i_res_ares,i_para,i_loop,n_loop,i_eps,i_Lo,transition(5)
  complex(SP)      :: E_plus_W,residual
  complex(SP)      :: SF(W%n_freqs,2)
  character(schlen):: LT_title
@@ -120,7 +125,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        !
        i_Lo_trans=i_res
        i_Lo      =1
-       transition=(/ik_bz,iv,ic,i_sp_c/)
+       transition=(/ik_bz,iv,ic,i_sp_c,i_sp_v/)
        !
        if (BS_n_eh_spaces==2) then
          if ( i_res_ares==1) i_Lo      =1
@@ -139,8 +144,10 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        if (     allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i_res)-cI*BSS_eh_W(i_res)
        !
        if(i_loop==2) then
-         forall(iw=1:W%n_freqs) W_mins%p(iw)=W%p(iw)-BS_diagonal(i_res)*BSS_eh_f(i_res)
-         forall(iw=1:W%n_freqs) W_plus%p(iw)=W%p(iw)+BS_diagonal(i_res)*BSS_eh_f(i_res)
+         do concurrent (iw=1:W%n_freqs) 
+            W_mins%p(iw)=W%p(iw)-BS_diagonal(i_res)*BSS_eh_f(i_res)
+            W_plus%p(iw)=W%p(iw)+BS_diagonal(i_res)*BSS_eh_f(i_res)
+         enddo
        endif
        !
        if ( .not.allocated(E%GreenF) ) then
@@ -158,7 +165,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
            if (BS_K_anti_resonant) then
              call X_GreenF_analytical(iq,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.,.FALSE.)
            endif
-           Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)=BSS_PL_f(i_res)/BSS_eh_f(i_res)**2*aimag(W%p(1))/pi
+           Lo(i_Lo_trans,:,i_Lo)=BSS_PL_f(i_res,i_Lo)/BSS_eh_f(i_res)**2*aimag(W%p(1))/pi
          endif
          !
        else 
@@ -188,9 +195,9 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        !
        if (l_BS_photolum.and.i_loop==1) then
          residual=dot_product(BSS_dipoles_PL(:,i_res),BSS_dipoles_PL(:,i_res))
-         PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,1))/pi*BSS_PL_f(i_res)
+         PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,1))/pi*BSS_PL_f(i_res,1)
          if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
-           PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*aimag(SF(:,2))/pi*BSS_PL_f(i_cpl)
+           PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,2))/pi*BSS_PL_f(i_cpl,2)
          endif
        endif
        !

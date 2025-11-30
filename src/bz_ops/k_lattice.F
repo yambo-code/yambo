@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 integer function k_lattice(k,Xk,G_shell,be_verbose)
  !
  ! Output(s)
@@ -21,8 +25,9 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
 &                         bz_samp,g_vec,ng_in_shell,Xk_grid_new_mapping
  use zeros,          ONLY:k_rlu_zero
  use drivers,        ONLY:l_rim_w
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp)::k,Xk
  integer      ::G_shell

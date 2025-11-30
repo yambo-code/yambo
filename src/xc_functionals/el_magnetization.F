@@ -19,7 +19,9 @@ subroutine el_magnetization(en,Xk,magn,bands)
  use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
  use D_lattice,      ONLY:nsym,dl_sop,i_time_rev
  use FFT_m,          ONLY:fft_size,fft_rot_r
- use wave_func,      ONLY:WF
+ use wave_func,      ONLY:WF,rho_map,rho_map_size
+ use interfaces,     ONLY:WF_load,WF_free
+ use hamiltonian,    ONLY:WF_G_max,WF_Go_indx
  use electrons,      ONLY:Spin_magn
  use matrix_operate, ONLY:m3det
  use parallel_m,     ONLY:PAR_IND_WF_linear,PAR_COM_density
@@ -31,6 +33,8 @@ subroutine el_magnetization(en,Xk,magn,bands)
  !
  implicit none
  !
+#include<yambo_wfs.h>
+ !
  type(levels), intent(in ) ::en
  type(bz_samp),intent(in ) ::Xk
  real(SP),     intent(out) ::magn(fft_size,3)
@@ -38,7 +42,8 @@ subroutine el_magnetization(en,Xk,magn,bands)
  !
  ! Work Space
  !
- integer :: isym,ifft,ib,ik,i_sp_pol,i_wf,bands_range(2)
+ logical :: l_WFs_on_the_fly
+ integer :: isym,ifft,ib,ik,i_sp_pol,i_wf,bands_range(2),wf_rspace_size
  real(SP):: cv(fft_size,3),tmp_sop(3,3),f_occ
  !
 #if defined _RT
@@ -52,11 +57,21 @@ subroutine el_magnetization(en,Xk,magn,bands)
  !
  if (n_spin==1) return
  !
+ wf_rspace_size=size(WF%r(:,1,1))
+ !
+ l_WFs_on_the_fly=.not.allocated(WF%r)
  !
  do i_sp_pol=1,n_sp_pol
    bands_range=(/1,en%nbm(i_sp_pol)/)
    if(present(bands)) bands_range=bands
    do ik=1,Xk%nibz
+     !
+     if (l_WFs_on_the_fly) then
+       call WF_load(WF,WF_G_max,WF_Go_indx,bands_range,(/ik,ik/),(/i_sp_pol,i_sp_pol/),&
+&                   space='R',title='-mang',keep_states_to_load=.true.)
+       wf_rspace_size=size(WF%r(:,1,1))
+     endif
+     !
      do ib=bands_range(1),bands_range(2)
        !
        if (allocated(PAR_IND_WF_linear%element_2D)) then
@@ -80,32 +95,57 @@ subroutine el_magnetization(en,Xk,magn,bands)
          !
          ! mz
          !
-         cv(:,3)=cv(:,3)+Xk%weights(ik)*(-1)**(i_sp_pol-1)*f_occ*real(conjg(WF%c(:,1,i_wf))*WF%c(:,1,i_wf))
+         if (wf_rspace_size<fft_size) then
+           cv(rho_map(:),3)=cv(rho_map(:),3)+Xk%weights(ik)*(-1)**(i_sp_pol-1)*f_occ*real(wfconjg(WF%r(:,1,i_wf))*WF%r(:,1,i_wf))
+         else
+           cv(:,3)         =cv(:,3)         +Xk%weights(ik)*(-1)**(i_sp_pol-1)*f_occ*real(wfconjg(WF%r(:,1,i_wf))*WF%r(:,1,i_wf))
+         endif
          !
        else if(n_spinor==2) then
          !
          !
          ! mx
          !
-         cv(:,1)=cv(:,1)+Xk%weights(ik)*f_occ*(&
-&                   +real(conjg(WF%c(:,1,i_wf))*WF%c(:,2,i_wf))&
-&                   +real(conjg(WF%c(:,2,i_wf))*WF%c(:,1,i_wf)) )
+         if (wf_rspace_size<fft_size) then
+           cv(rho_map(:),1)=cv(rho_map(:),1)+Xk%weights(ik)*f_occ*(&
+           &                 +real(wfconjg(WF%r(:,1,i_wf))*WF%r(:,2,i_wf))&
+           &                 +real(wfconjg(WF%r(:,2,i_wf))*WF%r(:,1,i_wf)) )
+         else
+           cv(:,1)         =cv(:,1)         +Xk%weights(ik)*f_occ*(&
+           &                 +real(wfconjg(WF%r(:,1,i_wf))*WF%r(:,2,i_wf))&
+           &                 +real(wfconjg(WF%r(:,2,i_wf))*WF%r(:,1,i_wf)) )
+         endif
          !
          ! my
          !
-         cv(:,2)=cv(:,2)+Xk%weights(ik)*f_occ*(&
-&                   +aimag(conjg(WF%c(:,1,i_wf))*WF%c(:,2,i_wf))&
-&                   -aimag(conjg(WF%c(:,2,i_wf))*WF%c(:,1,i_wf)) )
+         if (wf_rspace_size<fft_size) then
+           cv(rho_map(:),2)=cv(rho_map(:),2)+Xk%weights(ik)*f_occ*(&
+&                            +wfaimag(wfconjg(WF%r(:,1,i_wf))*WF%r(:,2,i_wf))&
+&                            -wfaimag(wfconjg(WF%r(:,2,i_wf))*WF%r(:,1,i_wf)) )
+         else
+           cv(:,2)         =cv(:,2)          +Xk%weights(ik)*f_occ*(&
+&                            +wfaimag(wfconjg(WF%r(:,1,i_wf))*WF%r(:,2,i_wf))&
+&                            -wfaimag(wfconjg(WF%r(:,2,i_wf))*WF%r(:,1,i_wf)) )
+         endif
          !
          ! mz
          !
-         cv(:,3)=cv(:,3)+Xk%weights(ik)*f_occ*(&
-&                   +real(conjg(WF%c(:,1,i_wf))*WF%c(:,1,i_wf))&
-&                   -real(conjg(WF%c(:,2,i_wf))*WF%c(:,2,i_wf)) )
+         if (wf_rspace_size<fft_size) then
+           cv(rho_map(:),3)=cv(rho_map(:),3)+Xk%weights(ik)*f_occ*(&
+&                            +real(wfconjg(WF%r(:,1,i_wf))*WF%r(:,1,i_wf))&
+&                            -real(wfconjg(WF%r(:,2,i_wf))*WF%r(:,2,i_wf)) )
+         else
+           cv(:,3)         =cv(:,3)         +Xk%weights(ik)*f_occ*(&
+&                            +real(wfconjg(WF%r(:,1,i_wf))*WF%r(:,1,i_wf))&
+&                            -real(wfconjg(WF%r(:,2,i_wf))*WF%r(:,2,i_wf)) )
+         endif
          !
        endif
        !
      enddo
+     !
+     if (l_WFs_on_the_fly) call WF_free(WF,keep_fft=.true.)
+     !
    enddo
  enddo
  !
@@ -121,8 +161,10 @@ subroutine el_magnetization(en,Xk,magn,bands)
    if (n_spinor==2) then
      tmp_sop(:,:)=dl_sop(:,:,isym)*m3det(dl_sop(:,:,isym))
      if( isym> nsym/(1+i_time_rev) ) tmp_sop(:,:)=-tmp_sop(:,:)
-     forall(ifft=1:fft_size) magn(ifft,:)=magn(ifft,:)+ &
+     do concurrent (ifft=1:fft_size) 
+       magn(ifft,:)=magn(ifft,:)+ &
 &                            matmul(tmp_sop, cv(fft_rot_r(ifft,isym),:)/real(nsym,SP))
+     enddo
    else
      magn(:,3)=magn(:,3)+cv(fft_rot_r(:,isym),3)/real(nsym,SP)
    endif

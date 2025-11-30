@@ -106,13 +106,21 @@ module functions
      ! From Mathworld
      ! https://mathworld.wolfram.com/LorentzianFunction.html
      !
-     use pars, ONLY:pi
+     use pars, ONLY:DP,pi
      real(SP), intent(in) :: x,damp
      real(SP) :: Lorentzian_func
      !
-     Lorentzian_func=1.0/pi*(0.5*damp)/(x**2+(0.5*damp)**2)
+     ! Double-precision temporaries
+     real(DP) :: xd, dd, val
      !
-   end
+     xd = real(x, DP)
+     dd = real(damp, DP)
+     !
+     val = (0.5_DP * dd) / (xd*xd + (0.5_DP*dd)**2) / real(pi, DP)
+     !
+     Lorentzian_func = real(val, SP)
+     !  
+   end function Lorentzian_func
    !
    ! Fermi functions
    !-----------------
@@ -196,13 +204,23 @@ module functions
    ! Boltzman function
    !----------------
    !
-   pure function boltzman_f(Eb)
+   function boltzman_f(Eb)
      !
-     use D_lattice, ONLY:Bose_Temp
+     use D_lattice, ONLY:Boltz_Temp
+     use units,     ONLY:HA2EV,HA2KEL
      real(SP), intent(in):: Eb
      real(SP)            :: boltzman_f
      !
-     boltzman_f=exp(-Eb/Bose_Temp)
+     real(SP) :: E_small=0.005/HA2EV  ! Threashold for degenerate excitons
+     real(SP) :: T_small=1._SP/HA2KEL
+     !
+     if(abs(Eb)>E_small.and.abs(Boltz_Temp)>T_small) then
+       boltzman_f=exp(-Eb/Boltz_Temp)  ! Normal case
+     elseif(abs(Eb)>E_small.and.abs(Boltz_Temp)<=T_small) then
+       boltzman_f=0._SP  ! Case  E>0 but T=0
+     elseif(abs(Eb)<E_small) then
+       boltzman_f=1._SP  ! Limit E=0 
+     endif
      !
    end function
 

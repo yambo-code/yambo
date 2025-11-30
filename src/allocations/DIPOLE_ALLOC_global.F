@@ -25,7 +25,6 @@ subroutine DIPOLE_ALLOC_global(D,NK)
    call DIPOLE_ALLOC_elemental('DIP_orbital')
    call DIPOLE_ALLOC_elemental('DIP_spin')
    call DIPOLE_ALLOC_elemental('DIP_P_spinor')
-   call DIPOLE_ALLOC_elemental('DIP_S')
    call DIPOLE_ALLOC_elemental('P_square') 
    return
  endif
@@ -34,12 +33,11 @@ subroutine DIPOLE_ALLOC_global(D,NK)
  call DIPOLE_ALLOC_elemental('DIP_v' ,(/3,D%ib_lim(2),D%ib(2),D%ib(1),D%ib_lim(1),NK/))
  call DIPOLE_ALLOC_elemental('DIP_P' ,(/3,D%ib_lim(2),D%ib(2),D%ib(1),D%ib_lim(1),NK/))
  !
- if (STRING_match(D%computed,"M_orb").and.STRING_match(D%computed,"M_it")) then
+ if (STRING_match(D%computed,"M_orbRT").and.STRING_match(D%computed,"M_it")) then
    call DIPOLE_ALLOC_elemental('DIP_orbital',(/3,D%ib_lim(2),D%ib(2),D%ib(1),D%ib_lim(1),NK,2/))
  endif
  !
- if ((STRING_match(D%computed,"M_orb").or.STRING_match(D%computed,"M_CD_orb")).and.&
-&     .not.STRING_match(D%computed,"M_it")) then
+ if ((STRING_match(D%computed,"M_orbCD"))) then
    call DIPOLE_ALLOC_elemental('DIP_orbital',(/3,D%ib_lim(2),D%ib(2),D%ib(1),D%ib_lim(1),NK,1/))
  endif
  !

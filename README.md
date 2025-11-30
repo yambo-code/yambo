@@ -1,3 +1,6 @@
+## Lumen
+Lumen is a GPL code derived from Yambo 5.3. Here below the readme file from Yambo
+
 ## Yambo
 This is the distribution of the Yambo code.
 Yambo doesn't stand for anything like "Yet Another Many-Body cOde", for instance.  Unless you really want it to. 

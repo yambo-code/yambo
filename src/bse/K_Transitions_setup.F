@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM DS IMA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
  !
  ! Filling of Transition groups
@@ -25,11 +29,11 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
  use BS_solvers,   ONLY:BSS_mode,BSS_uses_DbGd
  use BS,           ONLY:T_group,BS_bands,BS_T_grp,BS_nT_grps,BS_n_eh_spaces,&
 &                       BS_Blocks_and_Transitions_alloc,BS_perturbative_SOC,&
-&                       BS_nkFGbz_in_Tgrp
+&                       BS_nkFGbz_in_Tgrp,BS_bands_frozen
  use DIPOLES,      ONLY:DIPOLE_t
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_ordered,PAR_IND_T_groups,&
 &                       PAR_IND_T_Haydock,PP_indexes_reset
- use electrons,    ONLY:levels,n_sp_pol
+ use electrons,    ONLY:levels,n_sp_pol,i_spin_majority
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
  use BS,           ONLY:l_BS_magnons,l_BS_photolum
@@ -38,8 +42,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:EQ_Transitions,EQ_NoOcc
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels),    intent(in)   :: Ken
  type(bz_samp),   intent(in) :: Xk
@@ -49,7 +54,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
  !
  ! Work Space
  !
- real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
+ real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL(2)
  logical      :: l_trans_in_group,l_grp_to_grp
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,i_star,ib1,ib2,  &
 &                i_T_now,i_T_group_now,i_T_group_last,i_T_group_start,i_g,n_loops,i_loop,i_T_in_the_grp,i_res_ares,&
@@ -83,9 +88,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
    !
    nColFG_in_T_group_now=1
    !
-   ! DS: WARNING
-   ! I cannot revert ik and i_sp_pol loop here ...
-   !
    do i_res_ares=1,BS_n_eh_spaces
      !
      i_T_group_start=i_T_group_now+1
@@ -108,13 +110,18 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
        ! since i_k_bz and i_p_bz change at each iteration of the loop
        !
        do iv=V_bands(1),V_bands(2)
+         !
+	 if (BS_bands_frozen(iv)==1) cycle
+	 !
          do ic=C_bands(1),C_bands(2)
+	   !
+	   if (BS_bands_frozen(ic)==1) cycle
            !
            do i_sp_c=1,n_sp_pol
              i_sp_v=i_sp_c
              !
              if (l_BS_magnons.and.n_sp_pol==2) then
-               if(i_sp_c==1) cycle
+               if(i_sp_c==i_spin_majority) cycle
                i_sp_v=mod(i_sp_c,n_sp_pol)+1
              endif
              !
@@ -192,8 +199,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,V_bands,C_bands)
                  endif
                end if
                !
-               ! To be fixed
-               if (l_BS_photolum) BS_T_grp(i_T_group_now)%f_PL(i_T_in_the_grp,i_res_ares) =f_eh_PL
+               if (l_BS_photolum) then 
+                 BS_T_grp(i_T_group_now)%f_PL(i_T_in_the_grp,:) =f_eh_PL
+               endif
                !
                BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
                !
@@ -230,23 +238,25 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  !   BS_H_dim
  !   BS_nT_at_k
  !
- use pars,         ONLY:SP
- use stderr,       ONLY:intc
+ use pars,         ONLY:SP,schlen
+ use stderr,       ONLY:intc,STRING_split
+ use parser_m,     ONLY:parser
  use BS,           ONLY:BS_K_dim,BS_H_dim,BS_nT_at_k,BS_K_coupling,   &
 &                       l_BS_ares_from_res,BS_res_ares_n_mat,BS_bands,&
-&                       BS_n_eh_spaces
+&                       BS_n_eh_spaces,BS_bands_frozen
  use DIPOLES,      ONLY:DIPOLE_t
- use electrons,    ONLY:levels,n_sp_pol
+ use electrons,    ONLY:levels,n_sp_pol,i_spin_majority
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
  use BS,           ONLY:l_BS_magnons
 #if defined _RT
  use electrons,    ONLY:n_full_bands,n_met_bands
  use drivers,      ONLY:l_rt_carriers_in_use
- use RT_control,   ONLY:EQ_Transitions,EQ_NoOcc
+ use RT_control,   ONLY:EQ_Transitions,ALL_NoOcc
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels),    intent(in) :: Ken
  type(bz_samp),   intent(in) :: Xk
@@ -256,12 +266,11 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  !
  ! Work Space
  !
- real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
+ real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL(2)
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,i_star,ib1,ib2,  &
 &                i_res_ares,BS_nT_at_k_tmp(Xk%nibz*2)
  !
  logical, external :: K_Transition_check
- !
  !
  call section("+P",'Transition pre-analysis @q'//trim(intc(iq)))
  !
@@ -272,17 +281,29 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
  !
  V_bands=(/BS_bands(1),maxval(Ken%nbm)/)
  C_bands=(/minval(Ken%nbf)+1,BS_bands(2)/)
+ !
 #if defined _RT
  ! Bands range. In the _RT case %nbf and %nbm turn metallic when carriers are used.
  if (l_rt_carriers_in_use.and.EQ_Transitions) then
    V_bands=(/BS_bands(1),maxval(n_met_bands)/)
    C_bands=(/minval(n_full_bands)+1,BS_bands(2)/)
  endif
- if (EQ_NoOcc) then
-   V_bands=BS_bands
-   C_bands=BS_bands
- endif
+ !if (ALL_NoOcc) then
+ !  l_skip_unoccupied=.false.
+ !  V_bands=BS_bands
+ !  C_bands=BS_bands
+ !endif
 #endif
+ !
+ if (BS_bands(2) < V_bands(2) ) then
+   call exp_user_warning("BS_bands(2) lower then number of metallic bands")
+   V_bands(2)=BS_bands(2)
+ endif
+ !
+ if (BS_bands(1) > C_bands(1) ) then
+   call exp_user_warning("BS_bands(1) greater then number of filled bands")
+   C_bands(1)=BS_bands(1)
+ endif
  !
  do i_res_ares=1,BS_n_eh_spaces
    !
@@ -291,7 +312,7 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
      i_sp_v=i_sp_c
      !
      if (l_BS_magnons.and.n_sp_pol==2) then
-       if(i_sp_c==1) cycle
+       if(i_sp_c==i_spin_majority) cycle
        i_sp_v=mod(i_sp_c,n_sp_pol)+1
      endif
      !
@@ -303,7 +324,12 @@ subroutine K_Transitions_dimensions(iq,Ken,Xk,Dip,V_bands,C_bands)
          ikp  =Xk%sstar(ikpbz,1)
          !
          do iv=V_bands(1),V_bands(2)
+           !
+	   if (BS_bands_frozen(iv)==1) cycle
+	   !
            do ic=C_bands(1),C_bands(2)
+	     !
+	     if (BS_bands_frozen(ic)==1) cycle
              !
              if (i_res_ares==1) then; ib1=iv; ib2=ic; endif
              if (i_res_ares==2) then; ib1=ic; ib2=iv; endif

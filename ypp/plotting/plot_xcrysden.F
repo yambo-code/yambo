@@ -5,18 +5,23 @@
 !
 ! Authors (see AUTHORS file for details): AM DV
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine plot_xcrysden()
  !
  use pars,        ONLY:SP,schlen
  use units,       ONLY:BO2ANG
  use C_driver,    ONLY:code_version
  use com,         ONLY:msg
- use YPPm,        ONLY:nr,v2plot,ncell,v2plot2D,r_hole,plot_dim,l_free_hole,l_average_eh,&
+ use YPPm,        ONLY:nr,v2plot,ncell,v2plot2D,r_fixed,plot_dim,l_free_hole,l_average_eh,&
 &                      l_norm_to_one,WF_multiplier,l_exc_wf,plot_title,output_string,plot_is_2D
  use D_lattice,   ONLY:n_atomic_species,n_atoms_species,a,atom_pos,Z_species,n_atoms
  use LIVE_t,      ONLY:live_timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! Work Space...
  !
@@ -44,7 +49,7 @@ subroutine plot_xcrysden()
    !
    ! write Hole position
    ! 
-   write(ch,'(i2,f10.5,f10.5,f10.5)') -1,r_hole*BO2ANG
+   write(ch,'(i2,f10.5,f10.5,f10.5)') -1,r_fixed*BO2ANG
    call msg(output_string,'',ch,INDENT=0,USE_TABS=.FALSE.)
  else
    call msg(output_string,'',(/n_atoms*ncell(1)*ncell(2)*ncell(3),1/))

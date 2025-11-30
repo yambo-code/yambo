@@ -5,7 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+! headers
+!
 #include<dev_defs.h>
+!
 !
 subroutine TDDFT_ALDA_eh_space_G_collisions_L(iq,Xk,i_T_grp,NG,l_bs_tddft_wf_in_loop,tddft_wf,mode)
  !
@@ -16,7 +19,7 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_L(iq,Xk,i_T_grp,NG,l_bs_tddft_wf_in_
  !
  use pars,           ONLY:SP,DP,pi,cZERO
  use FFT_m,          ONLY:fft_size
- use wave_func,      ONLY:WF
+ use wave_func,      ONLY:rho_map_size,rho_map,WF
  use interfaces,     ONLY:WF_load,WF_free
  use R_lattice,      ONLY:qindx_X,bz_samp,minus_G
  use BS,             ONLY:l_BS_magnons,BS_T_grp,BS_bands
@@ -36,8 +39,8 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_L(iq,Xk,i_T_grp,NG,l_bs_tddft_wf_in_
  ! 
  ! Work Space
  !
- logical     :: l_load_WFs
- integer     :: i_spinor,j_spinor,ip_spinor,jp_spinor,ifft,irhotw,is_yambo,os_yambo,i_spinor_y,j_spinor_y
+ logical     :: l_use_rho_map,l_load_WFs
+ integer     :: i_spinor,j_spinor,ip_spinor,jp_spinor,ifft,irho,irhotw,is_yambo,os_yambo,i_spinor_y,j_spinor_y
  integer     :: i_T_el,i_T_el_p,N_T_el_p,i_c,i_v,i_sp_c,i_sp_v,i_k_bz,i_k,i_s,i_g0,i_g1,i_g2,i_p_bz,i_g_p,i_p,&
 &               i_sp,i_T_grp_p,is(4),os(4),qs(3),NK(2)
  !
@@ -54,6 +57,9 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_L(iq,Xk,i_T_grp,NG,l_bs_tddft_wf_in_
  WF_symm1_p=cZERO
  WF_symm2_p=cZERO
  rhotwr_p=  cZERO
+ !
+ ! Use pointers both for CUDA and to avoid continuous allocation and de-allocation
+ l_use_rho_map=allocated(rho_map)
  !
 #if defined(__NOTNOW) && ! defined(_CUDA)
  !$omp parallel default(shared), private( K_EXCH_collision, &
@@ -85,18 +91,9 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_L(iq,Xk,i_T_grp,NG,l_bs_tddft_wf_in_
    i_sp_c=BS_T_grp(i_T_grp)%table(i_T_el,4)
    i_sp_v=BS_T_grp(i_T_grp)%table(i_T_el,5)
    !
-   is=(/0,i_k,i_s ,i_sp_c/)
-   os=(/0,i_p,i_sp,i_sp_v/)
+   is=(/i_c,i_k,i_s ,i_sp_c/)
+   os=(/i_v,i_p,i_sp,i_sp_v/)
    qs=(/minus_G(i_g_p),iq,1/)
-   !
-   if (mode=="R".or.mode=="C".or.mode=="F") then
-     is(1)=i_c
-     os(1)=i_v
-   else if (mode=="A".or.mode=="Q") then
-     ! Same momenta and spin indexes, inverted bands
-     is(1)=i_v
-     os(1)=i_c
-   endif
    !
    l_load_WFs= l_bs_tddft_wf_in_loop .and. (NK(1)/=min(i_k,i_p).or.NK(2)/=max(i_k,i_p))
    if (l_load_WFs) then
@@ -119,7 +116,8 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_L(iq,Xk,i_T_grp,NG,l_bs_tddft_wf_in_
    call WF_apply_symm(os,WF_symm2_p)
    !
    if( n_spinor==1 ) then
-     rhotwr_p(:)=cmplx(WF_symm1_p(:,1)*conjg(WF_symm2_p(:,1)),kind=DP)
+     if(     l_use_rho_map) rhotwr_p(rho_map(:))=cmplx(WF_symm1_p(:,1)*conjg(WF_symm2_p(:,1)),kind=DP)
+     if(.not.l_use_rho_map) rhotwr_p(        : )=cmplx(WF_symm1_p(:,1)*conjg(WF_symm2_p(:,1)),kind=DP)
      call perform_fft_3d(qs,rhotwr_p,BS_T_grp(i_T_grp)%O_tddft_L(:,i_T_el,1,1))
    endif
    !
@@ -128,8 +126,10 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_L(iq,Xk,i_T_grp,NG,l_bs_tddft_wf_in_
      do i_spinor=1,n_spinor
        do j_spinor=1,n_spinor
          !
-	 do ifft=1,fft_size
-	   rhotwr_p(ifft)=cmplx(WF_symm1_p(ifft,i_spinor)*conjg(WF_symm2_p(ifft,j_spinor)),kind=DP)
+         do irho=1,rho_map_size
+           if(     l_use_rho_map) ifft=rho_map(irho)
+           if(.not.l_use_rho_map) ifft=        irho
+           rhotwr_p(ifft)=cmplx(WF_symm1_p(irho,i_spinor)*conjg(WF_symm2_p(irho,j_spinor)),kind=DP)
          enddo
          call perform_fft_3d(qs,rhotwr_p,BS_T_grp(i_T_grp)%O_tddft_L(:,i_T_el,i_spinor,j_spinor))
          !

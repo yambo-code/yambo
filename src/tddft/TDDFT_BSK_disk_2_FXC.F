@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  !
  use pars,          ONLY:SP,pi
@@ -24,7 +28,9 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD,RD,NONE,RD_CL,VERIFY,OP_RD_CL,REP
  use TDDFT,         ONLY:F_xc_gspace,FXC_n_g_corr,FXC_K_diagonal,io_BS_Fxc
-#include<y_memory.h>
+ use y_memory_alloc
+ !
+ implicit none
  type(bz_samp) ::Xk
  type(w_samp)  ::W
  integer       ::iq
@@ -100,7 +106,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
      !
      ACTION=RD
      if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL
-     call io_control(ACTION=ACTION,COM=NONE,SEC=(/UP_matrix_index(ik1,ik2)/),ID=ID)
+     call io_control(ACTION=ACTION,COM=NONE,SEC=(/UP_matrix_index(ik1,ik2)+1/),ID=ID)
      io_BS_err=io_BS(iq,X_static,ID)
      !
      if (BS_res_K_exchange) then

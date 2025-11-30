@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  !
  use pars,          ONLY:SP,IP,pi,cZERO,cI
@@ -18,22 +22,24 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  use ALLOC,         ONLY:DIPOLE_ALLOC_global
  use stderr,        ONLY:STRING_match
  use interfaces,    ONLY:WF_load,WF_free
- use electrons,     ONLY:levels,spin
+ use electrons,     ONLY:levels,spin,i_spin_majority,i_spin_minority
  use X_m,           ONLY:X_t,global_gauge,i_G_shift
  use DIPOLES,       ONLY:DIPOLE_t
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_Q_dir,BSS_E_dir,BSS_P_dir
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BSE_L_kind,BS_bands,&
 &                        BS_dip_size,l_BS_trace,BS_n_eh_spaces,&
 &                        l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
-&                        BSE_dipole_geometry,BS_field_direction,l_BS_ares_from_res
+&                        BSE_dipole_geometry,BS_field_direction,l_BS_ares_from_res,&
+&                        l_BS_mespin,l_BS_meorb
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_COM_Xk_ibz_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use timing_m,      ONLY:timing
  use vec_operate,   ONLY:v_rotate,cross_product
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  integer       ::iq
  type(levels)  ::Ken
@@ -151,8 +157,9 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
      ! *length*   : DIP(c,v,k) is q_ver*<v|r|c> while I need q_ver*<c|r|v> = conjg(q_ver*<v|r|c>)
      ! *velocity* : DIP(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> = conjg(q_ver*<v|r|c>)
      !
-     ! Absorption, KERR, PL, Dichroism
-     if(l_BS_abs.or.l_BS_kerr.or.l_BS_photolum.or.l_BS_dichroism) then
+     ! Absorption, KERR, PL, Dichroism, Magnetoelectric
+     if(l_BS_abs.or.l_BS_kerr.or.l_BS_photolum.or.&
+&       l_BS_dichroism.or.l_BS_meorb.or.l_BS_mespin) then
        !
        if(iq==1.and.i_G_shift==1) then
          call DIPOLE_rotate(ic,iv,ik_bz,i_sp_pol_c,trim(DIP_kind),Xk,DIP_bare)
@@ -169,30 +176,34 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
        endif
        !
        BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
-       if (BS_K_coupling.and.l_BS_ares_from_res) then
+       if (BS_K_coupling.and.l_BS_ares_from_res.and.iq==1) then
+         ! In the coulping case at q=1 when there are 2 blocks per group
+         ! See also src/bse/K_blocks.F and K_components_folded_in_serial_arrays.F
+         ! Possibly to be extended also to i_G_shift==1
          BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
        endif
        !
      endif
      !
-     ! Dichroism
-     if (l_BS_dichroism) then
+     ! Dichroism or orbital magnetoelectric part
+     if (l_BS_dichroism.or.l_BS_meorb) then
        if(iq==1.and.i_G_shift==1) then  
          call DIPOLE_rotate(ic,iv,ik_bz,i_sp_pol_c,"DIP_L",Xk,DIP_expanded)
          do i_dip=1,BS_dip_size
            DIP_projected(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
          enddo
        else
-         call error(' finite q not implemented for dichroism')
+         if (l_BS_dichroism) call error(' finite q not implemented for dichroism effect')
+         if (l_BS_meorb)     call error(' finite q not implemented for magnetoelectric effect')
        endif
-       BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
+       BS_T_grp(i_T_g)%dipoles_orb(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
        if (BS_K_coupling.and.l_BS_ares_from_res) then
-         BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
+         BS_T_grp(i_T_g)%dipoles_orb(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
        endif
      endif
      !
-     ! Magnons
-     if (l_BS_magnons) then
+     ! Magnons and Magnetoelectric spin part
+     if (l_BS_magnons.or.l_BS_mespin) then
        !
        ! notice:
        ! In optics q=0 requires a special treatment due to the non analytic behaviour
@@ -203,6 +214,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
        if(iq==1.and.i_G_shift==1) then
          call DIPOLE_rotate(ic,iv,ik_bz,i_sp_pol_c,"DIP_S",Xk,DIP_expanded)
        else
+         if (l_BS_mespin) call error(' finite q not implemented for magnetoelectric effect')
          call scatter_Bamp_spin(BSE_scatt,'x')
          DIP_expanded(1)=-conjg(BSE_scatt%rhotw(1))
          call scatter_Bamp_spin(BSE_scatt,'y')
@@ -212,20 +224,37 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
          DIP_expanded(3)=-conjg(BSE_scatt%rhotw(1))
        endif
        !
-       ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_c), to get <c|S-|v>(i_sp_pol_v) = conjg(<v|S+|c>(i_sp_pol_c))
-       ! DIP_Splus(c,v,k) is  <v|S+|c>(i_sp_pol_c), to get <c|S+|v>(i_sp_pol_v) = conjg(<v|S-|c>(i_sp_pol_c))
+       ! Magnons
+       if (l_BS_magnons) then
+         !
+         ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_c), to get <c|S-|v>(i_sp_pol_v) = conjg(<v|S+|c>(i_sp_pol_c))
+         ! DIP_Splus(c,v,k) is  <v|S+|c>(i_sp_pol_c), to get <c|S+|v>(i_sp_pol_v) = conjg(<v|S-|c>(i_sp_pol_c))
+         !
+         DIP_Splus = 0.5_SP*(DIP_expanded(1)+cI*DIP_expanded(2))  ! S+ for c\dn> transitions: <v\up|c\dn>
+         DIP_Smins = 0.5_SP*(DIP_expanded(1)-cI*DIP_expanded(2))  ! S- for c\up> transitions: <v\dn|c\up>
+         !
+         BS_T_grp(i_T_g)%dipoles_mag(i_spin_majority,i_T,1)=conjg(DIP_Splus)   ! S- for |c\dn> trans: <c\dn|S-|v\up>(i_sp_pol_v) = conjg(<v\up|S+|c\dn>(i_sp_pol_c))
+         BS_T_grp(i_T_g)%dipoles_mag(i_spin_minority,i_T,1)=conjg(DIP_Smins)   ! S+ for |c\up> trans: <c\dn|S+|v\up>(i_sp_pol_v) = conjg(<v\dn|S-|c\up>(i_sp_pol_c))
+                                                                 !      or the right R residual associated to (eps_c\dn-eps_v\up)
+                                                                 ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c) = conjg(<c\up|S+|v\dn>(i_sp_pol_v))
+                                                                 ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c) = conjg(<c\dn|S-|v\up>(i_sp_pol_v))
+         if (BS_K_coupling.and.l_BS_ares_from_res) then          ! This is the right A residual associated to (eps_v\up-eps_c\dn)
+           BS_T_grp(i_T_g)%dipoles_mag(i_spin_majority,i_T,2)=DIP_Smins        ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c)
+           BS_T_grp(i_T_g)%dipoles_mag(i_spin_minority,i_T,2)=DIP_Splus        ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c)
+         endif
+         !
+       endif
        !
-       DIP_Splus = 0.5_SP*(DIP_expanded(1)+cI*DIP_expanded(2))  ! S+ for c\dn> transitions: <v\up|c\dn>
-       DIP_Smins = 0.5_SP*(DIP_expanded(1)-cI*DIP_expanded(2))  ! S- for c\up> transitions: <v\dn|c\up>
        !
-       BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=conjg(DIP_Splus)   ! S- for |c\dn> trans: <c\dn|S-|v\up>(i_sp_pol_v) = conjg(<v\up|S+|c\dn>(i_sp_pol_c))
-       BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=conjg(DIP_Smins)   ! S+ for |c\up> trans: <c\dn|S+|v\up>(i_sp_pol_v) = conjg(<v\dn|S-|c\up>(i_sp_pol_c))
-                                                               !      or the right R residual associated to (eps_c\dn-eps_v\up)
-                                                               ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c) = conjg(<c\up|S+|v\dn>(i_sp_pol_v))
-                                                               ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c) = conjg(<c\dn|S-|v\up>(i_sp_pol_v))
-       if (BS_K_coupling.and.l_BS_ares_from_res) then          ! This is the right A residual associated to (eps_v\up-eps_c\dn)
-         BS_T_grp(i_T_g)%dipoles_mag(1,i_T,2)=DIP_Smins        ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c)
-         BS_T_grp(i_T_g)%dipoles_mag(2,i_T,2)=DIP_Splus        ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c)
+       ! Magnetoelectric spin part
+       if (l_BS_mespin) then
+         do i_dip=1,BS_dip_size
+           DIP_projected(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
+         enddo
+         BS_T_grp(i_T_g)%dipoles_spin(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
+         if (BS_K_coupling.and.l_BS_ares_from_res) then
+           BS_T_grp(i_T_g)%dipoles_spin(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
+         endif
        endif
        !
      endif

@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine XCo_driver(E,k,Xk,q)
  !
  use zeros,         ONLY:zero_dfl
@@ -24,8 +28,9 @@ subroutine XCo_driver(E,k,Xk,q)
  use hamiltonian,   ONLY:l_sc_V_is_local
  use global_XC,     ONLY:H_SE_FOCK,H_SE_HARTREE,H_SE_COH,H_SE_SEX
 #endif
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels) ::E       
  type(bz_samp)::k,Xk,q

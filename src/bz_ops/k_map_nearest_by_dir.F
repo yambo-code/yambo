@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine k_map_nearest_by_dir(Xk,k_map)
  !
  ! Map k-points on a regular grid along the b directions
@@ -13,8 +17,9 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  use R_lattice,      ONLY:bz_samp,bz_map,WF_shifts
  use com,            ONLY:msg
  use pars,           ONLY:zero_dfl
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_map), intent(inout) :: k_map
  type(bz_samp),intent(inout) :: Xk
@@ -67,7 +72,7 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  if(dshift>zero_dfl) then
    write(dump_ch,'(a,3f12.6)') " Shifted grid: ",k_shift
    call msg("sr",dump_ch)
-   call error(' Shifted grids not implemented yet in covariant dipoles ')
+   call warning('Yambo_nl works only with a single-shift k-point grid! ')
  else
    k_shift=0._SP
  endif

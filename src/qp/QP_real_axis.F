@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 !@brief GW self-energy on the real axis
 !
 subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
@@ -48,8 +52,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use wrapper,       ONLY:Vstar_dot_V,V_dot_V
  use wrapper_omp,   ONLY:Vstar_dot_V_omp,V_dot_V_omp
  use timing_m,      ONLY:timing
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(levels)   :: en,Xen
  type(bz_samp)  :: Xk,k,q
@@ -64,8 +69,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  type(elemental_collision) ::scattering_main,scattering_prime
  type(w_samp)     :: Sc_W(qp%n_states),X_life_W(q%nibz)
  integer          :: i1,i2,i3,i4,i_or,iqbz,iqibz,ib,i_err,i_q_to_start,iqs,&
+&                    i_v,i_c,i_k,i_kmq,i_kmq_bz,i_kmq_Go,i_kmq_s,i_sp_pol,&
 &                    io_err,X_id,WID,IO_ACT,timing_steps,i_q_mem,X_range(2),i_qp,i_qp_mem,i_q_W_mem,i_b_mem
- integer          :: X_rows1,X_rows2,X_cols1,X_cols2
+ integer          :: X_rows1,X_rows2,X_cols1,X_cols2,n_freqs
  complex(SP)      :: lrhotw(X%ng),W_dummy
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
@@ -106,7 +112,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    do i_qp=1,qp%n_states
      Sc_W(i_qp)%n_freqs=QP_dSc_steps
      YAMBO_ALLOC(Sc_W(i_qp)%p,(Sc_W(i_qp)%n_freqs))
-     forall (i2=1:QP_dSc_steps) Sc_W(i_qp)%p(i2)=qp%E_bare(i_qp)+(i2-1)*QP_dSc_delta
+     do concurrent (i2=1:QP_dSc_steps) 
+       Sc_W(i_qp)%p(i2)=qp%E_bare(i_qp)+(i2-1)*QP_dSc_delta
+     enddo
    enddo
  else if (trim(QP_solver)=='g') then
    !
@@ -262,19 +270,25 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    QP_W=cZERO
  endif
  !
- ! Test the spatial Inversion
- !
- call WF_spatial_inversion(en,Xk)
- !
  ! ALLOCATION (scattering_main)
  !
- call X_ALLOC_elemental('X',(/X%ng,X%ng,QP_n_W_freqs_redux/))
+ if (io_RESPONSE) then
+   !
+   call X_ALLOC_elemental('X',(/X%ng,X%ng,QP_n_W_freqs_redux/))
+   !
+   ! Replace X_mat with X_mat TO BE completed
+   ! At present X_par is not used
+   ! Here X_par is allocated just to define X_par(1)%rows
+   !
+   allocate(X_par(1))
+   call X_ALLOC_parallel(X_par(1),X%ng,Xw%n_freqs,"X INIT_ONLY")
+   !
+ endif
  !
  call elemental_collision_alloc(scattering_main,NG=X%ng,GAMP_NG=(/X%ng,X%ng/),TITLE="GW")
  call elemental_collision_alloc(scattering_prime,NG=X%ng,TITLE="GW")
  !
  QP_Sc=cZERO
- scattering_main%iqref=0
  !
  ! Main Loop
  !===========
@@ -298,6 +312,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=X_id)
    io_err=io_X(X,Xw,X_id)
  endif
+ !
  !
  do iqbz=i_q_to_start,q%nbz
    !
@@ -344,11 +359,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
        !
      endif
      !
-     if (l_life) then
-       call X_delta_part(X%ng,X_life_W(iqibz)%n_freqs,X_mat(:,:,X_range(1):X_range(2)),scattering_main%gamp)
-     else
-       call X_delta_part(X%ng,Xw%n_freqs,X_mat(:,:,X_range(1):X_range(2)),scattering_main%gamp)
-     endif
+     n_freqs=Xw%n_freqs
+     if (l_life) n_freqs=X_life_W(iqibz)%n_freqs
+     call X_delta_part(X%ng,n_freqs,X_mat(:,:,X_range(1):X_range(2)),scattering_main%gamp)
      !
      if (l_life) QP_n_W_freqs=0
      !
@@ -364,12 +377,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
      X_is_TR_rotated=.true.
    endif
    !
-   ! mapping of X_par from X_mat
-   ! TO BE completed (avoiding reference to X_mat in the following)
-   !
-   if (.not. allocated(X_par) ) allocate(X_par(1))
-   call X_ALLOC_parallel(X_par(1),X%ng,Xw%n_freqs,"X")
-   !
    ! Useful when GPU porting will be introduced
    ! X_blc_p=> DEV_VAR(X_par%blc)
    !
@@ -383,11 +390,22 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
      !
      i_qp_mem=PAR_QP_index(i_qp)
      !
-     scattering_main%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
-     scattering_main%os(2:)=(/k%sstar(qindx_S(scattering_main%is(2),iqbz,1),:),spin(QP_table(i_qp,:))/)
-     scattering_prime%is=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
+     i_v=QP_table(i_qp,1)
+     i_c=QP_table(i_qp,2)
+     i_k=QP_table(i_qp,3)
+     i_sp_pol=spin(QP_table(i_qp,:))
      !
-     scattering_main%qs(1)=qindx_S(QP_table(i_qp,3),iqbz,2)
+     i_kmq_Go=qindx_S(i_k,iqbz,2)
+     i_kmq_bz=qindx_S(i_k,iqbz,1)
+     !
+     i_kmq  =k%sstar(i_kmq_bz,1)
+     i_kmq_s=k%sstar(i_kmq_bz,2)
+     !
+     scattering_main%is=(/i_v,i_k,1,i_sp_pol/)
+     scattering_main%os=(/0,i_kmq,i_kmq_s,i_sp_pol/)
+     scattering_prime%is=(/i_c,i_k,1,i_sp_pol/)
+     !
+     scattering_main%qs(1)=i_kmq_Go
      scattering_prime%qs=scattering_main%qs
      !
      if (.not.PAR_IND_QP%element_1D(i_qp)) then
@@ -398,11 +416,10 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
        !
        if (l_life) then
          do ib=QP_n_G_bands(1),QP_n_G_bands(2)
-           scattering_main%os(1)=ib
-           i_or=IOR(e2et((/scattering_main%is(:2),scattering_main%is(4)/),            &
-&                        (/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fe),&
-&                   h2ht((/scattering_main%is(:2),scattering_main%is(4)/),            &
-&                        (/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fh))
+           i_or=IOR(e2et((/i_v,i_k,i_sp_pol/),            &
+&                        (/ ib,i_kmq,i_sp_pol/),en,life_Fe),&
+&                   h2ht((/i_v,i_k,i_sp_pol/),            &
+&                        (/ ib,i_kmq,i_sp_pol/),en,life_Fh))
            QP_n_W_freqs=QP_n_W_freqs+i_or
          enddo
        endif
@@ -416,10 +433,10 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
        i_b_mem=PAR_G_bands_index(ib)
        !
        if (l_life) then
-         i_or=IOR(e2et((/scattering_main%is(:2),scattering_main%is(4)/),            &
-&                      (/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fe),&
-&                 h2ht((/scattering_main%is(:2),scattering_main%is(4)/),            &
-&                      (/scattering_main%os(:2),scattering_main%os(4)/),en,life_Fh))
+         i_or=IOR(e2et((/i_v,i_k,i_sp_pol/),            &
+&                      (/ ib,i_kmq,i_sp_pol/),en,life_Fe),&
+&                 h2ht((/i_v,i_k,i_sp_pol/),            &
+&                      (/ ib,i_kmq,i_sp_pol/),en,life_Fh))
          QP_n_W_freqs=QP_n_W_freqs+i_or
        endif
        !
@@ -496,9 +513,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
      enddo bands_loop
    enddo qp_loop
    !
-   call MATRIX_reset(X_par(1))
-   deallocate(X_par)
-   !
    if (.not.l_life) then
      !
      QP_W_er(iqbz,:)=Xw%er
@@ -560,7 +574,10 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    enddo
  endif
  !
- if (allocated(X_par)) deallocate(X_par)
+ if (io_RESPONSE) then
+   call MATRIX_reset(X_par(1))
+   deallocate(X_par)
+ endif
  !
  call X_ALLOC_elemental('X')
  call WF_free(WF)

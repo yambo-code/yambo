@@ -5,6 +5,10 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
+! headers
+!
+#include<y_memory.h>
+!
 subroutine MAG_Hamiltonian()
  !
  ! WARNING: you need to put you system at the corner of the supercell <---
@@ -54,8 +58,9 @@ subroutine MAG_Hamiltonian()
  use wrapper,        ONLY:Vstar_dot_V
  use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
  use QP_m,           ONLY:QP_table,QP_n_states
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  ! Dummies
  !
@@ -194,16 +199,16 @@ subroutine MAG_Hamiltonian()
              if(H_magn_x_on) H_tmp(:,j_spinor,j_spinor)= H_paramagn_x(:)*wf_x(:,j_spinor,ip_wf)
              if(H_magn_y_on) H_tmp(:,j_spinor,j_spinor)= H_tmp(:,j_spinor,j_spinor)+H_paramagn_y(:)*wf_y(:,j_spinor,ip_wf)
              if(H_magn_z_on) H_tmp(:,j_spinor,j_spinor)= H_tmp(:,j_spinor,j_spinor)+H_paramagn_z(:)*wf_z(:,j_spinor,ip_wf)
-             H_tmp(:,j_spinor,j_spinor)=H_tmp(:,j_spinor,j_spinor)+H_diamagn(:)*WF%c(:,j_spinor,ip_wf)
+             H_tmp(:,j_spinor,j_spinor)=H_tmp(:,j_spinor,j_spinor)+H_diamagn(:)*WF%r(:,j_spinor,ip_wf)
            endif
            !
            do i_spinor=1,n_spinor
              !
              if (MAG_pauli) H_tmp(:,i_spinor,j_spinor)= H_tmp(:,i_spinor,j_spinor) &
-             &                                          +H_pauli(:,i_spinor,j_spinor,i_sp_pol)*WF%c(:,j_spinor,ip_wf)
+             &                                          +H_pauli(:,i_spinor,j_spinor,i_sp_pol)*WF%r(:,j_spinor,ip_wf)
              !
              Hzero(ib,ibp,ik,i_sp_pol)= Hzero(ib,ibp,ik,i_sp_pol)+&
-&              Vstar_dot_V(fft_size,WF%c(:,i_spinor,i_wf),H_tmp(:,i_spinor,j_spinor))
+&              Vstar_dot_V(fft_size,cmplx(WF%r(:,i_spinor,i_wf),kind=SP),H_tmp(:,i_spinor,j_spinor))
              !
            enddo
            !

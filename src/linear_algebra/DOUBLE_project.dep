@@ -6,7 +6,7 @@
  PARALLEL_inversion.o
  PARALLEL_lin_system.o
  SERIAL_HERMITIAN_diagonalization.o
- SERIAL_SVD_inversion.o
+ SERIAL_SVD.o
  SERIAL_diagonalization.o
  SERIAL_inversion.o
  SERIAL_lin_system.o

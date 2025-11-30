@@ -5,7 +5,11 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
+! headers
+!
+#include<y_memory.h>
+!
+subroutine excitons_spin(Xk,Res,BS_E,BS_E_degs)
  !
  use pars,          ONLY:SP,cZERO,rZERO
  use BS,            ONLY:BS_bands
@@ -22,12 +26,14 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
 &                        EXCITON_kin,excitons_degeneracy_average,EXCITON_spin,BSiq
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_index
+ use y_memory_alloc
  !
-#include<y_memory.h>
+ implicit none
  !
  type(bz_samp) :: Xk
  integer       :: BS_E_degs(BSS_n_eig)
- complex(SP)   :: BS_R_right(BSS_n_eig),BS_E(BSS_n_eig)
+ real(SP)      :: Res(BSS_n_eig)
+ complex(SP)   :: BS_E(BSS_n_eig)
  ! 
  ! Work Space
  !
@@ -158,7 +164,7 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  ! Sorting & reporting'
  !=====================
  !
- call excitons_sort_and_report(BSiq,BS_R_right,BS_E,EXC_spin=EXC_spin)
+ call excitons_sort_and_report(BSiq,Res,BS_E,EXC_spin=EXC_spin)
  !
  do i_c=1,EXCITONS_n_user_states
    !

@@ -8,6 +8,8 @@
  io_DB1_selective_scan.o
  io_Double_Grid.o
  io_ELPH.o
+ io_EXCPH_SE.o
+ io_EXCPH_gkkp.o
  io_E_SOC_map.o
  io_GROT.o
  io_HF_and_locXC.o
@@ -28,16 +30,18 @@
  io_RT_components_OBS.o
  io_RT_components_Reference.o
  io_RT_components_TIME_points.o
+ io_RT_components_V_bands.o
  io_RT_components_header.o
  io_SC_components.o
  io_USPP_pwscf.o
- io_Vnl.o
  io_WF.o
+ io_WF_phases.o
  io_X.o
  io_descriptors.o
  io_full_SYMMs.o
  io_gFsq.o
  io_header.o
+ io_kpts.o
  io_out_of_date.o
  load_SC_components.o
  variables_DIPOLES.o

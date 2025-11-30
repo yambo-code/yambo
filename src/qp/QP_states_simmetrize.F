@@ -14,7 +14,7 @@ subroutine QP_states_simmetrize(en,what,V_real,V_complex,state_is_2do,warn_me)
  use QP_m,          ONLY:QP_n_states,QP_table
  use units,         ONLY:HA2EV
  use vec_operate,   ONLY:sort,degeneration_finder
- use electrons,     ONLY:levels,spin,n_sp_pol
+ use electrons,     ONLY:levels,spin,n_sp_pol,deg_threshold
  use stderr,        ONLY:real2ch,intc
  !
  implicit none
@@ -33,7 +33,7 @@ subroutine QP_states_simmetrize(en,what,V_real,V_complex,state_is_2do,warn_me)
 &              first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp
  character(schlen)   :: title=" ",states_ch=" "
  logical             :: check_the_diffs=.FALSE.
- real(SP), parameter :: E_deg_treshold=0.0001_SP/HA2EV,V_deg_percentual_treshold=0.01
+ real(SP), parameter :: V_deg_percentual_treshold=0.01
  !
  if (present(what))    title=what
  if (present(warn_me)) check_the_diffs=warn_me
@@ -45,7 +45,7 @@ subroutine QP_states_simmetrize(en,what,V_real,V_complex,state_is_2do,warn_me)
  enddo
  !
  call sort(Eo_sorted,indx=Eo_sorted_index)
- call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,E_deg_treshold)
+ call degeneration_finder(QP_n_states,first_el,n_of_el,n_deg_grp,Er=Eo_sorted,deg_accuracy=deg_threshold)
  !
  if (present(state_is_2do)) then
    state_is_2do=.TRUE.

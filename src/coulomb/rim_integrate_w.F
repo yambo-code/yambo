@@ -10,7 +10,7 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis,Xw)
  use pars,          ONLY:SP,DP,pi
  use vec_operate,   ONLY:iku_v_norm
  use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,q0_def_norm,&
-&                        RIM_W_ng,q_pt,b,RIM_W_is_diagonal,&
+&                        RIM_W_ng,q_pt,b,RIM_W_is_diagonal,eps_env,&
 &                        RIM_W,f_coeff,cut_is_slab,idir,RIM_id_epsm1_reference
  use D_lattice,     ONLY:alat,a
  use frequency,     ONLY:w_samp
@@ -49,11 +49,20 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis,Xw)
 &                             ((qr(idir(3),i2)+q_pt(iq,idir(3))+g_vec(i1,idir(3)))/alat(idir(3)))**2)
      pre_factor=(1.-exp(-slab_vplane1*lcut)*cos(slab_vz1*lcut))
      !
+     ! This is the sqrt of eq. 7 in NPJ Mat 9, 44 (2023) 
+     ! Accordingly here vslab=sqrt[v_G(q+q')]
      vslab(i2,i1) = sqrt(4._SP*pi*pre_factor/(slab_vplane1**2+slab_vz1**2))
      !
    enddo
    !
  enddo
+ !
+ ! Here I rescale vslab by a constant dielectric function due to the environment.
+ ! A similar rescaling is also done in col_driver for bare_qpg and RIM_qpg
+ ! The final goal is to resale RIM_W. However, since RIM_W
+ ! is not linear in q+G, I need to rescale vslab
+ !
+ !vslab=vslab/sqrt(eps_env)
  !
  ! q /= 0 all terms
  !
@@ -72,6 +81,8 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis,Xw)
 &                                     +qr(2,i3)*(f_coeff(3,i1,i2,iq,iw)+qr(2,i3)*f_coeff(6,i1,i2,iq,iw)&
 &                                     +2._DP*qr(1,i3)*f_coeff(5,i1,i2,iq,iw))
          ! Accumulate W
+         ! This is eq. 16 + eq 14 in NPJ Mat 9, 44 (2023)
+         ! Accordingly here vslab=sqrt[v_G(q+q')]
          RIM_acc = RIM_acc + rfac*vslab(i3,i1)**2*func*vslab(i3,i2)**2/(1._DP-vslab(i3,i1)*func*vslab(i3,i2))
        enddo
        !
@@ -99,6 +110,8 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis,Xw)
      !Regularization
      if (slab_vplane1 < 1.e-5) then
        vslab(i1,1) = sqrt(4._DP*pi*(1.-exp(-q0_def_norm*lcut))/q0_def_norm**2)
+       ! Again, rescaling of vslab due to epsilon environment
+       !vslab(i1,1) = vslab(i1,1)/sqrt(eps_env)
        RIM_acc = RIM_acc + rfac*f_coeff(1,1,1,1,iw)*(4*pi*lcut)**2
        RIM_acc_anis = RIM_acc_anis + rfac*f_coeff(1,1,1,1,iw)*(4*pi*lcut)**2 &
 &                       *0.5_SP*(em1_anis(idir(2))+em1_anis(idir(3)))
@@ -107,6 +120,9 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis,Xw)
      !
      !Evaluate v_slab
      vslab2=4._DP*pi*(1.-exp(-slab_vplane1*lcut))
+     ! Again, rescaling of vslab due to environment.
+     ! Notice that here this is not the sqrt.
+     !vslab2 = vslab2/eps_env
      !
      !Evaluate interpolation function
      func = f_coeff(1,1,1,1,iw)*exp(-sqrt((f_coeff(2,1,1,1,iw)*(qr(2,i1)+a(2,1)/a(1,1)*qr(1,i1)))**2+&
@@ -119,7 +135,8 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis,Xw)
      func = func*anis_fact
      RIM_acc_anis = RIM_acc_anis + rfac*vslab2*func*vslab2/(r1**2*(1-vslab2*func))
      !
-     !Store the square root of vslab
+     ! Store the square root of vslab
+     ! Here vlsab2 is already rescaled
      vslab(i1,1) = sqrt(vslab2)/r1
      !
    enddo

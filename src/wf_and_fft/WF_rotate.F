@@ -5,9 +5,12 @@
 !
 ! Authors (see AUTHORS file for details): AM DS
 !
+! headers
+!
 #include<dev_defs.h>
+!
  !
-subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
+subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size,space)
  !
  ! <r|n'>= <m|n'><r|m>
  !
@@ -26,8 +29,9 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  !
  implicit none
  !
- integer     :: i_sp_pol,ik,wf_size
- type(WAVEs) :: WFo
+ integer,      intent(in)    :: i_sp_pol,ik,wf_size
+ type(WAVEs),  intent(inout) :: WFo
+ character(1), intent(in)    :: space
  !
  ! Work Space
  !
@@ -44,7 +48,8 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
    do ibp = H_ref_bands(1),H_ref_bands(2)
      i_wfp = WFo%index(ibp,ik,i_sp_pol)
      if (i_wfp==0) cycle
-     WS_wf(:,:,ib)=WS_wf(:,:,ib)+H_rotation(ibp,ib,ik,i_sp_pol)*WFo%c(:,:,i_wfp)
+     if (space/="R") WS_wf(:,:,ib)=WS_wf(:,:,ib)+H_rotation(ibp,ib,ik,i_sp_pol)*WFo%c(:,:,i_wfp)
+     if (space=="R") WS_wf(:,:,ib)=WS_wf(:,:,ib)+H_rotation(ibp,ib,ik,i_sp_pol)*WFo%r(:,:,i_wfp)
    end do
    !
  enddo
@@ -54,15 +59,31 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
    i_wf = WFo%index(ib,ik,i_sp_pol)
    if (i_wf==0) cycle
    !
-   !$omp parallel do default(shared), private(i_c,i_spinor)
-   do i_spinor=1,n_spinor
-     do i_c=1,wf_size
-       WF%c(i_c,i_spinor,i_wf)=WS_wf(i_c,i_spinor,ib)
+   if (space/="R") then
+     !
+     !$omp parallel do default(shared), private(i_c,i_spinor)
+     do i_spinor=1,n_spinor
+       do i_c=1,wf_size
+         WF%c(i_c,i_spinor,i_wf)=WS_wf(i_c,i_spinor,ib)
+       enddo
      enddo
-   enddo
-   !$omp end parallel do
-   !
-   if (have_gpu) call devxlib_memcpy_h2d(DEV_VAR(WF%c)(:,:,i_wf), WF%c(:,:,i_wf))
+     !$omp end parallel do
+     !
+     if (have_gpu) call devxlib_memcpy_h2d(DEV_VAR(WF%c)(:,:,i_wf), WF%c(:,:,i_wf))
+     !
+   else if(space=="R") then
+     !
+     !$omp parallel do default(shared), private(i_c,i_spinor)
+     do i_spinor=1,n_spinor
+       do i_c=1,wf_size
+         WF%r(i_c,i_spinor,i_wf)=WS_wf(i_c,i_spinor,ib)
+       enddo
+     enddo
+     !$omp end parallel do
+     !
+     if (have_gpu) call devxlib_memcpy_h2d(DEV_VAR(WF%r)(:,:,i_wf), WF%r(:,:,i_wf))
+     !
+   endif
    !
  enddo
  !

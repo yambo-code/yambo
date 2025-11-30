@@ -7,6 +7,8 @@
 !
 ! headers
 !
+#include<y_memory.h>
+!
 #if defined _SLEPC && !defined _NL
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
@@ -19,64 +21,58 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  ! Generic diagonalization method to solve resonant and non resonant Hamiltonians.
  !
- ! 10/06/2015 Added by HM: Generic slepc method to solve 
- !
  use pars,           ONLY:SP
  use com,            ONLY:msg
  use stderr,         ONLY:intc
  use units,          ONLY:HA2EV
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
-&                         BS_res_ares_n_mat,l_BS_optics,l_BS_dichroism,l_BS_ares_from_res !,BS_Blocks_symmetrize_K,&
- use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode, BSS_resize,BSS_n_eig_Input, &
+&                         BS_res_ares_n_mat,l_BS_ares_from_res,BS_nT_grps,&
+&                         l_BS_abs,l_BS_kerr,l_BS_kerr_asymm,l_BS_magnons,l_BS_photolum,l_BS_dichroism,&
+&                         l_BS_mespin,l_BS_meorb
+ use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,BSS_resize_only,BSS_resize_and_save,BSS_n_eig_Input, &
 &                         BSS_write_eig_2_db,BSS_eh_W,BSS_n_eig,BS_E,BSS_slepc_pseudo_herm,write_bs_ev_par,&
-&                         BSS_ydiago_solver,BSS_first_eig,BSS_target_E,BSS_trange_E,BSS_er,BSS_slepc_precondition
+&                         BSS_ldiago_solver,BSS_first_eig,BSS_target_E,BSS_trange_E,BSS_er,BSS_slepc_precondition,&
+&                         load_Diago
  use X_m,            ONLY:X_t,X_OUTPUT_driver
  use electrons,      ONLY:n_sp_pol,n_spinor
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing
  use linear_algebra, ONLY:DIAGO
- use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver,YDIAGO_driver,&
+ use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver,LDIAGO_driver,&
  &                        PL_diago_residual,K_diago_L_res,K_diago_R_res,&
  &                        K_diago_perturbative, K_stored_in_a_big_matrix
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
+ use parallel_m,     ONLY:CPU_structure
  use parallel_int,   ONLY:PP_wait
 #if defined _SLEPC && !defined _NL
- use interfaces,     ONLY:MATRIX_slepc
- use petscmat
- use slepceps
- use slepcepsdef
- use petscmatdef
- !
- use BS_solvers,     ONLY:BSS_slepc_approach,BSS_slepc_matrix_format,&
-&                         Slepc_v,BS_HAYVEC_free
-#endif
- use BS,             ONLY:l_BS_abs,l_BS_kerr,l_BS_kerr_asymm,l_BS_magnons,l_BS_photolum,l_BS_dichroism
- use MAGNONS,        ONLY:BSS_MAGN_free
- use PHOTOLUM,       ONLY:BSS_PL_free
- !
-#if defined _SLEPC && !defined _NL
+ use petscsys
  use slepceps,       ONLY:SlepcInitialize
  use petscmat,       ONLY:PETSC_NULL_CHARACTER
  use petscmatdef,    ONLY:tMat
-#endif
  !
-#include<y_memory.h>
+ use interfaces,     ONLY:MATRIX_slepc
+ use BS_solvers,     ONLY:BSS_slepc_approach,BSS_slepc_matrix_format,&
+&                         Slepc_v,BS_HAYVEC_free,BS_HAYVEC_alloc
+#endif
+ use y_memory_alloc
+ !
+ implicit none
  ! 
  type(w_samp)  :: W
  integer       :: iq
  !
  ! Work Space
  !
- integer          :: i_BS_mat,Input_n_eig, BS_mat_dim, neigs_this_cpu, neig_shift, elpa_solver = 2
+ integer          :: i_BS_mat,BSS_n_eig_before_solver, BS_mat_dim, neigs_this_cpu, neig_shift, elpa_solver = 2
  logical          :: K_is_not_hermitian,l_diago,l_slepc,l_dip_more,l_target_erange,l_neig_input, &
- &                   l_ydiago,l_kerr_lft,l_kerr_rgt,l_abs_res
+ &                   l_ldiago,l_kerr_lft,l_kerr_rgt,l_abs_res
  character(1)     :: sec
  character(10)    :: Solver
- ! Ydiago varibles
+ ! Ldiago varibles
  integer, target  :: neigs_range(2)
  real(SP), target :: eigvals_range(2)
  !
@@ -91,66 +87,66 @@ subroutine K_diago_driver(iq,W,X_static)
  ! Excitonic hamiltonian, residuals independent
  !==============================================
  real(SP),allocatable    :: BS_E_real(:)
- real(SP)   ,pointer     :: BS_E_SOC_corr(:,:) !=> null()
+ real(SP)   ,pointer     :: BS_E_SOC_corr(:,:)
  complex(SP),allocatable :: BS_corrections(:,:)
  !
  ! Coupling
  complex(SP),allocatable         :: BS_mat(:,:)
  complex(SP),allocatable, target :: BS_V_left(:,:)
  complex(SP),allocatable, target :: BS_V_right(:,:)
- complex(SP),pointer             :: BS_overlap(:,:)   ! => null()
+ complex(SP),pointer             :: BS_overlap(:,:)
  !
  ! Residuals, different for each response function
  !=================================================
- complex(SP),pointer     :: BS_R_left_abs(:)     !=> null()
- complex(SP),pointer     :: BS_R_right_abs(:)    !=> null()
+ complex(SP),pointer     :: BS_R_left_abs(:)
+ complex(SP),pointer     :: BS_R_right_abs(:)
  !
- real(SP),   pointer     :: BS_R_PL(:,:)         !=> null()
+ real(SP),   pointer     :: BS_R_PL(:,:)
  !
- complex(SP),pointer     :: BS_R_left_kerr(:)    !=> null()
- complex(SP),pointer     :: BS_R_right_kerr(:)   !=> null()
- complex(SP),pointer     :: BS_R_right_dich(:,:) !=> null()
+ complex(SP),pointer     :: BS_R_left_kerr(:)
+ complex(SP),pointer     :: BS_R_right_kerr(:)
+ complex(SP),pointer     :: BS_R_right_dich(:,:)
+ complex(SP),pointer     :: BS_R_right_mespin(:,:)
+ complex(SP),pointer     :: BS_R_right_meorb(:,:)
  !
- complex(SP),pointer     :: BS_R_left_magn(:,:)  !=> null()
- complex(SP),pointer     :: BS_R_right_magn(:,:) !=> null()
+ complex(SP),pointer     :: BS_R_left_magn(:,:)
+ complex(SP),pointer     :: BS_R_right_magn(:,:)
  !
  ! Temporary pointer 
- complex(SP),pointer     :: tmp_res_ptrR(:)     !=> null()
+ complex(SP),pointer     :: tmp_res_ptr(:)
  !
  ! I/O
  integer                 :: io_err,ID
  type(X_t),intent(in)    :: X_static
  !
- !
- l_abs_res =l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism
+ l_abs_res =l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_mespin.or.l_BS_meorb
  l_kerr_lft=l_BS_kerr_asymm.or.l_BS_dichroism
  l_kerr_rgt=l_BS_kerr      .or.l_BS_dichroism
  !
+ l_slepc     = index(BSS_mode,'s')/=0
 #if defined _SCALAPACK
  l_diago     = index(BSS_mode,'o')/=0.or. (     l_BS_photolum.and.(index(BSS_mode,'d')/=0))
- l_ydiago    = index(BSS_mode,'d')/=0.and. .not.l_BS_photolum
+ l_ldiago    = index(BSS_mode,'d')/=0.and. .not.l_BS_photolum
 #else
  l_diago     = index(BSS_mode,'o')/=0 .or. index(BSS_mode,'d')/=0
- l_ydiago    = .false. ! This must be set to false else u.b
 #endif
- l_slepc     = index(BSS_mode,'s')/=0
  !
 #if defined _NL
- if (l_ydiago) then
+ if (l_ldiago) then
    ! The issue is present if yambo was configured in single precision
-   ! If the coufingure was done in double precision, the issue is not present
+   ! If the confingure was done in double precision, the issue is not present
    ! However, at this stage, it is not possible to know how the user configured yambo
-   call warning("non-linear optics forces DP compilation and breaks Ydiago library interface in SP")
-   l_ydiago = .false.
+   call warning("non-linear optics forces DP compilation and breaks Ldiago library interface in SP")
+   l_ldiago = .false.
    l_diago  = .true.
  endif
 #endif
  !
  if(l_diago) Solver="Diago"
+ if(l_ldiago) Solver="Ldiago" 
 #if defined _SLEPC && !defined _NL
  if(l_slepc) Solver="Slepc"
 #endif
- if(l_ydiago) Solver="Ydiago" 
  !
  call timing(trim(Solver)//' Solver',OPR='start')
  !
@@ -171,22 +167,10 @@ subroutine K_diago_driver(iq,W,X_static)
  if (.not.BSS_write_eig_2_db) call parser('WRbsWF',BSS_write_eig_2_db)
  call parser('BSSPertWidth',BSS_perturbative_width)
  !
- do i_BS_mat=1,BS_res_ares_n_mat
+ do i_BS_mat=1, BS_res_ares_n_mat
    !
    if(.not.BS_K_coupling) BS_mat_dim = BS_K_dim(i_BS_mat)
    if(     BS_K_coupling) BS_mat_dim = BS_H_dim
-   !
-   NULLIFY(BS_overlap)
-   NULLIFY(BS_E_SOC_corr)
-   NULLIFY(BS_R_right_abs)
-   NULLIFY(BS_R_left_abs)
-   NULLIFY(BS_R_right_kerr)
-   NULLIFY(BS_R_left_kerr)
-   NULLIFY(BS_R_right_dich)
-   NULLIFY(BS_R_right_magn)
-   NULLIFY(BS_R_left_magn)
-   NULLIFY(BS_R_PL)
-   NULLIFY(tmp_res_ptrR)
    !
    call BSS_n_eig_init()
    !
@@ -199,11 +183,14 @@ subroutine K_diago_driver(iq,W,X_static)
    !========================
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
    io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
-  &                    BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
+  &                    BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,&
+  &                    BS_R_right_mespin,BS_R_right_meorb,BS_R_PL)
    !
    ! Kernel and/or BSS components loading
    !======================================
    if (io_err<0) then
+     !
+     if (load_Diago) call error("Loading of ndb.BS_diago failed in load diago mode") 
      !
      call K_components_folded_in_serial_arrays(iq)
      !
@@ -232,6 +219,8 @@ subroutine K_diago_driver(iq,W,X_static)
 #if defined _SLEPC && !defined _NL
      if(l_slepc) then
        !
+       call K_slepc_local_init()
+       !
        if (index(BSS_slepc_matrix_format,"shell")>0) then
          ! 1. Here we will define a PetscShell matrix and define the matrix-vector multiplication
          ! using the K_multiply_by_V function used in the Haydock method
@@ -241,13 +230,17 @@ subroutine K_diago_driver(iq,W,X_static)
          ! 2. Here we create a distributed PETSC matrix from the BS_blks
          !    There are 2 cases
          ! control of hermitian / pseudo-hermitian / non hermitian is in part explicit here
+#if PETSC_VERSION_GE(3,22,0)
          if (BSS_slepc_pseudo_herm) then
            ! 2.1. Nest matrix uses pseudo-hermitian structure of BSE, only for the coupling case
            call K_stored_in_a_nest_matrix(i_BS_mat,iq,slepc_mat)
          else
+#endif
            ! 2.2. Single PETSc matrix, for resonant case or non-hermitian coupling
            call K_stored_in_a_slepc_matrix(i_BS_mat,iq,slepc_mat)
+#if PETSC_VERSION_GE(3,22,0)
          endif
+#endif
        endif        
      endif
 #endif
@@ -256,26 +249,26 @@ subroutine K_diago_driver(iq,W,X_static)
    !
    ! Allocation (BS_E_real or BS_V)
    !===============================
-   call local_alloc("V")
+   if (.not. l_ldiago) call local_alloc("V")
    !
    if (io_err<0) then
      !
      ! Diagonalization of the excitonic hamiltonian
      !==============================================
      if(l_diago) call live_timing('BSK diagonalize',1)
-     !
-     if (K_is_not_hermitian) then
+     ! 
+     if (K_is_not_hermitian) then !coupling
        !
 #if defined _SCALAPACK
-       if (l_ydiago) then 
+       if (l_ldiago) then 
          ! BS_V_left are only referenced in non-hermitian case
          ! In coupling case, if the user requested n values,
          ! we compute the first min(n/2,BS_H_dim/2) positive and 
          ! min(n/2,BS_ham/2) negative eigvals and eigvectors, making it a total of min(n,BS_ham)
-         call YDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
+         call LDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
          &                   neigs_range=neigs_range, eigvals_range=eigvals_range,  &
          &                   BS_VL=BS_V_left,BS_overlap=BS_overlap,                 &
-         &                   solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
+         &                   solver_type=BSS_ldiago_solver, elpasolver=elpa_solver)
          BSS_n_eig = size(BS_E)
       endif
 #endif
@@ -295,13 +288,13 @@ subroutine K_diago_driver(iq,W,X_static)
        endif
 #endif
        !
-     else
+     else !no coupling
        !
 #if defined _SCALAPACK
-       if (l_ydiago) then
-         call YDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
+       if (l_ldiago) then
+         call LDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
 &                           neigs_range=neigs_range, eigvals_range=eigvals_range,   &
-&                           solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
+&                           solver_type=BSS_ldiago_solver, elpasolver=elpa_solver)
          BSS_n_eig = size(BS_E)
        endif
 #endif
@@ -322,13 +315,15 @@ subroutine K_diago_driver(iq,W,X_static)
        !
      endif
      !
+     ! Here we are resizing all the residuals which have not been used yet.
+     ! We could just allocated them here.
+     !
 #if defined _SLEPC && !defined _NL
      !
      if (l_slepc) then
+       call K_slepc_local_free()
        ! BSS_n_eig could be lowered by MATRIX_slepc
-       if (Input_n_eig>BSS_n_eig) call K_resize_variables()
-       ! Destroy the matrix
-       call MatDestroy(slepc_mat,ierr)
+       if (BSS_n_eig_before_solver>BSS_n_eig) call K_slepc_resize_variables()
      endif
      !
 #endif
@@ -336,14 +331,15 @@ subroutine K_diago_driver(iq,W,X_static)
      if (l_diago) call live_timing( )
      !
 #if defined _SCALAPACK
-     if (l_ydiago) then
-       if (Input_n_eig /= BSS_n_eig) call K_resize_variables()
+     if (l_ldiago) then
+       ! BSS_n_eig could be lowered by LDIAGO_driver
+       if (BSS_n_eig_before_solver/=BSS_n_eig) call K_ldiago_resize_variables()
      endif
 #endif
      !
      ! Compute residuals
      !
-     YAMBO_ALLOC_P(tmp_res_ptrR,(BSS_n_eig))
+     YAMBO_ALLOC_P(tmp_res_ptr,(BSS_n_eig))
      !
      ! Construct the residuals of epsilon
      !====================================
@@ -355,26 +351,40 @@ subroutine K_diago_driver(iq,W,X_static)
      endif
      !
      if(l_BS_dichroism) then
-       call K_diago_R_res("dic1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptrR,BS_V_right)
-       BS_R_right_dich(:,1) = tmp_res_ptrR
-       call K_diago_R_res("dic2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptrR,BS_V_right)
-       BS_R_right_dich(:,2) = tmp_res_ptrR
+       call K_diago_R_res("dic1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_right)
+       BS_R_right_dich(:,1) = tmp_res_ptr
+       call K_diago_R_res("dic2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_right)
+       BS_R_right_dich(:,2) = tmp_res_ptr
+     endif
+     !
+     if(l_BS_mespin) then
+       call K_diago_R_res("mespin1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_right)
+       BS_R_right_mespin(:,1) = tmp_res_ptr
+       call K_diago_R_res("mespin2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_right)
+       BS_R_right_mespin(:,2) = tmp_res_ptr
+     endif
+     !
+     if(l_BS_meorb) then
+       call K_diago_R_res("meorb1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_right)
+       BS_R_right_meorb(:,1) = tmp_res_ptr
+       call K_diago_R_res("meorb2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_right)
+       BS_R_right_meorb(:,2) = tmp_res_ptr
      endif
      !
      if(l_BS_magnons) then
-       call K_diago_R_res("mag1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptrR,BS_V_right)
-       BS_R_right_magn(:,1) = tmp_res_ptrR
+       call K_diago_R_res("mag1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_right)
+       BS_R_right_magn(:,1) = tmp_res_ptr
        if(n_spinor==2) then
-         call K_diago_R_res("mag2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptrR,BS_V_right)
-         BS_R_right_magn(:,2) = tmp_res_ptrR
+         call K_diago_R_res("mag2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_right)
+         BS_R_right_magn(:,2) = tmp_res_ptr
        endif
      endif
      !
      ! Left residuals needs to be computed only if the kernel is not hermitian
      if (K_is_not_hermitian) then
        !
-       ! In the ydiago solver, the BS_overlap is an identity matrix.
-       if (.not.l_ydiago) call K_diago_overlap_matrix(BS_V_left,BS_V_right,BS_overlap)
+       ! In the ldiago solver, the BS_overlap is an identity matrix.
+       if (.not.l_ldiago) call K_diago_overlap_matrix(BS_V_left,BS_V_right,BS_overlap)
        !
        ! Left residuals
        if(l_abs_res) then
@@ -383,11 +393,11 @@ subroutine K_diago_driver(iq,W,X_static)
        endif
        !
        if(l_BS_magnons) then
-         call K_diago_L_res("mag1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptrR,BS_V_left,BS_overlap)
-         BS_R_left_magn(:,1) = tmp_res_ptrR
+         call K_diago_L_res("mag1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_left,BS_overlap)
+         BS_R_left_magn(:,1) = tmp_res_ptr
          if(n_spinor==2) then
-           call K_diago_L_res("mag2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptrR,BS_V_left,BS_overlap)
-           BS_R_left_magn(:,2) = tmp_res_ptrR
+           call K_diago_L_res("mag2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptr,BS_V_left,BS_overlap)
+           BS_R_left_magn(:,2) = tmp_res_ptr
          endif
        endif
        !
@@ -400,15 +410,15 @@ subroutine K_diago_driver(iq,W,X_static)
        !
      endif
      !
-     YAMBO_FREE_P(tmp_res_ptrR)
+     YAMBO_FREE_P(tmp_res_ptr)
      !
      ! DS: this also should be changed according to the general structure
      if(l_BS_photolum) then
-       if (l_ydiago) call error("PL not implemented in Ydiago solver")
+       if (l_ldiago) call error("PL not implemented in Ldiago solver")
        if (K_is_not_hermitian) then
-         call PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap)
+         call PL_diago_non_herm_residual(BS_V_left,BS_V_right,BS_R_PL,BS_overlap)
        else
-         call PL_diago_residual(BS_V_right,BS_V_right,BS_R_PL,K_is_not_hermitian)
+         call PL_diago_herm_residual(BS_V_right,BS_R_PL)
        endif
      endif
      !
@@ -431,7 +441,8 @@ subroutine K_diago_driver(iq,W,X_static)
    ! Now I calculate the physical quantities
    !=========================================
    call K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
-   &               BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
+   &               BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,&
+   &               BS_R_right_mespin,BS_R_right_meorb,BS_R_PL)
    !
    ! Diagonalization DB (OUT)
    !==========================
@@ -439,33 +450,31 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
      io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
-     &     BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL,&
-     &                                                   BS_mat=BS_V_right,write_ev=.not.l_ydiago)
+     &     BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,&
+     &                                                   BS_R_right_mespin,BS_R_right_meorb,BS_R_PL,&
+     &                                                   BS_mat=BS_V_right,write_ev=.not.l_ldiago)
      !
      call PP_wait()
 #if defined _SCALAPACK
-     if (l_ydiago .and. BSS_write_eig_2_db) call write_bs_ev_par(iq, i_BS_mat, &
+     if (l_ldiago .and. BSS_write_eig_2_db) call write_bs_ev_par(iq, i_BS_mat, &
 &                             neigs_this_cpu, neig_shift, BS_V_right, BS_V_left)
 #endif
    endif
+   !
+   ! CLEAN
    !
    YAMBO_FREE(BS_E)
    call local_free( )
    !
  enddo
  !
+#if defined _SLEPC && !defined _NL
+ if (l_slepc) call SlepcFinalize(ierr)
+#endif
+ !
  ! Initialize & write the output file 
  !====================================
  call K_OUTPUT(iq,W,"open dump close "//trim(Solver),"ALL")
- !
- ! CLEAN
- !
-#if defined _SLEPC && !defined _NL
- if(l_slepc) call K_slepc_local_free()
-#endif
- !
- call BSS_PL_free( )
- call BSS_MAGN_free( )
  !
  call timing(trim(Solver)//' Solver',OPR='stop')
  !
@@ -495,6 +504,12 @@ subroutine K_diago_driver(iq,W,X_static)
        if (l_BS_dichroism) then
          YAMBO_ALLOC_P(BS_R_right_dich,(BSS_n_eig,2))
        endif
+       if (l_BS_mespin) then
+         YAMBO_ALLOC_P(BS_R_right_mespin,(BSS_n_eig,2))
+       endif
+       if (l_BS_meorb) then
+         YAMBO_ALLOC_P(BS_R_right_meorb,(BSS_n_eig,2))
+       endif
        if (l_BS_magnons) then
          YAMBO_ALLOC_P(BS_R_left_magn,(BSS_n_eig,2))
          YAMBO_ALLOC_P(BS_R_right_magn,(BSS_n_eig,2))
@@ -504,8 +519,6 @@ subroutine K_diago_driver(iq,W,X_static)
        endif
        !
      case("V")
-       !
-       if (l_ydiago)  return
        !
        if(K_is_not_hermitian) then
          YAMBO_ALLOC(BS_V_left,(BS_H_dim,BSS_n_eig))
@@ -541,6 +554,8 @@ subroutine K_diago_driver(iq,W,X_static)
      YAMBO_FREE_P(BS_R_right_kerr)
      YAMBO_FREE_P(BS_R_left_kerr)
      YAMBO_FREE_P(BS_R_right_dich)
+     YAMBO_FREE_P(BS_R_right_mespin)
+     YAMBO_FREE_P(BS_R_right_meorb)
      YAMBO_FREE_P(BS_R_right_magn)
      YAMBO_FREE_P(BS_R_left_magn)
      YAMBO_FREE_P(BS_R_PL)
@@ -548,36 +563,62 @@ subroutine K_diago_driver(iq,W,X_static)
    end subroutine local_free
    !
    !
-   subroutine K_resize_variables()
-     !
-     ! We need to realloc as sizes can change.
-     if(allocated(BS_corrections)) call BSS_resize(BS_corrections)
-     if(associated(BS_E_SOC_corr)) call BSS_resize(BS_E_SOC_corr)
-     !
-     if(associated(BS_R_left_abs) )  call BSS_resize(BS_R_left_abs)
-     if(associated(BS_R_right_abs))  call BSS_resize(BS_R_right_abs)
-     !
-     if(associated(BS_R_left_kerr) ) call BSS_resize(BS_R_left_kerr)
-     if(associated(BS_R_right_kerr)) call BSS_resize(BS_R_right_kerr)
-     if(associated(BS_R_right_dich)) call BSS_resize(BS_R_right_dich)
-     if(associated(BS_R_left_magn) ) call BSS_resize(BS_R_left_magn)
-     if(associated(BS_R_right_magn)) call BSS_resize(BS_R_right_magn)
-     if(associated(BS_R_PL)        ) call BSS_resize(BS_R_PL)
-     !
-     if (l_ydiago) return
-     !
-     if(allocated(BS_E))          call BSS_resize(BS_E)
-     !
-     if(allocated(BS_V_left))   call BSS_resize(BS_V_left)
-     if(allocated(BS_V_right))  call BSS_resize(BS_V_right)
-     if(associated(BS_overlap)) call BSS_resize(BS_overlap,.true.)
-     !
-     if(allocated(BS_E_real))   call BSS_resize(BS_E_real)
-     !
-   end subroutine K_resize_variables
+   subroutine K_ldiago_resize_variables()
+    !
+    ! We need to realloc as sizes can change.
+    if(allocated(BS_corrections)) call BSS_resize_only(BS_corrections)
+    if(associated(BS_E_SOC_corr)) call BSS_resize_only(BS_E_SOC_corr)
+    !
+    if(associated(BS_R_left_abs) )  call BSS_resize_only(BS_R_left_abs)
+    if(associated(BS_R_right_abs))  call BSS_resize_only(BS_R_right_abs)
+    !
+    if(associated(BS_R_left_kerr) )   call BSS_resize_only(BS_R_left_kerr)
+    if(associated(BS_R_right_kerr))   call BSS_resize_only(BS_R_right_kerr)
+    if(associated(BS_R_right_dich))   call BSS_resize_only(BS_R_right_dich)
+    if(associated(BS_R_right_mespin)) call BSS_resize_only(BS_R_right_mespin)
+    if(associated(BS_R_right_meorb))  call BSS_resize_only(BS_R_right_meorb)
+    if(associated(BS_R_left_magn) ) call BSS_resize_only(BS_R_left_magn)
+    if(associated(BS_R_right_magn)) call BSS_resize_only(BS_R_right_magn)
+    if(associated(BS_R_PL)        ) call BSS_resize_only(BS_R_PL)
+    !
+   end subroutine K_ldiago_resize_variables
    !
+#if defined _SLEPC && !defined _NL
+   !
+   subroutine K_slepc_resize_variables()
+     !
+     call warning(" resizing alla variables whose size depends on BSS_n_eig ")
+     if(allocated(BS_E))          call BSS_resize_and_save(BS_E)
+     !
+     if(allocated(BS_corrections)) call BSS_resize_only(BS_corrections)
+     if(associated(BS_E_SOC_corr)) call BSS_resize_only(BS_E_SOC_corr)
+     !
+     if(associated(BS_R_left_abs) )  call BSS_resize_only(BS_R_left_abs)
+     if(associated(BS_R_right_abs))  call BSS_resize_only(BS_R_right_abs)
+     !
+     if(associated(BS_R_left_kerr) )   call BSS_resize_only(BS_R_left_kerr)
+     if(associated(BS_R_right_kerr))   call BSS_resize_only(BS_R_right_kerr)
+     if(associated(BS_R_right_dich))   call BSS_resize_only(BS_R_right_dich)
+     if(associated(BS_R_right_mespin)) call BSS_resize_only(BS_R_right_mespin)
+     if(associated(BS_R_right_meorb))  call BSS_resize_only(BS_R_right_meorb)
+     if(associated(BS_R_left_magn) )   call BSS_resize_only(BS_R_left_magn)
+     if(associated(BS_R_right_magn))   call BSS_resize_only(BS_R_right_magn)
+     if(associated(BS_R_PL)        )   call BSS_resize_only(BS_R_PL)
+     !
+     if(allocated(BS_V_left))   call BSS_resize_and_save(BS_V_left)
+     if(allocated(BS_V_right))  call BSS_resize_and_save(BS_V_right)
+     if(associated(BS_overlap)) call BSS_resize_only(BS_overlap,.true.)
+     !
+     if(allocated(BS_E_real))   call BSS_resize_and_save(BS_E_real)
+     !
+   end subroutine
+   !
+#endif
    !
    subroutine K_local_init()
+     ! 
+     BSS_n_eig=BSS_n_eig_Input
+     !
      !
      K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
      !
@@ -604,31 +645,30 @@ subroutine K_diago_driver(iq,W,X_static)
        BSS_slepc_pseudo_herm = .false. 
        call warning('Preconditioning not supported in pseudo-hermitian case. Switching to non-hermitian diagonalization')
      endif
-
      !
 #if defined _SCALAPACK
-     if (l_ydiago) then
+     if (l_ldiago) then
        !
-       if (BSS_ydiago_solver/="s" .and. BSS_ydiago_solver/="e") then
-         call warning("Invalid ydiago solver. Switching to default")
+       if (BSS_ldiago_solver/="s" .and. BSS_ldiago_solver/="e") then
+         call warning("Invalid ldiago solver. Switching to default")
 #if defined _ELPA
-         BSS_ydiago_solver="e"
+         BSS_ldiago_solver="e"
 #else
-         BSS_ydiago_solver="s"
+         BSS_ldiago_solver="s"
 #endif
        endif
        !
 #if defined _GPU && defined _ELPA
-       if (BSS_ydiago_solver=="s") then
+       if (BSS_ldiago_solver=="s") then
          call warning("gpu ported code. Switching to Elpa solver")
-         BSS_ydiago_solver="e"
+         BSS_ldiago_solver="e"
        endif
 #endif
        !
 #if !defined _ELPA
-       if (BSS_ydiago_solver=="e") then
+       if (BSS_ldiago_solver=="e") then
          call warning("Elpa solver selected, but elpa not linked. Switching to scalapack")
-         BSS_ydiago_solver="s"
+         BSS_ldiago_solver="s"
        endif
 #endif
        !
@@ -637,38 +677,41 @@ subroutine K_diago_driver(iq,W,X_static)
        ! Here I double the number of n_eig to get correct allocations
        if (l_neig_input .and. K_is_not_hermitian) BSS_n_eig=BSS_n_eig*2
        !
-       if (l_target_erange .and. BSS_ydiago_solver=="e") then
+       if (l_target_erange .and. BSS_ldiago_solver=="e") then
 #if defined _GPU && defined _ELPA
          call warning(' energy range not compatible with elpa. Switching it off on gpu')
          l_target_erange=.false.
 #else
          call warning(' energy range not compatible with elpa. Switching to scalapack on cpu')
-         BSS_ydiago_solver="s"
+         BSS_ldiago_solver="s"
 #endif
        endif
        !
-       if (BSS_first_eig>1 .and. BSS_ydiago_solver=="e") then
+       if (BSS_first_eig>1 .and. BSS_ldiago_solver=="e") then
 #if defined _GPU && defined _ELPA
          call warning(' eigenvalues range not compatible with elpa. Switching it off on gpu')
          BSS_first_eig=1
 #else
          call warning(' eigenvalues range not compatible with elpa. Switching to scalapack on cpu')
-         BSS_ydiago_solver="s"
+         BSS_ldiago_solver="s"
 #endif
        endif
        !
-       if (l_neig_input .and. BSS_ydiago_solver=="e" .and. K_is_not_hermitian) then
+       if (l_neig_input .and. BSS_ldiago_solver=="e" .and. K_is_not_hermitian) then
 #if defined _GPU && defined _ELPA
          call warning(' Few eigenvalues not compatible with non hermitian elpa. Switching it off on gpu')
          l_neig_input=.false.
 #else
          call warning(' Few eigenvalues not compatible with non hermitian elpa. Switching to scalapack on cpu')
-         BSS_ydiago_solver="s"
+         BSS_ldiago_solver="s"
 #endif
        endif
        !
      endif
 #endif
+     !
+     ! LA for old diago solver
+     if (l_diago) call PARALLEL_assign_LA_COMMs("Response_T_space",DIAGO,CPU_structure(4)%nCPU_lin_algebra_DIAGO)
      !
    end subroutine K_local_init
    !
@@ -679,6 +722,20 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      BSS_n_eig=BSS_n_eig_Input
      !
+     nullify(BS_overlap)
+     nullify(BS_E_SOC_corr)
+     nullify(BS_R_right_abs)
+     nullify(BS_R_left_abs)
+     nullify(BS_R_right_kerr)
+     nullify(BS_R_left_kerr)
+     nullify(BS_R_right_dich)
+     nullify(BS_R_right_mespin)
+     nullify(BS_R_right_meorb)
+     nullify(BS_R_right_magn)
+     nullify(BS_R_left_magn)
+     nullify(BS_R_PL)
+     nullify(tmp_res_ptr)
+     !
      if (l_slepc) then
        !
        if (BSS_n_eig<1) then
@@ -687,14 +744,9 @@ subroutine K_diago_driver(iq,W,X_static)
          call warning('N_eigen < 1. Calculating only 1% of the eigenvalues.')
        endif
        !
-       if (BSS_n_eig>BS_H_dim) then
-         call warning('N_eigen > BS_H_dim. Calculating 10% of the eigenvalues.')
-         BSS_n_eig = nint(BS_H_dim*0.1)
-       endif
-       !
-       if (BSS_n_eig>BS_K_dim(1) .and. BSS_slepc_pseudo_herm) then
-         call warning('N_eigen > BS_K_dim and pseudo-hermitian case. Calculating 10% of the eigenvalues.')
-         BSS_n_eig = nint(BS_K_dim(1)*0.1)
+       if (BSS_n_eig>BS_mat_dim) then
+         call warning('N_eigen > BS_mat_dim. Calculating 10% of the eigenvalues.')
+         BSS_n_eig = nint(BS_mat_dim*0.1)
        endif
        !
      endif
@@ -702,10 +754,10 @@ subroutine K_diago_driver(iq,W,X_static)
      if(l_diago) BSS_n_eig = BS_mat_dim
      !
 #if defined _SCALAPACK
-     ! set a Ydiago defaults.
-     if(l_ydiago) then
+     ! set a Ldiago defaults.
+     if(l_ldiago) then
        !
-       ! In case of ydiago, BSS_n_eig will be overwritten after the solver is called 
+       ! In case of ldiago, BSS_n_eig will be overwritten after the solver is called 
        if( BSS_n_eig==0 ) BSS_n_eig = BS_mat_dim
        !
        neigs_range  = 0
@@ -725,7 +777,7 @@ subroutine K_diago_driver(iq,W,X_static)
          eigvals_range= BSS_trange_E
        ! The following is a good idea but it is the source of many fails in the
        ! test-suite. Commenting it for now
-       !else if (BSS_ydiago_solver=="s") then
+       !else if (BSS_ldiago_solver=="s") then
        !  ! with scalapack use the energy range needed by default
        !  neigs_range  = 0
        !  eigvals_range= BSS_er
@@ -734,18 +786,32 @@ subroutine K_diago_driver(iq,W,X_static)
      endif
 #endif
      !
-     Input_n_eig=BSS_n_eig
+     BSS_n_eig_before_solver=BSS_n_eig
      !
      ! For backward compatibitly I set  
      neig_shift = 0
      neigs_this_cpu = BSS_n_eig
      !
-     ! These will be changed by the YDIAGO_driver routine
+     ! These will be changed by the LDIAGO_driver routine
      ! each cpu contains eigen-vectors from [neig_shift + 1, neigs_this_cpu + neig_shift]
      !
    end subroutine BSS_n_eig_init
    !
 #if defined _SLEPC && !defined _NL
+   !
+   subroutine K_slepc_local_init()
+     integer          :: domk(BS_nT_grps)
+     !
+     if (BSS_slepc_matrix_format=='shell') then
+       call PARALLEL_Haydock_VEC_COMMs('assign')
+       allocate(Slepc_v%Vi(BS_nT_grps))
+       allocate(Slepc_v%Vo(BS_nT_grps))
+       domk=1
+       call BS_HAYVEC_alloc(Slepc_v%Vi,domk)
+       call BS_HAYVEC_alloc(Slepc_v%Vo,domk)
+     endif
+     !
+   end subroutine K_slepc_local_init
    !
    subroutine K_slepc_local_free()
      !
@@ -757,7 +823,9 @@ subroutine K_diago_driver(iq,W,X_static)
        call PARALLEL_Haydock_VEC_COMMs('reset')
      endif
      !
-     call SlepcFinalize(ierr)
+     ! Destroy the matrix
+     call MatDestroy(slepc_mat,ierr)
+     !
    end subroutine K_slepc_local_free
 #endif
    !

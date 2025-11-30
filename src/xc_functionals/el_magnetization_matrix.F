@@ -31,6 +31,8 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  !
  implicit none
  !
+#include<yambo_wfs.h>
+ !
  type(bz_samp), intent(in)  :: Xk
  complex(SP),   intent(in)  :: G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2),n_sp_pol)
  integer,       intent(in)  :: lowest_band
@@ -39,6 +41,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  !
  ! Work Space
  !
+ logical :: l_WFs_on_the_fly
  integer :: ib1,ib2,i_sp_pol,ik,ik_RT,isym,ifft,i_wf1,i_wf2
  real(SP):: cv(fft_size,3),tmp_sop(3,3)
  complex(SP) :: f_occ
@@ -51,7 +54,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  !
  if (n_spin==1) return
  !
- if (n_sp_pol==2) call error(' case n_sp_pol=2 not yet coded in yambo_rt')
+ l_WFs_on_the_fly=.not.allocated(WF%r)
  !
  if(lowest_band<RT_bands(1)) then
    !
@@ -74,27 +77,28 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
            !
            ! mz
            !
-           cv(:,3)=cv(:,3)+Xk%weights(ik)*(-1)**(i_sp_pol-1)*real(f_occ)*real(conjg(WF_tmp%c(:,1,i_wf1))*WF_tmp%c(:,1,i_wf1))
+           cv(:,3)=cv(:,3)+Xk%weights(ik)*(-1)**(i_sp_pol-1)*real(f_occ)*&
+&                      real(wfconjg(WF_tmp%r(:,1,i_wf1))*WF_tmp%r(:,1,i_wf1))
            !
          else if(n_spinor==2) then
            !
            ! mx
            !
            cv(:,1)=cv(:,1)+Xk%weights(ik)*real(f_occ)*(&
-&                     +real(conjg(WF_tmp%c(:,1,i_wf1))*WF_tmp%c(:,2,i_wf1))&
-&                     +real(conjg(WF_tmp%c(:,2,i_wf1))*WF_tmp%c(:,1,i_wf1)) )
+&                     +real(wfconjg(WF_tmp%r(:,1,i_wf1))*WF_tmp%r(:,2,i_wf1))&
+&                     +real(wfconjg(WF_tmp%r(:,2,i_wf1))*WF_tmp%r(:,1,i_wf1)) )
            !
            ! my
            !
            cv(:,2)=cv(:,2)+Xk%weights(ik)*real(f_occ)*(&
-&                     +aimag(conjg(WF_tmp%c(:,1,i_wf1))*WF_tmp%c(:,2,i_wf1))&
-&                     -aimag(conjg(WF_tmp%c(:,2,i_wf1))*WF_tmp%c(:,1,i_wf1)) )
+&                     +wfaimag(wfconjg(WF_tmp%r(:,1,i_wf1))*WF_tmp%r(:,2,i_wf1))&
+&                     -wfaimag(wfconjg(WF_tmp%r(:,2,i_wf1))*WF_tmp%r(:,1,i_wf1)) )
            !
            ! mz
            !
            cv(:,3)=cv(:,3)+Xk%weights(ik)*real(f_occ)*(&
-&                     +real(conjg(WF_tmp%c(:,1,i_wf1))*WF_tmp%c(:,1,i_wf1))&
-&                     -real(conjg(WF_tmp%c(:,2,i_wf1))*WF_tmp%c(:,2,i_wf1)) )
+&                     +real(wfconjg(WF_tmp%r(:,1,i_wf1))*WF_tmp%r(:,1,i_wf1))&
+&                     -real(wfconjg(WF_tmp%r(:,2,i_wf1))*WF_tmp%r(:,2,i_wf1)) )
            !
          endif
          !
@@ -105,11 +109,16 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
    !  
  endif
  !
+ do i_sp_pol=1,n_sp_pol
  do ik=1,Xk%nibz
    !
 #if !defined _YPP_RT
    if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
 #endif
+   if (l_WFs_on_the_fly) then
+     call WF_load(WF,WF_G_max,WF_Go_indx,RT_bands,(/ik,ik/),(/i_sp_pol,i_sp_pol/),&
+&                   space='R',title='-RT',keep_states_to_load=.true.)
+   endif
    !      
    do ib1=RT_bands(1),RT_bands(2)
      !
@@ -120,43 +129,53 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
      do ib2=ib1,RT_bands(2)
        !
 #if !defined _YPP_RT
-       if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1)-1 )) cycle
+       if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1) )) cycle
 #endif
        !
        f_occ=cZERO
        do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
-         if (ib1==ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,1)
-         if (ib1/=ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,1)*2._SP
+         if (ib1==ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,i_sp_pol)
+         if (ib1/=ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,i_sp_pol)*2._SP
          f_occ=f_occ*RTibz%weights(ik_RT)
        enddo
        !
-       i_wf1=WF%index(ib1,ik,1)
-       i_wf2=WF%index(ib2,ik,1)
+       i_wf1=WF%index(ib1,ik,i_sp_pol)
+       i_wf2=WF%index(ib2,ik,i_sp_pol)
        !
-       if (n_spinor==2) then
+       if (n_sp_pol==2) then
+         !
+         ! mz
+         !
+         cv(:,3)=cv(:,3)+(-1)**(i_sp_pol-1)*&
+         &       real(f_occ)*real(wfconjg(WF%r(:,1,i_wf1))*WF%r(:,1,i_wf2))
+         !
+       else if (n_spinor==2) then
          !
          ! mx
          !
          cv(:,1)=cv(:,1)+(&
-&                real(f_occ*conjg(WF%c(:,1,i_wf1))*WF%c(:,2,i_wf2))&
-&               +real(f_occ*conjg(WF%c(:,2,i_wf1))*WF%c(:,1,i_wf2)) )
+&                real(f_occ*wfconjg(WF%r(:,1,i_wf1))*WF%r(:,2,i_wf2))&
+&               +real(f_occ*wfconjg(WF%r(:,2,i_wf1))*WF%r(:,1,i_wf2)) )
          !
          ! my
          !
          cv(:,2)=cv(:,2)+(&
-&                aimag(f_occ*conjg(WF%c(:,1,i_wf1))*WF%c(:,2,i_wf2))&
-&               -aimag(f_occ*conjg(WF%c(:,2,i_wf1))*WF%c(:,1,i_wf2)) )
+&                wfaimag(f_occ*wfconjg(WF%r(:,1,i_wf1))*WF%r(:,2,i_wf2))&
+&               -wfaimag(f_occ*wfconjg(WF%r(:,2,i_wf1))*WF%r(:,1,i_wf2)) )
          !
          ! mz
          !
          cv(:,3)=cv(:,3)+(&
-&                real(f_occ*conjg(WF%c(:,1,i_wf1))*WF%c(:,1,i_wf2))&
-&               -real(f_occ*conjg(WF%c(:,2,i_wf1))*WF%c(:,2,i_wf2)) )
+&                real(f_occ*wfconjg(WF%r(:,1,i_wf1))*WF%r(:,1,i_wf2))&
+&               -real(f_occ*wfconjg(WF%r(:,2,i_wf1))*WF%r(:,2,i_wf2)) )
        endif
        !
      enddo
    enddo
    !
+   if (l_WFs_on_the_fly) call WF_free(WF,keep_fft=.true.)
+   !
+ enddo
  enddo
  !
  call PP_redux_wait(cv)
@@ -169,8 +188,10 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
    if (n_spinor==2) then
      tmp_sop(:,:)=dl_sop(:,:,isym)*m3det(dl_sop(:,:,isym))
      if( isym> nsym/(1+i_time_rev) ) tmp_sop(:,:)=-tmp_sop(:,:)
-     forall(ifft=1:fft_size) magn(ifft,:)=magn(ifft,:)+ &
+     do concurrent (ifft=1:fft_size) 
+       magn(ifft,:)=magn(ifft,:)+ &
 &                            matmul(tmp_sop, cv(fft_rot_r(ifft,isym),:)/real(nsym,SP) )
+     enddo
    else
      magn(:,3)=magn(:,3)+cv(fft_rot_r(:,isym),3)/real(nsym,SP)
    endif

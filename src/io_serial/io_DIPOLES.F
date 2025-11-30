@@ -124,11 +124,11 @@ integer function io_DIPOLES(Dip,ID)
    !
  endif
  !
- if (STRING_match(Dip%computed,"M_orb")) then
+ if (STRING_match(Dip%computed,"M_orbRT")) then
    !
    ! Orbital magnetization
    !
-   write (VAR_name,'(3(a,i4.4))') 'DIP_orbital_k_',ik,'_spin_',i_sp_pol
+   write (VAR_name,'(3(a,i4.4))') 'DIP_orbital_RT_k_',ik,'_spin_',i_sp_pol
    call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=DIP_size)
    call io_bulk(ID_frag,C3=DIP_orbital(:,:,:,ik_mem,i_sp_pol,1),IPOS=DIP_ipos)
    !
@@ -167,16 +167,16 @@ integer function io_DIPOLES(Dip,ID)
    !
  endif
  !
- if (STRING_match(Dip%computed,"M_CD_orb")) then
+ if (STRING_match(Dip%computed,"M_orbCD")) then
    !
    ! Orbital magnetization
    !
-   write (VAR_name,'(3(a,i4.4))') 'DIP_orbital_k_',ik,'_spin_',i_sp_pol
+   write (VAR_name,'(3(a,i4.4))') 'DIP_orbital_CD_k_',ik,'_spin_',i_sp_pol
    call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=DIP_size)
    call io_bulk(ID_frag,C3=DIP_orbital(:,:,:,ik_mem,i_sp_pol,1),IPOS=DIP_ipos)
    !
  endif
- ! 
+ !
  call io_fragment_disconnect(ID,ID_frag)
  !
 1 call io_disconnect(ID=ID)

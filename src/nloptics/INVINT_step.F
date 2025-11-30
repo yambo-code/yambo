@@ -18,7 +18,7 @@ subroutine INVINT_step(V_out,V_in,H_in,I_in,nbf,dT)
   complex(SP), intent(in)  :: V_in(NL_bands(2),nbf)
   complex(SP), intent(out) :: V_out(NL_bands(2),nbf)
   complex(SP), intent(in)  :: H_in(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
-  complex(SP), intent(in)  :: I_in(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),nbf)
+  complex(SP), intent(in)  :: I_in(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
   real(SP),    intent(in)  :: dT
   !
   ! Workspace
@@ -38,11 +38,13 @@ subroutine INVINT_step(V_out,V_in,H_in,I_in,nbf,dT)
   do ib=1,nbf
     !
     Hp=cZERO
-    forall(i1=NL_bands(1):NL_bands(2)) Hp(i1,i1)=cONE
+    do concurrent (i1=NL_bands(1):NL_bands(2)) 
+      Hp(i1,i1)=cONE
+    end do
     Hm=Hp
     !
-    Hm=Hm-cI*dT/2._SP*(H_in+I_in(:,:,ib))
-    Hp=Hp+cI*dT/2._SP*(H_in+I_in(:,:,ib))
+    Hm=Hm-cI*dT/2._SP*(H_in+I_in)
+    Hp=Hp+cI*dT/2._SP*(H_in+I_in)
     !
     if (l_use_inv) then
       !

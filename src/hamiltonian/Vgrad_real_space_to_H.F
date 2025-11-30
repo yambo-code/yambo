@@ -43,7 +43,7 @@ subroutine Vgrad_real_space_to_H(ik,H,WF,V_grad)
  do ib=H_ref_bands(1),H_ref_bands(2)
    do ibp=ib,H_ref_bands(2)
    !
-   if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 )) cycle
+   if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1) )) cycle
    !
    ! <i_wf|V|ip_wf>
    !
@@ -66,7 +66,7 @@ subroutine Vgrad_real_space_to_H(ik,H,WF,V_grad)
    enddo
    !
    i_wf = WF%index(ib,ik,1)
-   H(ib,ibp) = 0.25_SP*Vstar_dot_V(fft_size*n_spinor,WF%c(:,:,i_wf),c_ws(:,:))
+   H(ib,ibp) = 0.25_SP*Vstar_dot_V(fft_size*n_spinor,cmplx(WF%r(:,:,i_wf),kind=SP),c_ws(:,:))
    !
    if(ib==ibp) H(ib,ib) = real(H(ib,ib ),SP)
    if(ib/=ibp) H(ibp,ib)=conjg(H(ib,ibp)   )

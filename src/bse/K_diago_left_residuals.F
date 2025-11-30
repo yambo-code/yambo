@@ -23,22 +23,23 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,         ONLY:live_timing
  use X_m,            ONLY:global_gauge
- use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling
+ use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,&
+ &                        l_BS_res_from_E,BS_not_const_eh_f
  use BS_solvers,     ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f
  use MAGNONS,        ONLY:BSS_dipoles_magn
- use DICHROISM,      ONLY:BSS_dipoles_dich
+ use DICHROISM,      ONLY:BSS_dipoles_dich,BSS_dipoles_mespin,BSS_dipoles_meorb
  !
  implicit none
  !
  character(*),intent(in)  :: mode
  integer,     intent(in)  :: i_BS_mat, neigs_this_cpu, neig_shift
  complex(SP), allocatable,         intent(in)  :: BS_E(:)
- complex(SP), pointer,             intent(out) :: BS_R_left(:)
+ complex(SP), pointer,             intent(inout) :: BS_R_left(:)
  complex(SP), target, allocatable, intent(in)  :: BS_V_left(:,:)
  complex(SP), pointer, optional,   intent(in)  :: BS_Overlap(:,:)
  !
  ! If BS_Overlap is null(), then it is treated as a identity matrix
- ! Incase Ydiago solver is used, BS_Overlap is always null()
+ ! Incase Ldiago solver is used, BS_Overlap is always null()
  !
  ! Workspace
  !
@@ -50,6 +51,9 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  !
  complex(SP),allocatable :: tmp_res(:)
  complex(SP),pointer     :: BS_R_tmp(:) => null()
+ !
+ if (l_BS_res_from_E.and.BS_not_const_eh_f) &
+ & call error(" To be fixed, since sqrt of BSS_eh_f takes a conjg and it should not")
  !
  ! Sanity checks
  if (.not. allocated(BS_E))      return 
@@ -108,6 +112,10 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  if(trim(mode)=="opt2") tmp_res=BSS_dipoles_opt(2,res_range(1):res_range(2))
  if(trim(mode)=="dic1") tmp_res=BSS_dipoles_dich(1,res_range(1):res_range(2)) 
  if(trim(mode)=="dic2") tmp_res=BSS_dipoles_dich(2,res_range(1):res_range(2)) 
+ if(trim(mode)=="mespin1") tmp_res=BSS_dipoles_mespin(1,res_range(1):res_range(2)) 
+ if(trim(mode)=="mespin2") tmp_res=BSS_dipoles_mespin(2,res_range(1):res_range(2)) 
+ if(trim(mode)=="meorb1") tmp_res=BSS_dipoles_meorb(1,res_range(1):res_range(2)) 
+ if(trim(mode)=="meorb2") tmp_res=BSS_dipoles_meorb(2,res_range(1):res_range(2)) 
  if(trim(mode)=="mag1") tmp_res=BSS_dipoles_magn(1,res_range(1):res_range(2))
  if(trim(mode)=="mag2") tmp_res=BSS_dipoles_magn(2,res_range(1):res_range(2))
  !
@@ -130,7 +138,7 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  !
  call live_timing()
  !
- ! Incase of Ydiago solver Overlap is always identity.
+ ! Incase of Ldiago solver Overlap is always identity.
  !
  if (trim(scheme)=="hermitian")  return
  !

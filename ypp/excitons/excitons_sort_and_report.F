@@ -3,9 +3,9 @@
 !
 ! Copyright (C) 2015 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM DV
+! Authors (see AUTHORS file for details): AM DV DS
 !
-subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
+subroutine excitons_sort_and_report(iq,Res,BS_E,BS_E_SOC_corr,EXC_spin)
  !
  use pars,          ONLY:SP,schlen,pi,zero_dfl
  use units,         ONLY:HA2EV
@@ -23,7 +23,8 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  implicit none 
  !
  integer                      :: iq
- complex(SP)                  :: BS_R(BSS_n_eig),BS_E(BSS_n_eig)
+ real(SP)                     :: Res(BSS_n_eig)
+ complex(SP)                  :: BS_E(BSS_n_eig)
  real(SP), optional, pointer  :: BS_E_SOC_corr(:,:)
  type(EXCITON_spin),optional  :: EXC_spin
  !
@@ -107,8 +108,8 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
      titles(n_elements  )='dE(2)[meV]'
    endif
    !
-   Residuals(:) = real(BS_R(:)*conjg(BS_R(:)),SP)
-   if (write_widths)  Residuals(:) = abs(BS_R(:))
+   Residuals(:) = Res(:)
+   if (write_widths)  Residuals(:) = sqrt(Res(:))
    if(iq==1) q_norm=q0_def_norm**2
    if(iq> 1) q_norm=iku_v_norm(BSqpts(:,iq))**2
    Residuals(:) = Residuals(:)*real(spin_occ,SP)/(2._SP*pi)**3*d3k_factor*4._SP*pi/q_norm*HA2EV
@@ -174,7 +175,7 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
        enddo
      endif
      if (write_soc_corr) then
-       if (.not.any((/EXCITONS_user_indexes==j2/))) cycle
+       !if (.not.any((/EXCITONS_user_indexes==j2/))) cycle
        n_elements=n_elements+2
        rv(n_elements-1:n_elements)=(/BS_E_SOC_corr(1,j2),BS_E_SOC_corr(2,j2)/)*HA2EV*1000._SP
      endif

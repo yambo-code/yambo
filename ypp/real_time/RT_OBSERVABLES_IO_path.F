@@ -9,7 +9,7 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
  !
  use YPP_interfaces, ONLY:RT_OBSERVABLES_IO
  use YPP_real_time,  ONLY:Probe_Keyword,Pump_Keyword,max_n_of_paths,Pump_path,Probe_path,&
-&                         N_pumps,N_probes,N_probe_frequencies
+&                         N_pumps,N_probes,N_probe_frequencies,X_order
  use RT_output_m,    ONLY:RT_desc
  use com,            ONLY:core_io_path,msg,jobstr
  use IO_m,           ONLY:NONE
@@ -57,12 +57,13 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
    ! Remove "." and ".."
    !
    i_f=1
-   do while (i_f<nf)
+   do while (i_f<=nf)
      if ( trim(Probe_path(i_f)) == "." .or. trim(Probe_path(i_f)) == ".." ) then
        forall (i_fp=i_f+1:nf) Probe_path(i_fp-1)=Probe_path(i_fp)
        nf=nf-1
+     else
+       i_f=i_f+1
      endif
-     i_f=i_f+1
    enddo
    !
    Pump_path="none"
@@ -81,7 +82,9 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
 &         (trim(Probe_Keyword)=="none".and.index(trim(Probe_path(i_f)),trim(jobstr))>0)) then
          N_probes =N_probes+1
          i_f=i_f+1
+         cycle
        else if ( index(trim(Probe_path(i_f)),trim(Pump_Keyword))>0 ) then
+         call msg('s',' Candidate pump found in ',trim(Probe_path(i_f)))
          Pump_path=Probe_path(i_f)
          N_pumps=1
        endif
@@ -110,11 +113,12 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
      call IO_temporary_jobdir_and_strings("JOBSTR",Pump_path)
      call RT_OBSERVABLES_IO(what=what,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
      if (.not.IO_error) then
-       N_pump_frequencies= Efield(i_Pump)%n_frequencies
+       N_pump_frequencies=1
        call IO_desc_reset(Pump_RT_desc)
        call IO_desc_duplicate(RT_desc,Pump_RT_desc)
        if (N_pump_frequencies>1) call error('Pumps with multiple frequencies still not supported')
      else
+       call warning('Pump discarded due to IO_error in RT_OBSERVABLES') 
        N_pumps=0
      endif
    endif
@@ -125,20 +129,26 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
      if (.not.STRING_same(Probe_path(i_f),"default")) call IO_temporary_jobdir_and_strings("JOBSTR",Probe_path(i_f))
      if (     STRING_same(Probe_path(i_f),"default")) call IO_temporary_jobdir_and_strings("ALL","RESTORE")
      call RT_OBSERVABLES_IO(what=what,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
-     N_probe_frequencies= Efield(i_Probe)%n_frequencies
+     N_probe_frequencies=1
    enddo
    !
    ! Pump & Probe comparison
    !
    if (N_pumps>0) then
-     call DESC_compare(RT_desc,Pump_RT_desc,i_desc_err,exclude="FIELDs")
-     if (any(i_desc_err/=0)) call error("Probe and Pump runs are not compatible")
+     !call DESC_compare(RT_desc,Pump_RT_desc,i_desc_err,exclude="FIELDs")
+     !if (any(i_desc_err/=0)) call warning("Probe and Pump runs differ")
      if (n_ext_fields/=2) call warning("Probe run has only one field. Pump ignored")
    endif
    !
    ! In case of several probe_frequencies only one probe is supported
    !
-   if (N_probes>1.and.N_probe_frequencies>1) N_probes=0
+   if (N_probes>1.and.N_probe_frequencies>1) then
+     if (X_order==1) call warning("Using multi-frequency probe")
+     if (X_order/=1) then
+       call warning("Multi-frequency probe not supported for NL optics")
+       N_probes=0
+     endif
+   endif
    !
    call IO_temporary_jobdir_and_strings("ALL","RESTORE")
    !
@@ -158,7 +168,6 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
    ! I can use ANTIRES/RES probes with multiple frequencies only by using
    ! ProbeKey in the input file. This is because of the procedures defined in X_effective/X_inversion.
    !
-   if (Efield(i_Probe)%n_frequencies>1) IO_error=.TRUE.
    if (.not.IO_error)                   N_probes=1
    !
    ! If no Probes using the Keyword try using jobstr

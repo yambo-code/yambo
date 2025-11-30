@@ -23,6 +23,7 @@ CONFFLAGS=--prefix="$(LIBPATH)" $(petsc_flgs) \
          --PETSC_ARCH=${PETSC_ARCH} \
          --with-ssl=0 \
          --with-x=0 \
+         --with-cxx=0 \
          --with-debugging=no \
          --with-shared-libraries=$(spetsc) \
          --with-blaslapack-lib="$(llapackpetsc) $(lblaspetsc)" \

@@ -66,7 +66,7 @@ subroutine LDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
   ! Local variables
   type(c_ptr)                        :: mpicxt, diago_mat, evecs
   integer                            :: nProcs, my_rank, neig_tmp
-  integer(YDIAGO_INT)                :: SL_H_dim, ProcX, ProcY, elpa_nthreads, mpi_comm
+  integer(YDIAGO_INT)                :: SL_H_dim, ProcX, ProcY, elpa_nthreads, mpi_comm_diago
   integer(ERROR_INT)                 :: error_diago ! diagonalization error code
   integer                            :: ierr !! mpi error code 
   integer(YDIAGO_INT)                :: neig_found, i_c, i_r, blacs_blk_size 
@@ -191,9 +191,9 @@ endif
   blacs_blk_size = 1
 #endif
 
-  mpi_comm = MPI_COMM_WORLD
+  mpi_comm_diago = MPI_COMM_WORLD
 
-  mpicxt = BLACScxtInit_Fortran('R', mpi_comm, ProcX, ProcY)
+  mpicxt = BLACScxtInit_Fortran('R', mpi_comm_diago, ProcX, ProcY)
   if (.not. c_associated(mpicxt)) then
     call error("Failed to initiate BLACS context")
   end if

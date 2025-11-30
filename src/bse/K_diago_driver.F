@@ -87,33 +87,33 @@ subroutine K_diago_driver(iq,W,X_static)
  ! Excitonic hamiltonian, residuals independent
  !==============================================
  real(SP),allocatable    :: BS_E_real(:)
- real(SP)   ,pointer     :: BS_E_SOC_corr(:,:) => null()
+ real(SP)   ,pointer     :: BS_E_SOC_corr(:,:)
  complex(SP),allocatable :: BS_corrections(:,:)
  !
  ! Coupling
  complex(SP),allocatable         :: BS_mat(:,:)
  complex(SP),allocatable, target :: BS_V_left(:,:)
  complex(SP),allocatable, target :: BS_V_right(:,:)
- complex(SP),pointer             :: BS_overlap(:,:)    => null()
+ complex(SP),pointer             :: BS_overlap(:,:)
  !
  ! Residuals, different for each response function
  !=================================================
- complex(SP),pointer     :: BS_R_left_abs(:)     => null()
- complex(SP),pointer     :: BS_R_right_abs(:)    => null()
+ complex(SP),pointer     :: BS_R_left_abs(:)
+ complex(SP),pointer     :: BS_R_right_abs(:)
  !
- real(SP),   pointer     :: BS_R_PL(:,:)         => null()
+ real(SP),   pointer     :: BS_R_PL(:,:)
  !
- complex(SP),pointer     :: BS_R_left_kerr(:)      => null()
- complex(SP),pointer     :: BS_R_right_kerr(:)     => null()
- complex(SP),pointer     :: BS_R_right_dich(:,:)   => null()
- complex(SP),pointer     :: BS_R_right_mespin(:,:) => null()
- complex(SP),pointer     :: BS_R_right_meorb(:,:)  => null()
+ complex(SP),pointer     :: BS_R_left_kerr(:)
+ complex(SP),pointer     :: BS_R_right_kerr(:)
+ complex(SP),pointer     :: BS_R_right_dich(:,:)
+ complex(SP),pointer     :: BS_R_right_mespin(:,:)
+ complex(SP),pointer     :: BS_R_right_meorb(:,:)
  !
- complex(SP),pointer     :: BS_R_left_magn(:,:)  => null()
- complex(SP),pointer     :: BS_R_right_magn(:,:) => null()
+ complex(SP),pointer     :: BS_R_left_magn(:,:)
+ complex(SP),pointer     :: BS_R_right_magn(:,:)
  !
  ! Temporary pointer 
- complex(SP),pointer     :: tmp_res_ptr(:)      => null()
+ complex(SP),pointer     :: tmp_res_ptr(:)
  !
  ! I/O
  integer                 :: io_err,ID
@@ -721,6 +721,20 @@ subroutine K_diago_driver(iq,W,X_static)
      !=================================
      !
      BSS_n_eig=BSS_n_eig_Input
+     !
+     nullify(BS_overlap)
+     nullify(BS_E_SOC_corr)
+     nullify(BS_R_right_abs)
+     nullify(BS_R_left_abs)
+     nullify(BS_R_right_kerr)
+     nullify(BS_R_left_kerr)
+     nullify(BS_R_right_dich)
+     nullify(BS_R_right_mespin)
+     nullify(BS_R_right_meorb)
+     nullify(BS_R_right_magn)
+     nullify(BS_R_left_magn)
+     nullify(BS_R_PL)
+     nullify(tmp_res_ptr)
      !
      if (l_slepc) then
        !

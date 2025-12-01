@@ -339,17 +339,17 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        if (l_ppa) then
          !
-         !$omp     parallel do default(shared), private(ig1,ig2,l_RIM_W_g), &
+         !$omp     parallel do default(shared), private(ig1,ig2,l_rim_w_g), &
          !$omp &   reduction(+:PPcond_rate,TO_rate,PP_err), collapse(2)
          do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
          do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
            !
            ! RIM W support
            !
-           l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng.and.iqibz==1)
-           if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
+           l_rim_w_g=(l_rim_w.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng.and.iqibz==1)
+           if (RIM_W_is_diagonal.and.l_rim_w_g) l_rim_w_g=(ig1==ig2)
            !
-           if (l_RIM_W_g) then
+           if (l_rim_w_g) then
              X_par(iq_mem)%blc(ig1,ig2,X_range2)=RIM_W_E(ig1,ig2)
              !
            else
@@ -699,17 +699,18 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !       CUF reductions.
            dp_dummy_r = 0.0_DP
            dp_dummy_i = 0.0_DP
+           !
            dp_dummy = 0.0_DP
            !
            !DEV_ACC_DEBUG data present(X_blc_p,RIM_W,isc_gamp_p,conjg_iscp_rhotw,isc_rhotw_p,iscp_rhotw_p)
-           !DEV_ACC parallel  loop collapse(2) private(PPA_E,PPA_R,l_RIM_W_g,bose_PPA_E,ctmp) &
+           !DEV_ACC parallel  loop collapse(2) private(PPA_E,PPA_R,l_rim_w_g,bose_PPA_E,ctmp) &
            !DEV_ACC                reduction(+:dp_dummy_r,dp_dummy_i)
            !DEV_CUF kernel do(2)
            !DEV_OMPGPU target map(present,alloc:X_blc_p,RIM_W,isc_gamp_p,conjg_iscp_rhotw,isc_rhotw_p,iscp_rhotw_p) &
            !DEV_OMPGPU &      map(tofrom:dp_dummy_r,dp_dummy_i)
-           !DEV_OMPGPU teams  loop collapse(2) private(PPA_E,PPA_R,l_rim_W_g,bose_PPA_E,ctmp) &
+           !DEV_OMPGPU teams  loop collapse(2) private(PPA_E,PPA_R,l_rim_w_g,bose_PPA_E,ctmp) &
            !DEV_OMPGPU &           reduction(+:dp_dummy_r,dp_dummy_i)
-           !DEV_OMP parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp,l_RIM_W_g), &
+           !DEV_OMP parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp,l_rim_w_g), &
            !DEV_OMP &        reduction(+:dp_dummy), collapse(2)
            !
            do ig2=X_cols1,X_cols2
@@ -719,10 +720,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              !
              ! RIM W support
              !
-             l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
-             if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
+             l_rim_w_g=(l_rim_w.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
+             if (RIM_W_is_diagonal.and.l_rim_w_g) l_rim_w_g=(ig1==ig2)
              !
-             if (l_RIM_W_g) then
+             if (l_rim_w_g) then
                PPA_R=-cmplx(real(DEV_VAR(RIM_W)(1,iqibz,ig1,ig2))/2._SP, &
 &                           aimag(X_blc_p(ig1,ig2,X_range1))*real(isc_gamp_p(ig1,ig2)),kind=SP)/2._SP*PPA_E
              else

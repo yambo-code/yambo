@@ -124,8 +124,8 @@ module X_m
  !
  type X_t
    ! DS: is 1 Xo (see X_dielectric_matrix:109) or Xx (see io_X.F) ?
-   !     why is 5 reported as IP in the develop
-   integer    :: whoami ! 1:Xo/Xx 2:em1s 3:em1d 4:ppa 5:mpa ?:IP
+   !
+   integer    :: whoami ! 1:Xo/Xx 2:em1s 3:em1d 4:ppa 5:mpa
    integer    :: ng
    integer    :: ng_db
    integer    :: iq(2)

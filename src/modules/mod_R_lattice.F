@@ -153,9 +153,17 @@ module R_lattice
  logical :: RIM_W_is_diagonal
  real(SP),   allocatable, target          :: RIM_W_E(:,:)
  complex(SP),allocatable, target          :: RIM_W  (:,:,:,:)
- complex(SP),allocatable, target DEV_ATTR :: RIM_W_d(:,:,:,:)
- complex(DP),allocatable :: f_coeff(:,:,:,:,:)
- character(schlen)       :: RIMW_type
+ complex(SP),allocatable, target DEV_ATTR :: RIM_W_d  (:,:,:,:)
+ complex(SP),allocatable, target          :: aux_RIM_W(:,:,:)
+ ! AF: not needed at present
+ !complex(SP),allocatable, target DEV_ATTR :: aux_RIM_W_d(:,:,:)
+ complex(DP),allocatable, target          :: f_coeff(:,:,:,:,:)
+ complex(DP),allocatable, target DEV_ATTR :: f_coeff_d(:,:,:,:,:)
+ character(schlen)  :: rimw_type, rimw_check
+ !
+ ! System-dependent screening terms
+ logical  :: l_Dirac
+ real(SP) :: Dirac_v_f       ! Dirac cone Fermi velocity   (x 10^6 m/s)
  !
  ! Coulomb (including Cutoff)
  !

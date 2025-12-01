@@ -19,8 +19,8 @@ subroutine INIT_read_command_line(rstr,init_)
  use LIVE_t,         ONLY:USER_wall_time_string,GET_user_WALL_time
  use stderr,         ONLY:STRING_split,STRING_match,STRING_same
  use it_tools,       ONLY:runlevel_is_on,switch_off_runlevel
- use it_m,           ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,      &
-&                         V_real_time,V_nl_optics,V_all,V_parallel,V_ph,   &
+ use it_m,           ONLY:V_RL,V_kpt,V_sc,V_qp,V_coul,V_io,V_general,V_resp, &
+&                         V_real_time,V_nl_optics,V_all,V_parallel,V_ph,     &
 &                         infile_verbosity,nrnlvls,rnlvls
 #if defined _SC || defined _RT
  use hamiltonian,    ONLY:H_potential
@@ -122,6 +122,7 @@ subroutine INIT_read_command_line(rstr,init_)
      ! V_parallel=9
      ! V_nl_optics=10
      ! V_ph=11
+     ! V_coul=12
      ! V_all=99
      !
      if ( trim(rstr_piece(i1)) == 'infver' ) then
@@ -136,6 +137,7 @@ subroutine INIT_read_command_line(rstr,init_)
        if (STRING_same( trim(rstr_piece(i1+1)) , "nl")) infile_verbosity=V_nl_optics
        if (STRING_same( trim(rstr_piece(i1+1)) , "ph")) infile_verbosity=V_ph
        if (STRING_same( trim(rstr_piece(i1+1)) , "par")) infile_verbosity=V_parallel
+       if (STRING_same( trim(rstr_piece(i1+1)) , "coul")) infile_verbosity=V_coul
        if (STRING_same( trim(rstr_piece(i1+1)) , "all")) infile_verbosity=V_all
      endif
      !

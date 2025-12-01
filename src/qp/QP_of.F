@@ -196,10 +196,15 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      endif
      !
      do i_w=1,qp%GreenF_n_steps
-       call OUTPUT_driver(trim(G_sc_name),TITLES=(/"Energy","IM(En)"/),&
+       !
+       ! AF,GS: if IM(En) -> Im(En), an extra column with the damping of
+       !        G_1 = [ w-eps0-S(w) +/-id ]^-1 is printed and disrupt the
+       !        testing (currently disabled in view of this)
+       ! 
+       call OUTPUT_driver(trim(G_sc_name),TITLES=(/"Energy","IM(En)"/),& 
                               R_VALUES=(/real(qp%GreenF_W(i_qp,i_w)),aimag(qp%GreenF_W(i_qp,i_w))/),UNIT="eV")
        call OUTPUT_driver(trim(G_sc_name),TITLES=(/"Re(G)","Im(G)"/),&
-&                         R_VALUES=(/real(qp%GreenF(i_qp,i_w)),aimag(qp%GreenF(i_qp,i_w))/),UNIT="eVm1")
+&                             R_VALUES=(/real(qp%GreenF(i_qp,i_w)),aimag(qp%GreenF(i_qp,i_w))/),UNIT="eVm1")
        if (allocated(QP_Vxc).and.allocated(QP_Vnl_xc)) then
          call OUTPUT_driver(trim(G_sc_name),TITLES=(/"Re(S_c)"/),&
 &                           R_VALUES=(/real(qp%S_total(i_qp,i_w)-QP_Vnl_xc(i_qp)+QP_Vxc(i_qp))/),UNIT="eV")

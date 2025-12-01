@@ -567,7 +567,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    call OPENMP_update(master_thread) 
    !
-   !
    ! Allocate tddft_wf variables neeeded within the OMP loop
    if (l_tddft_rsum.and.iHxc==2) then
      YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
@@ -709,11 +708,14 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        if (iHxc==3) then 
          !
-         if (iq_W_bz/=iq_W_bz_mq.or.iq_W/=iq_W_mq.or.iq_W_s/=iq_W_s_mq) call error("Wrong transferred momentum")
+         if (iq_W_bz/=iq_W_bz_mq.or.iq_W/=iq_W_mq.or.iq_W_s/=iq_W_s_mq) &
+&           call error("Wrong transferred momentum")
          !
-         !if ( G_m_G(ig_W,ig_W_mq) /= G_m_G(ig_kmq,ig_pmq) )             call error("Wrong gvector shifts")
+         !if ( G_m_G(ig_W,ig_W_mq) /= G_m_G(ig_kmq,ig_pmq) ) &
+!&          call error("Wrong gvector shifts")
          !
-         if ( (.not.BS_W_is_diagonal) .and. iq_W_s>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
+         if ( (.not.BS_W_is_diagonal) .and. iq_W_s>nsym/(i_time_rev+1) &
+&              .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
          !
        endif
        !

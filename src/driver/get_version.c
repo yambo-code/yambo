@@ -21,9 +21,10 @@ struct tool_struct versions()
     t.patchlevel = YAMBO_PATCHLEVEL;
     t.revision = YAMBO_REVISION;
     sprintf(t.hash, "%s", YAMBO_HASH);
+    sprintf(t.lumenver, "%s", LUMEN_VERSION);
     return (t);
 }
-void C_FUNC(get_version, GET_VERSION)(int *version, int *subversion,
+void C_FUNC(get_version, GET_VERSION)(char *lumenver, int *version, int *subversion,
                                       int *patchlevel, int *revision,
                                       char *hash)
 {
@@ -33,7 +34,12 @@ void C_FUNC(get_version, GET_VERSION)(int *version, int *subversion,
     *subversion = t.subversion;
     *patchlevel = t.patchlevel;
     *revision = t.revision;
+
     strcpy(hash, t.hash);
-    int len = strlen(t.hash);
-    hash[len] = hash[len + 1];
+    int ylen = strlen(t.hash);
+    hash[ylen] = hash[ylen + 1];
+
+    strcpy(lumenver, t.lumenver);
+    int llen = strlen(t.lumenver);
+    lumenver[llen] = lumenver[llen + 1];
 }

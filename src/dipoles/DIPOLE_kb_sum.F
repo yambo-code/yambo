@@ -108,9 +108,13 @@ subroutine DIPOLE_kb_sum(rho,pp_dim_yambo,ib_range,iv,ic,XX)
  !DEV_ACC_DEBUG end data
  !
  call devxlib_memcpy_d2h(drho_loc,drho)
- do concurrent (i1=1:3) 
-   rho(i1)=rho(i1)+sum(drho_loc(:,i1,:))
- enddo
+ !
+ ! Code commented due to fail with intel compiler
+ ! See issue https://gitlab.com/lumen-code/lumen/-/issues/244
+ !do concurrent (i1=1:3) 
+ !  rho(i1)=rho(i1)+sum(drho_loc(:,i1,:))
+ !enddo
+ forall (i1=1:3) rho(i1)=rho(i1)+sum(drho_loc(:,i1,:))
  !
 end subroutine DIPOLE_kb_sum
 

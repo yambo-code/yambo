@@ -168,9 +168,7 @@ integer function io_SC_components(what,E_sc,ID)
      !
      E_tmp=E_tmp+E_sc%E(SC_bands(2),:,:)
      !
-     do concurrent (ib=SC_bands(2)+1:bands_to_load) 
-       E_sc%E(ib,:,:)=E_sc%E(ib,:,:)+ E_tmp(:,:)
-     enddo
+     forall (ib=SC_bands(2)+1:bands_to_load) E_sc%E(ib,:,:)=E_sc%E(ib,:,:)+ E_tmp(:,:)
      !
      YAMBO_FREE(E_tmp)
      !

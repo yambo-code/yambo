@@ -41,7 +41,8 @@ module LOGO
    !
    subroutine pickup_a_lumen_logo(unit_)
      !
-     use C_driver, ONLY:code_version,code_revision,code_hash,code_libraries,code_branch
+     use C_driver, ONLY:code_version,code_revision,code_hash,code_libraries,code_branch,&
+     &                  lumen_version
      use pars,     ONLY:SP
      use stderr,   ONLY:intc,slash
      !
@@ -52,9 +53,7 @@ module LOGO
      character(schlen) :: comment(4),ch
      integer           :: max_length,i1,left_space,iA,ic
      !
-     comment(1)='Version '//&
-&                trim(intc(code_version(1)))//'.'//trim(intc(code_version(2)))//&
-&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_revision))//' Hash (prev commit) '//trim(code_hash)
+     comment(1)="Fork "//trim(lumen_version)
      !
      comment(2)="Branch is "//trim(code_branch)
      !

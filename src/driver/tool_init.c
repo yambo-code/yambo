@@ -93,7 +93,10 @@ struct tool_struct tool_init()
     {
         pj = " ";
     }
+    /*
     sprintf(t.version_string, "%i.%i.%i Revision %i Hash %s", t.version,
             t.subversion, t.patchlevel, t.revision, t.hash);
+    */
+    sprintf(t.version_string, "Fork %s", t.lumenver);
     return (t);
 };

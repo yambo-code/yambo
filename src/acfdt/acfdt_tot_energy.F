@@ -227,9 +227,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
          enddo
          call LINEAR_ALGEBRA_driver(INV,M=tddftk,lib_in=USE_LK)
          X_s=matmul(tddftk,X_mat(:,:,iw))
-         do concurrent (i1=1:X%ng) 
-           dX(i1)=(X_s(i1,i1)-X_mat(i1,i1,iw))*4.*pi*isc%gamp(i1,1)
-         enddo
+	 forall (i1=1:X%ng) dX(i1)=(X_s(i1,i1)-X_mat(i1,i1,iw))*4.*pi*isc%gamp(i1,1)
          ACFDT_Ec=ACFDT_Ec-q%nstar(iqibz)*lambda_weight(il)*freq_weight(iw)*sum(dX)
          call live_timing(steps=1)
        enddo

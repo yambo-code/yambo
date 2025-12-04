@@ -79,9 +79,7 @@ subroutine NL_start_and_restart(E,k,Dip)
      & call error(" Wrong bands range!")
  !
  do i_sp_pol=1,n_sp_pol
-   do concurrent (i1=1:E%nbf(n_sp_pol)) 
-     V_bands(i1,i1,:,i_sp_pol)=cONE
-   end do
+   forall (i1=1:E%nbf(n_sp_pol)) V_bands(i1,i1,:,i_sp_pol)=cONE
  enddo
  !
  if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE.and.(eval_HARTREE.or.eval_DFT)) then

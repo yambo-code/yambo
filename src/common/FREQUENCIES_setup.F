@@ -74,9 +74,7 @@ subroutine FREQUENCIES_setup(W)
  !
  delta_w=(W%er(2)-W%er(1))/(W%n_freqs-1)
  !
- do concurrent (i1=1:W%n_freqs-1) 
-   W%p(i1+1)=cmplx(W%er(1)+delta_w*real(i1,SP),0.,SP)
- enddo
+ forall (i1=1:W%n_freqs-1) W%p(i1+1)=cmplx(W%er(1)+delta_w*real(i1,SP),0.,SP)
  !
  do i1=1,W%n_freqs
    W%p(i1)=real(W%p(i1))+FREQUENCIES_damping(W,real(W%p(i1)))*cI

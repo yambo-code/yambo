@@ -144,10 +144,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo)
        if (     allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i_res)-cI*BSS_eh_W(i_res)
        !
        if(i_loop==2) then
-         do concurrent (iw=1:W%n_freqs) 
-            W_mins%p(iw)=W%p(iw)-BS_diagonal(i_res)*BSS_eh_f(i_res)
-            W_plus%p(iw)=W%p(iw)+BS_diagonal(i_res)*BSS_eh_f(i_res)
-         enddo
+         forall (iw=1:W%n_freqs) W_mins%p(iw)=W%p(iw)-BS_diagonal(i_res)*BSS_eh_f(i_res)
+         forall (iw=1:W%n_freqs) W_plus%p(iw)=W%p(iw)+BS_diagonal(i_res)*BSS_eh_f(i_res)
        endif
        !
        if ( .not.allocated(E%GreenF) ) then

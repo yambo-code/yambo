@@ -1,5 +1,5 @@
 #
-# [VER] @SVERSION@.@SSUBVERSION@
+# Yambo Fork: @PACKAGE_STRING@
 #
 # Legend: [E]=external library [C]=internal lib to be compiled [I]=internal lib already compiled [X]=used [-]=not used
 # 

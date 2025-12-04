@@ -9,21 +9,6 @@
 !
 #include<y_memory.h>
 !
-! Copyright (C) 2004 WanT Group
-!
-! This file is distributed under the terms of the
-! GNU General Public License. See the file `License'
-! in the root directory of the present distribution,
-! License-Identifier: GPL
-!
-! Copyright (C) 2016 The Yambo Team
-!
-! Authors (see AUTHORS file for details): AM AF
-!
-! headers
-!
-#include<y_memory.h>
-!
 subroutine PARALLEL_inversion(M,N)
  !
  ! perform the inversion by using scalapack

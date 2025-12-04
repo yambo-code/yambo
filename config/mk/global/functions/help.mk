@@ -46,20 +46,15 @@ define yambo_help
   fi
   if [ "$(1)" = "intro" ] ; then \
    $(ECHO)  "\n *** Interfaces ***\n " ; \
-   $(ECHO)  " a2y =  ABINIT to Yambo interface ";\
-   $(ECHO)  " p2y =  QuantumEspresso to Yambo interface ";\
-   $(ECHO)  "        http://www.yambo-code.eu/wiki/index.php?title=Bulk_material:_h-BN ";\
-   $(ECHO)  " c2y =  CPMD to Yambo interface";\
+   $(ECHO)  " a2y =  Interface with ABINIT ";\
+   $(ECHO)  " p2y =  Interface with QuantumEspresso ";\
    $(ECHO)  "\n *** Main Components***\n" ;\
-   $(ECHO)  " yambo =  main Yambo code ";\
-   $(ECHO)  " ypp   =  Yambo Post Processing utility ";\
+   $(ECHO)  " yambo =  Main executable for GW and BSE ";\
+   $(ECHO)  " ypp   =  Post Processing utility ";\
    $(ECHO)  "\n *** Other projects ***\n" ;\
-   $(ECHO)  " yambo_sc =  Self-consistent (COHSEX, HF, DFT) project";\
-   $(ECHO)  " yambo_rt =  Real-time dynamics project";\
-   $(ECHO)  "             http://www.yambo-code.eu/wiki/index.php?title=Linear_response_from_real_time_simulations";\
-   $(ECHO)  " yambo_nl =  Non-linear optics project ";\
-   $(ECHO)  "             http://www.yambo-code.eu/wiki/index.php?title=Tutorials#Non_linear_response";\
-   $(ECHO)  " yambo_ph =  Electron-phonon coupling project ";\
-   $(ECHO)  "             http://www.yambo-code.eu/wiki/index.php?title=Tutorials#Electron_phonon_coupling\n";\
+   $(ECHO)  " yambo_sc =  Self-consistent module ";\
+   $(ECHO)  " yambo_rt =  Real-time dynamics module ";\
+   $(ECHO)  " yambo_nl =  Non-linear optics module ";\
+   $(ECHO)  " yambo_ph =  Electron-phonon coupling module ";\
   fi
 endef

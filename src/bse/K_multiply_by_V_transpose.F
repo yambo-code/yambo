@@ -40,9 +40,7 @@ subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par,iq)
  if(.not.BSS_Slepc_double_grp) alpha=-real(iter_par,SP)*cI
  if(     BSS_Slepc_double_grp) alpha=-real(iter_par,SP)
  !
- do concurrent (i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g))
-   Vo(i_g)%fragment = cZERO
- enddo
+ forall (i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g)) Vo(i_g)%fragment = cZERO
  !
  do i_B=1,n_BS_blks
    !

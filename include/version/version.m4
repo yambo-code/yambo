@@ -1,4 +1,4 @@
-AC_INIT(Yambo, 5.3.0 r.26305 h.7ab30e025b, yambo@yambo-code.org)
+AC_INIT(Lumen, 2.0.0, https://gitlab.com/lumen-code/lumen/-/issues, lumen ,www.lumen-code.org)
 SVERSION="5"
 SSUBVERSION="3"
 SPATCHLEVEL="0"

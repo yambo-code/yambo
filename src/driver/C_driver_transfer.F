@@ -7,7 +7,7 @@
 !
 subroutine C_driver_transfer()
  !
- use C_driver,       ONLY:code_version,code_revision,code_hash,&
+ use C_driver,       ONLY:code_version,code_revision,code_hash,lumen_version,&
 &                         code_libraries,get_version,get_libraries,get_running_tool,&
 &                         get_running_project,code_bin,code_tool,code_project
  !
@@ -22,6 +22,7 @@ subroutine C_driver_transfer()
  code_libraries=" "
  call get_libraries(code_libraries)
  code_hash=" "
- call get_version(code_version(1),code_version(2),code_version(3),code_revision,code_hash)
+ lumen_version=" "
+ call get_version(lumen_version,code_version(1),code_version(2),code_version(3),code_revision,code_hash)
  !
 end subroutine

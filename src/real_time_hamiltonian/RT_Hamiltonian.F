@@ -153,9 +153,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      !
      call PP_redux_wait(H_nl_sc,COMM=PAR_COM_Xk_ibz_A2A%COMM)
      !
-     do concurrent (ik_RT=RTibz%k_range(ik,1):RTibz%k_range(ik,2)) 
-       Ho_plus_Sigma(:,:,ik_RT,i_sp_pol)=H_nl_sc
-     enddo
+     forall (ik_RT=RTibz%k_range(ik,1):RTibz%k_range(ik,2)) Ho_plus_Sigma(:,:,ik_RT,i_sp_pol)=H_nl_sc
      !
    enddo
    enddo

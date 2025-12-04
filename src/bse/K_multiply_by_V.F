@@ -46,9 +46,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par,iq,mode)
  !
  if(BSS_uses_FKE) FG_factor_c = cmplx(FG_factor,0._SP)
  !
- do concurrent (i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g))
-   Vo(i_g)%fragment = cZERO
- enddo
+ forall (i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g)) Vo(i_g)%fragment = cZERO
  !
  do i_B=1,n_BS_blks
    !

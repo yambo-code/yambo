@@ -57,13 +57,9 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE,DELTA)
  if (l_use_Hxc_collisions.or.l_use_COH_collisions) then
    !
    G_sex=cZERO
-   do concurrent (ib=SC_bands(1):SC_bands(2),ik=1:E%nk) 
-     G_sex(ib,ib,ik)=cI*E%f(ib,ik,1)
-   enddo
+   forall (ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_sex(ib,ib,ik)=cI*E%f(ib,ik,1)
    G_coh=cZERO
-   do concurrent (ib=SC_bands(1):SC_bands(2),ik=1:E%nk) 
-     G_coh(ib,ib,ik)=cI
-   enddo
+   forall (ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_coh(ib,ib,ik)=cI
    !
    ! Now I build the G_collisions rotating the non interaction one
    ! G_collisions(ib,ib,ik)=(0._SP,1._SP)*en%f(ib,ik)

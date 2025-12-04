@@ -111,6 +111,7 @@ subroutine DIPOLE_kb_sum(rho,pp_dim_yambo,ib_range,iv,ic,XX)
  !
  ! Code commented due to fail with intel compiler
  ! See issue https://gitlab.com/lumen-code/lumen/-/issues/244
+ ! Also many other do concurrent reverted to forall. Only one left is here
  !do concurrent (i1=1:3) 
  !  rho(i1)=rho(i1)+sum(drho_loc(:,i1,:))
  !enddo

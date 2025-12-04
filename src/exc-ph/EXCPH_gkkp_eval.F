@@ -190,8 +190,7 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  !
  ! Compute the squared couplings (to be removed)
  !
- do concurrent (i_alpha=EXCPH_states(1):EXCPH_states(2),i_beta=EXCPH_sum(1):EXCPH_sum(2))
-   EXCPH_Gkkp_sq(il,i_beta,i_alpha)=REAL(EXCPH_Gkkp(il,i_beta,i_alpha),SP)**2 + AIMAG(EXCPH_Gkkp(il,i_beta,i_alpha))**2
- enddo
+ forall (i_alpha=EXCPH_states(1):EXCPH_states(2),i_beta=EXCPH_sum(1):EXCPH_sum(2)) &
+ &  EXCPH_Gkkp_sq(il,i_beta,i_alpha)=REAL(EXCPH_Gkkp(il,i_beta,i_alpha),SP)**2 + AIMAG(EXCPH_Gkkp(il,i_beta,i_alpha))**2
  !
 end subroutine

@@ -38,9 +38,7 @@ subroutine INVINT_step(V_out,V_in,H_in,I_in,nbf,dT)
   do ib=1,nbf
     !
     Hp=cZERO
-    do concurrent (i1=NL_bands(1):NL_bands(2)) 
-      Hp(i1,i1)=cONE
-    end do
+    forall (i1=NL_bands(1):NL_bands(2)) Hp(i1,i1)=cONE
     Hm=Hp
     !
     Hm=Hm-cI*dT/2._SP*(H_in+I_in)

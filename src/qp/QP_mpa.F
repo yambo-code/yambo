@@ -521,9 +521,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      iscp%qs=isc%qs
      !
      ! DALV: here the grid is centered in E0
-     do concurrent (i_w=1:QP_dSc_steps) 
-       W_(i_w)=Sc_W(i_qp)%p(i_w)+cI*QP_G_damp
-     enddo
+     forall (i_w=1:QP_dSc_steps) W_(i_w)=Sc_W(i_qp)%p(i_w)+cI*QP_G_damp
      !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !

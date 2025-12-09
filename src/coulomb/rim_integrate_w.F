@@ -573,26 +573,28 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
 &                       aimag(f_coeff(4,1,i2,iq,iw))*q_grid_b_rlu(idir(1+j),3))   &
 &                      /iku_v_norm(qtmp(:))
                 !
-                RIM_acc = RIM_acc + rfac*vslab2**2*func/(slab_vplane1**2+slab_vz1**2)/2.0/q0_def_norm
+                RIM_acc = RIM_acc + rfac*vslab2**2*func/(slab_vplane1**2+slab_vz1**2)/2.0_SP/q0_def_norm
                 !
               else
                 if ((g_vec(i2,idir(2))==g_vec(i2,idir(3))) .and. (g_vec(i2,idir(2))==0)) then
                   func = ((f_coeff(2,1,i2,iq,iw)-f_coeff(5,1,i2,iq,iw))*q_grid_b_rlu(idir(1+j),1)**2 + &
 &                        (f_coeff(3,1,i2,iq,iw)-f_coeff(6,1,i2,iq,iw))*q_grid_b_rlu(idir(1+j),2)**2  + &
 &                        (f_coeff(4,1,i2,iq,iw)-f_coeff(7,1,i2,iq,iw))*q_grid_b_rlu(idir(1+j),3)**2 )  &
-&                        /iku_v_norm(qtmp(:))**2/2.0
+&                        /iku_v_norm(qtmp(:))**2/2.0_SP
                   !
                   ! AF: is this correct ??
+                  ! GS: yes, the out of plane wings do not contribute. In hindsight, this part is superfluous
+                  !
                   RIM_acc = RIM_acc
                   !
                 else
                   func = ((f_coeff(2,1,i2,iq,iw)-f_coeff(5,1,i2,iq,iw))*abs(q_grid_b_rlu(idir(1+j),1))  + &
 &                        (f_coeff(3,1,i2,iq,iw)-f_coeff(6,1,i2,iq,iw))*abs(q_grid_b_rlu(idir(1+j),2))   + &
 &                        (f_coeff(4,1,i2,iq,iw)-f_coeff(7,1,i2,iq,iw))*abs(q_grid_b_rlu(idir(1+j),3)) )   &
-&                        /iku_v_norm(qtmp(:))/2.0
+&                        /iku_v_norm(qtmp(:))/2.0_SP
                   !
                   RIM_acc = RIM_acc + rfac*vslab2**2*func/(slab_vplane1**2+slab_vz1**2) &
-&                          /2.0/q0_def_norm
+&                          /2.0_SP/q0_def_norm
                 endif
               endif
               !
@@ -613,7 +615,7 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
 &                     *f_coeff(10,1,i2,iq,iw) + 2_SP*qtmp(1)*f_coeff(7,1,i2,iq,iw)))  &
 &                     /iku_v_norm(qtmp(:))**2
               !
-              slab_vplane1=sqrt((g_vec(i2,1)*2.0*pi/alat(1))**2 + (g_vec(i2,2)*2.0*pi &
+              slab_vplane1=sqrt((g_vec(i2,1)*2.0_SP*pi/alat(1))**2 + (g_vec(i2,2)*2.0_SP*pi &
 &                               /alat(2))**2 + (g_vec(i2,3)*2.*pi/alat(3))**2)
               !
               RIM_acc = RIM_acc + rfac*(4._SP*pi)**2*func/slab_vplane1**2/3.0
@@ -673,7 +675,7 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
 &                     (f_coeff(9,1,i2,iq,iw)+f_coeff(12,1,i2,iq,iw)+ (f_coeff(9,1,i2,iq,iw)   &
 &                    -f_coeff(12,1,i2,iq,iw))*sign(1._SP,qr_rlu(2)))*qr_rlu(2)**3   +         &
 &                     (f_coeff(10,1,i2,iq,iw)+f_coeff(13,1,i2,iq,iw)+ (f_coeff(10,1,i2,iq,iw) &
-&                    -f_coeff(13,1,i2,iq,iw))*sign(1._SP,qr_rlu(3)))*qr_rlu(3)**3)/2.0
+&                    -f_coeff(13,1,i2,iq,iw))*sign(1._SP,qr_rlu(3)))*qr_rlu(3)**3)/2.0_SP
             else
               !
               func = ((f_coeff(2,1,i2,iq,iw)+f_coeff(5,1,i2,iq,iw)+ (f_coeff(2,1,i2,iq,iw)    &
@@ -687,7 +689,7 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
 &                     (f_coeff(9,1,i2,iq,iw)+f_coeff(12,1,i2,iq,iw)+ (f_coeff(9,1,i2,iq,iw)   &
 &                    -f_coeff(12,1,i2,iq,iw))*sign(1._SP,qr_rlu(2)))*qr_rlu(2)**2   +         &
 &                     (f_coeff(10,1,i2,iq,iw)+f_coeff(13,1,i2,iq,iw)+ (f_coeff(10,1,i2,iq,iw) &
-&                    -f_coeff(13,1,i2,iq,iw))*sign(1._SP,qr_rlu(3)))*qr_rlu(3)**2)/2.0
+&                    -f_coeff(13,1,i2,iq,iw))*sign(1._SP,qr_rlu(3)))*qr_rlu(3)**2)/2.0_SP
             endif
             !
           endif
@@ -775,7 +777,7 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
 &                       aimag(f_coeff(4,i2,1,iq,iw))*q_grid_b_rlu(idir(1+j),3))   &
 &                      /iku_v_norm(qtmp(:))
                 !
-                RIM_acc = RIM_acc + rfac*vslab2**2*func/(slab_vplane1**2+slab_vz1**2)/2.0/q0_def_norm
+                RIM_acc = RIM_acc + rfac*vslab2**2*func/(slab_vplane1**2+slab_vz1**2)/2.0_SP/q0_def_norm
                 !
               else
                 !
@@ -783,9 +785,11 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
                   func = ( (f_coeff(2,i2,1,iq,iw)+f_coeff(5,i2,1,iq,iw))*q_grid_b_rlu(idir(1+j),1)**2   + &
 &                          (f_coeff(3,i2,1,iq,iw)+f_coeff(6,i2,1,iq,iw))*q_grid_b_rlu(idir(1+j),2)**2   + &
 &                          (f_coeff(4,i2,1,iq,iw)+f_coeff(7,i2,1,iq,iw))*q_grid_b_rlu(idir(1+j),3)**2 )   &
-&                        /iku_v_norm(qtmp(:))**2/2.0
+&                        /iku_v_norm(qtmp(:))**2/2.0_SP
                   !
-                  ! AF: is this correct ?
+                  ! AF: is this correct ? 
+                  ! GS: yes, the out of plane wings do not contribute. In hindsight, this part is superfluous
+                  !
                   RIM_acc = RIM_acc
                   !
                 else
@@ -793,10 +797,10 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
                   func = ( (f_coeff(2,i2,1,iq,iw)-f_coeff(5,i2,1,iq,iw))*abs(q_grid_b_rlu(idir(1+j),1)) + &
 &                          (f_coeff(3,i2,1,iq,iw)-f_coeff(6,i2,1,iq,iw))*abs(q_grid_b_rlu(idir(1+j),2)) + &
 &                          (f_coeff(4,i2,1,iq,iw)-f_coeff(7,i2,1,iq,iw))*abs(q_grid_b_rlu(idir(1+j),3)) ) &
-&                        /iku_v_norm(qtmp(:))/2.0
+&                        /iku_v_norm(qtmp(:))/2.0_SP
                   !
                   RIM_acc = RIM_acc + rfac*vslab2**2*func/(slab_vplane1**2+slab_vz1**2) &
-&                           /2.0/q0_def_norm
+&                           /2.0_SP/q0_def_norm
                 endif
                 !
               endif
@@ -818,7 +822,7 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
 &                     *f_coeff(10,i2,1,iq,iw) + 2_SP*qtmp(1)*f_coeff(7,i2,1,iq,iw)))  &
 &                     /iku_v_norm(qtmp(:))**2
               !
-              slab_vplane1=sqrt((g_vec(i2,1)*2.0*pi/alat(1))**2 + (g_vec(i2,2)*2.0*pi  &
+              slab_vplane1=sqrt((g_vec(i2,1)*2.0_SP*pi/alat(1))**2 + (g_vec(i2,2)*2.0_SP*pi  &
 &                               /alat(2))**2 + (g_vec(i2,3)*2.*pi/alat(3))**2)
               !
               RIM_acc = RIM_acc + rfac*(4._SP*pi)**2*func/slab_vplane1**2/3.0
@@ -850,7 +854,7 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
                 !slab_vplane1=sqrt(g_vec(i2,idir(2))*2.*pi/alat(idir(2))**2 +
                 !g_vec(i2,idir(3))*2.*pi/alat(idir(3))**2)
                 !RIM_acc = RIM_acc + rfac*(4._SP*pi)**2*func/(slab_vplane1**2+slab_vz1**2)*
-                !(1-exp(-lcut*slab_vplane1)*cos(lcut*slab_vz1))**2/2.0
+                !(1-exp(-lcut*slab_vplane1)*cos(lcut*slab_vz1))**2/2.0_SP
                 !
               !end do
              !else

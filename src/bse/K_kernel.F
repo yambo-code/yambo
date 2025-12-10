@@ -236,28 +236,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if( l_BSE_kernel_complete) return
  !
- if(trim(PARALLEL_default_mode)=="KQmemory") then
-   !
-   call msg("s","Buffering qindx_B in memory via MPI_Win_create ")
-   !
-   call MPI_Info_create(mpi_info_nolocks, mpi_err)
-   call MPI_Info_set(mpi_info_nolocks, "no_locks",  "true", mpi_err)  ! Disable locking
-   call MPI_Info_set(mpi_info_nolocks, "read_only", "true", mpi_err)  ! Read_only_mode
-   !
-   ! MPI_Win_create will duplicate in memory qindx_B
-   ! If I want to avoid this, I need to use MPI_Win_Alloc ...
-   mpi_size=size(qindx_B(:,:,1))
-   N2=sizeof(qindx_B(1,1,1))
-   call MPI_Win_create(qindx_B(:,:,1), mpi_size*N2, N2, mpi_info_nolocks, mpi_comm_world, win1_ID, mpi_err)
-   call MPI_Win_create(qindx_B(:,:,2), mpi_size*N2, N2, mpi_info_nolocks, mpi_comm_world, win2_ID, mpi_err)
-   call MPI_Win_fence(0, win1_ID, mpi_err)
-   call MPI_Win_fence(0, win2_ID, mpi_err)
-   !
-   ! Free the MPI_Info object as it's no longer needed
-   call MPI_Info_free(mpi_info_nolocks, mpi_err)
-   !
- endif
- !
  ! Screened interaction
  !======================
  !
@@ -414,6 +392,28 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    call TDDFT_ALDA_lower_cutoff(FXC_mode)
    !
    call WF_free(WF,keep_states_to_load=.true.)
+   !
+ endif
+ !
+ if(iHxc==3 .and. trim(PARALLEL_default_mode)=="KQmemory") then
+   !
+   call msg("s","Buffering qindx_B in memory via MPI_Win_create ")
+   !
+   call MPI_Info_create(mpi_info_nolocks, mpi_err)
+   call MPI_Info_set(mpi_info_nolocks, "no_locks",  "true", mpi_err)  ! Disable locking
+   call MPI_Info_set(mpi_info_nolocks, "read_only", "true", mpi_err)  ! Read_only_mode
+   !
+   ! MPI_Win_create will duplicate in memory qindx_B
+   ! If I want to avoid this, I need to use MPI_Win_Alloc ...
+   mpi_size=size(qindx_B(:,:,1))
+   N2=sizeof(qindx_B(1,1,1))
+   call MPI_Win_create(qindx_B(:,:,1), mpi_size*N2, N2, mpi_info_nolocks, mpi_comm_world, win1_ID, mpi_err)
+   call MPI_Win_create(qindx_B(:,:,2), mpi_size*N2, N2, mpi_info_nolocks, mpi_comm_world, win2_ID, mpi_err)
+   call MPI_Win_fence(0, win1_ID, mpi_err)
+   call MPI_Win_fence(0, win2_ID, mpi_err)
+   !
+   ! Free the MPI_Info object as it's no longer needed
+   call MPI_Info_free(mpi_info_nolocks, mpi_err)
    !
  endif
  !
@@ -1008,15 +1008,13 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    if (l_std_alg) then
      YAMBO_FREE(WF_phase)
    endif
-
+   !
    if(trim(PARALLEL_default_mode)=="KQmemory") then
-     !
      ! Free the window
      call MPI_Win_free(win1_ID, mpi_err)
      call MPI_Win_free(win2_ID, mpi_err)
-     !
    endif
-
+   !
    YAMBO_FREE_GPU(BS_W)
    YAMBO_FREE(BS_W)
    !

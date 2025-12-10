@@ -238,6 +238,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if(trim(PARALLEL_default_mode)=="KQmemory") then
    !
+   call msg("s","Buffering qindx_B in memory via MPI_Win_create ")
+   !
    call MPI_Info_create(mpi_info_nolocks, mpi_err)
    call MPI_Info_set(mpi_info_nolocks, "no_locks",  "true", mpi_err)  ! Disable locking
    call MPI_Info_set(mpi_info_nolocks, "read_only", "true", mpi_err)  ! Read_only_mode
@@ -522,6 +524,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    ! - The anti-resonant "A" and anti-coupling "Q" blocks are expliciltly needed only when l_BS_ares_from_res=.false.
    !   also in this case the code switches to mode_now="F"(ull) and standard relations are used
    !
+   call timing('X T_space Kernel more',OPR='start')
+   !
    mode_now=BS_blk(i_block)%mode
    if (BS_n_eh_spaces==2) mode_now="F"
    !
@@ -608,6 +612,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      endif
      !
    endif
+   !
+   call timing('X T_space Kernel more',OPR='stop')
    !
    ! Correlation oscillators
    !----------------------
@@ -936,6 +942,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    call timing('X T_space Kernel sum',OPR='stop')
    !
+   call timing('X T_space Kernel more',OPR='start')
+   !
    if(BS_K_cutoff>0._SP.and.l_write_kernel) &
 &     BS_max_val_CPU(myid+1)=maxval( (/BS_max_val_CPU(myid+1),abs(BS_blk(i_block)%mat(:,:))/) )
    !
@@ -963,6 +971,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
    !
    call live_timing(steps=i_steps)
+   !
+   call timing('X T_space Kernel more',OPR='stop')
    !
  enddo block_loop
  !

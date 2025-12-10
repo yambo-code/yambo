@@ -8,7 +8,8 @@
 subroutine PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
  !
  use R_lattice,    ONLY:nXkibz,nXkbz
- use parallel_m,   ONLY:COMM_copy,PAR_INDEX_copy,COMM_reset,PP_indexes_reset,PAR_K_scheme
+ use parallel_int, ONLY:PP_redux_wait
+ use parallel_m,   ONLY:COMM_copy,PAR_INDEX_copy,COMM_reset,PP_indexes_reset,PAR_K_scheme,myid
  ! DIP
  use parallel_m,  ONLY:PAR_COM_DIPk_ibz_INDEX,PAR_COM_DIPk_ibz_A2A,PAR_IND_DIPk_ibz,PAR_IND_DIPk_bz,&
  &                     PAR_DIPk_ibz_index,PAR_DIPk_bz_index,PAR_DIPk_nibz,PAR_DIPk_nbz,             &
@@ -24,7 +25,8 @@ subroutine PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
  !
  character(*),  intent(in)    :: PAR_K_scheme_kind
  !
- integer :: i1
+ integer :: i1,N
+ integer, allocatable :: tmp_vec(:)
  !
  call COMM_reset(PAR_K_scheme%COM_ibz_INDEX)
  call COMM_reset(PAR_K_scheme%COM_ibz_A2A)
@@ -32,6 +34,7 @@ subroutine PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
  call PP_indexes_reset(PAR_K_scheme%IND_bz)
  if (allocated(PAR_K_scheme%ibz_index)) deallocate(PAR_K_scheme%ibz_index)
  if (allocated(PAR_K_scheme%bz_index))  deallocate(PAR_K_scheme%bz_index)
+ if (allocated(PAR_K_scheme%bz_id))     deallocate(PAR_K_scheme%bz_id)
  !
  select case(trim(PAR_K_scheme_kind))
  case ("BZINDX")
@@ -94,8 +97,24 @@ subroutine PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
      PAR_K_scheme%ibz_index=PAR_Xk_ibz_index
    endif
    if (allocated(PAR_Xk_bz_index)) then
-     allocate(PAR_K_scheme%bz_index(size(PAR_Xk_bz_index)))
+     N=size(PAR_Xk_bz_index)
+     allocate(PAR_K_scheme%bz_index(N))
+     allocate(PAR_K_scheme%bz_id(N))
      PAR_K_scheme%bz_index=PAR_Xk_bz_index
+     PAR_K_scheme%bz_id=0
+     do i1=1,N
+       if(PAR_Xk_bz_index(i1)==0) cycle
+       PAR_K_scheme%bz_id(i1)=myid
+     enddo
+     call PP_redux_wait(PAR_K_scheme%bz_id)
+     allocate(tmp_vec(N))
+     tmp_vec=-PAR_Xk_bz_index
+     call PP_redux_wait(tmp_vec)
+     do i1=1,N
+       if(PAR_Xk_bz_index(i1)/=0) cycle
+       PAR_K_scheme%bz_index(i1)=tmp_vec(i1)
+     enddo
+     deallocate(tmp_vec)
    endif
    PAR_K_scheme%comm_world=mpi_comm_world
  case ("Kdef")

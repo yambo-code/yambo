@@ -10,7 +10,7 @@
 #include<dev_defs.h>
 #include<y_memory.h>
 ! 
-subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
+subroutine K_correlation_collisions_dir(iq,i_block,win1_ID,win2_ID,Xk,q)
  !
  ! This routine evaluates the correlation collisions:
  !
@@ -29,7 +29,9 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
  !
  implicit none
  !
- integer,       intent(in)  :: iq,i_block,qindx_ID_frag
+ integer,       intent(in)  :: iq,i_block
+ integer,       intent(in)  :: win1_ID
+ integer,       intent(in)  :: win2_ID
  type(bz_samp), intent(in)  :: Xk,q
  !
  ! Work Space
@@ -286,9 +288,10 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
        &                        j_v_k,j_c_k,j_k_sp_pol_v,j_k_sp_pol_c,j_k_s,   &
        &                        j_p_bz_last,j_k_bz_last,j_q_W,j_q_W_bz_last,j_g_W_last)
        !
-       use R_lattice,     ONLY:qindx_B,qindx_B_load
+       use R_lattice,     ONLY:qindx_B
        use D_lattice,     ONLY:sop_inv,sop_tab
        use parallel_m,    ONLY:PAR_K_scheme
+       use mpi,           ONLY:MPI_INTEGER,MPI_ADDRESS_KIND,MPI_Get
        !
        implicit none
        !
@@ -304,6 +307,12 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
        integer               :: j_k_bz,j_p_bz,j_kmq_bz,j_pmq_bz,j_k_s_m1,  &
        &                        j_kmq_s_m1,j_k_bz_mem,qindx_tmp(2),    &
        &                        j_q_W_bz,j_q_W_s,j_g_W
+       !
+       ! MPI window
+       !
+       integer(kind=MPI_ADDRESS_KIND) :: get_index
+       integer  :: mpi_err
+       integer  :: remote_id
        !
        j_k_bz  = BS_T_grp(j_Tgrp_k)%table(j_Tk,1) 
        j_p_bz  = BS_T_grp(j_Tgrp_p)%table(j_Tp,1) 
@@ -333,12 +342,13 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
        if (j_p_bz_last/=j_p_bz.or.j_k_bz_last/=j_k_bz) then 
          j_p_bz_last=j_p_bz 
          j_k_bz_last=j_k_bz 
-         if (j_k_bz_mem==0) then 
-           !DEV_OMP critical 
-           qindx_tmp=qindx_B_load(j_p_bz,j_k_bz,qindx_ID_frag) 
+         if (j_k_bz_mem<0) then 
+           get_index = (-j_k_bz_mem-1)*Xk%nbz+j_p_bz-1
+           remote_id=PAR_K_scheme%bz_id(i_k_bz)
+           call MPI_Get(qindx_tmp(1), 1, MPI_INTEGER, remote_id, get_index, 1, MPI_INTEGER, win1_ID, mpi_err)
+           call MPI_Get(qindx_tmp(2), 1, MPI_INTEGER, remote_id, get_index, 1, MPI_INTEGER, win2_ID, mpi_err)
            j_q_W_bz=qindx_tmp(1) 
            j_g_W   =qindx_tmp(2) 
-           !DEV_OMP end critical 
          else 
            j_q_W_bz=qindx_B(j_p_bz,j_k_bz_mem,1) 
            j_g_W   =qindx_B(j_p_bz,j_k_bz_mem,2) 

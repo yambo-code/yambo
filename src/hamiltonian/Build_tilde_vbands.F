@@ -5,6 +5,9 @@
 !
 ! Authors (see AUTHORS file for details): MG CA
 !
+! V_tilde(:,:,1) is calculated at  q+delta
+! V_tilde(:,:,2) is calculated at  q-delta
+!      
 subroutine Build_tilde_vbands(en,Xk,ikbz,i_sp,istep,id_red,V_bands,V_tilde)
  !
  ! Build the \tilde Valence bands as defined in Eq. 53 of

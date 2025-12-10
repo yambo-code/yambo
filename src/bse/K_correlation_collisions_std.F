@@ -62,7 +62,7 @@ subroutine K_correlation_collisions_std(iq,i_block,win1_ID,win2_ID,Xk,q)
  !
  integer ::     i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& 
 &               i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,& 
-&               i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,I_Tgrp_k_st,I_Tgrp_p_st,H_pos(2),& 
+&               i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,I_Tgrp_k_st,I_Tgrp_p_st,H_pos(2),H_pos_start(2),& 
 &               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,& 
 &               i_kmq_t,i_pmq_t 
  ! OMP LAST DEF
@@ -136,16 +136,19 @@ subroutine K_correlation_collisions_std(iq,i_block,win1_ID,win2_ID,Xk,q)
  mode_now=BS_blk(i_block)%mode
  if (.not.l_BS_ares_from_res) mode_now="F"
  !
+ H_pos_start(1)=sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+&
+ &             (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1)
+ H_pos_start(2)=sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+&
+ &             (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1)
+ !
  select case (mode_now)
  case("R","A","F")
    !
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
        !
-       H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+& 
-&              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
-       H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
-&              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
+       H_pos(1) = H_pos_start(1)+i_Tk 
+       H_pos(2) = H_pos_start(2)+i_Tp
        !
        if (H_pos(1)>H_pos(2) .and. .not. l_BSE_kernel_full) cycle
        !
@@ -177,10 +180,8 @@ subroutine K_correlation_collisions_std(iq,i_block,win1_ID,win2_ID,Xk,q)
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
        !
        !
-       H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+& 
-&              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
-       H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
-&              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
+       H_pos(1) = H_pos_start(1)+i_Tk
+       H_pos(2) = H_pos_start(2)+i_Tp
        !
        if (H_pos(1)>H_pos(2) .and. .not. l_BSE_kernel_full) cycle
        !
@@ -231,10 +232,8 @@ subroutine K_correlation_collisions_std(iq,i_block,win1_ID,win2_ID,Xk,q)
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
        !
-       H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+& 
-&              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
-       H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
-&              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
+       H_pos(1) = H_pos_start(1)+i_Tk
+       H_pos(2) = H_pos_start(2)+i_Tp
        !
        if (H_pos(1)>H_pos(2) .and. .not. l_BSE_kernel_full) cycle
        !
@@ -269,10 +268,8 @@ subroutine K_correlation_collisions_std(iq,i_block,win1_ID,win2_ID,Xk,q)
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
        !
-       H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+& 
-&              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
-       H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
-&              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
+       H_pos(1) = H_pos_start(1)+i_Tk
+       H_pos(2) = H_pos_start(2)+i_Tp
        !
        if (H_pos(1)>H_pos(2) .and. .not. l_BSE_kernel_full) cycle
        !

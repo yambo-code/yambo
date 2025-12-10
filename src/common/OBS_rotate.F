@@ -38,9 +38,7 @@ subroutine OBS_rotate(R,O,N,direction)
  !
  if (direction ==  1) R_=R
  if (direction == -1) then 
-   do concurrent (i=1:N,j=1:N) 
-     R_(i,j)=conjg(R(j,i))
-   enddo
+   forall (i=1:N,j=1:N) R_(i,j)=conjg(R(j,i))
  endif
  !
  ! [1] O_rot = (R_^{\dagger}) O

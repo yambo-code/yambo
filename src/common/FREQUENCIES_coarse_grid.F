@@ -83,7 +83,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
    coarse_grid_N=npts
    bare_grid_N=1
    coarse_grid_Pt=bg_pt
-   do concurrent ( i_bg=1:npts) 
+   do i_bg=1,npts
      ordered_grid_index(i_bg)=i_bg
      coarse_grid_index(i_bg) =i_bg
    enddo
@@ -179,7 +179,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
      i_vec(i_bg)=i_cg
    enddo
  enddo
- do concurrent (i_bg=1:npts) 
+ do i_bg=1,npts
    coarse_grid_index(i_bg)=i_vec( ordered_grid_index(i_bg) )
  enddo
  YAMBO_FREE(i_vec)

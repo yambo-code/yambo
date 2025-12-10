@@ -213,9 +213,7 @@ module vec_operate
      ! Cross product
      !
      U_cross=rZERO
-     do concurrent (i=1:3,j=1:3) 
-       U_cross(i,j) = axis(i)*axis(j)
-     enddo
+     forall (i=1:3,j=1:3) U_cross(i,j) = axis(i)*axis(j)
      R=R+(1.0_SP-cos(angle))*U_cross
      !
      axis_rotation=matmul(R,vec)
@@ -592,9 +590,7 @@ module vec_operate
      if (.not.present(arrout)) arrin=l_arrout
      if (present(indx)) indx=l_indx
      if (present(indx_m1)) then
-       do concurrent ( i=1:n) 
-         indx_m1(l_indx(i))=i
-       enddo
+       forall (i=1:n) indx_m1(l_indx(i))=i
      endif
      deallocate(l_indx,l_arrout)
    end subroutine r_sort
@@ -695,9 +691,7 @@ module vec_operate
      if (.not.present(arrout) ) arrin =l_arrout
      if (     present(indx)   ) indx  =l_indx
      if (     present(indx_m1)) then
-       do concurrent ( i=1:n) 
-         indx_m1(l_indx(i))=i
-       enddo
+       forall ( i=1:n) indx_m1(l_indx(i))=i
      endif
      deallocate(l_indx,l_arrout)
    end subroutine i_sort

@@ -10,7 +10,7 @@
 #include<dev_defs.h>
 #include<y_memory.h>
 ! 
-subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
+subroutine K_correlation_collisions_dir(iq,i_block,win1_ID,win2_ID,Xk,q)
  !
  ! This routine evaluates the correlation collisions:
  !
@@ -29,7 +29,9 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
  !
  implicit none
  !
- integer,       intent(in)  :: iq,i_block,qindx_ID_frag
+ integer,       intent(in)  :: iq,i_block
+ integer,       intent(in)  :: win1_ID
+ integer,       intent(in)  :: win2_ID
  type(bz_samp), intent(in)  :: Xk,q
  !
  ! Work Space
@@ -38,7 +40,7 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
  !
  integer ::     i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& 
 &               i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_pmq_s,i_kp_mq_s,i_p_s,i_kmq_s,i_k_s,& 
-&               i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,I_Tgrp_k_st,I_Tgrp_p_st,H_pos(2),& 
+&               i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,I_Tgrp_k_st,I_Tgrp_p_st,H_pos(2),H_pos_start(2),& 
 &               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,& 
 &               i_kmq_t,i_pmq_t 
  ! OMP LAST DEF
@@ -112,16 +114,19 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
  mode_now=BS_blk(i_block)%mode
  if (.not.l_BS_ares_from_res) mode_now="F"
  !
+ H_pos_start(1)=sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+&
+ &             (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1)
+ H_pos_start(2)=sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+&
+ &             (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1)
+ !
  select case (mode_now)
  case("R","A","F")
    !
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
        !
-       H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+& 
-&              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
-       H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
-&              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
+       H_pos(1) = H_pos_start(1)+i_Tk 
+       H_pos(2) = H_pos_start(2)+i_Tp
        !
        if (H_pos(1)>H_pos(2)) cycle
        !
@@ -150,11 +155,8 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
        !
-       !
-       H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+& 
-&              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
-       H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
-&              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
+       H_pos(1) = H_pos_start(1)+i_Tk 
+       H_pos(2) = H_pos_start(2)+i_Tp
        !
        if (H_pos(1)>H_pos(2)) cycle
        !
@@ -203,10 +205,8 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
        !
-       H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+& 
-&              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
-       H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
-&              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
+       H_pos(1) = H_pos_start(1)+i_Tk 
+       H_pos(2) = H_pos_start(2)+i_Tp
        !
        if (H_pos(1)>H_pos(2)) cycle
        !
@@ -239,10 +239,8 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
        !
-       H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+& 
-&              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
-       H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
-&              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
+       H_pos(1) = H_pos_start(1)+i_Tk 
+       H_pos(2) = H_pos_start(2)+i_Tp
        !
        if (H_pos(1)>H_pos(2)) cycle
        !
@@ -286,9 +284,10 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
        &                        j_v_k,j_c_k,j_k_sp_pol_v,j_k_sp_pol_c,j_k_s,   &
        &                        j_p_bz_last,j_k_bz_last,j_q_W,j_q_W_bz_last,j_g_W_last)
        !
-       use R_lattice,     ONLY:qindx_B,qindx_B_load
+       use R_lattice,     ONLY:qindx_B
        use D_lattice,     ONLY:sop_inv,sop_tab
        use parallel_m,    ONLY:PAR_K_scheme
+       use mpi,           ONLY:MPI_INTEGER,MPI_ADDRESS_KIND,MPI_Get
        !
        implicit none
        !
@@ -304,6 +303,12 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
        integer               :: j_k_bz,j_p_bz,j_kmq_bz,j_pmq_bz,j_k_s_m1,  &
        &                        j_kmq_s_m1,j_k_bz_mem,qindx_tmp(2),    &
        &                        j_q_W_bz,j_q_W_s,j_g_W
+       !
+       ! MPI window
+       !
+       integer(kind=MPI_ADDRESS_KIND) :: get_index
+       integer  :: mpi_err
+       integer  :: remote_id
        !
        j_k_bz  = BS_T_grp(j_Tgrp_k)%table(j_Tk,1) 
        j_p_bz  = BS_T_grp(j_Tgrp_p)%table(j_Tp,1) 
@@ -333,12 +338,13 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
        if (j_p_bz_last/=j_p_bz.or.j_k_bz_last/=j_k_bz) then 
          j_p_bz_last=j_p_bz 
          j_k_bz_last=j_k_bz 
-         if (j_k_bz_mem==0) then 
-           !DEV_OMP critical 
-           qindx_tmp=qindx_B_load(j_p_bz,j_k_bz,qindx_ID_frag) 
+         if (j_k_bz_mem<0) then 
+           get_index = (-j_k_bz_mem-1)*Xk%nbz+j_p_bz-1
+           remote_id=PAR_K_scheme%bz_id(i_k_bz)
+           call MPI_Get(qindx_tmp(1), 1, MPI_INTEGER, remote_id, get_index, 1, MPI_INTEGER, win1_ID, mpi_err)
+           call MPI_Get(qindx_tmp(2), 1, MPI_INTEGER, remote_id, get_index, 1, MPI_INTEGER, win2_ID, mpi_err)
            j_q_W_bz=qindx_tmp(1) 
            j_g_W   =qindx_tmp(2) 
-           !DEV_OMP end critical 
          else 
            j_q_W_bz=qindx_B(j_p_bz,j_k_bz_mem,1) 
            j_g_W   =qindx_B(j_p_bz,j_k_bz_mem,2) 

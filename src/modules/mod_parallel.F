@@ -203,6 +203,7 @@ module parallel_m
    type(PP_indexes)    :: IND_bz
    integer,allocatable :: ibz_index(:)
    integer,allocatable :: bz_index(:)
+   integer,allocatable :: bz_id(:)
    integer             :: nibz
    integer             :: nbz
    integer             :: comm_world

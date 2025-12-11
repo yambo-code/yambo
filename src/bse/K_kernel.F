@@ -23,7 +23,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G,TDDFT_ALDA_eh_space_R_kernel
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
  use R_lattice,     ONLY:qindx_X,bz_samp,&
-&                        qindx_B,qindx_B_max,qindx_B_load,RIM_W,RIM_W_d,&
+&                        qindx_B,qindx_B_max,RIM_W,RIM_W_d,&
 &                        RIM_ng,RIM_W_is_diagonal,RIM_W_ng
  use com,           ONLY:msg
  use stderr,        ONLY:intc
@@ -52,11 +52,14 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use wave_func,     ONLY:WF,rho_map,rho_map_thresh,rho_map_size
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme,PARALLEL_default_mode,master_cpu
+ use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme,PARALLEL_default_mode,&
+ &                       master_cpu,mpi_comm_world
  use parallel_int,  ONLY:PP_redux_wait
  use MAGNONS,       ONLY:BSS_MAGN_free
  use PHOTOLUM,      ONLY:BSS_PL_free
  use parser_m,      ONLY:parser
+ use mpi,           ONLY:MPI_INTEGER,MPI_ADDRESS_KIND,MPI_Win_create,MPI_Win_fence,MPI_Get,&
+ &                       MPI_Info_create,MPI_Info_set,MPI_info_free
  use y_memory_alloc
  !
  implicit none
@@ -79,7 +82,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& 
 &               i_kmq_s,i_kmq_s_m1,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,& 
-&               i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,I_Tgrp_k_st,I_Tgrp_p_st,H_pos(2),& 
+&               i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,I_Tgrp_k_st,I_Tgrp_p_st,H_pos(2),H_pos_start(2),& 
 &               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,iq_W_bz,iq_W_s,ig_W,& 
 &               i_kmq_t,i_pmq_t,i_k_bz_mem,i_kmq_bz_mem,qindx_tmp(2)
  ! OMP LAST DEF
@@ -105,10 +108,19 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! I/O
  !
- integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,qindx_ID,qindx_ID_frag,ID,ID_head,ID_compr,io_QINDX_err
+ integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,ID,ID_head,ID_compr,io_QINDX_err
  integer, external ::io_BS,io_BS_header
- integer, external ::qindx_B_init,qindx_B_close
  integer, external ::io_BS_PAR_init
+ !
+ ! MPI window
+ !
+ integer(kind=MPI_ADDRESS_KIND) :: mpi_size
+ integer(kind=MPI_ADDRESS_KIND) :: get_index
+ integer  :: mpi_info_nolocks
+ integer  :: mpi_err
+ integer  :: win1_ID,win2_ID
+ integer  :: N2
+ integer  :: remote_id
  !
  ! Timing and restart
  !
@@ -224,9 +236,27 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if( l_BSE_kernel_complete) return
  !
- io_QINDX_err=0
- if (l_bs_corr) io_QINDX_err=qindx_B_init(qindx_ID,qindx_ID_frag,"minus_q")
- if(io_QINDX_err/=0) call error('Error reading qindx_B database ')
+ if(trim(PARALLEL_default_mode)=="KQmemory") then
+   !
+   call msg("s","Buffering qindx_B in memory via MPI_Win_create ")
+   !
+   call MPI_Info_create(mpi_info_nolocks, mpi_err)
+   call MPI_Info_set(mpi_info_nolocks, "no_locks",  "true", mpi_err)  ! Disable locking
+   call MPI_Info_set(mpi_info_nolocks, "read_only", "true", mpi_err)  ! Read_only_mode
+   !
+   ! MPI_Win_create will duplicate in memory qindx_B
+   ! If I want to avoid this, I need to use MPI_Win_Alloc ...
+   mpi_size=size(qindx_B(:,:,1))
+   N2=sizeof(qindx_B(1,1,1))
+   call MPI_Win_create(qindx_B(:,:,1), mpi_size*N2, N2, mpi_info_nolocks, mpi_comm_world, win1_ID, mpi_err)
+   call MPI_Win_create(qindx_B(:,:,2), mpi_size*N2, N2, mpi_info_nolocks, mpi_comm_world, win2_ID, mpi_err)
+   call MPI_Win_fence(0, win1_ID, mpi_err)
+   call MPI_Win_fence(0, win2_ID, mpi_err)
+   !
+   ! Free the MPI_Info object as it's no longer needed
+   call MPI_Info_free(mpi_info_nolocks, mpi_err)
+   !
+ endif
  !
  ! Screened interaction
  !======================
@@ -494,6 +524,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    ! - The anti-resonant "A" and anti-coupling "Q" blocks are expliciltly needed only when l_BS_ares_from_res=.false.
    !   also in this case the code switches to mode_now="F"(ull) and standard relations are used
    !
+   call timing('X T_space Kernel more',OPR='start')
+   !
    mode_now=BS_blk(i_block)%mode
    if (BS_n_eh_spaces==2) mode_now="F"
    !
@@ -539,6 +571,14 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    i_k        =BS_blk(i_block)%ik
    i_p        =BS_blk(i_block)%ip
    !
+   H_pos_start(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)
+   H_pos_start(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)
+   !
+   if (.not.l_BS_ares_from_res) then
+     H_pos_start(1) = H_pos_start(1)+(BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
+     H_pos_start(2) = H_pos_start(2)+(BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1)
+   endif
+   !
    ! Exchange oscillators
    !----------------------
    if(iHxc==1) then
@@ -581,11 +621,13 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      !
    endif
    !
+   call timing('X T_space Kernel more',OPR='stop')
+   !
    ! Correlation oscillators
    !----------------------
    if(iHxc==3) then
-     if (l_std_alg) call K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
-     if (l_dir_alg) call K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
+     if (l_std_alg) call K_correlation_collisions_std(iq,i_block,win1_ID,win2_ID,Xk,q)
+     if (l_dir_alg) call K_correlation_collisions_dir(iq,i_block,win1_ID,win2_ID,Xk,q)
    endif
    !
    call timing('X T_space Kernel sum',OPR='start')
@@ -594,8 +636,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !------------------
    !
    !DEV_OMP parallel default(shared), &
-   !DEV_OMP private(i_Tk,i_Tp, O1,O2,O_times_W, &
-   !DEV_OMP &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol_c,i_k_sp_pol_v,i_k_s,is_k,os_k,i_k_s_m1,H_pos, &
+   !DEV_OMP private(i_Tk,i_Tp, O1,O2,O_times_W,H_pos, &
+   !DEV_OMP &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol_c,i_k_sp_pol_v,i_k_s,is_k,os_k,i_k_s_m1,&
    !DEV_OMP &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol_c,i_p_sp_pol_v,i_p_s,is_p,os_p,i_kp_s, &
    !DEV_OMP &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
    !DEV_OMP &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t,ig_W_final, &
@@ -640,13 +682,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        ! H_pos defines the position inside the full bse matrix when
        ! l_BS_ares_from_res.  Otherwise it defines the position inside the R/C blocks
        !
-       H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk
-       H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp
-       !
-       if (.not.l_BS_ares_from_res) then
-       H_pos(1) = H_pos(1)+(BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
-       H_pos(2) = H_pos(2)+(BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1)
-       endif
+       H_pos(1) = H_pos_start(1)+i_Tk
+       H_pos(2) = H_pos_start(2)+i_Tp
        !
        ! When l_BS_ares_from_res=.false., the full coupling block, and
        ! the upper part of the anti-resonant blocks are also computed
@@ -686,12 +723,13 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then 
            i_p_bz_last=i_p_bz 
            i_k_bz_last=i_k_bz 
-           if (i_k_bz_mem==0) then 
-             !DEV_OMP critical 
-             qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID_frag) 
+           if (i_k_bz_mem<0) then
+             get_index = (-i_k_bz_mem-1)*Xk%nbz+i_p_bz-1
+             remote_id=PAR_K_scheme%bz_id(i_k_bz)
+             call MPI_Get(qindx_tmp(1), 1, MPI_INTEGER, remote_id, get_index, 1, MPI_INTEGER, win1_ID, mpi_err)
+             call MPI_Get(qindx_tmp(2), 1, MPI_INTEGER, remote_id, get_index, 1, MPI_INTEGER, win2_ID, mpi_err)
              iq_W_bz=qindx_tmp(1) 
              ig_W   =qindx_tmp(2) 
-             !DEV_OMP end critical 
            else 
              iq_W_bz=qindx_B(i_p_bz,i_k_bz_mem,1) 
              ig_W   =qindx_B(i_p_bz,i_k_bz_mem,2) 
@@ -725,12 +763,13 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          if (i_pmq_bz_last/=i_pmq_bz.or.i_kmq_bz_last/=i_kmq_bz) then 
            i_pmq_bz_last=i_pmq_bz 
            i_kmq_bz_last=i_kmq_bz 
-           if (i_kmq_bz_mem==0) then 
-             !DEV_OMP critical 
-             qindx_tmp=qindx_B_load(i_pmq_bz,i_kmq_bz,qindx_ID_frag) 
+           if (i_kmq_bz_mem<0) then 
+             get_index = (-i_kmq_bz_mem-1)*Xk%nbz+i_pmq_bz-1
+             remote_id=PAR_K_scheme%bz_id(i_kmq_bz)
+             call MPI_Get(qindx_tmp(1), 1, MPI_INTEGER, remote_id, get_index, 1, MPI_INTEGER, win1_ID, mpi_err)
+             call MPI_Get(qindx_tmp(2), 1, MPI_INTEGER, remote_id, get_index, 1, MPI_INTEGER, win2_ID, mpi_err)
              iq_W_bz_mq=qindx_tmp(1) 
              ig_W_mq   =qindx_tmp(2) 
-             !DEV_OMP end critical 
            else 
              iq_W_bz_mq=qindx_B(i_pmq_bz,i_kmq_bz_mem,1) 
              ig_W_mq   =qindx_B(i_pmq_bz,i_kmq_bz_mem,2) 
@@ -906,6 +945,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    call timing('X T_space Kernel sum',OPR='stop')
    !
+   call timing('X T_space Kernel more',OPR='start')
+   !
    if(BS_K_cutoff>0._SP.and.l_write_kernel) &
 &     BS_max_val_CPU(myid+1)=maxval( (/BS_max_val_CPU(myid+1),abs(BS_blk(i_block)%mat(:,:))/) )
    !
@@ -933,6 +974,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
    !
    call live_timing(steps=i_steps)
+   !
+   call timing('X T_space Kernel more',OPR='stop')
    !
  enddo block_loop
  !
@@ -965,7 +1008,15 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    if (l_std_alg) then
      YAMBO_FREE(WF_phase)
    endif
-   qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
+
+   if(trim(PARALLEL_default_mode)=="KQmemory") then
+     !
+     ! Free the window
+     call MPI_Win_free(win1_ID, mpi_err)
+     call MPI_Win_free(win2_ID, mpi_err)
+     !
+   endif
+
    YAMBO_FREE_GPU(BS_W)
    YAMBO_FREE(BS_W)
    !

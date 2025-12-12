@@ -136,25 +136,13 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  ! Look if G_max_ibz must be increased
  !
  do iq=1,q%nibz
-!  if (v_norm(q%pt(iq,:))<0.2) then
    do ig=1,RIM_W_ng
      do nn=2,7
        if (G_max_ibz(idx_q(ig,iq,nn)) < idx_G(ig,iq,nn)) then
          G_max_ibz(idx_q(ig,iq,nn)) = idx_G(ig,iq,nn)
        endif 
      enddo
-!       do iqn2=1,7
-!       !
-!       if (idx_q(1,iq,iqn2)==1) then
-!         do nn=2,7
-!          if (G_max_ibz(idx_q(ig,iq,nn)) < idx_G_2(ig,iq,nn)) then
-!            G_max_ibz(idx_q(ig,iq,nn)) = idx_G_2(ig,iq,nn)
-!          endif
-!         enddo   
-!       end if
-!     end do   
    enddo
-!  end if
  enddo
  !
  G_max=maxval(G_max_ibz)
@@ -175,25 +163,11 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
    !
    ! I/O of X
    !
-   !call msg("rs","iq =",  iq)
-   !call msg("rs","Gmax",  G_max_ibz(iq))
-   !
    IO_ACT=manage_action(RD_CL_IF_END,iq,1,q%nibz)
    call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iq,2*iq+1/),ID=ID)
-   !if (iq==1) then
-   !   call io_control(ACTION=OP_RD,COM=REP,       SEC=(/1,2,2*iq+1/),ID=ID)
-   ! else if (q%nibz==1) then
-   !   call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID)
-   ! else if (iq > 1) then
-   !   call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq,2*iq+1/),ID=ID)
-   !endif
-   !
    !
    io_err=io_X(X,Xw,ID)
    !
-   !
-   !call msg('r', 'Re frequency 1', real(Xw%p(1)))
-   !call msg('r', 'Im frequency 1', aimag(Xw%p(1)))
    !
    call deliver_IO_error_message(io_err,'PP/Em1s',STOP_it=.TRUE.)
    !
@@ -202,69 +176,42 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
    !Assign X
    do iomega=1,Xw%n_freqs
    do ig1=1,RIM_W_ng
-     !
-     ig2max = RIM_W_ng
+    do ig2=1,ig2max
      if (RIM_W_is_diagonal) ig2max=ig1
      do iq1=1,q%nibz
-!     if (v_norm(q%pt(iq1,:))<0.2) then
-     do ig2=1,ig2max
-!    old version do ig2=ig1,ig2max
-       !
-       do nn=1,7
-         !
-         if (idx_q(ig1,iq1,nn) == iq) then
-           vX_nn(nn,iq1,ig1,ig2,iomega) = X_mat(idx_G(ig1,iq1,nn),idx_G(ig2,iq1,nn),iomega)
-         endif
-         if (idx_q_2(ig1,iq1,nn) == iq) then
+      !
+      do nn=1,7
+        !
+        if (idx_q(ig1,iq1,nn) == iq) then
+          vX_nn(nn,iq1,ig1,ig2,iomega) = X_mat(idx_G(ig1,iq1,nn),idx_G(ig2,iq1,nn),iomega)
+        endif
+        if (idx_q_2(ig1,iq1,nn) == iq) then
+              vX_nnn(nn,iq1,ig1,ig2,iomega) = X_mat(idx_G_2(ig1,iq1,nn),idx_G_2(ig2,iq1,nn),iomega)
+        end if
+        !
+      enddo
+        ! 
+        ! Calculation of next nearest neighbours vX needed only for the q=0 term and its neighbours
+        ! in the head term
+      if (ig1==1 .and. ig2==1) then 
+       do iqn2=1,7
+         if (idx_q(1,iq,iqn2)==1) then
+           do nn=8,13
+             if (idx_q_2(ig1,iq1,nn) == iq) then
                vX_nnn(nn,iq1,ig1,ig2,iomega) = X_mat(idx_G_2(ig1,iq1,nn),idx_G_2(ig2,iq1,nn),iomega)
-         end if
-         !
-       enddo
-         ! 
-         ! Calculation of next nearest neighbours vX needed only for the q=0 term and its neighbours
-         ! in the head term
-       if (ig1==1 .and. ig2==1) then 
-        do iqn2=1,7
-          if (idx_q(1,iq,iqn2)==1) then
-            do nn=8,13
-              if (idx_q_2(ig1,iq1,nn) == iq) then
-                vX_nnn(nn,iq1,ig1,ig2,iomega) = X_mat(idx_G_2(ig1,iq1,nn),idx_G_2(ig2,iq1,nn),iomega)
-              end if
-            end do 
-            cycle         
-          end if         
-        end do  
-       end if
+             end if
+           end do 
+           cycle         
+         end if         
+       end do  
+      end if
      end do
-     end do
-     ! 
-     ! Calculation of next nearest neighbours vX needed only for the q=0 term and the neighboursing q-points
-     ! for the wings and the head term 
-     !
- !     do iqn2=1,7 
- !       !
-!        if (idx_q(1,iq1,iqn2)==1) then
-!          do nn=1,13
- !           if (idx_q_2(1,iq1,nn) == iq) then
- !              vX_nnn(nn,iq1,1,ig1,iomega) = X_mat(idx_G_2(1,iq1,nn),idx_G_2(ig1,iq1,nn),iomega)
- !           end if
-!          end do  
- !       end if
-!      end do
-     !
-!     end if
-!      end do
-     !
+    end do
+   !
    enddo
    enddo
    !
    call X_ALLOC_global('X')
-   !if(iq==15) then
-   !  write(*,*) "Re[X_mat]"
-   !  write(*,*)  real(X_mat(:,:,1))
-   !  write(*,*) "Im[X_mat]"
-   !  write(*,*) aimag(X_mat(:,:,1))
-   !end if
    !
  enddo
  !call msg("rs","Re[vX] incrimined",  real(vX_nn(1,16,1,1,1)))
@@ -370,12 +317,6 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
             end if
           end if           
         enddo
-        !
-        !test = (iq1==1.and.igr == 1.and.igc == 1)
-        !call msg('r','iq',iq1)
-        !call msg('r','igr',igr)
-        !call msg('r','igc',igc)
-        !call msg('r','test',test)
         !
         ! Coefficients calculated from Taylor expansion
         ! Coefficients in rlu
@@ -531,82 +472,30 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
           !Calculate qpG and qpG nearest neighbour
           !qpG(:,1) = q%pt(iq1,:)+g_vec(ig1,:)
           !
-          ! Find nearest 1 --> 2
-          !
-          iq2_tmp = idx_q(igr,iq1,2)
-          ig1_tmp = idx_G(igr,iq1,2)
-          ig2_tmp = idx_G(igc,iq1,2)
-          !
-          ! Find next nearest 2 --> 5
+          ! Find next nearest 1 --> 5
           !
           iq2 = idx_q_2(igr,iq1,5)
           ig1 = idx_G_2(igr,iq1,5)
           ig2 = idx_G_2(igc,iq1,5)
           !
-          !call msg('r','iq  =',iq1)
-          !call msg('r','igr =',igr)
-          !call msg('r','igc =',igc)
-          !
-          !call msg('r','iq_nn  =',iq2_tmp)
-          !call msg('r','igr_nn =',ig1_tmp)
-          !call msg('r','igc_nn =',ig2_tmp)
-          !call msg('r','q_nn =',q%pt(iq2_tmp,:))
-          !
-          !call msg('r','iq_nnn  =',iq2)
-          !call msg('r','igr_nnn =',ig1)
-          !call msg('r','igc_nnn =',ig2)
-          !call msg('r','q_nnn =',q%pt(iq2,:))
-          !
           f_func(5) = real(bare_qpg(iq2,ig1)*bare_qpg(iq2,ig2),kind=DP)/(4._DP*pi)*&
 &                     vX_nnn(5,iq1,igr,igc,iomega)/(vX_nnn(5,iq1,igr,igc,iomega)+1._DP)
           !
-          !Find nearest 1 --> 3
-          !
-          iq2_tmp = idx_q(igr,iq1,3)
-          ig1_tmp = idx_G(igr,iq1,3)
-          ig2_tmp = idx_G(igc,iq1,3)
-          !
-          !Find next nearest 3 --> 6
+          !Find next nearest 1 --> 6
           !
           iq2 = idx_q_2(igr,iq1,6)
           ig1 = idx_G_2(igr,iq1,6)
           ig2 = idx_G_2(igc,iq1,6)
           !
-          !call msg('r','iq_nn  =',iq2_tmp)
-          !call msg('r','igr_nn =',ig1_tmp)
-          !call msg('r','igc_nn =',ig2_tmp)
-          !call msg('r','q_nn =',q%pt(iq2_tmp,:))
-          !
-          !call msg('r','iq_nnn  =',iq2)
-          !call msg('r','igr_nnn =',ig1)
-          !call msg('r','igc_nnn =',ig2)
-          !call msg('r','q_nnn =',q%pt(iq2,:))
-          !
           f_func(6) = real(bare_qpg(iq2,ig1)*bare_qpg(iq2,ig2),kind=DP)/(4._DP*pi)*&
 &                     vX_nnn(6,iq1,igr,igc,iomega)/(vX_nnn(6,iq1,igr,igc,iomega)+1._DP)
           !
-          !Find nearest 1 --> 4
-          !
-          iq2_tmp = idx_q(igr,iq1,4)
-          ig1_tmp = idx_G(igr,iq1,4)
-          ig2_tmp = idx_G(igc,iq1,4)
-          !
-          !Find next nearest 4 --> 7
+          !Find next nearest 1 --> 7
           !
           iq2 = idx_q_2(igr,iq1,7)
           ig1 = idx_G_2(igr,iq1,7)
           ig2 = idx_G_2(igc,iq1,7)
           !        
-          !call msg('r','iq_nn  =',iq2_tmp)
-          !call msg('r','igr_nn =',ig1_tmp)
-          !call msg('r','igc_nn =',ig2_tmp)
-          !call msg('r','q_nn =',q%pt(iq2_tmp,:))
-          !
-          !call msg('r','iq_nnn  =',iq2)
-          !call msg('r','igr_nnn =',ig1)
-          !call msg('r','igc_nnn =',ig2)
-          !call msg('r','q_nnn =',q%pt(iq2,:))
-          !
           f_func(7) = real(bare_qpg(iq2,ig1)*bare_qpg(iq2,ig2),kind=DP)/(4._DP*pi)*&
 &                     vX_nnn(7,iq1,igr,igc,iomega)/(vX_nnn(7,iq1,igr,igc,iomega)+1._DP)
           end if 
@@ -926,8 +815,8 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
                      if ( (igr==1 .and. (g_vec(igc,idir(2))==g_vec(igc,idir(3))) .and. (g_vec(igc,idir(2))==0)) .or.  &
 &                       (igc==1 .and. (g_vec(igr,idir(2))==g_vec(igr,idir(3))) .and. (g_vec(igr,idir(2))==0)) ) then
                       ! Coefficients kept in rlu
-                      ! Out of plane plane wings quadratic + cubic (1-3 positive 5-7 negative quadratic direction)
-                      ! (8-10 positive 11-13 negative cubic direction)
+                      ! Out of plane plane wings quadratic + cubic (quadratic 1-3 right 5-7 left limit)
+                      ! (cubic 8-10 right 11-13 left limit)
                       f_coeff(1:13,igr,igc,1,iomega) = 0._DP 
                       f_coeff(idir(2)+1,igr,igc,1,iomega) = (8*f_func(idir(2)+1)-f_func(idir(2)+7)) / &
 &                                                           (4*q_grid_b_rlu(idir(2),idir(2))**2)    ! f idir22 r
@@ -949,8 +838,8 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
                       !
                      else
                       ! Coefficients kept in rlu
-                      ! In plane wings linear + quadratic (1-3 positive 5-7 negative linear direction)
-                      ! (7-9 positive 10-12 negative quadratic direction)
+                      ! In plane wings linear + quadratic (linear 1-3 right 5-7 left limit)
+                      ! (quadratic 7-9 right 10-12 left limit)
                       f_coeff(1:13,igr,igc,1,iomega) = 0._DP 
                       f_coeff(idir(2)+1,igr,igc,1,iomega) = (4*f_func(idir(2)+1)-f_func(idir(2)+7)) / &
 &                                                           (2*q_grid_b_rlu(idir(2),idir(2)))       ! f idir2 r

@@ -38,7 +38,7 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
  !
  ! Work Space
  !
- integer    :: i1,i1min,i2,i2min,i2max,i3,iw,j
+ integer    :: i1,i1min,i2,i2min,i2max,i3,iw,j,s1,s2
  real(DP), allocatable :: vslab(:,:)
  real(DP), allocatable DEV_ATTR :: vslab_d(:,:)
  real(DP)   :: r1,rfac
@@ -349,7 +349,7 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
        call c2a(v_in=qr(:,i1),v_out=qr_rlu(:),mode='ki2a')
        !
        func = f_coeff(1,1,1,1,1) + f_coeff(2,1,1,1,1)*abs(qr_rlu(1)) + f_coeff(3,1,1,1,1)  &
-&            *abs(qr_rlu(2)) + f_coeff(4,1,1,1,1)*abs(qr_rlu(3)) + f_coeff(5,1,1,1,1)     &
+&            *abs(qr_rlu(2)) + f_coeff(4,1,1,1,1)*abs(qr_rlu(3)) + f_coeff(5,1,1,1,1)      &
 &            *qr_rlu(1)**2 + f_coeff(6,1,1,1,1)*qr_rlu(2)**2 + f_coeff(7,1,1,1,1)*qr_rlu(3)**2
        !
        slab_vplane1=sqrt((qr(idir(2),i1)*2.*pi/alat(idir(2)))**2+&
@@ -530,6 +530,10 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
  !
  do iw=1,Xw%n_freqs
    do i2=2,RIM_W_ng
+    do i1=0,1 ! I loop on both wings
+     !
+     s1 = 1 - i1 * (i2 - 1)
+     s2 = i2 * i1 + (1 - i1)
      !
      RIM_acc=0._DP
      !
@@ -565,21 +569,21 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
               !
               if (iw ==1) then
                 ! System 2D, real part of f func behaves as fcoeff*q, if imag present as vec(q)
-                func = (real(f_coeff(2,1,i2,iq,iw))*abs(q_grid_b_rlu(idir(1+j),1))  + &
-&                       real(f_coeff(3,1,i2,iq,iw))*abs(q_grid_b_rlu(idir(1+j),2))  + &
-&                       real(f_coeff(4,1,i2,iq,iw))*abs(q_grid_b_rlu(idir(1+j),3))  + &
-&                       aimag(f_coeff(2,1,i2,iq,iw))*q_grid_b_rlu(idir(1+j),1)  + &
-&                       aimag(f_coeff(3,1,i2,iq,iw))*q_grid_b_rlu(idir(1+j),2)  + &
-&                       aimag(f_coeff(4,1,i2,iq,iw))*q_grid_b_rlu(idir(1+j),3))   &
+                func = (real(f_coeff(2,s1,s2,iq,iw))*abs(q_grid_b_rlu(idir(1+j),1))  + &
+&                       real(f_coeff(3,s1,s2,iq,iw))*abs(q_grid_b_rlu(idir(1+j),2))  + &
+&                       real(f_coeff(4,s1,s2,iq,iw))*abs(q_grid_b_rlu(idir(1+j),3))  + &
+&                       aimag(f_coeff(2,s1,s2,iq,iw))*q_grid_b_rlu(idir(1+j),1)  + &
+&                       aimag(f_coeff(3,s1,s2,iq,iw))*q_grid_b_rlu(idir(1+j),2)  + &
+&                       aimag(f_coeff(4,s1,s2,iq,iw))*q_grid_b_rlu(idir(1+j),3))   &
 &                      /iku_v_norm(qtmp(:))
                 !
                 RIM_acc = RIM_acc + rfac*vslab2**2*func/(slab_vplane1**2+slab_vz1**2)/2.0_SP/q0_def_norm
                 !
               else
                 if ((g_vec(i2,idir(2))==g_vec(i2,idir(3))) .and. (g_vec(i2,idir(2))==0)) then
-                  func = ((f_coeff(2,1,i2,iq,iw)-f_coeff(5,1,i2,iq,iw))*q_grid_b_rlu(idir(1+j),1)**2 + &
-&                        (f_coeff(3,1,i2,iq,iw)-f_coeff(6,1,i2,iq,iw))*q_grid_b_rlu(idir(1+j),2)**2  + &
-&                        (f_coeff(4,1,i2,iq,iw)-f_coeff(7,1,i2,iq,iw))*q_grid_b_rlu(idir(1+j),3)**2 )  &
+                  func = ((f_coeff(2,s1,s2,iq,iw)-f_coeff(5,s1,s2,iq,iw))*q_grid_b_rlu(idir(1+j),1)**2 + &
+&                        (f_coeff(3,s1,s2,iq,iw)-f_coeff(6,s1,s2,iq,iw))*q_grid_b_rlu(idir(1+j),2)**2  + &
+&                        (f_coeff(4,s1,s2,iq,iw)-f_coeff(7,s1,s2,iq,iw))*q_grid_b_rlu(idir(1+j),3)**2 )  &
 &                        /iku_v_norm(qtmp(:))**2/2.0_SP
                   !
                   ! AF: is this correct ??
@@ -588,9 +592,9 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
                   RIM_acc = RIM_acc
                   !
                 else
-                  func = ((f_coeff(2,1,i2,iq,iw)-f_coeff(5,1,i2,iq,iw))*abs(q_grid_b_rlu(idir(1+j),1))  + &
-&                        (f_coeff(3,1,i2,iq,iw)-f_coeff(6,1,i2,iq,iw))*abs(q_grid_b_rlu(idir(1+j),2))   + &
-&                        (f_coeff(4,1,i2,iq,iw)-f_coeff(7,1,i2,iq,iw))*abs(q_grid_b_rlu(idir(1+j),3)) )   &
+                  func = ((f_coeff(2,s1,s2,iq,iw)-f_coeff(5,s1,s2,iq,iw))*abs(q_grid_b_rlu(idir(1+j),1))  + &
+&                        (f_coeff(3,s1,s2,iq,iw)-f_coeff(6,s1,s2,iq,iw))*abs(q_grid_b_rlu(idir(1+j),2))   + &
+&                        (f_coeff(4,s1,s2,iq,iw)-f_coeff(7,s1,s2,iq,iw))*abs(q_grid_b_rlu(idir(1+j),3)) )   &
 &                        /iku_v_norm(qtmp(:))/2.0_SP
                   !
                   RIM_acc = RIM_acc + rfac*vslab2**2*func/(slab_vplane1**2+slab_vz1**2) &
@@ -609,10 +613,10 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
               ! Load q_grid_b in iku
               qtmp(:)=q_grid_b_iku(j,:)
               !
-              func = (qtmp(1)*(qtmp(1)*f_coeff(5,1,i2,iq,iw) + 2_SP*qtmp(2)*          &
-&                     f_coeff(6,1,i2,iq,iw)) + qtmp(2)*(qtmp(2)*f_coeff(8,1,i2,iq,iw) &
-&                     + 2_SP*qtmp(3)*f_coeff(9,1,i2,iq,iw)) +qtmp(3)*(qtmp(3)         &
-&                     *f_coeff(10,1,i2,iq,iw) + 2_SP*qtmp(1)*f_coeff(7,1,i2,iq,iw)))  &
+              func = (qtmp(1)*(qtmp(1)*f_coeff(5,s1,s2,iq,iw) + 2_SP*qtmp(2)*           &
+&                     f_coeff(6,s1,s2,iq,iw)) + qtmp(2)*(qtmp(2)*f_coeff(8,s1,s2,iq,iw) &
+&                     + 2_SP*qtmp(3)*f_coeff(9,s1,s2,iq,iw)) +qtmp(3)*(qtmp(3)          &
+&                     *f_coeff(10,s1,s2,iq,iw) + 2_SP*qtmp(1)*f_coeff(7,s1,s2,iq,iw)))  &
 &                     /iku_v_norm(qtmp(:))**2
               !
               slab_vplane1=sqrt((g_vec(i2,1)*2.0_SP*pi/alat(1))**2 + (g_vec(i2,2)*2.0_SP*pi &
@@ -632,20 +636,20 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
         !
         !Evaluate func
         !
-        func = f_coeff(1,1,i2,iq,iw)                                            &
-&             + qr(1,i3)*(f_coeff(2,1,i2,iq,iw)+qr(1,i3)*f_coeff(5,1,i2,iq,iw)  &
-&             + 2._DP*qr(2,i3)*f_coeff(6,1,i2,iq,iw))                           &
-&             + qr(2,i3)*(f_coeff(3,1,i2,iq,iw)+qr(2,i3)*f_coeff(8,1,i2,iq,iw)  &
-&             + 2._DP*qr(3,i3)*f_coeff(9,1,i2,iq,iw))                           &
-&             + qr(3,i3)*(f_coeff(4,1,i2,iq,iw)+qr(3,i3)*f_coeff(10,1,i2,iq,iw) &
-&             + 2._DP*qr(1,i3)*f_coeff(7,1,i2,iq,iw))                           &
-&             +qr(1,i3)**2*(qr(1,i3)*f_coeff(11,1,i2,iq,iw)+3_DP*qr(2,i3)*      &
-&              f_coeff(12,1,i2,iq,iw)+3_DP*qr(3,i3)*f_coeff(13,1,i2,iq,iw))     &
-&             +qr(2,i3)**2*(qr(2,i3)*f_coeff(15,1,i2,iq,iw)+3_DP*qr(3,i3)*      &
-&              f_coeff(16,1,i2,iq,iw)+3_DP*qr(1,i3)*f_coeff(14,1,i2,iq,iw))     &
-&             +qr(3,i3)**2*(qr(3,i3)*f_coeff(19,1,i2,iq,iw)+3_DP*qr(1,i3)*      &
-&              f_coeff(17,1,i2,iq,iw)+3_DP*qr(2,i3)*f_coeff(18,1,i2,iq,iw))     &
-&             +6*qr(1,i3)*qr(2,i3)*qr(3,i3)*f_coeff(20,1,i2,iq,iw)
+        func = f_coeff(1,s1,s2,iq,iw)                                             &
+&             + qr(1,i3)*(f_coeff(2,s1,s2,iq,iw)+qr(1,i3)*f_coeff(5,s1,s2,iq,iw)  &
+&             + 2._DP*qr(2,i3)*f_coeff(6,s1,s2,iq,iw))                            &
+&             + qr(2,i3)*(f_coeff(3,s1,s2,iq,iw)+qr(2,i3)*f_coeff(8,s1,s2,iq,iw)  &
+&             + 2._DP*qr(3,i3)*f_coeff(9,s1,s2,iq,iw))                            &
+&             + qr(3,i3)*(f_coeff(4,s1,s2,iq,iw)+qr(3,i3)*f_coeff(10,s1,s2,iq,iw) &
+&             + 2._DP*qr(1,i3)*f_coeff(7,s1,s2,iq,iw))                            &
+&             +qr(1,i3)**2*(qr(1,i3)*f_coeff(11,s1,s2,iq,iw)+3_DP*qr(2,i3)*       &
+&              f_coeff(12,s1,s2,iq,iw)+3_DP*qr(3,i3)*f_coeff(13,s1,s2,iq,iw))     &
+&             +qr(2,i3)**2*(qr(2,i3)*f_coeff(15,s1,s2,iq,iw)+3_DP*qr(3,i3)*       &
+&              f_coeff(16,s1,s2,iq,iw)+3_DP*qr(1,i3)*f_coeff(14,s1,s2,iq,iw))     &
+&             +qr(3,i3)**2*(qr(3,i3)*f_coeff(19,s1,s2,iq,iw)+3_DP*qr(1,i3)*       &
+&              f_coeff(17,s1,s2,iq,iw)+3_DP*qr(2,i3)*f_coeff(18,s1,s2,iq,iw))     &
+&             +6*qr(1,i3)*qr(2,i3)*qr(3,i3)*f_coeff(20,s1,s2,iq,iw)
         !
         select case (trim(rimw_type))
         !
@@ -654,42 +658,42 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
         if (cut_is_slab) then
           !
           if (iw ==1) then
-            func = real(f_coeff(2,1,i2,iq,iw))*abs(qr_rlu(1)) + real(f_coeff(3,1,i2,iq,iw))*abs(qr_rlu(2)) &
-&                + real(f_coeff(4,1,i2,iq,iw))*abs(qr_rlu(3)) + aimag(f_coeff(2,1,i2,iq,iw))*qr_rlu(1)     &
-&                + aimag(f_coeff(3,1,i2,iq,iw))*qr_rlu(2) + aimag(f_coeff(4,1,i2,iq,iw))*qr_rlu(3)         &
-&                + f_coeff(5,i2,1,iq,iw)*(qr_rlu(1))**2 + f_coeff(6,i2,1,iq,iw)*(qr_rlu(2))**2             &
-&                + f_coeff(7,i2,1,iq,iw)*(qr_rlu(3))**2 + f_coeff(8,i2,1,iq,iw)                            &
-&                * sign(qr_rlu(1)**2,qr_rlu(1)) + f_coeff(9,i2,1,iq,iw)*sign(qr_rlu(2)**2,qr_rlu(2))       &
+            func = real(f_coeff(2,s1,s2,iq,iw))*abs(qr_rlu(1)) + real(f_coeff(3,s1,s2,iq,iw))*abs(qr_rlu(2)) &
+&                + real(f_coeff(4,s1,s2,iq,iw))*abs(qr_rlu(3)) + aimag(f_coeff(2,s1,s2,iq,iw))*qr_rlu(1)     &
+&                + aimag(f_coeff(3,s1,s2,iq,iw))*qr_rlu(2) + aimag(f_coeff(4,s1,s2,iq,iw))*qr_rlu(3)         &
+&                + f_coeff(5,i2,1,iq,iw)*(qr_rlu(1))**2 + f_coeff(6,i2,1,iq,iw)*(qr_rlu(2))**2               &
+&                + f_coeff(7,i2,1,iq,iw)*(qr_rlu(3))**2 + f_coeff(8,i2,1,iq,iw)                              &
+&                * sign(qr_rlu(1)**2,qr_rlu(1)) + f_coeff(9,i2,1,iq,iw)*sign(qr_rlu(2)**2,qr_rlu(2))         &
 &                + f_coeff(10,i2,1,iq,iw)*sign(qr_rlu(3)**2,qr_rlu(3))
           else
             !
             if ( (g_vec(i2,idir(2))==g_vec(i2,idir(3))) .and. (g_vec(i2,idir(2))==0)) then
-              func = ((f_coeff(2,1,i2,iq,iw)+f_coeff(5,1,i2,iq,iw)+ (f_coeff(2,1,i2,iq,iw)    &
-&                    -f_coeff(5,1,i2,iq,iw))*sign(1._SP,qr_rlu(1)))*qr_rlu(1)**2    +         &
-&                     (f_coeff(3,1,i2,iq,iw)+f_coeff(6,1,i2,iq,iw)+ (f_coeff(3,1,i2,iq,iw)    &
-&                    -f_coeff(6,1,i2,iq,iw))*sign(1._SP,qr_rlu(2)))*qr_rlu(2)**2    +         &
-&                     (f_coeff(4,1,i2,iq,iw)+f_coeff(7,1,i2,iq,iw)+ (f_coeff(4,1,i2,iq,iw)    &
-&                    -f_coeff(7,1,i2,iq,iw))*sign(1._SP,qr_rlu(3)))*qr_rlu(3)**2    +         &
-&                     (f_coeff(8,1,i2,iq,iw)+f_coeff(11,1,i2,iq,iw)+ (f_coeff(8,1,i2,iq,iw)   &
-&                    -f_coeff(11,1,i2,iq,iw))*sign(1._SP,qr_rlu(1)))*qr_rlu(1)**3   +         &
-&                     (f_coeff(9,1,i2,iq,iw)+f_coeff(12,1,i2,iq,iw)+ (f_coeff(9,1,i2,iq,iw)   &
-&                    -f_coeff(12,1,i2,iq,iw))*sign(1._SP,qr_rlu(2)))*qr_rlu(2)**3   +         &
-&                     (f_coeff(10,1,i2,iq,iw)+f_coeff(13,1,i2,iq,iw)+ (f_coeff(10,1,i2,iq,iw) &
-&                    -f_coeff(13,1,i2,iq,iw))*sign(1._SP,qr_rlu(3)))*qr_rlu(3)**3)/2.0_SP
+              func = ((f_coeff(2,s1,s2,iq,iw)+f_coeff(5,s1,s2,iq,iw)+ (f_coeff(2,s1,s2,iq,iw)    &
+&                    -f_coeff(5,s1,s2,iq,iw))*sign(1._SP,qr_rlu(1)))*qr_rlu(1)**2    +           &
+&                     (f_coeff(3,s1,s2,iq,iw)+f_coeff(6,s1,s2,iq,iw)+ (f_coeff(3,s1,s2,iq,iw)    &
+&                    -f_coeff(6,s1,s2,iq,iw))*sign(1._SP,qr_rlu(2)))*qr_rlu(2)**2    +           &
+&                     (f_coeff(4,s1,s2,iq,iw)+f_coeff(7,s1,s2,iq,iw)+ (f_coeff(4,s1,s2,iq,iw)    &
+&                    -f_coeff(7,s1,s2,iq,iw))*sign(1._SP,qr_rlu(3)))*qr_rlu(3)**2    +           &
+&                     (f_coeff(8,s1,s2,iq,iw)+f_coeff(11,s1,s2,iq,iw)+ (f_coeff(8,s1,s2,iq,iw)   &
+&                    -f_coeff(11,s1,s2,iq,iw))*sign(1._SP,qr_rlu(1)))*qr_rlu(1)**3   +           &
+&                     (f_coeff(9,s1,s2,iq,iw)+f_coeff(12,s1,s2,iq,iw)+ (f_coeff(9,s1,s2,iq,iw)   &
+&                    -f_coeff(12,s1,s2,iq,iw))*sign(1._SP,qr_rlu(2)))*qr_rlu(2)**3   +           &
+&                     (f_coeff(10,s1,s2,iq,iw)+f_coeff(13,s1,s2,iq,iw)+ (f_coeff(10,s1,s2,iq,iw) &
+&                    -f_coeff(13,s1,s2,iq,iw))*sign(1._SP,qr_rlu(3)))*qr_rlu(3)**3)/2.0_SP
             else
               !
-              func = ((f_coeff(2,1,i2,iq,iw)+f_coeff(5,1,i2,iq,iw)+ (f_coeff(2,1,i2,iq,iw)    &
-&                    -f_coeff(5,1,i2,iq,iw))*sign(1._SP,qr_rlu(1)))*qr_rlu(1)       +         &
-&                     (f_coeff(3,1,i2,iq,iw)+f_coeff(6,1,i2,iq,iw)+ (f_coeff(3,1,i2,iq,iw)    &
-&                    -f_coeff(6,1,i2,iq,iw))*sign(1._SP,qr_rlu(2)))*qr_rlu(2)       +         &
-&                     (f_coeff(4,1,i2,iq,iw)+f_coeff(7,1,i2,iq,iw)+ (f_coeff(4,1,i2,iq,iw)    &
-&                    -f_coeff(7,1,i2,iq,iw))*sign(1._SP,qr_rlu(3)))*qr_rlu(3)       +         &
-&                     (f_coeff(8,1,i2,iq,iw)+f_coeff(11,1,i2,iq,iw)+ (f_coeff(8,1,i2,iq,iw)   &
-&                    -f_coeff(11,1,i2,iq,iw))*sign(1._SP,qr_rlu(1)))*qr_rlu(1)**2   +         &
-&                     (f_coeff(9,1,i2,iq,iw)+f_coeff(12,1,i2,iq,iw)+ (f_coeff(9,1,i2,iq,iw)   &
-&                    -f_coeff(12,1,i2,iq,iw))*sign(1._SP,qr_rlu(2)))*qr_rlu(2)**2   +         &
-&                     (f_coeff(10,1,i2,iq,iw)+f_coeff(13,1,i2,iq,iw)+ (f_coeff(10,1,i2,iq,iw) &
-&                    -f_coeff(13,1,i2,iq,iw))*sign(1._SP,qr_rlu(3)))*qr_rlu(3)**2)/2.0_SP
+              func = ((f_coeff(2,s1,s2,iq,iw)+f_coeff(5,s1,s2,iq,iw)+ (f_coeff(2,s1,s2,iq,iw)    &
+&                    -f_coeff(5,s1,s2,iq,iw))*sign(1._SP,qr_rlu(1)))*qr_rlu(1)       +           &
+&                     (f_coeff(3,s1,s2,iq,iw)+f_coeff(6,s1,s2,iq,iw)+ (f_coeff(3,s1,s2,iq,iw)    &
+&                    -f_coeff(6,s1,s2,iq,iw))*sign(1._SP,qr_rlu(2)))*qr_rlu(2)       +           &
+&                     (f_coeff(4,s1,s2,iq,iw)+f_coeff(7,s1,s2,iq,iw)+ (f_coeff(4,s1,s2,iq,iw)    &
+&                    -f_coeff(7,s1,s2,iq,iw))*sign(1._SP,qr_rlu(3)))*qr_rlu(3)       +           &
+&                     (f_coeff(8,s1,s2,iq,iw)+f_coeff(11,s1,s2,iq,iw)+ (f_coeff(8,s1,s2,iq,iw)   &
+&                    -f_coeff(11,s1,s2,iq,iw))*sign(1._SP,qr_rlu(1)))*qr_rlu(1)**2   +           &
+&                     (f_coeff(9,s1,s2,iq,iw)+f_coeff(12,s1,s2,iq,iw)+ (f_coeff(9,s1,s2,iq,iw)   &
+&                    -f_coeff(12,s1,s2,iq,iw))*sign(1._SP,qr_rlu(2)))*qr_rlu(2)**2   +           &
+&                     (f_coeff(10,s1,s2,iq,iw)+f_coeff(13,s1,s2,iq,iw)+ (f_coeff(10,s1,s2,iq,iw) &
+&                    -f_coeff(13,s1,s2,iq,iw))*sign(1._SP,qr_rlu(3)))*qr_rlu(3)**2)/2.0_SP
             endif
             !
           endif
@@ -723,262 +727,10 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
 &                  vslab(i3,1)*func*vslab(i3,i2))
         !
      enddo
-     RIM_W(iw,iq,1,i2)=RIM_acc
-     ! old version symmetrization RIM_W(iw,iq,i2,1)=RIM_W(iw,iq,1,i2)
+     RIM_W(iw,iq,s1,s2)=RIM_acc
+     ! old version symmetrization RIM_W(iw,iq,i2,1)=RIM_W(iw,iq,s1,s2)
    enddo
    !
- enddo
- !
- !
- do iw=1,Xw%n_freqs
-   do i2=2,RIM_W_ng
-     !
-     RIM_acc=0._DP
-     !
-     do i3=1,RIM_n_rand_pts
-       !
-       call c2a(v_in=qr(:,i3),v_out=qr_rlu(:),mode='ki2a')
-       !
-       r1=sqrt((qr(1,i3)*2.*pi/alat(1))**2+(qr(2,i3)*2.*pi/alat(2))**2 + &
-&              (qr(3,i3)*2.*pi/alat(3))**2)
-       !
-       !
-       if ( r1 < 1e-5) then
-          !
-          !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-          ! Small q behaviour differs for metals and semiconductors
-          !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-          !
-          select case (trim(rimw_type))
-          !
-          !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-          !
-          case("metal")
-          !
-          if (cut_is_slab) then
-            !
-            slab_vz1=g_vec(i2,idir(1))*2.*pi/alat(idir(1))
-            slab_vplane1=sqrt((g_vec(i2,idir(2))*2.*pi/alat(idir(2)))**2 + &
-&                         (g_vec(i2,idir(3))*2.*pi/alat(idir(3)))**2)
-            if (slab_vplane1 < q0_def_norm) slab_vplane1 = q0_def_norm
-            vslab2 = 4._DP*pi*(1.-exp(-slab_vplane1*lcut)*cos(slab_vz1*lcut))**0.5
-            !
-            do j=1,2
-              ! Load q_grid_b in iku
-              qtmp(:)=q_grid_b_iku(idir(1+j),:)
-              !
-              if (iw ==1) then
-                ! System 2D, real part of f func behaves as fcoeff*q, if imag present as vec(q)
-                func = (real(f_coeff(2,i2,1,iq,iw))*abs(q_grid_b_rlu(idir(1+j),1))  + &
-&                       real(f_coeff(3,i2,1,iq,iw))*abs(q_grid_b_rlu(idir(1+j),2))  + &
-&                       real(f_coeff(4,i2,1,iq,iw))*abs(q_grid_b_rlu(idir(1+j),3))  + &
-&                       aimag(f_coeff(2,i2,1,iq,iw))*q_grid_b_rlu(idir(1+j),1)  + &
-&                       aimag(f_coeff(3,i2,1,iq,iw))*q_grid_b_rlu(idir(1+j),2)  + &
-&                       aimag(f_coeff(4,i2,1,iq,iw))*q_grid_b_rlu(idir(1+j),3))   &
-&                      /iku_v_norm(qtmp(:))
-                !
-                RIM_acc = RIM_acc + rfac*vslab2**2*func/(slab_vplane1**2+slab_vz1**2)/2.0_SP/q0_def_norm
-                !
-              else
-                !
-                if ((g_vec(i2,idir(2))==g_vec(i2,idir(3))) .and. (g_vec(i2,idir(2))==0)) then
-                  func = ( (f_coeff(2,i2,1,iq,iw)+f_coeff(5,i2,1,iq,iw))*q_grid_b_rlu(idir(1+j),1)**2   + &
-&                          (f_coeff(3,i2,1,iq,iw)+f_coeff(6,i2,1,iq,iw))*q_grid_b_rlu(idir(1+j),2)**2   + &
-&                          (f_coeff(4,i2,1,iq,iw)+f_coeff(7,i2,1,iq,iw))*q_grid_b_rlu(idir(1+j),3)**2 )   &
-&                        /iku_v_norm(qtmp(:))**2/2.0_SP
-                  !
-                  ! AF: is this correct ? 
-                  ! GS: yes, the out of plane wings do not contribute. In hindsight, this part is superfluous
-                  !
-                  RIM_acc = RIM_acc
-                  !
-                else
-                  !
-                  func = ( (f_coeff(2,i2,1,iq,iw)-f_coeff(5,i2,1,iq,iw))*abs(q_grid_b_rlu(idir(1+j),1)) + &
-&                          (f_coeff(3,i2,1,iq,iw)-f_coeff(6,i2,1,iq,iw))*abs(q_grid_b_rlu(idir(1+j),2)) + &
-&                          (f_coeff(4,i2,1,iq,iw)-f_coeff(7,i2,1,iq,iw))*abs(q_grid_b_rlu(idir(1+j),3)) ) &
-&                        /iku_v_norm(qtmp(:))/2.0_SP
-                  !
-                  RIM_acc = RIM_acc + rfac*vslab2**2*func/(slab_vplane1**2+slab_vz1**2) &
-&                           /2.0_SP/q0_def_norm
-                endif
-                !
-              endif
-              !
-            enddo
-            !
-          else
-            !
-            ! System 3D, f func behaves as f = fcoeff*q^2
-            ! we loop on 3D directions as fcoeff may be anisotropic
-            !
-            do j=1,3
-              ! Load q_grid_b in iku
-              qtmp(:)=q_grid_b_iku(j,:)
-              !
-              func = (qtmp(1)*(qtmp(1)*f_coeff(5,i2,1,iq,iw) + 2_SP*qtmp(2)*          &
-&                     f_coeff(6,i2,1,iq,iw)) + qtmp(2)*(qtmp(2)*f_coeff(8,i2,1,iq,iw) &
-&                     + 2_SP*qtmp(3)*f_coeff(9,i2,1,iq,iw)) +qtmp(3)*(qtmp(3)         &
-&                     *f_coeff(10,i2,1,iq,iw) + 2_SP*qtmp(1)*f_coeff(7,i2,1,iq,iw)))  &
-&                     /iku_v_norm(qtmp(:))**2
-              !
-              slab_vplane1=sqrt((g_vec(i2,1)*2.0_SP*pi/alat(1))**2 + (g_vec(i2,2)*2.0_SP*pi  &
-&                               /alat(2))**2 + (g_vec(i2,3)*2.*pi/alat(3))**2)
-              !
-              RIM_acc = RIM_acc + rfac*(4._SP*pi)**2*func/slab_vplane1**2/3.0
-              !
-            enddo
-            !
-          endif
-          cycle
-          !
-          !
-          !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-          !
-          !case("semiconductor") (removed specific case for now, computed with general rule)
-          !
-          !Load q_grid_b in rlu
-            !if (cut_is_slab) then
-              !
-              ! System 2D, f func behaves as f = fcoeff*sqrt(q)
-              ! fcoeff may differ in the planar directions
-              !
-              !do j=1,2
-                !
-                !qr(:,i3)=q_grid_b_iku(idir(1+j),:)
-                !
-                !func = (qr(1,i3)*f_coeff(2,1,i2,iq,iw) + qr(2,i3)*f_coeff(3,1,i2,iq,iw)
-                !       + qr(3,i3)*f_coeff(4,1,i2,iq,iw))/sqrt(iku_v_norm(qr(:,i3)))
-                !
-                !slab_vz1=g_vec(i2,idir(1))*2.*pi/alat(idir(1))
-                !slab_vplane1=sqrt(g_vec(i2,idir(2))*2.*pi/alat(idir(2))**2 +
-                !g_vec(i2,idir(3))*2.*pi/alat(idir(3))**2)
-                !RIM_acc = RIM_acc + rfac*(4._SP*pi)**2*func/(slab_vplane1**2+slab_vz1**2)*
-                !(1-exp(-lcut*slab_vplane1)*cos(lcut*slab_vz1))**2/2.0_SP
-                !
-              !end do
-             !else
-              !
-              ! System 3D, f func behaves as f = fcoeff*q
-              ! fcoeff may differ in the three directions
-              !
-              !do j=1,3
-                !
-                !qr(:,i3)=q_grid_b_iku(j,:)
-                !
-                !func = (qr(1,i3)*f_coeff(2,1,i2,iq,iw) + qr(2,i3)*f_coeff(3,1,i2,iq,iw)
-                !       + qr(3,i3)*f_coeff(4,1,i2,iq,iw))/iku_v_norm(qr(:,i3))
-                !
-                !slab_vplane1=sqrt(g_vec(i2,idir(1))*2.*pi/alat(idir(1))**2 +
-                !g_vec(i2,idir(2))*2.*pi/alat(idir(2))**2 +g_vec(i2,idir(3))*2.
-                ! *pi/alat(idir(3))**2)
-                !RIM_acc = RIM_acc + rfac*(4._SP*pi)**2*func/slab_vplane1/q0_def_norm/3.0
-                !
-                !
-               !end do
-            !end if
-            !
-            end select
-            !
-         endif
-         !
-         !Evaluate func
-         !
-         func = f_coeff(1,i2,1,iq,iw)                                           &
-&             + qr(1,i3)*(f_coeff(2,i2,1,iq,iw)+qr(1,i3)*f_coeff(5,i2,1,iq,iw)  &
-&             + 2._DP*qr(2,i3)*f_coeff(6,i2,1,iq,iw))                           &
-&             + qr(2,i3)*(f_coeff(3,i2,1,iq,iw)+qr(2,i3)*f_coeff(8,i2,1,iq,iw)  &
-&             + 2._DP*qr(3,i3)*f_coeff(9,i2,1,iq,iw))                           &
-&             + qr(3,i3)*(f_coeff(4,i2,1,iq,iw)+qr(3,i3)*f_coeff(10,i2,1,iq,iw) &
-&             + 2._DP*qr(1,i3)*f_coeff(7,i2,1,iq,iw))                           &
-&             +qr(1,i3)**2*(qr(1,i3)*f_coeff(11,i2,1,iq,iw)+3_DP*qr(2,i3)*      &
-&              f_coeff(12,i2,1,iq,iw)+3_DP*qr(3,i3)*f_coeff(13,i2,1,iq,iw))     &
-&             +qr(2,i3)**2*(qr(2,i3)*f_coeff(15,i2,1,iq,iw)+3_DP*qr(3,i3)*      &
-&              f_coeff(16,i2,1,iq,iw)+3_DP*qr(1,i3)*f_coeff(14,i2,1,iq,iw))     &
-&             +qr(3,i3)**2*(qr(3,i3)*f_coeff(19,i2,1,iq,iw)+3_DP*qr(1,i3)*      &
-&              f_coeff(17,i2,1,iq,iw)+3_DP*qr(2,i3)*f_coeff(18,i2,1,iq,iw))     &
-&             +6*qr(1,i3)*qr(2,i3)*qr(3,i3)*f_coeff(20,i2,1,iq,iw)
-         !
-         select case (trim(rimw_type))
-         !
-         case("metal")
-         !
-         if (cut_is_slab) then
-           !
-           if (iw ==1) then
-             func = real(f_coeff(2,i2,1,iq,iw))*abs(qr_rlu(1)) + real(f_coeff(3,i2,1,iq,iw))*abs(qr_rlu(2)) &
-&                 + real(f_coeff(4,i2,1,iq,iw))*abs(qr_rlu(3)) + aimag(f_coeff(2,i2,1,iq,iw))*qr_rlu(1)     &
-&                 + aimag(f_coeff(3,i2,1,iq,iw))*qr_rlu(2) + aimag(f_coeff(4,i2,1,iq,iw))*qr_rlu(3)         &
-&                 + f_coeff(5,i2,1,iq,iw)*(qr_rlu(1))**2 + f_coeff(6,i2,1,iq,iw)*(qr_rlu(2))**2             &
-&                 + f_coeff(7,i2,1,iq,iw)*(qr_rlu(3))**2 + f_coeff(8,i2,1,iq,iw)                            &
-&                 * sign(qr_rlu(1)**2,qr_rlu(1)) + f_coeff(9,i2,1,iq,iw)*sign(qr_rlu(2)**2,qr_rlu(2))       &
-&                 + f_coeff(10,i2,1,iq,iw)*sign(qr_rlu(3)**2,qr_rlu(3))
-           else
-             !
-             if ( (g_vec(i2,idir(2))==g_vec(i2,idir(3))) .and. (g_vec(i2,idir(2))==0)) then
-               func = ((f_coeff(2,i2,1,iq,iw)+f_coeff(5,i2,1,iq,iw)+ (f_coeff(2,i2,1,iq,iw)   &
-&                    -f_coeff(5,i2,1,iq,iw))*sign(1._SP,qr_rlu(1)))*qr_rlu(1)**2    +         &
-&                     (f_coeff(3,i2,1,iq,iw)+f_coeff(6,i2,1,iq,iw)+ (f_coeff(3,i2,1,iq,iw)    &
-&                    -f_coeff(6,i2,1,iq,iw))*sign(1._SP,qr_rlu(2)))*qr_rlu(2)**2    +         &
-&                     (f_coeff(4,i2,1,iq,iw)+f_coeff(7,i2,1,iq,iw)+ (f_coeff(4,i2,1,iq,iw)    &
-&                    -f_coeff(7,i2,1,iq,iw))*sign(1._SP,qr_rlu(3)))*qr_rlu(3)**2    +         &
-&                     (f_coeff(8,i2,1,iq,iw)+f_coeff(11,i2,1,iq,iw)+ (f_coeff(8,i2,1,iq,iw)   &
-&                    -f_coeff(11,i2,1,iq,iw))*sign(1._SP,qr_rlu(1)))*qr_rlu(1)**3   +         &
-&                     (f_coeff(9,i2,1,iq,iw)+f_coeff(12,i2,1,iq,iw)+ (f_coeff(9,i2,1,iq,iw)   &
-&                    -f_coeff(12,i2,1,iq,iw))*sign(1._SP,qr_rlu(2)))*qr_rlu(2)**3   +         &
-&                     (f_coeff(10,i2,1,iq,iw)+f_coeff(13,i2,1,iq,iw)+ (f_coeff(10,i2,1,iq,iw) &
-&                    -f_coeff(13,i2,1,iq,iw))*sign(1._SP,qr_rlu(3)))*qr_rlu(3)**3)/2.0_SP
-             else
-               !
-               func = ((f_coeff(2,i2,1,iq,iw)+f_coeff(5,i2,1,iq,iw)+ (f_coeff(2,i2,1,iq,iw)   &
-&                    -f_coeff(5,i2,1,iq,iw))*sign(1._SP,qr_rlu(1)))*qr_rlu(1)       +         &
-&                     (f_coeff(3,i2,1,iq,iw)+f_coeff(6,i2,1,iq,iw)+ (f_coeff(3,i2,1,iq,iw)    &
-&                    -f_coeff(6,i2,1,iq,iw))*sign(1._SP,qr_rlu(2)))*qr_rlu(2)       +         &
-&                     (f_coeff(4,i2,1,iq,iw)+f_coeff(7,i2,1,iq,iw)+ (f_coeff(4,i2,1,iq,iw)    &
-&                    -f_coeff(7,i2,1,iq,iw))*sign(1._SP,qr_rlu(3)))*qr_rlu(3)       +         &
-&                     (f_coeff(8,i2,1,iq,iw)+f_coeff(11,i2,1,iq,iw)+ (f_coeff(8,i2,1,iq,iw)   &
-&                    -f_coeff(11,i2,1,iq,iw))*sign(1._SP,qr_rlu(1)))*qr_rlu(1)**2   +         &
-&                     (f_coeff(9,i2,1,iq,iw)+f_coeff(12,i2,1,iq,iw)+ (f_coeff(9,i2,1,iq,iw)   &
-&                    -f_coeff(12,i2,1,iq,iw))*sign(1._SP,qr_rlu(2)))*qr_rlu(2)**2   +         &
-&                     (f_coeff(10,i2,1,iq,iw)+f_coeff(13,i2,1,iq,iw)+ (f_coeff(10,i2,1,iq,iw) &
-&                    -f_coeff(13,i2,1,iq,iw))*sign(1._SP,qr_rlu(3)))*qr_rlu(3)**2)/2.0_SP
-             endif
-             !
-           endif
-           !
-         endif
-         !
-         end select
-         !
-         r1=sqrt((qr(1,i3)*2.*pi/alat(1))**2+(qr(2,i3)*2.*pi/alat(2))**2 + &
-&               (qr(3,i3)*2.*pi/alat(3))**2)
-         slab_vplane1=sqrt((qr(idir(2),i3)*2.*pi/alat(idir(2)))**2 + &
-&                          (qr(idir(3),i3)*2.*pi/alat(idir(3)))**2)
-         !
-         if (r1 < 1.e-5) then
-           !
-           vslab(i3,1) = sqrt(4._DP*pi/q0_def_norm**2)
-           !
-           if (cut_is_slab)  vslab(i3,1) = vslab(i3,1)*sqrt(1.-exp(-q0_def_norm*lcut))
-           !
-         else
-           !
-           vslab(i3,1) =sqrt(4._DP*pi/r1**2)
-           !
-           if (cut_is_slab) vslab(i3,1) = vslab(i3,1)*sqrt(1.-exp(-slab_vplane1*lcut))
-           !
-         endif
-         !
-         ! Accumulate Wc
-         !
-         RIM_acc = RIM_acc + rfac*vslab(i3,1)**2*func*vslab(i3,i2)**2/(1._DP-  &
-&                  vslab(i3,1)*func*vslab(i3,i2))
-         !
-     enddo
-     !
-     RIM_W(iw,iq,i2,1)=RIM_acc
-     ! old version symmetrization RIM_W(iw,iq,i2,1)=RIM_W(iw,iq,1,i2)
-   enddo
  enddo
  !
  YAMBO_FREE(vslab)

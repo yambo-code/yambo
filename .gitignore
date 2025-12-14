@@ -138,9 +138,9 @@ autom4te.cache
 
 #Scripts
 compile_yambo_gcc
-gfortran*.sh
-pgi*.sh
-nvidia*.sh
+gfortran*.sh*
+nvfortran*.sh*
+ifx*.sh*
 git_nmd.sh
 
 #Configuation files

@@ -287,7 +287,10 @@ subroutine K_correlation_collisions_dir(iq,i_block,win1_ID,win2_ID,Xk,q)
        use R_lattice,     ONLY:qindx_B
        use D_lattice,     ONLY:sop_inv,sop_tab
        use parallel_m,    ONLY:PAR_K_scheme
-       use mpi,           ONLY:MPI_INTEGER,MPI_ADDRESS_KIND,MPI_Get
+       use mpi
+       ! Using the following line instead of the general use mpi
+       ! Gives compilation error with impi due to MPI_Get
+       !use mpi,           ONLY:MPI_INTEGER,MPI_ADDRESS_KIND,MPI_Get
        !
        implicit none
        !

@@ -58,8 +58,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use MAGNONS,       ONLY:BSS_MAGN_free
  use PHOTOLUM,      ONLY:BSS_PL_free
  use parser_m,      ONLY:parser
- use mpi,           ONLY:MPI_INTEGER,MPI_ADDRESS_KIND,MPI_Win_create,MPI_Win_fence,MPI_Get,&
- &                       MPI_Info_create,MPI_Info_set,MPI_info_free
+ use mpi
+ ! Using the following line instead of the general use mpi
+ ! Gives compilation error with impi due to MPI_Get and MPI_Win_create
+ !use mpi,           ONLY:MPI_INTEGER,MPI_ADDRESS_KIND,MPI_Win_create,MPI_Win_fence,MPI_Get,&
+ !&                       MPI_Info_create,MPI_Info_set,MPI_info_free
  use y_memory_alloc
  !
  implicit none

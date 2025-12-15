@@ -12704,7 +12704,7 @@ if test $acx_lapack_ok = no; then
 ac_fn_fc_check_func "$LINENO" "$cheev" "$as_ac_var"
 if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
-  acx_lapack_ok=yes
+  acx_lapack_ok=yes LAPACK_LIBS="$BLAS_LIBS"
 fi
 
         LIBS="$save_LIBS"
@@ -13647,11 +13647,10 @@ printf %s "checking for internal Petsc library... " >&6; }
   fi
   PETSC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${build_precision}/include" ;
   #
-  if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl -lstdc++"   ; fi
-  #
   petsc=yes
   if test -e "$PETSC_LIBS_DN" ; then
     PETSC_LIBS="$PETSC_LIBS_DN" ;
+    if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl -lstdc++"   ; fi
     compile_petsc="no" ;
     if test "x$lapack_shared" = "x1" ; then
       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: dynamic already compiled" >&5
@@ -13664,6 +13663,7 @@ printf "%s\n" "The compilation may fail. In case remove the dynamic petsc libs."
     fi
   elif test -e "$PETSC_LIBS_ST" ; then
     PETSC_LIBS="$PETSC_LIBS_ST" ;
+    if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl -lstdc++"   ; fi
     compile_petsc="no" ;
     if test "x$lapack_shared" = "x1" ; then
       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: static found, despite dynamic lapack." >&5

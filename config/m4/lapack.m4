@@ -43,7 +43,7 @@ fi
 # LAPACK linked to by default?  (is sometimes included in BLAS lib)
 if test $acx_lapack_ok = no; then
         save_LIBS="$LIBS"; LIBS="$LIBS $BLAS_LIBS $FLIBS"
-        AC_CHECK_FUNC($cheev, [acx_lapack_ok=yes])
+        AC_CHECK_FUNC($cheev, [acx_lapack_ok=yes LAPACK_LIBS="$BLAS_LIBS"])
         LIBS="$save_LIBS"
 fi
 

@@ -137,11 +137,10 @@ if test "x$enable_petsc" = "xyes" && test "x$petsc" = "xno" ; then
   fi
   PETSC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${build_precision}/include" ;
   #
-  if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl -lstdc++"   ; fi
-  #
   petsc=yes
   if test -e "$PETSC_LIBS_DN" ; then
     PETSC_LIBS="$PETSC_LIBS_DN" ;
+    if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl -lstdc++"   ; fi
     compile_petsc="no" ;
     if test "x$lapack_shared" = "x1" ; then
       AC_MSG_RESULT([dynamic already compiled]) ;
@@ -151,6 +150,7 @@ if test "x$enable_petsc" = "xyes" && test "x$petsc" = "xno" ; then
     fi
   elif test -e "$PETSC_LIBS_ST" ; then
     PETSC_LIBS="$PETSC_LIBS_ST" ;
+    if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl -lstdc++"   ; fi
     compile_petsc="no" ;
     if test "x$lapack_shared" = "x1" ; then
       AC_MSG_RESULT([static found, despite dynamic lapack.]) ;

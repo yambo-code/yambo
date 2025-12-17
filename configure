@@ -13523,6 +13523,64 @@ else case e in #(
 esac
 fi
 
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for main in -lstdc++" >&5
+printf %s "checking for main in -lstdc++... " >&6; }
+if test ${ac_cv_lib_stdcpp_main+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_lib_save_LIBS=$LIBS
+LIBS="-lstdc++  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main (void)
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_stdcpp_main=yes
+else case e in #(
+  e) ac_cv_lib_stdcpp_main=no ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_stdcpp_main" >&5
+printf "%s\n" "$ac_cv_lib_stdcpp_main" >&6; }
+if test "x$ac_cv_lib_stdcpp_main" = xyes
+then :
+  use_libstdc="yes";
+else case e in #(
+  e) use_libstdc="no"; ;;
+esac
+fi
+
 ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
@@ -13573,7 +13631,8 @@ printf %s "checking for Petsc in $with_petsc_path... " >&6; } ;
   try_PETSC_INCS="$IFLAG$try_petsc_incdir" ;
   try_PETSC_LIBS="-L$try_petsc_libdir -lpetsc" ;
   #
-  if test "$use_libdl"    = "yes"; then try_PETSC_LIBS="$try_PETSC_LIBS -ldl -lstdc++"   ; fi
+  if test "$use_libdl"    = "yes"; then try_PETSC_LIBS="$try_PETSC_LIBS -ldl"   ; fi
+  if test "$use_libstdc"  = "yes"; then try_PETSC_LIBS="$try_PETSC_LIBS -lstdc++"   ; fi
   #
   if test x"$with_petsc_libs" != "x" ; then try_PETSC_LIBS="$with_petsc_libs" ; fi
   if test x"$with_petsc_incs" != "x" ; then try_PETSC_INCS="$with_petsc_incs" ; fi
@@ -13650,7 +13709,8 @@ printf %s "checking for internal Petsc library... " >&6; }
   petsc=yes
   if test -e "$PETSC_LIBS_DN" ; then
     PETSC_LIBS="$PETSC_LIBS_DN" ;
-    if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl -lstdc++"   ; fi
+    if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl"   ; fi
+    if test "$use_libstdc"  = "yes"; then PETSC_LIBS="$PETSC_LIBS -lstdc++"   ; fi
     compile_petsc="no" ;
     if test "x$lapack_shared" = "x1" ; then
       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: dynamic already compiled" >&5
@@ -13663,7 +13723,8 @@ printf "%s\n" "The compilation may fail. In case remove the dynamic petsc libs."
     fi
   elif test -e "$PETSC_LIBS_ST" ; then
     PETSC_LIBS="$PETSC_LIBS_ST" ;
-    if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl -lstdc++"   ; fi
+    if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl"   ; fi
+    if test "$use_libstdc"  = "yes"; then PETSC_LIBS="$PETSC_LIBS -lstdc++"   ; fi
     compile_petsc="no" ;
     if test "x$lapack_shared" = "x1" ; then
       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: static found, despite dynamic lapack." >&5
@@ -17713,10 +17774,10 @@ fi
 # STRIPE [LIB] from paths
 #
 
-TMP1=`echo $LDIAGO_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $LDIAGO_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
@@ -17724,10 +17785,10 @@ fi
 #ACX_STRIPE_SUBPATH2($LDIAGO_LIBS,"LIB")
 LDIAGO_LIBS_R=$STRIPE
 
-TMP1=`echo $LDIAGO_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $LDIAGO_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -17738,20 +17799,20 @@ LDIAGO_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $IOTK_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $IOTK_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 IOTK_LIBS_R=$STRIPE
 
-TMP1=`echo $IOTK_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $IOTK_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -17761,20 +17822,20 @@ IOTK_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $YAML_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $YAML_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 YAML_LIBS_R=$STRIPE
 
-TMP1=`echo $YAML_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $YAML_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -17784,20 +17845,20 @@ YAML_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $FUTILE_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $FUTILE_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 FUTILE_LIBS_R=$STRIPE
 
-TMP1=`echo $FUTILE_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $FUTILE_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -17807,20 +17868,20 @@ FUTILE_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $ETSF_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $ETSF_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 ETSF_LIBS_R=$STRIPE
 
-TMP1=`echo $ETSF_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $ETSF_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -17830,20 +17891,20 @@ ETSF_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $NETCDFF_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $NETCDFF_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 NETCDFF_LIBS_R=$STRIPE
 
-TMP1=`echo $NETCDFF_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $NETCDFF_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -17853,20 +17914,20 @@ NETCDFF_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $NETCDF_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $NETCDF_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 NETCDF_LIBS_R=$STRIPE
 
-TMP1=`echo $NETCDF_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $NETCDF_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -17876,20 +17937,20 @@ NETCDF_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $HDF5_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $HDF5_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 HDF5_LIBS_R=$STRIPE
 
-TMP1=`echo $HDF5_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $HDF5_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -17899,20 +17960,20 @@ HDF5_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $FFT_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $FFT_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 FFT_LIBS_R=$STRIPE
 
-TMP1=`echo $FFT_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $FFT_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -17922,20 +17983,20 @@ FFT_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $BLAS_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $BLAS_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 BLAS_LIBS_R=$STRIPE
 
-TMP1=`echo $BLAS_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $BLAS_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -17945,20 +18006,20 @@ BLAS_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $LAPACK_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $LAPACK_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 LAPACK_LIBS_R=$STRIPE
 
-TMP1=`echo $LAPACK_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $LAPACK_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -17968,20 +18029,20 @@ LAPACK_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $SCALAPACK_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $SCALAPACK_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 SCALAPACK_LIBS_R=$STRIPE
 
-TMP1=`echo $SCALAPACK_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $SCALAPACK_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -17991,20 +18052,20 @@ SCALAPACK_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $ELPA_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $ELPA_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 ELPA_LIBS_R=$STRIPE
 
-TMP1=`echo $ELPA_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $ELPA_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -18014,20 +18075,20 @@ ELPA_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $MAGMA_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $MAGMA_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 MAGMA_LIBS_R=$STRIPE
 
-TMP1=`echo $MAGMA_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $MAGMA_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -18037,20 +18098,20 @@ MAGMA_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $BLACS_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $BLACS_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 BLACS_LIBS_R=$STRIPE
 
-TMP1=`echo $BLACS_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $BLACS_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -18060,20 +18121,20 @@ BLACS_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $PETSC_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $PETSC_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 PETSC_LIBS_R=$STRIPE
 
-TMP1=`echo $PETSC_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $PETSC_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -18083,20 +18144,20 @@ PETSC_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $SLEPC_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $SLEPC_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 SLEPC_LIBS_R=$STRIPE
 
-TMP1=`echo $SLEPC_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $SLEPC_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -18106,20 +18167,20 @@ SLEPC_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $MAGMA_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $MAGMA_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 MAGMA_LIBS_R=$STRIPE
 
-TMP1=`echo $MAGMA_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $MAGMA_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -18129,20 +18190,20 @@ MAGMA_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $LIBXC_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $LIBXC_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 LIBXC_LIBS_R=$STRIPE
 
-TMP1=`echo $LIBXC_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $LIBXC_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -18152,20 +18213,20 @@ LIBXC_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $DEVXLIB_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $DEVXLIB_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 DEVXLIB_LIBS_R=$STRIPE
 
-TMP1=`echo $DEVXLIB_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $DEVXLIB_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -18175,20 +18236,20 @@ DEVXLIB_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $LIBCUDA_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $LIBCUDA_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 LIBCUDA_LIBS_R=$STRIPE
 
-TMP1=`echo $LIBCUDA_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $LIBCUDA_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -18198,20 +18259,20 @@ LIBCUDA_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $BLAS_PETSC_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $BLAS_PETSC_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 BLAS_PETSC_LIBS_R=$STRIPE
 
-TMP1=`echo $BLAS_PETSC_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $BLAS_PETSC_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi
@@ -18221,20 +18282,20 @@ BLAS_PETSC_INCS_R=$STRIPE
 
 #
 
-TMP1=`echo $LAPACK_PETSC_LIBS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $LAPACK_PETSC_LIBS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("LIB")"
 fi
 
 LAPACK_PETSC_LIBS_R=$STRIPE
 
-TMP1=`echo $LAPACK_PETSC_INCS | sed 's/\//+/g'`
-TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//+/g'`
+TMP1=`echo $LAPACK_PETSC_INCS | sed 's/\//\#/g'`
+TMP2=`echo $extlibs_path/${FCKIND}/${FC} | sed 's/\//\#/g'`
 TMP3=`echo $TMP1 | sed "s/$TMP2/\(LIB\)/g"`
-STRIPE=`echo $TMP3 | sed 's/+/\//g'`
+STRIPE=`echo $TMP3 | sed 's/\#/\//g'`
 if [ -z "${1// }" ]; then
  STRIPE="$STRIPE ("INC")"
 fi

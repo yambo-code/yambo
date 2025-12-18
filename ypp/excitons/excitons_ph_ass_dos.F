@@ -37,13 +37,14 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  !
  logical, external     :: file_exists
  integer               :: i_q,i_c,i_E,ph_modes,i_idx,i_l
- integer               :: ID_INTERP_EXC,n_full_q
+ integer               :: ID_INTERP_EXC,n_full_q,ID_INTERP_OCC
  type(bz_samp)         :: q_matdyn
  real(SP), allocatable :: ph_freqs(:,:)
  integer, allocatable  :: iq_indx(:)
  real(SP), allocatable :: BSE_interp_E(:,:)
  real(SP)              :: dos_E(DOS_E_steps),exc_ph_DOS(DOS_E_steps),exc_OCC,Boltz_F_exc,Bose_F_ph,min_E 
  real(SP)              :: occ_threshold=1E-5
+ real(SP)              :: BS_all_E(EXCITONS_n_user_states,q_exc%nibz)
  type(PP_indexes)      :: px
  complex(SP), allocatable  :: ph_pol(:,:,:,:)
  !
@@ -93,7 +94,8 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  ! Read and interpolate excitons dispersion
  !
  ID_INTERP_EXC=1
- call excitons_interpolate_setup(k,Xk,en,Xen,q_exc,ID_INTERP_EXC,.TRUE.)
+ ID_INTERP_OCC=2
+ call excitons_interpolate_setup(k,Xk,en,Xen,q_exc,BS_all_E,ID_INTERP_EXC,ID_INTERP_OCC,.TRUE.)
  YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,q_matdyn%nibz))
  call INTERPOLATION_BZ(K=q_matdyn,NK=q_matdyn%nibz,R1D=BSE_interp_E,ID=ID_INTERP_EXC)
  !

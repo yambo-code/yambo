@@ -17,10 +17,11 @@ include ../config/external_libs_commons.mk
 include ../config/external_libs_defs.mk
 #         FOPTFLAGS="$(fcflags)" COPTFLAGS="$(cflags)" \
 #         FOPTFLAGS="-O1 -std=f2008 " COPTFLAGS="-O2" CXXOPTFLAGS="-O2" \
+#         CC=mpiicx CXX=mpiicx FC=mpiifx \
 #
 PETSC_ARCH=yambo_${yprecision}_complex
 CONFFLAGS=--prefix="$(LIBPATH)" $(petsc_flgs) \
-         CC=mpiicx CXX=mpiicx FC=mpiifx \
+         CC=$(cc) FC=$(fc) \
          --PETSC_ARCH=${PETSC_ARCH} \
          --with-ssl=0 \
          --with-x=0 \
@@ -28,7 +29,7 @@ CONFFLAGS=--prefix="$(LIBPATH)" $(petsc_flgs) \
          --with-shared-libraries=$(spetsc) \
          --with-blaslapack-lib="$(llapackpetsc) $(lblaspetsc)" \
          --with-scalar-type="complex" \
-         --with-precision="${yprecision}" #\
+         --with-precision="${yprecision}"
 #	 --with-mpi-dir=$(mpipath)
 #
 # MAIN target

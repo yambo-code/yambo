@@ -80,6 +80,7 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,BS_all_E,ID_INTERP_EXC,ID_IN
  endif
  !
  call excitons_read(k,Xk,en,Xen,1,"clean",io_err)
+ if(io_err/=0) call error("Error reading exciton at q = "//intc(1))
  !
  ! Read all eigenvalues and eigenvectors
  !
@@ -87,6 +88,7 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,BS_all_E,ID_INTERP_EXC,ID_IN
  do iq=2,q%nibz
    call msg('s','Reading '//exc_kind//'s at @ Q-index #',iq)
    call excitons_read(k,Xk,en,Xen,iq,"check",io_err)
+   if(io_err/=0) call error("Error reading exciton at q = "//intc(iq))
    !
    if(l_exc_occ_interp) then
      call excitons_read(k,Xk,en,Xen,iq,"eigenvectors eigenvalues",io_err)

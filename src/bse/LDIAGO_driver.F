@@ -95,6 +95,10 @@ subroutine LDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
   integer                            :: evec_fac = 1
   ! evec_fac = 2 if bse_solver function was used to diagonalize else 1
 
+#if !defined _MPI
+  call error("LDIAGO implementation needs MPI. Do not use LDIAGO solver.")
+#endif
+
   if(PRESENT(neigs_range)) then
     if(neigs_range(1)>0) then
       neig_tmp=neigs_range(2)-neigs_range(1)+1

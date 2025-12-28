@@ -31,6 +31,9 @@ subroutine LDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
   use LIVE_t,         ONLY:live_timing
   use com,            ONLY:msg
   use ldiago_interface
+#if defined _MPI
+  USE mpi
+#endif
   !
   implicit none
   !
@@ -91,6 +94,10 @@ subroutine LDIAGO_driver(i_BS_mat, BS_energies, BS_VR, &
 
   integer                            :: evec_fac = 1
   ! evec_fac = 2 if bse_solver function was used to diagonalize else 1
+
+#if !defined _MPI
+  call error("LDIAGO implementation needs MPI. Do not use LDIAGO solver.")
+#endif
 
   if(PRESENT(neigs_range)) then
     if(neigs_range(1)>0) then

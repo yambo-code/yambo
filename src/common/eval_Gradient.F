@@ -54,9 +54,7 @@ subroutine eval_Gradient(f,f_gradient,ng_)
  call fft_3d(Vr,fft_dim,-1)
 #endif
  !
- do concurrent (ic=1:3,ig=1:ng_) 
-   V3g(ig,ic)=cI*real(g_vec(ig,ic),DP)*Vr(fft_g_table(ig,1))/real(fft_size,DP)
- enddo
+ forall (ic=1:3,ig=1:ng_) V3g(ig,ic)=cI*real(g_vec(ig,ic),DP)*Vr(fft_g_table(ig,1))/real(fft_size,DP)
  !
  do ic = 1,3
    Vr = cZERO_DP

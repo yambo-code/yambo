@@ -1,4 +1,4 @@
-!
+! 
 ! License-Identifier: GPL
 !
 ! Copyright (C) 2016 The Yambo Team
@@ -91,6 +91,7 @@ subroutine NL_initialize(E,k)
  ! Velocity gauge mode
  ! =======================================
  l_velocity_IPA=.FALSE.
+ !
  if(trim(global_gauge)=='velocity') then
     !
     ! Turn on current

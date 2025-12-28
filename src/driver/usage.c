@@ -148,7 +148,7 @@ void usage(options_struct *options, struct tool_struct t, char *what,
 
         fprintf(stderr, "\n");
         fprintf(stderr, "%s\n\n",
-                " YAMBO developers group (http://www.yambo-code.eu)");
+                " Lumen developers group (http://www.lumen-code.org)");
     }
     else if (strcmp(what, "version") == 0)
     {
@@ -222,6 +222,6 @@ void usage(options_struct *options, struct tool_struct t, char *what,
         }
         fprintf(stderr, "\n\n");
         fprintf(stderr, "%s\n\n",
-                " YAMBO developers group (http://www.yambo-code.eu)");
+                " Lumen developers group (http://www.lumen-code.org)");
     }
 };

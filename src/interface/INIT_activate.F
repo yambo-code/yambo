@@ -97,6 +97,10 @@ subroutine INIT_activate()
    !call CPU_activate("SLK")
  endif
  !
+#if defined _PAR_IO
+ call CPU_activate("BZINDX")
+#endif
+ !
 #if defined _SC
  if (l_eval_collisions .or. l_sc_run) then
    call CPU_activate("SE")

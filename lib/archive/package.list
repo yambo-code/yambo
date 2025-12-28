@@ -1,7 +1,7 @@
 #
 # Libs list
 #
-EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff etsf_io libxc lapack blacs scalapack elpa magma petsc slepc fftw fftqe ldiago devxlib
+EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff etsf_io libxc lapack scalapack elpa magma petsc slepc fftw fftqe ldiago devxlib
 #
 # storing options
 #
@@ -12,7 +12,6 @@ keep_netcdff=no
 keep_etsf_io=no
 keep_libxc=no
 keep_lapack=no
-keep_blacs=no
 keep_scalapack=no
 keep_elpa=no
 keep_magma=no
@@ -35,13 +34,14 @@ version_hdf5=1.14.6
 version_etsf_io=1.0.4
 version_libxc=5.2.3
 version_lapack=3.12.0
-version_blacs=missing
-version_scalapack=2.2.1
+version_scalapack=2.2.2
 #version_elpa=release_2024_05_001   # This was neeeded for gitlab
-version_elpa=2024.05.001
+version_elpa=2025.06.002
 version_magma=2.8.0
-version_slepc=3.24.0
-version_petsc=3.24.0
+#version_slepc=3.22.2  # This is the latest version which does not require fortran 2018
+#version_petsc=3.22.2  # It is needed to compile with intel compilers
+version_slepc=3.24.1
+version_petsc=3.24.1
 version_fftw=3.3.10
 version_fftqe=missing
 version_yaml=0.2.2
@@ -58,7 +58,6 @@ pkgname_hdf5=hdf5-$(version_hdf5)
 pkgname_etsf_io=etsf_io-$(version_etsf_io)
 pkgname_libxc=libxc-$(version_libxc)
 pkgname_lapack=lapack-$(version_lapack)
-pkgname_blacs=blacs
 pkgname_scalapack=scalapack-$(version_scalapack)
 pkgname_elpa=elpa-$(version_elpa)
 pkgname_magma=magma-$(version_magma)
@@ -83,7 +82,6 @@ tarball_lapack=v$(version_lapack).tar.gz
 tarball_scalapack=v$(version_scalapack).tar.gz
 tarball_elpa=$(pkgname_elpa).tar.gz
 tarball_magma=$(pkgname_magma).tar.gz
-tarball_blacs=$(pkgname_blacs).tar.gz
 tarball_slepc=slepc-v$(version_slepc).tar.gz
 tarball_petsc=petsc-v$(version_petsc).tar.gz
 tarball_fftw=$(pkgname_fftw).tar.gz
@@ -123,7 +121,6 @@ url_base=https://github.com/yambo-code/yambo-libraries/raw/master/external/
 #
 url_iotk=$(url_base)/$(tarball_iotk)
 url_etsf_io=$(url_base)/$(tarball_etsf_io)
-url_blacs=$(url_base)/$(tarball_blacs)
 url_fftqe=$(url_base)/$(tarball_fftqe)
 url_yaml=$(url_base)/$(tarball_yaml)
 url_futile=$(url_base)/$(tarball_futile)

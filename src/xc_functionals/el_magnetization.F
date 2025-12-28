@@ -161,10 +161,9 @@ subroutine el_magnetization(en,Xk,magn,bands)
    if (n_spinor==2) then
      tmp_sop(:,:)=dl_sop(:,:,isym)*m3det(dl_sop(:,:,isym))
      if( isym> nsym/(1+i_time_rev) ) tmp_sop(:,:)=-tmp_sop(:,:)
-     do concurrent (ifft=1:fft_size) 
-       magn(ifft,:)=magn(ifft,:)+ &
-&                            matmul(tmp_sop, cv(fft_rot_r(ifft,isym),:)/real(nsym,SP))
-     enddo
+     forall (ifft=1:fft_size) &
+       & magn(ifft,:)=magn(ifft,:)+ &
+       & matmul(tmp_sop, cv(fft_rot_r(ifft,isym),:)/real(nsym,SP))
    else
      magn(:,3)=magn(:,3)+cv(fft_rot_r(:,isym),3)/real(nsym,SP)
    endif

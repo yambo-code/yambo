@@ -125,9 +125,7 @@ subroutine cutoff_cylinder(q,is_cut)
  !
  call live_timing()
  !
- do concurrent (iq=1:q%nibz,ig=1:wf_ng) 
-   bare_qpg(iq,ig)=sqrt(1._SP/V_cut(iq,ig))
- enddo
+ forall (iq=1:q%nibz,ig=1:wf_ng) bare_qpg(iq,ig)=sqrt(1._SP/V_cut(iq,ig))
  !
  ! cleanup
  call PP_indexes_reset(px)

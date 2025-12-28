@@ -33,7 +33,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
 &                        l_BS_mespin,l_BS_meorb
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
-&                        PAR_COM_Xk_ibz_INDEX
+&                        PAR_COM_Xk_ibz_INDEX,PARALLEL_default_mode
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use timing_m,      ONLY:timing
  use vec_operate,   ONLY:v_rotate,cross_product
@@ -284,8 +284,10 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
    !
    call DIPOLE_ALLOC_global( )
    !
-   ! Here I need the distribution over k
-   call PARALLEL_SETUP_K_scheme("Kdef")
+   ! The call to DIPOLE_IO might have changed the PAR_K_scheme.
+   ! Here I reset it to the previous value
+   if(     trim(PARALLEL_default_mode)=="KQmemory") call PARALLEL_SETUP_K_scheme("K")
+   if(.not.trim(PARALLEL_default_mode)=="KQmemory") call PARALLEL_SETUP_K_scheme("Kdef")
    !
  endif
  !

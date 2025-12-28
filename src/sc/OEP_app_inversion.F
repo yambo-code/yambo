@@ -153,10 +153,8 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
          rhotw_rs(1:QP_ng_Sx) = rhotw_ds(fft_g_table(1:QP_ng_Sx,1))
          !forall(ig1=2:QP_ng_Sx,ig2=2:QP_ng_Sx) rhotw_prd(ig1,ig2) = rhotw_prd(ig1,ig2) + &
          !  & Prefactor*E%f(iv1,ik,1)*conjg(rhotw_rs(ig1))*isc%rhotw(ig2)
-         do concurrent (ig1=2:QP_ng_Sx,ig2=2:QP_ng_Sx) 
-           rhotw_prd(ig1,ig2) = rhotw_prd(ig1,ig2) + &
+	 forall (ig1=2:QP_ng_Sx,ig2=2:QP_ng_Sx) rhotw_prd(ig1,ig2) = rhotw_prd(ig1,ig2) + &
            & Prefactor*E%f(iv1,ik,1)*rhotw_rs(ig1)*isc%rhotw(ig2)
-         enddo
          !
          if (l_is_TR) then
            !rhotw_sum_TR(1:QP_ng_Sx-1)=rhotw_sum_TR(1:QP_ng_Sx-1)+rhotw_rs(2:QP_ng_Sx)

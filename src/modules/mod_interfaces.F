@@ -175,7 +175,7 @@ module interfaces
    subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
      !
      use pars,           ONLY:SP,schlen
-     use petscmatdef,    ONLY:tmat
+     use petscmatdef,    ONLY:tMat
      Mat                         :: M_slepc      ! matrix to diagonalize of stype from slepc
      integer                     :: n_eig        ! number of eigenvalues to compute
      complex(SP)                 :: V_right(:,:) ! right eigenvalues

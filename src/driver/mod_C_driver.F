@@ -18,10 +18,12 @@ module C_driver
  character(50):: code_hash
  character(50):: code_libraries
  character(50):: code_branch
+ character(50):: lumen_version
  !
  interface  
    !
-   subroutine get_version(version,subversion,patchlevel,revision,hash)
+   subroutine get_version(lumenver,version,subversion,patchlevel,revision,hash)
+     character(*), intent(out):: lumenver
      integer     , intent(out):: version
      integer     , intent(out):: subversion
      integer     , intent(out):: patchlevel

@@ -1,5 +1,5 @@
 #
-# [VER] @SVERSION@.@SSUBVERSION@
+# Yambo Fork: @PACKAGE_STRING@
 #
 # Legend: [E]=external library [C]=internal lib to be compiled [I]=internal lib already compiled [X]=used [-]=not used
 # 
@@ -61,7 +61,6 @@
 # [@SLK_check@] SCALAPACK : @SCALAPACK_LIBS_R@ 
 # [@ELPA_check@] ELPA      : @ELPA_LIBS_R@ 
 #                 @ELPA_INCS_R@
-# [@BLACS_check@] BLACS     : @BLACS_LIBS_R@
 # [@FFT_check@] FFT       : @FFT_LIBS_R@
 #                 @FFT_INCS_R@
 # [@PETSC_check@] PETSC     : @PETSC_LIBS_R@ @PETSC_info@

@@ -16,6 +16,7 @@ typedef struct tool_struct
     char *bin;
     char *desc;
     char version_string[500];
+    char lumenver[500];
     char hash[500];
     char *pj;
     int version;

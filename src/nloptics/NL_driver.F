@@ -105,8 +105,10 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
  call DIPOLE_dimensions(E,Dip,NL_bands,(/0._SP,0._SP,0._SP/))
  call DIPOLE_IO(k,E,Dip,'read ',io_err,'NL')
  if(io_err/=0) call error("Error in Dipoles I/O")
- call OVERLAPS_IO(k,E,Dip,'read',io_err,'NL')
- if(io_err/=0) call error("Error in Overlaps I/O")
+ if(.not.l_use_DIPOLES) then 
+   call OVERLAPS_IO(k,E,Dip,'read',io_err,'NL')
+   if(io_err/=0) call error("Error in Overlaps I/O")
+ endif
  !
  ! Generate bare_qpg if required
  !=============================
@@ -286,9 +288,7 @@ subroutine NL_driver(E,X,Xw,k,q,Dip)
      ! ================
      V_bands=cZERO
      do i_sp_pol=1,n_sp_pol
-       do concurrent (i1=1:E%nbf(n_sp_pol)) 
-         V_bands(i1,i1,:,i_sp_pol)=cONE
-       end do
+       forall (i1=1:E%nbf(n_sp_pol)) V_bands(i1,i1,:,i_sp_pol)=cONE
      enddo
      !
    endif

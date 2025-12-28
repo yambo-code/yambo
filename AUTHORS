@@ -1,64 +1,61 @@
 
-ACTIVE DEVELOPERS
-==================
-
-   NAME SURNAME                 (INITIALS)    (since year)
-   ------------			----------    ------------
- * Myrta Gruening                  (MG)  	 (2004)
- * Daniele Varsano                 (DV)  	 (2004)
- * Conor Hogan                     (CH)  	 (2005)
- * Maurizia Palummo                (MP)  	 (2005)
- * Claudio Attaccalite             (CA)  	 (2009)
- * Davide Sangalli                 (DS)  	 (2009)
- * Elena Cannuccia                 (EC)  	 (2011)
- * Andrea Ferretti                 (AF)  	 (2013)
- * Alejandro Molina-Sánchez        (AMS) 	 (2015)
- * Miki Bonacci                    (MB)  	 (2018)
- * Dario Alejandro Leon-Valido     (DALV)	 (2018)
- * Fulvio Paleari                  (FP)  	 (2018)
- * Nicola Spallanzani              (NS)  	 (2019)
- * Pino D’Amico                    (PDA)  	 (2020) 
- * Alberto Guandalini              (AG)  	 (2020)
- * Riccardo Reho                   (RR)  	 (2022)
- * Giacomo Sesti                   (GS)  	 (2022)
- * Nalabothula Muralidhar          (NM)          (2024)
- * Torsten Geirsson                (TG)          (2025)
-
-FORMER DEVELOPERS
-==================
+DEVELOPERS
+===========
 
    NAME SURNAME 		(INITIALS)   (period of activity)
    ------------			----------   --------------------
+ * Davide Sangalli                 (DS)  	 (2009-NOW)
  * Andrea Marini                   (AM)  	 (2001-2025)
- * David Kammerlader               (DK)  	 (2010-2012)
- * Fabio Affinito                  (FA)  	 (2013-2019)
- * Pedro Melo                      (PM)  	 (2013-2022)
- * Ivan Marri                      (IM)  	 (2014-2018)
- * Margherita Marsili              (MM)  	 (2014-2022)
- * Mike Atambo                     (MA)  	 (2015-2018)
- * Pietro Bonfa’                   (PB)  	 (2015-2018)
- * Ryan McMillan                   (RM)  	 (2015-2017)
- * Antimo Marrazzo                 (AR)  	 (2016-2020)
+ * Claudio Attaccalite             (CA)  	 (2009-NOW)
+ * Andrea Ferretti                 (AF)  	 (2013-NOW)
  * Henrique Miranda                (HM)  	 (2016-2018)
- * Elena Molteni                   (EM)  	 (2019-2021)
+ * Daniele Varsano                 (DV)  	 (2004-NOW)
+ * Fulvio Paleari                  (FP)  	 (2018-NOW)
+ * Conor Hogan                     (CH)  	 (2005-2015)
+ * Nalabothula Muralidhar          (NM)          (2024-NOW)
+ * Alberto Guandalini              (AG)  	 (2020-2023)
+ * Myrta Gruening                  (MG)  	 (2004-NOW)
+ * Nicola Spallanzani              (NS)  	 (2019-NOW)
+ * Miki Bonacci                    (MB)  	 (2018-2020)
+ * Dario Alejandro Leon-Valido     (DALV)	 (2018-2024)
+ * Riccardo Reho                   (RR)  	 (2022-NOW)
  * Ignacio Martin Alliati          (IMA) 	 (2020-2024)
+ * Pedro Melo                      (PM)  	 (2013-2022)
  * Blanca Mellado Pinto            (BM)          (2023-2025)
+ * Elena Molteni                   (EM)  	 (2019-2021)
+ * Alejandro Molina-Sánchez        (AMS) 	 (2015-2022)
+ * Ivan Marri                      (IM)  	 (2014-2019)
+ * Pietro Bonfa’                   (PB)  	 (2018-2018)
+ * Giacomo Rossi                   (GR)          (2023-NOW)
+ * Ryan McMillan                   (RM)  	 (2015-2015)
+ * Antimo Marrazzo                 (AR)  	 (2016-2020)
+ * Laura Bellentani                (LB)          (2024-NOW)
+ * Giacomo Sesti                   (GS)  	 (2022-NOW)
+ * Petru Milev                     (PMI)         (2025-NOW)
+ * Torsten Geirsson                (TG)          (2025-NOW)
+ * Margherita Marsili              (MM)  	 (2014-2022)
+ * Pino D’Amico                    (PDA)  	 (2020-2021)
+ * Maurizia Palummo                (MP)  	 (2005-2020)
+ * Elena Cannuccia                 (EC)  	 (2011-2020)
+ * Fabio Affinito                  (FA)  	 (2013-2019)
+ * Mike Atambo                     (MA)  	 (2015-2018)
+ * David Kammerlader               (DK)  	 (2010-2012)
 
 ACKNOWLEDGEMENTS
 =================
 
 In all source files the developers are included with their initials.
 
-Andrea Marini is the original developer of the Yambo code
-
 Davide Sangallli and Claudio Attaccalite are the founders of the Lumen fork
+
+Andrea Marini is the original developer of the Yambo code
 
 For aknowledging the developers Team please refer to the following published articles:
 
-- A Marini, et al. "Yambo: an ab initio tool for excited state calculations",
-  Computer Physics Communications 180 (8), 1392 (2009)
-
 - D Sangalli, et al. "Many-body perturbation theory calculations using the yambo code",
   Journal of physics: Condensed matter 31 (32), 325902 (2019)
+
+- A Marini, et al. "Yambo: an ab initio tool for excited state calculations",
+  Computer Physics Communications 180 (8), 1392 (2009)
 
 For more info please refer to the README file

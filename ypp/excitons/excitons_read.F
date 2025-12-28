@@ -51,6 +51,8 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what,io_err)
  l_eigenvec=index(what,"eigenvectors") >0
  l_clean   =index(what,"clean")        >0
  !
+ io_err=0
+ !
  if(l_check) then
    !
    ! E SOC perturbative
@@ -168,6 +170,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what,io_err)
      YAMBO_FREE_P(BS_E_SOC_corr)
    endif
    call X_reset(Xbsk)
+   io_err=0
    !
  endif
  !

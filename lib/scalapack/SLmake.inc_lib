@@ -32,7 +32,7 @@ FC            = $(fc)
 CC            = $(cc) 
 NOOPT         = $(fcuflags)
 FCFLAGS       = $(fcflags) $(slkfcflags)
-CCFLAGS       = $(cflags)
+CCFLAGS       = $(cflags) -std=gnu90
 FCLOADER      = $(fc)
 CCLOADER      = $(cc)
 FCLOADFLAGS   = $(fcflags)

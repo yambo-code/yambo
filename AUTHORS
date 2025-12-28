@@ -46,16 +46,16 @@ ACKNOWLEDGEMENTS
 
 In all source files the developers are included with their initials.
 
-Andrea Marini is the original developer of the Yambo code
-
 Davide Sangallli and Claudio Attaccalite are the founders of the Lumen fork
+
+Andrea Marini is the original developer of the Yambo code
 
 For aknowledging the developers Team please refer to the following published articles:
 
-- A Marini, et al. "Yambo: an ab initio tool for excited state calculations",
-  Computer Physics Communications 180 (8), 1392 (2009)
-
 - D Sangalli, et al. "Many-body perturbation theory calculations using the yambo code",
   Journal of physics: Condensed matter 31 (32), 325902 (2019)
+
+- A Marini, et al. "Yambo: an ab initio tool for excited state calculations",
+  Computer Physics Communications 180 (8), 1392 (2009)
 
 For more info please refer to the README file

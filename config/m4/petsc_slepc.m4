@@ -38,6 +38,7 @@ compile_slepc="no"
 #
 AC_LANG_PUSH(C)
 AC_CHECK_LIB(dl, dlopen,  [use_libdl="yes";  ],[use_libdl="no";  ],[])
+AC_CHECK_LIB(stdc++, main, [use_libstdc="yes";], [use_libstdc="no";], [])
 AC_LANG_POP(C)
 #
 if test x"$enable_slepc_linalg" = "xyes"; then
@@ -81,7 +82,8 @@ if test -d "$with_petsc_path" || test -d "$with_petsc_libdir" || test x"$with_pe
   try_PETSC_INCS="$IFLAG$try_petsc_incdir" ;
   try_PETSC_LIBS="-L$try_petsc_libdir -lpetsc" ;
   #
-  if test "$use_libdl"    = "yes"; then try_PETSC_LIBS="$try_PETSC_LIBS -ldl -lstdc++"   ; fi
+  if test "$use_libdl"    = "yes"; then try_PETSC_LIBS="$try_PETSC_LIBS -ldl"   ; fi
+  if test "$use_libstdc"  = "yes"; then try_PETSC_LIBS="$try_PETSC_LIBS -lstdc++"   ; fi
   #
   if test x"$with_petsc_libs" != "x" ; then try_PETSC_LIBS="$with_petsc_libs" ; fi
   if test x"$with_petsc_incs" != "x" ; then try_PETSC_INCS="$with_petsc_incs" ; fi
@@ -137,11 +139,11 @@ if test "x$enable_petsc" = "xyes" && test "x$petsc" = "xno" ; then
   fi
   PETSC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${build_precision}/include" ;
   #
-  if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl -lstdc++"   ; fi
-  #
   petsc=yes
   if test -e "$PETSC_LIBS_DN" ; then
     PETSC_LIBS="$PETSC_LIBS_DN" ;
+    if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl"   ; fi
+    if test "$use_libstdc"  = "yes"; then PETSC_LIBS="$PETSC_LIBS -lstdc++"   ; fi
     compile_petsc="no" ;
     if test "x$lapack_shared" = "x1" ; then
       AC_MSG_RESULT([dynamic already compiled]) ;
@@ -151,6 +153,8 @@ if test "x$enable_petsc" = "xyes" && test "x$petsc" = "xno" ; then
     fi
   elif test -e "$PETSC_LIBS_ST" ; then
     PETSC_LIBS="$PETSC_LIBS_ST" ;
+    if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl"   ; fi
+    if test "$use_libstdc"  = "yes"; then PETSC_LIBS="$PETSC_LIBS -lstdc++"   ; fi
     compile_petsc="no" ;
     if test "x$lapack_shared" = "x1" ; then
       AC_MSG_RESULT([static found, despite dynamic lapack.]) ;

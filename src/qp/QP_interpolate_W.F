@@ -153,6 +153,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  call msg('r', 'G-vectors loaded', maxval(G_max_ibz))
  call msg('r', 'Number of interpolated frequencies', Xw%n_freqs)
  !
+
  !
  !Load only the G needed
  X%ng = G_max
@@ -176,6 +177,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
    !Assign X
    do iomega=1,Xw%n_freqs
    do ig1=1,RIM_W_ng
+    ig2max = RIM_W_ng
     do ig2=1,ig2max
      if (RIM_W_is_diagonal) ig2max=ig1
      do iq1=1,q%nibz

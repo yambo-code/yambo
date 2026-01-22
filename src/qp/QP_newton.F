@@ -31,7 +31,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use X_m,           ONLY:X_t,current_iq,l_recalculate_X
  use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,l_update_W,QP_table,&
 &                        QP_n_states,QP_dSc,QP_dSc_delta,GW_iterations,report_Sc,&
-&                        GWo_SC_done,GWo_iterations,SC_E_threshold,On_Mass_Shell_approx
+&                        GWo_SC_done,GWo_iterations,SC_E_threshold,On_Mass_Shell_approx,&
+&                        QP_env_cohsex,QP_XCo_alloc,QP_XCo_free
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,n_bands,spin
  use R_lattice,     ONLY:bz_samp
@@ -44,6 +45,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
 #if defined _QED
  use drivers,       ONLY:l_elphoton_corr
 #endif
+ use environ_m,     ONLY:l_environ
+ !
  implicit none
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
@@ -70,6 +73,9 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    !
  endif
  !
+ ! Allocate environ related quantities
+ if (l_environ) call QP_XCo_alloc(l_environ=.True.)
+ !
  call msg('rn','[Newton] SC iterations ',GWo_iterations)
  !
  iter=0
@@ -85,7 +91,10 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
      if (l_ppa.or.l_cohsex) then
        !
        if (l_RIM_W) call interpolate_W(X,Xw,q,'PPA')
+       !
        call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
+       !
+       if ( l_environ) call QP_environ_cohsex(X,Xk,en,k,q,qp,Xw,iter)
        !
      else 
        !
@@ -145,6 +154,9 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
          !
          if (l_elel_corr.and.allocated(QP_Vnl_xc)) Eqp(i2)=Eqp(i2)+Z(i2)*QP_Vnl_xc(i1)
          if (l_elel_corr.and.allocated(QP_Vxc)   ) Eqp(i2)=Eqp(i2)-Z(i2)*QP_Vxc(i1)
+         !
+         ! environ static contributions
+         if (l_elel_corr.and.l_environ ) Eqp(i2)=Eqp(i2)+Z(i2)*QP_env_cohsex(i1)
          !
        enddo
        !
@@ -248,6 +260,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  if (GWo_iterations<0) GWo_iterations=iter
  if (GW_iterations<0)  GW_iterations =iter
+ !
+ if (l_environ) call QP_XCo_free(l_environ=.True.)
  !
 end subroutine
 

@@ -78,6 +78,7 @@ module QP_m
  complex(SP),allocatable:: QP_Vnl_sex(:)
  complex(SP),allocatable:: QP_Sc(:,:)
  complex(SP),allocatable:: QP_Vxc(:)
+ complex(SP),allocatable:: QP_env_cohsex(:)
  integer,    allocatable:: QP_solver_state(:)
  integer,    allocatable:: QP_table(:,:)
  integer,    allocatable:: QP_W_table(:,:)
@@ -157,15 +158,17 @@ module QP_m
    !
    subroutine QP_XCo_alloc(l_Vxc,l_Vnl_xc,l_screen_hyb)
    implicit none
-     logical, optional, intent(in) :: l_Vxc,l_Vnl_xc,l_screen_hyb
-     logical :: l_Vxc_,l_Vnl_xc_,l_screen_hyb_
+     logical, optional, intent(in) :: l_Vxc,l_Vnl_xc,l_screen_hyb,l_environ
+     logical :: l_Vxc_,l_Vnl_xc_,l_screen_hyb_,l_environ_
      !
      l_Vxc_=.false.
      l_Vnl_xc_=.false.
      l_screen_hyb_=.false.
+     l_environ_=.false.
      if (present(l_Vxc)) l_Vxc_=l_Vxc
      if (present(l_Vnl_xc)) l_Vnl_xc_=l_Vnl_xc
      if (present(l_screen_hyb)) l_screen_hyb_=l_screen_hyb
+     if (present(l_environ)) l_environ_=l_environ
      !
      if (.not.allocated(QP_Vxc).and.l_Vxc_) then
        YAMBO_ALLOC(QP_Vxc,(QP_n_states))
@@ -176,22 +179,28 @@ module QP_m
      if (.not.allocated(QP_Vnl_sex).and.l_screen_hyb_) then
        YAMBO_ALLOC(QP_Vnl_sex,(QP_n_states))
      endif
+     if (.not.allocated(QP_env_cohsex).and.l_environ_) then
+       YAMBO_ALLOC(QP_env_cohsex,(QP_n_states))
+     endif
      if (l_Vnl_xc_)     QP_Vnl_xc=cZERO
      if (l_Vxc_)        QP_Vxc=cZERO
      if (l_screen_hyb_) QP_Vnl_sex=cZERO
+     if (l_environ_)    QP_env_cohsex=cZERO
    end subroutine 
    !
-   subroutine QP_XCo_free(l_Vxc,l_Vnl_xc,l_screen_hyb)
+   subroutine QP_XCo_free(l_Vxc,l_Vnl_xc,l_screen_hyb,l_environ)
    implicit none
-     logical, optional, intent(in) :: l_Vxc,l_Vnl_xc,l_screen_hyb
-     logical :: l_Vxc_,l_Vnl_xc_,l_screen_hyb_
+     logical, optional, intent(in) :: l_Vxc,l_Vnl_xc,l_screen_hyb,l_environ
+     logical :: l_Vxc_,l_Vnl_xc_,l_screen_hyb_,l_environ_
      !
      l_Vxc_=.false.
      l_Vnl_xc_=.false.
      l_screen_hyb_=.false.
+     l_environ_=.false.
      if (present(l_Vxc)) l_Vxc_=l_Vxc
      if (present(l_Vnl_xc)) l_Vnl_xc_=l_Vnl_xc
      if (present(l_screen_hyb)) l_screen_hyb_=l_screen_hyb
+     if (present(l_environ)) l_environ_=l_environ
      !
      if (l_Vxc_) then
        YAMBO_FREE(QP_Vxc)
@@ -201,6 +210,9 @@ module QP_m
      endif
      if (l_screen_hyb_) then
        YAMBO_FREE(QP_Vnl_sex)
+     endif
+     if (l_environ_) then
+       YAMBO_FREE(QP_env_cohsex)
      endif
      !
    end subroutine QP_XCo_free

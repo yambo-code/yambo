@@ -94,7 +94,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
        !
        call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
        !
-       if ( l_environ) call QP_environ_cohsex(X,Xk,en,k,q,qp,Xw,iter)
+       if ( l_environ) call QP_environ_cohsex(X,Xk,en,k,q,qp)
        !
      else 
        !

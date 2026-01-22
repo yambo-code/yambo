@@ -48,7 +48,7 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
 &                        QP_env_cohsex,QP_n_states,QP_G_damp,QP_table
  use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_mat_d,X_t
  use wave_func,     ONLY:WF
- use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,nqibz,RIM_W_E,bare_qpg,bare_qpg_d,&
+ use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,nqibz,RIM_W_E,bare_qpg,bare_qpg_d,q_pt,&
 &                        RIM_W_is_diagonal,RIM_W_ng,RIM_W,RIM_W_d
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
@@ -182,7 +182,7 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
  YAMBO_ALLOC(v_environ%blc,(v_environ%BLCrows(1):v_environ%BLCrows(2),v_environ%BLCcols(1):v_environ%BLCcols(2),1))
  v_environ%blc=cZERO
  !   
- if (compute_on_gpu) then
+ if (have_cuda) then
     YAMBO_ALLOC_SOURCE(v_environ%blc_d,v_environ%blc)
  endif
  !
@@ -344,7 +344,7 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
      ! in cases where no band loops are done (like here). In _SC instead 
      ! it is needed for a different purpose. This is why I use PAR_COM_QP_A2A%CPU_id in this case.
      !
-     if (HEAD_QP_cpu)  QP_env_cohsex(i_qp,:)=QP_env_cohsex(i_qp,:)+dc(1)
+     if (HEAD_QP_cpu)  QP_env_cohsex(i_qp)=QP_env_cohsex(i_qp)+dc(1)
      !
      dc=cZERO
      !

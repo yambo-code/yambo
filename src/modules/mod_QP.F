@@ -156,7 +156,7 @@ module QP_m
  !
  contains
    !
-   subroutine QP_XCo_alloc(l_Vxc,l_Vnl_xc,l_screen_hyb)
+   subroutine QP_XCo_alloc(l_Vxc,l_Vnl_xc,l_screen_hyb,l_environ)
    implicit none
      logical, optional, intent(in) :: l_Vxc,l_Vnl_xc,l_screen_hyb,l_environ
      logical :: l_Vxc_,l_Vnl_xc_,l_screen_hyb_,l_environ_

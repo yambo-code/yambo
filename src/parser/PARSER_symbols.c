@@ -17,6 +17,8 @@
  02111-1307, USA.
 */
 
+#include <string.h>
+#include <strings.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -81,7 +83,7 @@ int rmsym (char *sym_name)
 
 struct init_fntc{
 	char *fname;
-	gsl_complex (*fnct)();
+	gsl_complex (*fnct)(gsl_complex);
 };
 
 static struct init_fntc arith_fncts[] = {

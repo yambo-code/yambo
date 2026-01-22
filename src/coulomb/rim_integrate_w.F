@@ -729,6 +729,7 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
      enddo
      RIM_W(iw,iq,s1,s2)=RIM_acc
      ! old version symmetrization RIM_W(iw,iq,i2,1)=RIM_W(iw,iq,s1,s2)
+    end do 
    enddo
    !
  enddo

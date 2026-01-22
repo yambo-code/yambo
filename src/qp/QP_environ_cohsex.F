@@ -78,8 +78,8 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
  !
  ! Work Space
  !
- integer                  ::i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
-&                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,IO_ACT,timing_steps
+ integer          ::i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
+&                   i_qp_to_start,iq_to_start,is,X_range(2),io_err,ID,IO_ACT,timing_steps
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(elemental_collision),target ::isc,iscp
  character(schlen)::ch,SECTION_name,W_name
@@ -195,11 +195,6 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
  !
  call live_timing(trim(ch),timing_steps)
  !
- ! if (io_RESPONSE) then
- !   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
- !   io_err=io_X(X,Xw,ID)
- ! endif
- !
  Q_loop: do iqbz=iq_to_start,q%nbz
    !
    if (.not.PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) cycle
@@ -210,52 +205,36 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
    !
    if (iqibz/=isc%iqref) then
      !
-     iq_mem=PAR_Q_ibz_index(iqibz)
-     ! X_range=(/1,Xw%n_freqs/)
-     ! if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
-     !
      call DEV_SUB(scatter_Gamp)(isc,'c')
      if (have_cuda) call dev_memcpy(isc%gamp,isc%gamp_d)
      !
-     ! I/O
+     ! In principle, v_environ could be re-read from a DB
+     ! At present, we recompute it for simplicity
      !
-!     if (io_RESPONSE) then
-!       !
-!       IO_ACT=manage_action(RD_CL_IF_END,iqibz,iq_to_start,nqibz,PAR_INDEX=PAR_IND_Q_ibz)
-!       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
-!       io_err=io_X(X,Xw,ID)
-!       !
-!       call deliver_IO_error_message(io_err,'PP/Em1s',STOP_it=.TRUE.)
-!       !
-!     endif
-       !
-       ! In principle, v_environ could be re-read from a DB
-       ! At present, we recompute it for simplicity
-       !
-       call environ_vcoul(q_pt(iqibz,:),v_environ,.false.)
-       
-       !
-       !$omp parallel do default(shared), private(ig1,ig2)
-       do ig2=1,X%ng
-         do ig1=1,X%ng
-           ! 
-           ! Here: X_mat is set to v_reac(G,G') * (q+G) * (q+G') * gamp(G,G')
-           !
-           X_mat(ig1,ig2,X_range(1))= v_environ%blc(ig1,ig2,X_range(1)) * &
-&                                     bare_qpg(iqibz,ig1)*bare_qpg(iqibz,ig2)/(4.0_SP*pi)
-           !
-           ! subtract bare coulomb
-           !
-           if (ig1==ig2) X_mat(ig1,ig1,X_range(1))=X_mat(ig1,ig1,X_range(1))-1.0_SP
-           !
-           ! multiply by gamp (integration volume)
-           !
-           X_mat(ig1,ig2,X_range(1))=X_mat(ig1,ig2,X_range(1))*isc%gamp(ig1,ig2)
-           !
-         enddo
+     call environ_vcoul(q_pt(iqibz,:),v_environ,.false.)
+     
+     !
+     !$omp parallel do default(shared), private(ig1,ig2)
+     do ig2=1,X%ng
+       do ig1=1,X%ng
+         ! 
+         ! Here: X_mat is set to v_reac(G,G') * (q+G) * (q+G') * gamp(G,G')
+         !
+         X_mat(ig1,ig2,X_range(1))= v_environ%blc(ig1,ig2,X_range(1)) * &
+&                                   bare_qpg(iqibz,ig1)*bare_qpg(iqibz,ig2)/(4.0_SP*pi)
+         !
+         ! subtract bare coulomb
+         !
+         if (ig1==ig2) X_mat(ig1,ig1,X_range(1))=X_mat(ig1,ig1,X_range(1))-1.0_SP
+         !
+         ! multiply by gamp (integration volume)
+         !
+         X_mat(ig1,ig2,X_range(1))=X_mat(ig1,ig2,X_range(1))*isc%gamp(ig1,ig2)
+         !
        enddo
-       !$omp end parallel do
-       !
+     enddo
+     !$omp end parallel do
+     !
      X_is_TR_rotated=.false.
      !
    endif
@@ -288,14 +267,6 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
      !
      if (i_qp==QP_n_states) i_qp_to_start=1
      !
-!#if defined _SC  
-!     !
-!     ! In OEP only vc matrix elements so ... no cc' no vv' 
-!     ! (cv is not permitted by the order in QP_table)
-!     !                       (c)         (v)
-!     if (l_sc_srpa.and.(QP_table(i_qp,1)>E%nbf.or.QP_table(i_qp,2)<=E%nbf)) cycle
-!#endif
-     !
      isc%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
      isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),spin(QP_table(i_qp,:))/)
      isc%qs(1)=qindx_S(QP_table(i_qp,3),iqbz,2)
@@ -306,8 +277,6 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
      dc=cZERO
      !
      ! COH (using completeness relation)
-     !
-     ! if (((l_sc_srpa.or.l_sc_coh.or.l_cohsex).and..not.COHSEX_use_empties).or.l_GW_terminator) then
      !
      iscs_save(1,: )=isc%os
      iscs_save(2,:3)=isc%qs
@@ -351,9 +320,6 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
      isc%os=iscs_save(1,: )
      isc%qs=iscs_save(2,:3)
      !
-     ! UP TO HERE
-     !
-     ! endif
      !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !
@@ -377,34 +343,22 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
        !
        dc=cZERO
        !
-
-       !else if (l_sc_sex.or.l_cohsex.or.(l_sc_coh.and.COHSEX_use_empties)) then
-         !
-         call M_by_V('N', X%ng, X_mat(:,:,X_range(1)), conjg(iscp%rhotw), local_rhotw)
-         !
-         pre_factor=0.0_SP
-         !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor)
-         do ig1=1,X%ng
-           pre_factor=pre_factor+isc%rhotw(ig1)*local_rhotw(ig1)
-         enddo
-         !$omp end parallel do
-
-         !
-         ! SEX
-         !
-         ! if (l_sc_sex.or.l_cohsex) 
-         dc(1)=-4._SP/spin_occ*pi*pre_factor*e%f(isc%os(1),isc%os(2),isc%os(4))
-         !
-       !  !
-       !  ! COH (when no empties are used the COH part is indeed calculated above)
-       !  !
-       !  if (COHSEX_use_empties) then
-       !    if (l_sc_coh.or.l_cohsex) dc(2)=2._SP*pi*pre_factor
-       !  endif
-         !
-         QP_env_cohsex(i_qp)=QP_env_cohsex(i_qp)+dc(1)
-         !
-       !endif
+       ! SEX
+       !
+       !
+       call M_by_V('N', X%ng, X_mat(:,:,X_range(1)), conjg(iscp%rhotw), local_rhotw)
+       !
+       pre_factor=0.0_SP
+       !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor)
+       do ig1=1,X%ng
+         pre_factor=pre_factor+isc%rhotw(ig1)*local_rhotw(ig1)
+       enddo
+       !$omp end parallel do
+       !
+       dc(1)=-4._SP/spin_occ*pi*pre_factor*e%f(isc%os(1),isc%os(2),isc%os(4))
+       !
+       QP_env_cohsex(i_qp)=QP_env_cohsex(i_qp)+dc(1)
+       !
        !
      enddo ! loop on scattering states
      !

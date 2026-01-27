@@ -95,10 +95,10 @@ if test -d "${MKLROOT}" &&  test x"$try_fft_libs" = "x" ; then
    mkl_libdir="${MKLROOT}/lib/intel64"
    case "${FCKIND}" in
    *gfortran* )
-   	try_fft_libs="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_core -lmkl_sequential -lpthread -lm"
+   	try_fft_libs="-L${mkl_libdir} -Wl,-rpath,${mkl_libdir} -lmkl_gf_lp64 -lmkl_core -lmkl_sequential -lpthread -lm"
     ;;
     *intel* | *pgi* | *nvfortran* )
-   	try_fft_libs="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm"
+   	try_fft_libs="-L${mkl_libdir} -Wl,-rpath,${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm"
     ;;
     esac 
 fi

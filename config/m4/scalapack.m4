@@ -49,7 +49,7 @@ if test -d "${MKLROOT}" ; then
       lib_mkl_blacs="mkl_blacs_intelmpi_lp64" ;;
    esac
    #
-   try_mkl_scalapack="-L${mkl_libdir} -lmkl_scalapack_lp64 -l${lib_mkl_blacs}"
+   try_mkl_scalapack="-L${mkl_libdir} -Wl,-rpath,${mkl_libdir} -lmkl_scalapack_lp64 -l${lib_mkl_blacs}"
 fi
 #
 # Parse configure options

@@ -35,6 +35,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  use timing_m,      ONLY:timing
  use gpu_m,         ONLY:have_gpu
  use devxlib,       ONLY:devxlib_mapped
+ use mpi,           ONLY:MPI_Wtime
  !
 #include<y_memory.h>
 #include<dev_defs.h>
@@ -62,6 +63,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  integer             :: N,lib_in_use
  type (PAR_matrix)   :: M_loc,B_loc,C_loc,V_loc
  logical             :: USE_GPU
+ double precision    :: starttime,endtime
+ character(len=20)   :: matfilename
  !
  call timing("LINEAR ALGEBRA",OPR="start")
  !
@@ -139,6 +142,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      endif
      YAMBO_ALLOC(V_loc%blc,(V_loc%BLCrows(1):V_loc%BLCrows(2),V_loc%BLCcols(1):V_loc%BLCcols(2),V_loc%Nb))
      !
+     starttime = MPI_Wtime()
      if(idriver==DIAGO) call PARALLEL_HERMITIAN_diagonalization( M_loc, V_loc, N, E_real )
      !
      if(idriver==DIAGX) then 
@@ -148,6 +152,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      if(idriver==CHASE) then
         call PARALLEL_HERMITIAN_chase(M_loc, V_loc, N, E_real, neig)
      endif
+     endtime = MPI_Wtime()
+
+     print *, "LINEAR_ALGEBRA_eigensolver_time=",endtime-starttime
 
      !print *, E_real(:)
      !print *, V_loc%blc(1:10,1:10,V_loc%I)
@@ -247,6 +254,25 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    ! ###> SERIAL DIAGONALIZATION
    !
    if (idriver==DIAGO) then
+
+!        print *, "Writing the matrix..." 
+!       matfilename = 'matrix.bin'
+
+! Open the file for unformatted binary output
+!        open(unit=10, file=matfilename, form='unformatted', access='stream')
+
+! Write the matrix into the file
+
+!        if (present(M_slk)) then 
+!                 write(10) M_slk%blc(:,:,M_slk%I)
+!        else
+!                 write(10) M
+!        endif
+
+!        print *, "Writing the matrix... DONE" 
+    
+! Close the file
+!        close(10)
      !
      if (present(E_cmpl)) then
        !
@@ -299,6 +325,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
        !
      else
        !
+        print *, "Solving the eigenvalue problem with ChASE..." 
        !... Hermitian case
        if (present(M_slk)) then
          call SERIAL_HERMITIAN_chase(N,M_slk%blc(:,:,M_slk%I),E_real,neig)
@@ -306,6 +333,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
          call SERIAL_HERMITIAN_chase(N,M,E_real,neig)
        endif
        !
+       print *, "Solving the eigenvalue problem with ChASE... DONE" 
      endif
    endif
    !

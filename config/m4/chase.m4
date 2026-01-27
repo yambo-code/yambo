@@ -17,10 +17,15 @@ then
 	if test x"$with_chase_libdir" != "x"
 	then
 		echo "LIBDIR = ${with_chase_libdir}"
+	else
+		with_chase_libdir="${ChASEROOT}/build/lib64"
+	fi
+	
+	if test x"$with_chase_includedir" != "x"
+	then
 		echo "INCLUDEDIR = ${with_chase_includedir}"
 	else
-		with_chase_includedir="${ChASEROOT}/include"
-		with_chase_libdir="${ChASEROOT}/lib64"
+		with_chase_includedir="${ChASEROOT}/build/include"
 	fi
 
 	AC_SUBST([CHASE_LIBS_R],["$with_chase_libdir"])
@@ -39,13 +44,14 @@ then
         #        cd ../..
         #fi
 
-        AC_CHECK_FILES("${ChASEROOT}/lib64/libchase_c.a"    ,[],[AC_ERROR([lchase_c not found   ])])
-        AC_CHECK_FILES("${ChASEROOT}/lib64/libchase_f.a"    ,[],[AC_ERROR([lchase_f not found   ])])
-        AC_CHECK_FILES("${ChASEROOT}/lib64/libchase_cuda.a" ,[],[AC_ERROR([lchase_cuda not found])])
+        AC_CHECK_FILES("${CHASE_LIBS_R}/libchase_c.a"    ,[],[AC_ERROR([lchase_c not found   ])])
+        AC_CHECK_FILES("${CHASE_LIBS_R}/libchase_f.a"    ,[],[AC_ERROR([lchase_f not found   ])])
+        AC_CHECK_FILES("${CHASE_LIBS_R}/libchase_cuda_kernels.a" ,[],[AC_ERROR([lchase_cuda not found])])
 
-        AC_SUBST([CHASE_INCS],["${CHASE_INCS} -I${ChASEROOT}/include"])
-        AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -L${ChASEROOT}/lib64 -lchase_c -lchase_f -lchase_cuda "])
+        AC_SUBST([CHASE_INCS],["${CHASE_INCS} -I${CHASE_INCS_R}"])
+        AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels "])
         AC_SUBST([CHASE_LIBS],["${CHASE_LIBS}  -lopenblas -lgfortran -lscalapack -lstdc++ "])
+	
         AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -lcudart -lcublas -lcusolver -lcudart -lcurand -lnccl "])
 
         #LIBS="${LIBS} ${CHASE_LIBS} "

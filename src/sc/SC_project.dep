@@ -15,5 +15,4 @@
  SC_precondition.o
  SC_start_and_restart.o
  V_Mean_Potential.o
- objects.o
 

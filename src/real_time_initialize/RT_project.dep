@@ -5,5 +5,4 @@
  RT_occupations_and_levels_init.o
  RT_occupations_update.o
  RT_start_and_restart.o
- objects.o
 

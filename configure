@@ -7693,6 +7693,7 @@ fi
 	-zallextract*| -zdefaultextract)
 	  ac_cv_fc_libs="$ac_cv_fc_libs $ac_arg"
 	  ;;
+	-mllvm) ${2+shift};; # Defend against 'clang -mllvm -loopopt=0'.
 	  # Ignore everything else.
   esac
 done
@@ -10392,6 +10393,7 @@ fi
 	-zallextract*| -zdefaultextract)
 	  ac_cv_f77_libs="$ac_cv_f77_libs $ac_arg"
 	  ;;
+	-mllvm) ${2+shift};; # Defend against 'clang -mllvm -loopopt=0'.
 	  # Ignore everything else.
   esac
 done
@@ -13299,6 +13301,10 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
   #
   if test -d "$try_hdf5_libdir" ; then try_HDF5_LIBS="-L$try_hdf5_libdir -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
   #
+  # Add zlib dependency if HDF5 libraries were set from library directory
+  #
+  if test "$use_libz" = "yes" && test x"$with_hdf5_libs" = "x" && test -d "$try_hdf5_libdir"; then try_HDF5_LIBS="$try_HDF5_LIBS -lz" ; fi
+  #
   if test -d "$try_hdf5_incdir" ; then try_HDF5_INCS="$IFLAG$try_hdf5_incdir" ; fi
   #
   save_libs="$LIBS" ;
@@ -13354,16 +13360,38 @@ $as_echo_n "checking for HDF5 using h5pfc/h5fc system compilers... " >&6; } ;
     #
     # Check for the existence of the pre-compiled library corresponding to what needed by yambo
     #
+    # Original code (extracts -L paths but may miss some -l flags):
+    #if test -e $h5pfc && test $IO_LIB_VER = "parallel"; then
+    #   try_HDF5_LIBS=`$h5pfc -show | awk -F'-L' '{$1=""; for (i=2; i<=NF;i++) $i="-L"$i; print $0}'`
+    #   try_hdf5_incdir=`$h5pfc -show | awk -F'-I' '{print $2}' | awk '{print $1}'`
+    #   IO_LIB_VER="parallel";
+    #elif test -e $h5fc && test $IO_LIB_VER = "serial"; then
+    #   try_HDF5_LIBS=`$h5fc -show | awk -F'-L' '{$1=""; for (i=2; i<=NF;i++) $i="-L"$i; print $0}'`
+    #   try_hdf5_incdir=`$h5fc -show | awk -F'-I' '{print $2}' | awk '{print $1}'`
+    #   IO_LIB_VER="serial";
+    #   enable_hdf5_par_io="no";
+    #fi
+    #
+    # New code: extract libdir and build complete library list with correct ordering
+    #
     if test -e $h5pfc && test $IO_LIB_VER = "parallel"; then
-       try_HDF5_LIBS=`$h5pfc -show | awk -F'-L' '{$1=""; for (i=2; i<=NF;i++) $i="-L"$i; print $0}'`
+       try_hdf5_libdir=`$h5pfc -show | awk -F'-L' '{print $2}' | awk '{print $1}'`
        try_hdf5_incdir=`$h5pfc -show | awk -F'-I' '{print $2}' | awk '{print $1}'`
        IO_LIB_VER="parallel";
     elif test -e $h5fc && test $IO_LIB_VER = "serial"; then
-       try_HDF5_LIBS=`$h5fc -show | awk -F'-L' '{$1=""; for (i=2; i<=NF;i++) $i="-L"$i; print $0}'`
+       try_hdf5_libdir=`$h5fc -show | awk -F'-L' '{print $2}' | awk '{print $1}'`
        try_hdf5_incdir=`$h5fc -show | awk -F'-I' '{print $2}' | awk '{print $1}'`
        IO_LIB_VER="serial";
        enable_hdf5_par_io="no";
     fi
+    #
+    # Build complete HDF5 library list with correct ordering for static linking
+    # Order: HL Fortran -> Fortran -> HL C -> Core C -> dependencies
+    #
+    if test -d "$try_hdf5_libdir"; then
+       try_HDF5_LIBS="-L$try_hdf5_libdir -lhdf5_hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5"
+    fi
+    if test "$use_libz" = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lz" ; fi
     #
     try_HDF5_INCS="$IFLAG$try_hdf5_incdir" ;
     #
@@ -15550,10 +15578,15 @@ then
 	if test x"$with_chase_libdir" != "x"
 	then
 		echo "LIBDIR = ${with_chase_libdir}"
+	else
+		with_chase_libdir="${ChASEROOT}/build/lib64"
+	fi
+
+	if test x"$with_chase_includedir" != "x"
+	then
 		echo "INCLUDEDIR = ${with_chase_includedir}"
 	else
-		with_chase_includedir="${ChASEROOT}/include"
-		with_chase_libdir="${ChASEROOT}/lib64"
+		with_chase_includedir="${ChASEROOT}/build/include"
 	fi
 
 	CHASE_LIBS_R="$with_chase_libdir"
@@ -15574,15 +15607,15 @@ then
         #        cd ../..
         #fi
 
-        as_ac_File=`$as_echo "ac_cv_file_"${ChASEROOT}/lib64/libchase_c.a"" | $as_tr_sh`
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for \"${ChASEROOT}/lib64/libchase_c.a\"" >&5
-$as_echo_n "checking for \"${ChASEROOT}/lib64/libchase_c.a\"... " >&6; }
+        as_ac_File=`$as_echo "ac_cv_file_"${CHASE_LIBS_R}/libchase_c.a"" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for \"${CHASE_LIBS_R}/libchase_c.a\"" >&5
+$as_echo_n "checking for \"${CHASE_LIBS_R}/libchase_c.a\"... " >&6; }
 if eval \${$as_ac_File+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   test "$cross_compiling" = yes &&
   as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
-if test -r ""${ChASEROOT}/lib64/libchase_c.a""; then
+if test -r ""${CHASE_LIBS_R}/libchase_c.a""; then
   eval "$as_ac_File=yes"
 else
   eval "$as_ac_File=no"
@@ -15594,22 +15627,22 @@ $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
 
 cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_"${ChASEROOT}/lib64/libchase_c.a"" | $as_tr_cpp` 1
+#define `$as_echo "HAVE_"${CHASE_LIBS_R}/libchase_c.a"" | $as_tr_cpp` 1
 _ACEOF
 
 else
   as_fn_error $? "lchase_c not found   " "$LINENO" 5
 fi
 
-        as_ac_File=`$as_echo "ac_cv_file_"${ChASEROOT}/lib64/libchase_f.a"" | $as_tr_sh`
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for \"${ChASEROOT}/lib64/libchase_f.a\"" >&5
-$as_echo_n "checking for \"${ChASEROOT}/lib64/libchase_f.a\"... " >&6; }
+        as_ac_File=`$as_echo "ac_cv_file_"${CHASE_LIBS_R}/libchase_f.a"" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for \"${CHASE_LIBS_R}/libchase_f.a\"" >&5
+$as_echo_n "checking for \"${CHASE_LIBS_R}/libchase_f.a\"... " >&6; }
 if eval \${$as_ac_File+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   test "$cross_compiling" = yes &&
   as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
-if test -r ""${ChASEROOT}/lib64/libchase_f.a""; then
+if test -r ""${CHASE_LIBS_R}/libchase_f.a""; then
   eval "$as_ac_File=yes"
 else
   eval "$as_ac_File=no"
@@ -15621,22 +15654,22 @@ $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
 
 cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_"${ChASEROOT}/lib64/libchase_f.a"" | $as_tr_cpp` 1
+#define `$as_echo "HAVE_"${CHASE_LIBS_R}/libchase_f.a"" | $as_tr_cpp` 1
 _ACEOF
 
 else
   as_fn_error $? "lchase_f not found   " "$LINENO" 5
 fi
 
-        as_ac_File=`$as_echo "ac_cv_file_"${ChASEROOT}/lib64/libchase_cuda.a"" | $as_tr_sh`
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for \"${ChASEROOT}/lib64/libchase_cuda.a\"" >&5
-$as_echo_n "checking for \"${ChASEROOT}/lib64/libchase_cuda.a\"... " >&6; }
+        as_ac_File=`$as_echo "ac_cv_file_"${CHASE_LIBS_R}/libchase_cuda_kernels.a"" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for \"${CHASE_LIBS_R}/libchase_cuda_kernels.a\"" >&5
+$as_echo_n "checking for \"${CHASE_LIBS_R}/libchase_cuda_kernels.a\"... " >&6; }
 if eval \${$as_ac_File+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   test "$cross_compiling" = yes &&
   as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
-if test -r ""${ChASEROOT}/lib64/libchase_cuda.a""; then
+if test -r ""${CHASE_LIBS_R}/libchase_cuda_kernels.a""; then
   eval "$as_ac_File=yes"
 else
   eval "$as_ac_File=no"
@@ -15648,7 +15681,7 @@ $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
 
 cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_"${ChASEROOT}/lib64/libchase_cuda.a"" | $as_tr_cpp` 1
+#define `$as_echo "HAVE_"${CHASE_LIBS_R}/libchase_cuda_kernels.a"" | $as_tr_cpp` 1
 _ACEOF
 
 else
@@ -15656,9 +15689,9 @@ else
 fi
 
 
-        CHASE_INCS="${CHASE_INCS} -I${ChASEROOT}/include"
+        CHASE_INCS="${CHASE_INCS} -I${CHASE_INCS_R}"
 
-        CHASE_LIBS="${CHASE_LIBS} -L${ChASEROOT}/lib64 -lchase_c -lchase_f -lchase_cuda "
+        CHASE_LIBS="${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels "
 
         CHASE_LIBS="${CHASE_LIBS}  -lopenblas -lgfortran -lscalapack -lstdc++ "
 

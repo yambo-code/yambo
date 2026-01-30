@@ -158,7 +158,7 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
  call elemental_collision_alloc(isc,NG=isc%ngrho,NG_GAMP=(/X%ng,X%ng/),TITLE="GW")
  call elemental_collision_alloc(iscp,NG=isc%ngrho,TITLE="GW")
  !
- call timing('GW(ppa)',OPR='start')
+ call timing('QP_environ_cohsex',OPR='start')
  !
  ! Plasmon-Pole/Static interaction DB I/O
  !

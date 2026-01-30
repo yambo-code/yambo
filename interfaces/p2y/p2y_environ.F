@@ -124,7 +124,7 @@ subroutine p2y_environ(filename)
  !
 ! XXX
  ! Water specific values
- eps(:) = 1 + ((1.78-1)/(78.5-1))*(eps(:) - 1)
+ ! eps(:) = 1 + ((1.78-1)/(78.5-1))*(eps(:) - 1)
 ! XXX
 
  !

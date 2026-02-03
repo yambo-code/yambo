@@ -79,7 +79,7 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
  ! Work Space
  !
  integer          ::i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
-&                   i_qp_to_start,iq_to_start,is,X_range(2),io_err,ID,IO_ACT,timing_steps
+&                   i_qp_to_start,iq_to_start,is,io_err,ID,IO_ACT,timing_steps
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(elemental_collision),target ::isc,iscp
  character(schlen)::ch,SECTION_name,W_name
@@ -220,16 +220,16 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
          ! 
          ! Here: X_mat is set to v_reac(G,G') * (q+G) * (q+G') * gamp(G,G')
          !
-         X_mat(ig1,ig2,X_range(1))= v_environ%blc(ig1,ig2,X_range(1)) * &
+         X_mat(ig1,ig2,1)= v_environ%blc(ig1,ig2,1) * &
 &                                   bare_qpg(iqibz,ig1)*bare_qpg(iqibz,ig2)/(4.0_SP*pi)
          !
          ! subtract bare coulomb
          !
-         if (ig1==ig2) X_mat(ig1,ig1,X_range(1))=X_mat(ig1,ig1,X_range(1))-1.0_SP
+         if (ig1==ig2) X_mat(ig1,ig1,1)=X_mat(ig1,ig1,1)-1.0_SP
          !
          ! multiply by gamp (integration volume)
          !
-         X_mat(ig1,ig2,X_range(1))=X_mat(ig1,ig2,X_range(1))*isc%gamp(ig1,ig2)
+         X_mat(ig1,ig2,1)=X_mat(ig1,ig2,1)*isc%gamp(ig1,ig2)
          !
        enddo
      enddo
@@ -252,7 +252,7 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
      !
      ! Note (AF) that $omp directives are inside mat_transpose
      !
-     call mat_transpose(X_mat(:,:,X_range(1)))
+     call mat_transpose(X_mat(:,:,1))
      X_is_TR_rotated=.true.
    endif
    !
@@ -292,7 +292,7 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
        !$omp parallel do default(shared), private(ig1,ig2), reduction(+:dp_dummy)
        do ig2=1,X%ng
          do ig1=1,X%ng
-           dp_dummy=dp_dummy+cmplx(2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))*X_mat(ig1,ig2,X_range(1)),kind=DP)
+           dp_dummy=dp_dummy+cmplx(2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))*X_mat(ig1,ig2,1),kind=DP)
          enddo
        enddo
        !$omp end parallel do
@@ -300,7 +300,7 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
        !$omp parallel do default(shared), private(ig1,ig2), reduction(+:dp_dummy)
        do ig2=1,X%ng
          do ig1=1,X%ng
-           dp_dummy=dp_dummy+cmplx(2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,X_range(1)),kind=DP)
+           dp_dummy=dp_dummy+cmplx(2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,1),kind=DP)
          enddo
        enddo
        !$omp end parallel do
@@ -346,7 +346,7 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
        ! SEX
        !
        !
-       call M_by_V('N', X%ng, X_mat(:,:,X_range(1)), conjg(iscp%rhotw), local_rhotw)
+       call M_by_V('N', X%ng, X_mat(:,:,1), conjg(iscp%rhotw), local_rhotw)
        !
        pre_factor=0.0_SP
        !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor)

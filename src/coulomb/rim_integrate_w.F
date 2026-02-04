@@ -20,16 +20,16 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
  use com,           ONLY:msg
  use vec_operate,   ONLY:c2a,iku_v_norm
  use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_b,k_grid_uc_vol,q0_def_norm,&
-&                        RIM_W_ng,q_pt,b,RIM_W_is_diagonal,idir,RIM_W,RIM_W_d,&
+&                        RIM_W_ng,q_pt,RIM_W_is_diagonal,idir,RIM_W,RIM_W_d,&
 &                        aux_RIM_W,f_coeff,DEV_VAR(f_coeff),cut_is_slab,RIM_id_epsm1_reference,rimw_type
- use D_lattice,     ONLY:alat,a
+ use D_lattice,     ONLY:alat
  use frequency,     ONLY:w_samp
  use gpu_m,         ONLY:have_gpu
  use devxlib,       ONLY:devxlib_memcpy_d2h,devxlib_memcpy_h2d
  !
 #include<y_memory.h>
  !
- integer      :: iq,N_out,i_dir
+ integer      :: iq,N_out
  real(SP)     :: em1_anis(3),qtmp(3),qr_rlu(3)
  real(SP)     :: qr(3,RIM_n_rand_pts)
  real(SP) DEV_ATTR :: qr_d(3,RIM_n_rand_pts)
@@ -452,9 +452,8 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
      !
      case("metal")
      !
-     call c2a(v_in=qr(:,i1),v_out=qr_rlu(:),mode='ki2a')
-     !
      do i1=1,RIM_n_rand_pts
+       call c2a(v_in=qr(:,i1),v_out=qr_rlu(:),mode='ki2a')
        !
        r1=sqrt((qr(1,i1)*2.*pi/alat(1))**2+(qr(2,i1)*2.*pi/alat(2))**2 + &
 &              (qr(3,i1)*2.*pi/alat(3))**2)

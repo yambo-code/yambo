@@ -117,11 +117,11 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
        !
        !r1=iku_v_norm(qpGr+q_sampl)*iku_v_norm(qpGc+q_sampl)
        !kz
-       slab_vz1=(qr(idir(1),i2)+q_pt(iq,idir(1))+g_vec(i1,idir(1)))*2.*pi/alat(idir(1))
+       slab_vz1=(qr(idir(1),i2)+q_pt(iq,idir(1))+g_vec(i1,idir(1)))*2._SP*pi/alat(idir(1))
        !kxy
-       slab_vplane1=sqrt(((qr(idir(2),i2)+q_pt(iq,idir(2))+g_vec(i1,idir(2)))*2.*pi/ &
+       slab_vplane1=sqrt(((qr(idir(2),i2)+q_pt(iq,idir(2))+g_vec(i1,idir(2)))*2._SP*pi/ &
 &                         alat(idir(2)))**2 + ((qr(idir(3),i2)+q_pt(iq,idir(3))      &
-&                        +g_vec(i1,idir(3)))*2.*pi/alat(idir(3)))**2)
+&                        +g_vec(i1,idir(3)))*2._SP*pi/alat(idir(3)))**2)
        !
        if (slab_vplane1 < q0_def_norm) slab_vplane1 = q0_def_norm
        pre_factor = 1.-exp(-slab_vplane1*lcut)*cos(slab_vz1*lcut)
@@ -134,9 +134,9 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
        !
        pre_factor=1._SP
        !
-       slab_vplane1=sqrt(((qr(1,i2)+q_pt(iq,1)+g_vec(i1,1))*2.*pi/alat(1))**2 + &
-&                        ((qr(2,i2)+q_pt(iq,2)+g_vec(i1,2))*2.*pi/alat(2))**2 + &
-&                        ((qr(3,i2)+q_pt(iq,3)+g_vec(i1,3))*2.*pi/alat(3))**2)
+       slab_vplane1=sqrt(((qr(1,i2)+q_pt(iq,1)+g_vec(i1,1))*2._SP*pi/alat(1))**2 + &
+&                        ((qr(2,i2)+q_pt(iq,2)+g_vec(i1,2))*2._SP*pi/alat(2))**2 + &
+&                        ((qr(3,i2)+q_pt(iq,3)+g_vec(i1,3))*2._SP*pi/alat(3))**2)
        !
        vslab(i2,i1) = sqrt(4._SP*pi*pre_factor/slab_vplane1**2)
        !
@@ -229,11 +229,11 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
        !
        call c2a(v_in=qr(:,i1),v_out=qr_rlu(:),mode='ki2a')
        !
-       slab_vplane1=sqrt((qr(idir(2),i1)*2.*pi/alat(idir(2)))**2 + &
-&                        (qr(idir(3),i1)*2.*pi/alat(idir(3)))**2)
+       slab_vplane1=sqrt((qr(idir(2),i1)*2._SP*pi/alat(idir(2)))**2 + &
+&                        (qr(idir(3),i1)*2._SP*pi/alat(idir(3)))**2)
        !kxy
-       r1=sqrt((qr(1,i1)*2.*pi/alat(1))**2+(qr(2,i1)*2.*pi/alat(2))**2 + &
-&              (qr(3,i1)*2.*pi/alat(3))**2)
+       r1=sqrt((qr(1,i1)*2._SP*pi/alat(1))**2+(qr(2,i1)*2._SP*pi/alat(2))**2 + &
+&              (qr(3,i1)*2._SP*pi/alat(3))**2)
        !
        !Regularization
        if (r1 < 1.e-5) then
@@ -301,11 +301,11 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
        !
        call c2a(v_in=qr(:,i1),v_out=qr_rlu(:),mode='ki2a')
        !
-       slab_vplane1=sqrt((qr(idir(2),i1)*2.*pi/alat(idir(2)))**2 + &
-&                        (qr(idir(3),i1)*2.*pi/alat(idir(3)))**2)
+       slab_vplane1=sqrt((qr(idir(2),i1)*2._SP*pi/alat(idir(2)))**2 + &
+&                        (qr(idir(3),i1)*2._SP*pi/alat(idir(3)))**2)
        !kxy
-       r1=sqrt((qr(1,i1)*2.*pi/alat(1))**2+(qr(2,i1)*2.*pi/alat(2))**2 + &
-&              (qr(3,i1)*2.*pi/alat(3))**2)
+       r1=sqrt((qr(1,i1)*2._SP*pi/alat(1))**2+(qr(2,i1)*2._SP*pi/alat(2))**2 + &
+&              (qr(3,i1)*2._SP*pi/alat(3))**2)
        !
        if (r1 < 1.e-5) then
          vslab2 = 4._DP*pi/q0_def_norm**2
@@ -352,11 +352,11 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
 &            *abs(qr_rlu(2)) + f_coeff(4,1,1,1,1)*abs(qr_rlu(3)) + f_coeff(5,1,1,1,1)      &
 &            *qr_rlu(1)**2 + f_coeff(6,1,1,1,1)*qr_rlu(2)**2 + f_coeff(7,1,1,1,1)*qr_rlu(3)**2
        !
-       slab_vplane1=sqrt((qr(idir(2),i1)*2.*pi/alat(idir(2)))**2+&
-&                          (qr(idir(3),i1)*2.*pi/alat(idir(3)))**2)
+       slab_vplane1=sqrt((qr(idir(2),i1)*2._SP*pi/alat(idir(2)))**2+&
+&                          (qr(idir(3),i1)*2._SP*pi/alat(idir(3)))**2)
        !
-       r1=sqrt((qr(1,i1)*2.*pi/alat(1))**2+(qr(2,i1)*2.*pi/alat(2))**2 + &
-&             (qr(3,i1)*2.*pi/alat(3))**2)
+       r1=sqrt((qr(1,i1)*2._SP*pi/alat(1))**2+(qr(2,i1)*2._SP*pi/alat(2))**2 + &
+&             (qr(3,i1)*2._SP*pi/alat(3))**2)
        !
        if (r1 < 1.e-5) then
           !
@@ -393,11 +393,11 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
        !
        call c2a(v_in=qr(:,i1),v_out=qr_rlu(:),mode='ki2a')
        !
-       slab_vplane1=sqrt((qr(idir(2),i1)*2.*pi/alat(idir(2)))**2 + &
-&                        (qr(idir(3),i1)*2.*pi/alat(idir(3)))**2)
+       slab_vplane1=sqrt((qr(idir(2),i1)*2._SP*pi/alat(idir(2)))**2 + &
+&                        (qr(idir(3),i1)*2._SP*pi/alat(idir(3)))**2)
        !kxy
-       r1=sqrt((qr(1,i1)*2.*pi/alat(1))**2+(qr(2,i1)*2.*pi/alat(2))**2 + &
-&              (qr(3,i1)*2.*pi/alat(3))**2)
+       r1=sqrt((qr(1,i1)*2._SP*pi/alat(1))**2+(qr(2,i1)*2._SP*pi/alat(2))**2 + &
+&              (qr(3,i1)*2._SP*pi/alat(3))**2)
        !
        !Regularization
        if (r1 < 1.e-5) then
@@ -455,11 +455,11 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
      do i1=1,RIM_n_rand_pts
        call c2a(v_in=qr(:,i1),v_out=qr_rlu(:),mode='ki2a')
        !
-       r1=sqrt((qr(1,i1)*2.*pi/alat(1))**2+(qr(2,i1)*2.*pi/alat(2))**2 + &
-&              (qr(3,i1)*2.*pi/alat(3))**2)
+       r1=sqrt((qr(1,i1)*2._SP*pi/alat(1))**2+(qr(2,i1)*2._SP*pi/alat(2))**2 + &
+&              (qr(3,i1)*2._SP*pi/alat(3))**2)
        !
-       slab_vplane1=sqrt((qr(idir(2),i1)*2.*pi/alat(idir(2)))**2 + &
-&                        (qr(idir(3),i1)*2.*pi/alat(idir(3)))**2)
+       slab_vplane1=sqrt((qr(idir(2),i1)*2._SP*pi/alat(idir(2)))**2 + &
+&                        (qr(idir(3),i1)*2._SP*pi/alat(idir(3)))**2)
        !
        func =  f_coeff(1,1,1,1,iw)
        !
@@ -529,7 +529,7 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
  !
  do iw=1,Xw%n_freqs
    do i2=2,RIM_W_ng
-    do i1=0,1 ! I loop on both wings
+    do i1=0,1 ! loop on both wings
      !
      s1 = 1 - i1 * (i2 - 1)
      s2 = i2 * i1 + (1 - i1)
@@ -540,8 +540,8 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
         !
         call c2a(v_in=qr(:,i3),v_out=qr_rlu(:),mode='ki2a')
         !
-        r1=sqrt((qr(1,i3)*2.*pi/alat(1))**2+(qr(2,i3)*2.*pi/alat(2))**2 + &
-&              (qr(3,i3)*2.*pi/alat(3))**2)
+        r1=sqrt((qr(1,i3)*2._SP*pi/alat(1))**2+(qr(2,i3)*2._SP*pi/alat(2))**2 + &
+&              (qr(3,i3)*2._SP*pi/alat(3))**2)
         !
         if ( r1 < 1e-5) then
           !
@@ -556,9 +556,9 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
           case("metal")
           !
           if (cut_is_slab) then
-            slab_vz1=g_vec(i2,idir(1))*2.*pi/alat(idir(1))
-            slab_vplane1=sqrt((g_vec(i2,idir(2))*2.*pi/alat(idir(2)))**2 + &
-&                         (g_vec(i2,idir(3))*2.*pi/alat(idir(3)))**2)
+            slab_vz1=g_vec(i2,idir(1))*2._SP*pi/alat(idir(1))
+            slab_vplane1=sqrt((g_vec(i2,idir(2))*2._SP*pi/alat(idir(2)))**2 + &
+&                         (g_vec(i2,idir(3))*2._SP*pi/alat(idir(3)))**2)
             if (slab_vplane1 < q0_def_norm) slab_vplane1 = q0_def_norm
             vslab2 = 4._DP*pi*(1.-exp(-slab_vplane1*lcut)*cos(slab_vz1*lcut))**0.5
             !
@@ -612,10 +612,10 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
               ! Load q_grid_b in iku
               qtmp(:)=q_grid_b_iku(j,:)
               !
-              func = (qtmp(1)*(qtmp(1)*f_coeff(5,s1,s2,iq,iw) + 2_SP*qtmp(2)*           &
+              func = (qtmp(1)*(qtmp(1)*f_coeff(5,s1,s2,iq,iw) + 2._SP*qtmp(2)*           &
 &                     f_coeff(6,s1,s2,iq,iw)) + qtmp(2)*(qtmp(2)*f_coeff(8,s1,s2,iq,iw) &
-&                     + 2_SP*qtmp(3)*f_coeff(9,s1,s2,iq,iw)) +qtmp(3)*(qtmp(3)          &
-&                     *f_coeff(10,s1,s2,iq,iw) + 2_SP*qtmp(1)*f_coeff(7,s1,s2,iq,iw)))  &
+&                     + 2._SP*qtmp(3)*f_coeff(9,s1,s2,iq,iw)) +qtmp(3)*(qtmp(3)          &
+&                     *f_coeff(10,s1,s2,iq,iw) + 2._SP*qtmp(1)*f_coeff(7,s1,s2,iq,iw)))  &
 &                     /iku_v_norm(qtmp(:))**2
               !
               slab_vplane1=sqrt((g_vec(i2,1)*2.0_SP*pi/alat(1))**2 + (g_vec(i2,2)*2.0_SP*pi &

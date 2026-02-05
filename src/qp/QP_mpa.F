@@ -517,7 +517,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        iscp%os=isc%os
        !
        if (any(isc%is/=iscp%is))  then
-         call scatter_Bamp(iscp)
+         call scatter_Bamp_gpu(iscp)
        else
          if (     have_gpu) call devxlib_memcpy_d2d(iscp_rhotw_p, isc_rhotw_p)
          if (.not.have_gpu) iscp_rhotw_p=isc_rhotw_p

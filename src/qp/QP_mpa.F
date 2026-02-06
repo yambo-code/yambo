@@ -373,7 +373,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !$omp parallel default(shared),private(ig1,ig2,MPred,PPcond_rate,MP_err,cond_num,i_np,MPA_Xo,l_rim_w_g), &
      !$omp &        reduction(+:MPred_rate,PPcond_Qrate,MP_Qerr,cond_numQ)
      !
-     YAMBO_ALLOC(MPA_Xo,(Xw%n_freqs))
+     allocate(MPA_Xo(Xw%n_freqs))
      !
      !$omp do collapse(2)
      do ig2=X_cols(1),X_cols(2)
@@ -409,7 +409,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      !$omp end do
      !   
-     YAMBO_FREE(MPA_Xo)
+     deallocate(MPA_Xo)
      !
      !$omp end parallel
      !
@@ -625,9 +625,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !DEV_OMP parallel default(shared), private(i_np,ig1,ig2,bose_PPA_E,ctmp,&
          !DEV_OMP &                                 m_idx,cmplx_phase,prefac,poles,fract_sum)
          !
-         YAMBO_ALLOC(ctmp,(QP_dSc_steps))
-         YAMBO_ALLOC(poles,(QP_dSc_steps))
-         YAMBO_ALLOC(fract_sum,(QP_dSc_steps))
+         allocate(ctmp(QP_dSc_steps))
+         allocate(poles(QP_dSc_steps))
+         allocate(fract_sum(QP_dSc_steps))
          !
          !DEV_OMP do reduction(+:dp_dummy), collapse(2)
          !
@@ -678,11 +678,12 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          !DEV_OMP end do
          !
-         YAMBO_FREE(ctmp)
-         YAMBO_FREE(poles)
-         YAMBO_FREE(fract_sum)
+         deallocate(ctmp)
+         deallocate(poles)
+         deallocate(fract_sum)
          !
          !DEV_OMP end parallel
+         !
          !
          dc(:) = cmplx(dp_dummy,KIND=SP)
          dc(:) = -4._DP/spin_occ*pi * dc(:)

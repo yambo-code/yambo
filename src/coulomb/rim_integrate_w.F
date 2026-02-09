@@ -531,7 +531,7 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
    do i2=2,RIM_W_ng
     do i1=0,1 ! loop on both wings
      !
-     s1 = 1 - i1 * (i2 - 1)
+     s1 = i1 - i2 * (i1 - 1)
      s2 = i2 * i1 + (1 - i1)
      !
      RIM_acc=0._DP

@@ -26,7 +26,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
 &                            PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,           &
 &                            PAR_IND_OVLPk_ibz,PAR_COM_DIPk_ibz_INDEX
  use parallel_int,      ONLY:PP_redux_wait,PARALLEL_WF_index,PARALLEL_WF_distribute
- use interfaces,        ONLY:WF_shift_kpoint_gpu,eval_G_minus_G,WF_load,WF_free
+ use interfaces,        ONLY:WF_shift_kpoint,eval_G_minus_G,WF_load,WF_free
  use gpu_m,             ONLY:have_gpu
  use timing_m,          ONLY:timing
  !
@@ -106,7 +106,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
        !
        WF_tmp=>WF_ik(:,:,ib:ib)
        !  
-       call WF_shift_kpoint_gpu((/ib,ib/),1,ikbz,i_sp_pol,WF_shifts(ikbz,:),Xk,WF_symm,WF_tmp)
+       call WF_shift_kpoint((/ib,ib/),1,ikbz,WF_shifts(ikbz,:),Xk,WF_symm,WF_tmp)
        !
        nullify(WF_tmp)
        !
@@ -142,16 +142,32 @@ subroutine DIPOLE_overlaps(Xk,Dip)
          ! Shift the wave-function by a G-vector if the neighbor is out of the BZ (USE_shifed_wf=.true.)
          shift=WF_shifts(ikbzp,:)
          if(USE_shifted_wf) then
+           !
+           ! In this case a points k+q is out of the BZ
+           ! now I have different possibilities:
+           ! 1) the original point ikbz that corresponds to (k+q) was
+           !    between 0-1, therefore I have to shift it to generate
+           !    the k+q => case WF_shifts==0
+           ! 2) the orignal points ikbz that corresponds to (k+q) was 
+           !    shifted in the opposite direction the two
+           !    shifts cancel out and I get shift==0 ==> WF_shifts==-1
+           ! 3) the orignal points ibbz that corresponds to (k+q) was
+           !    already shifted in the right direction I keep this shift
+           !    case WF_shifts==1    
+           ! 
+           ! see also comments in src/bz_ops/k_map_nearest_by_dir.F 
+           ! 
            if(WF_shifts(ikbzp,id)==1) shift(id)=1
            if(WF_shifts(ikbzp,id)==0) shift(id)=1
-           if(WF_shifts(ikbzp,id)==2) shift(id)=0
+           if(WF_shifts(ikbzp,id)==-1) shift(id)=0
+           !
          endif
          !
          do ibp=1,Dip%ib(2) 
            if(.not.PAR_IND_CON_BANDS_OVLP%element_1D(ibp)) cycle
            !
            call WF_symm_kpoint_gpu((/ibp,ibp/),ikbzp,i_sp_pol,Xk,WF_symm)
-           call WF_shift_kpoint_gpu((/ibp,ibp/),1,ikbzp,i_sp_pol,shift,Xk,WF_symm,WF_ikp)
+           call WF_shift_kpoint((/ibp,ibp/),1,ikbzp,shift,Xk,WF_symm,WF_ikp)
            !
            do ib=1,Dip%ib(2)
              if(.not.PAR_IND_VAL_BANDS_OVLP%element_1D(ib)) cycle

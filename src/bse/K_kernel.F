@@ -26,18 +26,19 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use X_m,           ONLY:X_t
  use interfaces,    ONLY:el_density_and_current
  use QP_m,          ONLY:QP_ng_Vxc
- use BS,            ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
+ use BS_solvers,    ONLY:BSS_kernel_last_stored_block
+ use BS,            ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,BS_ID,&
 &                        BS_res_K_exchange,BS_Block_size,BS_n_g_W,&
 &                        O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
 &                        BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                        BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
-&                        WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
-&                        BS_nT_grps,BS_blks_free,l_BS_ares_from_res,&
+&                        WF_phase,n_BS_blks,BS_blk,BS_T_grp,BSK_IO_mode,BSK_IO_sum_value,&
+&                        BS_nT_grps,l_BS_ares_from_res,BS_K_has_been_calculated_loaded,&
 &                        l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
 &                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val,l_BS_magnons
  use collision_el,  ONLY:elemental_collision_free
  use IO_int,        ONLY:io_control
- use IO_m,          ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
+ use IO_m,          ONLY:REP,OP_WR,RD,WR,WR_CL,OP_APP,io_BS_K,deliver_IO_error_message
  use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc, &
 &                        FXC_mode,tddft_wf_t,l_Fxc_from_Vxc
  use xc_functionals,ONLY:V_xc,F_xc,F_xc_mat,magn,XC_potential_driver
@@ -93,8 +94,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP),   external :: TDDFT_ALDA_eh_space_G_kernel
  complex(SP),   external :: K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
- logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_bs_tddft_wf_in_loop,l_matrix_init,&
- &             l_load_kernel,l_write_kernel,l_skip_phases,l_std_alg,l_dir_alg,l_tddft_gsum,l_tddft_rsum
+ logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_bs_tddft_wf_in_loop,l_matrix_init,BS_blk_todo,l_tddft_comp,&
+ &             l_load_kernel,l_write_kernel,l_write_kernel_step,l_skip_phases,l_std_alg,l_dir_alg,l_tddft_gsum,l_tddft_rsum
  !
  ! I/O
  !
@@ -205,7 +206,10 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    call msg('r','[BSE] Correlation components ',(/BS_n_g_W,O_ng/))
  endif
  !
- call K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
+ call K_restart(iq,X,BS_ID(1),BS_ID(2),BS_ID(3),l_partial_kernel_loaded)
+ ID_head =BS_ID(1)
+ ID      =BS_ID(2)
+ ID_compr=BS_ID(3)
  !
  if( l_BSE_kernel_complete ) return
  !
@@ -296,6 +300,13 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  l_matrix_init=.true.
  l_load_kernel=.true.
  l_write_kernel=.false.
+ l_write_kernel_step= index(BSK_IO_mode,"write_all_steps")/=0
+ !
+ if (l_write_kernel_step) then
+   call warning("Experimental mode, IO at every step. Restart not possible")
+ else
+   BSS_kernel_last_stored_block=n_BS_blks
+ endif
  !
  BS_blk_done=.false.
  !
@@ -321,16 +332,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT",keep_states_to_load=.true.)
    !
    QP_ng_Vxc=BS_n_g_fxc
-   !
-   if (l_tddft_rsum) then
-     YAMBO_ALLOC(tddft_wf%rhotwr1,(fft_size*n_spinor*n_spinor))
-     YAMBO_ALLOC(tddft_wf%rhotwr2,(fft_size*n_spinor*n_spinor))
-   else if (l_tddft_gsum) then
-     YAMBO_ALLOC(tddft_wf%rhotwr_DP,(fft_size))
-   endif
-   !
-   YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
-   YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
    !
    YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
    if(l_BS_magnons .or. n_spinor==2 .or. l_Fxc_from_Vxc) then
@@ -376,6 +377,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    do i_block=1,n_BS_blks
      !
+     if (.not. allocated(BS_blk(i_block)%mat) ) call K_block_alloc(i_block,"all")
+     !
      ! Read BS_blk to check if the transition was already computed
      !
      if (.not.l_partial_kernel_loaded) then
@@ -392,16 +395,16 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      ! check if this block need to be done
      ! skip this block if already done
      !
-     BS_blk_done(i_block)=.true.
-     skip_check: do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
-       do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
-         if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t") cycle
-         BS_blk_done(i_block)=.false.
-         exit skip_check
-       enddo
-     enddo skip_check
+     BS_blk_done(i_block)=all((/BS_blk(i_block)%done=="t"/))
+     BS_blk_todo         =all((/BS_blk(i_block)%done=="f"/))
      !
      if (BS_blk_done(i_block)) m_steps=m_steps-i_steps
+     !
+     if ( (.not.l_partial_kernel_loaded) .and. io_BS_K .and. l_write_kernel_step) then
+       !
+       if (BS_blk_done(i_block) .or. BS_blk_todo) call K_block_free(i_block,"all")
+       !
+     endif
      !
      call live_timing(steps=i_steps)
      !
@@ -464,10 +467,19 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      if(l_partial_kernel_loaded.and.l_write_kernel) then
        call io_control(ACTION=WR,ID=ID)
        call io_BS_PAR_block(iq,i_block,ID,"full")
+       if (io_BS_K.and.l_write_kernel_step) call K_block_free(i_block,"all")
      endif
 #endif
      cycle
    endif
+   !
+   if (l_write_kernel_step) then
+     if (iHxc==1) BSK_IO_sum_value=.false.
+     if (iHxc==2) BSK_IO_sum_value=l_bs_exch
+     if (iHxc==3) BSK_IO_sum_value=l_bs_exch.or.BS_K_is_ALDA
+   endif
+   !
+   if (.not. allocated(BS_blk(i_block)%mat) ) call K_block_alloc(i_block,"all")
    !
    ! Read BS_blk to check if the transition was already computed
    !
@@ -504,6 +516,15 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    ! TDDFT oscillators
    !----------------------
    if(iHxc==2 .and. l_tddft_gsum) then
+     !
+     l_tddft_comp = .not.(allocated(BS_T_grp(i_Tgrp_k)%O_tddft_L).and.allocated(BS_T_grp(i_Tgrp_p)%O_tddft_R))
+     !
+     if (l_tddft_comp) then
+       YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
+       YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
+       YAMBO_ALLOC(tddft_wf%rhotwr_DP,(fft_size))
+     endif
+     !
      if (.not.allocated( BS_T_grp(i_Tgrp_k)%O_tddft_L) ) then
        call TDDFT_oscillators_alloc_L(i_Tgrp_k)
        call TDDFT_ALDA_eh_space_G_collisions_L(iq,Xk,i_Tgrp_k,NG,l_bs_tddft_wf_in_loop,tddft_wf,mode_now)
@@ -512,6 +533,13 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        call TDDFT_oscillators_alloc_R(i_Tgrp_p)
        call TDDFT_ALDA_eh_space_G_collisions_R(iq,Xk,i_Tgrp_p,NG,l_bs_tddft_wf_in_loop,tddft_wf,mode_now)
      endif
+     !
+     if (l_tddft_comp) then
+       YAMBO_FREE(tddft_wf%WF_symm1)
+       YAMBO_FREE(tddft_wf%WF_symm2)
+       YAMBO_FREE(tddft_wf%rhotwr_DP)
+     endif
+     !
    endif
    !
    ! Correlation oscillators
@@ -537,7 +565,16 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !DEV_OMP &       iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last, &
    !DEV_OMP &       i_k_bz_mem,i_kmq_bz_mem,qindx_tmp,BS_mat_tmp,tddft_wf )
    !
-   call OPENMP_update(master_thread)   
+   call OPENMP_update(master_thread) 
+   !
+   !
+   ! Allocate tddft_wf variables neeeded within the OMP loop
+   if (l_tddft_rsum.and.iHxc==2) then
+     YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
+     YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
+     YAMBO_ALLOC(tddft_wf%rhotwr1,(fft_size*n_spinor*n_spinor))
+     YAMBO_ALLOC(tddft_wf%rhotwr2,(fft_size*n_spinor*n_spinor))
+   endif
    !
    i_p_bz_last=0   ; i_k_bz_last=0
    i_pmq_bz_last=0 ; i_kmq_bz_last=0
@@ -561,7 +598,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t".and.l_BSE_restart) cycle
        !
-       H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+& 
+       H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+&
        &              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
        H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
        &              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1)
@@ -786,6 +823,17 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    !DEV_OMP end do
    !
+   if(iHxc==2) then
+     !
+     if (l_tddft_rsum) then
+       YAMBO_FREE(tddft_wf%rhotwr1)
+       YAMBO_FREE(tddft_wf%rhotwr2)
+       YAMBO_FREE(tddft_wf%WF_symm1)
+       YAMBO_FREE(tddft_wf%WF_symm2)
+     endif
+     !
+   endif
+   !
    if (iHxc==3) then
      YAMBO_FREE_GPU(O1)
      YAMBO_FREE_GPU(O2)
@@ -814,7 +862,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if(iHxc==3) call BS_correlation_oscillators_free(i_block,l_std_alg)
    !
-100 if(l_write_kernel) then
+100 if(l_write_kernel.or.l_write_kernel_step) then
 #if defined _PAR_IO
      call io_control(ACTION=WR,ID=ID)
      call io_BS_PAR_block(iq,i_block,ID,"full")
@@ -822,6 +870,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      call io_control(ACTION=WR,COM=REP,SEC=(/i_block+1/),ID=ID)
      io_BS_err=io_BS(iq,X,ID)
 #endif
+     if (io_BS_K.and.l_write_kernel_step) call K_block_free(i_block,"all")
    endif
    !
    call live_timing(steps=i_steps)
@@ -837,16 +886,10 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if(iHxc==2) then
    !
-   if (l_tddft_rsum) then
-     YAMBO_FREE(tddft_wf%rhotwr1)
-     YAMBO_FREE(tddft_wf%rhotwr2)
-   else if (l_tddft_gsum) then
+   if (l_tddft_gsum) then
      call TDDFT_oscillators_free_L(BS_nT_grps)
      call TDDFT_oscillators_free_R(BS_nT_grps)
-     YAMBO_FREE(tddft_wf%rhotwr_DP)
    endif
-   YAMBO_FREE(tddft_wf%WF_symm1)
-   YAMBO_FREE(tddft_wf%WF_symm2)
    !
    if (l_bs_fxc) then
      YAMBO_FREE(F_xc_gspace)
@@ -890,6 +933,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  call io_control(ACTION=WR_CL,COM=REP,ID=ID_head)
  call io_control(ACTION=WR_CL,COM=REP,ID=ID)
  call io_BS_PAR_free(ID_head,ID,"full",.true.)
+ ! In this mode the blocks are written to disk after each step and the memory is freed
+ if (io_BS_K.and.l_write_kernel_step) BS_K_has_been_calculated_loaded=.false.
 #else
  call io_control(ACTION=WR_CL,COM=REP,SEC=(/n_BS_blks+2/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)

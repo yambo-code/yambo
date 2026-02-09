@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2022 the Yambo Team
 !
 ! Authors (see AUTHORS file for details): MF, AF
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !================
 module gpu_m
@@ -30,20 +14,21 @@ module gpu_m
   use devxlib_memcpy
   use devxlib_linalg
   use devxlib_async,     ONLY:devxlib_async2stream
-  !use cusolverdn
-  use cusolverdn_y
-# if defined _CUDAF
+#if defined _GPU && defined _CUDA
+  use cusolverdn
+#endif
+#if defined _CUDAF
   use cufft
-# elif defined _OPENACC
+#elif defined _OPENACC
   use cufft_m
-# elif defined _OPENMP_GPU && defined _HIP
+#elif defined _OPENMP_GPU && defined _HIP
   use hip_m
   use hipfft_m
   use omp_lib
-# elif defined _OPENMP_GPU && defined _MKLGPU
+#elif defined _OPENMP_GPU && defined _MKLGPU
   use omp_lib
   use mkl_dfti_omp_offload
-# endif
+#endif
   use parallel_m,   ONLY:myid,host_name,PAR_COM_HOST
   use iso_c_binding
   !
@@ -305,7 +290,7 @@ contains
   !
   subroutine gpu_linalg_setup()
     implicit none
-#if defined _CUDAF || defined  _OPNEACC
+#if defined _CUDAF || defined  _OPENACC
     integer :: istat
     istat = cublasInit()
     if(istat/=0) call error('cublasInit failed')
@@ -319,7 +304,7 @@ contains
     implicit none
     integer :: ierr
     ierr = 0
-#if ( defined _CUDAF || defined  _OPNEACC ) && defined _CUDA
+#if ( defined _CUDAF || defined  _OPENACC ) && defined _CUDA
     ierr = CudaDeviceSynchronize()
     ierr = CudaGetLastError()
 #endif
@@ -334,7 +319,7 @@ contains
     implicit none
     integer :: ierr
     ierr = 0
-#if ( defined _CUDAF || defined  _OPNEACC ) && defined _CUDA
+#if ( defined _CUDAF || defined  _OPENACC ) && defined _CUDA
     ierr = CudaDeviceSynchronize()
 #endif
 #if defined _OPENMP_GPU && defined _HIP

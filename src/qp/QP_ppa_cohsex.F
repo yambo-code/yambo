@@ -702,14 +702,14 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            dp_dummy = 0.0_DP
            !
            !DEV_ACC_DEBUG data present(X_blc_p,RIM_W,isc_gamp_p,conjg_iscp_rhotw,isc_rhotw_p,iscp_rhotw_p)
-           !DEV_ACC parallel  loop collapse(2) private(PPA_E,PPA_R,l_RIM_W_g,bose_PPA_E,ctmp) &
+           !DEV_ACC parallel  loop collapse(2) private(PPA_E,PPA_R,l_rim_W_g,bose_PPA_E,ctmp) &
            !DEV_ACC                reduction(+:dp_dummy_r,dp_dummy_i)
            !DEV_CUF kernel do(2)
            !DEV_OMPGPU target map(present,alloc:X_blc_p,RIM_W,isc_gamp_p,conjg_iscp_rhotw,isc_rhotw_p,iscp_rhotw_p) &
            !DEV_OMPGPU &      map(tofrom:dp_dummy_r,dp_dummy_i)
            !DEV_OMPGPU teams  loop collapse(2) private(PPA_E,PPA_R,l_rim_W_g,bose_PPA_E,ctmp) &
            !DEV_OMPGPU &           reduction(+:dp_dummy_r,dp_dummy_i)
-           !DEV_OMP parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp,l_RIM_W_g), &
+           !DEV_OMP parallel do default(shared),private(ig1,ig2,PPA_E,PPA_R,bose_PPA_E,ctmp,l_rim_W_g), &
            !DEV_OMP &        reduction(+:dp_dummy), collapse(2)
            !
            do ig2=X_cols1,X_cols2

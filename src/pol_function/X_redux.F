@@ -25,7 +25,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PP_bcast
- use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_COM_X_WORLD_RL_resolved,&
+ use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_COM_X_WORLD_RL_resolved,PAR_COM_RL_INDEX,&
 &                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index
  use R_lattice,     ONLY:bare_qpg, bare_qpg_d
  use frequency,     ONLY:w_samp
@@ -34,7 +34,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  use wrapper,       ONLY:M_by_M
  use interfaces,    ONLY:LINEAR_ALGEBRA_driver,MATRIX_transfer
  use stderr,        ONLY:intc
- use X_m,           ONLY:X_t,X_use_lin_sys,X_use_gpu,X_par_lower_triangle,X_redux_build_kernel
+ use X_m,           ONLY:X_t,X_use_lin_sys,X_use_gpu,X_redux_build_kernel
  use TDDFT,         ONLY:FXC_n_g_corr,F_xc_gspace,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
  use timing_m,      ONLY:timing
  use devxlib,       ONLY:devxlib_memset_d,devxlib_memcpy_h2d,devxlib_memcpy_d2d,&
@@ -81,9 +81,6 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  compute_on_gpu=have_gpu.and.X_use_gpu
  !
  if (PAR_COM_SLK%n_CPU>=4.and.have_gpu) compute_on_gpu=.false.
- !
- ! AF_FIX: openacc + GPU linalg should be enabled
- if (have_openacc) compute_on_gpu=.false.
  !
  ! AMD-GPUs + GPU linalg not yet implemented
  if (have_hip) compute_on_gpu=.false.
@@ -160,14 +157,9 @@ subroutine X_redux(iq,what,X_par,Xw,X)
 &                                                   SND=X_par%INTRA_comm%CPU_id==0,&
 &                                                   RCV=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,&
 &                                                   COMM=PAR_COM_X_WORLD,COMM_name="X_redux_1_"//trim(intc(i_LA_pool)))
-     if(allocated(X_par_lower_triangle%blc)) then
-       call MATRIX_transfer(M_in=X_par_lower_triangle,M_out=Xo,INDEX_in=iw_X(1),&
-&                                                   SND=X_par%INTRA_comm%CPU_id==0,&
-&                                                   RCV=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,&
-&                                                   COMM=PAR_COM_X_WORLD,COMM_name="X_redux_1_"//trim(intc(i_LA_pool)))
-     endif
      !
    enddo
+   !
    !
    if (iw_par>PAR_n_freqs) cycle
    !
@@ -364,7 +356,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  !
  ! complete the transfer with a collective communication
  !
- call PP_bcast(X_par%blc,node=0,COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
+ if(PAR_COM_RL_INDEX%n_CPU>1) call PP_bcast(X_par%blc,node=0,COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
  !
  call timing(what//' (REDUX)',OPR='stop')
  !

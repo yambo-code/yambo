@@ -24,6 +24,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use IO_m,           ONLY:REP,NONE,OP_WR_CL
  use matrix,         ONLY:MATRIX_reset
  use timing_m,       ONLY:timing
+ use BS_solvers,     ONLY:BS_mat
+ use interfaces,     ONLY:K_stored_in_a_big_matrix
 #if defined _SCALAPACK
  use interfaces,     ONLY:MATRIX_transfer,MATRIX_duplicate
  use parallel_m,     ONLY:linear_algebra_is_parallel
@@ -141,7 +143,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
  else
    !
-   call K_stored_in_a_big_matrix(1,iq,"INV")
+   call K_stored_in_a_big_matrix(1,BS_H_dim,BS_mat,iq,"INV")
    !
    ! Diagonal removal
    !==================
@@ -184,7 +186,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 &                              TOTAL=W%n_freqs,NCPU=PAR_COM_SLK_INDEX_local%n_CPU)
    call live_timing('Perturbative inversion ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
    !
-   call K_inversion_engine("any",1,W%n_freqs,iq,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
+   call K_inversion_engine("any",1,W%n_freqs,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
    !
    call PP_redux_wait(K_INV_EPS%err,COMM=PAR_COM_SLK_INDEX_local%COMM)
    call PP_redux_wait(Resp_ii(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
@@ -292,7 +294,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
        !
        iw=TYP%iw_full(i1)
        !
-       call K_inversion_engine(TYP%what,iw,1,iq,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.TRUE.)
+       call K_inversion_engine(TYP%what,iw,1,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.TRUE.)
        !
        call live_timing(steps=1)
        !

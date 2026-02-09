@@ -75,8 +75,8 @@ module parallel_m
  !
  ! Logicals
  !
- logical            :: l_par_X_T,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_BZINDX,l_par_SE, &
-&                      l_par_RT,l_par_SC,l_par_NL,l_par_OSCLL
+ logical            :: l_par_X_T,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_BZINDX,&
+&                      l_par_SE,l_par_SX,l_par_RT,l_par_SC,l_par_NL,l_par_OSCLL
  !
  ! In a parallel runs, when some loops not involving all CPU's are parallelized it is usefull to keep 
  ! the operations local in the cpu world
@@ -533,7 +533,7 @@ module parallel_m
 #if !defined _io_lib
    character(lchlen) function PARALLEL_message(i_s)
      use stderr, ONLY:intc
-     use openmp, ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K, &
+     use openmp, ONLY:n_threads_X,n_threads_SE,n_threads_SX,n_threads_RT,n_threads_DIP,n_threads_K, &
 &                     n_threads_NL,n_threads_BZINDX,n_threads_OSCLL,n_threads
      integer :: i_s
      !
@@ -553,6 +553,7 @@ module parallel_m
        if (n_threads_BZINDX>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_BZINDX))//"(threads@BZINDX)"
        if (n_threads_DIP   >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_DIP))//"(threads@DIP)"
        if (n_threads_SE    >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_SE))//"(threads@SE)"
+       if (n_threads_SX    >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_SX))//"(threads@SX)"
        if (n_threads_RT    >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_RT))//"(threads@RT)"
        if (n_threads_K     >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_K))//"(threads@K)"
        if (n_threads_NL    >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_NL))//"(threads@NL)"
@@ -605,6 +606,8 @@ module parallel_m
      CPU_structure(10)%Short_Description="PH_SE"
      CPU_structure(11)%Long_Description="Oscillators"
      CPU_structure(11)%Short_Description="OSCLL"
+     CPU_structure(12)%Long_Description="Sigma_X"
+     CPU_structure(12)%Short_Description="SX"
    end subroutine
    !
    subroutine COMM_reset(COMM)
@@ -721,4 +724,37 @@ module parallel_m
 #endif
    end subroutine CREATE_hosts_COMM
    !
+   subroutine par_distribute_set(nsets, nsets_this_cpu, nset_shift, comm)
+     !
+     implicit none
+     !
+     integer, intent(in)      :: nsets
+     integer, intent(out)     :: nsets_this_cpu, nset_shift
+     integer, optional        :: comm
+
+#if defined _MPI
+     integer                  :: nProcs, my_rank, ierr
+     integer                  :: loc_comm = mpi_comm_world
+     !
+     if (present(comm)) loc_comm = comm
+     !
+     call MPI_COMM_SIZE(loc_comm, nProcs, ierr)
+     call MPI_COMM_RANK(loc_comm, my_rank, ierr)
+
+     nsets_this_cpu = nsets/nProcs 
+     nset_shift  = nsets_this_cpu * my_rank
+     !
+     if (my_rank .lt. mod(nsets, nProcs)) then
+       nsets_this_cpu = nsets_this_cpu + 1
+       nset_shift = nset_shift + my_rank
+     else 
+       nset_shift = nset_shift + mod(nsets, nProcs)
+     endif
+#else 
+     nset_shift = 0
+     nsets_this_cpu = nsets
+#endif
+   end subroutine par_distribute_set
+!
 end module parallel_m
+!

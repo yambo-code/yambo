@@ -43,7 +43,7 @@ i?86*linux*)
     DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame -Mbackslash"
     ;;
   *nvfortran* )
-    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
+    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp -c++libs"
     FUFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
@@ -78,7 +78,7 @@ i?86*linux*)
     NETCDFFLAGS="-DgFortran"
     DEBUG_FLAGS="-Og -g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
-  *ifort*)
+  *ifort* | *ifx* )
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
     CPU_FLAG=""
@@ -88,7 +88,7 @@ i?86*linux*)
        CPU_FLAG="-xHost"
        #CPU_FLAG=" "
        ;;
-      *2021* )
+      *2021* | *2022* | *2023* | *2024* | *2025* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp -parallel"
        FCMFLAG="-nofor-main"
@@ -104,7 +104,7 @@ i?86*linux*)
        CPU_FLAG=" "
        ;;
     esac
-    SYSFLAGS="-assume bscc -O3 -g -ip $CPU_FLAG"
+    SYSFLAGS="-assume bscc -O2 -g $CPU_FLAG"
     FUFLAGS="-assume bscc -O0 $CPU_FLAG"
     DEBUG_FLAGS="-check all -CB -traceback -check bound"
   ;;
@@ -166,7 +166,7 @@ i?86*linux*)
        CPU_FLAG="-mtune=pentium4"
        ;;
     esac
-    SYSFLAGS="-assume bscc -O3 -g -ip ${CPU_FLAG}"
+    SYSFLAGS="-assume bscc -O3 -g ${CPU_FLAG}"
     FUFLAGS="-assume bscc -O0 -g ${CPU_FLAG}"
     FCMFLAG="-nofor_main"
     OMPFLAGS="-openmp"
@@ -243,7 +243,7 @@ ia64*linux* )
        CPU_FLAG=""
        ;;
     esac
-    SYSFLAGS="-assume bscc -O2 -g -ip ${CPU_FLAG}"
+    SYSFLAGS="-assume bscc -O2 -g ${CPU_FLAG}"
     FUFLAGS="-assume bscc -O0 -g ${CPU_FLAG}"
     FCMFLAG="-nofor_main"
     OMPFLAGS="-openmp"
@@ -296,7 +296,7 @@ aarch*linux* | arm*linux* )
     DEBUG_FLAGS="-g "
   ;;
   *pgf9* | *ftn* | *pgfortran* | *nvfortran* )
-    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
+    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp -c++libs"
     #SYSFLAGS="-O2 -g -Munroll -Mnoframe -Mdalign -Mbackslash -cpp"
     FUFLAGS="-O0 -g -Mbackslash -cpp"
     FCMFLAG="-Mnomain"
@@ -329,7 +329,7 @@ aarch*linux* | arm*linux* )
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
     ;;
-  *ifort*)
+  *ifort* | *ifx* )
     OMPFLAGS="-openmp"
     CPU_FLAG=""
     FCMFLAG="-nofor_main"
@@ -338,7 +338,7 @@ aarch*linux* | arm*linux* )
        #CPU_FLAG="-xHost"
        CPU_FLAG=" "
        ;;
-      *2020* | *2021* )
+      *2020* | *2021* | *2022* | *2023* | *2024* | *2025* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp -parallel"
        FCMFLAG="-nofor-main"
@@ -361,7 +361,7 @@ aarch*linux* | arm*linux* )
        CPU_FLAG=" "
        ;;
     esac
-    SYSFLAGS="-assume bscc -O3 -g -ip ${CPU_FLAG}"
+    SYSFLAGS="-assume bscc -O2 -g ${CPU_FLAG}"
     FUFLAGS="-assume bscc -O0 -g ${CPU_FLAG}"
     NETCDFFLAGS="-DpgiFortran"
     DEBUG_FLAGS="-CB -traceback -debug full"

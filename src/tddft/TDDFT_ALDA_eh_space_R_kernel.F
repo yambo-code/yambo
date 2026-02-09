@@ -62,6 +62,11 @@ function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
  rhotwr1_p  => tddft_wf%rhotwr1
  rhotwr2_p  => tddft_wf%rhotwr2
  !
+ WF_symm1_p=cZERO
+ WF_symm2_p=cZERO
+ rhotwr1_p =cZERO
+ rhotwr2_p =cZERO
+ !
  ! Use pointers both for CUDA and to avoid continuous allocation and de-allocation
  !
  !
@@ -75,7 +80,7 @@ function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
      do j_spinor=1,n_spinor
        do ifft=1,fft_size
          irhotw=ifft+(i_spinor-1)*fft_size+(j_spinor-1)*n_spinor*fft_size
-	 rhotwr1_p(irhotw)=conjg(WF_symm1_p(ifft,i_spinor))*WF_symm2_p(ifft,j_spinor)
+         rhotwr1_p(irhotw)=conjg(WF_symm1_p(ifft,i_spinor))*WF_symm2_p(ifft,j_spinor)
        enddo
      enddo
    enddo
@@ -121,7 +126,7 @@ function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
              irhotw=ifft+(i_spinor-1)*fft_size+(j_spinor-1)*n_spinor*fft_size
              rhotwr2_p(irhotw)=rhotwr2_p(irhotw)+                        &
              & F_xc_mat(ifft,i_spinor_y,j_spinor_y,ip_spinor,jp_spinor)* &
-	     & WF_symm1_p(ifft,ip_spinor)*conjg(WF_symm2_p(ifft,jp_spinor))
+             & WF_symm1_p(ifft,ip_spinor)*conjg(WF_symm2_p(ifft,jp_spinor))
            enddo
          enddo
        enddo
@@ -139,6 +144,11 @@ function TDDFT_ALDA_eh_space_R_kernel(is,os,isp,osp,tddft_wf,mode) result(H_x)
  ! --> X/Co = fft_size/4/pi
  !
  H_x=H_x*real(fft_size,SP)/4._SP/pi
+ !
+ nullify(WF_symm1_p)
+ nullify(WF_symm2_p)
+ nullify(rhotwr1_p)
+ nullify(rhotwr2_p)
  !
  call timing('T_space ALDA scatt.',OPR='stop')
  !

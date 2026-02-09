@@ -9,7 +9,7 @@
 !
 subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR)
  !
- use pars,                ONLY:SP,lchlen,cZERO
+ use pars,                ONLY:LP,SP,lchlen,cZERO
  use com,                 ONLY:msg,core_io_path,more_io_path
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:OP_WR_CL,NONE,OP_APP_CL,OP_WR,OP_RD,&
@@ -34,7 +34,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR)
  integer,intent(in)          :: kpoints_map(2,k%nibz)
  !
  integer,intent(in)       :: old_nsym
- logical,intent(in)       :: S_contains_TR(old_nsym)
+ integer(LP),intent(in)       :: S_contains_TR(old_nsym)
  !
  ! Work space
  !
@@ -219,7 +219,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR)
              forall(ic=1:wf_nc_k_new(ik)) wf_tmp(ic,:)=matmul(spin_sop(:,:,is),wf_tmp(ic,:))
            endif
            !
-           if ( S_contains_TR(is) ) wf_tmp=conjg(wf_tmp)
+           if ( S_contains_TR(is) ==1 ) wf_tmp=conjg(wf_tmp)
            !  
            wf_disk(:,:,ib_disk)= wf_tmp(:,:)
            !

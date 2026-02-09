@@ -1,26 +1,10 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2018 the Yambo Team
 !
 ! Authors (see AUTHORS file for details): AF
 ! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
 subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  !
  !  Solve the linear system
@@ -57,7 +41,6 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  !
  YAMBO_ALLOC_GPU(v_int,(n))
  YAMBO_ALLOC_GPU(vp_int,(1))
-
  !
  ! init
  if (.not.gpu_linalg_init) call gpu_linalg_setup()
@@ -100,6 +83,10 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  !DEV_ACC end host_data
  !DEV_ACC_DEBUG end data
 #endif
+ !
+ YAMBO_FREE_GPU(v_int)
+ YAMBO_FREE_GPU(vp_int)
+ YAMBO_FREE_GPU(v_cmplx)
  !
  if(.not.(l_nl_optics.or.l_real_time)) call timing(trim(subname),OPR='stop')
  !

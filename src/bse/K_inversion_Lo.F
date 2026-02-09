@@ -48,6 +48,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  ! Zeroing
  !=======
+ SF=cZERO
  if (X_do_obs("pl"))  PL(:,3) = rZERO
  if (X_do_obs("eps")) Resp_ii(:,3:4) = cZERO
  !

@@ -9,6 +9,10 @@
 
  use pars,         ONLY:IPL
  use y_memory,     ONLY:MEM_err,MEM_msg,MEM_count,MEM_global_mesg
+#if defined _OPENACC || defined _OPENMP_GPU
+ use y_memory,     ONLY:MEM_count_d
+ use devxlib,      ONLY:devxlib_map,devxlib_unmap,devxlib_mapped,devxlib_memcpy_h2d
+#endif
 
  implicit none
 
@@ -26,7 +30,7 @@
     YAMBO_ALLOC(x,(SIZE(1),SIZE(2),SIZE(3),SIZE(4),SIZE(5),SIZE(6)))
 
 #define SIMPLE_ALLOC(x,SIZE) \
-  allocate(x SIZE, &NEWLINE& stat=MEM_err,errmsg=MEM_msg)  NEWLINE \
+  allocate(x SIZE, &NEWLINE& stat=MEM_err,errmsg=MEM_msg)
 
 #define YAMBO_ALLOC_P(x,SIZE) \
   allocate(x SIZE, &NEWLINE& stat=MEM_err,errmsg=MEM_msg)NEWLINE \

@@ -25,6 +25,7 @@ AC_CONFIG_SRCDIR([driver/yambo.F])
 #
 m4_include([config/m4/yambo_remote_compilation_setup.m4])
 m4_include([config/m4/yambo_specific.m4])
+m4_include([config/m4/yambo_diago.m4])
 # 
 #  General
 #
@@ -308,6 +309,9 @@ AC_CHASE_SETUP
 # ============================================================================
 # Device XLIB
 ACX_DEVXLIB
+# ============================================================================
+# Yambo Libs
+AC_YDIAGO
 # ============================================================================
 # Prepare the REPORT file variables
 ACX_REPORT()

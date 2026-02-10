@@ -50,10 +50,10 @@ then
 
         AC_SUBST([CHASE_INCS],["${CHASE_INCS} -I${CHASE_INCS_R}"])
         AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels "])
-        AC_SUBST([CHASE_LIBS],["${CHASE_LIBS}  -lopenblas -lgfortran -lscalapack -lstdc++ "])
+        AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -lstdc++ "])
 	
-        AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -lcudart -lcublas -lcusolver -lcudart -lcurand -lnccl "])
-
+        AC_SUBST([CHASE_LIBS],["${CHASE_LIBS}  "])
+        #-lcudart -lcublas -lcusolver -lcudart -lcurand -lnccl
         #LIBS="${LIBS} ${CHASE_LIBS} "
         #INCS="${INCS} ${CHASE_INCS} "
 

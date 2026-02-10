@@ -8,11 +8,14 @@
 AC_DEFUN([AC_YDIAGO],[
 
 #
+AC_ARG_ENABLE(ydiago,   AS_HELP_STRING([--enable-ydiago],[Use ydiago. Default is no]))
 AC_ARG_WITH(ydiago-branch,[AS_HELP_STRING([--with-ydiago-branch=<branch>],[Use the <branch> of the ydiago repository.],[32])],,[with_ydiago_branch=none])
 #
 AC_CONFIG_FILES([lib/ydiago/make_ydiago.inc:lib/ydiago/make_ydiago.inc.in])
 
-if test "$def_scalapack" = "-D_SCALAPACK" ; then
+compile_ydiago="no"
+
+if test "$def_scalapack" = "-D_SCALAPACK" && test "$enable_ydiago" = "yes" ; then
 
   compile_ydiago="yes"
   

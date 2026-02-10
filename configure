@@ -1119,6 +1119,7 @@ with_devxlib_path
 with_devxlib_libdir
 with_devxlib_includedir
 with_devxlib_branch
+enable_ydiago
 with_ydiago_branch
 '
       ac_precious_vars='build_alias
@@ -1810,6 +1811,7 @@ Optional Features:
                           and report problems [default=yes]
   --enable-nvtx=<path>    Enable NVTX support [default=no]
   --enable-chase          Use ChASE eigensolver. Default is no
+  --enable-ydiago         Use ydiago. Default is no
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -17123,12 +17125,12 @@ fi
 
         CHASE_LIBS="${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels "
 
-        CHASE_LIBS="${CHASE_LIBS}  -lopenblas -lgfortran -lscalapack -lstdc++ "
+        CHASE_LIBS="${CHASE_LIBS} -lstdc++ "
 
 
-        CHASE_LIBS="${CHASE_LIBS} -lcudart -lcublas -lcusolver -lcudart -lcurand -lnccl "
+        CHASE_LIBS="${CHASE_LIBS}  "
 
-
+        #-lcudart -lcublas -lcusolver -lcudart -lcurand -lnccl
         #LIBS="${LIBS} ${CHASE_LIBS} "
         #INCS="${INCS} ${CHASE_INCS} "
 
@@ -17363,6 +17365,12 @@ LIBS="$acx_devxlib_save_LIBS"
 
 
 #
+# Check whether --enable-ydiago was given.
+if test ${enable_ydiago+y}
+then :
+  enableval=$enable_ydiago;
+fi
+
 
 # Check whether --with-ydiago-branch was given.
 if test ${with_ydiago_branch+y}
@@ -17377,7 +17385,9 @@ fi
 ac_config_files="$ac_config_files lib/ydiago/make_ydiago.inc:lib/ydiago/make_ydiago.inc.in"
 
 
-if test "$def_scalapack" = "-D_SCALAPACK" ; then
+compile_ydiago="no"
+
+if test "$def_scalapack" = "-D_SCALAPACK" && test "$enable_ydiago" = "yes" ; then
 
   compile_ydiago="yes"
 

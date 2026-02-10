@@ -107,6 +107,10 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
 &                    .or.idriver==MAT_MUL) USE_GPU=.false.
  if (USE_GPU) lib_in_use=USE_LK
  !
+#if ! defined _CHASE
+ if (idriver==CHASE) idriver=DIAGO
+#endif
+ !
 #if defined _SCALAPACK
  if ((idriver==DIAGO.or.idriver==DIAGX.or.idriver==CHASE).and.present(E_cmpl).and.ncpu>1) then
    !
@@ -135,29 +139,16 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    !
    if (idriver==DIAGO.or.idriver==DIAGX.or.idriver==CHASE) then
      !
-     if(idriver==CHASE) then
-        call MATRIX_init("SLK",  V_loc, N, 1 )
-     else 
-        call MATRIX_init("SLK",  V_loc, N, 1 )
-     endif
+     call MATRIX_init("SLK",  V_loc, N, 1 )
      YAMBO_ALLOC(V_loc%blc,(V_loc%BLCrows(1):V_loc%BLCrows(2),V_loc%BLCcols(1):V_loc%BLCcols(2),V_loc%Nb))
      !
-     starttime = MPI_Wtime()
      if(idriver==DIAGO) call PARALLEL_HERMITIAN_diagonalization( M_loc, V_loc, N, E_real )
      !
-     if(idriver==DIAGX) then 
-        call PARALLEL_HERMITIAN_feweigenvalues( M_loc, V_loc, N, E_real, neig)
-     endif
+     if(idriver==DIAGX) call PARALLEL_HERMITIAN_feweigenvalues( M_loc, V_loc, N, E_real, neig)
      !
-     if(idriver==CHASE) then
-        call PARALLEL_HERMITIAN_chase(M_loc, V_loc, N, E_real, neig)
-     endif
-     endtime = MPI_Wtime()
-
-     print *, "LINEAR_ALGEBRA_eigensolver_time=",endtime-starttime
-
-     !print *, E_real(:)
-     !print *, V_loc%blc(1:10,1:10,V_loc%I)
+#if defined _CHASE
+     if(idriver==CHASE) call PARALLEL_HERMITIAN_chase(M_loc, V_loc, N, E_real, neig)
+#endif
      !
      call MATRIX_transfer( M_in = V_loc , M=M )
      YAMBO_FREE(V_loc%blc)
@@ -312,6 +303,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
        endif
      endif
      !
+#if defined _CHASE
    else if(idriver==CHASE) then
      
      if (present(E_cmpl)) then
@@ -325,7 +317,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
        !
      else
        !
-        print *, "Solving the eigenvalue problem with ChASE..." 
+       print *, "Solving the eigenvalue problem with ChASE..." 
        !... Hermitian case
        if (present(M_slk)) then
          call SERIAL_HERMITIAN_chase(N,M_slk%blc(:,:,M_slk%I),E_real,neig)
@@ -335,6 +327,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
        !
        print *, "Solving the eigenvalue problem with ChASE... DONE" 
      endif
+#endif
+     !
    endif
    !
    ! ####> LINEAR SYSTEM SOLUTION

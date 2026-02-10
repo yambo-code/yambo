@@ -6,9 +6,9 @@
 ! Authors (see AUTHORS file for details): AM AF
 !
 ! #CHASE STAMP      
-
+!
 subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
-
+ !
  use chase_diag
  !
  use pars,           ONLY:SP
@@ -32,12 +32,12 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  character(64)     :: subname="PARALLEL_HERMITIAN_chase"
  complex(SP), allocatable :: Vtemp(:,:)
  real(SP), allocatable :: Etemp(:)
-
+ !
  integer :: myrank_intra, myrank_inter, intra_size, inter_size,&
 &           myrank_slk_ortho_comm, slk_ortho_comm_size,ierr
 
  call timing('PARALLEL_HERMITIAN_chase',OPR='start')
-!
+ !
  nev = min(neig,N)
  nex = max(10,nev/10)
  nex = max(0,min(nex,N-nev))
@@ -63,17 +63,19 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
 
  Vtemp = 0.0
  Etemp = 0.0
- 
+ ! 
  call mpi_comm_rank(comm,myrank_slk_ortho_comm,ierr)
  call mpi_comm_size(comm,slk_ortho_comm_size  ,ierr)
- 
+ ! 
  call mpi_barrier(comm,ierr)
-
+ !
  call timing('ChASE_INIT',OPR='start')
+ !
 #if defined _DOUBLE
-! call pzchase_init(N,nev,nex,m,nl,Mat%blc(:,:,Mat%I),m,Vtemp,Etemp,&
-!&                  nprow,npcol,grid_major,comm,init)
-
+ !
+ ! call pzchase_init(N,nev,nex,m,nl,Mat%blc(:,:,Mat%I),m,Vtemp,Etemp,&
+ !&                  nprow,npcol,grid_major,comm,init)
+ !
  call pzchase_init_blockcyclic(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
 &                              nprow, npcol, grid_major, 0, 0, comm, init)
 #else
@@ -93,28 +95,25 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
 #else
  call pcchase_finalize(flag)
 #endif
-
- if(flag/=0) print *, "[WARNING] ChASE did not finalize properly"
  !
-
- !print *, Etemp(:)
-
+ call warning("[WARNING] ChASE did not finalize properly")
+ !
  do i = 1,nev
-        E(i) = Etemp(i)
- end do
-
+   E(i) = Etemp(i)
+ enddo
+ !
  call timing('ChASE_Reorganize',OPR='start')
-
+ !
  if (nev > nl * mycol) then
    do i = 1,min(n,nev-n*mycol)
      V%blc(:,i,V%I) = Vtemp(:, nl * mycol + i)
-   end do
+   enddo
  endif
- 
-call timing('ChASE_Reorganize',OPR='stop')
-
+ ! 
+ call timing('ChASE_Reorganize',OPR='stop')
+ !
  !call PP_redux_wait(E,COMM=SLK_POOL%INTRA_comm)
-
+ !
  deallocate(Etemp)
  call timing('PARALLEL_HERMITIAN_chase',OPR='stop')
  !

@@ -88,8 +88,8 @@
 # FC kind = @FCKIND@ @FCVERSION@
 # MPI kind= @MPIKIND@
 #
-# [ CPP ] @CPP@ @CPPFLAGS_yambo@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_chase@ @def_elpa@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@ @def_gpu@ @def_yaml@ @PW_CPP@
-# [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_chase@ @def_elpa@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@ @def_gpu@ @def_yaml@
+# [ CPP ] @CPP@ @CPPFLAGS_yambo@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_chase@ @def_elpa@ @def_ydiago@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@ @def_gpu@ @def_yaml@ @PW_CPP@
+# [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_chase@ @def_elpa@ @def_ydiago@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@ @def_gpu@ @def_yaml@
 # [ CC  ] @CC@ @CFLAGS@
 # [ FC  ] @FC@ @FCFLAGS@ @OPENMPLIBS@ @GPU_FLAGS@
 # [ FCUF] @FCUFLAGS@ @GPU_FLAGS@

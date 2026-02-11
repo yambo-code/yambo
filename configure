@@ -723,6 +723,7 @@ KEEP_OBJS_check
 DP_check
 with_ydiago_branch
 ydiago_opt
+def_ydiago
 compile_ydiago
 YDIAGO_GPU_SUPPORT
 YDIAGO_INCS
@@ -733,14 +734,6 @@ internal_devxlib
 compile_devxlib
 DEVXLIB_INCS
 DEVXLIB_LIBS
-def_chase
-CHASE_LIBS
-CHASE_INCS
-CHASE_INCS_R
-CHASE_LIBS_R
-external_chase
-internal_chase
-compile_chase
 MKLGPU_LIBS
 LIBROCM_PATH
 LIBROCM_INCS
@@ -812,6 +805,14 @@ IO_LIB_VER
 HDF5_OPT
 HDF5_INCS
 HDF5_LIBS
+def_chase
+CHASE_LIBS
+CHASE_INCS
+CHASE_INCS_R
+CHASE_LIBS_R
+external_chase
+internal_chase
+compile_chase
 internal_elpa
 compile_elpa
 internal_blacs
@@ -1053,6 +1054,9 @@ with_blacs_libs
 with_scalapack_libs
 with_elpa_libs
 with_elpa_includedir
+enable_chase
+with_chase_libdir
+with_chase_includedir
 with_hdf5_libs
 with_hdf5_path
 with_hdf5_libdir
@@ -1111,9 +1115,6 @@ with_rocm_libdir
 with_rocm_includedir
 with_rocm_path
 with_mklgpu_libs
-enable_chase
-with_chase_libdir
-with_chase_includedir
 with_devxlib_libs
 with_devxlib_path
 with_devxlib_libdir
@@ -1791,6 +1792,7 @@ Optional Features:
   --enable-slepc-linalg   Enable suport for the diagonalization of BSE using
                           SLEPC. Default is no
   --enable-par-linalg     Use parallel linear algebra. Default is no
+  --enable-chase          Use ChASE eigensolver. Default is no
   --enable-hdf5-compression
                           Activate the HDF5 data compression. Default is no.
   --enable-hdf5-par-io    Enable the HDF5 parallel I/O. Default is yes
@@ -1810,8 +1812,7 @@ Optional Features:
                           The configure script will check CUDA installation
                           and report problems [default=yes]
   --enable-nvtx=<path>    Enable NVTX support [default=no]
-  --enable-chase          Use ChASE eigensolver. Default is no
-  --enable-ydiago         Use ydiago. Default is no
+  --enable-ydiago         Use ydiago. Default is yes
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1851,6 +1852,9 @@ Optional Packages:
                                 Use SCALAPACK libraries <libs> or setup MKL
   --with-elpa-libs=(libs)       Use ELPA libraries <libs>
   --with-elpa-includedir=<path> Path to the elpa include directory
+  --with-chase-libdir=<path>    Path to the ChASE lib directory
+  --with-chase-includedir=<path>
+                                Path to the ChASE include directory
   --with-hdf5-libs=<libs>       Use HDF5 libraries <libs>
   --with-hdf5-path=<path>       Path to the HDF5 install directory
   --with-hdf5-libdir=<path>     Path to the HDF5 lib directory
@@ -1907,9 +1911,6 @@ Optional Packages:
   --with-rocm-includedir=<path> Path to the rocm include directory
   --with-rocm-path=<path>       Path to rocm install directory
   --with-mklgpu-libs=<libs>     Use librocm library <libs>
-  --with-chase-libdir=<path>    Path to the ChASE lib directory
-  --with-chase-includedir=<path>
-                                Path to the ChASE include directory
   --with-devxlib-libs=<libs>    Use devxlib libraries <libs>
   --with-devxlib-path=<path>    Path to devxlib install directory
   --with-devxlib-libdir=<path>  Path to the devxlib lib directory
@@ -14134,6 +14135,194 @@ LIBS="$reset_LIBS"
 
 
 # ============================================================================
+# ChASE
+
+
+# Check whether --enable-chase was given.
+if test ${enable_chase+y}
+then :
+  enableval=$enable_chase;
+fi
+
+
+# Check whether --with-chase_libdir was given.
+if test ${with_chase_libdir+y}
+then :
+  withval=$with_chase_libdir;
+fi
+
+
+# Check whether --with-chase_includedir was given.
+if test ${with_chase_includedir+y}
+then :
+  withval=$with_chase_includedir;
+fi
+
+
+compile_chase="no"
+internal_chase="no"
+external_chase="yes"
+
+
+
+
+if test "$enable_chase" = "yes"
+then
+	if test x"$with_chase_libdir" != "x"
+	then
+		echo "LIBDIR = ${with_chase_libdir}"
+	else
+		with_chase_libdir="${ChASEROOT}/build/lib64"
+	fi
+
+	if test x"$with_chase_includedir" != "x"
+	then
+		echo "INCLUDEDIR = ${with_chase_includedir}"
+	else
+		with_chase_includedir="${ChASEROOT}/build/include"
+	fi
+
+	CHASE_LIBS_R="$with_chase_libdir"
+
+	CHASE_INCS_R="$with_chase_includedir"
+
+
+        #if test "$have_chase" = no
+        #then
+        #        echo "Downloading ChASE..."
+        #        git clone https://github.com/ChASE-library/ChASE.git
+        #        cd ChASE
+        #        ChASEROOT=$(pwd)
+        #        mkdir build
+        #        cd build
+        #        cmake .. -DCMAKE_INSTALL_PREFIX=${ChASEROOT} #We assume CMake exists
+        #        make install
+        #        cd ../..
+        #fi
+
+        as_ac_File=`printf "%s\n" "ac_cv_file_"${CHASE_LIBS_R}/libchase_c.a"" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for \"${CHASE_LIBS_R}/libchase_c.a\"" >&5
+printf %s "checking for \"${CHASE_LIBS_R}/libchase_c.a\"... " >&6; }
+if eval test \${$as_ac_File+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) test "$cross_compiling" = yes &&
+  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
+if test -r ""${CHASE_LIBS_R}/libchase_c.a""; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi ;;
+esac
+fi
+eval ac_res=\$$as_ac_File
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_File"\" = x"yes"
+then :
+
+cat >>confdefs.h <<_ACEOF
+#define `printf "%s\n" "HAVE_"${CHASE_LIBS_R}/libchase_c.a"" | sed "$as_sed_cpp"` 1
+_ACEOF
+
+else case e in #(
+  e) as_fn_error $? "lchase_c not found   " "$LINENO" 5 ;;
+esac
+fi
+
+        as_ac_File=`printf "%s\n" "ac_cv_file_"${CHASE_LIBS_R}/libchase_f.a"" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for \"${CHASE_LIBS_R}/libchase_f.a\"" >&5
+printf %s "checking for \"${CHASE_LIBS_R}/libchase_f.a\"... " >&6; }
+if eval test \${$as_ac_File+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) test "$cross_compiling" = yes &&
+  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
+if test -r ""${CHASE_LIBS_R}/libchase_f.a""; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi ;;
+esac
+fi
+eval ac_res=\$$as_ac_File
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_File"\" = x"yes"
+then :
+
+cat >>confdefs.h <<_ACEOF
+#define `printf "%s\n" "HAVE_"${CHASE_LIBS_R}/libchase_f.a"" | sed "$as_sed_cpp"` 1
+_ACEOF
+
+else case e in #(
+  e) as_fn_error $? "lchase_f not found   " "$LINENO" 5 ;;
+esac
+fi
+
+        as_ac_File=`printf "%s\n" "ac_cv_file_"${CHASE_LIBS_R}/libchase_cuda_kernels.a"" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for \"${CHASE_LIBS_R}/libchase_cuda_kernels.a\"" >&5
+printf %s "checking for \"${CHASE_LIBS_R}/libchase_cuda_kernels.a\"... " >&6; }
+if eval test \${$as_ac_File+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) test "$cross_compiling" = yes &&
+  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
+if test -r ""${CHASE_LIBS_R}/libchase_cuda_kernels.a""; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi ;;
+esac
+fi
+eval ac_res=\$$as_ac_File
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_File"\" = x"yes"
+then :
+
+cat >>confdefs.h <<_ACEOF
+#define `printf "%s\n" "HAVE_"${CHASE_LIBS_R}/libchase_cuda_kernels.a"" | sed "$as_sed_cpp"` 1
+_ACEOF
+
+else case e in #(
+  e) as_fn_error $? "lchase_cuda not found" "$LINENO" 5 ;;
+esac
+fi
+
+
+        CHASE_INCS="${CHASE_INCS} -I${CHASE_INCS_R}"
+
+        CHASE_LIBS="${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels "
+
+        CHASE_LIBS="${CHASE_LIBS} -lstdc++ "
+
+
+        CHASE_LIBS="${CHASE_LIBS}  "
+
+        #-lcudart -lcublas -lcusolver -lcudart -lcurand -lnccl
+        #LIBS="${LIBS} ${CHASE_LIBS} "
+        #INCS="${INCS} ${CHASE_INCS} "
+
+	#AC_SUBST(LIBS)
+	#AC_SUBST(INCS)
+
+        #Assuming a CUDA compiler...
+        #LIBS+="-lcudart -lcublas -lcusolver -lcudart -lcurand -lnccl -lstdc++ "
+
+        def_chase="-D_CHASE"
+else
+        def_chase=""
+fi
+
+
+
+
+
+# ============================================================================
 # HDF5
 
 #
@@ -16962,194 +17151,6 @@ fi
 #
 
 # ============================================================================
-# ChASE
-
-
-# Check whether --enable-chase was given.
-if test ${enable_chase+y}
-then :
-  enableval=$enable_chase;
-fi
-
-
-# Check whether --with-chase_libdir was given.
-if test ${with_chase_libdir+y}
-then :
-  withval=$with_chase_libdir;
-fi
-
-
-# Check whether --with-chase_includedir was given.
-if test ${with_chase_includedir+y}
-then :
-  withval=$with_chase_includedir;
-fi
-
-
-compile_chase="no"
-internal_chase="no"
-external_chase="yes"
-
-
-
-
-if test "$enable_chase" = "yes"
-then
-	if test x"$with_chase_libdir" != "x"
-	then
-		echo "LIBDIR = ${with_chase_libdir}"
-	else
-		with_chase_libdir="${ChASEROOT}/build/lib64"
-	fi
-
-	if test x"$with_chase_includedir" != "x"
-	then
-		echo "INCLUDEDIR = ${with_chase_includedir}"
-	else
-		with_chase_includedir="${ChASEROOT}/build/include"
-	fi
-
-	CHASE_LIBS_R="$with_chase_libdir"
-
-	CHASE_INCS_R="$with_chase_includedir"
-
-
-        #if test "$have_chase" = no
-        #then
-        #        echo "Downloading ChASE..."
-        #        git clone https://github.com/ChASE-library/ChASE.git
-        #        cd ChASE
-        #        ChASEROOT=$(pwd)
-        #        mkdir build
-        #        cd build
-        #        cmake .. -DCMAKE_INSTALL_PREFIX=${ChASEROOT} #We assume CMake exists
-        #        make install
-        #        cd ../..
-        #fi
-
-        as_ac_File=`printf "%s\n" "ac_cv_file_"${CHASE_LIBS_R}/libchase_c.a"" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for \"${CHASE_LIBS_R}/libchase_c.a\"" >&5
-printf %s "checking for \"${CHASE_LIBS_R}/libchase_c.a\"... " >&6; }
-if eval test \${$as_ac_File+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) test "$cross_compiling" = yes &&
-  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
-if test -r ""${CHASE_LIBS_R}/libchase_c.a""; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi ;;
-esac
-fi
-eval ac_res=\$$as_ac_File
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_File"\" = x"yes"
-then :
-
-cat >>confdefs.h <<_ACEOF
-#define `printf "%s\n" "HAVE_"${CHASE_LIBS_R}/libchase_c.a"" | sed "$as_sed_cpp"` 1
-_ACEOF
-
-else case e in #(
-  e) as_fn_error $? "lchase_c not found   " "$LINENO" 5 ;;
-esac
-fi
-
-        as_ac_File=`printf "%s\n" "ac_cv_file_"${CHASE_LIBS_R}/libchase_f.a"" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for \"${CHASE_LIBS_R}/libchase_f.a\"" >&5
-printf %s "checking for \"${CHASE_LIBS_R}/libchase_f.a\"... " >&6; }
-if eval test \${$as_ac_File+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) test "$cross_compiling" = yes &&
-  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
-if test -r ""${CHASE_LIBS_R}/libchase_f.a""; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi ;;
-esac
-fi
-eval ac_res=\$$as_ac_File
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_File"\" = x"yes"
-then :
-
-cat >>confdefs.h <<_ACEOF
-#define `printf "%s\n" "HAVE_"${CHASE_LIBS_R}/libchase_f.a"" | sed "$as_sed_cpp"` 1
-_ACEOF
-
-else case e in #(
-  e) as_fn_error $? "lchase_f not found   " "$LINENO" 5 ;;
-esac
-fi
-
-        as_ac_File=`printf "%s\n" "ac_cv_file_"${CHASE_LIBS_R}/libchase_cuda_kernels.a"" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for \"${CHASE_LIBS_R}/libchase_cuda_kernels.a\"" >&5
-printf %s "checking for \"${CHASE_LIBS_R}/libchase_cuda_kernels.a\"... " >&6; }
-if eval test \${$as_ac_File+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) test "$cross_compiling" = yes &&
-  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
-if test -r ""${CHASE_LIBS_R}/libchase_cuda_kernels.a""; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi ;;
-esac
-fi
-eval ac_res=\$$as_ac_File
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_File"\" = x"yes"
-then :
-
-cat >>confdefs.h <<_ACEOF
-#define `printf "%s\n" "HAVE_"${CHASE_LIBS_R}/libchase_cuda_kernels.a"" | sed "$as_sed_cpp"` 1
-_ACEOF
-
-else case e in #(
-  e) as_fn_error $? "lchase_cuda not found" "$LINENO" 5 ;;
-esac
-fi
-
-
-        CHASE_INCS="${CHASE_INCS} -I${CHASE_INCS_R}"
-
-        CHASE_LIBS="${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels "
-
-        CHASE_LIBS="${CHASE_LIBS} -lstdc++ "
-
-
-        CHASE_LIBS="${CHASE_LIBS}  "
-
-        #-lcudart -lcublas -lcusolver -lcudart -lcurand -lnccl
-        #LIBS="${LIBS} ${CHASE_LIBS} "
-        #INCS="${INCS} ${CHASE_INCS} "
-
-	#AC_SUBST(LIBS)
-	#AC_SUBST(INCS)
-
-        #Assuming a CUDA compiler...
-        #LIBS+="-lcudart -lcublas -lcusolver -lcudart -lcurand -lnccl -lstdc++ "
-
-        def_chase="-D_CHASE"
-else
-        def_chase=""
-fi
-
-
-
-
-
-# ============================================================================
 # Device XLIB
 
 
@@ -17369,6 +17370,9 @@ LIBS="$acx_devxlib_save_LIBS"
 if test ${enable_ydiago+y}
 then :
   enableval=$enable_ydiago;
+else case e in #(
+  e) enable_ydiago="yes" ;;
+esac
 fi
 
 
@@ -17386,10 +17390,13 @@ ac_config_files="$ac_config_files lib/ydiago/make_ydiago.inc:lib/ydiago/make_ydi
 
 
 compile_ydiago="no"
+def_ydiago=""
 
-if test "$def_scalapack" = "-D_SCALAPACK" && test "$enable_ydiago" = "yes" ; then
+if test "$def_scalapack" = "-D_SCALAPACK" && test "x$def_chase" = "x" &&
+   test "$enable_ydiago" = "yes" ; then
 
   compile_ydiago="yes"
+  def_ydiago="-D_YDIAGO"
 
   # GPU flags are passed to ydiago compilation only if elpa library is available
   if test ! x"$def_gpu" = "x" && test "$def_elpa" = "-D_ELPA" ; then
@@ -17408,11 +17415,13 @@ if test "$def_scalapack" = "-D_SCALAPACK" && test "$enable_ydiago" = "yes" ; the
 else
 
   compile_ydiago="no"
+  def_ydiago=""
   ydiago_opt=""
   YDIAGO_LIBS=""
   YDIAGO_INCS=""
 
 fi
+
 
 
 

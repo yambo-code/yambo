@@ -36,9 +36,12 @@ subroutine K_diago_driver(iq,W,X_static)
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing
  use linear_algebra, ONLY:DIAGO,DIAGX,CHASE
- use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver,YDIAGO_driver,&
+ use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver,&
  &                        PL_diago_residual,K_diago_L_res,K_diago_R_res,&
  &                        K_diago_perturbative, K_stored_in_a_big_matrix
+#if defined _YDIAGO
+ use interfaces,     ONLY:YDIAGO_driver
+#endif
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
@@ -132,7 +135,7 @@ subroutine K_diago_driver(iq,W,X_static)
  l_kerr_lft=l_BS_kerr_asymm.or.l_BS_dichroism
  l_kerr_rgt=l_BS_kerr      .or.l_BS_dichroism
  !
-#if defined _SCALAPACK
+#if defined _YDIAGO
  l_diago     = index(BSS_mode,'o')/=0.or. (     l_BS_photolum.and.(index(BSS_mode,'d')/=0))
  l_ydiago    = index(BSS_mode,'d')/=0.and. .not.l_BS_photolum
 #else
@@ -277,7 +280,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if (K_is_not_hermitian) then
        !
-#if defined _SCALAPACK
+#if defined _YDIAGO
        if (l_ydiago) then 
          ! BS_V_left are only referenced in non-hermitian case
          ! In coupling case, if the user requested n values,
@@ -310,7 +313,7 @@ subroutine K_diago_driver(iq,W,X_static)
        !
      else
        !
-#if defined _SCALAPACK
+#if defined _YDIAGO
        if (l_ydiago) then
          call YDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
 &                           neigs_range=neigs_range, eigvals_range=eigvals_range,   &
@@ -360,7 +363,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if (l_diago) call live_timing( )
      !
-#if defined _SCALAPACK
+#if defined _YDIAGO
      if (l_ydiago) then
        if (Input_n_eig /= BSS_n_eig) call K_resize_variables()
      endif
@@ -468,7 +471,7 @@ subroutine K_diago_driver(iq,W,X_static)
      &                                                   BS_mat=BS_V_right,write_ev=.not.l_ydiago)
      !
      call PP_wait()
-#if defined _SCALAPACK
+#if defined _YDIAGO
      if (l_ydiago .and. BSS_write_eig_2_db) call write_bs_ev_par(iq, i_BS_mat, &
 &                             neigs_this_cpu, neig_shift, BS_V_right, BS_V_left)
 #endif
@@ -633,7 +636,7 @@ subroutine K_diago_driver(iq,W,X_static)
      endif
 
      !
-#if defined _SCALAPACK
+#if defined _YDIAGO
      if (l_ydiago) then
        !
        if (BSS_ydiago_solver/="s" .and. BSS_ydiago_solver/="e") then
@@ -728,7 +731,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if(l_diago) BSS_n_eig = BS_mat_dim
      !
-#if defined _SCALAPACK
+#if defined _YDIAGO
      ! set a Ydiago defaults.
      if(l_ydiago) then
        !

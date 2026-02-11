@@ -18,8 +18,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  ! * INV:   M_slk/M => M_slk/M
  !
  ! * DIAGO: M => M + E_real/E_cmpl + V_left/V_right (SLK external arrays still to implement)
- 
  ! * DIAGX: M => M + few E_real/E_cmpl + V_left/V_right
+ ! * CHASE: M => M + few E_real/E_cmpl + V_left/V_right
  !
  ! * LIN_SYSTEM: M_slk/M + B_slk/B => B_slk/B 
  !
@@ -142,12 +142,12 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      call MATRIX_init("SLK",  V_loc, N, 1 )
      YAMBO_ALLOC(V_loc%blc,(V_loc%BLCrows(1):V_loc%BLCrows(2),V_loc%BLCcols(1):V_loc%BLCcols(2),V_loc%Nb))
      !
-     if(idriver==DIAGO) call PARALLEL_HERMITIAN_diagonalization( M_loc, V_loc, N, E_real )
+     if(idriver==DIAGO) call PARALLEL_HERMITIAN_diago( M_loc, V_loc, N, E_real )
      !
-     if(idriver==DIAGX) call PARALLEL_HERMITIAN_feweigenvalues( M_loc, V_loc, N, E_real, neig)
+     if(idriver==DIAGX) call PARALLEL_HERMITIAN_diagx( M_loc, V_loc, N, E_real, neig )
      !
 #if defined _CHASE
-     if(idriver==CHASE) call PARALLEL_HERMITIAN_chase(M_loc, V_loc, N, E_real, neig)
+     if(idriver==CHASE) call PARALLEL_HERMITIAN_chase( M_loc, V_loc, N, E_real, neig )
 #endif
      !
      call MATRIX_transfer( M_in = V_loc , M=M )
@@ -245,41 +245,22 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    ! ###> SERIAL DIAGONALIZATION
    !
    if (idriver==DIAGO) then
-
-!        print *, "Writing the matrix..." 
-!       matfilename = 'matrix.bin'
-
-! Open the file for unformatted binary output
-!        open(unit=10, file=matfilename, form='unformatted', access='stream')
-
-! Write the matrix into the file
-
-!        if (present(M_slk)) then 
-!                 write(10) M_slk%blc(:,:,M_slk%I)
-!        else
-!                 write(10) M
-!        endif
-
-!        print *, "Writing the matrix... DONE" 
-    
-! Close the file
-!        close(10)
      !
      if (present(E_cmpl)) then
        !
        !... non-Hermitian case
        if (present(M_slk)) then
-         call SERIAL_diagonalization(N,M_slk%blc(:,:,M_slk%I),E_cmpl,V_left,V_right)
+         call SERIAL_diago(N,M_slk%blc(:,:,M_slk%I),E_cmpl,V_left,V_right)
        else
-         call SERIAL_diagonalization(N,M,E_cmpl,V_left,V_right)
+         call SERIAL_diago(N,M,E_cmpl,V_left,V_right)
        endif
      else
        !
        !... Hermitian case
        if (present(M_slk)) then
-         call SERIAL_HERMITIAN_diagonalization(N,M_slk%blc(:,:,M_slk%I),E_real)
+         call SERIAL_HERMITIAN_diago(N,M_slk%blc(:,:,M_slk%I),E_real)
        else
-         call SERIAL_HERMITIAN_diagonalization(N,M,E_real)
+         call SERIAL_HERMITIAN_diago(N,M,E_real)
        endif
      endif
      !
@@ -289,35 +270,36 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
        !
        !... non-Hermitian case
        if (present(M_slk)) then
-         call SERIAL_diagonalization(N,M_slk%blc(:,:,M_slk%I),E_cmpl,V_left,V_right)
+         call SERIAL_diago(N,M_slk%blc(:,:,M_slk%I),E_cmpl,V_left,V_right)
        else
-         call SERIAL_diagonalization(N,M,E_cmpl,V_left,V_right)
+         call SERIAL_diago(N,M,E_cmpl,V_left,V_right)
        endif
+       !
      else
        !
        !... Hermitian case
        if (present(M_slk)) then
-         call SERIAL_HERMITIAN_feweigenvalues(N,M_slk%blc(:,:,M_slk%I),E_real,neig)
+         call SERIAL_HERMITIAN_diagx(N,M_slk%blc(:,:,M_slk%I),E_real,neig)
        else
-         call SERIAL_HERMITIAN_feweigenvalues(N,M,E_real,neig)
+         call SERIAL_HERMITIAN_diagx(N,M,E_real,neig)
        endif
+       !
      endif
      !
 #if defined _CHASE
    else if(idriver==CHASE) then
-     
+     !
      if (present(E_cmpl)) then
        !
        !... non-Hermitian case
        if (present(M_slk)) then
-         call SERIAL_diagonalization(N,M_slk%blc(:,:,M_slk%I),E_cmpl,V_left,V_right)
+         call SERIAL_diago(N,M_slk%blc(:,:,M_slk%I),E_cmpl,V_left,V_right)
        else
-         call SERIAL_diagonalization(N,M,E_cmpl,V_left,V_right)
+         call SERIAL_diago(N,M,E_cmpl,V_left,V_right)
        endif
        !
      else
        !
-       print *, "Solving the eigenvalue problem with ChASE..." 
        !... Hermitian case
        if (present(M_slk)) then
          call SERIAL_HERMITIAN_chase(N,M_slk%blc(:,:,M_slk%I),E_real,neig)
@@ -325,7 +307,6 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
          call SERIAL_HERMITIAN_chase(N,M,E_real,neig)
        endif
        !
-       print *, "Solving the eigenvalue problem with ChASE... DONE" 
      endif
 #endif
      !

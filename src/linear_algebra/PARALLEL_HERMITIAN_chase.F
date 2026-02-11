@@ -9,8 +9,6 @@
 !
 subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  !
- use chase_diag
- !
  use pars,           ONLY:SP
  use parallel_int,   ONLY:PP_redux_wait
  use SLK_m,          ONLY:SLK_POOL,SLK_ORTHO
@@ -18,6 +16,8 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  use parallel_m,     ONLY:PAR_COM_WORLD
  use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing
+ use chase_diag
+ !
 #include<y_memory.h>
  !
  integer           :: N,neig,i,j,k,nr,nb,nprow,npcol,m,myrow,mycol,nl
@@ -39,8 +39,9 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  call timing('PARALLEL_HERMITIAN_chase',OPR='start')
  !
  nev = min(neig,N)
- nex = max(10,nev/10)
- nex = max(0,min(nex,N-nev))
+ nex = nev
+ !nex = max(10,nev/10)
+ !nex = max(0,min(nex,N-nev))
 
  deg = 20
  tol = 1e-10
@@ -60,7 +61,7 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
 
  allocate(Vtemp(m,nev+nex))
  allocate(Etemp(nev+nex))
-
+ !
  Vtemp = 0.0
  Etemp = 0.0
  ! 
@@ -89,20 +90,18 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
 #else
  call pcchase(deg,tol,mode,opt,qr)
 #endif
- 
+ ! 
 #if defined _DOUBLE
  call pzchase_finalize(flag)
 #else
  call pcchase_finalize(flag)
 #endif
  !
- call warning("[WARNING] ChASE did not finalize properly")
- !
- do i = 1,nev
-   E(i) = Etemp(i)
- enddo
+ if (flag/=0) call warning("[WARNING] ChASE did not finalize properly")
  !
  call timing('ChASE_Reorganize',OPR='start')
+ !
+ E(1:nev) = Etemp(1:nev)
  !
  if (nev > nl * mycol) then
    do i = 1,min(n,nev-n*mycol)
@@ -115,6 +114,7 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  !call PP_redux_wait(E,COMM=SLK_POOL%INTRA_comm)
  !
  deallocate(Etemp)
+ deallocate(Vtemp)
  call timing('PARALLEL_HERMITIAN_chase',OPR='stop')
  !
 end subroutine PARALLEL_HERMITIAN_chase

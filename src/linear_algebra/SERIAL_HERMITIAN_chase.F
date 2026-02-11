@@ -14,6 +14,7 @@ subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,&
 &                         LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
+ !
 #include<y_memory.h>
  !
  integer     :: n,neig,ii
@@ -32,21 +33,22 @@ subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
    call timing('SERIAL_HERMITIAN_chase',OPR='start')
  endif
  ! 
- allocate(Vtemp(n,n))
- Vtemp = 0.0
+ !
+ E=0.0
  !
  nev = min(neig,n)
- nex = max(0,min(10,n-nev))
+ !nex = max(0,min(10,n-nev))
+ nex = nev
+ !
  deg = 20
- tol = 1e-10
+ tol = 1e-8
  mode = 'R'
  opt = 'S'
  qr = 'C'
  !
- !print *, "SERIAL ChASE, Matrix sample :"
- !print *, M(1:5,1:5)
- !
+ allocate(Vtemp(n,nev+nex))
  allocate(Etemp(nev+nex))
+ Vtemp = 0.0
  Etemp = 0.0
  ! 
  call timing('ChASE_INIT',OPR='start')
@@ -71,14 +73,18 @@ subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
  call cchase_finalize(flag)
 #endif
  !
- call warning("[WARNING] ChASE did not finalize properly")
+ if (flag/=0) call warning("[WARNING] ChASE did not finalize properly")
  !
- do ii = 1,nev
-   E(ii) = Etemp(ii)
- enddo
- M = Vtemp
+ E(1:nev) = Etemp(1:nev)
+ M(:,1:nev) = Vtemp(:,1:nev)
+ M(:,nev+1:) = 0.0_SP
  !
  deallocate(Etemp)
+ deallocate(Vtemp)
+ !
+write(100,"(2f15.9)") E
+write(101,"(8f15.9)") M
+ !
  if(.not.(l_nl_optics.or.l_real_time)) then
    call timing('SERIAL_HERMITIAN_chase',OPR='stop')
  endif

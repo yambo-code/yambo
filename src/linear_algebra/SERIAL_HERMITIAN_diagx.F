@@ -3,10 +3,9 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM AF
+! Authors (see AUTHORS file for details): CR AF
 !
-! #CHASE_UPDATE_STAMP
-subroutine SERIAL_HERMITIAN_feweigenvalues(n,M,E,neig)
+subroutine SERIAL_HERMITIAN_diagx(n,M,E,neig)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_nl_optics,l_real_time
@@ -19,7 +18,7 @@ subroutine SERIAL_HERMITIAN_feweigenvalues(n,M,E,neig)
  complex(SP) :: M(n,n)
  real(SP)    :: E(neig),abstol
  !
- character(64)     :: subname="SERIAL_HERMITIAN_feweigenvalues"
+ character(64)     :: subname="SERIAL_HERMITIAN_diagx"
  integer           :: lwork,nfound,info
  type(LALGEBRA_WS) :: WS
  integer, allocatable :: iwork(:),ifail(:)
@@ -35,7 +34,7 @@ subroutine SERIAL_HERMITIAN_feweigenvalues(n,M,E,neig)
  allocate(WS%v_cmplx(1))
  !
  if(.not.(l_nl_optics.or.l_real_time)) then
-   call timing('SERIAL_HERMITIAN_feweigenvalues',OPR='start')
+   call timing('SERIAL_HERMITIAN_diagx',OPR='start')
    YAMBO_ALLOC(WS%v_real,(max(1,7*n)))
  else
    allocate(WS%v_real(max(1,7*n)))
@@ -43,15 +42,15 @@ subroutine SERIAL_HERMITIAN_feweigenvalues(n,M,E,neig)
  !
  abstol = 2*DLAMCH('S')
  allocate(iwork(max(1,5*n)))
-        !print *, M(:,:)
  allocate(ifail(n))
+ !
  info = 0
  ifail = 0
  E = 0.0
  Vtemp = 0.0
  iwork = 0
  nfound = 0
-
+ !
 #if defined _DOUBLE
  abstol = 2*DLAMCH('S')
  call ZHEEVX('V','I','U',n,M,n,1,1,1,neig,abstol,nfound,Etemp,Vtemp&
@@ -74,24 +73,27 @@ subroutine SERIAL_HERMITIAN_feweigenvalues(n,M,E,neig)
 #if defined _DOUBLE
  call ZHEEVX('V','I','U',n,M,n,1,1,1,neig,abstol,nfound,Etemp,Vtemp&
 &       ,n,WS%v_cmplx,lwork,WS%v_real,iwork,ifail,info)
- if(info.ne.0) call LINEAR_ALGEBRA_error(subname,'performing ZHEEV')
+ if(info.ne.0) call LINEAR_ALGEBRA_error(subname,'performing ZHEEVX')
 #else
  call CHEEVX('V','I','U',n,M,n,1,1,1,neig,abstol,nfound,Etemp,Vtemp&
 &       ,n,WS%v_cmplx,lwork,WS%v_real,iwork,ifail,info)
- if(info.ne.0) call LINEAR_ALGEBRA_error(subname,'performing CHEEV')
+ if(info.ne.0) call LINEAR_ALGEBRA_error(subname,'performing CHEEVX')
 #endif
  !
  call LINEAR_ALGEBRA_WS_reset(WS)
- !
  deallocate(iwork)
+ !
  M=Vtemp
- do ii = 1,neig
-        E(ii) = Etemp(ii)
- end do
+ E(1:neig) = Etemp(1:neig)
+ !
  deallocate(Etemp)
- 
+ ! 
+ !
+write(200,"(2f15.9)") E
+write(201,"(8f15.9)") M
+ !
  if(.not.(l_nl_optics.or.l_real_time)) then
-   call timing('SERIAL_HERMITIAN_feweigenvalues',OPR='stop')
+   call timing('SERIAL_HERMITIAN_diagx',OPR='stop')
  endif
  !
 end subroutine

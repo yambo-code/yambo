@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
-subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
+subroutine SERIAL_HERMITIAN_diago(n,M,E)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_nl_optics,l_real_time
@@ -18,7 +18,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  complex(SP) :: M(n,n)
  real(SP)    :: E(n)
  !
- character(64)     :: subname="SERIAL_HERMITIAN_diagonalization"
+ character(64)     :: subname="SERIAL_HERMITIAN_diago"
  integer           :: lwork
  type(LALGEBRA_WS) :: WS
  !

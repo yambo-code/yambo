@@ -174,8 +174,6 @@ subroutine K_diago_driver(iq,W,X_static)
  if (isec(2)/=0) sec="="
  if (isec(2)==0) sec="+"
  call section(sec,trim(Solver)//' Solver @q'//trim(intc(iq)))
- !
- !if(l_diagx) call pars.or.l_diagxer
 
  !  
  call K_local_init()
@@ -368,6 +366,7 @@ subroutine K_diago_driver(iq,W,X_static)
        if (Input_n_eig /= BSS_n_eig) call K_resize_variables()
      endif
 #endif
+
      !
      ! Compute residuals
      !
@@ -377,10 +376,11 @@ subroutine K_diago_driver(iq,W,X_static)
      !====================================
      !
      ! Right residuals
-     if(l_abs_res) then
-                      call K_diago_R_res("opt1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,BS_R_right_abs, BS_V_right)
-       if(l_kerr_rgt) call K_diago_R_res("opt2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,BS_R_right_kerr,BS_V_right)
+     if (l_abs_res) then
+                       call K_diago_R_res("opt1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,BS_R_right_abs, BS_V_right)
+       if (l_kerr_rgt) call K_diago_R_res("opt2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,BS_R_right_kerr,BS_V_right)
      endif
+write(*,*) "after l_abs_res"
      !
      if(l_BS_dichroism) then
        call K_diago_R_res("dic1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,tmp_res_ptrR,BS_V_right)

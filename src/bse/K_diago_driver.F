@@ -294,14 +294,19 @@ subroutine K_diago_driver(iq,W,X_static)
        endif
 #endif
        !
-       if (l_diago.or.l_diagx.or.l_chase) then
-         ! call LINEAR_ALGEBRA_driver(DIAGO,M=BS_V_right,E_cmpl=BS_E,V_left=BS_V_left)
-         ! The following code should be replaced by the above line wich a change in LINEAR_ALGEBRA_driver
-         YAMBO_ALLOC(BS_mat,(BS_mat_dim,BS_mat_dim))
-         BS_mat=BS_V_right
+       YAMBO_ALLOC(BS_mat,(BS_mat_dim,BS_mat_dim))
+       BS_mat=BS_V_right
+       !
+       if (l_diago) then
          call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
-         YAMBO_FREE(BS_mat)
        endif
+       !
+       if (l_chase) then
+         call LINEAR_ALGEBRA_driver(CHASE,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right,neig=BSS_n_eig)
+         neigs_this_cpu = BSS_n_eig
+       endif
+       !
+       YAMBO_FREE(BS_mat)
        !
 #if defined _SLEPC && !defined _NL
        if (l_slepc) then

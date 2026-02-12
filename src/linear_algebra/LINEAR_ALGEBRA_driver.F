@@ -65,6 +65,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  logical             :: USE_GPU
  double precision    :: starttime,endtime
  character(len=20)   :: matfilename
+ real(SP), allocatable :: E_raux(:)
  !
  call timing("LINEAR ALGEBRA",OPR="start")
  !
@@ -147,7 +148,23 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      if(idriver==DIAGX) call PARALLEL_HERMITIAN_diagx( M_loc, V_loc, N, E_real, neig )
      !
 #if defined _CHASE
-     if(idriver==CHASE) call PARALLEL_HERMITIAN_chase( M_loc, V_loc, N, E_real, neig )
+     !
+     if (idriver==CHASE) then
+       !
+       if (present(E_cmpl)) then
+         !
+         !... non-Hermitian case
+         !call PARALLEL_PSEUDOHERM_chase( M_loc, V_loc, N, E_real, neig )
+         !
+       else
+         ! 
+         !... Hermitian case
+         call PARALLEL_HERMITIAN_chase( M_loc, V_loc, N, E_real, neig )
+         !
+       endif
+       !
+     endif
+     ! 
 #endif
      !
      call MATRIX_transfer( M_in = V_loc , M=M )
@@ -292,11 +309,16 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      if (present(E_cmpl)) then
        !
        !... non-Hermitian case
+       YAMBO_ALLOC( E_raux,(neig) )
+       !
        if (present(M_slk)) then
-         call SERIAL_diago(N,M_slk%blc(:,:,M_slk%I),E_cmpl,V_left,V_right)
+         call SERIAL_PSEUDOHERM_chase(N,M_slk%blc(:,:,M_slk%I),E_raux,V_left,V_right,neig)
        else
-         call SERIAL_diago(N,M,E_cmpl,V_left,V_right)
+         call SERIAL_PSEUDOHERM_chase(N,M,E_raux,V_left,V_right,neig)
        endif
+       !
+       E_cmpl(1:neig)=cmplx(E_raux(1:neig),kind=SP)
+       YAMBO_FREE( E_raux )
        !
      else
        !

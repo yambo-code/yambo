@@ -7,7 +7,7 @@
 !
 ! #CHASE STAMP      
 !
-subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
+subroutine SERIAL_PSEUDOHERM_chase(n,M,E,V_left,V_right,neig)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_nl_optics,l_real_time
@@ -20,20 +20,20 @@ subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
  integer     :: n,neig
  complex(SP) :: M(n,n)
  real(SP)    :: E(neig)
+ complex(SP) :: V_left(n,*),V_right(n,*)
 
- integer     :: nev, nex, deg, ierr
+ integer     :: nev,nex,ierr,deg,is,ie
  real(SP)    :: tol
- character   :: mode, opt, qr
+ character   :: mode,opt,qr
  !
- character(64)     :: subname="SERIAL_HERMITIAN_chase"
+ character(64)     :: subname="SERIAL_PSEUDOHERM_chase"
  complex(SP), allocatable :: Vtemp(:,:)
  real(SP),    allocatable :: Etemp(:)
 
  if(.not.(l_nl_optics.or.l_real_time)) then
-   call timing('SERIAL_HERMITIAN_chase',OPR='start')
+   call timing('SERIAL_PSEUDOHERM_chase',OPR='start')
  endif
  ! 
- !
  E=0.0
  !
  nev = min(neig,n)
@@ -76,14 +76,17 @@ subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
  if (ierr/=0) call warning("[WARNING] ChASE did not finalize properly")
  !
  E(1:nev) = Etemp(1:nev)
- M(:,1:nev) = Vtemp(:,1:nev)
- M(:,nev+1:) = 0.0_SP
+ V_right(:,1:nev) = Vtemp(:,1:nev)
+ !
+ is=n/2+1
+ ie=n
+ V_left(is:ie,1:nev) = -Vtemp(is:ie,1:nev)
  !
  deallocate(Etemp)
  deallocate(Vtemp)
  !
  if(.not.(l_nl_optics.or.l_real_time)) then
-   call timing('SERIAL_HERMITIAN_chase',OPR='stop')
+   call timing('SERIAL_PSEUDOHERM_chase',OPR='stop')
  endif
  !
-end subroutine
+end subroutine SERIAL_PSEUDOHERM_chase

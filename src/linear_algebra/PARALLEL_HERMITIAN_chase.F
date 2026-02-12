@@ -3,9 +3,7 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM AF
-!
-! #CHASE STAMP      
+! Authors (see AUTHORS file for details): CR AF
 !
 subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  !
@@ -20,18 +18,19 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  !
 #include<y_memory.h>
  !
- integer           :: N,neig,i,j,k,nr,nb,nprow,npcol,m,myrow,mycol,nl
+ integer           :: N,neig
  type(PAR_matrix)  :: Mat,V
  real(SP)          :: E(neig)
 
- integer  :: nev, nex, init, deg, flag
- integer  :: comm
- real(SP) :: tol
+ integer   :: i,j,k,nr,nb,nprow,npcol,m,myrow,mycol,nl
+ integer   :: nev, nex, ierr, deg
+ integer   :: comm
+ real(SP)  :: tol
  character :: mode, opt, qr, grid_major
  !
  character(64)     :: subname="PARALLEL_HERMITIAN_chase"
  complex(SP), allocatable :: Vtemp(:,:)
- real(SP), allocatable :: Etemp(:)
+ real(SP),    allocatable :: Etemp(:)
  !
  integer :: myrank_intra, myrank_inter, intra_size, inter_size,&
 &           myrank_slk_ortho_comm, slk_ortho_comm_size,ierr
@@ -40,16 +39,14 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  !
  nev = min(neig,N)
  nex = nev
- !nex = max(10,nev/10)
- !nex = max(0,min(nex,N-nev))
-
+ !
  deg = 20
  tol = 1e-10
  mode = 'R'
  opt = 'S'
  qr = 'C'
  grid_major = 'R' !----- Check grid major /!\. -- Checked in SLK_ORTHO_init
-
+ !
  nprow = SLK_ORTHO%grid(1)
  npcol = SLK_ORTHO%grid(2)
  myrow = SLK_ORTHO%coordinate(1)
@@ -58,7 +55,7 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  m     = Mat%nrows
  nl    = Mat%ncols
  comm  = SLK_ORTHO%COMM
-
+ !
  allocate(Vtemp(m,nev+nex))
  allocate(Etemp(nev+nex))
  !
@@ -78,10 +75,10 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  !&                  nprow,npcol,grid_major,comm,init)
  !
  call pzchase_init_blockcyclic(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
-&                              nprow, npcol, grid_major, 0, 0, comm, init)
+&                              nprow, npcol, grid_major, 0, 0, comm, ierr)
 #else
  call pcchase_init_blockcyclic(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
-&                              nprow, npcol, grid_major, 0, 0, comm, init)
+&                              nprow, npcol, grid_major, 0, 0, comm, ierr)
 #endif
  call timing('ChASE_INIT',OPR='stop')
 
@@ -92,12 +89,12 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
 #endif
  ! 
 #if defined _DOUBLE
- call pzchase_finalize(flag)
+ call pzchase_finalize(ierr)
 #else
- call pcchase_finalize(flag)
+ call pcchase_finalize(ierr)
 #endif
  !
- if (flag/=0) call warning("[WARNING] ChASE did not finalize properly")
+ if (ierr/=0) call warning("[WARNING] ChASE did not finalize properly")
  !
  call timing('ChASE_Reorganize',OPR='start')
  !

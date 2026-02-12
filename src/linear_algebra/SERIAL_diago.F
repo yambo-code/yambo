@@ -35,6 +35,7 @@ subroutine SERIAL_diago(n,M,E,V_left,V_right)
  WS%dim=int(real(WS%v_cmplx(1)))
  deallocate(WS%v_cmplx)
  YAMBO_ALLOC(WS%v_cmplx,(WS%dim))
+ !
  call M_eigenvalues(n,M,E,V_left,V_right,WS%v_cmplx,WS%dim,WS%v_real,WS%i_fail)
  !
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('SERIAL_diago','failed')

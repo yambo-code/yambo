@@ -88,10 +88,6 @@ subroutine SERIAL_HERMITIAN_diagx(n,M,E,neig)
  !
  deallocate(Etemp)
  ! 
- !
-write(200,"(2f15.9)") E
-write(201,"(8f15.9)") M
- !
  if(.not.(l_nl_optics.or.l_real_time)) then
    call timing('SERIAL_HERMITIAN_diagx',OPR='stop')
  endif

@@ -32,9 +32,6 @@ subroutine SERIAL_HERMITIAN_diago(n,M,E)
    allocate(WS%v_real(max(1,3*n-2)))
  endif
  !
- print *, "M = ",M(1:3,1:3)
- print *, "E = ",E(:)
- print *, "WS%v_real = ",WS%v_real(1:10)
 #if defined _DOUBLE
  call ZHEEV('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
 #else

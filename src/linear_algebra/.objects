@@ -7,7 +7,7 @@ SLK_objs = SLK_test.o SLK_ORTHO_group.o SLK_ORTHO_init.o SLK_setup.o PARALLEL_in
 SLEPC_objs = MATRIX_slepc.o 
 #endif
 #if defined _CHASE
-CHASE_objs = SERIAL_HERMITIAN_chase.o 
+CHASE_objs = SERIAL_HERMITIAN_chase.o SERIAL_PSEUDOHERM_chase.o
 #endif
 #if defined _CHASE && defined _SCALAPACK
 CHASE_objs += PARALLEL_HERMITIAN_chase.o

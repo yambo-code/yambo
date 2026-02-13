@@ -37,8 +37,7 @@ subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
  E=0.0
  !
  nev = min(neig,n)
- !nex = max(0,min(10,n-nev))
- nex = nev
+ nex = min(n-nev,nev)
  !
  deg = 20
  tol = 1e-8

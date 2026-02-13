@@ -37,8 +37,7 @@ subroutine SERIAL_PSEUDOHERM_chase(n,M,E,V_left,V_right,neig)
  E=0.0
  !
  nev = min(neig,n)
- !nex = max(0,min(10,n-nev))
- nex = nev
+ nex = min(n-nev,nev)
  !
  deg = 20
  tol = 1e-8
@@ -51,20 +50,20 @@ subroutine SERIAL_PSEUDOHERM_chase(n,M,E,V_left,V_right,neig)
  Vtemp = 0.0
  Etemp = 0.0
  ! 
- call timing('ChASE_INIT',OPR='start')
+ call timing('ChASE_PS_INIT',OPR='start')
  !
 #if defined _DOUBLE
- call zchase_init(n, nev, nex, M, n, Vtemp, Etemp, ierr)
+ call zchase_init_pseudo(n, nev, nex, M, n, Vtemp, Etemp, ierr)
 #else
- call cchase_init(n, nev, nex, M, n, Vtemp, Etemp, ierr)
+ call cchase_init_pseudo(n, nev, nex, M, n, Vtemp, Etemp, ierr)
 #endif
  !
- call timing('ChASE_INIT',OPR='stop')
+ call timing('ChASE_PS_INIT',OPR='stop')
  !
 #if defined _DOUBLE
- call zchase(deg,tol,mode,opt,qr)
+ call zchase_pseudo(deg,tol,mode,opt,qr)
 #else
- call cchase(deg,tol,mode,opt,qr)
+ call cchase_pseudo(deg,tol,mode,opt,qr)
 #endif
  ! 
 #if defined _DOUBLE
@@ -73,7 +72,7 @@ subroutine SERIAL_PSEUDOHERM_chase(n,M,E,V_left,V_right,neig)
  call cchase_finalize(ierr)
 #endif
  !
- if (ierr/=0) call warning("[WARNING] ChASE did not finalize properly")
+ if (ierr/=0) call warning("[WARNING] ChASE_PS did not finalize properly")
  !
  E(1:nev) = Etemp(1:nev)
  V_right(:,1:nev) = Vtemp(:,1:nev)

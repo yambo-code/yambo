@@ -22,7 +22,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
 &                        PARALLEL_WF_distribute,PARALLEL_index
  use parser_m,      ONLY:parser
- use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PAR_COM_Q_A2A,PAR_COM_NULL,master_cpu,&
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PAR_COM_Q_INDEX,PAR_COM_NULL,master_cpu,&
 &                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,yMPI_comm,COMM_copy,PAR_COM_RL_A2A,&
 &                        PAR_Q_ibz_index,n_WF_bands_to_load,myid,PAR_COM_X_WORLD,PAR_COM_RL_INDEX,&
 &                        PP_indexes,PP_indexes_reset
@@ -255,10 +255,11 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! setting up a MPA-specific MPI parallelism
  ! for the fitting of poles and residues, aimed at distributing
  ! G vectors. This parallelism is incompatible at present with the
- ! global G_parallelism of the self-energy
+ ! global G_parallelism of the self-energy and also incompatible
+ ! with Q_parallelism of the self-energy
  !
  call PP_indexes_reset(px)
- l_para_G_MPA=.not.(PAR_COM_RL_INDEX%n_cpu>1)
+ l_para_G_MPA=.not.(PAR_COM_RL_INDEX%n_cpu>1 .or. PAR_COM_Q_INDEX%n_cpu>1)
  !
  if (l_para_G_MPA) then
     call PARALLEL_index(px,uplim=X_cols(2:2),low_range=X_cols(1:1),&

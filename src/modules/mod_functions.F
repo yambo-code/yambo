@@ -11,7 +11,9 @@ module functions
  implicit none
  !
  real(SP)     :: bose_E_cut
+#if defined(_FUJITSU)
  logical, external :: isnan
+#endif
  !
  interface
    !

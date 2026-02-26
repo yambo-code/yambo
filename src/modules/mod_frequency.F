@@ -68,7 +68,7 @@ module frequency
    subroutine W_reset(W,damping,type)
      type(w_samp)::W
      real(SP), optional, intent(in) :: damping
-     integer, optional, intent(in) :: type
+     integer,  optional, intent(in) :: type
      real :: local_damping
      local_damping=0.1_SP
      if(present(damping)) local_damping=damping
@@ -78,14 +78,13 @@ module frequency
      !
      if (present(type)) then
        select case (type)
-        !
-        case(5) ! For MPA set default EnRngeXm to 2 Ha
+       ! For MPA set default EnRngeXm to 2 Ha
+       case(5)
          W%er=(/0._SP,2._SP/)
-        case default
+       case default
          W%er=(/0._SP,10._SP/)/HA2EV
-        !
        end select
-     end if
+     endif
      !
      W%ir=(/1._SP,1._SP/)!/HA2EV
      W%dr=(/local_damping,local_damping/)/HA2EV

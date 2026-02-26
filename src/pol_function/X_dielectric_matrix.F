@@ -118,8 +118,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
    X_MEM_n_freqs =2*X%mpa_npoles
    !
    if (Xw%er(2)<=Xw%er(1)) then
-    Xw%er(1) = 0.0_SP
-    Xw%er(2) = ( maxval(Xen%E(X%ib(2),:,:)) - minval(Xen%E(X%ib(1),:,:)) ) / 2.0_SP
+     Xw%er(1) = 0.0_SP
+     Xw%er(2) = ( maxval(Xen%E(X%ib(2),:,:)) - minval(Xen%E(X%ib(1),:,:)) ) / 2.0_SP
    endif
    !
    X%ordering='t'

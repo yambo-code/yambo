@@ -94,6 +94,10 @@ if test x"$enable_hdf5" = "xyes"; then
   #
   if test -d "$try_hdf5_libdir" ; then try_HDF5_LIBS="-L$try_hdf5_libdir -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
   #
+  # Add zlib dependency if HDF5 libraries were set from library directory
+  #
+  if test "$use_libz" = "yes" && test x"$with_hdf5_libs" = "x" && test -d "$try_hdf5_libdir"; then try_HDF5_LIBS="$try_HDF5_LIBS -lz" ; fi
+  #
   if test -d "$try_hdf5_incdir" ; then try_HDF5_INCS="$IFLAG$try_hdf5_incdir" ; fi
   #
   save_libs="$LIBS" ;
@@ -136,16 +140,38 @@ if test x"$enable_hdf5" = "xyes"; then
     #
     # Check for the existence of the pre-compiled library corresponding to what needed by yambo
     #
+    # Original code (extracts -L paths but may miss some -l flags):
+    #if test -e $h5pfc && test $IO_LIB_VER = "parallel"; then
+    #   try_HDF5_LIBS=`$h5pfc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
+    #   try_hdf5_incdir=`$h5pfc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
+    #   IO_LIB_VER="parallel";
+    #elif test -e $h5fc && test $IO_LIB_VER = "serial"; then 
+    #   try_HDF5_LIBS=`$h5fc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
+    #   try_hdf5_incdir=`$h5fc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
+    #   IO_LIB_VER="serial";
+    #   enable_hdf5_par_io="no";
+    #fi
+    #
+    # New code: extract libdir and build complete library list with correct ordering
+    #
     if test -e $h5pfc && test $IO_LIB_VER = "parallel"; then
-       try_HDF5_LIBS=`$h5pfc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
+       try_hdf5_libdir=`$h5pfc -show | awk -F'-L' '{print @S|@2}' | awk '{print @S|@1}'`
        try_hdf5_incdir=`$h5pfc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
        IO_LIB_VER="parallel";
     elif test -e $h5fc && test $IO_LIB_VER = "serial"; then 
-       try_HDF5_LIBS=`$h5fc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
+       try_hdf5_libdir=`$h5fc -show | awk -F'-L' '{print @S|@2}' | awk '{print @S|@1}'`
        try_hdf5_incdir=`$h5fc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
        IO_LIB_VER="serial";
        enable_hdf5_par_io="no";
     fi
+    #
+    # Build complete HDF5 library list with correct ordering for static linking
+    # Order: HL Fortran -> Fortran -> HL C -> Core C -> dependencies
+    #
+    if test -d "$try_hdf5_libdir"; then
+       try_HDF5_LIBS="-L$try_hdf5_libdir -lhdf5_hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5"
+    fi
+    if test "$use_libz" = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lz" ; fi
     #
     try_HDF5_INCS="$IFLAG$try_hdf5_incdir" ;
     #

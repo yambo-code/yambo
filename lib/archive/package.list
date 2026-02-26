@@ -1,7 +1,7 @@
 #
 # Libs list
 #
-EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff etsf_io libxc lapack blacs scalapack elpa petsc slepc fftw fftqe ydiago devxlib
+EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff etsf_io libxc lapack blacs scalapack chase elpa petsc slepc fftw fftqe ydiago devxlib
 #
 # storing options
 #
@@ -14,6 +14,7 @@ keep_libxc=no
 keep_lapack=no
 keep_blacs=no
 keep_scalapack=no
+keep_chase=no
 keep_elpa=no
 keep_petsc=no
 keep_slepc=no
@@ -36,6 +37,7 @@ version_libxc=5.2.3
 version_lapack=3.12.0
 version_blacs=missing
 version_scalapack=2.2.1
+version_chase=1.7.0
 #version_elpa=release_2024_05_001   # This was neeeded for gitlab
 version_elpa=2024.05.001
 version_slepc=3.22.2
@@ -44,7 +46,7 @@ version_fftw=3.3.10
 version_fftqe=missing
 version_yaml=0.2.2
 version_futile=missing
-version_devxlib=0.8.5
+version_devxlib=0.9.0
 #
 # package names
 #
@@ -58,6 +60,7 @@ pkgname_libxc=libxc-$(version_libxc)
 pkgname_lapack=lapack-$(version_lapack)
 pkgname_blacs=blacs
 pkgname_scalapack=scalapack-$(version_scalapack)
+pkgname_chase=chase-$(version_chase)
 pkgname_elpa=elpa-$(version_elpa)
 pkgname_slepc=slepc-$(version_slepc)
 pkgname_petsc=petsc-$(version_petsc)
@@ -78,6 +81,7 @@ tarball_etsf_io=$(pkgname_etsf_io).tar.gz
 tarball_libxc=$(pkgname_libxc).tar.gz
 tarball_lapack=v$(version_lapack).tar.gz
 tarball_scalapack=v$(version_scalapack).tar.gz
+tarball_chase=v$(version_chase).tar.gz
 tarball_elpa=$(pkgname_elpa).tar.gz
 tarball_blacs=$(pkgname_blacs).tar.gz
 tarball_slepc=slepc-v$(version_slepc).tar.gz
@@ -93,6 +97,7 @@ tarball_devxlib=$(pkgname_devxlib).tar.gz
 url_Ydiago=https://github.com/yambo-code/Ydiago/archive/refs/tags/$(tarball_Ydiago)
 url_lapack=https://github.com/Reference-LAPACK/lapack/archive/refs/tags/$(tarball_lapack)
 url_scalapack=https://github.com/Reference-ScaLAPACK/scalapack/archive/refs/tags/$(tarball_scalapack)
+url_chase=https://github.com/ChASE-library/ChASE
 url_hdf5=https://github.com/HDFGroup/hdf5/archive/refs/tags/$(tarball_hdf5)
 url_netcdf=https://github.com/Unidata/netcdf-c/archive/refs/tags/$(tarball_netcdf)
 url_netcdff=https://github.com/Unidata/netcdf-fortran/archive/refs/tags/$(tarball_netcdff)

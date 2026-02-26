@@ -171,7 +171,7 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
    if (read_is_on(ID) .or. dump_ev) then
      if (.not.present(BS_mat)) call error(" io_BSS_diago: io of BS_mat without providing it in input")
     call io_bulk(ID,'BS_EIGENSTATES',VAR_SZ=(/2,BS_H_dim,BSS_n_eig/))
-    call io_bulk(ID,C2=BS_mat,IPOS=(/1,1,1/))
+    call io_bulk(ID,C2=BS_mat(:,1:BSS_n_eig),IPOS=(/1,1,1/))
    endif
    !
  endif
@@ -189,9 +189,9 @@ subroutine write_bs_ev_par(iq, i_BS_mat, neigs_this_cpu, neig_shift, BS_VR, BS_V
   use BS_solvers,     ONLY:BSS_n_eig
   use IO_m,           ONLY:REP,OP_APP_CL,YAMBO_DEF_CHUNK
   use stderr,         ONLY:intc
-  use timing_m,      ONLY:timing
-  use IO_int,        ONLY:io_connect,io_disconnect,def_variable_bulk,&
-&                        io_variable_bulk,io_control
+  use timing_m,       ONLY:timing
+  use IO_int,         ONLY:io_connect,io_disconnect,def_variable_bulk,&
+&                          io_variable_bulk,io_control
   !
   implicit none
   !

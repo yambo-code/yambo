@@ -695,6 +695,7 @@ YPY_check
 YDB_check
 SLEPC_info
 PETSC_info
+CHASE_check
 SLEPC_check
 PETSC_check
 ELPA_check
@@ -722,6 +723,7 @@ KEEP_OBJS_check
 DP_check
 with_ydiago_branch
 ydiago_opt
+def_ydiago
 compile_ydiago
 YDIAGO_GPU_SUPPORT
 YDIAGO_INCS
@@ -803,6 +805,14 @@ IO_LIB_VER
 HDF5_OPT
 HDF5_INCS
 HDF5_LIBS
+def_chase
+CHASE_LIBS
+CHASE_INCS
+CHASE_INCS_R
+CHASE_LIBS_R
+external_chase
+internal_chase
+compile_chase
 internal_elpa
 compile_elpa
 internal_blacs
@@ -1044,6 +1054,9 @@ with_blacs_libs
 with_scalapack_libs
 with_elpa_libs
 with_elpa_includedir
+enable_chase
+with_chase_libdir
+with_chase_includedir
 with_hdf5_libs
 with_hdf5_path
 with_hdf5_libdir
@@ -1107,6 +1120,7 @@ with_devxlib_path
 with_devxlib_libdir
 with_devxlib_includedir
 with_devxlib_branch
+enable_ydiago
 with_ydiago_branch
 '
       ac_precious_vars='build_alias
@@ -1778,6 +1792,7 @@ Optional Features:
   --enable-slepc-linalg   Enable suport for the diagonalization of BSE using
                           SLEPC. Default is no
   --enable-par-linalg     Use parallel linear algebra. Default is no
+  --enable-chase          Use ChASE eigensolver. Default is no
   --enable-hdf5-compression
                           Activate the HDF5 data compression. Default is no.
   --enable-hdf5-par-io    Enable the HDF5 parallel I/O. Default is yes
@@ -1797,6 +1812,7 @@ Optional Features:
                           The configure script will check CUDA installation
                           and report problems [default=yes]
   --enable-nvtx=<path>    Enable NVTX support [default=no]
+  --enable-ydiago         Use ydiago. Default is yes
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1836,6 +1852,9 @@ Optional Packages:
                                 Use SCALAPACK libraries <libs> or setup MKL
   --with-elpa-libs=(libs)       Use ELPA libraries <libs>
   --with-elpa-includedir=<path> Path to the elpa include directory
+  --with-chase-libdir=<path>    Path to the ChASE lib directory
+  --with-chase-includedir=<path>
+                                Path to the ChASE include directory
   --with-hdf5-libs=<libs>       Use HDF5 libraries <libs>
   --with-hdf5-path=<path>       Path to the HDF5 install directory
   --with-hdf5-libdir=<path>     Path to the HDF5 lib directory
@@ -3713,6 +3732,7 @@ else case e in #(
 esac
 fi
 
+if test x"$with_echo" = "x"; then AC_PROG_ECHO; fi
 ECHO=$with_echo
 
 #
@@ -4816,6 +4836,7 @@ fi
 # -------------
 # Check whether to use -e or not to intepret \backslash commands
 #
+
 
 #
 # Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch
@@ -10801,6 +10822,9 @@ url_ydb=https://github.com/yambo-code/ydb.git
 #
 
 
+
+
+
 #
 #
 #        Copyright (C) 2000-2021 the YAMBO team
@@ -11968,7 +11992,7 @@ then :
   printf %s "(cached) " >&6
 else case e in #(
   e) ac_check_lib_save_LIBS=$LIBS
-LIBS="-lmkl_gf_lp64 -L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm $LIBS"
+LIBS="-lmkl_gf_lp64 -L${mkl_libdir} -Wl,-rpath,${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm $LIBS"
 cat > conftest.$ac_ext <<_ACEOF
       program main
       call $caxpy
@@ -11991,7 +12015,7 @@ eval ac_res=\$$as_ac_Lib
 printf "%s\n" "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_Lib"\" = x"yes"
 then :
-  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm"
+  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -Wl,-rpath,${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm"
 fi
 
 		;;
@@ -12932,10 +12956,10 @@ if test -d "${MKLROOT}" &&  test x"$try_fft_libs" = "x" ; then
    mkl_libdir="${MKLROOT}/lib/intel64"
    case "${FCKIND}" in
    *gfortran* )
-   	try_fft_libs="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_core -lmkl_sequential -lpthread -lm"
+   	try_fft_libs="-L${mkl_libdir} -Wl,-rpath,${mkl_libdir} -lmkl_gf_lp64 -lmkl_core -lmkl_sequential -lpthread -lm"
     ;;
     *intel* | *pgi* | *nvfortran* )
-   	try_fft_libs="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm"
+   	try_fft_libs="-L${mkl_libdir} -Wl,-rpath,${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm"
     ;;
     esac
 fi
@@ -13866,7 +13890,7 @@ if test -d "${MKLROOT}" ; then
       lib_mkl_blacs="mkl_blacs_intelmpi_lp64" ;;
    esac
    #
-   try_mkl_scalapack="-L${mkl_libdir} -lmkl_scalapack_lp64 -l${lib_mkl_blacs}"
+   try_mkl_scalapack="-L${mkl_libdir} -Wl,-rpath,${mkl_libdir} -lmkl_scalapack_lp64 -l${lib_mkl_blacs}"
 fi
 #
 # Parse configure options
@@ -14105,6 +14129,194 @@ LIBS="$reset_LIBS"
 
 
 
+
+
+
+
+
+# ============================================================================
+# ChASE
+
+
+# Check whether --enable-chase was given.
+if test ${enable_chase+y}
+then :
+  enableval=$enable_chase;
+fi
+
+
+# Check whether --with-chase_libdir was given.
+if test ${with_chase_libdir+y}
+then :
+  withval=$with_chase_libdir;
+fi
+
+
+# Check whether --with-chase_includedir was given.
+if test ${with_chase_includedir+y}
+then :
+  withval=$with_chase_includedir;
+fi
+
+
+compile_chase="no"
+internal_chase="no"
+external_chase="yes"
+
+
+
+
+if test "$enable_chase" = "yes"
+then
+	if test x"$with_chase_libdir" != "x"
+	then
+		echo "LIBDIR = ${with_chase_libdir}"
+	else
+		with_chase_libdir="${ChASEROOT}/build/lib64"
+	fi
+
+	if test x"$with_chase_includedir" != "x"
+	then
+		echo "INCLUDEDIR = ${with_chase_includedir}"
+	else
+		with_chase_includedir="${ChASEROOT}/build/include"
+	fi
+
+	CHASE_LIBS_R="$with_chase_libdir"
+
+	CHASE_INCS_R="$with_chase_includedir"
+
+
+        #if test "$have_chase" = no
+        #then
+        #        echo "Downloading ChASE..."
+        #        git clone https://github.com/ChASE-library/ChASE.git
+        #        cd ChASE
+        #        ChASEROOT=$(pwd)
+        #        mkdir build
+        #        cd build
+        #        cmake .. -DCMAKE_INSTALL_PREFIX=${ChASEROOT} #We assume CMake exists
+        #        make install
+        #        cd ../..
+        #fi
+
+        as_ac_File=`printf "%s\n" "ac_cv_file_"${CHASE_LIBS_R}/libchase_c.a"" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for \"${CHASE_LIBS_R}/libchase_c.a\"" >&5
+printf %s "checking for \"${CHASE_LIBS_R}/libchase_c.a\"... " >&6; }
+if eval test \${$as_ac_File+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) test "$cross_compiling" = yes &&
+  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
+if test -r ""${CHASE_LIBS_R}/libchase_c.a""; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi ;;
+esac
+fi
+eval ac_res=\$$as_ac_File
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_File"\" = x"yes"
+then :
+
+cat >>confdefs.h <<_ACEOF
+#define `printf "%s\n" "HAVE_"${CHASE_LIBS_R}/libchase_c.a"" | sed "$as_sed_cpp"` 1
+_ACEOF
+
+else case e in #(
+  e) as_fn_error $? "lchase_c not found   " "$LINENO" 5 ;;
+esac
+fi
+
+        as_ac_File=`printf "%s\n" "ac_cv_file_"${CHASE_LIBS_R}/libchase_f.a"" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for \"${CHASE_LIBS_R}/libchase_f.a\"" >&5
+printf %s "checking for \"${CHASE_LIBS_R}/libchase_f.a\"... " >&6; }
+if eval test \${$as_ac_File+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) test "$cross_compiling" = yes &&
+  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
+if test -r ""${CHASE_LIBS_R}/libchase_f.a""; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi ;;
+esac
+fi
+eval ac_res=\$$as_ac_File
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_File"\" = x"yes"
+then :
+
+cat >>confdefs.h <<_ACEOF
+#define `printf "%s\n" "HAVE_"${CHASE_LIBS_R}/libchase_f.a"" | sed "$as_sed_cpp"` 1
+_ACEOF
+
+else case e in #(
+  e) as_fn_error $? "lchase_f not found   " "$LINENO" 5 ;;
+esac
+fi
+
+        as_ac_File=`printf "%s\n" "ac_cv_file_"${CHASE_LIBS_R}/libchase_cuda_kernels.a"" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for \"${CHASE_LIBS_R}/libchase_cuda_kernels.a\"" >&5
+printf %s "checking for \"${CHASE_LIBS_R}/libchase_cuda_kernels.a\"... " >&6; }
+if eval test \${$as_ac_File+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) test "$cross_compiling" = yes &&
+  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
+if test -r ""${CHASE_LIBS_R}/libchase_cuda_kernels.a""; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi ;;
+esac
+fi
+eval ac_res=\$$as_ac_File
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_File"\" = x"yes"
+then :
+
+cat >>confdefs.h <<_ACEOF
+#define `printf "%s\n" "HAVE_"${CHASE_LIBS_R}/libchase_cuda_kernels.a"" | sed "$as_sed_cpp"` 1
+_ACEOF
+
+else case e in #(
+  e) as_fn_error $? "lchase_cuda not found" "$LINENO" 5 ;;
+esac
+fi
+
+
+        CHASE_INCS="${CHASE_INCS} -I${CHASE_INCS_R}"
+
+        CHASE_LIBS="${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels "
+
+        CHASE_LIBS="${CHASE_LIBS} -lstdc++ "
+
+
+        CHASE_LIBS="${CHASE_LIBS}  "
+
+        #-lcudart -lcublas -lcusolver -lcudart -lcurand -lnccl
+        #LIBS="${LIBS} ${CHASE_LIBS} "
+        #INCS="${INCS} ${CHASE_INCS} "
+
+	#AC_SUBST(LIBS)
+	#AC_SUBST(INCS)
+
+        #Assuming a CUDA compiler...
+        #LIBS+="-lcudart -lcublas -lcusolver -lcudart -lcurand -lnccl -lstdc++ "
+
+        def_chase="-D_CHASE"
+else
+        def_chase=""
+fi
 
 
 
@@ -14590,6 +14802,10 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
   #
   if test -d "$try_hdf5_libdir" ; then try_HDF5_LIBS="-L$try_hdf5_libdir -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
   #
+  # Add zlib dependency if HDF5 libraries were set from library directory
+  #
+  if test "$use_libz" = "yes" && test x"$with_hdf5_libs" = "x" && test -d "$try_hdf5_libdir"; then try_HDF5_LIBS="$try_HDF5_LIBS -lz" ; fi
+  #
   if test -d "$try_hdf5_incdir" ; then try_HDF5_INCS="$IFLAG$try_hdf5_incdir" ; fi
   #
   save_libs="$LIBS" ;
@@ -14647,16 +14863,38 @@ printf %s "checking for HDF5 using h5pfc/h5fc system compilers... " >&6; } ;
     #
     # Check for the existence of the pre-compiled library corresponding to what needed by yambo
     #
+    # Original code (extracts -L paths but may miss some -l flags):
+    #if test -e $h5pfc && test $IO_LIB_VER = "parallel"; then
+    #   try_HDF5_LIBS=`$h5pfc -show | awk -F'-L' '{$1=""; for (i=2; i<=NF;i++) $i="-L"$i; print $0}'`
+    #   try_hdf5_incdir=`$h5pfc -show | awk -F'-I' '{print $2}' | awk '{print $1}'`
+    #   IO_LIB_VER="parallel";
+    #elif test -e $h5fc && test $IO_LIB_VER = "serial"; then
+    #   try_HDF5_LIBS=`$h5fc -show | awk -F'-L' '{$1=""; for (i=2; i<=NF;i++) $i="-L"$i; print $0}'`
+    #   try_hdf5_incdir=`$h5fc -show | awk -F'-I' '{print $2}' | awk '{print $1}'`
+    #   IO_LIB_VER="serial";
+    #   enable_hdf5_par_io="no";
+    #fi
+    #
+    # New code: extract libdir and build complete library list with correct ordering
+    #
     if test -e $h5pfc && test $IO_LIB_VER = "parallel"; then
-       try_HDF5_LIBS=`$h5pfc -show | awk -F'-L' '{$1=""; for (i=2; i<=NF;i++) $i="-L"$i; print $0}'`
+       try_hdf5_libdir=`$h5pfc -show | awk -F'-L' '{print $2}' | awk '{print $1}'`
        try_hdf5_incdir=`$h5pfc -show | awk -F'-I' '{print $2}' | awk '{print $1}'`
        IO_LIB_VER="parallel";
     elif test -e $h5fc && test $IO_LIB_VER = "serial"; then
-       try_HDF5_LIBS=`$h5fc -show | awk -F'-L' '{$1=""; for (i=2; i<=NF;i++) $i="-L"$i; print $0}'`
+       try_hdf5_libdir=`$h5fc -show | awk -F'-L' '{print $2}' | awk '{print $1}'`
        try_hdf5_incdir=`$h5fc -show | awk -F'-I' '{print $2}' | awk '{print $1}'`
        IO_LIB_VER="serial";
        enable_hdf5_par_io="no";
     fi
+    #
+    # Build complete HDF5 library list with correct ordering for static linking
+    # Order: HL Fortran -> Fortran -> HL C -> Core C -> dependencies
+    #
+    if test -d "$try_hdf5_libdir"; then
+       try_HDF5_LIBS="-L$try_hdf5_libdir -lhdf5_hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5"
+    fi
+    if test "$use_libz" = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lz" ; fi
     #
     try_HDF5_INCS="$IFLAG$try_hdf5_incdir" ;
     #
@@ -17128,6 +17366,15 @@ LIBS="$acx_devxlib_save_LIBS"
 
 
 #
+# Check whether --enable-ydiago was given.
+if test ${enable_ydiago+y}
+then :
+  enableval=$enable_ydiago;
+else case e in #(
+  e) enable_ydiago="yes" ;;
+esac
+fi
+
 
 # Check whether --with-ydiago-branch was given.
 if test ${with_ydiago_branch+y}
@@ -17142,9 +17389,14 @@ fi
 ac_config_files="$ac_config_files lib/ydiago/make_ydiago.inc:lib/ydiago/make_ydiago.inc.in"
 
 
-if test "$def_scalapack" = "-D_SCALAPACK" ; then
+compile_ydiago="no"
+def_ydiago=""
+
+if test "$def_scalapack" = "-D_SCALAPACK" && test "x$def_chase" = "x" &&
+   test "$enable_ydiago" = "yes" ; then
 
   compile_ydiago="yes"
+  def_ydiago="-D_YDIAGO"
 
   # GPU flags are passed to ydiago compilation only if elpa library is available
   if test ! x"$def_gpu" = "x" && test "$def_elpa" = "-D_ELPA" ; then
@@ -17163,11 +17415,13 @@ if test "$def_scalapack" = "-D_SCALAPACK" ; then
 else
 
   compile_ydiago="no"
+  def_ydiago=""
   ydiago_opt=""
   YDIAGO_LIBS=""
   YDIAGO_INCS=""
 
 fi
+
 
 
 
@@ -17328,6 +17582,15 @@ elif test "$enable_slepc" = "yes" ; then
   SLEPC_check="E"
 fi
 #
+CHASE_check="-"
+if test "$internal_chase" = "yes" ; then
+  if test "$compile_chase" = "yes" ; then CHASE_check="C"; fi
+  if test "$compile_chase" = "no"  ; then CHASE_check="I"; fi
+  #if ! test "$with_chase_branch" = "none"; then CHASE_LIBS="$CHASE_LIBS (git branch $with_slepc_branch)"; fi
+elif test "$enable_chase" = "yes" ; then
+  CHASE_check="E"
+fi
+#
 LIBXC_check="E"
 if test "$internal_libxc" = "yes" ; then
   if test "$compile_libxc" = "yes"; then LIBXC_check="C"; fi
@@ -17410,6 +17673,7 @@ fi
 
 
 #
+
 
 
 
@@ -19299,6 +19563,14 @@ for includedir in $SLEPC_INCDIRS;  do
   if test $count != 0; then ln -fs $includedir/*slepc*.h    include/system/  ; fi
   count=`ls -1 $includedir/*slepc*.mod 2>/dev/null | wc -l`
   if test $count != 0; then ln -fs $includedir/*slepc*.mod  include/system/  ; fi
+done
+#
+CHASE_INCDIRS=`echo "$CHASE_INCS"   | sed "s/$IFLAG/ /g"`
+for includedir in $CHASE_INCDIRS;  do
+  count=`ls -1 $includedir/*chase*.h   2>/dev/null | wc -l`
+  if test $count != 0; then ln -fs $includedir/*chase*.h    include/system/  ; fi
+  count=`ls -1 $includedir/*chase*.mod 2>/dev/null | wc -l`
+  if test $count != 0; then ln -fs $includedir/*chase*.mod  include/system/  ; fi
 done
 #
 LIBXC_INCDIRS=`echo "$LIBXC_INCS"   | sed "s/$IFLAG/ /g"`

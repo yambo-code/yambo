@@ -80,6 +80,8 @@ module BS_solvers
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.
  logical  :: run_Diago=.FALSE.
+ logical  :: run_Diagx=.FALSE.
+ logical  :: run_Chase=.FALSE.
  logical  :: run_Slepc=.FALSE.
  !
  ! Solvers (Diago)

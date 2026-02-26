@@ -85,7 +85,7 @@ subroutine TIMING_clock_write(obj,what)
      integer           :: i_c
      CHARACTER(lchlen) :: ch,time_str,chin
      ch=chin
-     if (total_time(i_c)<600.) then
+     if (.TRUE..or.(total_time(i_c)<600.)) then
        WRITE (chin, '(a,1x,f11.4,"s ",a)') trim(ch),total_time(i_c),trim(cpu_str)
      else
        time_str=time_string(total_time(i_c))

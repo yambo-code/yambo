@@ -86,6 +86,14 @@ for includedir in $SLEPC_INCDIRS;  do
   if test $count != 0; then ln -fs $includedir/*slepc*.mod  include/system/  ; fi
 done
 #
+CHASE_INCDIRS=`echo "$CHASE_INCS"   | sed "s/$IFLAG/ /g"`
+for includedir in $CHASE_INCDIRS;  do
+  count=`ls -1 $includedir/*chase*.h   2>/dev/null | wc -l`
+  if test $count != 0; then ln -fs $includedir/*chase*.h    include/system/  ; fi
+  count=`ls -1 $includedir/*chase*.mod 2>/dev/null | wc -l`
+  if test $count != 0; then ln -fs $includedir/*chase*.mod  include/system/  ; fi
+done
+#
 LIBXC_INCDIRS=`echo "$LIBXC_INCS"   | sed "s/$IFLAG/ /g"`
 for includedir in $LIBXC_INCDIRS;  do
   count=`ls -1 $includedir/*xc*.h   2>/dev/null | wc -l`

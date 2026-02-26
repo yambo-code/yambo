@@ -119,8 +119,8 @@ if test $acx_blas_ok = no && test -d "${MKLROOT}" ; then
 		case "${host}" in
 		*x86*64*)
 			AC_CHECK_LIB(mkl_gf_lp64, $caxpy,
-				[acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm"],,
-				[-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm])
+				[acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -Wl,-rpath,${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm"],,
+				[-L${mkl_libdir} -Wl,-rpath,${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm])
 		;;
 		i?86*linux*)
 			AC_CHECK_LIB(mkl_gf, $caxpy,

@@ -6,7 +6,7 @@
 ! Authors (see AUTHORS file for details): DS NM
 !
 subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
-  &                  neigs_this_cpu, neig_shift, BS_R_right, BS_V_right) 
+&                  neigs_this_cpu, neig_shift, BS_R_right, BS_V_right)
  !
  !  The right eigenvector v(j) of A satisfies
  !                   A * v(j) = lambda(j) * v(j)
@@ -50,7 +50,7 @@ subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
  neig_total = size(BS_E)
  !
  if (size(BS_R_right)       /= neig_total)     call error("Size mismatch between eigvals and R.residuals.")
- if (size(BS_V_right,dim=2) /= neigs_this_cpu) call error("Size mismatch between eigvecs and R.residuals.")
+ if (size(BS_V_right,dim=2)  < neigs_this_cpu) call error("Size mismatch between eigvecs and R.residuals.")
  !
  velocity_correction=(index(mode,"opt")>0).and.(trim(global_gauge)=="velocity")
  !
@@ -69,6 +69,7 @@ subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
  n_steps=neigs_this_cpu
  step_shift=neig_shift
  res_shift=0
+ !
  if (l_duplicate_mem_par) then
    call PP_indexes_reset(px)
    call PARALLEL_index(px,(/neig_total/),CONSECUTIVE=.TRUE.)

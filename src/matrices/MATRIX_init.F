@@ -20,13 +20,14 @@ subroutine MATRIX_init( what, M_par, N, Nb)
  use pars,           ONLY:SP
  use matrix,         ONLY:PAR_matrix,MATRIX_reset
  use parallel_m,     ONLY:COMM_copy,PAR_COM_SLK,PAR_COM_SLK_INDEX_local,&
-&                         PAR_COM_RL_INDEX,PAR_COM_RL_A2A,ncpu
+&                         PAR_COM_SLK_INDEX_global,PAR_COM_RL_INDEX,PAR_COM_RL_A2A,ncpu
+ use SLK_m,          ONLY:SLK_ORTHO
 #include <dev_defs.h>
 #include <y_memory.h>
  !
  character(*)           :: what
  type(PAR_matrix)       :: M_par
- integer                :: N,Nb
+ integer                :: N,Nb,ierr
  !
  ! Work Space
  !

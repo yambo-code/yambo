@@ -401,12 +401,6 @@ subroutine K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
        j_s_star=Xk%s_table(j_p,j_kp_s) 
        j_s_mq_star=Xk%s_table(j_pmq,j_kp_mq_s) 
        !
-       ! These two assignments are made as a workaround because
-       ! the fujitsu compiler complains that intent(out) variables
-       ! need to be assigned
-!       j_k = 0
-!       j_p = 0
-       !
    end subroutine fill_indexes
    !
    subroutine EVAL_table(iB,iki,iko,ibi,ibo,i_sp_pol,i_s_ki_ko,i_s_collision)

@@ -11,9 +11,6 @@ module functions
  implicit none
  !
  real(SP)     :: bose_E_cut
-#if defined(_FUJITSU)
- logical, external :: isnan
-#endif
  !
  interface
    !
@@ -50,6 +47,9 @@ module functions
      use ieee_arithmetic
      real(SP), intent(in) :: E
      NAN= ieee_is_nan(E)
+#elif defined(_FUJITSU)
+     real(SP), intent(in) :: E
+     NAN = (E /= E)
 #else
      real(SP), intent(in) :: E
      NAN= isnan(E)

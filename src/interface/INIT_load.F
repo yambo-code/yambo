@@ -849,6 +849,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      des(2) ='Frequency sampling in the complex plane ("1l" one line, "2l" two lines)'
      des(3) ='Partition along the real axis ("ho" homogeneous, "lP" linear, "qP" quadratic, "cP" cubic)'
      des(4) ='Energy range'
+     if (X%whoami==5) then
+       des(4) ='Energy range; if 0.0 | -1.0 | half the maximum e-h pair included in X is used'
+     endif
      des(5) ='Imaginary range'
      des(6) ='Damping range'
      des(7) ='[o/o] Coarse grid controller'

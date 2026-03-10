@@ -37,7 +37,6 @@ subroutine MPA_ALLOC_parallel(MPA_E_par,MPA_R_par,NG,NW,mode)
   !
   call MATRIX_init( "MPA", MPA_E_par, NG, NW )  
   call MATRIX_init( "MPA", MPA_R_par, NG, NW )
-  !endif
   !
   MPA_rows = MPA_E_par%rows
   MPA_cols = MPA_E_par%cols

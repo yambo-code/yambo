@@ -86,6 +86,14 @@ for includedir in $SLEPC_INCDIRS;  do
   if test $count != 0; then ln -fs $includedir/*slepc*.mod  include/system/  ; fi
 done
 #
+CHASE_INCDIRS=`echo "$CHASE_INCS"   | sed "s/$IFLAG/ /g"`
+for includedir in $CHASE_INCDIRS;  do
+  count=`ls -1 $includedir/*chase*.h   2>/dev/null | wc -l`
+  if test $count != 0; then ln -fs $includedir/*chase*.h    include/system/  ; fi
+  count=`ls -1 $includedir/*chase*.mod 2>/dev/null | wc -l`
+  if test $count != 0; then ln -fs $includedir/*chase*.mod  include/system/  ; fi
+done
+#
 LIBXC_INCDIRS=`echo "$LIBXC_INCS"   | sed "s/$IFLAG/ /g"`
 for includedir in $LIBXC_INCDIRS;  do
   count=`ls -1 $includedir/*xc*.h   2>/dev/null | wc -l`
@@ -106,6 +114,15 @@ if ! test -d "$extlibs_path/${FCKIND}/${FC}";         then mkdir -p "$extlibs_pa
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/lib";     then mkdir    "$extlibs_path/${FCKIND}/${FC}/lib";     fi
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/include"; then mkdir    "$extlibs_path/${FCKIND}/${FC}/include"; fi
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/bin";     then mkdir    "$extlibs_path/${FCKIND}/${FC}/bin";     fi
+#
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}";           then mkdir    "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}";            fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/lib";       then mkdir    "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/lib";        fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/include";   then mkdir    "$extlibs_path/${FCKIND}/${FC}/${GPU_SUPPORT}/include";    fi
+#
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/diago";                                 then mkdir    "$extlibs_path/${FCKIND}/${FC}/diago";                                  fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/diago/${YDIAGO_GPU_SUPPORT}";           then mkdir    "$extlibs_path/${FCKIND}/${FC}/diago/${YDIAGO_GPU_SUPPORT}";            fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/diago/${YDIAGO_GPU_SUPPORT}/lib";       then mkdir    "$extlibs_path/${FCKIND}/${FC}/diago/${YDIAGO_GPU_SUPPORT}/lib";        fi
+if ! test -d "$extlibs_path/${FCKIND}/${FC}/diago/${YDIAGO_GPU_SUPPORT}/include";   then mkdir    "$extlibs_path/${FCKIND}/${FC}/diago/${YDIAGO_GPU_SUPPORT}/include";    fi
 #
 if  test -d "$extlibs_path/${FCKIND}/${FC}" ; then
  BIN_LIBRARIES=$extlibs_path/${FCKIND}/${FC}/bin/* ;

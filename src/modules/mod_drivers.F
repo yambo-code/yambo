@@ -73,6 +73,7 @@ module drivers
  logical :: l_screen             =.FALSE.
  logical :: l_X                  =.FALSE.
  logical :: l_em1d               =.FALSE.
+ logical :: l_em1dx              =.FALSE.
  logical :: l_em1s               =.FALSE.
  !
  ! ... and the kernel

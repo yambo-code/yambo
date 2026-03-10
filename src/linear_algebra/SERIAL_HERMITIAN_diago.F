@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
-subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
+subroutine SERIAL_HERMITIAN_diago(n,M,E)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_nl_optics,l_real_time
@@ -18,7 +18,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  complex(SP) :: M(n,n)
  real(SP)    :: E(n)
  !
- character(64)     :: subname="SERIAL_HERMITIAN_diagonalization"
+ character(64)     :: subname="SERIAL_HERMITIAN_diago"
  integer           :: lwork
  type(LALGEBRA_WS) :: WS
  !
@@ -26,7 +26,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  allocate(WS%v_cmplx(1))
  !
  if(.not.(l_nl_optics.or.l_real_time)) then
-   call timing('SERIAL_HERMITIAN_diagonalization',OPR='start')
+   call timing('SER_HERM_diago',OPR='start')
    YAMBO_ALLOC(WS%v_real,(max(1,3*n-2)))
  else
    allocate(WS%v_real(max(1,3*n-2)))
@@ -58,7 +58,8 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  call LINEAR_ALGEBRA_WS_reset(WS)
  !
  if(.not.(l_nl_optics.or.l_real_time)) then
-   call timing('SERIAL_HERMITIAN_diagonalization',OPR='stop')
+   call timing('SER_HERM_diago',OPR='stop')
  endif
  !
 end subroutine
+

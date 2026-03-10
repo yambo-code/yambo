@@ -13,8 +13,8 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match,STRING_split
- use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix_format,BSS_uses_DbGd,BSS_uses_FKE,&
-&                       BSS_slepc_pseudo_herm,BSS_slepc_double_grp,run_Slepc,BSS_mode,&
+ use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix_format,BSS_uses_DbGd,BSS_uses_FKE,BSS_ydiago_solver,&
+&                       BSS_slepc_pseudo_herm,BSS_slepc_double_grp,run_Slepc,BSS_mode,BSS_first_eig,&
 &                       l_abs_prop_chi_bse,l_eels_can_be_computed,l_eels_from_inversion,&
 &                       BSS_kernel_IO_on_the_fly,BSS_kernel_stored_size,BSS_slepc_approach
  use BS,           ONLY:BSE_L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
@@ -278,5 +278,13 @@ subroutine K_driver_init(what,iq,Ken,Xk)
      read (BSK_IO_strings(i1-1),*) BSS_kernel_stored_size
    enddo
  endif
+ !
+#if defined _ELPA
+ if ( index(BSS_mode,'d')/=0 .and. BSS_ydiago_solver=='e' .and. BSS_first_eig>1) then
+   call warning('ELPA does not support BSS_First_eig>1')
+   BSS_first_eig=1
+ endif
+#endif
+
  !
 end subroutine

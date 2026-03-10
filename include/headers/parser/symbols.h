@@ -45,7 +45,7 @@ typedef struct symrec{
 		gsl_complex c;             /* value of a VAR */
 		char *str;                 /* value of a STRING */
 		sym_block *block;          /* to store blocks */
-		gsl_complex (*fnctptr)();  /* value of a FNCT */
+		gsl_complex (*fnctptr)(gsl_complex);  /* value of a FNCT */
 	} value;
 
 	struct symrec *next;         /* link field */

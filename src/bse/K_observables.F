@@ -15,7 +15,7 @@ subroutine K_observables(W,Xk)
  use X_m,          ONLY:global_gauge
  use R_lattice,    ONLY:bz_samp
  use com,          ONLY:exp_user
- use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,BSS_mode
+ use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,run_Diagx,run_Chase,BSS_mode
  use BS,           ONLY:BS_dip_size,l_BS_anomalous_Hall,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,&
 &                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,l_BS_kerr_asymm,l_BS_esort_indx
@@ -105,7 +105,9 @@ subroutine K_observables(W,Xk)
  !
  ! Solver Logicals
  !=================
- run_Diago     = STRING_match(BSS_mode,'d')
+ run_Diago     = STRING_match(BSS_mode,'d').or.STRING_match(BSS_mode,'o')
+ run_Diagx     = STRING_match(BSS_mode,'x')
+ run_Chase     = STRING_match(BSS_mode,'c')
  run_Haydock   = STRING_match(BSS_mode,'h')
  run_inversion = STRING_match(BSS_mode,'i')
 #if defined _SLEPC && !defined _NL

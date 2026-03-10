@@ -6,7 +6,7 @@
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
-subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
+subroutine PARALLEL_HERMITIAN_diago(M, V, N, E)
  !
  ! perform the diagonalization by using scalapack
  !
@@ -22,7 +22,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  type(PAR_matrix)  :: M,V
  real(SP)          :: E(N)
  !
- character(64)     :: subname="PARALLEL_HERMITIAN_diagonalization"
+ character(64)     :: subname="PARALLEL_HERMITIAN_diago"
  integer           :: lwork,lrwork
  real(SP)          :: rvar(1)
  complex(SP)       :: cvar(1)
@@ -32,7 +32,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  !
  if (SLK_ORTHO%coordinate(1)==-1) return
  !
- call timing('PARALLEL_HERMITIAN_diagonalization',OPR='start')
+ call timing('PAR_HERM_diago',OPR='start')
  !
  lwork=-1
  lrwork=-1
@@ -65,7 +65,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  !
  call LINEAR_ALGEBRA_WS_reset(WS) 
  !
- call timing('PARALLEL_HERMITIAN_diagonalization',OPR='stop')
+ call timing('PAR_HERM_diago',OPR='stop')
  !
-end subroutine PARALLEL_HERMITIAN_diagonalization
+end subroutine PARALLEL_HERMITIAN_diago
 

@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
+subroutine SERIAL_diago(n,M,E,V_left,V_right)
  !
  !  The right eigenvector V_right(j) of M satisfies
  !                   M * V_right(j) = E(j) * V_right(j)
@@ -28,19 +28,20 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  YAMBO_ALLOC(WS%v_real,(2*n))
  call M_eigenvalues(n,M,E,V_left,V_right,WS%v_cmplx,-1,WS%v_real,WS%i_fail)
  !
- call timing('SERIAL_diagonalization',OPR='start')
+ call timing('SERIAL_diago',OPR='start')
  !
- if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('M_eigenvalues (SD)','WS%v_cmplxspace failed')
+ if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('SERIAL_diago','WS%v_cmplxspace failed')
  !
  WS%dim=int(real(WS%v_cmplx(1)))
  deallocate(WS%v_cmplx)
  YAMBO_ALLOC(WS%v_cmplx,(WS%dim))
+ !
  call M_eigenvalues(n,M,E,V_left,V_right,WS%v_cmplx,WS%dim,WS%v_real,WS%i_fail)
  !
- if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('M_eigenvalues (SD)','failed')
+ if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('SERIAL_diago','failed')
  !
  call LINEAR_ALGEBRA_WS_reset(WS)
  !
- call timing('SERIAL_diagonalization',OPR='stop')
+ call timing('SERIAL_diago',OPR='stop')
  !
 end subroutine

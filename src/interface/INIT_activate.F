@@ -370,7 +370,7 @@ subroutine INIT_activate()
      if (l_gw0) then
        call initactivate(1,'FFTGvecs RandQpts QEDRLvcs GbndRnge GDamping G_mprop dScStep DysSolver')
        if (trim(QP_solver)=="g") then
-         call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP')
+         call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP G_mprop GDamping')
        else
          call initactivate(1,'SCEtresh')
          if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
@@ -395,7 +395,7 @@ subroutine INIT_activate()
      !
      if (l_gw0) then
        if (.not.l_cohsex.or.COHSEX_use_empties) call initactivate(1,'GbndRnge') 
-       if (.not.l_cohsex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping G_mprop')
+       if (.not.l_cohsex) call initactivate(1,'GDamping G_mprop')
        if (.not.l_cohsex) call initactivate(1,'dScStep') 
        if (.not.l_elphoton_corr) then
          if (.not.l_ppa.and..not.l_mpa.and..not.l_cohsex) &

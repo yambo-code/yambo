@@ -22,7 +22,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
 &                        PARALLEL_WF_distribute,PARALLEL_index
  use parser_m,      ONLY:parser
- use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PAR_COM_Q_A2A,PAR_COM_NULL,master_cpu,&
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PAR_COM_Q_INDEX,PAR_COM_NULL,master_cpu,&
 &                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,yMPI_comm,COMM_copy,PAR_COM_RL_A2A,&
 &                        PAR_Q_ibz_index,n_WF_bands_to_load,myid,PAR_COM_X_WORLD,PAR_COM_RL_INDEX,&
 &                        PP_indexes,PP_indexes_reset
@@ -255,10 +255,11 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! setting up a MPA-specific MPI parallelism
  ! for the fitting of poles and residues, aimed at distributing
  ! G vectors. This parallelism is incompatible at present with the
- ! global G_parallelism of the self-energy
+ ! global G_parallelism of the self-energy and also incompatible
+ ! with Q_parallelism of the self-energy
  !
  call PP_indexes_reset(px)
- l_para_G_MPA=.not.(PAR_COM_RL_INDEX%n_cpu>1)
+ l_para_G_MPA=.not.(PAR_COM_RL_INDEX%n_cpu>1 .or. PAR_COM_Q_INDEX%n_cpu>1)
  !
  if (l_para_G_MPA) then
     call PARALLEL_index(px,uplim=X_cols(2:2),low_range=X_cols(1:1),&
@@ -368,12 +369,12 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        X_rows=X_par(iq_mem)%rows
        X_cols=X_par(iq_mem)%cols
      endif
-
+     !
+     YAMBO_ALLOC(MPA_Xo,(Xw%n_freqs))
      !
      !$omp parallel default(shared),private(ig1,ig2,MPred,PPcond_rate,MP_err,cond_num,i_np,MPA_Xo,l_rim_w_g), &
      !$omp &        reduction(+:MPred_rate,PPcond_Qrate,MP_Qerr,cond_numQ)
      !
-     allocate(MPA_Xo(Xw%n_freqs))
      !
      !$omp do collapse(2)
      do ig2=X_cols(1),X_cols(2)
@@ -409,9 +410,10 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      !$omp end do
      !   
-     deallocate(MPA_Xo)
      !
      !$omp end parallel
+     !
+     YAMBO_FREE(MPA_Xo)
      !
      ! AF: retrieve G_parallelism on MPA pole fitting,
      !     if present
@@ -586,7 +588,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
                do m_idx=0,QP_G_mprop_temp-1
                  !
                  cmplx_phase = exp(cI*pi*(1._SP+2._SP*m_idx)/(2._SP*QP_G_mprop_temp))
-                 prefac      = cI*cmplx_phase*sin(pi/2._SP*QP_G_mprop_temp)
+                 prefac      = cI*cmplx_phase*sin(pi/2._SP/QP_G_mprop_temp)
                  poles       = W_i+cmplx_phase*QP_G_damp-E_kmq
                  fract_sum   = (spin_occ-f_kmq+bose_PPA_E)/ &
 &                              (poles+sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np)))*MPA_E_par_p(ig1,ig2,i_np))  &
@@ -621,20 +623,23 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        !do i_w=1,QP_dSc_steps
          !
          dp_dummy(:) = 0.0_DP
+         YAMBO_ALLOC(ctmp,(QP_dSc_steps))
+         YAMBO_ALLOC(poles,(QP_dSc_steps))
+         YAMBO_ALLOC(fract_sum,(QP_dSc_steps))
          !
          !DEV_OMP parallel default(shared), private(i_np,ig1,ig2,bose_PPA_E,ctmp,&
          !DEV_OMP &                                 m_idx,cmplx_phase,prefac,poles,fract_sum)
          !
-         allocate(ctmp(QP_dSc_steps))
-         allocate(poles(QP_dSc_steps))
-         allocate(fract_sum(QP_dSc_steps))
+         !allocate(ctmp(QP_dSc_steps))
+         !allocate(poles(QP_dSc_steps))
+         !allocate(fract_sum(QP_dSc_steps))
          !
          !DEV_OMP do reduction(+:dp_dummy), collapse(2)
          !
          do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
            do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
              !
-             ctmp(:) = 0.0_SP
+             ctmp(:) = 0._DP
              !
              do i_np=1,X_mpa_npoles
                !
@@ -658,7 +663,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
                do m_idx=0,QP_G_mprop_temp-1
                  !
                  cmplx_phase = exp(cI*pi*(1._SP+2._SP*m_idx)/(2._SP*QP_G_mprop_temp))  
-                 prefac      = cI*cmplx_phase*sin(pi/2._SP*QP_G_mprop_temp)                             
+                 prefac      = cI*cmplx_phase*sin(pi/2._SP/QP_G_mprop_temp)                             
                  poles(:)    = W_(:)+cmplx_phase*QP_G_damp-E_kmq
                  fract_sum(:)= (spin_occ-f_kmq+bose_PPA_E)/ &
 &                              (poles(:)+sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np)))*MPA_E_par_p(ig1,ig2,i_np))  &
@@ -678,12 +683,12 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          !DEV_OMP end do
          !
-         deallocate(ctmp)
-         deallocate(poles)
-         deallocate(fract_sum)
          !
          !DEV_OMP end parallel
          !
+         YAMBO_FREE(ctmp)
+         YAMBO_FREE(poles)
+         YAMBO_FREE(fract_sum)
          !
          dc(:) = cmplx(dp_dummy,KIND=SP)
          dc(:) = -4._DP/spin_occ*pi * dc(:)

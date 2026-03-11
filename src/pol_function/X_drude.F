@@ -32,28 +32,8 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  integer              :: iw,ik,ib,is
  !
  drude_GreenF = cZERO
+ call metallic_occupations(Xen,Xk,f_eh,drude_n_states)
  !
- ! Compute metallic occupations
- !
- drude_n_states=0
- f_eh=0._SP
- do is=1,n_sp_pol
-   do ik=1,Xen%nk
-     do ib=1,Xen%nb
-       !
-       f_occ=Xen%f (ib,ik,is)
-       !
-       if (            f_occ < filled_tresh ) cycle
-       if ( spin_occ - f_occ < filled_tresh ) cycle
-       !
-       drude_n_states=drude_n_states+int(Xk%weights(ik)*real(Xk%nbz,SP))
-       f_eh=f_eh+f_occ*(spin_occ-f_occ)*Xk%weights(ik)*real(Xk%nbz,SP)
-       !
-     enddo
-   enddo
- enddo
- !
- if(drude_n_states>0) f_eh=f_eh/real(drude_n_states,SP)
  !
  ! Drude Contrib. if all of following conditions hold
  !====================================================
@@ -237,4 +217,45 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
    !
   end function Graphene_drude
   !
+end subroutine
+  !
+subroutine metallic_occupations(Xen,Xk,f_eh,drude_n_states)
+ use pars,          ONLY:SP
+ use units,         ONLY:HA2EV
+ use electrons,     ONLY:levels,spin_occ,n_sp_pol,filled_tresh
+ use R_lattice,     ONLY:bz_samp,q_norm
+ !
+ implicit none
+ ! 
+ type(levels), intent(in)   :: Xen
+ type(bz_samp),intent(in)   :: Xk
+ ! 
+ real(SP),     intent(out)  :: f_eh 
+ integer,      intent(out)  :: drude_n_states
+ ! 
+ real(SP)             :: f_occ
+ integer              :: ik,ib,is
+ !
+ ! Compute metallic occupations
+ !
+ drude_n_states=0
+ f_eh=0._SP
+ do is=1,n_sp_pol
+   do ik=1,Xen%nk
+     do ib=1,Xen%nb
+       !
+       f_occ=Xen%f (ib,ik,is)
+       !
+       if (            f_occ < filled_tresh ) cycle
+       if ( spin_occ - f_occ < filled_tresh ) cycle
+       !
+       drude_n_states=drude_n_states+int(Xk%weights(ik)*real(Xk%nbz,SP))
+       f_eh=f_eh+f_occ*(spin_occ-f_occ)*Xk%weights(ik)*real(Xk%nbz,SP)
+       !
+     enddo
+   enddo
+ enddo
+ !
+ if(drude_n_states>0) f_eh=f_eh/real(drude_n_states,SP)
+ !
 end subroutine

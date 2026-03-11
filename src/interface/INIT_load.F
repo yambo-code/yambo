@@ -258,9 +258,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
 #else
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit,verb_level=V_qp)
- call it(defs,'G_mprop', '[GW] G[W] propagator order',QP_G_mprop)
 #endif
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
+ call it(defs,'G_mprop',  '[GW] G[W] propagator order',QP_G_mprop,verb_level=V_qp)
  call it(defs,'dScStep',  '[GW] Energy step to evaluate Z factors',QP_dSc_delta,E_unit,verb_level=V_qp)
  call it(defs,'DysSolver','[GW] Dyson Equation solver ("n","s","g","q")',QP_solver,protect=.FALSE.,case="a")
  call it(defs,'GsampType','[GW] Type of sampling ("ra" FF-RA, "1l" MPA-1l, "2l" MPA-2l)',QP_G_solver)

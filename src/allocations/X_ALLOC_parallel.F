@@ -24,7 +24,7 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
  !
  ! Work Space
  !
- logical :: l_XUP,l_PAR,l_CPU_ONLY
+ logical :: l_XUP,l_PAR,l_CPU_ONLY,x_lower_triangle_matrix_in_use
  !
  ! Reset...
  !

@@ -21,6 +21,8 @@ module linear_algebra
  integer, parameter :: SVD_INV=7
  integer, parameter :: LIN_SYS=8
  integer, parameter :: MAT_MUL=9
+ integer, parameter :: DIAGX=10
+ integer, parameter :: CHASE=11
  integer, parameter :: min_cpu_block_size=50
  !
  ! Common Work Space

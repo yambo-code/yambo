@@ -142,7 +142,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
  if (      ENVIRONMENT=="DIPOLES")             call PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
  !
  if (      ENVIRONMENT=="Self_Energy")         call PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
- if (      ENVIRONMENT=="Sigma_X")       call PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
+ if (      ENVIRONMENT=="Sigma_X")             call PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
  !
  if (      ENVIRONMENT=="Response_T_space")    call PARALLEL_global_Response_T_base(Xk)
  !

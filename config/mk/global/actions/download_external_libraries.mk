@@ -41,5 +41,7 @@ petsc-dl:
 	@LIB2DO="petsc"; $(get_external_libraries)
 slepc-dl: 
 	@LIB2DO="slepc"; $(get_external_libraries)
+chase-dl: 
+	@LIB2DO="chase"; $(get_external_libraries)
 ydiago-dl:
 	@LIB2DO="ydiago"; $(get_external_libraries)

@@ -65,15 +65,27 @@ module frequency
      Wo%grid_type=Wi%grid_type
    end subroutine W_duplicate
    !
-   subroutine W_reset(W,damping)
+   subroutine W_reset(W,damping,type)
      type(w_samp)::W
      real(SP), optional, intent(in) :: damping
+     integer,  optional, intent(in) :: type
      real :: local_damping
      local_damping=0.1_SP
      if(present(damping)) local_damping=damping
      W%n_freqs=100
      W%per_memstps=100._SP
      W%er=(/0._SP,10._SP/)/HA2EV
+     !
+     if (present(type)) then
+       select case (type)
+       ! For MPA set default EnRngeXm to 2 Ha
+       case(5)
+         W%er=(/0._SP,2._SP/)
+       case default
+         W%er=(/0._SP,10._SP/)/HA2EV
+       end select
+     endif
+     !
      W%ir=(/1._SP,1._SP/)!/HA2EV
      W%dr=(/local_damping,local_damping/)/HA2EV
      W%damp_reference=0._SP

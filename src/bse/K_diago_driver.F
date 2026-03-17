@@ -35,10 +35,13 @@ subroutine K_diago_driver(iq,W,X_static)
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing
- use linear_algebra, ONLY:DIAGO
- use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver,YDIAGO_driver,&
+ use linear_algebra, ONLY:DIAGO,DIAGX,CHASE
+ use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver,&
  &                        PL_diago_residual,K_diago_L_res,K_diago_R_res,&
  &                        K_diago_perturbative, K_stored_in_a_big_matrix
+#if defined _YDIAGO
+ use interfaces,     ONLY:YDIAGO_driver
+#endif
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
@@ -72,7 +75,7 @@ subroutine K_diago_driver(iq,W,X_static)
  ! Work Space
  !
  integer          :: i_BS_mat,Input_n_eig, BS_mat_dim, neigs_this_cpu, neig_shift, elpa_solver = 2
- logical          :: K_is_not_hermitian,l_diago,l_slepc,l_dip_more,l_target_erange,l_neig_input, &
+ logical          :: K_is_not_hermitian,l_diago,l_diagx,l_chase,l_slepc,l_dip_more,l_target_erange,l_neig_input, &
  &                   l_ydiago,l_kerr_lft,l_kerr_rgt,l_abs_res
  character(1)     :: sec
  character(10)    :: Solver
@@ -121,12 +124,18 @@ subroutine K_diago_driver(iq,W,X_static)
  integer                 :: io_err,ID
  type(X_t),intent(in)    :: X_static
  !
+ l_diago     = index(BSS_mode,'d')/=0
+ l_diagx     = index(BSS_mode,'x')/=0
+ l_chase     = index(BSS_mode,'c')/=0
+#if defined _SLEPC && !defined _NL
+ l_slepc     = index(BSS_mode,'s')/=0
+#endif
  !
  l_abs_res =l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism
  l_kerr_lft=l_BS_kerr_asymm.or.l_BS_dichroism
  l_kerr_rgt=l_BS_kerr      .or.l_BS_dichroism
  !
-#if defined _SCALAPACK
+#if defined _YDIAGO
  l_diago     = index(BSS_mode,'o')/=0.or. (     l_BS_photolum.and.(index(BSS_mode,'d')/=0))
  l_ydiago    = index(BSS_mode,'d')/=0.and. .not.l_BS_photolum
 #else
@@ -147,6 +156,8 @@ subroutine K_diago_driver(iq,W,X_static)
 #endif
  !
  if(l_diago) Solver="Diago"
+ if(l_diagx) Solver="Diagx"
+ if(l_chase) Solver="ChASE"
 #if defined _SLEPC && !defined _NL
  if(l_slepc) Solver="Slepc"
 #endif
@@ -163,6 +174,7 @@ subroutine K_diago_driver(iq,W,X_static)
  if (isec(2)/=0) sec="="
  if (isec(2)==0) sec="+"
  call section(sec,trim(Solver)//' Solver @q'//trim(intc(iq)))
+
  !  
  call K_local_init()
  !
@@ -212,7 +224,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !   to a distributed (SLEPC shells / or eventually BLACS) matrix
      ! - The resulting matrix is symmetrized
      !
-     if (l_diago) then
+     if (l_diago.or.l_diagx.or.l_chase) then
        !
        call K_stored_in_a_big_matrix(i_BS_mat,BS_mat_dim,BS_V_right,iq,"DIAGO")
        !
@@ -262,42 +274,49 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      ! Diagonalization of the excitonic hamiltonian
      !==============================================
-     if(l_diago) call live_timing('BSK diagonalize',1)
+     if(l_diago.or.l_diagx.or.l_chase) call live_timing('BSK diagonalize',1)
      !
      if (K_is_not_hermitian) then
        !
-#if defined _SCALAPACK
+#if defined _YDIAGO
        if (l_ydiago) then 
          ! BS_V_left are only referenced in non-hermitian case
          ! In coupling case, if the user requested n values,
          ! we compute the first min(n/2,BS_H_dim/2) positive and 
          ! min(n/2,BS_ham/2) negative eigvals and eigvectors, making it a total of min(n,BS_ham)
+         !
          call YDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
          &                   neigs_range=neigs_range, eigvals_range=eigvals_range,  &
          &                   BS_VL=BS_V_left,BS_overlap=BS_overlap,                 &
          &                   solver_type=BSS_ydiago_solver, elpasolver=elpa_solver)
          BSS_n_eig = size(BS_E)
-      endif
+         !
+       endif
 #endif
-      !
-      if(l_diago) then
-         ! call LINEAR_ALGEBRA_driver(DIAGO,M=BS_V_right,E_cmpl=BS_E,V_left=BS_V_left)
-         ! The following code should be replaced by the above line wich a change in LINEAR_ALGEBRA_driver
-         YAMBO_ALLOC(BS_mat,(BS_mat_dim,BS_mat_dim))
-         BS_mat=BS_V_right
+       !
+       YAMBO_ALLOC(BS_mat,(BS_mat_dim,BS_mat_dim))
+       BS_mat=BS_V_right
+       !
+       if (l_diago) then
          call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
-         YAMBO_FREE(BS_mat)
        endif
        !
+       if (l_chase) then
+         call LINEAR_ALGEBRA_driver(CHASE,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right,neig=BSS_n_eig)
+         neigs_this_cpu = BSS_n_eig
+       endif
+       !
+       YAMBO_FREE(BS_mat)
+       !
 #if defined _SLEPC && !defined _NL
-       if(l_slepc) then
+       if (l_slepc) then
          call MATRIX_slepc(slepc_mat,BSS_n_eig,BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
        endif
 #endif
        !
      else
        !
-#if defined _SCALAPACK
+#if defined _YDIAGO
        if (l_ydiago) then
          call YDIAGO_driver(i_BS_mat, BS_E, BS_V_right, neigs_this_cpu, neig_shift, &
 &                           neigs_range=neigs_range, eigvals_range=eigvals_range,   &
@@ -306,8 +325,20 @@ subroutine K_diago_driver(iq,W,X_static)
        endif
 #endif
        !
-       if(l_diago) then
+       if (l_diago) then
          call LINEAR_ALGEBRA_driver(DIAGO,M=BS_V_right,E_real=BS_E_real)
+         BS_E=cmplx(BS_E_real,0._SP,kind=SP)
+         neigs_this_cpu = BSS_n_eig
+       endif
+       !
+       if (l_diagx) then
+         call LINEAR_ALGEBRA_driver(DIAGX,M=BS_V_right,E_real=BS_E_real,neig=BSS_n_eig)
+         BS_E=cmplx(BS_E_real,0._SP,kind=SP)
+         neigs_this_cpu = BSS_n_eig
+       endif
+       !
+       if (l_chase) then
+         call LINEAR_ALGEBRA_driver(CHASE,M=BS_V_right,E_real=BS_E_real,neig=BSS_n_eig)
          BS_E=cmplx(BS_E_real,0._SP,kind=SP)
          neigs_this_cpu = BSS_n_eig
        endif
@@ -335,11 +366,12 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if (l_diago) call live_timing( )
      !
-#if defined _SCALAPACK
+#if defined _YDIAGO
      if (l_ydiago) then
        if (Input_n_eig /= BSS_n_eig) call K_resize_variables()
      endif
 #endif
+
      !
      ! Compute residuals
      !
@@ -349,9 +381,9 @@ subroutine K_diago_driver(iq,W,X_static)
      !====================================
      !
      ! Right residuals
-     if(l_abs_res) then
-                      call K_diago_R_res("opt1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,BS_R_right_abs, BS_V_right)
-       if(l_kerr_rgt) call K_diago_R_res("opt2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,BS_R_right_kerr,BS_V_right)
+     if (l_abs_res) then
+                       call K_diago_R_res("opt1",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,BS_R_right_abs, BS_V_right)
+       if (l_kerr_rgt) call K_diago_R_res("opt2",i_BS_mat,BS_E,neigs_this_cpu,neig_shift,BS_R_right_kerr,BS_V_right)
      endif
      !
      if(l_BS_dichroism) then
@@ -443,7 +475,7 @@ subroutine K_diago_driver(iq,W,X_static)
      &                                                   BS_mat=BS_V_right,write_ev=.not.l_ydiago)
      !
      call PP_wait()
-#if defined _SCALAPACK
+#if defined _YDIAGO
      if (l_ydiago .and. BSS_write_eig_2_db) call write_bs_ev_par(iq, i_BS_mat, &
 &                             neigs_this_cpu, neig_shift, BS_V_right, BS_V_left)
 #endif
@@ -608,7 +640,7 @@ subroutine K_diago_driver(iq,W,X_static)
      endif
 
      !
-#if defined _SCALAPACK
+#if defined _YDIAGO
      if (l_ydiago) then
        !
        if (BSS_ydiago_solver/="s" .and. BSS_ydiago_solver/="e") then
@@ -703,7 +735,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if(l_diago) BSS_n_eig = BS_mat_dim
      !
-#if defined _SCALAPACK
+#if defined _YDIAGO
      ! set a Ydiago defaults.
      if(l_ydiago) then
        !

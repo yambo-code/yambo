@@ -13,7 +13,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_t
  use BS_solvers,     ONLY:BSS_desc,BSS_free,BS_mat,run_Haydock,&
-&                         run_inversion,run_Diago,run_Slepc,BSS_kernel_IO_on_the_fly
+&                         run_inversion,run_Diago,run_Diagx,run_Chase,run_Slepc,BSS_kernel_IO_on_the_fly
  use BS,             ONLY:BS_K_has_been_calculated_loaded,BS_ID,&
 &                         l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism
  use parallel_m,     ONLY:master_cpu,CPU_structure
@@ -56,7 +56,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! Diagonalization
  !
- if (run_Diago) then 
+ if (run_Diago .or. run_Diagx .or. run_Chase) then 
    !
    call PARALLEL_assign_LA_COMMs("Response_T_space",DIAGO,CPU_structure(4)%nCPU_lin_algebra_DIAGO)
    !

@@ -43,6 +43,8 @@ blacs:
 	@+URL="$(url_blacs)"    ; LIB="$(pkgname_blacs)"; $(getsrc)
 scalapack:
 	@+URL="$(url_scalapack)"; LIB="$(pkgname_scalapack)"; $(getsrc)
+chase:
+	@+URL="$(url_chase)"    ; LIB="$(pkgname_chase)"; $(getsrc)
 elpa:
 	@+URL="$(url_elpa)"     ; LIB="$(pkgname_elpa)"; $(getsrc)
 petsc:

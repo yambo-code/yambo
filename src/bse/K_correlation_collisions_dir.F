@@ -287,9 +287,9 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
        !
        implicit none
        !
-       integer, intent(in)   :: j_Tk,j_Tp,j_Tgrp_k,j_Tgrp_p,j_block,j_q
+       integer, intent(in)   :: j_Tk,j_Tp,j_Tgrp_k,j_Tgrp_p,j_block,j_q,j_k,j_p
        integer, intent(out)  :: j_kp_s,j_s_star,j_kp_mq_s,j_s_mq_star,j_pmq_s,  &
-       &                        j_k,j_p,j_kmq,j_pmq,j_kmq_t,j_pmq_t,j_p_s,      &
+       &                        j_kmq,j_pmq,j_kmq_t,j_pmq_t,j_p_s,      &
        &                        j_c_p,j_v_p,j_p_sp_pol_v,j_p_sp_pol_c,j_kmq_s,  &
        &                        j_v_k,j_c_k,j_k_sp_pol_v,j_k_sp_pol_c,j_q_W,j_k_s
        integer, intent(inout):: j_p_bz_last,j_k_bz_last,j_q_W_bz_last,j_g_W_last
@@ -360,6 +360,12 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
        ! 
        j_s_star=Xk%s_table(j_p,j_kp_s) 
        j_s_mq_star=Xk%s_table(j_pmq,j_kp_mq_s) 
+       !
+       ! These two assignments are made as a workaround because
+       ! the fujitsu compiler complains that intent(out) variables
+       ! need to be assigned
+!       j_k = 0
+!       j_p = 0
        !
    end subroutine fill_indexes
    !

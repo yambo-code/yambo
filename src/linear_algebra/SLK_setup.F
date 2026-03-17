@@ -9,7 +9,7 @@ subroutine SLK_setup( idriver, ncpu_in_use, ORTHO, POOL, COMM, INDEX_comm, slk_e
  !
  use SLK_m,          ONLY:n_pools,ORTHO_group,POOL_group,SLK_POOL_init
  use parallel_m,     ONLY:yMPI_comm
- use linear_algebra, ONLY:INV,DIAGO,LIN_SYS,MAT_MUL
+ use linear_algebra, ONLY:INV,DIAGO,DIAGX,LIN_SYS,MAT_MUL
  use com,            ONLY:msg
  !
  IMPLICIT NONE
@@ -46,6 +46,7 @@ subroutine SLK_setup( idriver, ncpu_in_use, ORTHO, POOL, COMM, INDEX_comm, slk_e
  !
  if (idriver==INV)     ch="Inversion"
  if (idriver==DIAGO)   ch="Digonalization"
+ if (idriver==DIAGX)   ch="Few Eigenvalues"
  if (idriver==LIN_SYS) ch="LinearSystem"
  if (idriver==MAT_MUL) ch="MatrixMult."
  !

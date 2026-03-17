@@ -256,6 +256,7 @@ m4_include([config/m4/etsf_io.m4])
 m4_include([config/m4/scalapack.m4])
 m4_include([config/m4/petsc_slepc.m4])
 m4_include([config/m4/libcuda.m4])
+m4_include([config/m4/chase.m4])
 m4_include([config/m4/device_xlib.m4])
 #
 AC_LANG_PUSH(Fortran)
@@ -275,6 +276,9 @@ AC_PETSC_SLEPC_SETUP
 # ============================================================================
 # SCALAPACK/BLACS
 AC_SLK_SETUP
+# ============================================================================
+# ChASE
+AC_CHASE_SETUP
 # ============================================================================
 # HDF5 
 AC_HAVE_HDF5_F90

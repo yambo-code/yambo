@@ -58,7 +58,7 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  neig_total = size(BS_E)
  !
  if (size(BS_R_left)       /= neig_total)     call error("Size mismatch between eigvals and R.residuals.")
- if (size(BS_V_left,dim=2) /= neigs_this_cpu) call error("Size mismatch between eigvecs and R.residuals.")
+ if (size(BS_V_left,dim=2) <  neigs_this_cpu) call error("Size mismatch between eigvecs and R.residuals.")
  !
  if (.not.(present(BS_overlap).and.associated(BS_overlap))) scheme="hermitian"
  if (     (present(BS_overlap).and.associated(BS_overlap))) scheme="non-hermitian"

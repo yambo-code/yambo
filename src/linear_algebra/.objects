@@ -1,13 +1,20 @@
 #if defined _SCALAPACK
 SLK_objs = SLK_test.o SLK_ORTHO_group.o SLK_ORTHO_init.o SLK_setup.o PARALLEL_inversion.o \
-           PARALLEL_HERMITIAN_diagonalization.o PARALLEL_lin_system.o PARALLEL_M_by_M.o PARALLEL_M_by_V.o \
-           SLK_tools.o 
+           PARALLEL_HERMITIAN_diago.o PARALLEL_HERMITIAN_diagx.o PARALLEL_lin_system.o PARALLEL_M_by_M.o PARALLEL_M_by_V.o \
+           SLK_tools.o  
 #endif
 #if defined _SLEPC && !defined _NL
 SLEPC_objs = MATRIX_slepc.o 
 #endif
+#if defined _CHASE
+CHASE_objs = SERIAL_HERMITIAN_chase.o SERIAL_PSEUDOHERM_chase.o
+#endif
+#if defined _CHASE && defined _SCALAPACK
+CHASE_objs += PARALLEL_HERMITIAN_chase.o
+#endif
 #if defined _GPU && defined _PGI
 GPU_objs = SERIAL_lin_system_gpu.o
 #endif
-objs = LINEAR_ALGEBRA_driver.o SERIAL_SVD_inversion.o SERIAL_inversion.o SERIAL_diagonalization.o \
-       SERIAL_HERMITIAN_diagonalization.o SERIAL_lin_system.o $(SLK_objs) $(SLEPC_objs) $(GPU_objs)
+objs = LINEAR_ALGEBRA_driver.o SERIAL_SVD_inversion.o SERIAL_inversion.o SERIAL_diago.o \
+       SERIAL_HERMITIAN_diago.o SERIAL_HERMITIAN_diagx.o SERIAL_lin_system.o \
+       $(SLK_objs) $(CHASE_objs) $(SLEPC_objs) $(GPU_objs)

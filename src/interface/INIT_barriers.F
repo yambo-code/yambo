@@ -23,7 +23,7 @@ subroutine INIT_barriers()
  ! Additional logicals ...
  !
  logical :: metallic_system, bss_tddft,bse_bsfxc,&
-            TR_or_SI,gw0_raxis,tddft_r_space,bss_diago,bse_sex,&
+            TR_or_SI,gw0_raxis,tddft_r_space,bss_diago,bss_diagx,bss_chase,bse_sex,&
 &           bss_haydock,gw0_ppa,gw0_mpa,gw0_cohsex,tddft_g_space,bss_inv,l_flag
  character(lchlen) :: always_on_runlevels,on_runlevels
  !
@@ -45,6 +45,8 @@ subroutine INIT_barriers()
  bse_bsfxc=trim(BSK_mode)=='BSfxc'
  !
  bss_diago=l_bss.and.(index(BSS_mode,'d')/=0.or.index(BSS_mode,'o')/=0)
+ bss_diagx=l_bss.and.index(BSS_mode,'x')/=0
+ bss_chase=l_bss.and.index(BSS_mode,'c')/=0
  bss_inv=l_bss.and.index(BSS_mode,'i')/=0
  bss_haydock=l_bss.and.index(BSS_mode,'h')/=0
  bss_tddft=l_bss.and.index(BSS_mode,'t')/=0

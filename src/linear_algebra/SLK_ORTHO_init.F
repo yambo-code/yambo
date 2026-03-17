@@ -28,6 +28,7 @@ subroutine SLK_ORTHO_init( ORTHO, POOL, n_CPU_in )
  CALL BLACS_PINFO( ORTHO%BLACS_id, ORTHO%BLACS_np )
  CALL BLACS_GET( -1, 0, ORTHO%world_cntx )
  CALL BLACS_GRIDINIT( ORTHO%world_cntx, 'Row', 1, ORTHO%BLACS_np )
+ !CALL BLACS_GRIDINIT( ORTHO%world_cntx, 'C', 1, ORTHO%BLACS_np )
  !
  IF( n_CPU_in > 0 ) THEN
    ! use the input value ensuring that it falls in the proper range

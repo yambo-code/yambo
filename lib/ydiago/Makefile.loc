@@ -7,7 +7,7 @@ include ../../config/setup
 include ../archive/package.list
 #
 LIBNAME=libydiago.a
-LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/$(ydiago_gpu_support)
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_Ydiago)

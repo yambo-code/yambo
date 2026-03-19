@@ -51,13 +51,14 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  real(SP)          :: Dirac_v_f_au,X0_Dirac
  real(SP)          :: q_grid_b_rlu(3,3),q_grid_b_iku(3,3),q_grid_b_cc(3,3)
  integer           :: ID, IO_ACT,io_err, ng_save,G_max_ibz(q%nibz), G_max
- integer, external :: io_X, io_RIM_W
+ integer, external :: io_X, io_RIM_W, io_RIM_W_aux
  character(schlen) :: ch_dum,fmt_dum,msg_dum(2)
  logical           :: l_check,q0_neighbour,q0_snd_neighbour
  !
  call timing('RIM-W-coeff',OPR='start')
  !
  YAMBO_ALLOC(f_coeff,(20,RIM_W_ng,RIM_W_ng,q%nibz,Xw%n_freqs))
+ f_coeff=0
  !
  call section("+", "RIM-W interpolation")
  !
@@ -973,7 +974,13 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !
  call parser('rimw_check',l_check)
- if(l_check) call check_W_interpolation(q,Xw,f_coeff,q_grid_b_rlu,vX_nn,idx_q,idx_is,idx_G)
+ !if(l_check) call check_W_interpolation(q,Xw,f_coeff,q_grid_b_rlu,vX_nn,idx_q,idx_is,idx_G)
+ if (l_check) then
+  if (master_cpu) then
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/2/),ID=ID)
+    io_err=io_RIM_W_aux(ID,Xw)
+  endif
+ endif
  !
  call rim('c',Xw)
  !

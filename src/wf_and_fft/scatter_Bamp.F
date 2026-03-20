@@ -28,7 +28,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  use FFT_m
 ! use FFT_m,          ONLY:fftw_plan,cufft_plan,hipfft_plan,mklgpu_desc,&
  !&                        fft_size,fft_dim,DEV_VAR(fft_g_table)
- use interfaces,     ONLY:DEV_SUB(WF_apply_symm)
+ !use interfaces,     ONLY:DEV_SUB(WF_apply_symm)
  use devxlib,        ONLY:devxlib_memset_d,devxlib_memset_h
  !
  implicit none

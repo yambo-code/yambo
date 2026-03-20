@@ -18,6 +18,9 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
 #if defined _RT
  use real_time,     ONLY:l_update_SOC
 #endif
+#if defined _OPENACC
+ use openacc
+#endif
  !
  implicit none
  !
@@ -72,7 +75,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
          rho_acc_i=0.0_SP
          !
          !DEV_ACC_DEBUG data present(WF_p,g_vec,wf_igk)
-         !DEV_ACC parallel loop private(ig,rho_acc) reduction(+:rho_acc_r,rho_acc_i)
+         !DEV_ACC parallel loop private(ig,rho_acc) reduction(+:rho_acc_r,rho_acc_i) async
          !DEV_CUF kernel do(1)
          !DEV_OMPGPU target map(present,alloc:WF_p,g_vec,wf_igk) map(tofrom:rho_acc_r,rho_acc_i)
          !DEV_OMPGPU teams loop private(ig,rho_acc) reduction(+:rho_acc_r,rho_acc_i)
@@ -85,6 +88,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
          enddo
          !DEV_OMPGPU end target
          !DEV_ACC_DEBUG end data
+         !DEV_ACC wait(acc_async_noval)
          !
          rho_spinor(i1,i_spinor,j_spinor)=cmplx(rho_acc_r,rho_acc_i,SP)
        enddo
@@ -97,7 +101,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
      rho_acc_i=0.0_SP
      ! 
      !DEV_ACC_DEBUG data present(WF_p,g_vec,wf_igk)
-     !DEV_ACC parallel loop collapse(2) private(ig,rho_acc) reduction(+:rho_acc_r,rho_acc_i)
+     !DEV_ACC parallel loop collapse(2) private(ig,rho_acc) reduction(+:rho_acc_r,rho_acc_i) async
      !DEV_CUF kernel do(2)
      !DEV_OMPGPU target map(present,alloc:WF_p,g_vec,wf_igk) map(tofrom:rho_acc_r,rho_acc_i)
      !DEV_OMPGPU teams loop collapse(2) private(ig,rho_acc) reduction(+:rho_acc_r,rho_acc_i)
@@ -112,6 +116,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
      enddo
      !DEV_OMPGPU end target
      !DEV_ACC_DEBUG end data
+     !DEV_ACC wait(acc_async_noval)
      !
      rho(i1)=cmplx(rho_acc_r,rho_acc_i,SP)
      !

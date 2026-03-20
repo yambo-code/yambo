@@ -150,7 +150,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      if(l_rim_w) then
        !
        !DEV_ACC_DEBUG data present(RIM_vpW,DEV_VAR(RIM_W),gamp_p)
-       !DEV_ACC parallel loop collapse(2)
+       !DEV_ACC parallel loop collapse(2) async
        !DEV_CUF kernel do(2) <<<*,*>>>
        do i_g3=1,RIM_W_ng
          do i_g2=1,RIM_W_ng
@@ -165,7 +165,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      if (BS_W_is_diagonal) then
        !
        !DEV_ACC_DEBUG data present(BS_W,X_mat_p,gamp_p)
-       !DEV_ACC parallel loop private(i_g2_mat)
+       !DEV_ACC parallel loop private(i_g2_mat) async
        !DEV_CUF kernel do(1) <<<*,*>>>
        do i_g2=1, BS_n_g_W
          i_g2_mat=min(i_g2,X%ng)
@@ -176,7 +176,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      else if (.not.BS_W_is_diagonal) then
        !
        !DEV_ACC_DEBUG data present(BS_W,RIM_vpW,X_mat_p,gamp_p)
-       !DEV_ACC parallel loop private(i_g3,i_g3_mat,i_g2,i_g2_mat,l_RIM_W_g)
+       !DEV_ACC parallel loop private(i_g3,i_g3_mat,i_g2,i_g2_mat,l_RIM_W_g) async
        !DEV_CUF kernel do(1) <<<*,*>>>
        do i_g3=1,BS_n_g_W
          i_g3_mat=min(i_g3,X%ng)

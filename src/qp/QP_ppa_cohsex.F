@@ -66,6 +66,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
+#if defined _OPENACC
+ use openacc
+#endif
  !
 #include<y_memory.h>
  !
@@ -512,7 +515,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            if (X_is_TR_rotated) then
              !
              !DEV_ACC_DEBUG data present(G_m_G,isc_rhotw_p,eet_factor)
-             !DEV_ACC parallel loop collapse(2)
+             !DEV_ACC parallel loop collapse(2) async
              !DEV_CUF kernel do(2)
              !DEV_OMPGPU target map(present,alloc:G_m_G,isc_rhotw_p,eet_factor)
              !DEV_OMPGPU teams loop collapse(2)
@@ -528,7 +531,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            else
              !
              !DEV_ACC_DEBUG data present(G_m_G,isc_rhotw_p,eet_factor)
-             !DEV_ACC parallel loop collapse(2)
+             !DEV_ACC parallel loop collapse(2) async
              !DEV_CUF kernel do(2)
              !DEV_OMPGPU target map(present,alloc:G_m_G,isc_rhotw_p,eet_factor)
              !DEV_OMPGPU teams loop collapse(2)
@@ -553,7 +556,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          if (X_is_TR_rotated) then
            !
            !DEV_ACC_DEBUG data present(G_m_G,isc_rhotw_p,X_blc_p)
-           !DEV_ACC parallel loop collapse(2) private(ctmp) reduction(+:dp_dummy_r,dp_dummy_i)
+           !DEV_ACC parallel loop collapse(2) private(ctmp) reduction(+:dp_dummy_r,dp_dummy_i) async
            !DEV_CUF kernel do(2)
            !DEV_OMPGPU target map(present,alloc:G_m_G,isc_rhotw_p) &
            !DEV_OMPGPU &      map(tofrom:dp_dummy_r,dp_dummy_i)
@@ -575,11 +578,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            enddo
            !DEV_OMPGPU end target
            !DEV_ACC_DEBUG end data
+           !DEV_ACC wait(acc_async_noval)
            !
          else
            !
            !DEV_ACC_DEBUG data present(G_m_G,isc_rhotw_p,X_blc_p)
-           !DEV_ACC parallel loop collapse(2) private(ctmp) reduction(+:dp_dummy_r,dp_dummy_i)
+           !DEV_ACC parallel loop collapse(2) private(ctmp) reduction(+:dp_dummy_r,dp_dummy_i) async
            !DEV_CUF kernel do(2)
            !DEV_OMPGPU target map(present,alloc:G_m_G,isc_rhotw_p) &
            !DEV_OMPGPU &      map(tofrom:dp_dummy_r,dp_dummy_i)
@@ -601,6 +605,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            enddo
            !DEV_OMPGPU end target
            !DEV_ACC_DEBUG end data
+           !DEV_ACC wait(acc_async_noval)
            !
          endif
          !
@@ -668,7 +673,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          if(l_GW_terminator) then
            !
            !DEV_ACC_DEBUG data present(eet_factor,isc_rhotw_p,conjg_iscp_rhotw)
-           !DEV_ACC parallel loop collapse(2) 
+           !DEV_ACC parallel loop collapse(2) async
            !DEV_CUF kernel do(2)
            !DEV_OMPGPU target map(present,alloc:eet_factor,isc_rhotw_p,conjg_iscp_rhotw)
            !DEV_OMPGPU teams loop collapse(2)
@@ -704,7 +709,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !
            !DEV_ACC_DEBUG data present(X_blc_p,RIM_W,isc_gamp_p,conjg_iscp_rhotw,isc_rhotw_p,iscp_rhotw_p)
            !DEV_ACC parallel  loop collapse(2) private(ig1,ig2,PPA_E,PPA_R,bose_PPA_E,ctmp,l_rim_w_g) &
-           !DEV_ACC           reduction(+:dp_dummy_r,dp_dummy_i)
+           !DEV_ACC           reduction(+:dp_dummy_r,dp_dummy_i) async
            !DEV_CUF kernel    do(2)
            !DEV_OMPGPU target map(present,alloc:X_blc_p,RIM_W,isc_gamp_p,conjg_iscp_rhotw,isc_rhotw_p,iscp_rhotw_p) &
            !DEV_OMPGPU &      map(tofrom:dp_dummy_r,dp_dummy_i)
@@ -757,6 +762,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            enddo
            !DEV_OMPGPU end target
            !DEV_ACC_DEBUG end data
+           !DEV_ACC wait(acc_async_noval)
            !
            if (have_gpu) dp_dummy=cmplx(dp_dummy_r,dp_dummy_i,kind=DP)
            !
@@ -804,7 +810,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          !DEV_ACC_DEBUG data present(X_blc_p,isc_gamp_p,eet_factor)
          !DEV_ACC parallel  loop collapse(2) private(PPA_E,PPA_R,eet_energy,lW,QP_ppa_EET,ctmp) &
-         !DEV_ACC                reduction(+:dp_dummy_r,dp_dummy_i)
+         !DEV_ACC                reduction(+:dp_dummy_r,dp_dummy_i) async
          !DEV_CUF kernel do(2)
          !DEV_OMPGPU target map(present,alloc:X_blc_p,isc_gamp_p,eet_factor) &
          !DEV_OMPGPU &      map(tofrom:dp_dummy_r,dp_dummy_i)
@@ -842,6 +848,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          enddo
          !DEV_OMPGPU end target
          !DEV_ACC_DEBUG end data
+         !DEV_ACC wait(acc_async_noval)
          !
          if (have_gpu) dp_dummy=cmplx(dp_dummy_r,dp_dummy_i,kind=DP)
          !

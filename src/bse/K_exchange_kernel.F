@@ -18,6 +18,9 @@ function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   use BS,           ONLY: BS_T_group,l_BS_magnons
   use wrapper_omp,  ONLY: Vstar_dot_V_omp
   use R_lattice,    ONLY: bare_qpg, bare_qpg_d
+#if defined _OPENACC
+  use openacc
+#endif
   implicit none
   !
   integer,                  intent(in) :: iq,BS_n_g_exch,i_Tp,i_Tk
@@ -43,7 +46,7 @@ function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   H_x_i=rZERO
   !
   !DEV_ACC_DEBUG data present(BS_T_grp_ip_O_x_p,BS_T_grp_ik_O_x_p,bare_qpg)
-  !DEV_ACC parallel loop private(ig,H_x) reduction(+:H_x_r,H_x_i)
+  !DEV_ACC parallel loop private(ig,H_x) reduction(+:H_x_r,H_x_i) async
   !DEV_CUF kernel do(1) <<<*,*>>>
   !DEV_OMPGPU target map(present,alloc:BS_T_grp_ip_O_x_p,BS_T_grp_ik_O_x_p,bare_qpg)
   !DEV_OMPGPU teams loop private(ig,H_x) reduction(+:H_x_r,H_x_i)
@@ -54,6 +57,7 @@ function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   enddo
   !DEV_OMPGPU end target
   !DEV_ACC_DEBUG end data
+  !DEV_ACC wait(acc_async_noval)
   !
   H_x=cmplx(H_x_r,H_x_i,kind=SP)
   !
@@ -78,6 +82,9 @@ function K_exchange_kernel_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   use BS,           ONLY: BS_T_group,l_BS_magnons
   use wrapper_omp,  ONLY: V_dot_V_omp
   use R_lattice,    ONLY: bare_qpg, minus_G, bare_qpg_d, minus_G_d
+#if defined _OPENACC
+  use openacc
+#endif
   !
   implicit none
   !
@@ -104,7 +111,7 @@ function K_exchange_kernel_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   H_x_i=rZERO
   !
   !DEV_ACC_DEBUG data present(BS_T_grp_ip_O_x_p,BS_T_grp_ik_O_x_p,minus_G,bare_qpg)
-  !DEV_ACC parallel loop private(ig,H_x) reduction(+:H_x_r,H_x_i)
+  !DEV_ACC parallel loop private(ig,H_x) reduction(+:H_x_r,H_x_i) async
   !DEV_CUF kernel do(1) <<<*,*>>>
   !DEV_OMPGPU target map(present,alloc:BS_T_grp_ip_O_x_p,BS_T_grp_ik_O_x_p,minus_G,bare_qpg)
   !DEV_OMPGPU teams loop private(H_x) reduction(+:H_x_r,H_x_i)
@@ -115,6 +122,7 @@ function K_exchange_kernel_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   enddo
   !DEV_OMPGPU end target
   !DEV_ACC_DEBUG end data
+  !DEV_ACC wait(acc_async_noval)
   !
   H_x=cmplx(H_x_r,H_x_i,SP)
   !

@@ -47,6 +47,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use functions,     ONLY:bose_E_cut
  use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memcpy_d2d
  use gpu_m,         ONLY:have_gpu
+#if defined _OPENACC
+ use openacc
+#endif
  !
 #include<y_memory.h>
  !
@@ -540,7 +543,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          !DEV_ACC_DEBUG data present(MPA_E_par_p,MPA_R_par_p,isc_rhotw_p,iscp_rhotw_p,isc_gamp_p)
          !DEV_ACC parallel loop collapse(3) private(i_np,ig1,ig2,bose_PPA_E,ctmp,l_RIM_W_g) &
-         !DEV_ACC               reduction(+:dp_dummy_r,dp_dummy_i)
+         !DEV_ACC               reduction(+:dp_dummy_r,dp_dummy_i) async
          !DEV_CUF kernel do(3)
          !DEV_OMPGPU target map(present,alloc:MPA_E_par_p,MPA_R_par_p,isc_gamp_p,isc_rhotw_p,iscp_rhotw_p) &
          !DEV_OMPGPU &      map(tofrom:dp_dummy_r,dp_dummy_i)
@@ -601,6 +604,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !DEV_OMPGPU end target
          !DEV_ACC_DEBUG end data
          !DEV_OMP end parallel do
+         !DEV_ACC wait(acc_async_noval)
          !
          dp_dummy=cmplx(dp_dummy_r,dp_dummy_i,kind=DP)
          !

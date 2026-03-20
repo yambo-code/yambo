@@ -24,6 +24,9 @@ module wrapper
 #ifdef _CUDAF
  use cudafor,          only:c_devloc
 #endif
+#ifdef _OPENACC
+ use openacc
+#endif
  !
  use devxlib_linalg,   only: M_by_M_gpu=>devxlib_xGEMM_gpu,devxlib_xGEMM_gpu,devxlib_xGEMV_gpu,&
 &                            devxlib_xAXPY_gpu,devxlib_xDOT_gpu,devxlib_xDOTC_gpu,devxlib_xDOTU_gpu
@@ -495,7 +498,7 @@ module wrapper
      ctmp=0.0
      !
      !DEV_ACC_DEBUG data present(CX,CY,CZ)
-     !DEV_ACC parallel loop
+     !DEV_ACC parallel loop reduction(+:ctmp) async
      !DEV_CUF kernel do(1) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:CX,CY,CZ) map(tofrom:ctmp)
      !DEV_OMPGPU teams loop reduction(+:ctmp)
@@ -505,6 +508,7 @@ module wrapper
      enddo
      !DEV_OMPGPU end target
      !DEV_ACC_DEBUG end data
+     !DEV_ACC wait(acc_async_noval)
      !
      Vstar_dot_VV_c1_gpu=ctmp
      !
@@ -649,7 +653,7 @@ module wrapper
      ctmp=0.0_SP
      !
      !DEV_ACC_DEBUG data present(CX,CY,CZ)
-     !DEV_ACC parallel loop
+     !DEV_ACC parallel loop reduction(+:ctmp) async
      !DEV_CUF kernel do(1) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:CX,CY,CZ) map(tofrom:ctmp)
      !DEV_OMPGPU teams loop reduction(+:ctmp)
@@ -658,6 +662,7 @@ module wrapper
      enddo
      !DEV_OMPGPU end target
      !DEV_ACC_DEBUG end data
+     !DEV_ACC wait(acc_async_noval)
      !
      V_dot_VV_c1_gpu=ctmp
    end function V_dot_VV_c1_gpu
@@ -706,7 +711,7 @@ module wrapper
      !
      integer :: i
      !DEV_ACC_DEBUG data present(CX,CY,CZ)
-     !DEV_ACC parallel loop
+     !DEV_ACC parallel loop async
      !DEV_CUF kernel do(1) <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:CX,CY,CZ)
      !DEV_OMPGPU teams loop

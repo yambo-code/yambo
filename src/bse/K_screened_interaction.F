@@ -165,7 +165,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      if (BS_W_is_diagonal) then
        !
        !DEV_ACC_DEBUG data present(BS_W,X_mat_p,gamp_p)
-       !DEV_ACC parallel loop private(i_g2_mat) async
+       !DEV_ACC parallel loop private(i_g2,i_g2_mat) async
        !DEV_CUF kernel do(1) <<<*,*>>>
        do i_g2=1, BS_n_g_W
          i_g2_mat=min(i_g2,X%ng)

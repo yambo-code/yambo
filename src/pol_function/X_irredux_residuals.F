@@ -145,7 +145,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,&
        sop_inv_l=sop_inv(is)
        !
        !DEV_ACC_DEBUG data present(g_rot,rhotw_save,Xo_scatt_rhotw_p)
-       !DEV_ACC parallel loop private(ig2) async
+       !DEV_ACC parallel loop private(ig1,ig2) async
        !DEV_CUF kernel do(1) <<<*,*>>>
        !DEV_OMPGPU target map(present,alloc:g_rot,rhotw_save,Xo_scatt_rhotw_p)
        !DEV_OMPGPU teams loop private(ig2)

@@ -610,7 +610,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          !DEV_OMPGPU end target
          !DEV_ACC_DEBUG end data
-         !DEV_OMP end parallel do
          !DEV_ACC wait(acc_async_noval)
          !
          dp_dummy=cmplx(dp_dummy_r,dp_dummy_i,kind=DP)

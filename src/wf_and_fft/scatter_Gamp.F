@@ -103,10 +103,10 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  gamp_p => DEV_VAR(isc%gamp)
  !
  !DEV_ACC_DEBUG data present(gamp_p,RIM_qpg,bare_qpg)
- !DEV_ACC parallel loop collapse(2) async
+ !DEV_ACC parallel loop collapse(2) private(i1,i2,ig1,ig2,l_RIM) async
  !DEV_CUF kernel do(2)
  !DEV_OMPGPU target map(present,alloc:gamp_p,RIM_qpg,bare_qpg)
- !DEV_OMPGPU teams loop collapse(2)
+ !DEV_OMPGPU teams loop, private(i1,i2,ig1,ig2,l_RIM), collapse(2)
  !DEV_OMP parallel do default(shared), private(i1,i2,ig1,ig2,l_RIM), collapse(2)
  !
  do i2=ng_cols1,ng_cols2

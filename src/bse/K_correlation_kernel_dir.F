@@ -45,7 +45,7 @@ function K_correlation_kernel_dir(i_block,i_p,i_pmq,                            
  O_c_d_iO2 => DEV_VAR(BS_blk(i_block)%O_c)(:,iO2)
  !
  !DEV_ACC_DEBUG data present(O_c_d_iO1,O_c_d_iO2,G_m_G,g_rot,O1,O2)
- !DEV_ACC parallel loop async
+ !DEV_ACC parallel loop private(i_g1,i_g2,i_g3) async
  !DEV_CUF kernel do(1) <<<*,*>>>
  !DEV_OMP parallel do default(shared), private(i_g1,i_g2,i_g3)
  do i_g1=1,BS_n_g_W

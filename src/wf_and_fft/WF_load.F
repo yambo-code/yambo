@@ -400,10 +400,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               npwk=wf_nc_k(ikibz)
               !
               !DEV_ACC_DEBUG data present(wf_igk,fft_g_table,wf_DP,wf_disk)
-              !DEV_ACC parallel loop async
+              !DEV_ACC parallel loop private(ic,ig,igfft) async
               !DEV_CUF kernel do(1) <<<*,*>>>
               !DEV_OMPGPU target map(present,alloc:wf_igk,fft_g_table,wf_DP,wf_disk)
-              !DEV_OMPGPU teams loop private(ig,igfft)
+              !DEV_OMPGPU teams loop private(ic,ig,igfft)
               do ic=1,npwk
                 !
                 ig=DEV_VAR(wf_igk)(ic,ikibz)

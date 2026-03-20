@@ -10,12 +10,14 @@
 !     - del of old/unused source code
 !     - ...
 !
+#include<dev_defs.h>
+!
 subroutine QP_interpolate_W(X,Xw,q,mode)
  !
  use pars,          ONLY:SP,pi,zero_dfl,schlen,DP,rZERO
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,RIM_W_ng,g_vec,k_grid_b,bare_qpg,&
-&                        RIM_W_is_diagonal,RIM_W,f_coeff,idir,RIM_W_E,cut_is_slab,&
+&                        RIM_W_is_diagonal,RIM_W,DEV_VAR(RIM_W),f_coeff,idir,RIM_W_E,cut_is_slab,&
 &                        RIM_id_epsm1_reference,RIM_epsm1,Dirac_v_f,RIM_qpg,rimw_type
  use vec_operate,   ONLY:c2a,v_norm
  use ALLOC,         ONLY:X_ALLOC_elemental
@@ -30,7 +32,6 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  use parallel_m,    ONLY:master_cpu
  use parser_m,      ONLY:parser
  !
-#include<dev_defs.h>
 #include<y_memory.h>
  !
  type(X_t)    :: X
@@ -109,7 +110,8 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  call msg('r', '          ', q_grid_b_iku(:,3), '[iku]')
  call msg('r', 'G-vectors ', RIM_W_ng)
  !
- !Check if RIM-W has been alreay calculated
+ ! Check if RIM-W has been alreay calculated
+ !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=io_RIM_W(ID,mode,Xw)
  !
@@ -151,7 +153,6 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  !
  call msg('r', 'G-vectors loaded', maxval(G_max_ibz))
  call msg('r', 'Number of interpolated frequencies', Xw%n_freqs)
- !
 
  !
  !Load only the G needed
@@ -171,60 +172,61 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
    !
    call deliver_IO_error_message(io_err,'PP/Em1s',STOP_it=.TRUE.)
    !
-   !call msg("rs","shape X_mat",shape(X_mat))
-   !
    !Assign X
    do iomega=1,Xw%n_freqs
-    do ig1=1,RIM_W_ng
+   do ig1=1,RIM_W_ng
      !
      ig2max = RIM_W_ng
      if (RIM_W_is_diagonal) ig2max=ig1
+     !
      do iq1=1,q%nibz
-      do ig2=1,ig2max
        !
-       do nn=1,7
+       do ig2=1,ig2max
+         do nn=1,7
+           if (idx_q(ig1,iq1,nn) == iq) then
+             vX_nn(nn,iq1,ig1,ig2,iomega) = X_mat(idx_G(ig1,iq1,nn),idx_G(ig2,iq1,nn),iomega)
+           endif
+         enddo
+       enddo
+       ! 
+       ! Calculation of next nearest neighbours vX needed only for the q=0 term 
+       ! and the neighboursing q-points for the wings and the head term 
+       !
+       do iqn2=1,7 
          !
-         if (idx_q(ig1,iq1,nn) == iq) then
-           vX_nn(nn,iq1,ig1,ig2,iomega) = X_mat(idx_G(ig1,iq1,nn),idx_G(ig2,iq1,nn),iomega)
+         if (idx_q(1,iq1,iqn2)==1) then
+           idm=7
+           if (ig1==1) idm=13
+           do nn=1,idm
+             if (idx_q_2(1,iq1,nn) == iq) then
+               vX_nnn(nn,iq1,1,ig1,iomega) = X_mat(idx_G_2(1,iq1,nn),idx_G_2(ig1,iq1,nn),iomega)
+             endif
+           enddo
+           cycle  
+           !
          endif
          !
        enddo
-      end do
-      ! 
-      ! Calculation of next nearest neighbours vX needed only for the q=0 term and the neighboursing q-points
-      ! for the wings and the head term 
-      !
-      do iqn2=1,7 
-        !
-        if (idx_q(1,iq1,iqn2)==1) then
-          idm=7
-          if (ig1==1) idm=13
-          do nn=1,idm
-            if (idx_q_2(1,iq1,nn) == iq) then
-               vX_nnn(nn,iq1,1,ig1,iomega) = X_mat(idx_G_2(1,iq1,nn),idx_G_2(ig1,iq1,nn),iomega)
-            end if
-          end do
-        cycle  
-        end if
-      end do
+       !
+       if (ig1>1) then
+         do iqn2=1,7 
+           !
+           if (idx_q(1,iq1,iqn2)==1) then
+             do nn=1,7
+               if (idx_q_2(1,iq1,nn) == iq) then
+                 vX_nnn(nn,iq1,ig1,1,iomega) = X_mat(idx_G_2(ig1,iq1,nn),idx_G_2(1,iq1,nn),iomega)
+               endif
+             enddo
+             cycle  
+           endif
+           !
+         enddo
+       endif 
+       !
+     enddo
      !
-      if (ig1>1) then
-       do iqn2=1,7 
-        !
-        if (idx_q(1,iq1,iqn2)==1) then
-          do nn=1,7
-            if (idx_q_2(1,iq1,nn) == iq) then
-               vX_nnn(nn,iq1,ig1,1,iomega) = X_mat(idx_G_2(ig1,iq1,nn),idx_G_2(1,iq1,nn),iomega)
-            end if
-          end do
-        cycle  
-        end if
-       end do
-      end if 
-     !
-     end do
-    end do
-   end do
+   enddo
+   enddo
    !
    call X_ALLOC_global('X')
    !
@@ -244,19 +246,19 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  if (RIM_id_epsm1_reference==0) em1_anis=0.
  !
  do iomega=1,Xw%n_freqs
-   !call msg('r','iomega',iomega)
+   !
    do igr=1,RIM_W_ng
-    !
-    ig2max = RIM_W_ng
-    if (RIM_W_is_diagonal) ig2max=igr
-    do igc=1,ig2max
-      !
-      do iq1=1,q%nibz
-        !
-        q0_neighbour=.false.
-        q0_snd_neighbour=.false.
-        !
-        do nn=1,7
+     !
+     ig2max = RIM_W_ng
+     if (RIM_W_is_diagonal) ig2max=igr
+     do igc=1,ig2max
+       !
+       do iq1=1,q%nibz
+         !
+         q0_neighbour=.false.
+         q0_snd_neighbour=.false.
+         !
+         do nn=1,7
           !
           !Select the index of the reference/n.n.
           iq2 = idx_q(igr,iq1,nn)
@@ -974,12 +976,10 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !
  call parser('rimw_check',l_check)
- !if(l_check) call check_W_interpolation(q,Xw,f_coeff,q_grid_b_rlu,vX_nn,idx_q,idx_is,idx_G)
- if (l_check) then
-  if (master_cpu) then
+ !
+ if (l_check.and.master_cpu) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/2/),ID=ID)
-    io_err=io_RIM_W_aux(ID,Xw)
-  endif
+   io_err=io_RIM_W_aux(ID,Xw)
  endif
  !
  call rim('c',Xw)
@@ -1076,10 +1076,10 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
          RIM_W_E(ig1,ig2)=sqrt(dummy(1)/dummy(2)-1._SP)  
        endif
        !
-     end do
-   end do
+     enddo
+   enddo
    !
- end if
+ endif
  !
  !Write the database
  !
@@ -1226,12 +1226,15 @@ subroutine find_q_nnns(q,q_grid_b_iku,idx_q,idx_is,idx_G)
  integer     :: iq_trial_ibz,is_trial,i_dummy,nnn_find,nnn
  real(SP)    :: qpG(3,13),qpG_trial(3)
  !
- !Cycles over qpG points
+ ! Cycles over qpG points
+ !
  do iq=1,q%nibz
    !
    do ig=1,RIM_W_ng
+     !
      ! find in general 6 second order neighbours 
      max_numb=6
+     !
      ! For the neighbours of iq1, 12 second order neighbours are needed
      if (ig==1) max_numb=12
      !
@@ -1241,28 +1244,30 @@ subroutine find_q_nnns(q,q_grid_b_iku,idx_q,idx_is,idx_G)
      idx_is(ig,iq,1) = 1
      idx_G (ig,iq,1) = ig
      !
-     !Calculate qpG and qpG of next nearest neighbour
+     ! Calculate qpG and qpG of next nearest neighbour
      qpG(:,1) = q%pt(iq,:)+g_vec(ig,:)
      !
-     !Calculate qpG and qpG of next nearest neighbour
+     ! Calculate qpG and qpG of next nearest neighbour
      qpG(:,2) = qpG(:,1) - 2.0*q_grid_b_iku(:,1)
      qpG(:,3) = qpG(:,1) - 2.0*q_grid_b_iku(:,2)
      qpG(:,4) = qpG(:,1) - 2.0*q_grid_b_iku(:,3)
      qpG(:,5) = qpG(:,1) + 2.0*q_grid_b_iku(:,1)
      qpG(:,6) = qpG(:,1) + 2.0*q_grid_b_iku(:,2)
      qpG(:,7) = qpG(:,1) + 2.0*q_grid_b_iku(:,3)
+     !
      if (ig==1) then
-      qpG(:,8) = qpG(:,1) + q_grid_b_iku(:,1) + q_grid_b_iku(:,2)
-      qpG(:,9) = qpG(:,1) + q_grid_b_iku(:,1) + q_grid_b_iku(:,3)
-      qpG(:,10) = qpG(:,1) + q_grid_b_iku(:,2) + q_grid_b_iku(:,3)
-      qpG(:,11) = qpG(:,1) - q_grid_b_iku(:,1) + q_grid_b_iku(:,2)
-      qpG(:,12) = qpG(:,1) - q_grid_b_iku(:,1) + q_grid_b_iku(:,3)
-      qpG(:,13) = qpG(:,1) - q_grid_b_iku(:,2) + q_grid_b_iku(:,3)
-     end if
-     !Find indexes
+       qpG(:,8) = qpG(:,1) + q_grid_b_iku(:,1) + q_grid_b_iku(:,2)
+       qpG(:,9) = qpG(:,1) + q_grid_b_iku(:,1) + q_grid_b_iku(:,3)
+       qpG(:,10) = qpG(:,1) + q_grid_b_iku(:,2) + q_grid_b_iku(:,3)
+       qpG(:,11) = qpG(:,1) - q_grid_b_iku(:,1) + q_grid_b_iku(:,2)
+       qpG(:,12) = qpG(:,1) - q_grid_b_iku(:,1) + q_grid_b_iku(:,3)
+       qpG(:,13) = qpG(:,1) - q_grid_b_iku(:,2) + q_grid_b_iku(:,3)
+     endif
+     !
+     ! Find indexes
      do i_dummy=1,ng_vec
        !
-       !Try first ig2 near ig
+       ! Try first ig2 near ig
        if (i_dummy < 2*ig) then
          ig_trial = (2*(i_dummy-2*(i_dummy/2))-1)*(i_dummy/2) + ig
        else
@@ -1278,15 +1283,15 @@ subroutine find_q_nnns(q,q_grid_b_iku,idx_q,idx_is,idx_G)
          !
          ! nnn along positive suffice
          !
-          do nnn=2,max_numb+1
+         do nnn=2,max_numb+1
            if (v_is_zero(qpG_trial-qpG(:,nnn))) then
              idx_q (ig,iq,nnn) = iq_trial_ibz
              idx_is(ig,iq,nnn) = is_trial
              idx_G (ig,iq,nnn) = ig_trial
              nnn_find = nnn_find + 1
            endif       
-          enddo
-          if (nnn_find == max_numb) exit
+         enddo
+         if (nnn_find == max_numb) exit
        enddo
        !
        if (nnn_find == max_numb) exit

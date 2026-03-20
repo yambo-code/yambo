@@ -1,5 +1,5 @@
 !
-! License-Identifier: GPL 
+! License-Identifier: GPL
 !
 ! Copyright (C) 2006 The Yambo Team
 !
@@ -42,7 +42,7 @@ subroutine check_W_interpolation(q,Xw,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
  real(SP) :: g1_2D_mod, g2_2D_mod, qpGr(3), qpGc(3), idx_q1, q_out(3),q_num(3), &
 &            qpG_trial(3),anis_fact,em1_anis(3),q_min
  complex(SP):: func,epsm1_sampl,W_sampl,f_coeff_loc(20)
- character(schlen):: str_piece1,str_piece2,str_piece3
+ character(schlen):: str_piece1,str_piece2,str_piece3,file1,file2
  character(1) :: dir(3)
  integer, allocatable :: indexes(:,:,:)
  integer :: q_nn, Gr_nn, Gc_nn, n_indx_steps(3)
@@ -95,14 +95,14 @@ subroutine check_W_interpolation(q,Xw,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
        !
        !Open output files
        write(str_piece1, '(I2.2)') igr
-       write(str_piece2, '(I2.2)') igc 
-       write(str_piece3, '(I2.2)') iomega 
-       open (unit=out_unit_W_fit,file="W_w="//trim(str_piece3)//"_"&
-&//dir(i_dir)//"_fit_g"//trim(str_piece1)//"_g"//trim(str_piece2)//".dat",&
-&          action="write",status="replace")
-       open (unit=out_unit_W_num,file="W_w="//trim(str_piece3)//"_"&
-&//dir(i_dir)//"_num_g"//trim(str_piece1)//"_g"//trim(str_piece2)//".dat",&
-&          action="write",status="replace")
+       write(str_piece2, '(I2.2)') igc
+       write(str_piece3, '(I2.2)') iomega
+       file1="W_w="//trim(str_piece3)//"_"//dir(i_dir)//"_fit_g"// &
+&             trim(str_piece1)//"_g"//trim(str_piece2)//".dat"
+       file2="W_w="//trim(str_piece3)//"_"//dir(i_dir)//"_num_g"// &
+&             trim(str_piece1)//"_g"//trim(str_piece2)//".dat"
+       open (unit=out_unit_W_fit,file=file1, action="write",status="replace")
+       open (unit=out_unit_W_num,file=file2, action="write",status="replace")
        !
        !
        !###################################
@@ -253,8 +253,8 @@ subroutine check_W_interpolation(q,Xw,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
          end if
          !
          !Write output
-         !   
-         write(out_unit_W_num,"(I4, E15.6, E15.6,E15.6,E15.6, E15.6, E15.6, E15.6, E15.6, E15.6, E15.6, E15.6)") &
+         !
+         write(out_unit_W_num,"(I4, 11E15.6)") &
 &                         i, q_num(1),q_num(2),q_num(3),q_num_norm,vslab,real(func),aimag(func),real(epsm1_sampl),&
 &                         aimag(epsm1_sampl),real(W_sampl),aimag(W_sampl)
          !
@@ -312,7 +312,7 @@ subroutine check_W_interpolation(q,Xw,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
              !kxy
              slab_vplane1=sqrt(((q_sampl(idir(2))+qpGr(idir(2)))*2.*pi/alat(idir(2)))**2+&
 &                              ((q_sampl(idir(3))+qpGr(idir(3)))*2.*pi/alat(idir(3)))**2)
-             !     
+             !
              slab_vplane2=sqrt(((q_sampl(idir(2))+qpGc(idir(2)))*2.*pi/alat(idir(2)))**2+&
 &                              ((q_sampl(idir(3))+qpGc(idir(3)))*2.*pi/alat(idir(3)))**2)
              !
@@ -321,11 +321,11 @@ subroutine check_W_interpolation(q,Xw,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
              !
              pre_factor = sqrt(1.-exp(-slab_vplane1*lcut)*cos(slab_vz1*lcut))*&
 &                         sqrt(1.-exp(-slab_vplane2*lcut)*cos(slab_vz2*lcut))
-             !        
+             !
              vslab=vslab*pre_factor
            endif
            !
-           ! Evaluate func    
+           ! Evaluate func
            !===============
            !
            !Transform f_coeff from iBZ to BZ
@@ -343,270 +343,298 @@ subroutine check_W_interpolation(q,Xw,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
 &                 +q_sampl(3)**2*(q_sampl(3)*f_coeff_loc(19)+3_DP*q_sampl(1)*f_coeff_loc(17)+3_DP*q_sampl(2)*f_coeff_loc(18)) &
 &                 +6*q_sampl(1)*q_sampl(2)*q_sampl(3)*f_coeff_loc(20)
            !
-           if(iq==1) then
+           if (iq==1) then
              !
              ! Head
              !
-             if(ig1==1.and.ig2==1) then
-               !  
-               ! Metal case, static and finite frequency 
+             if (ig1==1.and.ig2==1) then
+               !
+               ! Metal case, static and finite frequency
                !
                select case (trim(rimw_type))
-               !
                case ("metal")
-               !
-                if (iomega==1) then
                  !
-                 q_out = q_sampl
-                 call c2a(b_in=b,v_in=q_out,mode='ki2c')
-                 func = f_coeff_loc(1) + f_coeff(2,ig1,ig2,iq,iomega)*abs(q_rlu(1))                             &
-&                     + f_coeff(3,ig1,ig2,iq,iomega)*abs(q_rlu(2))+f_coeff(4,ig1,ig2,iq,iomega)*abs(q_rlu(3))   &
-&                     + f_coeff(5,ig1,ig2,iq,iomega)*(q_rlu(1))**2 + f_coeff(6,ig1,ig2,iq,iomega)*(q_rlu(2))**2 &
-&                     + f_coeff(7,ig1,ig2,iq,iomega)*(q_rlu(3))**2    
-                 !
-                 epsm1_sampl = 1._SP/(1._SP-vslab/r1*func)
-                 W_sampl= vslab/r1/(1._SP-vslab/r1*func)
-                 !
-                 if (iku_v_norm(q_sampl) < q0_def_norm) then
-                   if(cut_is_slab) then
-                     !
-                     epsm1_sampl = q_out_norm/(q_out_norm-2._SP*pi*func*alat(idir(1)))
-                     !
-                     W_sampl = 2._SP*pi*a(idir(1),idir(1))/(q_out_norm-2._SP*pi*func*alat(idir(1)))
-                     !
-                   else
-                     !
-                     epsm1_sampl = q_out_norm**2/(q_out_norm**2-4._SP*pi*func)
-                     !
-                     W_sampl = 4._SP*pi/(q_out_norm**2-4._SP*pi*func)
-                     !
-                   end if
-                 end if
-                 !
-                 write(out_unit_W_fit,"(I5,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6)") &
-&                           i, q_out(1),q_out(2),q_out(3), q_out_norm, vslab/r1, real(func),&
-&                           aimag(func),real(epsm1_sampl),aimag(epsm1_sampl),real(W_sampl),aimag(W_sampl)  
-                 cycle
-                else
-                !
-                func =  f_coeff(1,1,1,1,iomega)
-                !
-                 if (iku_v_norm(q_sampl) < q0_def_norm) then
+                 if (iomega==1) then
                    !
-                   epsm1_sampl = vslab*func/(1.0-vslab*func)
-                   W_sampl = func/(1.0-vslab*func)*vslab**2/q0_def_norm**2    
-                   func= f_coeff(1,1,1,1,iomega)*iku_v_norm(q_sampl)**2
-                   !func= func*iku_v_norm(q_sampl)**2
+                   q_out = q_sampl
+                   call c2a(b_in=b,v_in=q_out,mode='ki2c')
+                   func = f_coeff_loc(1) + f_coeff(2,ig1,ig2,iq,iomega)*abs(q_rlu(1))                             &
+&                       + f_coeff(3,ig1,ig2,iq,iomega)*abs(q_rlu(2))+f_coeff(4,ig1,ig2,iq,iomega)*abs(q_rlu(3))   &
+&                       + f_coeff(5,ig1,ig2,iq,iomega)*(q_rlu(1))**2 + f_coeff(6,ig1,ig2,iq,iomega)*(q_rlu(2))**2 &
+&                       + f_coeff(7,ig1,ig2,iq,iomega)*(q_rlu(3))**2
                    !
-                   write(out_unit_W_fit,"(I5,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6)") &
-&                           i, q_out(1),q_out(2),q_out(3), q_out_norm, vslab/r1, real(func),&
-&                           aimag(func),real(epsm1_sampl),aimag(epsm1_sampl),real(W_sampl),aimag(W_sampl)  
+                   epsm1_sampl = 1._SP/(1._SP-vslab/r1*func)
+                   W_sampl= vslab/r1/(1._SP-vslab/r1*func)
+                   !
+                   if (iku_v_norm(q_sampl) < q0_def_norm) then
+                     if(cut_is_slab) then
+                       !
+                       epsm1_sampl = q_out_norm/(q_out_norm-2._SP*pi*func*alat(idir(1)))
+                       !
+                       W_sampl = 2._SP*pi*a(idir(1),idir(1))/(q_out_norm-2._SP*pi*func*alat(idir(1)))
+                       !
+                     else
+                       !
+                       epsm1_sampl = q_out_norm**2/(q_out_norm**2-4._SP*pi*func)
+                       !
+                       W_sampl = 4._SP*pi/(q_out_norm**2-4._SP*pi*func)
+                       !
+                     endif
+                   endif
+                   !
+                   write(out_unit_W_fit,"(I5, 11E15.6)") &
+&                             i, q_out(1),q_out(2),q_out(3), q_out_norm, vslab/r1, real(func),&
+&                             aimag(func),real(epsm1_sampl),aimag(epsm1_sampl),real(W_sampl),aimag(W_sampl)
                    cycle
-                 end if       
-                 ! 
-                 func = (func+f_coeff(5,1,1,1,iomega)*abs(q_rlu(1)) + f_coeff(6,1,1,1,iomega)*abs(q_rlu(2)) +      &
-&                        f_coeff(7,1,1,1,iomega)*abs(q_rlu(3)))*exp(sign(1._DP,real(f_coeff(3,1,1,1,iomega)))      &
-&                        *sqrt(f_coeff(2,1,1,1,iomega)**2*(q_rlu(1))**2 + f_coeff(3,1,1,1,iomega)**2*(q_rlu(2))**2 + &
-&                        f_coeff(4,1,1,1,iomega)**2*(q_rlu(3))**2 ))     
+                   !
+                 else
+                   !
+                   func =  f_coeff(1,1,1,1,iomega)
+                   !
+                   if (iku_v_norm(q_sampl) < q0_def_norm) then
+                     !
+                     epsm1_sampl = vslab*func/(1.0-vslab*func)
+                     W_sampl = func/(1.0-vslab*func)*vslab**2/q0_def_norm**2
+                     func= f_coeff(1,1,1,1,iomega)*iku_v_norm(q_sampl)**2
+                     !func= func*iku_v_norm(q_sampl)**2
+                     !
+                     write(out_unit_W_fit,"(I5, 11E15.6)") &
+&                             i, q_out(1),q_out(2),q_out(3), q_out_norm, vslab/r1, real(func),&
+&                             aimag(func),real(epsm1_sampl),aimag(epsm1_sampl),real(W_sampl),aimag(W_sampl)
+                     cycle
+                     !
+                   endif
+                   ! 
+                   func = (func+f_coeff(5,1,1,1,iomega)*abs(q_rlu(1)) + f_coeff(6,1,1,1,iomega)*abs(q_rlu(2)) +      &
+&                          f_coeff(7,1,1,1,iomega)*abs(q_rlu(3)))*exp(sign(1._DP,real(f_coeff(3,1,1,1,iomega)))      &
+&                          *sqrt(f_coeff(2,1,1,1,iomega)**2*(q_rlu(1))**2 + f_coeff(3,1,1,1,iomega)**2*(q_rlu(2))**2 + &
+&                          f_coeff(4,1,1,1,iomega)**2*(q_rlu(3))**2 ))
+                   !
+                   func = func*iku_v_norm(q_sampl)**2
+                   epsm1_sampl = func*vslab/r1/(1._SP-vslab/r1*func)
+                   W_sampl= vslab/r1*func*vslab/r1/(1._SP-vslab/r1*func)
+                   !
+                   write(out_unit_W_fit,"(I5, 11E15.6)") &
+&                            i, q_out(1),q_out(2),q_out(3), q_out_norm, vslab/r1, real(func),&
+&                            aimag(func),real(epsm1_sampl),aimag(epsm1_sampl),real(W_sampl),aimag(W_sampl)
+                   cycle
+                   !
+                 endif
                  !
-                 func = func*iku_v_norm(q_sampl)**2
-                 !func = func
-                 epsm1_sampl = func*vslab/r1/(1._SP-vslab/r1*func)
-                 W_sampl= vslab/r1*func*vslab/r1/(1._SP-vslab/r1*func)
-                 
-                 write(out_unit_W_fit,"(I5,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6)") &
-&                           i, q_out(1),q_out(2),q_out(3), q_out_norm, vslab/r1, real(func),&
-&                           aimag(func),real(epsm1_sampl),aimag(epsm1_sampl),real(W_sampl),aimag(W_sampl)  
-                 cycle
-                end if
                end select
                !
-               ! Semiconductors and Dirac cone, static case and finite frequency 
-               !    
+               ! Semiconductors and Dirac cone, static case and finite frequency
+               !
                if (iku_v_norm(q_sampl) < 1.e-5) then
-                  !
-                  epsm1_sampl = vslab*f_coeff(1,1,1,1,iomega)/(1.0-vslab*f_coeff(1,1,1,1,iomega))
-                  W_sampl = f_coeff(1,1,1,1,iomega)/(1.0-vslab*f_coeff(1,1,1,1,iomega))*vslab**2/q0_def_norm**2 
-                  if (iomega==1) then
+                 !
+                 epsm1_sampl = vslab*f_coeff(1,1,1,1,iomega)/(1.0-vslab*f_coeff(1,1,1,1,iomega))
+                 W_sampl = f_coeff(1,1,1,1,iomega)/(1.0-vslab*f_coeff(1,1,1,1,iomega))*vslab**2/q0_def_norm**2
+                 !
+                 if (iomega==1) then
                    select case (trim(rimw_type))
-                    case ("Dirac")  
+                   case ("Dirac")
                      epsm1_sampl = vslab/q0_def_norm*f_coeff(1,1,1,1,iomega)/(1.0-vslab/q0_def_norm*f_coeff(1,1,1,1,iomega))
                      W_sampl = f_coeff(1,1,1,1,iomega)/(1.0-vslab/q0_def_norm*f_coeff(1,1,1,1,iomega))*vslab**2/q0_def_norm**3
                    end select
-                  end if                  
-                  !
-                  if(RIM_id_epsm1_reference /= 0 .and. iomega == 1) then
-                      W_sampl = W_sampl*em1_anis(i_dir)
-                  end if
-                  !
-                  write(out_unit_W_fit,"(I5,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6)") &
-&                           i, q_out(1),q_out(2),q_out(3), q_out_norm, vslab/r1,0.0,&
-&                           0.0,real(epsm1_sampl),aimag(epsm1_sampl),real(W_sampl),aimag(W_sampl)
-                  cycle
-               end if
+                 endif
+                 !
+                 if (RIM_id_epsm1_reference /= 0 .and. iomega == 1) then
+                   W_sampl = W_sampl*em1_anis(i_dir)
+                 endif
+                 !
+                 write(out_unit_W_fit,"(I5, 11E15.6)") &
+&                      i, q_out(1),q_out(2),q_out(3), q_out_norm, vslab/r1,0.0,&
+&                      0.0,real(epsm1_sampl),aimag(epsm1_sampl),real(W_sampl),aimag(W_sampl)
+                 cycle
+                 !
+               endif
                !
                if (cut_is_slab) then
-               !
-               func =  f_coeff(1,1,1,1,iomega)*exp(sign(1._DP,real(f_coeff(2,1,1,1,iomega),DP))*sqrt(  &
+                 !
+                 func= f_coeff(1,1,1,1,iomega)*exp(sign(1._DP,real(f_coeff(2,1,1,1,iomega),DP))*sqrt(  &
 &                      f_coeff(2,1,1,1,iomega)**2*(q_rlu(1))**2+f_coeff(3,1,1,1,iomega)**2*(q_rlu(2))**2))
-               !
+                 !
                else
-               ! 
-               func =  f_coeff(1,1,1,1,iomega)*exp(sign(1._DP,real(f_coeff(2,1,1,1,iomega),DP))*sqrt(f_coeff(2,1,1,1,iomega)**2 &
+                 ! 
+                 func= f_coeff(1,1,1,1,iomega)*exp(sign(1._DP,real(f_coeff(2,1,1,1,iomega),DP))*sqrt(f_coeff(2,1,1,1,iomega)**2 &
 &                      *(q_rlu(1))**2 + f_coeff(3,1,1,1,iomega)**2*(q_rlu(2))**2 + f_coeff(4,1,1,1,iomega)**2*(q_rlu(3))**2))
 
+                 !
+               endif
                !
-               end if
-               !
-               if(RIM_id_epsm1_reference /= 0 .and. iomega == 1) then
+               if (RIM_id_epsm1_reference /= 0 .and. iomega == 1) then
                  anis_fact = dot_product(em1_anis,(2._SP*pi*q_sampl/alat)**2)/iku_v_norm(q_sampl)**2
                  func = func*anis_fact
-               end if
+               endif
                !
                if (iomega==1) then
-                  select case (trim(rimw_type))
-                  !
-                  case ("semiconductor")
-                    call msg("rs", "Entered in the head check mode")
-                    func = func*iku_v_norm(q_sampl)**2
-                    !
-                  case ("Dirac")
-                    call msg("rs", "Entered in the head check mode")
-                    func = func*iku_v_norm(q_sampl)
-                    !
-                  case default
-                    func = f_coeff_loc(1) +q_sampl(1)*(f_coeff_loc(2)+q_sampl(1)*f_coeff_loc(5) + 2_DP*q_sampl(2)   &
-&                          *f_coeff_loc(6)) +q_sampl(2)*(f_coeff_loc(3)+q_sampl(2)*f_coeff_loc(8) + 2_DP*q_sampl(3) &
-&                          *f_coeff_loc(9))+q_sampl(3)*(f_coeff_loc(4)+q_sampl(3)*f_coeff_loc(10) + 2_DP*q_sampl(1) &
-&                          *f_coeff_loc(7))
-                  end select
-                  !
-               else
-                 select case (trim(rimw_type))
                  !
-                 case ("semiconductor","Dirac")
-                    func = func*iku_v_norm(q_sampl)**2
-                    !
+                 select case (trim(rimw_type))
+                 case ("semiconductor")
+                   call msg("rs", "Entered in the head check mode")
+                   func = func*iku_v_norm(q_sampl)**2
+                   !
+                 case ("Dirac")
+                   call msg("rs", "Entered in the head check mode")
+                   func = func*iku_v_norm(q_sampl)
+                   !
                  case default
-                    func = f_coeff_loc(1) +q_sampl(1)*(f_coeff_loc(2)+q_sampl(1)*f_coeff_loc(5) + 2_DP*q_sampl(2)   &
-&                          *f_coeff_loc(6)) +q_sampl(2)*(f_coeff_loc(3)+q_sampl(2)*f_coeff_loc(8) + 2_DP*q_sampl(3) &
-&                          *f_coeff_loc(9))+q_sampl(3)*(f_coeff_loc(4)+q_sampl(3)*f_coeff_loc(10) + 2_DP*q_sampl(1) &
-&                          *f_coeff_loc(7))
+                   func = f_coeff_loc(1) +q_sampl(1)*(f_coeff_loc(2)+q_sampl(1)*f_coeff_loc(5) + 2_DP*q_sampl(2)   &
+&                         *f_coeff_loc(6)) +q_sampl(2)*(f_coeff_loc(3)+q_sampl(2)*f_coeff_loc(8) + 2_DP*q_sampl(3) &
+&                         *f_coeff_loc(9))+q_sampl(3)*(f_coeff_loc(4)+q_sampl(3)*f_coeff_loc(10) + 2_DP*q_sampl(1) &
+&                         *f_coeff_loc(7))
                  end select
                  !
-               end if
-             end if
+               else
+                 !
+                 select case (trim(rimw_type))
+                 case ("semiconductor","Dirac")
+                   func = func*iku_v_norm(q_sampl)**2
+                   !
+                 case default
+                   func = f_coeff_loc(1) +q_sampl(1)*(f_coeff_loc(2)+q_sampl(1)*f_coeff_loc(5) + 2_DP*q_sampl(2)   &
+&                         *f_coeff_loc(6)) +q_sampl(2)*(f_coeff_loc(3)+q_sampl(2)*f_coeff_loc(8) + 2_DP*q_sampl(3) &
+&                         *f_coeff_loc(9))+q_sampl(3)*(f_coeff_loc(4)+q_sampl(3)*f_coeff_loc(10) + 2_DP*q_sampl(1) &
+&                         *f_coeff_loc(7))
+                 end select
+                 !
+               endif
+               !
+             endif
              !
              ! wings
              !
-             if(ig1==1 .and. ig2 .ne. 1) then  
-              !
-              select case (trim(rimw_type))
-              !
-              case ("metal")
-              !
-              if (cut_is_slab) then
-               if (iomega ==1) then
-                func = real(f_coeff(2,1,ig2,iq,iomega))*abs(q_rlu(1)) + real(f_coeff(3,1,ig2,iq,iomega))*abs(q_rlu(2))   &
-&                     +real(f_coeff(4,1,ig2,iq,iomega))*abs(q_rlu(3)) + aimag(f_coeff(2,1,ig2,iq,iomega))*q_rlu(1)       &                
-&                     + aimag(f_coeff(3,1,ig2,iq,iomega))*q_rlu(2) + aimag(f_coeff(4,1,ig2,iq,iomega))*q_rlu(3)          &
-&                     + f_coeff(5,1,ig2,iq,iomega)*(q_rlu(1))**2 + f_coeff(6,1,ig2,iq,iomega)*(q_rlu(2))**2              &
-&                     + f_coeff(7,1,ig2,iq,iomega)*(q_rlu(3))**2 + f_coeff(8,1,ig2,iq,iomega)*sign(q_rlu(1)**2,q_rlu(1)) & 
-&                     + f_coeff(9,1,ig2,iq,iomega)*sign(q_rlu(2)**2,q_rlu(2)) + f_coeff(10,1,ig2,iq,iomega)              &
-&                     * sign(q_rlu(3)**2,q_rlu(3))
-               else
-                 if ((g_vec(ig2,idir(2))==g_vec(ig2,idir(3))) .and. (g_vec(ig2,idir(2))==0)) then
-                func = ((f_coeff(2,1,ig2,iq,iomega)+f_coeff(5,1,ig2,iq,iomega)+ (f_coeff(2,1,ig2,iq,iomega)    & 
-&                      -f_coeff(5,1,ig2,iq,iomega))*sign(1._SP,q_rlu(1)))*(q_rlu(1))**2   +                    & 
-&                       (f_coeff(3,1,ig2,iq,iomega)+f_coeff(6,1,ig2,iq,iomega)+ (f_coeff(3,1,ig2,iq,iomega)    & 
-&                      -f_coeff(6,1,ig2,iq,iomega))*sign(1._SP,q_rlu(2)))*(q_rlu(2))**2   +                    &  
-&                       (f_coeff(4,1,ig2,iq,iomega)+f_coeff(7,1,ig2,iq,iomega)+ (f_coeff(4,1,ig2,iq,iomega)    & 
-&                      -f_coeff(7,1,ig2,iq,iomega))*sign(1._SP,q_rlu(3)))*(q_rlu(3))**2   +                    &
-&                       (f_coeff(8,1,ig2,iq,iomega)+f_coeff(11,1,ig2,iq,iomega)+ (f_coeff(8,1,ig2,iq,iomega)   & 
-&                      -f_coeff(11,1,ig2,iq,iomega))*sign(1._SP,q_rlu(1)))*(q_rlu(1))**3   +                   & 
-&                       (f_coeff(9,1,ig2,iq,iomega)+f_coeff(12,1,ig2,iq,iomega)+ (f_coeff(9,1,ig2,iq,iomega)   & 
-&                      -f_coeff(12,1,ig2,iq,iomega))*sign(1._SP,q_rlu(2)))*(q_rlu(2))**3   +                   &  
-&                       (f_coeff(10,1,ig2,iq,iomega)+f_coeff(13,1,ig2,iq,iomega)+ (f_coeff(10,1,ig2,iq,iomega) & 
-&                      -f_coeff(13,1,ig2,iq,iomega))*sign(1._SP,q_rlu(3)))*(q_rlu(3))**3)/2.0                         
-                  else 
-                func = ((f_coeff(2,1,ig2,iq,iomega)+f_coeff(5,1,ig2,iq,iomega)+ (f_coeff(2,1,ig2,iq,iomega)    & 
-&                      -f_coeff(5,1,ig2,iq,iomega))*sign(1._SP,q_rlu(1)))*(q_rlu(1))      +                    & 
-&                       (f_coeff(3,1,ig2,iq,iomega)+f_coeff(6,1,ig2,iq,iomega)+ (f_coeff(3,1,ig2,iq,iomega)    & 
-&                      -f_coeff(6,1,ig2,iq,iomega))*sign(1._SP,q_rlu(2)))*(q_rlu(2))      +                    &  
-&                       (f_coeff(4,1,ig2,iq,iomega)+f_coeff(7,1,ig2,iq,iomega)+ (f_coeff(4,1,ig2,iq,iomega)    & 
-&                      -f_coeff(7,1,ig2,iq,iomega))*sign(1._SP,q_rlu(3)))*(q_rlu(3))      +                    &
-&                       (f_coeff(8,1,ig2,iq,iomega)+f_coeff(11,1,ig2,iq,iomega)+ (f_coeff(8,1,ig2,iq,iomega)   & 
-&                      -f_coeff(11,1,ig2,iq,iomega))*sign(1._SP,q_rlu(1)))*(q_rlu(1))**2  +                    & 
-&                       (f_coeff(9,1,ig2,iq,iomega)+f_coeff(12,1,ig2,iq,iomega)+ (f_coeff(9,1,ig2,iq,iomega)   & 
-&                      -f_coeff(12,1,ig2,iq,iomega))*sign(1._SP,q_rlu(2)))*(q_rlu(2))**2  +                    &  
-&                       (f_coeff(10,1,ig2,iq,iomega)+f_coeff(13,1,ig2,iq,iomega)+ (f_coeff(10,1,ig2,iq,iomega) & 
-&                      -f_coeff(13,1,ig2,iq,iomega))*sign(1._SP,q_rlu(3)))*(q_rlu(3))**2)/2.0  
-                  end if    
-               end if                  
-              end if
-              !
-              if (iku_v_norm(q_sampl) < q0_def_norm) then
+             if (ig1==1 .and. ig2/=1) then  
+               !
+               select case (trim(rimw_type))
+               case ("metal")
                !
                if (cut_is_slab) then
-                if (iomega ==1) then
-                   ! System 2D, f func behaves as fcoeff*q
-                   func = (real(f_coeff(2,1,ig2,iq,iomega))*abs(q_rlu(1)) + real(f_coeff(3,1,ig2,iq,iomega))*abs(q_rlu(2))  &
-&                        + real(f_coeff(4,1,ig2,iq,iomega))*abs(q_rlu(3)) + aimag(f_coeff(2,1,ig2,iq,iomega))*q_rlu(1)      &                
+                 !
+                 if (iomega ==1) then
+                   func = real(f_coeff(2,1,ig2,iq,iomega))*abs(q_rlu(1)) + real(f_coeff(3,1,ig2,iq,iomega))*abs(q_rlu(2)) &
+&                       + real(f_coeff(4,1,ig2,iq,iomega))*abs(q_rlu(3)) + aimag(f_coeff(2,1,ig2,iq,iomega))*q_rlu(1)     &                
+&                       + aimag(f_coeff(3,1,ig2,iq,iomega))*q_rlu(2) + aimag(f_coeff(4,1,ig2,iq,iomega))*q_rlu(3)         &
+&                       + f_coeff(5,1,ig2,iq,iomega)*(q_rlu(1))**2 + f_coeff(6,1,ig2,iq,iomega)*(q_rlu(2))**2             &
+&                       + f_coeff(7,1,ig2,iq,iomega)*(q_rlu(3))**2 + f_coeff(8,1,ig2,iq,iomega)*sign(q_rlu(1)**2,q_rlu(1))& 
+&                       + f_coeff(9,1,ig2,iq,iomega)*sign(q_rlu(2)**2,q_rlu(2)) + f_coeff(10,1,ig2,iq,iomega)             &
+&                       * sign(q_rlu(3)**2,q_rlu(3))
+                   !
+                 else
+                   !
+                   if ((g_vec(ig2,idir(2))==g_vec(ig2,idir(3))) .and. (g_vec(ig2,idir(2))==0)) then
+                     !
+                     func= ((f_coeff(2,1,ig2,iq,iomega)+f_coeff(5,1,ig2,iq,iomega)+ (f_coeff(2,1,ig2,iq,iomega) & 
+&                         -f_coeff(5,1,ig2,iq,iomega))*sign(1._SP,q_rlu(1)))*(q_rlu(1))**2   +                   &
+&                          (f_coeff(3,1,ig2,iq,iomega)+f_coeff(6,1,ig2,iq,iomega)+ (f_coeff(3,1,ig2,iq,iomega)   &
+&                         -f_coeff(6,1,ig2,iq,iomega))*sign(1._SP,q_rlu(2)))*(q_rlu(2))**2   +                   &
+&                          (f_coeff(4,1,ig2,iq,iomega)+f_coeff(7,1,ig2,iq,iomega)+ (f_coeff(4,1,ig2,iq,iomega)   &
+&                         -f_coeff(7,1,ig2,iq,iomega))*sign(1._SP,q_rlu(3)))*(q_rlu(3))**2   +                   &
+&                          (f_coeff(8,1,ig2,iq,iomega)+f_coeff(11,1,ig2,iq,iomega)+ (f_coeff(8,1,ig2,iq,iomega)  &
+&                         -f_coeff(11,1,ig2,iq,iomega))*sign(1._SP,q_rlu(1)))*(q_rlu(1))**3   +                  &
+&                          (f_coeff(9,1,ig2,iq,iomega)+f_coeff(12,1,ig2,iq,iomega)+ (f_coeff(9,1,ig2,iq,iomega)  &
+&                         -f_coeff(12,1,ig2,iq,iomega))*sign(1._SP,q_rlu(2)))*(q_rlu(2))**3   +                  &
+&                          (f_coeff(10,1,ig2,iq,iomega)+f_coeff(13,1,ig2,iq,iomega)+ (f_coeff(10,1,ig2,iq,iomega)&
+&                         -f_coeff(13,1,ig2,iq,iomega))*sign(1._SP,q_rlu(3)))*(q_rlu(3))**3)/2.0_SP
+                     !
+                   else 
+                     !
+                     func= ((f_coeff(2,1,ig2,iq,iomega)+f_coeff(5,1,ig2,iq,iomega)+ (f_coeff(2,1,ig2,iq,iomega)  &
+&                         -f_coeff(5,1,ig2,iq,iomega))*sign(1._SP,q_rlu(1)))*(q_rlu(1))      +                   &
+&                          (f_coeff(3,1,ig2,iq,iomega)+f_coeff(6,1,ig2,iq,iomega)+ (f_coeff(3,1,ig2,iq,iomega)   &
+&                         -f_coeff(6,1,ig2,iq,iomega))*sign(1._SP,q_rlu(2)))*(q_rlu(2))      +                   &
+&                          (f_coeff(4,1,ig2,iq,iomega)+f_coeff(7,1,ig2,iq,iomega)+ (f_coeff(4,1,ig2,iq,iomega)   &
+&                         -f_coeff(7,1,ig2,iq,iomega))*sign(1._SP,q_rlu(3)))*(q_rlu(3))      +                   &
+&                          (f_coeff(8,1,ig2,iq,iomega)+f_coeff(11,1,ig2,iq,iomega)+ (f_coeff(8,1,ig2,iq,iomega)  &
+&                         -f_coeff(11,1,ig2,iq,iomega))*sign(1._SP,q_rlu(1)))*(q_rlu(1))**2  +                   &
+&                          (f_coeff(9,1,ig2,iq,iomega)+f_coeff(12,1,ig2,iq,iomega)+ (f_coeff(9,1,ig2,iq,iomega)  &
+&                         -f_coeff(12,1,ig2,iq,iomega))*sign(1._SP,q_rlu(2)))*(q_rlu(2))**2  +                   &
+&                          (f_coeff(10,1,ig2,iq,iomega)+f_coeff(13,1,ig2,iq,iomega)+ (f_coeff(10,1,ig2,iq,iomega)&
+&                         -f_coeff(13,1,ig2,iq,iomega))*sign(1._SP,q_rlu(3)))*(q_rlu(3))**2)/2.0_SP
+                     !
+                   endif
+                   !
+                 endif
+                 !
+               endif
+               !
+               if (iku_v_norm(q_sampl) < q0_def_norm) then
+                 !
+                 if (cut_is_slab) then
+                   !
+                   if (iomega ==1) then
+                     !
+                     ! System 2D, f func behaves as fcoeff*q
+                     !
+                     func= (real(f_coeff(2,1,ig2,iq,iomega))*abs(q_rlu(1)) + real(f_coeff(3,1,ig2,iq,iomega))*abs(q_rlu(2)) &
+&                        + real(f_coeff(4,1,ig2,iq,iomega))*abs(q_rlu(3)) + aimag(f_coeff(2,1,ig2,iq,iomega))*q_rlu(1)      &
 &                        + aimag(f_coeff(3,1,ig2,iq,iomega))*q_rlu(2) + aimag(f_coeff(4,1,ig2,iq,iomega))*q_rlu(3))         &
 &                         /iku_v_norm(q_sampl)
-                   ! 
-                   W_sampl = func/iku_v_norm(qpGc+q_sampl)**2*vslab**2/q0_def_norm
-                   epsm1_sampl = func/iku_v_norm(qpGc+q_sampl)*vslab*sqrt(iku_v_norm(q_sampl)/q0_def_norm)
-                   func=func*iku_v_norm(q_sampl)
-                else
-                 if ( (iomega .ne. 1) .and. (g_vec(ig2,idir(2))==g_vec(ig2,idir(3))) .and. (g_vec(ig2,idir(2))==0)) then
-                   W_sampl = 0
-                   epsm1_sampl = 0
-                   func=0               
+                     !
+                     W_sampl = func/iku_v_norm(qpGc+q_sampl)**2*vslab**2/q0_def_norm
+                     epsm1_sampl = func/iku_v_norm(qpGc+q_sampl)*vslab*sqrt(iku_v_norm(q_sampl)/q0_def_norm)
+                     func=func*iku_v_norm(q_sampl)
+                     !
+                   else
+                     !
+                     if ( (iomega .ne. 1) .and. (g_vec(ig2,idir(2))==g_vec(ig2,idir(3))) .and. (g_vec(ig2,idir(2))==0)) then
+                       W_sampl = 0
+                       epsm1_sampl = 0
+                       func=0               
+                     else
+                       func = ((f_coeff(2,1,ig2,iq,iomega)-f_coeff(5,1,ig2,iq,iomega))*abs(q_rlu(1)) + &
+&                           + (f_coeff(3,1,ig2,iq,iomega)-f_coeff(6,1,ig2,iq,iomega))*abs(q_rlu(2)) +  &
+&                           + (f_coeff(4,1,ig2,iq,iomega)-f_coeff(7,1,ig2,iq,iomega))*abs(q_rlu(3)))   &
+                             /iku_v_norm(q_sampl)/2.0_SP
+                       W_sampl = func/iku_v_norm(qpGc+q_sampl)**2*vslab**2/q0_def_norm
+                       epsm1_sampl = func/iku_v_norm(qpGc+q_sampl)*vslab*sqrt(iku_v_norm(q_sampl)/q0_def_norm)
+                       func=func*iku_v_norm(q_sampl)
+                     endif
+                     !
+                   endif
+                   !
                  else
-                   func = ((f_coeff(2,1,ig2,iq,iomega)-f_coeff(5,1,ig2,iq,iomega))*abs(q_rlu(1)) +  &
-&                         +(f_coeff(3,1,ig2,iq,iomega)-f_coeff(6,1,ig2,iq,iomega))*abs(q_rlu(2)) +  &
-&                         +(f_coeff(4,1,ig2,iq,iomega)-f_coeff(7,1,ig2,iq,iomega))*abs(q_rlu(3)))   &
-                           /iku_v_norm(q_sampl)/2.0
-                   W_sampl = func/iku_v_norm(qpGc+q_sampl)**2*vslab**2/q0_def_norm
-                   epsm1_sampl = func/iku_v_norm(qpGc+q_sampl)*vslab*sqrt(iku_v_norm(q_sampl)/q0_def_norm)
-                   func=func*iku_v_norm(q_sampl)  
-                 end if
-                end if
-                !
-               else 
-                ! System 3D, the static f func behaves  as fcoeff*q^2
-                ! Dinamically, f func has a linear term that however cancels out due to symmetry
-                func = (q_sampl(1)*(q_sampl(1)*f_coeff_loc(5) + 2_SP*q_sampl(2)*f_coeff_loc(6)) &
-&                       +q_sampl(2)*(q_sampl(2)*f_coeff_loc(8) + 2_SP*q_sampl(3)*f_coeff_loc(9)) &
-&                       +q_sampl(3)*(q_sampl(3)*f_coeff_loc(10) + 2_SP*q_sampl(1)*f_coeff_loc(7)))/iku_v_norm(q_sampl)**2
-                !
-                W_sampl = func/iku_v_norm(qpGc+q_sampl)**2*vslab**2
-                epsm1_sampl = func/iku_v_norm(qpGc+q_sampl)*vslab*iku_v_norm(q_sampl)
-                func=func*iku_v_norm(q_sampl)**2
-               end if
+                   !
+                   ! System 3D, the static f func behaves  as fcoeff*q^2
+                   ! Dinamically, f func has a linear term that however cancels out due to symmetry
+                   !
+                   func= (q_sampl(1)*(q_sampl(1)*f_coeff_loc(5) + 2_SP*q_sampl(2)*f_coeff_loc(6)) &
+&                      + q_sampl(2)*(q_sampl(2)*f_coeff_loc(8)  + 2_SP*q_sampl(3)*f_coeff_loc(9)) &
+&                      + q_sampl(3)*(q_sampl(3)*f_coeff_loc(10) + 2_SP*q_sampl(1)*f_coeff_loc(7)))/iku_v_norm(q_sampl)**2
+                   !
+                   W_sampl = func/iku_v_norm(qpGc+q_sampl)**2*vslab**2
+                   epsm1_sampl = func/iku_v_norm(qpGc+q_sampl)*vslab*iku_v_norm(q_sampl)
+                   func=func*iku_v_norm(q_sampl)**2
+                   !
+                 endif
+                 !
+                 write(out_unit_W_fit,"(I5, 11E15.6)") &
+&                      i, q_out(1),q_out(2),q_out(3), q_out_norm, vslab/r1, real(func), &
+&                      aimag(func),real(epsm1_sampl),aimag(epsm1_sampl),real(W_sampl),aimag(W_sampl)
+                 cycle
+                 !
+               endif
                !
-               write(out_unit_W_fit,"(I5,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6)") &
-&                           i, q_out(1),q_out(2),q_out(3), q_out_norm, vslab/r1, real(func),&
-&                           aimag(func),real(epsm1_sampl),aimag(epsm1_sampl),real(W_sampl),aimag(W_sampl)
-               cycle
-              end if
-              end select
-             end if
-           end if
-          !
-          epsm1_sampl = func*vslab/r1/(1._SP-vslab/r1*func)
-          W_sampl= vslab/r1*func*vslab/r1/(1._SP-vslab/r1*func)
-          if (ig1==ig2 .and. iomega==1) then
-              select case (trim(rimw_type))
-              !
-              case ("metal")
+               end select
+               !
+             endif
+             !
+           endif
+           !
+           epsm1_sampl = func*vslab/r1/(1._SP-vslab/r1*func)
+           W_sampl= vslab/r1*func*vslab/r1/(1._SP-vslab/r1*func)
+           !
+           if (ig1==ig2 .and. iomega==1) then
+             !
+             select case (trim(rimw_type))
+             case ("metal")
                !
                epsm1_sampl = 1._SP/(1._SP-vslab/r1*func)
                W_sampl= vslab/r1/(1._SP-vslab/r1*func)
                !
-              end select
-           end if
+             end select
+             !
+           endif
            !         
            !if(igr==1.and.igc == 1.and.iomega==1.and.i_int==1.and.i==1) then
            !  write(*,*) "f_coeff_loc"
@@ -650,23 +678,21 @@ subroutine check_W_interpolation(q,Xw,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
            !Convert q_sampl to iku
            !call c2a(b_in=b,v_in=q_sampl,mode='ka2i')
            !
-           !
-           !
-           write(out_unit_W_fit,"(I5,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6,E15.6)") &
-&                           i, q_out(1),q_out(2),q_out(3), q_out_norm, vslab/r1, real(func),&
+           write(out_unit_W_fit,"(I5, 11E15.6)") &
+&                           i, q_out(1),q_out(2),q_out(3), q_out_norm, vslab/r1, real(func), &
 &                           aimag(func),real(epsm1_sampl),aimag(epsm1_sampl),real(W_sampl),aimag(W_sampl)
-         end do
+         enddo
          !
-       end do
+       enddo
        !
-       !Close output files
+       ! Close output files
        !
        close(unit=out_unit_W_fit)
        close(unit=out_unit_W_num)
        !
-     end do
-   end do
- end do
+     enddo
+   enddo
+ enddo
  enddo
 end subroutine
 !
@@ -712,45 +738,53 @@ subroutine trans_f_coeff(f_func,f_func_loc,symi)
  &               + symi(2,3)*symi(3,3)*f_func(9)*2+symi(3,3)*symi(3,3)*f_func(10)
  !
  f_func_loc(11:20)=0
- do i1=1,3 !i
-   do i2=1,3 !j      
-      do nn=11,19
-         if (mod(nn-11,4)==0) then
-           i3=(nn-11)/4+1
-           f_func_loc(7+3*i1+i2) = f_func_loc(7+3*i1+i2) + f_func(nn)*symi(i3,i1)*symi(i3,i1)*symi(i3,i2)  
-         else
-           i4=mod(nn-11,3)+1
-           i3=(nn-10-i4)/3+1
-           f_func_loc(7+3*i1+i2) = f_func_loc(7+3*i1+i2) + f_func(nn)*(2.0*symi(i4,i1)*symi(i3,i1)*symi(i3,i2) &
-&                                   + symi(i4,i2)*symi(i3,i1)*symi(i3,i1))
-         end if
-      end do
+ do i1=1,3
+   do i2=1,3
+     do nn=11,19
+       !
+       if (mod(nn-11,4)==0) then
+         i3=(nn-11)/4+1
+         f_func_loc(7+3*i1+i2) = f_func_loc(7+3*i1+i2) + f_func(nn)*symi(i3,i1)*symi(i3,i1)*symi(i3,i2)
+       else
+         i4=mod(nn-11,3)+1
+         i3=(nn-10-i4)/3+1
+         f_func_loc(7+3*i1+i2) = f_func_loc(7+3*i1+i2) + f_func(nn)*(2.0_SP*symi(i4,i1)*symi(i3,i1)*symi(i3,i2) &
+&                              + symi(i4,i2)*symi(i3,i1)*symi(i3,i1))
+       endif
+       !
+     enddo
+     !
      do i3=0,5
-        i4=(i3-mod(i3,2))/2+2+mod(i3,2)
-        i5=i4+1-2*mod(i3,2)
-        if (i4>3) i4=i4-3
-        if (i5>3) i5=i5-3
-        f_func_loc(7+3*i1+i2) = f_func_loc(7+3*i1+i2) + f_func(20)*symi((i3-mod(i3,2))/2+1,i1)*symi(i4,i1)*symi(i5,i2)  
-     end do
-   end do
- end do    
- !           
+       i4=(i3-mod(i3,2))/2+2+mod(i3,2)
+       i5=i4+1-2*mod(i3,2)
+       if (i4>3) i4=i4-3
+       if (i5>3) i5=i5-3
+       f_func_loc(7+3*i1+i2) = f_func_loc(7+3*i1+i2) + &
+&                              f_func(20)*symi((i3-mod(i3,2))/2+1,i1)*symi(i4,i1)*symi(i5,i2)
+     enddo
+   enddo
+ enddo
+ !
  do nn=11,19
-    if (mod(nn-11,4)==0) then
-      i3=(nn-11)/4+1
-      f_func_loc(20) = f_func_loc(20) + f_func(nn)*symi(i3,1)*symi(i3,2)*symi(i3,3)  
-    else
-      i4=mod(nn-11,3)+1
-      i3=(nn-10-i4)/3+1
-      f_func_loc(20) = f_func_loc(20) + f_func(nn)*(symi(i3,1)*symi(i3,2)*symi(i4,3) + symi(i3,1)*symi(i4,2)*symi(i3,3) &
-&                      + symi(i4,1)*symi(i3,1)*symi(i3,3))
-    end if
- end do
+   !
+   if (mod(nn-11,4)==0) then
+     i3=(nn-11)/4+1
+     f_func_loc(20) = f_func_loc(20) + f_func(nn)*symi(i3,1)*symi(i3,2)*symi(i3,3)
+   else
+     i4=mod(nn-11,3)+1
+     i3=(nn-10-i4)/3+1
+     f_func_loc(20) = f_func_loc(20) + f_func(nn)*(symi(i3,1)*symi(i3,2)*symi(i4,3) + symi(i3,1)*symi(i4,2)*symi(i3,3) &
+&                   + symi(i4,1)*symi(i3,1)*symi(i3,3))
+   endif
+   !
+ enddo
+ !
  do i3=0,5
-    i4=(i3-mod(i3,2))/2+2+mod(i3,2)
-    i5=i4+1-2*mod(i3,2)
-    if (i4>3) i4=i4-3
-    if (i5>3) i5=i5-3   
-    f_func_loc(20) = f_func_loc(20) + f_func(20)*symi((i3-mod(i3,2))/2+1,1)*symi(i4,2)*symi(i5,3)  
- end do
+   i4=(i3-mod(i3,2))/2+2+mod(i3,2)
+   i5=i4+1-2*mod(i3,2)
+   if (i4>3) i4=i4-3
+   if (i5>3) i5=i5-3
+   f_func_loc(20) = f_func_loc(20) + f_func(20)*symi((i3-mod(i3,2))/2+1,1)*symi(i4,2)*symi(i5,3)
+ enddo
+ !
 end subroutine

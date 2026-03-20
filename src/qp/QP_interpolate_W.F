@@ -118,6 +118,10 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  if (io_err==0) then
    call timing('RIM-W-coeff',OPR='stop')
    YAMBO_FREE(f_coeff)
+   !
+#ifdef _GPU
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_W),RIM_W)
+#endif
    return
  endif
  !
@@ -1087,6 +1091,10 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=io_RIM_W(ID,mode,Xw)
  endif
+ !
+#ifdef _GPU
+ YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_W),RIM_W)
+#endif
  !
  YAMBO_FREE(f_coeff)
  !

@@ -184,7 +184,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  !
  if (.not.l_col_cut.and.ng_rows1==1.and.ng_cols1==1) then
    !DEV_ACC_DEBUG data present(gamp_p)
-   !DEV_ACC serial
+   !DEV_ACC serial async
    !DEV_OMPGPU target map(present,alloc:gamp_p)
    if (all((/iq==1,RIM_ng>0,mode=='c',RIM_anisotropy/=0._SP/))) gamp_p(1,1)=RIM_anisotropy/2._SP
    !DEV_OMPGPU end target

@@ -299,9 +299,12 @@ contains
     implicit none
 #if defined _CUDAF || defined  _OPENACC
     integer :: istat
-    istat = cublasInit()
-    if(istat/=0) call error('cublasInit failed')
-
+    !
+    ! This has already been initialized by gpu_setup
+    !
+    !istat = cublasInit()
+    !if(istat/=0) call error('cublasInit failed')
+    !
     istat = cusolverDnCreate(cusolv_h)
     if(istat/=CUSOLVER_STATUS_SUCCESS) call error('cusolverDnCreate failed')
 #endif

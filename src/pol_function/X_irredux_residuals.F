@@ -58,8 +58,9 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,&
  real(SP)     :: Z_eh_occ
  logical      :: l_X_term_vv
  integer      :: ngrho
+ integer      :: X_rows1,X_rows2,X_cols1,X_cols2
  integer      :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,&
-&                isp,iv,ic,isave(4),n_poles,i_bg,ig_start,ROWS(2)
+&                isp,iv,ic,isave(4),n_poles,i_bg,ig_start
  !
  ! DIPOLES
  !
@@ -76,6 +77,15 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,&
  !
  rhotw_save => work(1:ngrho)
  if (l_X_terminator) rhotw_save2 => work(ngrho+1:2*ngrho)
+ !
+ ! AF: These scalar definitions are needed in the GPU kernels
+ !     (at least when using OpenACC)
+ X_rows1=X_rows(1)
+ X_rows2=X_rows(2)
+ X_cols1=X_cols(1)
+ X_cols2=X_cols(2)
+ !
+ ! Main loop
  !
  loop_bare_grid: do i_bg = 1,bare_grid_N(i_cg)
    !
@@ -216,7 +226,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,&
    !DEV_CUF kernel do <<<*,*>>>
    !DEV_OMPGPU target map(present,alloc:rhotw_mp_R,Xo_scatt_rhotw_p)
    !DEV_OMPGPU teams loop
-   do ig1=X_rows(1),X_rows(2)
+   do ig1=X_rows1,X_rows2
      rhotw_mp_R(ig1,i_bg) = sqrt(Z_eh_occ) * conjg(Xo_scatt_rhotw_p(ig1))
    enddo
    !DEV_OMPGPU end target
@@ -229,7 +239,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,&
      !DEV_CUF kernel do <<<*,*>>>
      !DEV_OMPGPU target map(present,alloc:rhotw_mp_C,Xo_scatt_rhotw_p)
      !DEV_OMPGPU teams loop
-     do ig1=X_cols(1),X_cols(2)
+     do ig1=X_cols1,X_cols2
        rhotw_mp_C(ig1,i_bg) = sqrt(Z_eh_occ) * conjg(Xo_scatt_rhotw_p(ig1))
      enddo
      !DEV_OMPGPU end target
@@ -291,8 +301,8 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,&
      !DEV_OMPGPU target map(present,alloc:Xo_res,Xo_scatt_rhotw_p,G_m_G)
      !DEV_OMPGPU teams loop collapse(2)
      !DEV_OMP parallel do default(shared), private(ig1,ig2)
-     do ig2=X_cols(1),X_cols(2)
-     do ig1=ig_start,X_rows(2)
+     do ig2=X_cols1,X_cols2
+     do ig1=ig_start,X_rows2
         Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt_rhotw_p(DEV_VAR(G_m_G)(ig2,ig1))
      enddo
      enddo

@@ -9,7 +9,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  ! 
  ! Calculates and stores on file the dielectric matrix.
  !
- use pars,          ONLY:SP,schlen
+ use pars,          ONLY:SP,schlen,cI
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life,l_rpa_IP 
  use DIPOLES,       ONLY:DIPOLE_t
  use ALLOC,         ONLY:X_ALLOC_elemental,DIPOLE_ALLOC_global
@@ -20,18 +20,20 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
- use R_lattice,     ONLY:bz_samp,nqibz
- use electrons,     ONLY:levels
+ use R_lattice,     ONLY:bz_samp,nqibz,l_Dirac,Dirac_v_f
+ use electrons,     ONLY:levels,n_sp_pol
  use parallel_int,  ONLY:PP_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,PAR_COM_X_WORLD,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
- use IO_m,          ONLY:OP_RD_CL,OP_APP_CL,VERIFY,REP,io_RESPONSE
+ use IO_m,          ONLY:OP_RD_CL,OP_APP_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
+ use com,           ONLY:depth,msg
  use TDDFT,         ONLY:F_xc_gspace
  use interfaces,    ONLY:WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset,MATRIX_copy
+ use parser_m,      ONLY:parser
  !
 #include<y_memory.h>
  !
@@ -49,10 +51,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  ! Work Space
  !
  integer              :: iq,ID(2),i_err,X_MEM_n_freqs,io_X_done(nqibz),iq_mem,&
-&                        X_MEM_n_tot_freqs,n_poles,iq_dir
- real(SP)             :: minmax_ehe(2)
+&                        X_MEM_n_tot_freqs,n_poles,iq_dir,drude_n_states
+ real(SP)             :: minmax_ehe(2),f_eh
  character(1)         :: sec_mode
  character(schlen)    :: X_what
+ logical              :: metal_cond(2)
  !
  ! logicals and control
  !
@@ -72,6 +75,15 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  ! TDDFT KERNEL SETUP (-1 argument)
  !
  call TDDFT_do_X_W_typs(-1,X,Xw)
+ !
+ !Check if to include the Dirac cone Fermi velocity
+ !
+ call parser('graphene',l_Dirac)
+ if(l_Dirac) then
+   call msg('r','Graphene q--> 0 term included')
+   call parser('v_fermi',Dirac_v_f)
+ end if
+ !
  !
  ! Sectioning
  !
@@ -124,7 +136,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
    !
    X%ordering='t'
    Xw%grid_type="mp"
-   if(Xw%dr(1)<epsilon(1._SP)) call error("Damping = 0.0 not compatible with MPA dielectric constant")
    !
  endif
  !
@@ -198,6 +209,22 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  ! Some check
  !
  if(X%ib(2)>Xen%nb) call error("Too many bands required in X. Run DFT with more bands!")
+ !
+ ! GS put a check in MPA for metals and correct first frequency appropriately
+ !
+ if (X%whoami==5) then   
+   ! 
+   call metallic_occupations(Xen,Xk,f_eh,drude_n_states)  
+   ! 
+   metal_cond(1) = any( (/Xen%nbf(:n_sp_pol)/=Xen%nbm(:n_sp_pol)/) )
+   metal_cond(2) = (f_eh>0._SP)
+   !
+   if (Xw%dr(1)<epsilon(1._SP) .and. all((/metal_cond(1:2)/)) ) then
+      call warning("dmXrnge = 0.0 not compatible with MPA dielectric constant for metals, changed to 1.d-4 Ha")
+      call msg('r','')
+      Xw%dr(1)=1.e-4_SP
+   end if
+ end if
  !
  ! Parallel distribution
  !=======================

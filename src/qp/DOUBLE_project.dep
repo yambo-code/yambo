@@ -3,6 +3,7 @@
  QP_Green_Function.o
  QP_W2Sc.o
  QP_bracket.o
+ QP_check_interpolate_W.o
  QP_descriptions.o
  QP_driver.o
  QP_expand.o

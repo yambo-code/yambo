@@ -42,6 +42,7 @@ module QP_m
  real(SP)          :: QP_G_Zoom_treshold
  real(SP)          :: QP_time_order_sign=-1 ! T-ordered. Set to +1 (causal) in QP_SET_temperature_pre_factor
  real(SP)          :: QP_G_damp
+ integer           :: QP_G_mprop            ! GS: order of Lorentzians used in the G[W] propagator
  real(SP)          :: QP_G_er(2)
  real(SP)          :: QP_G_ir(2)
  real(SP)          :: QP_G_dr(2)
@@ -65,7 +66,7 @@ module QP_m
  logical,    allocatable:: QP_state(:,:)
  !
  ! Solver...
- character(2)      :: QP_G_solver
+ character(2)      :: QP_G_solver           ! DALV: for G&Sigma_mpa
  real(SP)          :: QP_dSc_delta
  logical           :: QP_dSc_test
  logical           :: On_Mass_Shell_approx

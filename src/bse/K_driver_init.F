@@ -28,7 +28,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:NEQ_Kernel,EQ_Transitions,EQ_NoOcc,NEQ_Residuals,RT_BSE_Occ_Mode
 #endif
-#if defined _CUDA
+#if defined _GPU
  use TDDFT,        ONLY:FXC_mode
 #endif
  !
@@ -173,7 +173,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    call parser('FxcLibxc',l_Fxc_Libxc)
    l_Fxc_from_Vxc=(n_spin==1).and..not.l_Fxc_Libxc
  endif
-#if defined _CUDA
+#if defined _GPU
  if ( BS_K_is_alda.and. index(FXC_mode,"G-")>0 ) then
    call warning(" Tddft with G-integrals is not GPU ported. Fallback to R-integrals")
    FXC_mode="R-def"

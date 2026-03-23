@@ -3,7 +3,9 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM AF NS GS
+!
+#include<dev_defs.h>
 !
 subroutine rim(mode,Xw)
  !
@@ -17,10 +19,12 @@ subroutine rim(mode,Xw)
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,nqbz,&
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
 &                        RIM_n_rand_pts,RIM_ng,RIM_W_ng,RIM_qpg,RIM_W_is_diagonal,&
-&                        RIM_id_epsm1_reference,RIM_anisotropy,RIM_W,&
-&                        cut_is_slab,idir
+&                        RIM_id_epsm1_reference,RIM_anisotropy,RIM_W,RIM_W_d,aux_RIM_W,& ! aux_RIM_W_d,&
+&                        cut_is_slab,idir,f_coeff,f_coeff_d
  use timing_m,      ONLY:timing
  use frequency,     ONLY:w_samp
+ use gpu_m,         ONLY:have_gpu
+ use devxlib,       ONLY:devxlib_memcpy_h2d
  !
 #include<y_memory.h>
  !
@@ -29,9 +33,9 @@ subroutine rim(mode,Xw)
  !
  ! Work Space
  !
- type(PP_indexes)      ::px
- integer               :: iq
- real(SP)              :: em1_anis(3),G_radii,G_circ
+ type(PP_indexes) :: px
+ integer          :: iq
+ real(SP)         :: em1_anis(3),G_radii,G_circ
  !
  ! Random generator
  !
@@ -39,9 +43,10 @@ subroutine rim(mode,Xw)
  integer   :: N_out,N_in,N_out_G,rep_factor,inn1,inn2,inn3,ic
  real(SP)  :: v1(3),v2(3),v1_norm(2)
  real(SP), allocatable  :: qr(:,:)
+ real(SP), allocatable DEV_ATTR :: qr_d(:,:)
  integer            :: iseed(8)
  real(DP), external :: dlaran
- ! 
+ !
  if (mode == "x") call timing('RIM',OPR='start')
  if (mode == "c") call timing('RIM-W',OPR='start')
  !
@@ -53,6 +58,9 @@ subroutine rim(mode,Xw)
  ! the bare part is embodied in the exchange.
  !
  YAMBO_ALLOC(qr,(3,RIM_n_rand_pts))
+ if (have_gpu) then
+   YAMBO_ALLOC_GPU(DEV_VAR(qr),(3,RIM_n_rand_pts))
+ endif
  !
  em1_anis=RIM_epsm1(:)-1.
  !
@@ -146,6 +154,10 @@ subroutine rim(mode,Xw)
  !Only the 2D-BZ is sampled for 2D systems
  if (cut_is_slab) qr(idir(1),:) = 0._SP
  !
+ ! init on GPU mem
+ !
+ if (have_gpu) call devxlib_memcpy_h2d(DEV_VAR(qr),qr)
+ !
  call live_timing()
  call msg('r','Points outside the sBZ  ',N_out)
  !  
@@ -166,7 +178,16 @@ subroutine rim(mode,Xw)
  else if (mode == "c") then
    YAMBO_ALLOC(RIM_W,(Xw%n_freqs,nqibz,RIM_W_ng,RIM_W_ng))
    RIM_W=0._SP
- end if
+   !
+   ! AF: need to cp f_coeff on GPU mem before calling rim_integrate_w
+   !
+   YAMBO_ALLOC(aux_RIM_W,(Xw%n_freqs,RIM_W_ng,RIM_W_ng))
+#ifdef _GPU
+   !AMBO_ALLOC_GPU_SOURCE(DEV_VAR(aux_RIM_W),aux_RIM_W)
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_W),RIM_W)
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(f_coeff),f_coeff)
+#endif
+ endif
  !
  call PARALLEL_index(px,(/nqibz/))
  call live_timing('Momenta loop',px%n_of_elements(myid+1))
@@ -176,8 +197,10 @@ subroutine rim(mode,Xw)
    !
    if (mode == "x") then
      call rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
-   else
-     call rim_integrate_w(iq,qr,N_out,em1_anis,Xw)
+   else if (mode == "c") then
+     !
+     call rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
+     !
    endif
    call live_timing(steps=1)
    !
@@ -210,7 +233,16 @@ subroutine rim(mode,Xw)
  ! CLEAN
  !
  call PP_indexes_reset(px)
+ !
+ if (mode == "c") then
+ YAMBO_FREE(aux_RIM_W)
+#ifdef _GPU
+ YAMBO_FREE_GPU(DEV_VAR(f_coeff))
+ YAMBO_FREE_GPU(DEV_VAR(qr))
+ !AMBO_FREE_GPU(DEV_VAR(aux_RIM_W))
+#endif
  YAMBO_FREE(qr)
+ end if
  !
  if (mode == "x") call timing('RIM',OPR='stop')
  if (mode == "c") call timing('RIM-W',OPR='stop')

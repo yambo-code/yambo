@@ -19,7 +19,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     l_X_terminator,X_terminator_E,global_gauge,&
 &                     Chi_linalg_mode,X_use_lin_sys,X_use_gpu,X_DbGd_percentual
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
-&                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
+&                     QP_dSc_test,QP_solver,QP_G_damp,QP_G_mprop,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
 &                     QP_Sc_steps,QP_G_er,QP_G_ir,QP_G_dr,SC_band_mixing,QP_G_solver,&
 &                     COHSEX_use_empties,On_Mass_Shell_approx,&
@@ -285,7 +285,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  ! RIM-W
  !
  RIM_W_ng=0
- RIMW_type="default"
+ rimw_type='semiconductor'
  !
  ! CUTOFF
  !
@@ -374,6 +374,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  QP_dSc_test=.FALSE.
  QP_solver=' '
  QP_G_damp=0.1/HA2EV
+ QP_G_mprop=1
  QP_dSc_delta=0.1/HA2EV
  QP_G_solver='ra'
  QP_G_er=(/-10._SP/HA2EV,10._SP/HA2EV/)

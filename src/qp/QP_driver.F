@@ -305,8 +305,15 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
      !
      ! GF for ppa and mpa
      !
-     if ( l_ppa ) call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,0)
-     if ( l_mpa ) call QP_mpa(X,Xk,en,k,q,qp,Xw,0)
+     if ( l_ppa ) then
+       if (l_rim_w) call QP_interpolate_W(X,Xw,q,'PPA')
+       call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,0)
+     end if
+     !
+     if ( l_mpa ) then
+       if (l_rim_w) call QP_interpolate_W(X,Xw,q,'MPA')
+       call QP_mpa(X,Xk,en,k,q,qp,Xw,0)
+     end if
      !
    endif
    !

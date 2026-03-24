@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2014 The Yambo Team
 !
-! Authors (see AUTHORS file for details): DALV AF
+! Authors (see AUTHORS file for details): DALV AF GS
 !
 integer function io_MPA(X,Xw,ID)
  !

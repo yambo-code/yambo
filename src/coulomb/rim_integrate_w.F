@@ -9,6 +9,9 @@
 !
 ! Authors (see AUTHORS file for details): AM AG GS AF NS
 !
+! This work has been developed by Giacomo Sesti et al.
+! Please cite this work arXiv:2508.06930:https://arxiv.org/abs/2508.06930
+!
 ! AF: This file needs cleanup
 !     - proper indentation
 !     - explicit handling of precision (e.g. 2.0_SP instead of 2.0)

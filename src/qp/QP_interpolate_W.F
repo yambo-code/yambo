@@ -5,6 +5,9 @@
 !
 ! Authors (see AUTHORS file for details): AG GS
 !
+! This work has been developed by Giacomo Sesti et al.
+! Please cite this work arXiv:2508.06930:https://arxiv.org/abs/2508.06930
+!
 ! AF: This source needs cleanup
 !     - proper indentation
 !     - del of old/unused source code
@@ -574,6 +577,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
               !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
               case ("metal")
                 !
+                call msg('r',' ')
                 call msg("r","Metallic q --> 0 shape of f")
                 !
                 ! The first point in metals is computed with a first order Taylor expansion 
@@ -590,6 +594,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
                   f_coeff(1,1,1,1,1) = ((2._DP*f_func(2)-f_func(5))+(2._DP*f_func(3)-f_func(6)) + &
 &                                                  (2._DP*f_func(4)-f_func(7)))/3._DP   
                   call msg('r','3D Thomas-Fermi const  =',-real(4*pi**2*f_coeff(1,igr,igc,iq1,iomega),SP)) 
+                  call msg('r',' ')
                 end if  
                 !f_coeff(1,1,1,1,1)=0._DP  
                 ! 
@@ -982,7 +987,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  call parser('rimw_check',l_check)
  !
  if (l_check.and.master_cpu) then
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/2/),ID=ID)
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=io_RIM_W_aux(ID,Xw)
  endif
  !

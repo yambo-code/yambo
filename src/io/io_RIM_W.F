@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2015 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM AG GS
 !
 integer function io_RIM_W(ID,mode,Xw)
  !
@@ -113,7 +113,7 @@ integer function io_RIM_W_aux(ID,Xw)
  if (any((/io_sec(ID,:)==1/))) then
    !
    ! First get the DB version
-   io_RIM_W_aux=io_header(ID,QPTS=.true.,R_LATT=.true.,IMPOSE_SN=.true.,CUTOFF=.true.)
+   io_RIM_W_aux=io_header(ID,QPTS=.false.,R_LATT=.false.,IMPOSE_SN=.false.,CUTOFF=.true.)
    if (io_RIM_W_aux/=0) goto 1   
    !
    RL_vol_disk=RL_vol

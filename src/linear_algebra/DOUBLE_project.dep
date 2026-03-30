@@ -11,6 +11,7 @@
  SERIAL_HERMITIAN_chase.o
  SERIAL_HERMITIAN_diago.o
  SERIAL_HERMITIAN_diagx.o
+ SERIAL_PSEUDOHERM_chase.o
  SERIAL_SVD_inversion.o
  SERIAL_diago.o
  SERIAL_inversion.o

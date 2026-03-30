@@ -15,21 +15,21 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use it_tools,      ONLY:it
  use it_m,          ONLY:initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,V_ph,&
-&                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time,V_nl_optics
+&                        V_RL,V_kpt,V_sc,V_qp,V_coul,V_io,V_general,V_resp,V_real_time,V_nl_optics
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,&
 &                        global_gauge,Chi_linalg_mode, &
 &                        X_terminator_Kind,X_terminator_E,X_DbGd_percentual
  use DIPOLES,       ONLY:DIPOLE_t
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
- use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
+ use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_G_mprop,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_ng_Vxc,GW_terminator_E,GW_terminator_Kind,&
 &                        QP_G_er,QP_G_ir,QP_G_dr,QP_Sc_steps,QP_G_solver,&
 &                        QP_dSc_delta,QP_G_Zoom_treshold,GF_energy_range_mode
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,molecule_position,Bose_Temp
- use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,RIM_W_ng,rimw_type,&
+ use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,RIM_W_ng,rimw_type,Dirac_v_f,rimw_check, &
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
@@ -260,6 +260,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit,verb_level=V_qp)
 #endif
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
+ call it(defs,'G_mprop',  '[GW] G[W] propagator order',QP_G_mprop,verb_level=V_qp)
  call it(defs,'dScStep',  '[GW] Energy step to evaluate Z factors',QP_dSc_delta,E_unit,verb_level=V_qp)
  call it(defs,'DysSolver','[GW] Dyson Equation solver ("n","s","g","q")',QP_solver,protect=.FALSE.,case="a")
  call it(defs,'GsampType','[GW] Type of sampling ("ra" FF-RA, "1l" MPA-1l, "2l" MPA-2l)',QP_G_solver)
@@ -397,8 +398,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'QpgFull', '[F RIM] Coulomb interaction: Full matrix',verb_level=V_RL)
  !
  ! RIM-W
- call it(defs,'RandGvecW','[RIM-W] Screened interaction RS components',RIM_W_ng,G_unit)
- call it(defs,'rimw_type','[RIM-W] Screened interaction limit metal/semiconductor/graphene',rimw_type)
+ !
+ call it(defs,'RandGvecW','[RIM-W] Screened interaction RS components (smaller than X matrix)',RIM_W_ng,G_unit)
+ call it(defs,'rimw_type','[RIM-W] Screened interaction limit metal/semiconductor/2D Dirac',rimw_type)
+ call it(defs,'Dirac_v_f','[RIM-W] In case of 2D Dirac, specify the Fermi velocity of the cone (10^6 m/s)',&
+&             Dirac_v_f,verb_level=V_coul)
+ call it('f',defs,'rimw_check','[RIM-W] Debug option to check W, XV and auxiliary functions',verb_level=V_coul)
  !
  ! CUTOFF
  !

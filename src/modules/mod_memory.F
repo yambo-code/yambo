@@ -544,8 +544,9 @@ module y_memory
      real(DP) DEV_ATTR ::c(:,:,:,:,:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),kind(c(1,1,1,1,1,1)),DEV_)
    end subroutine
-
+   !
 #endif
+   !
    ! end of GPU subroutines
    !
    subroutine MEM_l1(name,l)

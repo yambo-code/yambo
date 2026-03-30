@@ -87,16 +87,17 @@ module it_tools
    logical function check_verbosity(what)
      use drivers, ONLY:infile_editing
      character(*) :: what
-     if (what=="kpt") check_verbosity=infile_verbosity==V_kpt.or.infile_verbosity==V_all
-     if (what=="RL" ) check_verbosity=infile_verbosity==V_RL.or.infile_verbosity==V_all
-     if (what=="sc" ) check_verbosity=infile_verbosity==V_sc.or.infile_verbosity==V_all
-     if (what=="qp" ) check_verbosity=infile_verbosity==V_qp.or.infile_verbosity==V_all
-     if (what=="io" ) check_verbosity=infile_verbosity==V_io.or.infile_verbosity==V_all
+     if (what=="kpt")       check_verbosity=infile_verbosity==V_kpt.or.infile_verbosity==V_all
+     if (what=="RL" )       check_verbosity=infile_verbosity==V_RL.or.infile_verbosity==V_all
+     if (what=="sc" )       check_verbosity=infile_verbosity==V_sc.or.infile_verbosity==V_all
+     if (what=="qp" )       check_verbosity=infile_verbosity==V_qp.or.infile_verbosity==V_all
+     if (what=="io" )       check_verbosity=infile_verbosity==V_io.or.infile_verbosity==V_all
      if (what=="general"  ) check_verbosity=infile_verbosity==V_general.or.infile_verbosity==V_all
      if (what=="resp"     ) check_verbosity=infile_verbosity==V_resp.or.infile_verbosity==V_all
      if (what=="real_time") check_verbosity=infile_verbosity==V_real_time.or.infile_verbosity==V_all
      if (what=="parallel" ) check_verbosity=infile_verbosity==V_parallel.or.infile_verbosity==V_all
-     if (what=="nl" )      check_verbosity=infile_verbosity==V_nl_optics.or.infile_verbosity==V_all
+     if (what=="nl" )       check_verbosity=infile_verbosity==V_nl_optics.or.infile_verbosity==V_all
+     if (what=="coul" )     check_verbosity=infile_verbosity==V_coul.or.infile_verbosity==V_all
      if (.not.infile_editing) check_verbosity=.TRUE.
    end function
    !

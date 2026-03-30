@@ -145,9 +145,7 @@ subroutine INIT_activate()
  !
  if (l_rim) call initactivate(1,'RandQpts RandGvec QpgFull Em1Anys IDEm1Ref')
  !
- !RIM_W
- !
- if (l_rim_w) call initactivate(1,'RandQpts RandGvecW rimw_type')
+ if (l_rim_w) call initactivate(1,'RandQpts RandGvecW rimw_type Dirac_v_f rimw_check')
  !
  !Col CUTOFF 
  !
@@ -330,7 +328,7 @@ subroutine INIT_activate()
  !
  if ( (l_em1d.and.l_ppa) .or. (l_em1d.and.l_mpa) .or. (l_em1s.and.l_cohsex)) then
    call INIT_QP_ctl_switch('X')
-   call initactivate(1,'RIM_W RIM_W_diag RIM_W_graph')
+   call initactivate(1,'RIM_W RIM_W_diag')
    !
 #if defined _RT
    call INIT_RT_ctl_switch('X')
@@ -377,9 +375,9 @@ subroutine INIT_activate()
 #if defined _QED
    if (l_elphoton_corr) then
      if (l_gw0) then
-       call initactivate(1,'FFTGvecs RandQpts QEDRLvcs GbndRnge GDamping dScStep DysSolver') 
+       call initactivate(1,'FFTGvecs RandQpts QEDRLvcs GbndRnge GDamping G_mprop dScStep DysSolver')
        if (trim(QP_solver)=="g") then
-         call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
+         call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP G_mprop GDamping')
        else
          call initactivate(1,'SCEtresh')
          if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
@@ -404,7 +402,7 @@ subroutine INIT_activate()
      !
      if (l_gw0) then
        if (.not.l_cohsex.or.COHSEX_use_empties) call initactivate(1,'GbndRnge') 
-       if (.not.l_cohsex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
+       if (.not.l_cohsex) call initactivate(1,'GDamping G_mprop')
        if (.not.l_cohsex) call initactivate(1,'dScStep') 
        if (.not.l_elphoton_corr) then
          if (.not.l_ppa.and..not.l_mpa.and..not.l_cohsex) &
@@ -431,16 +429,6 @@ subroutine INIT_activate()
      endif
    endif
    !
-#if defined  _PHEL 
-   !
-   if (l_phel_corr) then
-     call initactivate(1,'ElecTemp BoseTemp PH_SE_mode GphBRnge GDamping PHELQpts ElPhModes PHDbGdsize DbGdQsize GDamping')
-     call initactivate(1,'ExtendOut OnMassShell')
-     if (      l_gw0) call initactivate(1,'DysSolver GEnSteps GEnRnge PHEL_QPH_En')
-     if (.not. l_gw0) call initactivate(1,'GDamping PHELTrans') 
-   endif
-   !
-#endif
 #if defined  _ELPH 
    !
    if (l_elph_corr) then

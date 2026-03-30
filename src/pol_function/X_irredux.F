@@ -24,14 +24,14 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  use drivers,       ONLY:l_life
  use IO_m,          ONLY:io_RESPONSE,io_DIP
  use ALLOC,         ONLY:DIPOLE_ALLOC_global
- use pars,          ONLY:SP,cZERO,schlen
+ use pars,          ONLY:SP,cZERO,schlen,pi
  use wrapper,       ONLY:V_plus_alpha_V,vv_caxpy
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use matrix,        ONLY:PAR_matrix
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved,myid
+ use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_COM_RL_INDEX,myid,PAR_COM_X_WORLD_RL_resolved,master_cpu
  use parallel_int,  ONLY:PP_redux_wait
  use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,&
 &                        n_out_threads,n_inn_threads,OPENMP_locks_reset,n_threads_FFT
@@ -41,8 +41,8 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
  use interfaces,    ONLY:WF_load
  use electrons,     ONLY:levels
- use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
- use D_lattice,     ONLY:i_space_inv
+ use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G,q_norm,idir,l_Dirac,Dirac_v_f
+ use D_lattice,     ONLY:i_space_inv,alat
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
@@ -55,6 +55,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  use gpu_m,         ONLY:have_gpu,have_openacc,have_ompgpu
  use devxlib,       ONLY:devxlib_memcpy_d2h,devxlib_memcpy_h2d
  use timing_m,      ONLY:timing
+ use units,         ONLY:HA2EV
  !
 #include<dev_defs.h>
 #include<y_memory.h>
@@ -74,8 +75,8 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  integer              :: ig1,ig2,iw,n_poles,i_cg,i_bg,mutexid,ngrho,&
 &                        X_rows1,X_rows2,X_cols1,X_cols2,X_nrows,io_err
  logical              :: force_bare_X_G,Drude_pole,skip_WF_load
- real(SP)             :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff
- complex(SP)          :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),ctmp(1,1)
+ real(SP)             :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff,lcut,Dirac_v_f_au
+ complex(SP)          :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),ctmp(1,1),X_Dirac
 
  complex(SP),allocatable, target DEV_ATTR :: Xo_res(:,:)
  complex(SP),allocatable DEV_ATTR :: work(:)
@@ -282,6 +283,40 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
      exit
    enddo
  endif
+ !
+ !Graphene intraband term
+ !
+ if (iq==1.and.master_thread.and.(l_Dirac)) then
+   !
+   if(X_par%rows(1)==1.and.X_par%cols(1)==1) then
+     !call msg('r', 'Graphene analytical model of intraband transitions')
+     call warning('Dirac cone contribution is applied only to head static irr. polarizability')
+     !
+     ! Head correction
+     !=================
+     !
+     lcut = alat(idir(1))
+     !
+     call msg('r', 'Fermi velocity (10^6 m/s)', Dirac_v_f)
+     Dirac_v_f_au = Dirac_v_f/2.187691_SP
+     call msg('r', 'Fermi velocity (a.u.)', Dirac_v_f_au)
+     !
+     !Analytical model graphene:
+     !X^0_00_Dirac(w=0) = -1/(4*v_fermi)*q/L
+     !
+     X_Dirac = -q_norm(1)/(4._SP*Dirac_v_f_au*lcut)
+     !
+     if(master_cpu) then
+       !
+       X_par%blc(1,1,1)=X_par%blc(1,1,1)+X_Dirac
+       !
+       if (have_gpu) X_par%blc_d(1,1,1)=X_par%blc(1,1,1)
+       !
+     endif
+     !
+   endif
+ endif
+ !
  !
  ! MAIN LOOP
  !===========

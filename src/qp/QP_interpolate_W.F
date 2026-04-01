@@ -457,10 +457,10 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
           !
 
           if ( (igr==1.and.igc==1) &
-&            .or. ( (igr==1) .and. (igc/= 1) .and. (cut_is_slab) &
+&            .or. ( (igr==1) .and. (igc .ne. 1) .and. (cut_is_slab) &
 &                   .and. (g_vec(igc,idir(2))==g_vec(igc,idir(3))) .and. (g_vec(igc,idir(2))==0) .and. (iomega==1) ) &
-&            .or. ( (igr==1) .and. (igc .ne. 1) .and. (cut_is_slab) .and. (g_vec(igc,idir(2))==g_vec(igc,idir(3))) &
-&                   .and. (g_vec(igc,idir(2))==0) .and. (iomega==1) ) ) then
+&            .or. ( (igc==1) .and. (igr .ne. 1) .and. (cut_is_slab) .and. (g_vec(igr,idir(2))==g_vec(igr,idir(3))) &
+&                   .and. (g_vec(igr,idir(2))==0) .and. (iomega==1) ) ) then
           !
           ! Special treatment of the q-->0 term
           !=====================================
@@ -750,7 +750,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
             end if
             !
             ! Wings 
-            if ((igr==1) .neqv. (igc==1)) then
+	if ((igr==1) .neqv. (igc==1)) then
               select case (trim(rimw_type))
               !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 ! case ("semiconductor")

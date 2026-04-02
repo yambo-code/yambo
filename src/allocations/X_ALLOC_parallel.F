@@ -44,8 +44,6 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
    call MATRIX_init( "X"  , X_par, NG, NW )
  endif
  !
- !DEV_ACC enter data copyin(X_par)
- !
  X_rows = X_par%rows
  X_cols = X_par%cols
  X_lower_triangle_matrix_in_use=.FALSE.

@@ -76,6 +76,11 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  call PARALLEL_WF_index( )
  !
+#ifdef _OPENACC && _OPENMP_GPU
+ YAMBO_ALLOC(WF_symm,   (wf_ng_1st_BZ,n_spinor,1))
+ YAMBO_ALLOC(WF_ikp,    (wf_ng_overlaps,n_spinor,1))
+ YAMBO_ALLOC(WF_ik,     (wf_ng_overlaps,n_spinor,Dip%ib(2)))
+#endif
  YAMBO_ALLOC_GPU(WF_symm,   (wf_ng_1st_BZ,n_spinor,1))
  YAMBO_ALLOC_GPU(WF_ikp,    (wf_ng_overlaps,n_spinor,1))
  YAMBO_ALLOC_GPU(WF_ik,     (wf_ng_overlaps,n_spinor,Dip%ib(2)))

@@ -118,6 +118,9 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
    YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_dim_atom))
    !
    if (have_gpu) then
+#ifdef _OPENACC && _OPENMP_GPU
+     YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_dim_yambo,Dip%ib(1):Dip%ib(2)))
+#endif
      YAMBO_ALLOC_GPU(XX,(n_spinor,n_spinor,4,pp_dim_yambo,Dip%ib(1):Dip%ib(2)))
      YAMBO_ALLOC_GPU(DEV_VAR(kbv),(wf_ncx,n_spinor,4,pp_dim_atom))
      call devxlib_memset_d(DEV_VAR(kbv),cZERO)

@@ -240,6 +240,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  enddo
  !
  X%ng = ng_save
+ YAMBO_FREE_GPU(X_mat)
  YAMBO_FREE(X_mat)
  !
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

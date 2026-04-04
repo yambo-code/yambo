@@ -583,7 +583,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !            here for performance in the presence of GPUs)
    !
    if (iHxc==3) then
-#ifdef _OPENACC && _OPENMP_GPU
+#if defined _OPENACC || defined _OPENMP_GPU
      YAMBO_ALLOC(O1,(BS_n_g_W))
      YAMBO_ALLOC(O2,(BS_n_g_W))
      YAMBO_ALLOC(O_times_W,(BS_n_g_W))

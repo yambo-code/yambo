@@ -118,7 +118,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
    YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_dim_atom))
    !
    if (have_gpu) then
-#ifdef _OPENACC && _OPENMP_GPU
+#if defined _OPENACC || defined _OPENMP_GPU
      YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_dim_yambo,Dip%ib(1):Dip%ib(2)))
 #endif
      YAMBO_ALLOC_GPU(XX,(n_spinor,n_spinor,4,pp_dim_yambo,Dip%ib(1):Dip%ib(2)))
@@ -339,9 +339,8 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
    if (have_gpu) then
      YAMBO_FREE_GPU(DEV_VAR(kbv))
      YAMBO_FREE_GPU(XX)
-   else
-     YAMBO_FREE(XX)
    endif
+   YAMBO_FREE(XX)
    YAMBO_FREE(DEV_VAR(kbv))
    YAMBO_FREE(pp_n_l_comp)
    YAMBO_FREE(pp_table)

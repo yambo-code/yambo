@@ -54,7 +54,7 @@ subroutine WF_shift_kpoint(b_to_shift,nb_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_
  !
  do id=1,3
    !
-   WF_k_out=cZERO
+   call devxlib_memset_d(WF_k_out,cZERO)
    !
    if(WF_shift(id)/=0) then
      !

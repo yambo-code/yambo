@@ -85,8 +85,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    N=size(M,1)
  endif
 
- if(present(neig).and.((neig<=0).or.(neig>size(M,1)))) then
-        neig = min(n,10)
+ if(present(neig)) then
+    if ( neig<=0.or.neig>size(M,1) ) neig = min(n,10)
  endif
  !
  ! Decide which to use among LK or SLK

@@ -63,7 +63,7 @@ integer function io_MPA(X,Xw,ID)
    !
    ! Header
    !
-   io_MPA=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.false.,FRAG=frag_MULTIPOLE)
+   io_MPA=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.false.,CUTOFF=.true.,FRAG=frag_MULTIPOLE)
    if (io_MPA/=0) goto 1
    !
    ! Global Descriptions

@@ -32,7 +32,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,l_update_W,QP_table,&
 &                        QP_n_states,QP_dSc,QP_dSc_delta,GW_iterations,report_Sc,&
 &                        GWo_SC_done,GWo_iterations,SC_E_threshold,On_Mass_Shell_approx,&
-&                        QP_env_cohsex,QP_XCo_alloc,QP_XCo_free
+&                        QP_env_cohsex,QP_XCo_alloc,QP_XCo_free,QP_env_coh,QP_env_sex
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,n_bands,spin
  use R_lattice,     ONLY:bz_samp
@@ -175,6 +175,15 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
      endif
      !
    enddo
+
+   if (l_environ) then
+     open(unit=201, file="coh_sex.txt", status='replace', action='write')
+     write(201, *) "state Z*coh Z*sex Z"
+     do i1=1, QP_n_states
+       write(201, *) i1, real( qp%Z(i1)*QP_env_coh(i1) ), real( qp%Z(i1)*QP_env_sex(i1) ), qp%Z(i1)
+     end do
+     close(201)
+   end if
    !
    SC_corr_now= maxval(real(qp%E(:)-qp%E_bare(:)))
    GWo_SC_done=abs( SC_corr_prev-SC_corr_now )<SC_E_threshold.or.iter==SC_iterations

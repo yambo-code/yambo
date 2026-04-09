@@ -79,6 +79,8 @@ module QP_m
  complex(SP),allocatable:: QP_Sc(:,:)
  complex(SP),allocatable:: QP_Vxc(:)
  complex(SP),allocatable:: QP_env_cohsex(:)
+ complex(SP),allocatable:: QP_env_coh(:)
+ complex(SP),allocatable:: QP_env_sex(:)
  integer,    allocatable:: QP_solver_state(:)
  integer,    allocatable:: QP_table(:,:)
  integer,    allocatable:: QP_W_table(:,:)
@@ -182,10 +184,18 @@ module QP_m
      if (.not.allocated(QP_env_cohsex).and.l_environ_) then
        YAMBO_ALLOC(QP_env_cohsex,(QP_n_states))
      endif
+     if (.not.allocated(QP_env_coh).and.l_environ_) then
+       YAMBO_ALLOC(QP_env_coh,(QP_n_states))
+     endif
+     if (.not.allocated(QP_env_sex).and.l_environ_) then
+       YAMBO_ALLOC(QP_env_sex,(QP_n_states))
+     endif
      if (l_Vnl_xc_)     QP_Vnl_xc=cZERO
      if (l_Vxc_)        QP_Vxc=cZERO
      if (l_screen_hyb_) QP_Vnl_sex=cZERO
      if (l_environ_)    QP_env_cohsex=cZERO
+     if (l_environ_)    QP_env_coh=cZERO
+     if (l_environ_)    QP_env_sex=cZERO
    end subroutine 
    !
    subroutine QP_XCo_free(l_Vxc,l_Vnl_xc,l_screen_hyb,l_environ)
@@ -213,6 +223,12 @@ module QP_m
      endif
      if (l_environ_) then
        YAMBO_FREE(QP_env_cohsex)
+     endif
+     if (l_environ_) then
+       YAMBO_FREE(QP_env_coh)
+     endif
+     if (l_environ_) then
+       YAMBO_FREE(QP_env_sex)
      endif
      !
    end subroutine QP_XCo_free

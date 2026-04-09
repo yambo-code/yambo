@@ -78,8 +78,8 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
  ! AF: to be checked whether we really need this
  !
  ng_loc=ng_vec
- ng_loc=min(ng_loc,v_environ%cols(2))
- ng_loc=min(ng_loc,v_environ%rows(2))
+ ! ng_loc=min(ng_loc,v_environ%cols(2))
+ ! ng_loc=min(ng_loc,v_environ%rows(2))
  !
  YAMBO_ALLOC(g_vec_loc,(3,ng_loc))
  do ig1=1,ng_loc

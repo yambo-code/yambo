@@ -45,7 +45,7 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
  use IO_m,          ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD_CL_IF_END,&
 &                        io_RESPONSE,deliver_IO_error_message
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_table,l_QP_symmetrize,&
-&                        QP_env_cohsex,QP_n_states,QP_G_damp,QP_table
+&                        QP_env_cohsex,QP_n_states,QP_G_damp,QP_table, QP_env_coh, QP_env_sex
  use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_mat_d,X_t
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,nqibz,RIM_W_E,bare_qpg,bare_qpg_d,q_pt,&
@@ -87,6 +87,7 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
  complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor
  complex(DP)      ::dp_dummy,ctmp
+ integer :: QP_n_G_bands_environ_cohsex(2)
  !
  !
  type(PAR_matrix) :: v_environ
@@ -113,14 +114,16 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
  i_qp_to_start=1
  iq_to_start  =1
  QP_env_cohsex =cZERO
+ QP_env_coh =cZERO
+ QP_env_sex =cZERO
  !
  ! COHSEX: bands setup
  !
- !if ((l_sc_srpa.or.l_cohsex.or.l_sc_coh.or.l_sc_sex  ).and.(.not.COHSEX_use_empties)) then
-   QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),maxval(n_met_bands))
- !endif
+ QP_n_G_bands_environ_cohsex = QP_n_G_bands
+ QP_n_G_bands_environ_cohsex(2)=max(maxval(QP_table(:,:2)),maxval(n_met_bands))
  !
  call k_expand(k)
+ !
  !
  ! WF distributed & load
  !=======================
@@ -129,6 +132,15 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
  !
  ! Redefine iq_to_start to be CPU-dependent
  !
+ ! Environ SLK datatype
+ !
+ call MATRIX_init("SLK", v_environ , X%ng, 1) 
+ YAMBO_ALLOC(v_environ%blc,(v_environ%BLCrows(1):v_environ%BLCrows(2),v_environ%BLCcols(1):v_environ%BLCcols(2),1))
+ v_environ%blc=cZERO
+ !   
+ if (have_cuda) then
+    YAMBO_ALLOC_SOURCE(v_environ%blc_d,v_environ%blc)
+ endif
  do iqbz=1,q%nbz 
    if (PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) then
      iq_to_start=iqbz
@@ -176,22 +188,12 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
  if (io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,1/))
  allocate(dc(2))
  !
- ! Environ SLK datatype
- !
- call MATRIX_init( "SLK", v_environ , X%ng, 1 ) 
- YAMBO_ALLOC(v_environ%blc,(v_environ%BLCrows(1):v_environ%BLCrows(2),v_environ%BLCcols(1):v_environ%BLCcols(2),1))
- v_environ%blc=cZERO
- !   
- if (have_cuda) then
-    YAMBO_ALLOC_SOURCE(v_environ%blc_d,v_environ%blc)
- endif
- !
  !
  call PP_wait()
  !
  timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
 &             PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)*&
-&             count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
+&             count( PAR_IND_G_b%element_1D(QP_n_G_bands_environ_cohsex(1):QP_n_G_bands_environ_cohsex(2)) )
  !
  call live_timing(trim(ch),timing_steps)
  !
@@ -314,6 +316,7 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
      ! it is needed for a different purpose. This is why I use PAR_COM_QP_A2A%CPU_id in this case.
      !
      if (HEAD_QP_cpu)  QP_env_cohsex(i_qp)=QP_env_cohsex(i_qp)+dc(1)
+     if (HEAD_QP_cpu)  QP_env_coh(i_qp)=QP_env_coh(i_qp)+dc(1)
      !
      dc=cZERO
      !
@@ -321,7 +324,7 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
      isc%qs=iscs_save(2,:3)
      !
      !
-     do ib=QP_n_G_bands(1),QP_n_G_bands(2)
+     do ib=QP_n_G_bands_environ_cohsex(1), QP_n_G_bands_environ_cohsex(2)
        !
        if (.not.PAR_IND_G_b%element_1D(ib)) cycle
        !
@@ -358,6 +361,7 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
        dc(1)=-4._SP/spin_occ*pi*pre_factor*e%f(isc%os(1),isc%os(2),isc%os(4))
        !
        QP_env_cohsex(i_qp)=QP_env_cohsex(i_qp)+dc(1)
+       QP_env_sex(i_qp)=QP_env_sex(i_qp)+dc(1)
        !
        !
      enddo ! loop on scattering states
@@ -379,6 +383,7 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
  !
  ! ALL 2 ALL of QP_env_cohsex
  call PP_redux_wait(QP_env_cohsex)
+ call PP_redux_wait(QP_env_sex)
  !
  call timing('QP_environ_cohsex',OPR='stop')
  !

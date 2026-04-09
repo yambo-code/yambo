@@ -30,6 +30,7 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
 #ifdef _CUDA
  use X_m,           ONLY:X_mat_d
 #endif
+ use environ_m,     ONLY:v_env_mat
  use stderr,        ONLY:STRING_match
  !
 #include<memory.h>
@@ -81,6 +82,10 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
 #ifdef _CUDA
      allocate(X_mat_d, source=X_mat)
 #endif
+   case('V_ENV')
+     if (allocated(v_env_mat)) return
+     YAMBO_ALLOC(v_env_mat,(DIM(1),DIM(2),DIM(3)))
+     v_env_mat=cZERO
    end select
    return
  endif
@@ -127,6 +132,9 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
    YAMBO_FREE(X_mat_d)
 #endif
    !
+ endif
+ if (STRING_match(WHAT,"V_ENV").or.STRING_match(WHAT,"ALL")) then
+   YAMBO_FREE(v_env_mat)
  endif
  !
 end subroutine

@@ -48,7 +48,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use interfaces,    ONLY:WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset,MATRIX_copy
- use environ_m,     ONLY:l_environ
+ use environ_m,     ONLY:l_environ,v_env_par,v_env_mat
  !
 #include<memory.h>
  !
@@ -61,11 +61,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  ! External
  !
- integer, external    :: io_X,X_eh_setup,io_ENVIRON_pwscf
+ integer, external    :: io_X,X_eh_setup,io_ENVIRON_pwscf,io_ENVIRON
  !
  ! Work Space
  !
- integer              :: iq,ID(2),i_err,X_MEM_n_freqs,io_X_done(nqibz),iq_mem,&
+ integer              :: iq,ID(3),i_err,X_MEM_n_freqs,io_X_done(nqibz),iq_mem,&
 &                        X_MEM_n_tot_freqs,n_poles,iq_dir
  real(SP)             :: minmax_ehe(2)
  character(1)         :: sec_mode
@@ -219,6 +219,22 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    if (.not.io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_tot_freqs/))
  endif
  !
+ ! if environ is present, mimic the allocation of X_par
+ !
+ if ( l_environ ) then
+   !
+   if (io_RESPONSE) then
+     allocate(v_env_par(1))
+#if !defined _PAR_IO
+     call X_ALLOC_elemental('V_ENV',(/X%ng,X%ng,1/))
+#endif
+   else
+     allocate(v_env_par(PAR_nQ_ibz))
+     call X_ALLOC_elemental('V_ENV',(/X%ng,X%ng,PAR_nQ_ibz/))
+   endif
+   !
+ endif
+ !
  ! WF distribution 
  !=================
  !
@@ -310,17 +326,19 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
      call X_ALLOC_parallel(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
      !
+     if (l_environ) call X_ALLOC_parallel(v_env_par(iq_mem),X%ng,1,"X,CPU_ONLY")
+     !
      if (n_OPTICAL_dir_to_eval>1) call X_AVERAGE_setup("DIR-LOOP",iq_dir,X%q0)
      if (n_OPTICAL_dir_to_eval>1) X_what="("//trim(intc(iq_dir))//" of "//trim(intc(n_OPTICAL_dir_to_eval))//")"
      !
      call X_irredux(iq,"Xo"//trim(X_what),X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
      !
      if (l_write_disk_Xo.and.n_OPTICAL_dir_to_eval==1) then
-       call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
+       call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_par(iq_mem),X_mat)
        call elemental_IO( iq , .TRUE. )
      endif
      !
-     if (.not.l_rpa_IP) call X_redux(iq,"X"//trim(X_what),X_par(iq_mem),Xw,X)
+     if (.not.l_rpa_IP) call X_redux(iq,"X"//trim(X_what),X_par(iq_mem),v_env_par(iq_mem),Xw,X)
      !
      if (n_OPTICAL_dir_to_eval>1.and.iq_dir==1) call MATRIX_copy(X_par(iq_mem),X_par_average,.TRUE.)
      if (n_OPTICAL_dir_to_eval>1)               call X_AVERAGE_do_it("ACCUMULATE",X_par(iq_mem))
@@ -334,7 +352,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    ! X_par => X_mat
    !
-   call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
+   call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_par(iq_mem),X_mat)
+   if (l_environ) then
+     call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,v_env_par(iq_mem),v_env_mat)
+   endif
    !
    call elemental_IO( iq , .FALSE. )
    !
@@ -350,6 +371,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    ! CLEAN (2)
    if (io_RESPONSE) call MATRIX_reset(X_par(iq_mem))
+   if (io_RESPONSE.and.l_environ) call MATRIX_reset(v_env_par(iq_mem))
+   !
    YAMBO_FREE(X_par_lower_triangle%blc)
    call MATRIX_reset(X_par_lower_triangle)
    !
@@ -370,6 +393,12 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
 #endif
    deallocate(X_par)
  endif
+ !
+ if (io_RESPONSE.and.l_environ) then
+   YAMBO_FREE(v_env_mat)
+   deallocate(v_env_par)
+ endif
+ !
  if (allocated(F_xc_gspace)) then
    YAMBO_FREE(F_xc_gspace)
  endif
@@ -432,6 +461,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
      call io_control(ACTION=OP_APP_CL,COM=COM,SEC=SEC,ID=ID(idb),COMM=local_yMPI_COMM,DO_IT=condition)
      i_err=io_X(X,Xw,ID(idb))
+     !
+     if (l_environ) then
+       call io_control(ACTION=OP_APP_CL,COM=COM,SEC=SEC,ID=ID(3),COMM=local_yMPI_COMM,DO_IT=condition)
+       i_err=io_ENVIRON(X,Xw,ID(3))
+     endif
      !
      if (this_is_Xo) then
        X%whoami=whoami_save

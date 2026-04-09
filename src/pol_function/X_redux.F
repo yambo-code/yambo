@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_redux(iq,what,X_par,Xw,X)
+subroutine X_redux(iq,what,X_par,v_env_par,Xw,X)
  !
  ! Here we solve the Dyson equation using a combination of Serial(SER)/Parallel(PAR)/SLK environments.
  !
@@ -58,7 +58,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
 #include<dev_defs.h>
 #include<memory.h>
  !
- type(PAR_matrix) :: X_par
+ type(PAR_matrix) :: X_par,v_env_par
  type(X_t)        :: X
  type(w_samp)     :: Xw
  integer          :: iq
@@ -359,7 +359,6 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  ! ========
  call MATRIX_reset(KERNEL)
  call MATRIX_reset(Xo)
- if (l_environ) call MATRIX_reset(v_environ)
  if (l_environ) call MATRIX_reset(work)
  if (l_alda_fxc.and.Xo%kind=="SLK") call MATRIX_reset(K_FXC)
  !
@@ -406,12 +405,24 @@ subroutine X_redux(iq,what,X_par,Xw,X)
 &                         RCV=PAR_COM_X_WORLD_RL_resolved%CPU_id==0,&
 &                         COMM=PAR_COM_X_WORLD,COMM_name="X_redux_2_"//trim(intc(i_LA_pool)))
      !
+     if (l_environ.and.iw_par==1) then
+       !
+       call MATRIX_transfer(M_in=v_environ,M_out=v_env_par,INDEX_in=1,INDEX_out=1,&
+&                         SND=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,&
+&                         RCV=PAR_COM_X_WORLD_RL_resolved%CPU_id==0,&
+&                         COMM=PAR_COM_X_WORLD,COMM_name="X_redux_2_"//trim(intc(i_LA_pool)))
+       !
+     endif
+     !
    enddo
  enddo
+ !
+ if (l_environ) call MATRIX_reset(v_environ)
  !
  ! complete the transfer with a collective communication
  !
  call PP_bcast(X_par%blc,node=0,COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
+ if (l_environ) call PP_bcast(v_env_par%blc,node=0,COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
  !
  call timing(what//' (REDUX)',OPR='stop')
  !

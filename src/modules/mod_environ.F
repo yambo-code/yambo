@@ -23,14 +23,21 @@
 !
 module environ_m
  !
- use pars,      ONLY:SP
+ use pars,           ONLY:SP
+ use matrix,         ONLY:PAR_matrix
+ !
 #include<memory.h>
  !
- logical  :: l_environ
+ logical  :: l_environ=.false.
  !
  integer  :: nr1,nr2,nr3
  integer  :: ng_env
  complex(SP), allocatable :: eps_env_RL(:)
+ !
+ ! v_env
+ !
+ type(PAR_matrix), allocatable, target :: v_env_par(:)
+ complex(SP),      allocatable :: v_env_mat(:,:,:)
  !
  ! asymptitic values (q->0)
  ! v_env(q,G=G'=0) ~ 4pi/[q^2 (eps0+A0)]

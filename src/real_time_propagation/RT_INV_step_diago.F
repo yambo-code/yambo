@@ -63,7 +63,7 @@ subroutine RT_INV_step_diago(dG_old,dG_inp,dG_out,ik,deltaT)
  ! Diagonalize U_k
  !
  U_k=Ho_plus_Sigma(:,:,ik,1)
- call SERIAL_HERMITIAN_diagonalization(RT_nbands,U_k,En)
+ call SERIAL_HERMITIAN_diago(RT_nbands,U_k,En)
  !
  ! Implementation works, and it is much faster than before
  ! However it is not sensitive

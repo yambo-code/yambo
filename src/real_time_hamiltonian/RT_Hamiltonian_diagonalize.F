@@ -84,7 +84,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
      !
    endif
    !
-   call SERIAL_HERMITIAN_diagonalization(RT_nbands,H,Ed)
+   call SERIAL_HERMITIAN_diago(RT_nbands,H,Ed)
    !
    ! Rotation
    !

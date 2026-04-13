@@ -45,9 +45,8 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
  endif
  !
  X_rows = X_par%rows
- !DEV_ACC update device(X_rows)
  X_cols = X_par%cols
- !DEV_ACC update device(X_cols)
+ X_lower_triangle_matrix_in_use=.FALSE.
  !
  YAMBO_ALLOC(X_par%blc,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2),NW))
  X_par%blc=cZERO

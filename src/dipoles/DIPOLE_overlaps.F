@@ -56,6 +56,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  ! Generate G_m_G of the needed size
  !
+ YAMBO_FREE_GPU(DEV_VAR(G_m_G))
  YAMBO_FREE(G_m_G)
  ng_tmp=eval_G_minus_G(wf_ng_1st_BZ,iG0)
  !
@@ -76,13 +77,16 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  call PARALLEL_WF_index( )
  !
+#if defined _OPENACC || defined _OPENMP_GPU
+ YAMBO_ALLOC(WF_symm,   (wf_ng_1st_BZ,n_spinor,1))
+ YAMBO_ALLOC(WF_ikp,    (wf_ng_overlaps,n_spinor,1))
+ YAMBO_ALLOC(WF_ik,     (wf_ng_overlaps,n_spinor,Dip%ib(2)))
+#endif
  YAMBO_ALLOC_GPU(WF_symm,   (wf_ng_1st_BZ,n_spinor,1))
  YAMBO_ALLOC_GPU(WF_ikp,    (wf_ng_overlaps,n_spinor,1))
  YAMBO_ALLOC_GPU(WF_ik,     (wf_ng_overlaps,n_spinor,Dip%ib(2)))
  !
-!$OMP WORKSHARE
  DIP_S=cZERO
-!$OMP END WORKSHARE
  !
  call live_timing("Overlaps",PAR_IND_DIPk_bz%n_of_elements(PAR_IND_DIPk_bz_ID+1)*n_sp_pol)
  !
@@ -172,7 +176,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            do ib=1,Dip%ib(2)
              if(.not.PAR_IND_VAL_BANDS_OVLP%element_1D(ib)) cycle
              DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)= &
-             &  Vstar_dot_V_gpu(wf_ng_overlaps*n_spinor,WF_ik(:,:,ib),WF_ikp(:,:,1))
+&                     Vstar_dot_V_gpu(wf_ng_overlaps*n_spinor,WF_ik(:,:,ib),WF_ikp(:,:,1))
            enddo ! ibp
          enddo ! ib
          !

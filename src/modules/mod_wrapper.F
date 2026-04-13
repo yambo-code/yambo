@@ -434,6 +434,7 @@ module wrapper
      complex(SP) DEV_ATTR, intent(in) :: CX(:),CY(:)
      !
      Vstar_dot_V_c1_gpu=devxlib_xDOTC_gpu(N,CX,1,CY,1)
+     !DEV_ACC wait(acc_async_noval)
      !
    end function Vstar_dot_V_c1_gpu
    !
@@ -453,6 +454,7 @@ module wrapper
 #endif
      !
      Vstar_dot_V_c2_gpu=devxlib_xDOTC_gpu(N,CX_p,1,CY_p,1)
+     !DEV_ACC wait(acc_async_noval)
      !     
    end function Vstar_dot_V_c2_gpu
    !
@@ -554,6 +556,7 @@ module wrapper
      real(SP) DEV_ATTR, intent(in) :: CX(:),CY(:)
      !
      V_dot_V_r1_gpu=devxlib_xDOT_gpu(N,CX,1,CY,1)
+     !DEV_ACC wait(acc_async_noval)
      !
    end function V_dot_V_r1_gpu
    !
@@ -571,6 +574,7 @@ module wrapper
      call c_f_pointer(c_loc(CY),CY_p,[size(CY)])
 #endif
      V_dot_V_r2_gpu=devxlib_xDOT_gpu(N,CX_p,1,CY_p,1)
+     !DEV_ACC wait(acc_async_noval)
      !
    end function V_dot_V_r2_gpu
    !
@@ -606,6 +610,7 @@ module wrapper
      complex(SP) DEV_ATTR, intent(in) :: CX(:),CY(:)
      !
      V_dot_V_c1_gpu=devxlib_xDOTU_gpu(N,CX,1,CY,1)
+     !DEV_ACC wait(acc_async_noval)
      !
    end function V_dot_V_c1_gpu
    !
@@ -623,6 +628,7 @@ module wrapper
      call c_f_pointer(c_loc(CY),CY_p,[size(CY)])
 #endif
      V_dot_V_c2_gpu=devxlib_xDOTU_gpu(N,CX_p,1,CY_p,1)
+     !DEV_ACC wait(acc_async_noval)
      !
    end function V_dot_V_c2_gpu
    !

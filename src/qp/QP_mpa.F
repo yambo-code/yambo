@@ -3,9 +3,10 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): DALV AF AM
+! Authors (see AUTHORS file for details): DALV AF AM GS
 ! 
 #include<dev_defs.h>
+!
 !
 subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !

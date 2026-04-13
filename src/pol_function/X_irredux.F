@@ -415,7 +415,10 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !=======
  YAMBO_FREE_GPU(Xo_res)
  YAMBO_FREE(Xo_res)
+ !
+#ifdef _GPU
  YAMBO_FREE_GPU(work)
+#endif
  YAMBO_FREE(work)
  YAMBO_FREE_GPU(rhotw_mp_R)
  YAMBO_FREE(rhotw_mp_R)

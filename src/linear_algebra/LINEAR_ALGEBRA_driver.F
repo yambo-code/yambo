@@ -26,6 +26,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  ! * MAT_MUL: M_slk/M + B_slk/B => C_slk/C 
  !
  use pars,          ONLY:SP,cONE,cZERO
+ use com,           ONLY:msg
  use linear_algebra,ONLY:INV,DIAGO,DIAGX,CHASE,LIN_SYS,SVD_INV,MAT_MUL,USE_LK,USE_SLK
  use com,           ONLY:msg
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
@@ -36,7 +37,6 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  use timing_m,      ONLY:timing
  use gpu_m,         ONLY:have_gpu
  use devxlib,       ONLY:devxlib_mapped
- use mpi,           ONLY:MPI_Wtime
  !
 #include<y_memory.h>
 #include<dev_defs.h>

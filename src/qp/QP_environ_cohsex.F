@@ -32,6 +32,7 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
+ use environ_m,     ONLY:v_env_mat
  use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run,&
 &                        l_rt_carriers_in_use,l_RIM_W
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
@@ -75,6 +76,10 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
  type(bz_samp)::Xk,k,q
  type(X_t)    ::X
  type(QP_t)   ::qp
+ !
+ ! External
+ !
+ integer, external :: io_ENVIRON
  !
  ! Work Space
  !
@@ -185,7 +190,17 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
  ! ALLOCATION
  !------------
  !
- if (io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,1/))
+
+
+ call io_control(ACTION=OP_RD_CL, COM=REP, SEC=(/1,2/), MODE=VERIFY, ID=ID)
+ io_err = io_ENVIRON(X, ID)
+ if (io_RESPONSE) then
+   if (io_err < 0) call error('Incomplete and/or broken PCM-screened interaction database')
+   call X_ALLOC_elemental('V_ENV',(/X%ng, X%ng, 1/))
+   call io_control(ACTION=OP_RD, COM=NONE, SEC=(/1/), ID=ID)
+   io_err = io_ENVIRON(X, ID)
+   call X_ALLOC_elemental('X', (/X%ng, X%ng, 1/))
+ end if
  allocate(dc(2))
  !
  !
@@ -210,11 +225,14 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
      call DEV_SUB(scatter_Gamp)(isc,'c')
      if (have_cuda) call dev_memcpy(isc%gamp,isc%gamp_d)
      !
-     ! In principle, v_environ could be re-read from a DB
-     ! At present, we recompute it for simplicity
-     !
-     call environ_vcoul(q_pt(iqibz,:),v_environ,.false.)
-     
+     if (io_RESPONSE) then
+       !
+       IO_ACT = manage_action(RD_CL_IF_END, iqibz, iq_to_start, nqibz, PAR_INDEX=PAR_IND_Q_ibz)
+       call io_control(ACTION=IO_ACT, COM=NONE, SEC=(/2*iqibz, 2*iqibz+1/), ID=ID)
+       io_err = io_ENVIRON(X, ID)
+       !
+       call deliver_IO_error_message(io_err,'environ',STOP_it=.TRUE.)
+     end if
      !
      !$omp parallel do default(shared), private(ig1,ig2)
      do ig2=1,X%ng
@@ -222,7 +240,7 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
          ! 
          ! Here: X_mat is set to v_reac(G,G') * (q+G) * (q+G') * gamp(G,G')
          !
-         X_mat(ig1,ig2,1)= v_environ%blc(ig1,ig2,1) * &
+         X_mat(ig1,ig2,1)= v_env_mat(ig1,ig2,1) * &
 &                                   bare_qpg(iqibz,ig1)*bare_qpg(iqibz,ig2)/(4.0_SP*pi)
          !
          ! subtract bare coulomb
@@ -373,6 +391,11 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
  call live_timing()
  !
  ! CLEAN
+ !
+ if (io_RESPONSE) then
+   call X_ALLOC_elemental('X')
+   call X_ALLOC_elemental('V_ENV')
+ end if
  !
  deallocate(dc)
  !

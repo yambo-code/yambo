@@ -28,6 +28,10 @@
 !   then RQ_solver should be called for each G, G' and q.  
 !------------------------------------------------------------
 !
+! GS forced Padé in double precision, this strongly stabilizes the MPA
+!    change of parallism with Padé in SP leads to QP differences in meV range or larger
+!    with Padé in DP, QP differences are within the SP error
+!
 module mpa_m
  !
  use pars,            ONLY:SP,DP,cZERO,cONE,cI
@@ -63,27 +67,27 @@ contains
  !
  subroutine mpa_cond1(z, E, PPcond_rate)
    !
-   complex(SP), intent(in)     :: z(2)
-   complex(SP), intent(inout)  :: E
-   real(SP),    intent(out)    :: PPcond_rate
+   complex(DP), intent(in)     :: z(2)
+   complex(DP), intent(inout)  :: E
+   real(DP),    intent(out)    :: PPcond_rate
    !
-   PPcond_rate=0._SP
+   PPcond_rate=0._DP
    !
-   if(NAN(abs(E)) .or. abs(E)<0.00001_SP) then
-     E=abs(z(2))-cI*epsilon(1._SP) 
-     PPcond_rate=1._SP  
-   elseif(real(E)>0._SP) then     
+   if(NAN(real(abs(E),kind=SP)) .or. abs(E)<0.00001_DP) then
+     E=abs(z(2))-cI*epsilon(1._DP) 
+     PPcond_rate=1._DP  
+   elseif(real(E)>0._DP) then     
      E = sqrt(E)
    else
      E = sqrt(-conjg(E)) ! DALV: PPA uses E = 1._SP
-     PPcond_rate=1._SP 
+     PPcond_rate=1._DP 
    endif
    !
    ! DALV: since MPA uses complex poles 
    !       we need to guarantee the time ordering
    !
-   if(real(E)<0._SP) E=-E
-   if(aimag(E)>-epsilon(1._SP)) E=real(E,SP)-cI*epsilon(1._SP)
+   if(real(E)<0._DP) E=-E
+   if(aimag(E)>-epsilon(1._DP)) E=real(E,SP)-cI*epsilon(1._DP)
    !
  end subroutine mpa_cond1
  !
@@ -91,8 +95,8 @@ contains
    implicit none
    !
    integer ,    intent(in)     :: i
-   real(SP),    intent(in)     :: wmax, thr
-   complex(SP), intent(inout)  :: E(:)
+   real(DP),    intent(in)     :: wmax, thr
+   complex(DP), intent(inout)  :: E(:)
    !
    integer     :: j
    logical     :: pole_is_out
@@ -104,14 +108,14 @@ contains
    j=1
    do while(j<i.and..not.pole_is_out)
      !
-     if(abs(real(E(i),SP)-real(E(j),SP))<thr) then
+     if(abs(real(E(i),DP)-real(E(j),DP))<thr) then
        !
        pole_is_out=.true.
        !
-       if(abs(real(E(j),SP))>max(abs(aimag(E(j))),abs(aimag(E(i))))) then
-         E(j)=(real(E(j),SP)+real(E(i),SP))/2._SP-cI*max(abs(aimag(E(j))),abs(aimag(E(i))))
+       if(abs(real(E(j),DP))>max(abs(aimag(E(j))),abs(aimag(E(i))))) then
+         E(j)=(real(E(j),DP)+real(E(i),DP))/2._DP-cI*max(abs(aimag(E(j))),abs(aimag(E(i))))
        else
-         E(j)=(real(E(j),SP)+real(E(i),SP))/2._SP-cI*min(abs(aimag(E(j))),abs(aimag(E(i))))
+         E(j)=(real(E(j),DP)+real(E(i),DP))/2._DP-cI*min(abs(aimag(E(j))),abs(aimag(E(i))))
        endif
        !
      endif
@@ -127,18 +131,18 @@ contains
    integer,     intent(in)     :: np
    integer,     intent(out)    :: npr
    logical,     intent(out)    :: PPcond(np)
-   complex(SP), intent(in)     :: z(2*np)
-   complex(SP), intent(inout)  :: E(np)
+   complex(DP), intent(in)     :: z(2*np)
+   complex(DP), intent(inout)  :: E(np)
    !
    integer     :: i, j
-   complex(SP) :: Eaux(np)
-   real(SP)    :: wmax, thr=0.00001_SP
+   complex(DP) :: Eaux(np)
+   real(DP)    :: wmax, thr=0.00001_DP
    !
    npr=np
    !
    !DALV: we were using the square before, 
    !      now we use 1.5* the extreme of the interval
-   wmax=maxval(sqrt(real(z,SP)))*1.5_SP 
+   wmax=maxval(sqrt(real(z,SP)))*1.5_DP 
    !
    i=1
    do while(i<=npr)
@@ -160,7 +164,7 @@ contains
    !
    E(1:npr)=Eaux(1:npr)
    if(npr<np) then
-     E(npr+1:np)=1._SP-cI*epsilon(1._SP)
+     E(npr+1:np)=1._DP-cI*epsilon(1._DP)
      PPcond(npr+1:np)=.true.
    endif
    !
@@ -172,10 +176,10 @@ contains
    !
    implicit none
    !
-   complex(SP), intent(in)   :: z(2)
-   complex(SP), intent(in)   :: x(2)
-   complex(SP), intent(out)  :: E
-   real(SP),    intent(out)  :: PPcond_rate
+   complex(DP), intent(in)   :: z(2)
+   complex(DP), intent(in)   :: x(2)
+   complex(DP), intent(out)  :: E
+   real(DP),    intent(out)  :: PPcond_rate
    !
    E = (x(1)*z(1)**2 -x(2)*z(2)**2 )/(x(1)-x(2))
    call mpa_cond1(z, E, PPcond_rate)
@@ -185,72 +189,72 @@ contains
  subroutine mpa_R_fit(np,npr, w, xq, R, E)
    implicit none
    integer,     intent(in)   :: np, npr
-   complex(SP), intent(in)   :: w(2*np)
-   complex(SP), intent(in)   :: xq(2*np), E(np)
-   complex(SP), intent(out)  :: R(np)
+   complex(DP), intent(in)   :: w(2*np)
+   complex(DP), intent(in)   :: xq(2*np), E(np)
+   complex(DP), intent(out)  :: R(np)
    !
-   complex(SP)               :: A(2*np,npr), B(2*np)
+   complex(DP)               :: A(2*np,npr), B(2*np)
    integer                   :: i, k, info, rank, lwork, lwmax 
    parameter                 (lwmax=1000)
-   real(SP)                  :: rcond
+   real(DP)                  :: rcond
    integer                   :: iwork(3*npr*0+11*npr)
-   real(SP)                  :: S(npr), rwork(10*npr+2*npr*25+8*npr*0+3*25+26*26)
-   complex(SP)               :: work(lwmax)
+   real(DP)                  :: S(npr), rwork(10*npr+2*npr*25+8*npr*0+3*25+26*26)
+   complex(DP)               :: work(lwmax)
    !
    do k = 1, 2*np
      B(k) = xq(k)
      do i = 1, npr
-       A(k,i) = 2._SP*E(i)/(w(k)**2 -E(i)**2)
+       A(k,i) = 2._DP*E(i)/(w(k)**2 -E(i)**2)
      enddo
    enddo 
    !
-   rcond=-1._SP
+   rcond=-1._DP
    !
-#ifdef _DOUBLE
+! #ifdef _DOUBLE
    call zgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,-1,   rwork,iwork,info)
    lwork=min(lwmax,int(work(1)))
    call zgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,lwork,rwork,iwork,info)
-#else
-   call cgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,-1,   rwork,iwork,info)
-   lwork=min(lwmax,int(work(1)))
-   call cgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,lwork,rwork,iwork,info)
-#endif
+! #else
+!   call cgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,-1,   rwork,iwork,info)
+!   lwork=min(lwmax,int(work(1)))
+!   call cgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,lwork,rwork,iwork,info)
+! #endif
    !
    R(1:npr)=B(1:npr)
-   if (npr<np) R(npr+1:np)=0.0_SP
+   if (npr<np) R(npr+1:np)=0.0_DP
    !
  end subroutine mpa_R_fit
  !
  subroutine mpa_R_solver(np, w, xq, R, E, rcond)
    implicit none
    integer,     intent(in)   :: np
-   complex(SP), intent(in)   :: w(2*np)
-   complex(SP), intent(in)   :: xq(2*np), E(np)
-   complex(SP), intent(out)  :: R(np)
-   real(SP),    intent(out)  :: rcond
+   complex(DP), intent(in)   :: w(2*np)
+   complex(DP), intent(in)   :: xq(2*np), E(np)
+   complex(DP), intent(out)  :: R(np)
+   real(DP),    intent(out)  :: rcond
    !
-   complex(SP) :: A(np,np)
-   real(SP)    :: anorm
+   complex(DP) :: A(np,np)
+   real(DP)    :: anorm
    integer     :: i, k, info, ind(np)    
-   complex(SP) :: rwork(2*np), work(2*np)
+   complex(DP) :: rwork(2*np), work(2*np)
    !
-   anorm=abs(2._SP*E(1)/(w(1)**2 -E(1)**2))
+   anorm=abs(2._DP*E(1)/(w(1)**2 -E(1)**2))
    !
    do k = 1, np
      R(k) = xq(k)
      do i = 1, np
-       A(k,i) = 2._SP*E(i)/(w(k)**2 -E(i)**2)
+       A(k,i) = 2._DP*E(i)/(w(k)**2 -E(i)**2)
        if(abs(A(k,i))>anorm) anorm=abs(A(k,i))
      enddo
    enddo 
    !
-#ifdef _DOUBLE
+!  #ifdef _DOUBLE
    call zgecon('I', np, A, np, anorm, rcond, work, rwork, info)
    call zgesv(np, 1, A, np, ind, R, np, info) 
-#else
-   call cgecon('I', np, A, np, anorm, rcond, work, rwork, info)
-   call cgesv(np, 1, A, np, ind, R, np, info) 
-#endif
+!  #else
+!    call cgecon('I', np, A, np, anorm, rcond, work, rwork, info)
+!    call cgesv(np, 1, A, np, ind, R, np, info) 
+!  #endif
    !
  end subroutine mpa_R_solver
  !
@@ -258,17 +262,17 @@ contains
    implicit none
    integer,     intent(in)   :: np
    integer,     intent(out)  :: npr
-   complex(SP), intent(in)   :: z(2*np)
-   complex(SP), intent(in)   :: xq(2*np)
-   complex(SP), intent(out)  :: E(np)
+   complex(DP), intent(in)   :: z(2*np)
+   complex(DP), intent(in)   :: xq(2*np)
+   complex(DP), intent(out)  :: E(np)
    logical,     intent(out)  :: PPcond(np)
-   real(SP),    intent(out)  :: econd(2)
+   real(DP),    intent(out)  :: econd(2)
    !
-   complex(SP) :: Z1(np,np), Z2(np,np), M1(np,np), M2(np,np), v1(np)
-   complex(SP) :: M(np,np), b(np), Companion(np,np)
-   complex(SP) :: rwork(2*np),work(2*np),VR(np),VL(np),S(np),RCE(np,np),RCV(np,np),ABNRM
+   complex(DP) :: Z1(np,np), Z2(np,np), M1(np,np), M2(np,np), v1(np)
+   complex(DP) :: M(np,np), b(np), Companion(np,np)
+   complex(DP) :: rwork(2*np),work(2*np),VR(np),VL(np),S(np),RCE(np,np),RCV(np,np),ABNRM
    integer     :: i, j, info, ind(np), ILO,IHI    
-   real(SP)    :: rcond, anorm, Wm
+   real(DP)    :: rcond, anorm, Wm
    !
    PPcond(:)=.true.
    Wm = maxval(abs(z(1:np)))
@@ -277,19 +281,19 @@ contains
      ind(j) = j
      v1(j)  = xq(j   )*z(j   )**np 
      b (j)  = xq(j+np)*z(j+np)**np 
-     Z1(j,1) = 1._SP
-     Z2(j,1) = 1._SP  
+     Z1(j,1) = 1._DP
+     Z2(j,1) = 1._DP  
      M1(j,1) = -xq(j) 
      M2(j,1) = -xq(j+np) 
-     M (j,1) = 0._SP
-     M (j,j) = 1._SP
+     M (j,1) = 0._DP
+     M (j,j) = 1._DP
      !
      do i = 2, np
        Z1(j,i) =  (z(j)/Wm)**(i-1)
        Z2(j,i) =  (z(j+np)/Wm)**(i-1)
        M1(j,i) = -xq(j   )*Z1(j,i)
        M2(j,i) = -xq(j+np)*Z2(j,i)
-       if(i/=j) M(j,i) = 0._SP 
+       if(i/=j) M(j,i) = 0._DP 
      enddo
      !
    enddo
@@ -302,22 +306,22 @@ contains
      enddo
    enddo
    !
-#ifdef _DOUBLE
+! #ifdef _DOUBLE
    call zgecon('I', np, Z1, np, anorm, econd(1), work, rwork, info)
    call zgesv(np, np, Z1, np, ind, M, np,info) 
-#else
-   call cgecon('I', np, Z1, np, anorm, econd(1), work, rwork, info)
-   call cgesv(np, np, Z1, np, ind, M, np,info) 
-#endif
+! #else
+!   call cgecon('I', np, Z1, np, anorm, econd(1), work, rwork, info)
+!   call cgesv(np, np, Z1, np, ind, M, np,info) 
+! #endif
    !
    M  = matmul(Z2,M)
    M2 = matmul(M,M1) - M2
    b  = matmul(M,v1) - b
    !
-   M = 0.0_SP
+   M = 0.0_DP
    !
    do i =1,np
-     M(i,i) = 1.0_SP
+     M(i,i) = 1.0_DP
    enddo
    !
    anorm=abs(M2(1,1))
@@ -328,27 +332,27 @@ contains
      enddo
    enddo
    !
-#ifdef _DOUBLE
+! #ifdef _DOUBLE
    call zgecon('I', np, M2, np, anorm, econd(2), work, rwork, info)
    call zgesv(np, 1, M2, np, ind, b, np, info)
-#else
-   call cgecon('I', np, M2, np, anorm, econd(2), work, rwork, info)
-   call cgesv(np, 1, M2, np, ind, b, np, info)
-#endif
+! #else
+!   call cgecon('I', np, M2, np, anorm, econd(2), work, rwork, info)
+!   call cgesv(np, 1, M2, np, ind, b, np, info)
+! #endif
    !
-   Companion=0._SP
+   Companion=0._DP
    Companion(1,np) = -b(1)
    !
    do i = 2, np
      Companion(i,np)  = -b(i)/Wm**(i-1)
-     Companion(i,i-1) = 1._SP
+     Companion(i,i-1) = 1._DP
    enddo
    !
-#ifdef _DOUBLE
+! #ifdef _DOUBLE
    call zgeev( 'N', 'N', np, Companion, np, E, VL, 1, VR, 1, work, 2*np, rwork, info )
-#else
-   call cgeev( 'N', 'N', np, Companion, np, E, VL, 1, VR, 1, work, 2*np, rwork, info )
-#endif
+! #else
+!   call cgeev( 'N', 'N', np, Companion, np, E, VL, 1, VR, 1, work, 2*np, rwork, info )
+! #endif
    !
    ! DALV: here we need to force real(E) to be positive.
    ! This is because of the way the residue integral is performed, later.
@@ -361,22 +365,22 @@ contains
    implicit none
    integer,     intent(in)   :: np
    integer,     intent(out)  :: npr
-   complex(SP), intent(in)   :: z(2*np)
-   complex(SP), intent(in)   :: X(2*np)
-   complex(SP), intent(out)  :: E(np)
+   complex(DP), intent(in)   :: z(2*np)
+   complex(DP), intent(in)   :: X(2*np)
+   complex(DP), intent(out)  :: E(np)
    logical,     intent(out)  :: PPcond(np)
    !
-   complex(SP) :: c(2*np), b(np+1), Companion(np,np)
-   complex(SP) :: c_m1(2*np), b_m1(np+1), b_m2(np+1)
-   complex(SP) :: rwork(2*np),work(2*np),VR(np),VL(np)
+   complex(DP) :: c(2*np), b(np+1), Companion(np,np)
+   complex(DP) :: c_m1(2*np), b_m1(np+1), b_m2(np+1)
+   complex(DP) :: rwork(2*np),work(2*np),VR(np),VL(np)
    integer     :: i, j, info   
-   real(SP)    :: rcond, anorm, Wm
+   real(DP)    :: rcond, anorm, Wm
    !
    PPcond(:)=.true.
-   b_m1(1)=1._SP
-   b_m2(1)=1._SP
-   b_m1(2:)=0._SP
-   b_m2(2:)=0._SP
+   b_m1(1)=1._DP
+   b_m2(1)=1._DP
+   b_m1(2:)=0._DP
+   b_m2(2:)=0._DP
    b=b_m1
    c=X
    c_m1=c
@@ -411,14 +415,14 @@ contains
    !
    do i = 2, np
      Companion(i,np)  = -b(i)/b(np+1)
-     Companion(i,i-1) = 1._SP
+     Companion(i,i-1) = 1._DP
    enddo
    !
-#ifdef _DOUBLE
+! #ifdef _DOUBLE
    call zgeev( 'N', 'N', np, Companion, np, E, VL, 1, VR, 1, work, 2*np, rwork, info )
-#else
-   call cgeev( 'N', 'N', np, Companion, np, E, VL, 1, VR, 1, work, 2*np, rwork, info )
-#endif
+! #else
+!   call cgeev( 'N', 'N', np, Companion, np, E, VL, 1, VR, 1, work, 2*np, rwork, info )
+! #endif
    !
    ! DALV: here we need to force real(E) to be positive.
    ! This is because of the way the residue integral is performed, later.
@@ -440,40 +444,66 @@ contains
    integer  :: i,npr
    logical  :: PPcond(np)
    real(SP) :: cond_num(2)
+   complex( DP) :: w_dummy(2*np), x_dummy(2*np),R_dummy(np), E_dummy(np)
+   real(DP) :: PPcond_rate_dummy,MP_err_dummy,cond_num_dummy(2) 
    !
-   PPcond_rate=0._SP
+   PPcond_rate_dummy=0._DP
+   !
+   ! GS Pass intent-in in double precision 
+#ifdef _DOUBLE
+   w_dummy = w
+   x_dummy = x
+#else
+   w_dummy = cmplx(w, kind=DP)
+   x_dummy = cmplx(x, kind=DP)
+#endif
    !
    select case(np)
    case(1)
      !
-     call mpa_E_1p_solver(w, x, E(1), PPcond_rate)
-     call mpa_R_fit(1, 1, w, x, R, E)
+     call mpa_E_1p_solver(w_dummy, x_dummy, E_dummy(1), PPcond_rate_dummy)
+     call mpa_R_fit(1, 1, w_dummy, x_dummy, R_dummy, E_dummy)
    !
    ! DALV: we can also use the particular solutions in the cases of 2 and 3 poles
    !
    case default
      !
      if(mpa_sol=='LA') then
-       call mpa_E_solver(np, npr, w**2, x, E, PPcond, cond_num)
-       cond_num=log10(1._SP/cond_num)
+       call mpa_E_solver(np, npr, w_dummy**2, x_dummy, E_dummy, PPcond, cond_num_dummy)
+       cond_num_dummy=log10(1._DP/cond_num_dummy)
      else ! DALV: we use Pade-Thiele instead (mpa_sol='PT')
-       cond_num=0.
-       call mpa_E_solver_Pade(np, npr, w**2, x, E, PPcond)
+       cond_num_dummy=0._DP
+       call mpa_E_solver_Pade(np, npr, w_dummy**2, x_dummy, E_dummy, PPcond)
      endif
      !
      if(npr<np) MPred=.true.
      !
-     call mpa_R_fit(np, npr, w, x, R, E)
+     call mpa_R_fit(np, npr, w_dummy, x_dummy, R_dummy, E_dummy)
      !
      do i=1,np
-       if(.not.PPcond(i)) PPcond_rate=PPcond_rate+abs(R(i))
+       if(.not.PPcond(i)) PPcond_rate=PPcond_rate+abs(R_dummy(i))
      enddo
      !
-     PPcond_rate=PPcond_rate/sum(abs(R(:)))
+     PPcond_rate_dummy=PPcond_rate_dummy/sum(abs(R_dummy(:)))
      !
-   end select
+  end select
    !
-   MP_err=err_func_X(np, R, E, w, x)
+   MP_err_dummy=err_func_X(np, R_dummy, E_dummy, w_dummy, x_dummy)
+   ! 
+   ! GS Get intent-out either in single or double precision 
+#ifdef _DOUBLE
+   R = R_dummy
+   E = E_dummy
+   PPcond_rate=PPcond_rate_dummy
+   MP_err=MP_err_dummy
+   cond_num=cond_num_dummy
+#else
+   R = cmplx(R_dummy, kind=SP)
+   E = cmplx(E_dummy, kind=SP)
+   PPcond_rate=real(PPcond_rate_dummy, kind=SP)
+   MP_err=real(MP_err_dummy, kind=SP)
+   cond_num=real(cond_num_dummy, kind=SP)
+#endif
    !
  end subroutine mpa_RE_solver
  !
@@ -482,21 +512,21 @@ contains
    implicit none
    !
    integer ,    intent(in)  :: np
-   complex(SP), intent(in)  :: x(2*np), w(2*np)
-   complex(SP), intent(in)  :: R(np), E(np)
+   complex(DP), intent(in)  :: x(2*np), w(2*np)
+   complex(DP), intent(in)  :: R(np), E(np)
    !
-   complex(SP) :: aux
-   real(SP)    :: err_func_X
+   complex(DP) :: aux
+   real(DP)    :: err_func_X
    integer     :: i,j
    !
-   err_func_X = 0._SP
+   err_func_X = 0._DP
    !
    do j=1, 2*np
      !
      aux = cZERO
      !
      do i=1, np
-       aux = aux + 2._SP*E(i)*R(i)/(w(j)**2-E(i)**2)     
+       aux = aux + 2._DP*E(i)*R(i)/(w(j)**2-E(i)**2)     
      enddo
      !
      err_func_X = err_func_X + abs( aux - x(j) )**2
@@ -506,7 +536,7 @@ contains
    ! DALV: this is the Standard Deviation relative to the maximum: 
    !       (Coefficient of variation)
    !
-   err_func_X = sqrt(err_func_X/(2._SP*np-1._SP))/maxval(abs(X(:)))
+   err_func_X = sqrt(err_func_X/(2._DP*np-1._DP))/maxval(abs(X(:)))
    !
  endfunction err_func_X
  !
@@ -521,10 +551,10 @@ contains
    !
    implicit none
    !
-   complex(SP), intent(in)   :: z(2)
-   complex(SP), intent(in)   :: x(2)
-   complex(SP), intent(out)  :: R, E
-   real(SP),    intent(out)  :: PPcond_rate
+   complex(DP), intent(in)   :: z(2)
+   complex(DP), intent(in)   :: x(2)
+   complex(DP), intent(out)  :: R, E
+   real(DP),    intent(out)  :: PPcond_rate
    !
    E = (x(1)*z(1)**2 -x(2)*z(2)**2 )/(x(1)-x(2))
    !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_ENVIRON(X,Xw,ID) result(io_ENV)
+integer function io_ENVIRON(X,ID) result(io_ENV)
  !
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
@@ -41,7 +41,6 @@ integer function io_ENVIRON(X,Xw,ID) result(io_ENV)
 #include<memory.h>
  !
  type(X_t)   :: X
- type(w_samp):: Xw
  integer     :: ID
  !
  !Work Space
@@ -204,10 +203,12 @@ integer function io_ENVIRON(X,Xw,ID) result(io_ENV)
    !
    if (read_is_on(ID) .and. different_db_RL_order) then 
      YAMBO_ALLOC(X_on_disk,(X%ng,X%ng))
-     do i1=1,Xw%n_freqs
-       X_on_disk=v_env_mat(:,:,i1)
-       v_env_mat(X_RLcomp_ig(:),X_RLcomp_ig(:),i1)=X_on_disk
-     enddo
+     X_on_disk = v_env_mat(:, :, 1)
+     v_env_mat(X_RLcomp_ig(:), X_RLcomp_ig(:), 1) = X_on_disk
+!    do i1=1,Xw%n_freqs
+!      X_on_disk=v_env_mat(:,:,i1)
+!      v_env_mat(X_RLcomp_ig(:),X_RLcomp_ig(:),i1)=X_on_disk
+!    enddo
      YAMBO_FREE(X_on_disk)
    endif
    !

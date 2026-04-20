@@ -464,7 +464,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
      if (l_environ) then
        call io_control(ACTION=OP_APP_CL,COM=COM,SEC=SEC,ID=ID(3),COMM=local_yMPI_COMM,DO_IT=condition)
-       i_err=io_ENVIRON(X,Xw,ID(3))
+       i_err=io_ENVIRON(X, ID(3))
      endif
      !
      if (this_is_Xo) then

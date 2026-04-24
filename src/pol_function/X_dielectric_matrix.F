@@ -235,6 +235,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
  endif
  !
+ ! fallback for the case that Environ is not active
+ if (.not.allocated(v_env_par)) allocate(v_env_par(1))
+ !
  ! WF distribution 
  !=================
  !

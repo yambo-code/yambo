@@ -337,7 +337,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      call X_irredux(iq,"Xo"//trim(X_what),X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
      !
      if (l_write_disk_Xo.and.n_OPTICAL_dir_to_eval==1) then
-#if ! defined _PAR_IO
+#if !defined _PAR_IO
        call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_par(iq_mem),X_mat)
 #endif
        call elemental_IO( iq , .TRUE. )
@@ -357,7 +357,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    ! X_par => X_mat
    !
-#if ! defined _PAR_IO
+#if !defined _PAR_IO
    call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_par(iq_mem),X_mat)
    if (l_environ) then
      call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,v_env_par(iq_mem),v_env_mat)

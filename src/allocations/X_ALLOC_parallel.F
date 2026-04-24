@@ -61,6 +61,12 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
  !
  X_rows = X_par%rows
  X_cols = X_par%cols
+
+ write(*,*)
+ write(*,*) "X_rows ", X_rows
+ write(*,*) "X_cols ", X_cols
+ write(*,*)
+
  !
  if (l_XUP.and..not.X_FILL_UP_matrix_only.and.X_par%INTER_comm%n_CPU>1) then
    !

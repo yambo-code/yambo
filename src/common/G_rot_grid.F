@@ -5,13 +5,18 @@
 !
 ! Authors (see AUTHORS file for details): DS
 !
+#include<dev_defs.h>
+!
 subroutine G_rot_grid(is,call_kind)
  !
  use pars,         ONLY:SP
- use R_lattice,    ONLY:ng_vec,ng_closed,g_vec,minus_G
+ use R_lattice,    ONLY:ng_vec,ng_closed,g_vec,g_vec_d,minus_G
  use D_lattice,    ONLY:dl_sop,alat
  use zeros,        ONLY:G_iku_zero
  use vec_operate,  ONLY:v_is_zero
+ use gpu_m,        ONLY:have_gpu
+ use devxlib,      ONLY:devxlib_memcpy_h2d
+ !
 #include<y_memory.h>
  !
  integer               :: is
@@ -58,6 +63,7 @@ subroutine G_rot_grid(is,call_kind)
  g_vec_tmp(1:ng,:)=g_vec(1:ng,:)
  g_rot_found=.false.
  if(extend_grid) then
+   YAMBO_FREE_GPU(DEV_VAR(g_vec))
    YAMBO_FREE(g_vec)
  endif
  !
@@ -96,7 +102,9 @@ subroutine G_rot_grid(is,call_kind)
  !
  if(extend_grid) then
    YAMBO_ALLOC(g_vec,(ng_vec,3))
+   YAMBO_ALLOC_GPU(DEV_VAR(g_vec),(ng_vec,3))
    g_vec=g_vec_tmp(1:ng_vec,:)
+   if (have_gpu) call devxlib_memcpy_h2d(DEV_VAR(g_vec),g_vec)
  endif
  !
  YAMBO_FREE(g_vec_tmp)

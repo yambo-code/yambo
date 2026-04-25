@@ -20,7 +20,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_DIP
  use pseudo,              ONLY:PP_free,pp_table,pp_n_l_comp,pp_kbv_dim_yambo,pp_kbv_table,pp_factor,pp_kbv_dim_atom,pp_kbv_dim
  use D_lattice,           ONLY:n_atomic_species,n_atoms_species
- use R_lattice,           ONLY:bz_samp,g_vec_d,g_vec
+ use R_lattice,           ONLY:bz_samp
  use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,g_space_obs
  use ALLOC,               ONLY:DIPOLE_alloc_elemental 
  use X_m,                 ONLY:l_X_terminator
@@ -75,8 +75,9 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
  !
  ! Synchronize some memory
 #ifdef _GPU
- YAMBO_FREE_GPU(DEV_VAR(g_vec))
- YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
+ !AMBO_FREE_GPU(DEV_VAR(g_vec))
+ !AMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
+ !
  if(STRING_match(g_space_obs,"P2")) call warning("P2 not coded with GPUs, CPU only algorithm for it")
 #endif
  !
@@ -110,6 +111,8 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
    !
  endif
  !
+write(*,*) "here 3"
+ 
  if(l_use_comm) then
    !
    ! allocation of DEV variabless with zero dims is a problem (PGI, CUDA For)
@@ -118,15 +121,20 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
    YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_dim_atom))
    !
    if (have_gpu) then
+write(*,*) "here 5"
 #if defined _OPENACC || defined _OPENMP_GPU
      YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_dim_yambo,Dip%ib(1):Dip%ib(2)))
 #endif
      YAMBO_ALLOC_GPU(XX,(n_spinor,n_spinor,4,pp_dim_yambo,Dip%ib(1):Dip%ib(2)))
+write(*,*) "here 6"
      YAMBO_ALLOC_GPU(DEV_VAR(kbv),(wf_ncx,n_spinor,4,pp_dim_atom))
+write(*,*) "here 7"
      call devxlib_memset_d(DEV_VAR(kbv),cZERO)
+write(*,*) "here 8"
    else
      YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_dim_yambo,Dip%ib(1):Dip%ib(2)))
    endif
+write(*,*) "here 9"
    !
    ! Eo    are always the eigenvalues consistent with the WFs
    ! E     do also include the QP corrections when Eo are allocated
@@ -143,6 +151,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
    !
    call DIPOLE_alloc_elemental("DIP_work",[pp_dim_yambo])
    !
+write(*,*) "here 10"
  endif
  !
  ! Main loop over k in IBZ
@@ -175,9 +184,11 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
      !
      ! WF load
      !
+write(*,*) "here 11"
      call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='C',&
 &                 title='-Oscillators/G space/Transverse '//spin_string(i_sp_pol),force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
      !
+write(*,*) "here 12"
      if (l_use_comm) then
        !
        call timing('DIPOLE_g_space_proj',OPR='start')
@@ -186,8 +197,10 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
        npp=0
        npp_tab=0
        pp_range(2)=0
+write(*,*) "here 13"
        call devxlib_memset_d(XX,cZERO)
        !
+write(*,*) "here 14"
        do is = 1,n_atomic_species
          do ia = 1,n_atoms_species(is)
            !
@@ -223,8 +236,10 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
        !
        call timing('DIPOLE_g_space_proj',OPR='stop')
        !
+write(*,*) "here 15"
      endif
      !
+write(*,*) "here 16"
      do iv=Dip%ib(1),Dip%ib_lim(1) 
        !
        if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
@@ -232,6 +247,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
        ic_min=max(iv,Dip%ib_lim(2))
        if (l_X_terminator) ic_min=iv
        !
+write(*,*) "here 17"
        do ic=ic_min,Dip%ib(2)
          !
          if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
@@ -325,6 +341,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
        enddo    ! conduction band loop
      enddo      ! valence    band loop
      !
+write(*,*) "here 18"
      call WF_free(WF)
      ! 
    enddo        ! k-points loop
@@ -334,6 +351,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
  !
  ! CLEAN
  !
+write(*,*) "here 19"
  if (l_use_comm) then
    call DIPOLE_alloc_elemental("DIP_work")
    if (have_gpu) then
@@ -348,9 +366,7 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
    YAMBO_FREE(pp_factor)
    call PP_free()
  endif
- if (have_gpu) then
-   YAMBO_FREE_GPU(DEV_VAR(g_vec))
- endif
+write(*,*) "here 20"
  !
  call timing('DIPOLE_g_space',OPR='stop')
  !

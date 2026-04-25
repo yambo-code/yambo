@@ -274,9 +274,12 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  if (WF%space=='C')  wf_grid_size=wf_ncx
  if (WF%space=='B')  wf_grid_size=wf_ncx
  !
+write(*,*) "ciao 1"
  YAMBO_ALLOC(wf_DP,(wf_grid_size))
  if (have_gpu) then
+write(*,*) "ciao 2"
    YAMBO_ALLOC_GPU(DEV_VAR(wf_DP),(wf_grid_size))
+write(*,*) "ciao 3"
  endif
  !
  wfc_p => DEV_VAR(WF%c)
@@ -358,9 +361,12 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
        !
        if (.not.buffer_is_ok) then
          !
+write(*,*) "ciao 4"
          YAMBO_ALLOC(wf_disk,(wf_ncx,n_spinor,wf_nb_to_load))
          if (have_gpu) then
+write(*,*) "ciao 5", shape(wf_disk)
            YAMBO_ALLOC_GPU(DEV_VAR(wf_disk),(wf_ncx,n_spinor,wf_nb_to_load))
+write(*,*) "ciao 6"
          endif
          !
          call io_control(ACTION=RD,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
@@ -399,6 +405,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               !
               npwk=wf_nc_k(ikibz)
               !
+write(*,*) "ciao 7"
               !DEV_ACC_DEBUG data present(wf_igk,fft_g_table,wf_DP,wf_disk)
               !DEV_ACC parallel loop private(ic,ig,igfft) async
               !DEV_CUF kernel do(1) <<<*,*>>>
@@ -415,6 +422,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               enddo
               !DEV_OMPGPU end target
               !DEV_ACC_DEBUG end data
+write(*,*) "ciao 8"
               !
 #ifdef _CUDA
               call fft_3d_cuda( DEV_VAR(wf_DP),fft_dim,+1,cufft_plan)
@@ -424,6 +432,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               call fft_3d_mklgpu( DEV_VAR(wf_DP),fft_dim,+1,mklgpu_desc)
 #endif
               WF_N = WF%N
+write(*,*) "ciao 9"
               !
               !DEV_ACC_DEBUG data present(wfc_p,wf_DP)
               !DEV_ACC parallel loop async
@@ -436,11 +445,13 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               !DEV_OMPGPU end target
               !DEV_ACC_DEBUG end data
               !
+write(*,*) "ciao 10"
             enddo  ! i_spinor
             !
          else
 #endif
             !
+write(*,*) "ciao 11"
             do i_spinor=1,n_spinor
               !
               wf_DP=(0._DP,0._DP)
@@ -473,16 +484,19 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               WF%c(:,i_spinor,WF%N)=cmplx(wf_DP(:),kind=SP)*fft_norm
               !
             enddo  ! i_spinor
+write(*,*) "ciao 12"
 #ifdef _GPU
          endif
 #endif
          !
        enddo    ! i_b
        !
+write(*,*) "ciao 13"
        if (.not.buffer_is_ok) then
          YAMBO_FREE_GPU(DEV_VAR(wf_disk))
          YAMBO_FREE(wf_disk)
        endif
+write(*,*) "ciao 14"
        !
      enddo      ! i_b_grp
    enddo        ! i_k

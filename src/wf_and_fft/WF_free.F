@@ -52,6 +52,8 @@ subroutine WF_free(WF,keep_fft,keep_states_to_load)
  WF%sp_pol=0
  WF%space=' '
  !
+ !DEV_ACC exit data delete(WF)
+ !
  if (keep_states_to_load_) return
  !
  WF%to_load=.TRUE.

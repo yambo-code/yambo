@@ -13,6 +13,9 @@
  use y_memory,     ONLY:MEM_count_d
  use devxlib,      ONLY:devxlib_map,devxlib_unmap,devxlib_mapped,devxlib_memcpy_h2d
 #endif
+#if defined _OPENACC
+ use openacc
+#endif
 
  implicit none
 
@@ -83,23 +86,27 @@
   if (.not.allocated(x)) then NEWLINE YAMBO_ALLOC(x,SIZE) NEWLINE \
   endif NEWLINE \
   call devxlib_map(x) NEWLINE \
+  !DEV_ACC wait(acc_async_noval) NEWLINE \
   YAMBO_ALLOC_CHECK_GPU(x)
 #define YAMBO_ALLOC_GPU_SOURCE(x,y) \
    if (.not.allocated(x)) then NEWLINE call error("[ALLOC] x not allocated") NEWLINE	\
   endif NEWLINE \
   call devxlib_map(x) NEWLINE \
+  !DEV_ACC wait(acc_async_noval) NEWLINE \
   call devxlib_memcpy_h2d(x,y) NEWLINE \
   YAMBO_ALLOC_CHECK_GPU(x)
 #define YAMBO_ALLOC_GPU_MOLD(x,y) \
   if (.not.allocated(x)) then NEWLINE YAMBO_ALLOC_MOLD(x,y) NEWLINE \
   endif NEWLINE \
   call devxlib_map(x) NEWLINE \
+  !DEV_ACC wait(acc_async_noval) NEWLINE \
   YAMBO_ALLOC_CHECK_GPU(x)
 
 #define YAMBO_FREE_GPU(x) \
   if (.not.allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \
-  if (     allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,size(x,KIND=IPL))NEWLINE \
-  if (     allocated(x)) &NEWLINE& call devxlib_unmap(x,MEM_err)
+  if (     allocated(x).and.devxlib_mapped(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,size(x,KIND=IPL))NEWLINE \
+  if (     allocated(x).and.devxlib_mapped(x)) &NEWLINE& call devxlib_unmap(x,MEM_err) NEWLINE \
+  !DEV_ACC wait(acc_async_noval)
 
 #else
 

@@ -17,7 +17,7 @@ integer function io_DB1(E,k,ID)
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, input_GS_Tel, dl_sop, &
 &                           Tel, n_atoms_species_max,n_atomic_species,n_atoms_species,atom_pos, &
 &                           Z_species, n_atoms, mag_syms, atom_mass, atoms_map
- use R_lattice,        ONLY:ng_vec,g_vec,bz_samp,nkibz,QP_states_k,nXkibz,ng_closed
+ use R_lattice,        ONLY:ng_vec,g_vec,g_vec_d,bz_samp,nkibz,QP_states_k,nXkibz,ng_closed
  use wave_func,        ONLY:wf_ncx,wf_nc_k,wf_igk,wf_igk_d,wf_ng,wf_nb_io
  use LIVE_t,           ONLY:live_timing_is_on
  use IO_int,           ONLY:io_connect,io_disconnect,io_elemental,io_bulk,ver_is_gt_or_eq
@@ -269,6 +269,8 @@ integer function io_DB1(E,k,ID)
    YAMBO_ALLOC(wf_nc_k,(k%nibz))
    YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))
    !
+   YAMBO_ALLOC_GPU(DEV_VAR(g_vec),(ng_vec,3))
+   !
    if (have_gpu) then
      YAMBO_ALLOC_GPU(DEV_VAR(wf_igk),(wf_ncx,k%nibz))
    endif
@@ -326,6 +328,10 @@ integer function io_DB1(E,k,ID)
  !
  call io_bulk(ID, VAR="G-VECTORS", VAR_SZ=(/ng_vec,3/) )
  call io_bulk(ID, R2=g_vec(:ng_vec,:))
+ !
+ if (read_is_on(ID).and.have_gpu) then
+   call devxlib_memcpy_h2d(DEV_VAR(g_vec),g_vec)
+ endif
  !
  ! K-point grid
  !

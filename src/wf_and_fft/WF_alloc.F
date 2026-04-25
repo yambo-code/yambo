@@ -27,6 +27,8 @@ subroutine WF_alloc(WF,k_extrema_only)
  !
  ! Distributed allocation
  !
+ !DEV_ACC enter data copyin(WF)
+ !
  if(allocated(states_to_load)) then
    !
    WF%N=0
@@ -40,7 +42,7 @@ subroutine WF_alloc(WF,k_extrema_only)
            N_loaded=N_loaded+1
            if (.not.k_extrema_only) WF%N=WF%N+1
            if (     k_extrema_only.and.(ik==WF%k(1).or.ik==WF%k(2))) WF%N=WF%N+1
-	 endif
+         endif
        enddo
      enddo
    enddo

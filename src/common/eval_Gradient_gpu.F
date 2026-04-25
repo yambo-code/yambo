@@ -70,11 +70,11 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  YAMBO_ALLOC_GPU(DEV_VAR(V3g),(ng_,3))
  !
  ! Synchronize g_vec host/dev if needed
-#ifdef _GPU
- if (have_gpu.and..not.devxlib_mapped(DEV_VAR(g_vec))) then
-   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
- endif
-#endif
+!#ifdef _GPU
+! if (have_gpu.and..not.devxlib_mapped(DEV_VAR(g_vec))) then
+!   AMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
+! endif
+!#endif
  !
  f_gradient = cZERO
  !

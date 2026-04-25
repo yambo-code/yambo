@@ -15,7 +15,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !    
  use pars,              ONLY:SP,cZERO,pi
  use LIVE_t,            ONLY:live_timing
- use R_lattice,         ONLY:k_map,bz_samp,WF_shifts,G_m_G
+ use R_lattice,         ONLY:k_map,bz_samp,WF_shifts,G_m_G,DEV_VAR(G_m_G)
  use wave_func,         ONLY:WF
  use vec_operate,       ONLY:k_periodic_idx
  use DIPOLES,           ONLY:DIPOLE_t,DIP_S

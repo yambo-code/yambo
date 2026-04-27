@@ -51,7 +51,19 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  BS_res_ares_n_mat=1
  !
  ! default mode
- if(STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-bar"
+ if (iq==1) then
+   ! Default is Lbar for optical absorption. Consequences:
+   ! 1. No LT splitting in 3D (use 'Lkind= full' for that)
+   ! 2. BSE Hamiltonian fully symmetric (no nonanalytic term)
+   if(STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-bar"
+ endif
+ !
+ if (iq/=1) then
+   ! Default is Lfull as Lbar is NOT defined and gives WRONG results
+   ! BSE Hamiltonian is fully symmetric with Lfull
+   if(STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-full"
+   if(STRING_match(BSE_L_kind,"bar")) call error("Lbar not defined at q/=0")
+endif
  !
  if (l_col_cut.and.what=="init") then
    ! We are here in 0D, 1D or 2D

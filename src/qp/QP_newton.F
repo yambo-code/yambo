@@ -46,6 +46,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use drivers,       ONLY:l_elphoton_corr
 #endif
  use environ_m,     ONLY:l_environ
+ use parallel_int,  ONLY:PP_wait
+ use parallel_m,    ONLY:myid
  !
  implicit none
  type(levels) ::en,Xen
@@ -177,12 +179,15 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    enddo
 
    if (l_environ) then
-     open(unit=201, file="coh_sex.txt", status='replace', action='write')
-     write(201, *) "state Z*coh Z*sex Z"
-     do i1=1, QP_n_states
-       write(201, *) i1, real( qp%Z(i1)*QP_env_coh(i1) ), real( qp%Z(i1)*QP_env_sex(i1) ), qp%Z(i1)
-     end do
-     close(201)
+     call PP_wait()
+     if (myid == 0) then
+       open(unit=201, file="coh_sex.txt", status='replace', action='write')
+       write(201, *) "state Z*coh Z*sex"
+       do i1=1, QP_n_states
+         write(201, *) i1, real(qp%Z(i1)*QP_env_coh(i1)), real(qp%Z(i1)*QP_env_sex(i1))
+       end do
+       close(201)
+     end if
    end if
    !
    SC_corr_now= maxval(real(qp%E(:)-qp%E_bare(:)))

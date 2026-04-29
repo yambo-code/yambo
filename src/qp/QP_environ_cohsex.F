@@ -139,13 +139,13 @@ subroutine QP_environ_cohsex(X,Xk,E,k,q,qp)
  !
  ! Environ SLK datatype
  !
- call MATRIX_init("SLK", v_environ , X%ng, 1) 
- YAMBO_ALLOC(v_environ%blc,(v_environ%BLCrows(1):v_environ%BLCrows(2),v_environ%BLCcols(1):v_environ%BLCcols(2),1))
- v_environ%blc=cZERO
+ ! call MATRIX_init("SLK", v_environ , X%ng, 1) 
+ ! Y AMBO_ALLOC(v_environ%blc,(v_environ%BLCrows(1):v_environ%BLCrows(2),v_environ%BLCcols(1):v_environ%BLCcols(2),1))
+ ! v_environ%blc=cZERO
  !   
- if (have_cuda) then
-    YAMBO_ALLOC_SOURCE(v_environ%blc_d,v_environ%blc)
- endif
+ ! if (have_cuda) then
+ !    Y AMBO_ALLOC_SOURCE(v_environ%blc_d,v_environ%blc)
+ ! endif
  do iqbz=1,q%nbz 
    if (PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) then
      iq_to_start=iqbz

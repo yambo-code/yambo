@@ -59,11 +59,12 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  endif
  !
  if (iq/=1) then
-   ! Default is Lfull as Lbar is NOT defined and gives WRONG results
+   ! For finite momentum Lbar is NOT defined and gives WRONG results
    ! BSE Hamiltonian is fully symmetric with Lfull
-   if(STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-full"
-   if(STRING_match(BSE_L_kind,"bar")) call error("Lbar not defined at q/=0")
-endif
+   if (.not. STRING_match(BSE_L_kind, "full")) &
+&   call warning('Lbar is defined only for q = 0. For q /= 0, it is always set to "full".')
+   BSE_L_kind="full"
+ endif
  !
  if (l_col_cut.and.what=="init") then
    ! We are here in 0D, 1D or 2D
@@ -77,18 +78,6 @@ endif
      ! directly remove the G=0 term
      call warning('Coulomb cutoff at q=0. Default/Suggested Lkind= bar')
      if (STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-bar"
-   endif
-   if (iq/=1) then
-     ! We are here in 1D or 2D.
-     ! At q>0 there is L-T spliting in 1D or 2D
-     ! Lbar and Lfull give the same result only in the limit V->infinity
-     ! The above mentioned G=0 term is part of this effect.
-     ! Here we assume it would be better to include it, to be double checked
-     call warning('Coulomb cutoff at q>0. Default/Suggested Lkind= full')
-     if (STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-full"
-     ! N.B.: One could compute the calculation without L-T slitting,
-     ! by removing such full line (2D) / plane (1D). Not coded at the moment.
-     ! I would define it as L="transverse"
    endif
  endif
  !

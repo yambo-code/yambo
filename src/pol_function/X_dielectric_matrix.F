@@ -506,49 +506,48 @@ subroutine X_symmetrize_q0(X_par, NG, Xw)
 
   integer :: ig1, ig2, ig1_sym, ig2_sym, isym, iw
   integer :: nsym_loop, ig1_loc
-  complex(SP), allocatable :: X_full(:,:,:)
-
+  complex(SP), allocatable :: X_full(:,:)
+  !
   if (nsym <= 1) return
-
+  !
   call msg('r', 'Applying q->0 symmetries to the macroscopic dielectric matrix')
-
-  allocate(X_full(NG, NG, Xw%n_freqs))
-  X_full = cZERO
-  
-  if (X_par%nrows>0) X_full(X_par%rows(1):X_par%rows(2), 1:NG, :) = X_par%blc(1:X_par%nrows, 1:NG, :)
-  
-  call PP_redux_wait(X_full, COMM=X_par%INTER_comm%COMM)
-  
-  X_par%blc = cZERO
-  
-  do iw = 1, Xw%n_freqs
+  !
+  allocate(X_full(NG, NG))
+  ! 
+  do iw = 1, Xw%n_freqs  
+     X_full = cZERO
+     if (X_par%nrows>0) X_full(X_par%rows(1):X_par%rows(2), 1:NG) = X_par%blc(1:X_par%nrows, 1:NG, iw)
+     call PP_redux_wait(X_full, COMM=X_par%INTER_comm%COMM)
+     if (X_par%nrows>0) X_par%blc(1:X_par%nrows, 1:NG, iw) = cZERO
+     ! Note :
+     ! Time reversal maps (X(q,...,E) to X(q,...,-E)
+     ! so we only apply to E = 0 case
      if (abs(Xw%p(iw)) < 1.e-5_SP) then
         nsym_loop = nsym
      else
         nsym_loop = nsym / (i_time_rev + 1)
      endif
-
      do ig2 = 1, NG
         do ig1_loc = 1, X_par%nrows
            ig1 = ig1_loc + X_par%rows(1) - 1
            do isym = 1, nsym_loop
               ig1_sym = g_rot(ig1, isym)
               ig2_sym = g_rot(ig2, isym)
-              
+              !
               if (ig1_sym > 0 .and. ig1_sym <= NG .and. ig2_sym > 0 .and. ig2_sym <= NG) then
                  if (isym > nsym / (i_time_rev + 1)) then
                     X_par%blc(ig1_loc, ig2, iw) = X_par%blc(ig1_loc, ig2, iw) + &
-                         conjg(X_full(ig1_sym, ig2_sym, iw)) / real(nsym_loop, SP)
+                         conjg(X_full(ig1_sym, ig2_sym)) / real(nsym_loop, SP)
                  else
                     X_par%blc(ig1_loc, ig2, iw) = X_par%blc(ig1_loc, ig2, iw) + &
-                         X_full(ig1_sym, ig2_sym, iw) / real(nsym_loop, SP)
+                         X_full(ig1_sym, ig2_sym) / real(nsym_loop, SP)
                  endif
               endif
            enddo
         enddo
      enddo
   enddo
-  
+  !
   deallocate(X_full)
-
+!
 end subroutine X_symmetrize_q0

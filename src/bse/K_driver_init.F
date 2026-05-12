@@ -61,9 +61,10 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  if (iq/=1) then
    ! For finite momentum Lbar is NOT defined and gives WRONG results
    ! BSE Hamiltonian is fully symmetric with Lfull
-   if (.not. STRING_match(BSE_L_kind, "full")) &
-&   call warning('Lbar is defined only for q = 0. For q /= 0, it is always set to "full".')
-   BSE_L_kind="default-full"
+   if (.not. STRING_match(BSE_L_kind, "full")) then
+    call warning('Lbar is defined only for q = 0. For q /= 0, it is always set to "full".')
+    BSE_L_kind="default-full"
+   endif
  endif
  !
  if (l_col_cut.and.what=="init") then

@@ -497,6 +497,7 @@ subroutine X_symmetrize_q0(X_par, NG, Xw)
   use R_lattice,     ONLY: g_rot
   use parallel_int,  ONLY: PP_redux_wait
   use com,           ONLY: msg
+  use stderr,        ONLY: write_to_log
 
   implicit none
 
@@ -507,18 +508,22 @@ subroutine X_symmetrize_q0(X_par, NG, Xw)
   integer :: ig1, ig2, ig1_sym, ig2_sym, isym, iw
   integer :: nsym_loop, ig1_loc
   complex(SP), allocatable :: X_full(:,:)
+  logical :: saved_log
   !
   if (nsym <= 1) return
   !
-  call msg('r', 'Applying q->0 symmetries to the macroscopic dielectric matrix')
+  saved_log = write_to_log
+  if (X_par%INTER_comm%CPU_id == 0) write_to_log = .TRUE.
+  call msg('s', 'Applying q->0 symmetries to the macroscopic dielectric matrix')
+  write_to_log = saved_log
   !
   allocate(X_full(NG, NG))
   ! 
   do iw = 1, Xw%n_freqs  
      X_full = cZERO
-     if (X_par%nrows>0) X_full(X_par%rows(1):X_par%rows(2), 1:NG) = X_par%blc(1:X_par%nrows, 1:NG, iw)
+     if (X_par%nrows>0) X_full(X_par%rows(1):X_par%rows(2), 1:NG) = X_par%blc(X_par%rows(1):X_par%rows(2), 1:NG, iw)
      call PP_redux_wait(X_full, COMM=X_par%INTER_comm%COMM)
-     if (X_par%nrows>0) X_par%blc(1:X_par%nrows, 1:NG, iw) = cZERO
+     if (X_par%nrows>0) X_par%blc(X_par%rows(1):X_par%rows(2), 1:NG, iw) = cZERO
      ! Note :
      ! Time reversal maps (X(q,...,E) to X(q,...,-E)
      ! so we only apply to E = 0 case
@@ -536,10 +541,10 @@ subroutine X_symmetrize_q0(X_par, NG, Xw)
               !
               if (ig1_sym > 0 .and. ig1_sym <= NG .and. ig2_sym > 0 .and. ig2_sym <= NG) then
                  if (isym > nsym / (i_time_rev + 1)) then
-                    X_par%blc(ig1_loc, ig2, iw) = X_par%blc(ig1_loc, ig2, iw) + &
+                    X_par%blc(ig1, ig2, iw) = X_par%blc(ig1, ig2, iw) + &
                          conjg(X_full(ig1_sym, ig2_sym)) / real(nsym_loop, SP)
                  else
-                    X_par%blc(ig1_loc, ig2, iw) = X_par%blc(ig1_loc, ig2, iw) + &
+                    X_par%blc(ig1, ig2, iw) = X_par%blc(ig1, ig2, iw) + &
                          X_full(ig1_sym, ig2_sym) / real(nsym_loop, SP)
                  endif
               endif

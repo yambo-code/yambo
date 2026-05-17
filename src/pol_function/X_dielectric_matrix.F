@@ -507,7 +507,6 @@ subroutine X_symmetrize_q0(X_par, NG, Xw)
   integer :: ig1, ig2, ig1_sym, ig2_sym, isym, iw
   integer :: nsym_loop, ig1_loc
   complex(SP), allocatable :: X_full(:,:)
-  logical :: saved_log
   !
   if (nsym <= 1) return
   !

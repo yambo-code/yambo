@@ -497,7 +497,6 @@ subroutine X_symmetrize_q0(X_par, NG, Xw)
   use R_lattice,     ONLY: g_rot
   use parallel_int,  ONLY: PP_redux_wait
   use com,           ONLY: msg
-  use stderr,        ONLY: write_to_log
 
   implicit none
 
@@ -512,10 +511,7 @@ subroutine X_symmetrize_q0(X_par, NG, Xw)
   !
   if (nsym <= 1) return
   !
-  saved_log = write_to_log
-  if (X_par%INTER_comm%CPU_id == 0) write_to_log = .TRUE.
   call msg('s', 'Applying q->0 symmetries to the macroscopic dielectric matrix')
-  write_to_log = saved_log
   !
   allocate(X_full(NG, NG))
   ! 

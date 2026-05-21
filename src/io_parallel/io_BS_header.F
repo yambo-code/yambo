@@ -76,6 +76,7 @@ integer function io_BS_header(iq,X,ID,mode)
  if (io_BS_header/=0.and.io_mode(ID)/=DUMP) then
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    call warning('Invalid dimensions found. BSE restart file '//trim(full_db_name)//' not accepted')
+   call io_disconnect(ID)
    return
  endif
  !

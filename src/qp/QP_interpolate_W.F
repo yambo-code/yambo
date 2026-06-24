@@ -66,7 +66,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  !
  call section("+", "RIM-W interpolation")
  !
- call msg("r", trim(rimW_type))
+ call msg("r", trim(rimw_type))
  !
  !Load q_grid_b in rlu
  do idm=1,3
@@ -196,8 +196,10 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
          enddo
        enddo
        ! 
+       if ((trim(rimw_type) != "semiconductor") and (.not.  cut_is_slab)) then
+       !
        ! Calculation of next nearest neighbours vX needed only for the q=0 term 
-       ! and the neighboursing q-points for the wings and the head term 
+       ! and the neighboursing q-points (for the wings and the head term)
        !
        do iqn2=1,7 
          !
@@ -229,6 +231,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
            !
          enddo
        endif 
+       endif
        !
      enddo
      !
@@ -320,12 +323,23 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
           end if
           !
           !
-          if ((ig1==1) .and. (ig2==1)  .and. (iomega .ne. 1) .and. (iq2 .ne. 1) .and. (iq1 .ne. 1)) then
+          if ((ig1==1) .and. (ig2==1)  .and. (iomega .ne. 1) .and. (iq2 .ne. 1) .and. (iq1 .ne. 1)) then      
+           select case (trim(rimw_type))
+           case ("semiconductor")
+           if  (.not. cut_is_slab) then  
             iq3 = idx_q(ig1,iq2,nn)
             if (iq3==1) then
-              q0_snd_neighbour=.true.
+              q0_snd_neighbour=.true.  
               iq0=nn
             end if
+           end if
+           case ("metal")
+            iq3 = idx_q(ig1,iq2,nn)
+            if (iq3==1) then
+              q0_snd_neighbour=.true.  
+              iq0=nn
+            end if
+           end select
           end if           
         enddo
         !

@@ -19,11 +19,11 @@ subroutine rim(mode,Xw)
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,nqbz,&
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
 &                        RIM_n_rand_pts,RIM_ng,RIM_W_ng,RIM_qpg,RIM_W_is_diagonal,&
-&                        RIM_id_epsm1_reference,RIM_anisotropy,RIM_W,RIM_W_d,aux_RIM_W,& ! aux_RIM_W_d,&
+&                        RIM_id_epsm1_reference,RIM_anisotropy,RIM_W,RIM_W_d,aux_RIM_W,&
 &                        cut_is_slab,idir,f_coeff,f_coeff_d
  use timing_m,      ONLY:timing
  use frequency,     ONLY:w_samp
- use gpu_m,         ONLY:have_gpu
+ use gpu_m,         ONLY:have_gpu,have_cuf
  use devxlib,       ONLY:devxlib_memcpy_h2d
  !
 #include<y_memory.h>
@@ -60,6 +60,12 @@ subroutine rim(mode,Xw)
  YAMBO_ALLOC(qr,(3,RIM_n_rand_pts))
  if (have_gpu) then
    YAMBO_ALLOC_GPU(DEV_VAR(qr),(3,RIM_n_rand_pts))
+ endif
+ !
+ ! This is allocated for safety in order not to pass
+ ! a non-allocated pointer to rim_interpolate_w
+ if (.not. have_cuf) then
+   YAMBO_ALLOC(qr_d,(1,1))
  endif
  !
  em1_anis=RIM_epsm1(:)-1.
@@ -170,23 +176,28 @@ subroutine rim(mode,Xw)
  call section('=','RIM integrals')
  !
  if (mode == "x") then
+   !
    YAMBO_ALLOC(RIM_qpg,(nqibz,RIM_ng,RIM_ng))
    RIM_qpg=0._SP
    G_radii=0._SP
    G_circ=0._SP
    N_out_G=0
+   !
  else if (mode == "c") then
+   !
    YAMBO_ALLOC(RIM_W,(Xw%n_freqs,nqibz,RIM_W_ng,RIM_W_ng))
    RIM_W=0._SP
    !
-   ! AF: need to cp f_coeff on GPU mem before calling rim_integrate_w
+   ! AF: before calling rim_integrate_w we need to:
+   !     * allocate aux_RIM_W on CPU
+   !     * cp f_coeff and RIM_W  on GPU mem 
    !
    YAMBO_ALLOC(aux_RIM_W,(Xw%n_freqs,RIM_W_ng,RIM_W_ng))
 #ifdef _GPU
-   !AMBO_ALLOC_GPU_SOURCE(DEV_VAR(aux_RIM_W),aux_RIM_W)
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_W),RIM_W)
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(f_coeff),f_coeff)
 #endif
+   !
  endif
  !
  call PARALLEL_index(px,(/nqibz/))
@@ -196,7 +207,9 @@ subroutine rim(mode,Xw)
    if (.not.px%element_1D(iq)) cycle
    !
    if (mode == "x") then
+     !
      call rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
+     !
    else if (mode == "c") then
      !
      call rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
@@ -234,15 +247,15 @@ subroutine rim(mode,Xw)
  !
  call PP_indexes_reset(px)
  !
- if (mode == "c") then
  YAMBO_FREE(aux_RIM_W)
-#ifdef _GPU
  YAMBO_FREE_GPU(DEV_VAR(f_coeff))
+ !
  YAMBO_FREE_GPU(DEV_VAR(qr))
- !AMBO_FREE_GPU(DEV_VAR(aux_RIM_W))
-#endif
  YAMBO_FREE(qr)
- end if
+ !
+ if (.not. have_cuf) then
+   YAMBO_FREE(qr_d)
+ endif
  !
  if (mode == "x") call timing('RIM',OPR='stop')
  if (mode == "c") call timing('RIM-W',OPR='stop')

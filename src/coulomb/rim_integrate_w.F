@@ -14,8 +14,8 @@
 !
 ! AF: This file needs cleanup
 !     - proper indentation
-!     - explicit handling of precision (e.g. 2.0_SP instead of 2.0)
 !     - too long, splitting ??
+!     - aux_RIM_W (CPU only) should be allocated in here
 !
 subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
  !
@@ -101,9 +101,7 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
  YAMBO_ALLOC(vslab,(RIM_n_rand_pts,RIM_W_ng))
  !
  if (have_gpu) then
-  !
   YAMBO_ALLOC_GPU(DEV_VAR(vslab),(RIM_n_rand_pts,RIM_W_ng))
-  !
  endif
  !
  !
@@ -170,7 +168,12 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
        !
        RIM_acc=0.0_DP
        !
+       !DEV_ACC_DEBUG data present(f_coeff_p,qr)
+       !DEV_ACC parallel loop async private(i3,func) reduction(+:RIM_acc)
        !DEV_CUF kernel do(1) <<<*,*>>>
+       !DEV_OMPGPU target map(present,alloc:f_coeff_p,qr) private(i3,func) reduction(+:RIM_acc)
+       !DEV_OMPGPU teams loop
+       !
        do i3=1,RIM_n_rand_pts
          !
          func = f_coeff_p(1,i1,i2,iq,iw)                                                                 &
@@ -195,6 +198,9 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
 &                  (1._DP- DEV_VAR(vslab)(i3,i1)*func*DEV_VAR(vslab)(i3,i2) )
          !
        enddo
+       !DEV_OMPGPU end target
+       !DEV_ACC_DEBUG end data
+       !DEV_ACC wait(acc_async_noval)
        !
        aux_RIM_W(iw,i1,i2)=cmplx(RIM_acc,KIND=SP)
        !
@@ -205,13 +211,10 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
    !
  enddo
  !
- !if (have_gpu) call devxlib_memcpy_d2h(aux_RIM_W,DEV_VAR(aux_RIM_W))
- !
  RIM_W(:,iq,:,:)=aux_RIM_W(:,:,:)
  !
-#ifdef _GPU
+ ! note: vslab is freed on CPU at the end of the routine
  YAMBO_FREE_GPU(DEV_VAR(vslab))
-#endif
  !
  if (iq>1) return
  !

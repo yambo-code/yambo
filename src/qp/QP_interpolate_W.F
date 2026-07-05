@@ -196,41 +196,42 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
          enddo
        enddo
        ! 
-       if ((trim(rimw_type) != "semiconductor") and (.not.  cut_is_slab)) then
-       !
-       ! Calculation of next nearest neighbours vX needed only for the q=0 term 
-       ! and the neighboursing q-points (for the wings and the head term)
-       !
-       do iqn2=1,7 
+       if ((trim(rimw_type) /= "semiconductor") .and. (.not. cut_is_slab)) then
          !
-         if (idx_q(1,iq1,iqn2)==1) then
-           idm=7
-           if (ig1==1) idm=13
-           do nn=1,idm
-             if (idx_q_2(1,iq1,nn) == iq) then
-               vX_nnn(nn,iq1,1,ig1,iomega) = X_mat(idx_G_2(1,iq1,nn),idx_G_2(ig1,iq1,nn),iomega)
-             endif
-           enddo
-           cycle  
-           !
-         endif
+         ! Calculation of next nearest neighbours vX needed only for the q=0 term 
+         ! and the neighboursing q-points (for the wings and the head term)
          !
-       enddo
-       !
-       if (ig1>1) then
          do iqn2=1,7 
            !
            if (idx_q(1,iq1,iqn2)==1) then
-             do nn=1,7
+             idm=7
+             if (ig1==1) idm=13
+             do nn=1,idm
                if (idx_q_2(1,iq1,nn) == iq) then
-                 vX_nnn(nn,iq1,ig1,1,iomega) = X_mat(idx_G_2(ig1,iq1,nn),idx_G_2(1,iq1,nn),iomega)
+                 vX_nnn(nn,iq1,1,ig1,iomega) = X_mat(idx_G_2(1,iq1,nn),idx_G_2(ig1,iq1,nn),iomega)
                endif
              enddo
              cycle  
+             !
            endif
            !
          enddo
-       endif 
+         !
+         if (ig1>1) then
+           do iqn2=1,7 
+             !
+             if (idx_q(1,iq1,iqn2)==1) then
+               do nn=1,7
+                 if (idx_q_2(1,iq1,nn) == iq) then
+                   vX_nnn(nn,iq1,ig1,1,iomega) = X_mat(idx_G_2(ig1,iq1,nn),idx_G_2(1,iq1,nn),iomega)
+                 endif
+               enddo
+               cycle  
+             endif
+             !
+           enddo
+         endif 
+         !
        endif
        !
      enddo

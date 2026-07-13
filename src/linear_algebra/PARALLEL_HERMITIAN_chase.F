@@ -38,10 +38,17 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  call timing('PARALLEL_HERMITIAN_chase',OPR='start')
  !
  nev = min(neig,N)
- nex = nev
+ nex = min(100,nev)
  !
+ ! AF: to be checked
+#ifdef _DOUBLE
  deg = 20
  tol = 1e-10
+#else
+ deg = 10
+ tol = 1e-5
+#endif
+ !
  mode = 'R'
  opt = 'S'
  qr = 'C'
@@ -56,15 +63,14 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  nl    = Mat%ncols
  comm  = SLK_ORTHO%COMM
  !
- allocate(Vtemp(m,nev+nex))
- allocate(Etemp(nev+nex))
+ YAMBO_ALLOC(Vtemp,(m,nev+nex))
+ YAMBO_ALLOC(Etemp,(nev+nex))
  !
  Vtemp = 0.0
  Etemp = 0.0
  ! 
  call mpi_comm_rank(comm,myrank_slk_ortho_comm,ierr)
  call mpi_comm_size(comm,slk_ortho_comm_size  ,ierr)
- ! 
  call mpi_barrier(comm,ierr)
  !
  call timing('ChASE_INIT',OPR='start')
@@ -74,11 +80,15 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  ! call pzchase_init(N,nev,nex,m,nl,Mat%blc(:,:,Mat%I),m,Vtemp,Etemp,&
  !&                  nprow,npcol,grid_major,comm,init)
  !
- call pzchase_init_blockcyclic(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
-&                              nprow, npcol, grid_major, 0, 0, comm, ierr)
+ !call pzchase_init_blockcyclic(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
+ !&                              nprow, npcol, grid_major, 0, 0, comm, ierr)
+ call pzchase_init(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
+&                  nprow, npcol, grid_major, comm, ierr)
 #else
- call pcchase_init_blockcyclic(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
-&                              nprow, npcol, grid_major, 0, 0, comm, ierr)
+ !call pcchase_init_blockcyclic(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
+ !&                             nprow, npcol, grid_major, 0, 0, comm, ierr)
+ call pcchase_init(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
+&                  nprow, npcol, grid_major, comm, ierr)
 #endif
  call timing('ChASE_INIT',OPR='stop')
 
@@ -110,8 +120,9 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  !
  !call PP_redux_wait(E,COMM=SLK_POOL%INTRA_comm)
  !
- deallocate(Etemp)
- deallocate(Vtemp)
+ YAMBO_FREE(Etemp)
+ YAMBO_FREE(Vtemp)
+ !
  call timing('PARALLEL_HERMITIAN_chase',OPR='stop')
  !
 end subroutine PARALLEL_HERMITIAN_chase

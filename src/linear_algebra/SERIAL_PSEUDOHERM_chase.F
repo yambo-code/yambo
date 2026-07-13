@@ -36,17 +36,27 @@ subroutine SERIAL_PSEUDOHERM_chase(n,M,E,V_left,V_right,neig)
  ! 
  E=0.0
  !
- nev = min(neig,n)
- nex = min(n-nev,nev)
+ ! AF: Warning if neig too large (eg > 25-30% of n)
+ ! AF: neig is here assumed to be the number of positive eigs
  !
+ nev = min(neig,n)
+ nex = min(100,nev)
+ !
+ ! AF: to be checked
+#ifdef _DOUBLE
  deg = 20
  tol = 1e-8
+#else
+ deg = 10
+ tol = 1e-4
+#endif
+ !
  mode = 'R'
  opt = 'S'
  qr = 'C'
  !
- allocate(Vtemp(n,nev+nex))
- allocate(Etemp(nev+nex))
+ YAMBO_ALLOC(Vtemp,(n,2*(nev+nex)))
+ YAMBO_ALLOC(Etemp,(2*(nev+nex)))
  Vtemp = 0.0
  Etemp = 0.0
  ! 
@@ -61,9 +71,9 @@ subroutine SERIAL_PSEUDOHERM_chase(n,M,E,V_left,V_right,neig)
  call timing('ChASE_PS_INIT',OPR='stop')
  !
 #if defined _DOUBLE
- call zchase_pseudo(deg,tol,mode,opt,qr)
+ call zchase(deg,tol,mode,opt,qr)
 #else
- call cchase_pseudo(deg,tol,mode,opt,qr)
+ call cchase(deg,tol,mode,opt,qr)
 #endif
  ! 
 #if defined _DOUBLE
@@ -81,8 +91,8 @@ subroutine SERIAL_PSEUDOHERM_chase(n,M,E,V_left,V_right,neig)
  ie=n
  V_left(is:ie,1:nev) = -Vtemp(is:ie,1:nev)
  !
- deallocate(Etemp)
- deallocate(Vtemp)
+ YAMBO_FREE(Etemp)
+ YAMBO_FREE(Vtemp)
  !
  if(.not.(l_nl_optics.or.l_real_time)) then
    call timing('SERIAL_PSEUDOHERM_chase',OPR='stop')

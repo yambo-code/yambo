@@ -33,20 +33,26 @@ subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
    call timing('SERIAL_HERMITIAN_chase',OPR='start')
  endif
  ! 
- !
  E=0.0
  !
  nev = min(neig,n)
- nex = min(n-nev,nev)
+ nex = min(100,nev)
  !
+ ! AF: to be checked
+#ifdef _DOUBLE
  deg = 20
- tol = 1e-8
+ tol = 1e-10
+#else
+ deg = 10
+ tol = 1e-5
+#endif
+ !
  mode = 'R'
  opt = 'S'
  qr = 'C'
  !
- allocate(Vtemp(n,nev+nex))
- allocate(Etemp(nev+nex))
+ YAMBO_ALLOC(Vtemp,(n,nev+nex))
+ YAMBO_ALLOC(Etemp,(nev+nex))
  Vtemp = 0.0
  Etemp = 0.0
  ! 
@@ -78,8 +84,8 @@ subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
  M(:,1:nev) = Vtemp(:,1:nev)
  M(:,nev+1:) = 0.0_SP
  !
- deallocate(Etemp)
- deallocate(Vtemp)
+ YAMBO_FREE(Etemp)
+ YAMBO_FREE(Vtemp)
  !
  if(.not.(l_nl_optics.or.l_real_time)) then
    call timing('SERIAL_HERMITIAN_chase',OPR='stop')

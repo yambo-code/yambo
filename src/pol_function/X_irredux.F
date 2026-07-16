@@ -55,7 +55,6 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  use gpu_m,         ONLY:have_gpu
  use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_memcpy_d2h,devxlib_memcpy_h2d
  use timing_m,      ONLY:timing
- use units,         ONLY:HA2EV
  !
 #include<dev_defs.h>
 #include<y_memory.h>

@@ -33,7 +33,7 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  real(SP),    allocatable :: Etemp(:)
  !
  integer :: myrank_intra, myrank_inter, intra_size, inter_size,&
-&           myrank_slk_ortho_comm, slk_ortho_comm_size,ierr
+&           myrank_slk_ortho_comm, slk_ortho_comm_size
 
  call timing('PARALLEL_HERMITIAN_chase',OPR='start')
  !

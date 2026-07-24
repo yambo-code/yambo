@@ -376,12 +376,12 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
      call VecScatterEnd(vs,xup,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
      call VecScatterEnd(vs2,xdown,vout2,INSERT_VALUES,SCATTER_FORWARD,ierr)
      !
-     call VecGetArrayReadF90(vout,xsr,ierr)
+     call VecGetArrayRead(vout,xsr,ierr)
      V_right(1:Nsize/2, i_eig+1) = cmplx(xsr,kind=SP)
-     call VecRestoreArrayReadF90(vout,xsr,ierr)
-     call VecGetArrayReadF90(vout2,xsr,ierr)
+     call VecRestoreArrayRead(vout,xsr,ierr)
+     call VecGetArrayRead(vout2,xsr,ierr)
      V_right(Nsize/2+1:Nsize, i_eig+1) = cmplx(xsr,kind=SP)
-     call VecRestoreArrayReadF90(vout2,xsr,ierr)
+     call VecRestoreArrayRead(vout2,xsr,ierr)
      !
      call VecRestoreSubVector(xr,is(1),xup,ierr)
      call VecRestoreSubVector(xr,is(2),xdown,ierr)
@@ -396,12 +396,12 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
        call VecScatterEnd(vs,xup,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
        call VecScatterEnd(vs2,xdown,vout2,INSERT_VALUES,SCATTER_FORWARD,ierr)
        !
-       call VecGetArrayReadF90(vout,xsr_left,ierr)
+       call VecGetArrayRead(vout,xsr_left,ierr)
        V_left(1:Nsize/2, i_eig+1) = cmplx(xsr_left,kind=SP)
-       call VecRestoreArrayReadF90(vout,xsr_left,ierr)
-       call VecGetArrayReadF90(vout2,xsr_left,ierr)
+       call VecRestoreArrayRead(vout,xsr_left,ierr)
+       call VecGetArrayRead(vout2,xsr_left,ierr)
        V_left(Nsize/2+1:Nsize, i_eig+1) = cmplx(xsr_left,kind=SP)
-       call VecRestoreArrayReadF90(vout2,xsr_left,ierr)
+       call VecRestoreArrayRead(vout2,xsr_left,ierr)
        !
        call VecRestoreSubVector(xr_left,is(1),xup,ierr)
        call VecRestoreSubVector(xr_left,is(2),xdown,ierr)
@@ -412,10 +412,10 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
      call VecScatterBegin(vs,xr,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
      call VecScatterEnd(vs,xr,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
      !
-     call VecGetArrayReadF90(vout,xsr,ierr)
+     call VecGetArrayRead(vout,xsr,ierr)
      V_right(:, i_eig+1) = cmplx(xsr,kind=SP)
      !if (BSS_slepc_double_grp) V_right(BS_K_dim(1)+1:,i_eig+1)=cI*V_right(BS_K_dim(1)+1:,i_eig+1)
-     call VecRestoreArrayReadF90(vout,xsr,ierr)
+     call VecRestoreArrayRead(vout,xsr,ierr)
      !
      if (present(V_left)) then
        !save the left eigenvectors
@@ -423,10 +423,10 @@ subroutine MATRIX_slepc(M_slepc,n_eig,V_right,V_left,E_real,E_cmpl)
        call VecScatterBegin(vs,xr_left,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
        call VecScatterEnd(vs,xr_left,vout,INSERT_VALUES,SCATTER_FORWARD,ierr)
        !
-       call VecGetArrayReadF90(vout,xsr_left,ierr)
+       call VecGetArrayRead(vout,xsr_left,ierr)
        V_left(:, i_eig+1) = cmplx(xsr_left,kind=SP)
        !if (BSS_slepc_double_grp) V_left(BS_K_dim(1)+1:,i_eig+1) =cI*V_left(BS_K_dim(1)+1:,i_eig+1)
-       call VecRestoreArrayReadF90(vout,xsr_left,ierr)
+       call VecRestoreArrayRead(vout,xsr_left,ierr)
      endif
    endif
    !

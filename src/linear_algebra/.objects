@@ -10,7 +10,7 @@ SLEPC_objs = MATRIX_slepc.o
 CHASE_objs = SERIAL_HERMITIAN_chase.o SERIAL_PSEUDOHERM_chase.o
 #endif
 #if defined _CHASE && defined _SCALAPACK
-CHASE_objs += PARALLEL_HERMITIAN_chase.o
+CHASE_objs += PARALLEL_HERMITIAN_chase.o PARALLEL_PSEUDOHERM_chase.o
 #endif
 #if defined _GPU && defined _PGI
 GPU_objs = SERIAL_lin_system_gpu.o

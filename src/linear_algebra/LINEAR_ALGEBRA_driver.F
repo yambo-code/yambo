@@ -61,7 +61,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  complex(SP)         :: det_
  integer             :: N,lib_in_use
- type (PAR_matrix)   :: M_loc,B_loc,C_loc,V_loc
+ type (PAR_matrix)   :: M_loc,B_loc,C_loc,V_loc,V_locL,V_locR
  logical             :: USE_GPU
  double precision    :: starttime,endtime
  character(len=20)   :: matfilename
@@ -98,8 +98,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  if (present(lib_in)) then
    lib_in_use=lib_in
  endif
- if(idriver==SVD_INV.or.((idriver==DIAGO.or.idriver==DIAGX&
-&                        .or.idriver==CHASE).and.present(E_cmpl))) lib_in_use=USE_LK 
+ if(idriver==SVD_INV.or.((idriver==DIAGO.or.idriver==DIAGX)&
+&                        .and.present(E_cmpl))) lib_in_use=USE_LK 
  if (.not.linear_algebra_is_parallel) lib_in_use=USE_LK
  !
  ! whether to use CUDA lib
@@ -113,7 +113,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
 #endif
  !
 #if defined _SCALAPACK
- if ((idriver==DIAGO.or.idriver==DIAGX.or.idriver==CHASE).and.present(E_cmpl).and.ncpu>1) then
+ if ((idriver==DIAGO.or.idriver==DIAGX).and.present(E_cmpl).and.ncpu>1) then
    !
    call warning('Parallel non-herm diag not yet implemented. Switching to LK')
    lib_in_use=USE_LK
@@ -140,36 +140,49 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    !
    if (idriver==DIAGO.or.idriver==DIAGX.or.idriver==CHASE) then
      !
-     call MATRIX_init("SLK",  V_loc, N, 1 )
-     YAMBO_ALLOC(V_loc%blc,(V_loc%BLCrows(1):V_loc%BLCrows(2),V_loc%BLCcols(1):V_loc%BLCcols(2),V_loc%Nb))
-     !
-     if(idriver==DIAGO) call PARALLEL_HERMITIAN_diago( M_loc, V_loc, N, E_real )
-     !
-     if(idriver==DIAGX) call PARALLEL_HERMITIAN_diagx( M_loc, V_loc, N, E_real, neig )
-     !
-#if defined _CHASE
-     !
-     if (idriver==CHASE) then
+     if (.not.present(E_cmpl)) then
        !
-       if (present(E_cmpl)) then
-         !
-         !... non-Hermitian case
-         !call PARALLEL_PSEUDOHERM_chase( M_loc, V_loc, N, E_real, neig )
-         !
-       else
-         ! 
-         !... Hermitian case
-         call PARALLEL_HERMITIAN_chase( M_loc, V_loc, N, E_real, neig )
-         !
-       endif
+       !... Hermitian case
+       !
+       call MATRIX_init("SLK",  V_loc, N, 1 )
+       YAMBO_ALLOC(V_loc%blc,(V_loc%BLCrows(1):V_loc%BLCrows(2),V_loc%BLCcols(1):V_loc%BLCcols(2),V_loc%Nb))
+       !
+       if(idriver==DIAGO) call PARALLEL_HERMITIAN_diago( M_loc, V_loc, N, E_real )
+       !
+       if(idriver==DIAGX) call PARALLEL_HERMITIAN_diagx( M_loc, V_loc, N, E_real, neig )
+       !
+#if defined _CHASE
+       if(idriver==CHASE) call PARALLEL_HERMITIAN_chase( M_loc, V_loc, N, E_real, neig )
+#endif
+       !
+       call MATRIX_transfer( M_in=V_loc , M=M )
+       !
+       YAMBO_FREE(V_loc%blc)
+       call MATRIX_reset(V_loc)
+       !
+     else
+       !
+       !... non-Hermitian case
+       !
+       call MATRIX_init("SLK",  V_locR, N, 1 )
+       YAMBO_ALLOC(V_locR%blc,(V_locR%BLCrows(1):V_locR%BLCrows(2),V_locR%BLCcols(1):V_locR%BLCcols(2),V_locR%Nb))
+       call MATRIX_init("SLK",  V_locL, N, 1 )
+       YAMBO_ALLOC(V_locL%blc,(V_locL%BLCrows(1):V_locL%BLCrows(2),V_locL%BLCcols(1):V_locL%BLCcols(2),V_locL%Nb))
+       !
+#if defined _CHASE
+       call PARALLEL_PSEUDOHERM_chase( M_loc, V_loc, V_locR, N, E_cmpl, neig )
+#endif
+       !
+       call MATRIX_transfer( M_in=V_locL , M=V_left )
+       call MATRIX_transfer( M_in=V_locR , M=V_right )
+       !
+       YAMBO_FREE(V_locR%blc)
+       call MATRIX_reset(V_locR)
+       YAMBO_FREE(V_locL%blc)
+       call MATRIX_reset(V_locL)
        !
      endif
      ! 
-#endif
-     !
-     call MATRIX_transfer( M_in = V_loc , M=M )
-     YAMBO_FREE(V_loc%blc)
-     call MATRIX_reset(V_loc)
      !
    else if (idriver==INV) then
      !

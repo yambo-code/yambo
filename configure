@@ -13986,6 +13986,7 @@ else $as_nop
   as_fn_error $? "lchase_f not found   " "$LINENO" 5
 fi
 
+        #AC_CHECK_FILES("${CHASE_LIBS_R}/libchase_cuda_kernels.a" ,[],[AC_ERROR([lchase_cuda not found])])
         as_ac_File=`printf "%s\n" "ac_cv_file_"${CHASE_LIBS_R}/libchase_cuda_kernels.a"" | $as_tr_sh`
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for \"${CHASE_LIBS_R}/libchase_cuda_kernels.a\"" >&5
 printf %s "checking for \"${CHASE_LIBS_R}/libchase_cuda_kernels.a\"... " >&6; }
@@ -14010,16 +14011,21 @@ then :
 cat >>confdefs.h <<_ACEOF
 #define `printf "%s\n" "HAVE_"${CHASE_LIBS_R}/libchase_cuda_kernels.a"" | $as_tr_cpp` 1
 _ACEOF
-
+have_chase_cuda=yes
 else $as_nop
-  as_fn_error $? "lchase_cuda not found" "$LINENO" 5
+  have_chase_cuda=no
 fi
 
 
         CHASE_INCS="${CHASE_INCS} -I${CHASE_INCS_R}"
 
-        CHASE_LIBS="${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels "
+        if  "$have_chase_cuda" == "yes"  ; then
+          CHASE_LIBS="${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels "
 
+        else
+          CHASE_LIBS="${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f "
+
+        fi
         CHASE_LIBS="${CHASE_LIBS} -lstdc++ "
 
 

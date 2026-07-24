@@ -87,8 +87,12 @@ subroutine SERIAL_PSEUDOHERM_chase(n,M,E,V_left,V_right,neig)
  E(1:nev) = Etemp(1:nev)
  V_right(:,1:nev) = Vtemp(:,1:nev)
  !
+ ! Left eigenvectors: L = S R with S=diag(I,-I) for BSE pseudo-Hermitian.
+ ! If R=(X,Y), then L=(X,-Y). Must copy the upper half as well.
+ !
  is=n/2+1
  ie=n
+ V_left(1:n/2,1:nev) =  Vtemp(1:n/2,1:nev)
  V_left(is:ie,1:nev) = -Vtemp(is:ie,1:nev)
  !
  YAMBO_FREE(Etemp)

@@ -170,7 +170,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
        YAMBO_ALLOC(V_locL%blc,(V_locL%BLCrows(1):V_locL%BLCrows(2),V_locL%BLCcols(1):V_locL%BLCcols(2),V_locL%Nb))
        !
 #if defined _CHASE
-       call PARALLEL_PSEUDOHERM_chase( M_loc, V_loc, V_locR, N, E_cmpl, neig )
+       call PARALLEL_PSEUDOHERM_chase( M_loc, V_locL, V_locR, N, E_cmpl, neig )
 #endif
        !
        call MATRIX_transfer( M_in=V_locL , M=V_left )
@@ -188,7 +188,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      !
      if (present(M)) then
        call PARALLEL_inversion( M_loc, N ) 
-       call MATRIX_transfer( M_in = M_loc , M=M )
+       call MATRIX_transfer( M_in=M_loc , M=M )
      else
        call PARALLEL_inversion( M_slk, N ) 
      endif
@@ -199,11 +199,11 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
        !
        call MATRIX_init("SLK",  B_loc, N, 1 )
        YAMBO_ALLOC(B_loc%blc,(B_loc%BLCrows(1):B_loc%BLCrows(2),B_loc%BLCcols(1):B_loc%BLCcols(2),B_loc%Nb))
-       call MATRIX_transfer( M_out = B_loc, M=B )
+       call MATRIX_transfer( M_out=B_loc, M=B )
        !
        call PARALLEL_lin_system( M_loc, B_loc, N, N)
        !
-       call MATRIX_transfer( M_in =  B_loc, M=B )
+       call MATRIX_transfer( M_in=B_loc, M=B )
        !
        YAMBO_FREE(B_loc%blc)
        call MATRIX_reset(B_loc)
@@ -220,14 +220,14 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
        !
        call MATRIX_init("SLK",  B_loc, N, 1 )
        YAMBO_ALLOC(B_loc%blc,(B_loc%BLCrows(1):B_loc%BLCrows(2),B_loc%BLCcols(1):B_loc%BLCcols(2),B_loc%Nb))
-       call MATRIX_transfer( M_out =  B_loc, M=B )
+       call MATRIX_transfer( M_out=B_loc, M=B )
        !
        call MATRIX_init("SLK",  C_loc, N, 1 )
        YAMBO_ALLOC(C_loc%blc,(C_loc%BLCrows(1):B_loc%BLCrows(2),C_loc%BLCcols(1):C_loc%BLCcols(2),C_loc%Nb))
        call MATRIX_transfer( M_out =  C_loc, M=C )
        !
        call PARALLEL_M_by_M( M_loc, B_loc, C_loc, 'N', 'N', N, N , N )
-       call MATRIX_transfer( M_in =  C_loc, M=C )
+       call MATRIX_transfer( M_in=C_loc, M=C )
        !
        call MATRIX_reset(B_loc)
        YAMBO_FREE(B_loc%blc)

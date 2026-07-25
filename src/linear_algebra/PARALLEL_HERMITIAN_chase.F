@@ -76,20 +76,13 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V, N, E, neig)
  call timing('ChASE_INIT',OPR='start')
  !
 #if defined _DOUBLE
- !
- ! call pzchase_init(N,nev,nex,m,nl,Mat%blc(:,:,Mat%I),m,Vtemp,Etemp,&
- !&                  nprow,npcol,grid_major,comm,init)
- !
- !call pzchase_init_blockcyclic(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
- !&                              nprow, npcol, grid_major, 0, 0, comm, ierr)
  call pzchase_init(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
-&                  nprow, npcol, grid_major, comm, ierr)
+&                  nprow, npcol, grid_major, comm, init=ierr)
 #else
- !call pcchase_init_blockcyclic(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
- !&                             nprow, npcol, grid_major, 0, 0, comm, ierr)
  call pcchase_init(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
-&                  nprow, npcol, grid_major, comm, ierr)
+&                  nprow, npcol, grid_major, comm, init=ierr)
 #endif
+ !
  call timing('ChASE_INIT',OPR='stop')
 
 #if defined _DOUBLE

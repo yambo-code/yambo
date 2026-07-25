@@ -14,6 +14,7 @@ subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,&
 &                         LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
+ use chase_diag
  !
 #include<y_memory.h>
  !
@@ -38,7 +39,6 @@ subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
  nev = min(neig,n)
  nex = min(100,nev)
  !
- ! AF: to be checked
 #ifdef _DOUBLE
  deg = 20
  tol = 1e-10
@@ -59,9 +59,9 @@ subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
  call timing('ChASE_INIT',OPR='start')
  !
 #if defined _DOUBLE
- call zchase_init(n, nev, nex, M, n, Vtemp, Etemp, ierr)
+ call zchase_init(n, nev, nex, M, n, Vtemp, Etemp, init=ierr)
 #else
- call cchase_init(n, nev, nex, M, n, Vtemp, Etemp, ierr)
+ call cchase_init(n, nev, nex, M, n, Vtemp, Etemp, init=ierr)
 #endif
  !
  call timing('ChASE_INIT',OPR='stop')

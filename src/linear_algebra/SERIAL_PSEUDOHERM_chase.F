@@ -14,6 +14,7 @@ subroutine SERIAL_PSEUDOHERM_chase(n,M,E,V_left,V_right,neig)
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,&
 &                         LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
+ use chase_diag
  !
 #include<y_memory.h>
  !
@@ -42,7 +43,6 @@ subroutine SERIAL_PSEUDOHERM_chase(n,M,E,V_left,V_right,neig)
  nev = min(neig,n)
  nex = min(100,nev)
  !
- ! AF: to be checked
 #ifdef _DOUBLE
  deg = 20
  tol = 1e-8
@@ -63,9 +63,9 @@ subroutine SERIAL_PSEUDOHERM_chase(n,M,E,V_left,V_right,neig)
  call timing('ChASE_PS_INIT',OPR='start')
  !
 #if defined _DOUBLE
- call zchase_init_pseudo(n, nev, nex, M, n, Vtemp, Etemp, ierr)
+ call zchase_init_pseudo(n, nev, nex, M, n, Vtemp, Etemp, init=ierr)
 #else
- call cchase_init_pseudo(n, nev, nex, M, n, Vtemp, Etemp, ierr)
+ call cchase_init_pseudo(n, nev, nex, M, n, Vtemp, Etemp, init=ierr)
 #endif
  !
  call timing('ChASE_PS_INIT',OPR='stop')

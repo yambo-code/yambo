@@ -82,10 +82,10 @@ subroutine PARALLEL_PSEUDOHERM_chase(Mat, V_left, V_right, N, E, neig)
  !
 #if defined _DOUBLE
  call pzchase_init_pseudo(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
-&                         nprow, npcol, grid_major, comm, ierr)
+&                         nprow, npcol, grid_major, comm, init=ierr)
 #else
  call pcchase_init_pseudo(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
-&                         nprow, npcol, grid_major, comm, ierr)
+&                         nprow, npcol, grid_major, comm, init=ierr)
 #endif
  !
  call timing('ChASE_INIT',OPR='stop')

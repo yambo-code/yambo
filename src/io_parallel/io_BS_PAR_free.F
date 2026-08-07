@@ -42,7 +42,10 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
    endif
  endif
  !
- if(.not.io_BS_K .and. trim(mode)=="full" )      return
+ if(.not.io_BS_K .and. trim(mode)=="full" ) then
+   call io_disconnect(ID)
+   return
+ endif
  !
  if(trim(mode)=="compressed_mat".or.trim(mode)=="full") call io_disconnect(ID)
  !

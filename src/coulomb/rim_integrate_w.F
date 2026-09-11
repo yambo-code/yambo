@@ -171,8 +171,8 @@ subroutine rim_integrate_w(iq,qr,qr_d,N_out,em1_anis,Xw)
        !DEV_ACC_DEBUG data present(f_coeff_p,qr)
        !DEV_ACC parallel loop async private(i3,func) reduction(+:RIM_acc)
        !DEV_CUF kernel do(1) <<<*,*>>>
-       !DEV_OMPGPU target map(present,alloc:f_coeff_p,qr) private(i3,func) reduction(+:RIM_acc)
-       !DEV_OMPGPU teams loop
+       !DEV_OMPGPU target map(present,alloc:f_coeff_p,qr)
+       !DEV_OMPGPU teams loop private(i3,func) reduction(+:RIM_acc)
        !
        do i3=1,RIM_n_rand_pts
          !

@@ -129,6 +129,27 @@ module interfaces
     integer,  optional                 :: elpasolver
     complex(SP),pointer,optional       :: BS_overlap(:,:)
   end subroutine YDIAGO_driver
+#if defined _CHASE
+   !
+   subroutine CHASE_driver(N,neig,M_slk,V_right,V_left,E_cmpl,E_real)
+     use pars,          ONLY:SP
+     use matrix,        ONLY:PAR_matrix
+     implicit none
+     integer, intent(in)             :: N,neig
+     type(PAR_matrix), intent(inout) :: M_slk
+     complex(SP),      intent(out)   :: V_right(N,neig)
+     complex(SP),      intent(out), optional :: V_left(N,neig)
+     real(SP),         intent(out), optional :: E_real(neig)
+     complex(SP),      intent(out), optional :: E_cmpl(neig)
+   end subroutine CHASE_driver
+   !
+   subroutine K_stored_in_a_blacs_matrix(M_blacs,ncpu_blacs,i_BS_mat,BS_mat_dim,iq)
+     use matrix,        ONLY:PAR_matrix
+     implicit none
+     integer,          intent(in)  :: ncpu_blacs,i_BS_mat,BS_mat_dim,iq
+     type(PAR_matrix), intent(out) :: M_blacs
+   end subroutine K_stored_in_a_blacs_matrix
+#endif
 
    subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
      use pars,           ONLY:SP

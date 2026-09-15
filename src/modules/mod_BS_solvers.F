@@ -186,6 +186,13 @@ module BS_solvers
      complex(SP),allocatable, target, optional ::BS_VR(:,:),BS_VL(:,:)
    end subroutine write_bs_ev_par
    !
+   subroutine write_bs_ev_row_par(iq, i_BS_mat, BS_VR, BS_VL)
+     use pars,           ONLY:SP
+     implicit none
+     integer, intent(in)      :: i_BS_mat, iq
+     complex(SP),allocatable, target, optional ::BS_VR(:,:),BS_VL(:,:)
+   end subroutine write_bs_ev_row_par
+   !
    integer function io_BSS_Haydock(ID,iq,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,Vnp1)
      use pars,          ONLY:SP
      implicit none

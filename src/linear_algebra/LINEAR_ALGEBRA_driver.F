@@ -30,6 +30,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
  use wrapper,       ONLY:M_by_M
  use parallel_m,    ONLY:linear_algebra_is_parallel,ncpu
+ use parallel_int,  ONLY:PP_redux_wait
  use interfaces,    ONLY:MATRIX_transfer
  use BS,            ONLY:BS_block,BS_H_dim
  use timing_m,      ONLY:timing
@@ -66,6 +67,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  double precision    :: starttime,endtime
  character(len=20)   :: matfilename
  real(SP), allocatable :: E_raux(:)
+ complex(SP), allocatable :: V_tmp(:,:)
  !
  call timing("LINEAR ALGEBRA",OPR="start")
  !
@@ -144,6 +146,19 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
        !
        !... Hermitian case
        !
+#if defined _CHASE
+       if(idriver==CHASE) then
+         YAMBO_ALLOC(V_tmp,(N,neig))
+         if (present(M_slk)) then
+           call PARALLEL_HERMITIAN_chase( M_slk, V_tmp, N, E_real, neig )
+         else
+           call PARALLEL_HERMITIAN_chase( M_loc, V_tmp, N, E_real, neig )
+         endif
+         call PP_redux_wait(V_tmp)
+         M(:,1:neig)=V_tmp
+         YAMBO_FREE(V_tmp)
+       else
+#endif
        call MATRIX_init("SLK",  V_loc, N, 1 )
        YAMBO_ALLOC(V_loc%blc,(V_loc%BLCrows(1):V_loc%BLCrows(2),V_loc%BLCcols(1):V_loc%BLCcols(2),V_loc%Nb))
        !
@@ -151,27 +166,40 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
        !
        if(idriver==DIAGX) call PARALLEL_HERMITIAN_diagx( M_loc, V_loc, N, E_real, neig )
        !
-#if defined _CHASE
-       if(idriver==CHASE) call PARALLEL_HERMITIAN_chase( M_loc, V_loc, N, E_real, neig )
-#endif
-       !
        call MATRIX_transfer( M_in=V_loc , M=M )
        !
        YAMBO_FREE(V_loc%blc)
        call MATRIX_reset(V_loc)
+#if defined _CHASE
+       endif
+#endif
        !
      else
        !
-       !... non-Hermitian case
+       !... non-Hermitian / pseudo-Hermitian (ChASE: only R, then L=S R)
        !
+#if defined _CHASE
+       if(idriver==CHASE) then
+         YAMBO_ALLOC(V_tmp,(N,neig))
+         YAMBO_ALLOC(E_raux,(neig))
+         if (present(M_slk)) then
+           call PARALLEL_PSEUDOHERM_chase( M_slk, V_tmp, N, E_raux, neig )
+         else
+           call PARALLEL_PSEUDOHERM_chase( M_loc, V_tmp, N, E_raux, neig )
+         endif
+         call PP_redux_wait(V_tmp)
+         V_right(:,1:neig)=V_tmp
+         V_left(1:N/2,1:neig)=V_tmp(1:N/2,1:neig)
+         V_left(N/2+1:N,1:neig)=-V_tmp(N/2+1:N,1:neig)
+         E_cmpl(1:neig)=cmplx(E_raux(1:neig),kind=SP)
+         YAMBO_FREE(E_raux)
+         YAMBO_FREE(V_tmp)
+       else
+#endif
        call MATRIX_init("SLK",  V_locR, N, 1 )
        YAMBO_ALLOC(V_locR%blc,(V_locR%BLCrows(1):V_locR%BLCrows(2),V_locR%BLCcols(1):V_locR%BLCcols(2),V_locR%Nb))
        call MATRIX_init("SLK",  V_locL, N, 1 )
        YAMBO_ALLOC(V_locL%blc,(V_locL%BLCrows(1):V_locL%BLCrows(2),V_locL%BLCcols(1):V_locL%BLCcols(2),V_locL%Nb))
-       !
-#if defined _CHASE
-       call PARALLEL_PSEUDOHERM_chase( M_loc, V_locL, V_locR, N, E_cmpl, neig )
-#endif
        !
        call MATRIX_transfer( M_in=V_locL , M=V_left )
        call MATRIX_transfer( M_in=V_locR , M=V_right )
@@ -180,6 +208,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
        call MATRIX_reset(V_locR)
        YAMBO_FREE(V_locL%blc)
        call MATRIX_reset(V_locL)
+#if defined _CHASE
+       endif
+#endif
        !
      endif
      ! 

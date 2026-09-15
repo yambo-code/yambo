@@ -256,3 +256,130 @@ subroutine write_bs_ev_par(iq, i_BS_mat, neigs_this_cpu, neig_shift, BS_VR, BS_V
   return 
 #endif
 end subroutine write_bs_ev_par
+!
+! Row-distributed eigenvectors (ChASE): mycol==0 owns local rows × all neig.
+! Collective NetCDF put along the kcv axis. mycol!=0 / spectators write a
+! zero-sized slab so they still participate in the collective.
+!
+subroutine write_bs_ev_row_par(iq, i_BS_mat, BS_VR, BS_VL)
+  !
+  use pars,           ONLY:SP,schlen
+  use BS,             ONLY:BS_K_dim, BS_H_dim,BS_K_coupling,BS_res_ares_n_mat
+  use BS_solvers,     ONLY:BSS_n_eig
+  use IO_m,           ONLY:REP,OP_APP_CL,YAMBO_DEF_CHUNK
+  use stderr,         ONLY:intc
+  use timing_m,       ONLY:timing
+  use IO_int,         ONLY:io_connect,io_disconnect,def_variable_bulk,&
+&                          io_variable_bulk,io_control
+  use parallel_m,     ONLY:ncpu
+#if defined _SCALAPACK
+  use SLK_m,          ONLY:SLK_ORTHO
+#endif
+  !
+  implicit none
+  !
+  integer, intent(in)      :: i_BS_mat, iq
+  complex(SP),allocatable, target, optional ::BS_VR(:,:),BS_VL(:,:)
+  !
+  integer :: SL_H_dim, ID, io_err, chunksize(3), varid
+  integer :: rows(2), nrows, nprow, myrow, mycol, block
+  character(schlen):: db_name
+  character(schlen) :: dim_names(3)
+  complex(SP), allocatable, target :: V_tmp(:,:)
+  !
+  if (.not. present(BS_VR) .and. .not. present(BS_VL)) return
+  if(     BS_K_coupling) SL_H_dim=BS_H_dim
+  if(.not.BS_K_coupling) SL_H_dim=BS_K_dim(i_BS_mat)
+  !
+  rows  = (/1,0/)
+  nrows = 0
+  if (ncpu==1) then
+    rows  = (/1,SL_H_dim/)
+    nrows = SL_H_dim
+#if defined _SCALAPACK
+  else if (SLK_ORTHO%coordinate(1)/=-1) then
+    nprow = SLK_ORTHO%grid(1)
+    myrow = SLK_ORTHO%coordinate(1)
+    mycol = SLK_ORTHO%coordinate(2)
+    block = SL_H_dim/nprow
+    if (block*nprow < SL_H_dim) block=block+1
+    rows(1) = myrow*block+1
+    rows(2) = min(myrow*block+block,SL_H_dim)
+    ! Only process-column 0 holds the deposited ChASE eigenvectors
+    if (mycol==0 .and. rows(2)>=rows(1)) nrows = rows(2)-rows(1)+1
+#endif
+  endif
+  !
+  call timing('io_BSS_diago',OPR='start')
+  !
+  if (BS_res_ares_n_mat>1) then
+    if(i_BS_mat==1) db_name='BS_diago_Q'//trim(intc(iq))
+    if(i_BS_mat==2) db_name='BS_diago_Q'//trim(intc(iq))//'_ares'
+  else
+    db_name='BS_diago_Q'//trim(intc(iq))
+  endif
+  !
+  call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID,DO_IT=.TRUE.)
+  io_err=io_connect(desc=trim(db_name),type=2,ID=ID)
+  if (io_err/=0) then
+    call io_disconnect(ID)
+    call timing('io_BSS_diago',OPR='stop')
+    return
+  endif
+  !
+  chunksize(1) = 2
+  chunksize(2) = SL_H_dim
+  chunksize(3) = CEILING(real(YAMBO_DEF_CHUNK**2/SL_H_dim,kind=SP))
+  dim_names(1) = 're_im'
+  dim_names(2) = 'kcv'
+  dim_names(3) = 'neigs'
+  if ( BSS_n_eig < chunksize(3)) chunksize(2:3) = 0
+  !
+  varid = 100
+  if (present(BS_VR) .and. allocated(BS_VR)) then
+#if defined _MPI
+    call def_variable_bulk(ID,'BS_EIGENSTATES', varid,&
+&        (/2,SL_H_dim,BSS_n_eig/),SP,dim_names, &
+&         par_io_kind='collective',chunksize=chunksize)
+#else
+    call def_variable_bulk(ID,'BS_EIGENSTATES', varid,&
+&        (/2,SL_H_dim,BSS_n_eig/),SP,dim_names,chunksize=chunksize)
+#endif
+    if (nrows>0) then
+      allocate(V_tmp(nrows,BSS_n_eig))
+      V_tmp = BS_VR(rows(1):rows(2),1:BSS_n_eig)
+      call io_variable_bulk(ID,varid,C2=V_tmp,IPOS=(/1,rows(1),1/))
+      deallocate(V_tmp)
+    else
+      allocate(V_tmp(0,0))
+      call io_variable_bulk(ID,varid,C2=V_tmp,IPOS=(/1,1,1/))
+      deallocate(V_tmp)
+    endif
+  endif
+  !
+  varid = 101
+  if (present(BS_VL) .and. allocated(BS_VL)) then
+#if defined _MPI
+    call def_variable_bulk(ID,'BS_EIGENSTATES_LEFT', varid,&
+&        (/2,SL_H_dim,BSS_n_eig/),SP,dim_names, &
+&         par_io_kind='collective',chunksize=chunksize)
+#else
+    call def_variable_bulk(ID,'BS_EIGENSTATES_LEFT', varid,&
+&        (/2,SL_H_dim,BSS_n_eig/),SP,dim_names,chunksize=chunksize)
+#endif
+    if (nrows>0) then
+      allocate(V_tmp(nrows,BSS_n_eig))
+      V_tmp = BS_VL(rows(1):rows(2),1:BSS_n_eig)
+      call io_variable_bulk(ID,varid,C2=V_tmp,IPOS=(/1,rows(1),1/))
+      deallocate(V_tmp)
+    else
+      allocate(V_tmp(0,0))
+      call io_variable_bulk(ID,varid,C2=V_tmp,IPOS=(/1,1,1/))
+      deallocate(V_tmp)
+    endif
+  endif
+  !
+  call io_disconnect(ID)
+  call timing('io_BSS_diago',OPR='stop')
+  !
+end subroutine write_bs_ev_row_par

@@ -143,3 +143,39 @@ subroutine K_diagonal(iq,what)
    end function
    !
 end subroutine K_diagonal
+!
+!
+subroutine K_add_E_diagonal_slk(M_blacs)
+ !
+ ! Add eh energies on the diagonal of a distributed SLK BSE matrix.
+ !
+ use pars,           ONLY:SP,cI
+ use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W
+ use BS,             ONLY:BS_K_dim,BSE_mode
+ use matrix,         ONLY:PAR_matrix
+ !
+ implicit none
+ !
+ type(PAR_matrix),  intent(inout) :: M_blacs
+ !
+ logical          :: l_cpl
+ integer          :: i_r,rows(2)
+ complex(SP)      :: E_plus_W
+ !
+ rows=(/max(M_blacs%rows(1),M_blacs%cols(1)),min(M_blacs%rows(2),M_blacs%cols(2))/)
+ l_cpl=index(BSE_mode,'coupling')>0
+ !
+ do i_r=rows(1),rows(2)
+   !
+   if (.not.allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i_r)
+   if (     allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i_r)-cI*BSS_eh_W(i_r)
+   !
+   if (i_r<=BS_K_dim(1)) then
+     M_blacs%blc(i_r,i_r,1)=M_blacs%blc(i_r,i_r,1)+E_plus_W
+   else if (l_cpl) then
+     M_blacs%blc(i_r,i_r,1)=M_blacs%blc(i_r,i_r,1)+conjg(E_plus_W)
+   endif
+   !
+ enddo
+ !
+end subroutine K_add_E_diagonal_slk

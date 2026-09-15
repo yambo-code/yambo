@@ -62,7 +62,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    ! Default is Lfull as Lbar is NOT defined and gives WRONG results
    ! BSE Hamiltonian is fully symmetric with Lfull
    if(STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-full"
-   if(STRING_match(BSE_L_kind,"bar")) call error("Lbar not defined at q/=0")
+   if(STRING_match(BSE_L_kind,"bar")) call warning("Lbar not defined at q/=0")
 endif
  !
  if (l_col_cut.and.what=="init") then

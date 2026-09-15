@@ -3,136 +3,97 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): CR AF
+! Authors (see AUTHORS file for details): CR AF DS
 !
-subroutine PARALLEL_PSEUDOHERM_chase(Mat, V_left, V_right, N, E, neig)
+! Parallel pseudo-Hermitian ChASE. Returns right eigenvectors only,
+! row-distributed (mycol==0). Left vectors L=S R are built by the caller.
+!
+subroutine PARALLEL_PSEUDOHERM_chase(Mat, V_blc, N, E, neig)
  !
- use pars,           ONLY:SP
- use parallel_int,   ONLY:PP_redux_wait
- use SLK_m,          ONLY:SLK_POOL,SLK_ORTHO
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
- use parallel_m,     ONLY:PAR_COM_WORLD
+ use pars,           ONLY:SP,cZERO,rZERO
+ use SLK_m,          ONLY:SLK_ORTHO
  use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing
  use chase_diag
  !
-#include<y_memory.h>
+ implicit none
  !
- integer           :: N,neig
- type(PAR_matrix)  :: Mat,V_left,V_right
- real(SP)          :: E(neig)
-
- integer   :: i,j,k,is,ie,nr,nb,nprow,npcol,m,myrow,mycol,nl
- integer   :: nev, nex, ierr, deg
- integer   :: comm
+ integer,          intent(in)   :: N,neig
+ type(PAR_matrix), intent(in)   :: Mat
+ complex(SP),      intent(out)  :: V_blc(N,neig)
+ real(SP),         intent(out)  :: E(neig)
+ !
+ integer   :: nbr,nrows,ncols,rows(2),nprow,npcol,myrow,mycol,nev,nex,ierr,deg,comm
  real(SP)  :: tol
  character :: mode, opt, qr, grid_major
- !
- character(64)     :: subname="PARALLEL_PSEUDOHERM_chase"
  complex(SP), allocatable :: Vtemp(:,:)
  real(SP),    allocatable :: Etemp(:)
  !
- integer :: myrank_intra, myrank_inter, intra_size, inter_size,&
-&           myrank_slk_ortho_comm, slk_ortho_comm_size
-
+ V_blc=cZERO
+ E=rZERO
+ if (SLK_ORTHO%coordinate(1)==-1) return
+ !
  call timing('PARALLEL_PSEUDOHERM_chase',OPR='start')
  !
- ! 
- E=0.0
- !
- ! AF: Warning if neig too large (eg > 25-30% of n)
- ! AF: neig is here assumed to be the number of positive eigs
- !
  nev = min(neig,N)
- nex = min(100,nev)
- !
 #ifdef _DOUBLE
  deg = 20
- tol = 1e-8
+ tol = 1.0e-8_SP
 #else
  deg = 10
- tol = 1e-4
+ tol = 1.0e-4_SP
 #endif
- !
  mode = 'R'
  opt = 'S'
  qr = 'C'
- grid_major = 'R' !----- Check grid major /!\. -- Checked in SLK_ORTHO_init
+ grid_major = 'R'
  !
  nprow = SLK_ORTHO%grid(1)
  npcol = SLK_ORTHO%grid(2)
  myrow = SLK_ORTHO%coordinate(1)
  mycol = SLK_ORTHO%coordinate(2)
- nb    = Mat%BLCnrows
- m     = Mat%nrows
- nl    = Mat%ncols
+ nbr   = Mat%BLCnrows
+ nrows = Mat%nrows
+ ncols = Mat%ncols
+ rows  = Mat%rows
  comm  = SLK_ORTHO%COMM
+ nex   = min(100,nev)
  !
- YAMBO_ALLOC(Vtemp,(m,nev+nex))
- YAMBO_ALLOC(Etemp,(nev+nex))
+ allocate(Vtemp(nrows,2*(nev+nex)))
+ allocate(Etemp(2*(nev+nex)))
+ Vtemp = cZERO
+ Etemp = rZERO
  !
- Vtemp = 0.0
- Etemp = 0.0
- ! 
- call mpi_comm_rank(comm,myrank_slk_ortho_comm,ierr)
- call mpi_comm_size(comm,slk_ortho_comm_size  ,ierr)
- call mpi_barrier(comm,ierr)
- !
- call timing('ChASE_INIT',OPR='start')
- !
+ call timing('ChASE_PS init',OPR='start')
 #if defined _DOUBLE
- call pzchase_init_pseudo(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
-&                         nprow, npcol, grid_major, comm, init=ierr)
+ call pzchase_init_pseudo( N, nev, nex, nrows, ncols, Mat%blc(:,:,Mat%I), nbr, &
+ &                         Vtemp, Etemp, nprow, npcol, grid_major, comm, ierr)
 #else
- call pcchase_init_pseudo(N, nev, nex, nb, nb, Mat%blc(:,:,Mat%I), m, Vtemp, Etemp,&
-&                         nprow, npcol, grid_major, comm, init=ierr)
+ call pcchase_init_pseudo( N, nev, nex, nrows, ncols, Mat%blc(:,:,Mat%I), nbr, &
+ &                         Vtemp, Etemp, nprow, npcol, grid_major, comm, ierr)
 #endif
+ call timing('ChASE_PS init',OPR='stop')
  !
- call timing('ChASE_INIT',OPR='stop')
+ if (ierr/=1) call warning("ChASE_PS did not init properly")
  !
 #if defined _DOUBLE
  call pzchase(deg,tol,mode,opt,qr)
 #else
  call pcchase(deg,tol,mode,opt,qr)
 #endif
- ! 
+ !
 #if defined _DOUBLE
  call pzchase_finalize(ierr)
 #else
  call pcchase_finalize(ierr)
 #endif
- !
- if (ierr/=0) call warning("[WARNING] ChASE did not finalize properly")
- !
- call timing('ChASE_Reorganize',OPR='start')
+ if (ierr/=0) call warning("ChASE_PS did not finalize properly")
  !
  E(1:nev) = Etemp(1:nev)
+ if (mycol==0 .and. nrows>0) V_blc(rows(1):rows(2),1:nev) = Vtemp(1:nrows,1:nev)
  !
- ! Left eigenvectors: L = S R with S=diag(I,-I) for BSE pseudo-Hermitian.
- ! If R=(X,Y), then L=(X,-Y). Must copy the upper half as well.
- !
- if (nev > nl * mycol) then
-   !
-   is=N/2+1
-   ie=N
-   !
-   do i = 1,min(n,nev-n*mycol)
-     !
-     V_right%blc(:,i,V_right%I)   =  Vtemp(:, nl * mycol + i)
-     !
-     V_left%blc(1:N/2,i,V_left%I) =  Vtemp(1:N/2, nl * mycol + i)
-     V_left%blc(is:ie,i,V_left%I) = -Vtemp(is:ie, nl * mycol + i)
-     !
-   enddo
- endif
- ! 
- call timing('ChASE_Reorganize',OPR='stop')
- !
- !call PP_redux_wait(E,COMM=SLK_POOL%INTRA_comm)
- !
- YAMBO_FREE(Etemp)
- YAMBO_FREE(Vtemp)
- !
+ deallocate(Etemp)
+ deallocate(Vtemp)
  call timing('PARALLEL_PSEUDOHERM_chase',OPR='stop')
  !
 end subroutine PARALLEL_PSEUDOHERM_chase

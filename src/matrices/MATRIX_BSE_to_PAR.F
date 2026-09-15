@@ -288,7 +288,9 @@ subroutine MATRIX_BSE_to_PAR( M_bse , M_slk )
      endif
      !
      if (myid==SLK_cpu_id_in_the_world(i_c1)-1) then
-       call PP_send_and_receive("receive",M_slk%blc(K_coo(1):K_coo(2),K_coo(3):K_coo(4),M_slk%I),i_c2-1)
+       ! MPI_RECV needs a contiguous buffer; blc(K_coo) is generally non-contiguous.
+       call PP_send_and_receive("receive",M_tmp,i_c2-1)
+       M_slk%blc(K_coo(1):K_coo(2),K_coo(3):K_coo(4),M_slk%I)=M_tmp
      endif
      !
    end subroutine

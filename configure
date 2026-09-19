@@ -814,8 +814,8 @@ HDF5_OPT
 HDF5_INCS
 HDF5_LIBS
 def_chase
-CHASE_LIBS
 CHASE_INCS
+CHASE_LIBS
 CHASE_INCS_R
 CHASE_LIBS_R
 external_chase
@@ -14017,26 +14017,23 @@ else $as_nop
 fi
 
 
-        CHASE_INCS="${CHASE_INCS} -I${CHASE_INCS_R}"
-
-        if  "$have_chase_cuda" == "yes"  ; then
-          CHASE_LIBS="${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels "
-
+        #AC_SUBST([CHASE_INCS],["${CHASE_INCS} -I${CHASE_INCS_R}"])
+        CHASE_INCS="$CHASE_INCS -I${CHASE_INCS_R}"
+        #
+        if test "$have_chase_cuda" = "yes" ; then
+          #AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels "])
+          CHASE_LIBS="${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels"
         else
-          CHASE_LIBS="${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f "
-
+          #AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f "])
+          CHASE_LIBS="${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f"
         fi
-        CHASE_LIBS="${CHASE_LIBS} -lstdc++ "
+        #AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -lstdc++ "])
+        CHASE_LIBS="${CHASE_LIBS} -lstdc++"
 
-
-        CHASE_LIBS="${CHASE_LIBS}  "
-
+        ##AC_SUBST([CHASE_LIBS],["${CHASE_LIBS}  "])
         #-lcudart -lcublas -lcusolver -lcudart -lcurand -lnccl
         #LIBS="${LIBS} ${CHASE_LIBS} "
         #INCS="${INCS} ${CHASE_INCS} "
-
-	#AC_SUBST(LIBS)
-	#AC_SUBST(INCS)
 
         #Assuming a CUDA compiler...
         #LIBS+="-lcudart -lcublas -lcusolver -lcudart -lcurand -lnccl -lstdc++ "
@@ -14045,6 +14042,8 @@ fi
 else
         def_chase=""
 fi
+
+
 
 
 

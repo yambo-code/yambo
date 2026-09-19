@@ -49,21 +49,23 @@ then
         #AC_CHECK_FILES("${CHASE_LIBS_R}/libchase_cuda_kernels.a" ,[],[AC_ERROR([lchase_cuda not found])])
         AC_CHECK_FILES("${CHASE_LIBS_R}/libchase_cuda_kernels.a" ,[have_chase_cuda=yes],[have_chase_cuda=no])
 
-        AC_SUBST([CHASE_INCS],["${CHASE_INCS} -I${CHASE_INCS_R}"])
-        if [ "$have_chase_cuda" == "yes" ] ; then
-          AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels "])
+        #AC_SUBST([CHASE_INCS],["${CHASE_INCS} -I${CHASE_INCS_R}"])
+        CHASE_INCS="$CHASE_INCS -I${CHASE_INCS_R}"
+        #
+        if test "$have_chase_cuda" = "yes" ; then
+          #AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels "])
+          CHASE_LIBS="${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels"
         else
-          AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f "])
+          #AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f "])
+          CHASE_LIBS="${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f"
         fi
-        AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -lstdc++ "])
+        #AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -lstdc++ "])
+        CHASE_LIBS="${CHASE_LIBS} -lstdc++"
 	
-        AC_SUBST([CHASE_LIBS],["${CHASE_LIBS}  "])
+        ##AC_SUBST([CHASE_LIBS],["${CHASE_LIBS}  "])
         #-lcudart -lcublas -lcusolver -lcudart -lcurand -lnccl
         #LIBS="${LIBS} ${CHASE_LIBS} "
         #INCS="${INCS} ${CHASE_INCS} "
-
-	#AC_SUBST(LIBS)
-	#AC_SUBST(INCS)
 
         #Assuming a CUDA compiler...
         #LIBS+="-lcudart -lcublas -lcusolver -lcudart -lcurand -lnccl -lstdc++ "
@@ -73,6 +75,8 @@ else
         def_chase=""
 fi
 
+AC_SUBST(CHASE_LIBS)
+AC_SUBST(CHASE_INCS)
 AC_SUBST(def_chase)
 
 dnl Process Makefile.in to create Makefile

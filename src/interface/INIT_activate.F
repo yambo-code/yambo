@@ -64,7 +64,7 @@ subroutine INIT_activate()
      else
        call CPU_activate("X")
      endif
-     call initactivate(1,'X_Threads')
+     call initactivate(1,'X_Threads X_WeightedBands')
    if (l_elel_corr.or.l_elphoton_corr) then
      call CPU_activate("DIP")
      call initactivate(1,'X_Threads DIP_Threads')

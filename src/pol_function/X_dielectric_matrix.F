@@ -13,7 +13,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life,l_rpa_IP 
  use DIPOLES,       ONLY:DIPOLE_t
  use ALLOC,         ONLY:X_ALLOC_elemental,DIPOLE_ALLOC_global
- use X_m,           ONLY:X_t,self_detect_E_range,X_poles,l_recalculate_X,l_write_disk_Xo,&
+ use X_m,           ONLY:X_t,self_detect_E_range,X_poles,l_recalculate_X,l_write_disk_Xo,X_WeightedBands,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,&
 &                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup,&
 &                        n_OPTICAL_dir_to_eval,X_par_average
@@ -23,7 +23,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  use R_lattice,     ONLY:bz_samp,nqibz,l_Dirac,Dirac_v_f
  use electrons,     ONLY:levels,n_sp_pol
  use parallel_int,  ONLY:PP_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,PAR_COM_X_WORLD,&
+ use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,PAR_COM_X_WORLD,PAR_COM_CON_INDEX_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
@@ -34,6 +34,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset,MATRIX_copy
  use parser_m,      ONLY:parser
+ use timing_m,      ONLY:timing
  !
 #include<y_memory.h>
  !
@@ -60,6 +61,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  ! logicals and control
  !
  self_detect_E_range=.false.
+ call parser('X_WeightedBands',X_WeightedBands)
  !
  ! Check if there is a Efield directions average to be done
  !
@@ -233,6 +235,17 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
    call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_and_IO",X=X) 
  endif
  call X_half_mat_check(Xen,Xk,Xw)
+ !
+ ! Replace only the provisional conduction-band mask.  The historical mask is
+ ! left untouched unless the option is active and there is useful parallel
+ ! work remaining.
+ !
+ if (X_WeightedBands.and.PAR_COM_CON_INDEX_X(X%whoami)%n_CPU>1.and.&
+&    any(io_X_done(X%iq(1):X%iq(2))<=0.and.PAR_IND_Q_ibz%element_1D(X%iq(1):X%iq(2)))) then
+   call timing('Xo weighted bands prepass',OPR='start')
+   call X_weighted_bands_setup(Xen,Xk,X,X%iq,io_X_done)
+   call timing('Xo weighted bands prepass',OPR='stop')
+ endif
  !
  if (     io_RESPONSE) X_MEM_n_tot_freqs=Xw%n_freqs
  if (.not.io_RESPONSE) X_MEM_n_tot_freqs=X_MEM_n_freqs*PAR_nQ_ibz

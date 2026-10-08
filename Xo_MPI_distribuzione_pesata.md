@@ -300,3 +300,47 @@ Non sarebbe necessario modificare:
 Il prepass seguito da una partizione contigua pesata è meno invasivo del raggruppamento globale con redistribuzione diretta dei gruppi. Conserva la località delle bande e delle funzioni d'onda e interviene principalmente nella fase di inizializzazione della distribuzione MPI.
 
 Il metodo non garantisce lo stesso numero finale di gruppi su ogni rank, ma può essere efficace anche con una stima imperfetta, purché i pesi riproducano l'andamento relativo del costo lungo le bande. Prima di considerarlo definitivo sarà necessario misurare separatamente il costo del prepass, la qualità del bilanciamento di `coarse_grid_N`, i tempi `Xo (procedure)` e l'attesa in `Xo (REDUX)`.
+
+## Interfaccia e comportamento implementati
+
+La prima implementazione è attivata dal flag di input:
+
+```text
+X_WeightedBands
+```
+
+Il flag appartiene alle opzioni parallele, è disabilitato per default e viene
+letto soltanto da `X_dielectric_matrix`; `OPTICS_driver` resta quindi invariato.
+Con il flag assente, la chiamata storica a `PARALLEL_global_indexes` continua a
+produrre gli stessi blocchi contigui equinumerosi e non viene eseguito alcun
+prepass.
+
+Con il flag presente, più di un rank `c` e almeno un q-point pendente assegnato
+al gruppo `q`, `X_weighted_bands_setup` viene eseguita dopo la verifica dei
+database e la costruzione ordinaria degli indici, ma prima di
+`PARALLEL_WF_distribute`. La routine:
+
+- conserva le maschere `q`, `k` e `v` e ignora soltanto la maschera `c`
+  provvisoria;
+- assegna ciclicamente le bande del prepass ai rank `c`;
+- per ogni banda e ogni q-point pendente riproduce occupazioni, finestra
+  energetica e terminatore di `X_eh_setup`;
+- moltiplica il contributo di `q=1` per il numero effettivo di direzioni
+  ottiche;
+- conta i gruppi con `FREQUENCIES_group_engine`, lo stesso nucleo privo di
+  effetti collaterali ora usato dal wrapper `FREQUENCIES_coarse_grid`;
+- somma pesi e transizioni accettate con riduzioni MPI intere a 64 bit;
+- sostituisce esclusivamente `PAR_IND_CON_BANDS_X(X%whoami)` con la partizione
+  contigua minimax.
+
+`PARALLEL_index_weighted_contiguous` trova il minimo carico massimo mediante
+ricerca binaria e ricostruisce deterministicamente gli intervalli. In caso di
+peso totale nullo riproduce la distribuzione equinumerosa storica. Quando le
+bande sono meno dei rank, assegna una banda ai primi rank utili e segnala i rank
+eccedenti. I campi `element_1D`, `first_of_1D`, `last_of_1D` e
+`n_of_elements` contengono rispettivamente maschera locale, limiti globali e
+numero reale di bande.
+
+Il report `[X-WB]` mostra intervallo, numero di bande, peso previsto e numero di
+transizioni accettate del rank. Il costo è registrato separatamente come
+`Xo weighted bands prepass` nei timer.

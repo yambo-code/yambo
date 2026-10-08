@@ -16,7 +16,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use it_m,          ONLY:initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,V_ph,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_coul,V_io,V_general,V_resp,V_real_time,V_nl_optics
- use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,&
+ use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,X_WeightedBands,&
 &                        global_gauge,Chi_linalg_mode, &
 &                        X_terminator_Kind,X_terminator_E,X_DbGd_percentual
  use DIPOLES,       ONLY:DIPOLE_t
@@ -223,6 +223,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _MPI 
  call it(defs,'NLogCPUs',     '[PARALLEL] Live-timing CPU`s (0 for all)',n_log_CPUs,verb_level=V_parallel)
+ call it('f',defs,'X_WeightedBands','[PARALLEL/X] Contiguous weighted conduction-band distribution',&
+&        verb_level=V_parallel)
 #endif
  !
  ! I/O

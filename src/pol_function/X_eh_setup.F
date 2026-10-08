@@ -266,8 +266,8 @@ subroutine X_weighted_bands_setup(Xen,Xk,X,iq_range,io_X_done)
  call PARALLEL_index_weighted_contiguous(PAR_IND_CON_BANDS_X(X%whoami),X%ib(2),ic_low,weights,&
 &                                        PAR_COM_CON_INDEX_X(X%whoami))
  !
+ if (PAR_COM_CON_INDEX_X(X%whoami)%CPU_id==0) then
  do ir=1,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU
-   if (ir/=PAR_COM_CON_INDEX_X(X%whoami)%CPU_id+1) cycle
    write(ch,'(a,i0,a,i0,a,i0,a,i0)') '[X-WB] c-rank ',ir-1,' bands ',&
 &    PAR_IND_CON_BANDS_X(X%whoami)%first_of_1D(ir),':',&
 &    PAR_IND_CON_BANDS_X(X%whoami)%last_of_1D(ir),' count ',&
@@ -281,6 +281,7 @@ subroutine X_weighted_bands_setup(Xen,Xk,X,iq_range,io_X_done)
      call msg('r',trim(ch))
    endif
  enddo
+ endif
  deallocate(weights,accepted,poles,ein,sorted,sorted_x,group_sorted)
  !
 end subroutine

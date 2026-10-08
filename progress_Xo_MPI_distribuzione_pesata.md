@@ -41,12 +41,29 @@ Ultimo aggiornamento: 2026-10-08.
 - Verificati inoltre casi uniformi, peso dominante, pesi nulli e più rank che
   bande.
 - `git diff --check`: superato.
-- Restano da eseguire il confronto runtime X-CG/prepass e piccoli casi MPI con
-  database; questi saranno completati prima della richiesta T01.
+- Caso locale Al_bulk, 4 rank MPI tutti sul livello `c`, percorso lifetimes su
+  8 q-point: completati run legacy e pesato in
+  `/home/nicola/tmp/codex/yambo5-xo-weighted-local-87bc4e536`.
+- Il primo run pesato ha rivelato che lifetimes richiamava
+  `X_dielectric_matrix` separatamente per q e ricostruiva la partizione. La
+  correzione ora esegue il prepass una sola volta sulla sequenza completa dei
+  q-point e riusa la maschera nelle chiamate successive.
+- Rerun `weighted-static`: una sola partizione, intervalli `2:5`, `6:10`,
+  `11:15`, `16:20`; copertura completa, contigua e senza sovrapposizioni.
+- Confronto transizioni prepass/X-CG esatto su ogni rank: 3068 per il primo
+  intervallo e 4040 per ciascuno degli altri; nei log per-rank i totali X-CG
+  sono rispettivamente la somma 378+379+385+387+382+385+383+389 e 505*8.
+- Il confronto dei soli `o-legacy.qp` e `o-weighted_static.qp` mostra identiche
+  energie e differenze di arrotondamento nell'ultima cifra stampata per alcuni
+  valori, coerenti col diverso ordine delle somme MPI.
+- Tempi del piccolo caso (non rappresentativo): legacy `Xo (procedure)` max
+  0.0521 s; pesato statico 0.0620 s, prepass 0.0004 s. Il criterio prestazionale
+  resta demandato al benchmark anatase.
 
 ## Commit pubblicati e richieste di test
 
 - Commit documentale pubblicato: `48bef44a4`.
+- Commit iniziale d'implementazione pubblicato: `87bc4e536`.
 - Nessuna richiesta di test ancora emessa.
 
 ## Directory dei risultati
@@ -66,7 +83,6 @@ Ultimo aggiornamento: 2026-10-08.
 
 ## Prossima attività
 
-Consolidare e pubblicare il commit d'implementazione, eseguire un piccolo caso
-MPI locale con almeno due rank `c` nelle modalità legacy e pesata, confrontare
-transizioni e `[X-CG]`, quindi pubblicare le verifiche e predisporre T01 sul
-relativo hash.
+Pubblicare la correzione della partizione statica e le verifiche locali,
+predisporre T01 sul relativo hash già remoto e attendere i risultati prima di
+preparare T02.

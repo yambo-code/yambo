@@ -52,7 +52,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  ! Work Space
  !
  integer              :: iq,ID(2),i_err,X_MEM_n_freqs,io_X_done(nqibz),iq_mem,&
-&                        X_MEM_n_tot_freqs,n_poles,iq_dir,drude_n_states
+&                        X_MEM_n_tot_freqs,n_poles,iq_dir,drude_n_states,weighted_iq_range(2)
  real(SP)             :: minmax_ehe(2),f_eh
  character(1)         :: sec_mode
  character(schlen)    :: X_what
@@ -240,10 +240,13 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE,CHILD)
  ! left untouched unless the option is active and there is useful parallel
  ! work remaining.
  !
- if (X_WeightedBands.and.PAR_COM_CON_INDEX_X(X%whoami)%n_CPU>1.and.&
+ weighted_iq_range=X%iq
+ if (l_life.and.X%iq(1)==1) weighted_iq_range(2)=q%nibz
+ if (X_WeightedBands.and..not.(l_life.and.X%iq(1)>1).and.&
+&    PAR_COM_CON_INDEX_X(X%whoami)%n_CPU>1.and.&
 &    any(io_X_done(X%iq(1):X%iq(2))<=0.and.PAR_IND_Q_ibz%element_1D(X%iq(1):X%iq(2)))) then
    call timing('Xo weighted bands prepass',OPR='start')
-   call X_weighted_bands_setup(Xen,Xk,X,X%iq,io_X_done)
+   call X_weighted_bands_setup(Xen,Xk,X,weighted_iq_range,io_X_done)
    call timing('Xo weighted bands prepass',OPR='stop')
  endif
  !

@@ -64,13 +64,19 @@ Ultimo aggiornamento: 2026-10-08.
 
 - Commit documentale pubblicato: `48bef44a4`.
 - Commit iniziale d'implementazione pubblicato: `87bc4e536`.
-- Nessuna richiesta di test ancora emessa.
+- Correzione statica e verifiche locali pubblicate: `cf76e8fdf`.
+- Commit esatto richiesto per T01:
+  `cf76e8fdf366f678e4c39f33ece00d5f253c0676`.
+- T01 predisposto; richiesta pronta per due run q=1 sullo stesso binario
+  (`X_WeightedBands` assente/presente).
 
 ## Directory dei risultati
 
 - Radice prevista:
   `/home/nicola/tmp/risultati-test-codex-Xo-distribuzione-pesata`.
-- Nessuna sessione TNN ancora predisposta.
+- Sessione predisposta:
+  `T01_q1_smoke_cf76e8fdf`, completa di manifest, istruzioni, input e directory
+  vuote per report/output/log di entrambe le varianti.
 
 ## Analisi e problemi
 

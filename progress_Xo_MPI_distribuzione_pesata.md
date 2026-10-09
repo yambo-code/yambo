@@ -161,6 +161,12 @@ Ultimo aggiornamento: 2026-10-09.
 
 ## Prossima attività
 
-Compilare e verificare localmente la correzione marginale. Non predisporre T02
-finché la correzione e l'analisi T01 non sono consolidate in un commit
-pubblicato e non è stata concordata una nuova richiesta remota controllata.
+- Correzione marginale e diagnostica per-q pubblicate nel commit
+  `d48b5dd5f2c940a9a89e9352d45a4a2c7c153b69`.
+- T02 predisposto in
+  `/home/nicola/tmp/risultati-test-codex-Xo-distribuzione-pesata/`
+  `T02_anatase_full_a4a1dfaa9_d48b5dd5f`, con input anatase completi e
+  directory separate per legacy e weighted.
+- Eseguire T02 e analizzare partizione statica, diagnostica `[X-WB-Q]`, carichi
+  reali `[X-CG]`, timer e `o-OUTPUT.qp` prima di ulteriori modifiche alla
+  distribuzione.

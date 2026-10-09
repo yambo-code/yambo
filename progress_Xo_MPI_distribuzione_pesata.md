@@ -170,3 +170,368 @@ Ultimo aggiornamento: 2026-10-09.
 - Eseguire T02 e analizzare partizione statica, diagnostica `[X-WB-Q]`, carichi
   reali `[X-CG]`, timer e `o-OUTPUT.qp` prima di ulteriori modifiche alla
   distribuzione.
+
+## Analisi T02: stima marginale e diagnostica per q
+
+Provenienza usata per l'analisi, indipendentemente dalle stringhe stampate nei
+report:
+
+- T01 legacy: `a4a1dfaa9800917b36bd5aee613d27ff99c60c73`;
+- T01 weighted: `cf76e8fdf366f678e4c39f33ece00d5f253c0676`;
+- T02 weighted: `d48b5dd5f2c940a9a89e9352d45a4a2c7c153b69`.
+
+Gli input weighted T01 e T02 sono byte-identici (SHA-256
+`bde9fc279770e9480091c2dc8816c1cce8ecfd8ef449d3b5dafe054a53c46695`).
+L'input legacy differisce per l'assenza dell'opzione weighted, come previsto.
+
+### Partizione statica e significato del messaggio `247/1976`
+
+La partizione T02 riportata da `[X-WB]` è:
+
+| c-rank | bande | numero | gruppi marginali previsti | transizioni accettate |
+|---:|:---:|---:|---:|---:|
+| 0 | 25:273 | 249 | 13,560,352 | 38,724,480 |
+| 1 | 274:521 | 248 | 13,545,929 | 38,568,960 |
+| 2 | 522:769 | 248 | 13,560,914 | 38,568,960 |
+| 3 | 770:1017 | 248 | 13,570,588 | 38,568,960 |
+| 4 | 1018:1262 | 245 | 13,530,561 | 38,102,400 |
+| 5 | 1263:1507 | 245 | 13,544,664 | 38,102,400 |
+| 6 | 1508:1754 | 247 | 13,535,283 | 38,413,440 |
+| 7 | 1755:2000 | 246 | 13,563,924 | 38,257,920 |
+
+La copertura 25:2000 è completa, contigua e senza sovrapposizioni. I pesi
+previsti hanno range 40,027 e CV 0.100%, quindi il partizionatore risolve
+correttamente il problema definito dalla stima. Rispetto a T01 weighted i
+confini cambiano però molto poco: i numeri di bande passano da
+`249,248,247,247,246,246,247,246` a
+`249,248,248,248,245,245,247,246`.
+
+La riga di log
+`[PARALLEL Response_G_space_and_IO for CON bands on 8 CPU] ... 247/1976`
+non descrive la maschera weighted finale. Viene emessa dentro
+`PARALLEL_global_indexes`, immediatamente dopo la distribuzione storica
+equinumerosa provvisoria. `X_weighted_bands_setup` viene chiamata dopo e
+sostituisce `PAR_IND_CON_BANDS_X`; ancora dopo,
+`PARALLEL_WF_distribute` riceve questa maschera aggiornata. Le righe `[X-WB]`
+e i cambiamenti coerenti dei conteggi `[X-CG]` sui rank i cui confini sono
+mutati confermano che la nuova maschera viene effettivamente usata. Il
+messaggio `247/1976` è quindi fuorviante per questa modalità, non evidenza di
+una mancata distribuzione weighted.
+
+### Diagnostica marginale specifica per q
+
+Tutti i 30 insiemi `[X-WB-Q]` coprono 25:2000 con otto intervalli contigui.
+I confini specifici oscillano di poche bande attorno a quelli statici: il
+primo limite superiore varia fra 270 e 274 e gli altri limiti mostrano
+spostamenti dello stesso ordine. Il confronto completo dei massimi è:
+
+| q | ideal max | static max | beneficio teorico |
+|---:|---:|---:|---:|
+| 1 | 146,220 | 147,700 | 1.00% |
+| 2 | 565,363 | 565,546 | 0.03% |
+| 3 | 541,255 | 541,299 | 0.01% |
+| 4 | 327,331 | 328,034 | 0.21% |
+| 5 | 531,056 | 531,145 | 0.02% |
+| 6 | 651,335 | 654,050 | 0.42% |
+| 7 | 674,449 | 676,128 | 0.25% |
+| 8 | 791,666 | 793,634 | 0.25% |
+| 9 | 348,552 | 350,258 | 0.49% |
+| 10 | 521,922 | 521,922 | 0.00% |
+| 11 | 705,405 | 708,837 | 0.48% |
+| 12 | 343,965 | 345,629 | 0.48% |
+| 13 | 211,568 | 213,484 | 0.90% |
+| 14 | 229,169 | 230,334 | 0.51% |
+| 15 | 500,418 | 501,290 | 0.17% |
+| 16 | 541,185 | 541,185 | 0.00% |
+| 17 | 491,649 | 492,058 | 0.08% |
+| 18 | 358,893 | 359,329 | 0.12% |
+| 19 | 530,950 | 531,314 | 0.07% |
+| 20 | 791,031 | 793,372 | 0.30% |
+| 21 | 468,114 | 468,114 | 0.00% |
+| 22 | 340,782 | 342,262 | 0.43% |
+| 23 | 521,809 | 521,809 | 0.00% |
+| 24 | 315,090 | 316,961 | 0.59% |
+| 25 | 483,147 | 483,147 | 0.00% |
+| 26 | 229,009 | 230,378 | 0.59% |
+| 27 | 565,351 | 565,586 | 0.04% |
+| 28 | 359,029 | 359,772 | 0.21% |
+| 29 | 345,497 | 347,219 | 0.50% |
+| 30 | 143,788 | 145,054 | 0.87% |
+
+Il beneficio medio non pesato è 0.301%, la mediana 0.230%, il massimo
+1.00%; cinque q-point hanno beneficio nullo. Sommando i massimi sui q, la
+riduzione prevista è 31,852 gruppi marginali su 13,606,850, cioè 0.234%.
+
+### Gruppi reali `[X-CG]`
+
+La tabella riporta tutti i q-point e i rank T02; l'ultima colonna è il
+rapporto fra massimo e minimo del q.
+
+| q | r0 | r1 | r2 | r3 | r4 | r5 | r6 | r7 | max/min |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 119743 | 111111 | 107137 | 104860 | 102382 | 100940 | 99633 | 98363 | 1.217 |
+| 2 | 306512 | 260063 | 241187 | 231715 | 224221 | 216919 | 210091 | 206293 | 1.486 |
+| 3 | 298787 | 254230 | 236467 | 226937 | 219470 | 212741 | 206426 | 202592 | 1.475 |
+| 4 | 218769 | 193219 | 182292 | 176535 | 171453 | 167510 | 163347 | 160813 | 1.360 |
+| 5 | 296971 | 253081 | 235226 | 225937 | 218130 | 211912 | 205202 | 201730 | 1.472 |
+| 6 | 332585 | 279396 | 258892 | 248145 | 239491 | 232021 | 224330 | 220236 | 1.510 |
+| 7 | 338769 | 283208 | 262010 | 250879 | 241842 | 234016 | 225794 | 221931 | 1.526 |
+| 8 | 367482 | 303940 | 279660 | 267571 | 257487 | 248952 | 239607 | 234921 | 1.564 |
+| 9 | 229311 | 200936 | 189357 | 183447 | 177799 | 173702 | 169316 | 166587 | 1.377 |
+| 10 | 294143 | 250913 | 233533 | 224603 | 216364 | 210384 | 203873 | 200301 | 1.469 |
+| 11 | 347193 | 289333 | 266758 | 255928 | 246330 | 238884 | 229770 | 225803 | 1.538 |
+| 12 | 227179 | 199682 | 188101 | 182360 | 176386 | 172377 | 168107 | 165537 | 1.372 |
+| 13 | 161121 | 145832 | 139587 | 136051 | 132428 | 130249 | 127682 | 126413 | 1.275 |
+| 14 | 170031 | 153552 | 146354 | 142123 | 138574 | 135723 | 133119 | 131449 | 1.294 |
+| 15 | 285668 | 244772 | 228730 | 219442 | 212655 | 206292 | 200638 | 197203 | 1.449 |
+| 16 | 298327 | 254199 | 236839 | 226942 | 219278 | 212899 | 206304 | 202776 | 1.471 |
+| 17 | 282903 | 242262 | 226415 | 217874 | 210658 | 204584 | 198658 | 195080 | 1.450 |
+| 18 | 232356 | 203752 | 191981 | 185544 | 180317 | 175926 | 171304 | 168637 | 1.378 |
+| 19 | 297077 | 252842 | 235215 | 226297 | 218357 | 212155 | 204941 | 201609 | 1.474 |
+| 20 | 367563 | 303588 | 279573 | 267302 | 257504 | 248864 | 239477 | 235117 | 1.563 |
+| 21 | 276048 | 237343 | 221811 | 213684 | 206790 | 201205 | 195169 | 191822 | 1.439 |
+| 22 | 226404 | 198965 | 187560 | 181924 | 176171 | 172089 | 167800 | 165322 | 1.369 |
+| 23 | 294244 | 250626 | 233259 | 224414 | 216454 | 210542 | 204004 | 200175 | 1.470 |
+| 24 | 214337 | 189344 | 179001 | 173473 | 167638 | 164507 | 160047 | 158043 | 1.356 |
+| 25 | 280098 | 240562 | 224631 | 216193 | 209465 | 203739 | 197339 | 194078 | 1.443 |
+| 26 | 169965 | 153432 | 146557 | 142236 | 138534 | 136060 | 133279 | 131420 | 1.293 |
+| 27 | 306600 | 259820 | 241469 | 231671 | 223964 | 216983 | 210115 | 206531 | 1.485 |
+| 28 | 232497 | 204099 | 192035 | 185889 | 180230 | 176066 | 171298 | 168813 | 1.377 |
+| 29 | 228614 | 200584 | 189131 | 183234 | 177304 | 173695 | 168996 | 166159 | 1.376 |
+| 30 | 118528 | 110242 | 106337 | 104056 | 101542 | 100320 | 99032 | 97722 | 1.213 |
+
+Le somme sui 30 q per rank sono
+`7,819,825, 6,724,928, 6,287,105, 6,057,266, 5,859,218, 5,702,256,
+5,534,698, 5,443,476`. Lo sbilanciamento resta monotono e sostanzialmente
+identico a T01 weighted. Il CV passa anzi da 11.832% a 11.869%; il range resta
+2,376,349 perché gli estremi, rank 0 e rank 7, non cambiano. La stima
+marginale bilancia se stessa ma non il numero reale di gruppi di un intervallo:
+la non additività a più bande rimane dominante.
+
+### Timer e costo complessivo
+
+| run | `Xo (procedure)` min/max | range | CV | `Xo (REDUX)` min/max | prepass max | cammino critico Xo + prepass |
+|:---|:---|---:|---:|:---|---:|---:|
+| T01 legacy | 3197.292 / 5736.258 s | 2538.967 s | 20.186% | 0.644 / 2549.431 s | 0 | 5736.258 s |
+| T01 weighted | 3173.223 / 5816.876 s | 2643.653 s | 20.783% | 0.638 / 2646.794 s | 9.532 s | 5826.407 s |
+| T02 weighted | 3174.054 / 5797.772 s | 2623.718 s | 20.737% | 0.634 / 2627.305 s | 29.336 s | 5827.108 s |
+
+La correzione riduce il massimo `Xo (procedure)` di 19.10 s rispetto a T01
+weighted, ma il prepass aumenta di 19.80 s per la diagnostica per-q: il totale
+stimato del cammino critico è 0.70 s più lento di T01 weighted e 90.85 s
+(1.58%) più lento del legacy. A risoluzione di un minuto, entrambi i run
+weighted riportano 02h34m complessivi e il legacy 02h33m. Le variazioni di
+pochi decimi di punto nei timer di procedura non costituiscono un miglioramento
+misurabile del bilanciamento.
+
+### Equivalenza fisica e anomalie
+
+`o-OUTPUT.qp` contiene gli stessi 420 stati `(k,banda)` e valori `Eo`
+identici al legacy T01. Sulle colonne dipendenti dal calcolo:
+
+- T02 contro legacy: differenza massima `E-Eo` 1.47e-4 eV, RMS 3.48e-5 eV;
+  differenza massima `Sc|Eo` 2.8e-5 eV, RMS 1.17e-5 eV;
+- T02 contro T01 weighted: differenza massima `E-Eo` 2.8e-5 eV e massima
+  `Sc|Eo` 5e-6 eV.
+
+Le differenze T02/legacy sono della stessa ampiezza già presente fra T01
+weighted e legacy (massimo `E-Eo` 1.60e-4 eV), mentre T01/T02 weighted sono
+molto più vicini. Non emerge quindi una regressione fisica attribuibile alla
+correzione marginale; le differenze sono compatibili con il diverso ordine
+delle somme parallele e con la variabilità numerica fra i due run/build.
+
+Il run termina regolarmente. Non compaiono errori, abort, NaN o warning nuovi.
+L'unico warning, ripetuto nei log dei rank e una volta nel report, è quello
+preesistente secondo cui `[x,Vnl]` rallenta il calcolo dei dipoli. Le stringhe
+di branch/revisione nei report sono state intenzionalmente ignorate. L'unica
+anomalia diagnostica rilevante è il messaggio provvisorio `247/1976`, corretto
+nel punto in cui viene emesso ma facile da interpretare erroneamente come
+distribuzione produttiva finale.
+
+### Decisione dopo T02
+
+1. La stima marginale **non migliora realmente il bilanciamento** rispetto a
+   T01: confini e carichi reali cambiano troppo poco, il CV `[X-CG]` non
+   diminuisce e la dispersione dei timer resta sostanzialmente invariata.
+2. Una partizione specifica per q **non giustifica la redistribuzione delle
+   funzioni d'onda**: il guadagno teorico massimo è 1.00%, quello medio 0.301%
+   e quello aggregato 0.234%. Inoltre tali percentuali ottimizzano una stima
+   che non correla adeguatamente col carico reale.
+3. Non vi è evidenza neppure per introdurre poche classi di q-point: i confini
+   specifici sono già molto vicini alla partizione statica e il vantaggio
+   residuo è trascurabile. Fra le tre alternative considerate conviene
+   **mantenere una sola partizione statica**. Questa conclusione non rende però
+   efficace l'attuale euristica marginale: prima di qualsiasi T03 o modifica
+   ulteriore va discusso se fermarsi, oppure cercare in futuro una stima del
+   costo di intervallo realmente non additiva. Non è stata implementata
+   alcuna ulteriore modifica e T03 non è stato predisposto.
+
+## Analisi oracle offline successiva a T02
+
+Su richiesta, è stata eseguita un'analisi esclusivamente offline per capire
+se il fallimento della stima marginale escluda anche un vantaggio ottenibile
+da una diversa partizione statica. Non sono stati modificati sorgenti o
+risultati e non è stato predisposto T03.
+
+### Capacità predittiva dei gruppi reali
+
+La somma dei gruppi `[X-CG]` sui 30 q-point è un ottimo predittore del timer
+per rank:
+
+| run | correlazione Pearson | correlazione di rango | R² regressione lineare | errore RMS del fit |
+|:---|---:|---:|---:|---:|
+| T01 weighted | 0.99734 | 1.000 | 0.99469 | 59.3 s |
+| T02 weighted | 0.99767 | 1.000 | 0.99535 | 55.3 s |
+
+In T02 il fit sui rank è
+
+```text
+Xo (procedure) [s] = -2907.05 + 0.00110374 * somma_gruppi
+```
+
+Anche ripetendo il confronto separatamente per ciascun q, fra i suoi otto
+carichi `[X-CG]` e il timer totale dei rank, le correlazioni sono sempre molto
+alte: minimo 0.9902, media 0.9968, massimo 0.9990. Questo non assegna un tempo
+separato a ogni q, ma dimostra che il gradiente dei gruppi fra rank è stabile
+su tutti i q e spiega quasi interamente il gradiente del tempo complessivo.
+Bilanciare i gruppi reali è quindi un obiettivo prestazionale fondato; il
+fallimento T02 riguarda la loro stima, non la scelta della metrica osservata.
+
+### Oracle statico approssimato
+
+Come primo limite superiore si è assegnata a ogni banda la densità media
+osservata nell'intervallo T02 che la contiene, quindi si è riequilibrata la
+somma di questi costi piecewise-constant. Questo modello conserva il carico
+totale osservato, 49,428,772 gruppi, con obiettivo 6,178,596.5 per rank.
+
+| c-rank | intervallo T02 | intervallo oracle approssimato | bande oracle | carico previsto |
+|---:|:---:|:---:|---:|---:|
+| 0 | 25:273 | 25:221 | 197 | 6,186,769 |
+| 1 | 274:521 | 222:440 | 219 | 6,161,536 |
+| 2 | 522:769 | 441:678 | 238 | 6,176,591 |
+| 3 | 770:1017 | 679:928 | 250 | 6,190,451 |
+| 4 | 1018:1262 | 929:1184 | 256 | 6,167,611 |
+| 5 | 1263:1507 | 1185:1448 | 264 | 6,194,443 |
+| 6 | 1508:1754 | 1449:1721 | 273 | 6,168,441 |
+| 7 | 1755:2000 | 1722:2000 | 279 | 6,182,930 |
+
+Il massimo del modello scende da 7,819,825 a 6,194,443 gruppi, -20.79%.
+Applicando il fit T02, il cammino critico `Xo (procedure)` passerebbe da
+5797.8 a circa 3930.0 s, un limite teorico di circa 1868 s o 32.2%. La
+percentuale sul tempo è maggiore di quella sui gruppi a causa dell'intercetta
+del fit e va considerata soltanto nel dominio di carico osservato, nel quale il
+nuovo massimo comunque ricade.
+
+I confini oracle richiedono molte meno bande sui rank bassi e molte di più su
+quelli alti. Questo è esattamente il segnale che le due stime per-banda provate
+finora non hanno riprodotto: sia T01 sia T02 hanno prodotto blocchi quasi
+equinumerosi.
+
+### Informazione empirica dagli spostamenti T01--T02
+
+Le poche differenze fra le due partizioni permettono due misure locali pulite:
+
+- aggiungere la banda 769 all'intervallo 522:768 aumenta la somma reale dei
+  gruppi di 19,008, con incrementi positivi per tutti i q (415--760,
+  media 633.6);
+- rimuovere la banda 1262 dall'intervallo 1262:1507 riduce la somma di 18,829,
+  con decrementi per tutti i q (371--789 in valore assoluto, media 627.6).
+
+Questi marginali reali valgono rispettivamente circa il 76.5% e l'82.1% della
+densità media per banda dei relativi intervalli. Confermano due aspetti:
+
+1. lo spostamento dei confini produce effetti reali, coerenti e misurabili su
+   tutti i q;
+2. anche il costo marginale reale di una banda dipende dall'intervallo che la
+   contiene e non coincide con un peso additivo indipendente.
+
+Le variazioni dei timer T01--T02 non possono invece essere attribuite banda
+per banda: quattro rank non cambiano maschera ma mostrano comunque variazioni
+fra -19.1 e +4.5 s, che quantificano il rumore fra run. I cambiamenti osservati
+sui rank modificati sono dello stesso ordine o poco superiori a tale rumore.
+
+### Interpretazione e passo successivo raccomandato
+
+L'oracle non è una previsione quantitativa della partizione finale. Assume
+additività all'interno degli otto intervalli misurati, mentre proprio T01/T02
+dimostrano che dividere, estendere o unire un intervallo cambia le
+sovrapposizioni energetiche e quindi il suo costo. I risultati esistenti non
+contengono il costo reale dei nuovi intervalli oracle; tale costo non può
+essere ricostruito esattamente dai soli otto valori per q.
+
+Il margine teorico del 20.8% sui gruppi e del 32.2% sul timer è però molto più
+grande del rumore e del costo del prepass T02. Esiste quindi evidenza
+sufficiente per non abbandonare l'idea di una partizione statica pesata. Il
+problema va attribuito principalmente all'algoritmo di stima dei pesi:
+`PARALLEL_index_weighted_contiguous` bilancia correttamente i numeri ricevuti,
+ma né gruppi isolati né marginali di coppie rappresentano il costo di blocchi
+di 200--300 bande.
+
+Il prossimo esperimento, da discutere prima di implementarlo, dovrebbe
+misurare direttamente una funzione `cost(a,b,q)` sugli intervalli candidati.
+Una strategia contenuta sarebbe:
+
+1. partire dai confini oracle approssimati;
+2. nel prepass valutare i gruppi dell'intero intervallo per pochi confini
+   candidati attorno a ciascun taglio;
+3. spostare iterativamente i tagli dal rank più carico a quello adiacente,
+   usando il costo ricalcolato dei due intervalli e non pesi per-banda;
+4. produrre sempre una sola partizione statica, senza classi di q o
+   redistribuzioni durante il loop;
+5. prima di un run completo, aggiungere una modalità diagnostica che calcoli e
+   stampi i costi degli otto intervalli proposti senza usarli, così da validare
+   la previsione separatamente dall'esecuzione produttiva.
+
+Questa evidenza giustifica un prepass *interval-aware*, non un altro tentativo
+di perfezionare un peso additivo locale per banda.
+
+## Implementazione diagnostica interval-aware
+
+Implementata, senza cambiare la partizione produttiva, la verifica proposta
+dall'oracle offline:
+
+- il prepass conta i gruppi dell'intero intervallo statico di ciascun c-rank;
+- costruisce una proposta usando la densità media di gruppi per banda misurata
+  negli intervalli statici;
+- conta nuovamente i gruppi degli interi intervalli proposti;
+- stampa in `[X-WB-I]` costi statici e proposti per ogni q/rank, massimi per q,
+  confini e totali aggregati;
+- misura separatamente i due conteggi nel timer
+  `Xo weighted interval diagnostic`;
+- lascia `PAR_IND_CON_BANDS_X` sulla partizione marginale precedente, quindi
+  non ridistribuisce le funzioni d'onda secondo la proposta.
+
+L'helper interval-aware riproduce gli stessi filtri fisici del prepass e usa
+`FREQUENCIES_group_engine`. Ogni c-rank valuta un intervallo completo; una
+riduzione intera a 64 bit rende disponibili tutti i costi. Il caso con rank
+eccedenti resta collettivo e non introduce ritorni anticipati che potrebbero
+causare deadlock.
+
+### Build e test MPI locale
+
+- Build incrementale con `module load profile/gcc-14.3.0 && make yambo`:
+  completata.
+- Caso Al_bulk lifetimes, 4 rank tutti sul livello `c`, 8 q-point, job
+  `weighted_interval_diag2_gcc143`: completato.
+- I costi statici `[X-WB-I]` riproducono esattamente le righe `[X-CG]` del
+  calcolo produttivo per ciascun q e rank. Le somme sono rispettivamente
+  `625, 715, 575, 698`.
+- La partizione produttiva resta `2:6, 7:11, 12:15, 16:20`. La proposta
+  diagnostica è `2:5, 6:10, 11:15, 16:20`, con costi esatti aggregati
+  `507, 696, 704, 698`: il massimo passa da 715 a 704, soltanto -1.54%, come
+  atteso dal debole potenziale del piccolo caso.
+- Per q, la variazione del massimo è compresa fra -2.17% e +3.06%; il segno
+  misto conferma la necessità di validare gli intervalli completi anziché
+  fidarsi della sola proposta piecewise-constant.
+- Il timer `Xo weighted interval diagnostic` è 0.0009 s; l'intero prepass
+  arriva a 0.0026 s nel caso piccolo.
+- `o-weighted_interval_diag2_gcc143.qp` conserva gli stessi stati ed energie;
+  le differenze rispetto al precedente weighted sono esclusivamente nelle
+  ultime cifre stampate, coerenti con la normale variabilità delle riduzioni.
+- Eseguito anche `legacy_interval_diag_guard_gcc143` con il flag disabilitato:
+  nessuna riga `[X-WB]` o `[X-WB-I]`, completamento regolare e sole differenze
+  di arrotondamento rispetto al precedente output legacy.
+- `git diff --check`: superato.
+
+Il diagnostico locale è funzionalmente pronto per un benchmark anatase
+dedicato, ma nessun T03 è stato ancora predisposto o richiesto.

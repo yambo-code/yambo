@@ -382,3 +382,30 @@ Questa diagnostica non modifica le maschere produttive e non ridistribuisce le
 funzioni d'onda. Serve a misurare quanto cambierebbero i confini specifici per
 q e a stimare se il possibile beneficio giustifichi in futuro il costo e la
 complessità di una redistribuzione delle funzioni d'onda durante il q-loop.
+
+## Diagnostica interval-aware successiva a T02
+
+Poiché T02 ha dimostrato che anche i marginali fra bande adiacenti non
+rappresentano il costo di blocchi di centinaia di bande, il prepass misura ora
+anche il costo non additivo di intervalli completi. Questa parte resta
+strettamente diagnostica e non sostituisce la maschera produttiva ottenuta dai
+pesi marginali.
+
+La sequenza è:
+
+1. contare con `FREQUENCIES_group_engine` i gruppi dell'intero intervallo
+   statico assegnato a ciascun c-rank, per ogni q-point;
+2. assegnare temporaneamente a ciascuna banda la densità media osservata nel
+   proprio intervallo, cioè gruppi esatti aggregati divisi per numero di bande;
+3. costruire da questa approssimazione piecewise-constant una partizione
+   proposta con lo stesso partizionatore contiguo minimax;
+4. ricalcolare i gruppi degli interi intervalli proposti, senza usare somme di
+   pesi per-banda;
+5. riportare per ogni q e rank i costi esatti statici e proposti, i massimi per
+   q e i totali aggregati.
+
+Le righe sono marcate `[X-WB-I]`. Il costo dei due conteggi completi è
+registrato separatamente dal resto del prepass nel timer
+`Xo weighted interval diagnostic`. La partizione proposta non viene passata a
+`PARALLEL_WF_distribute`: serve soltanto a verificare se il forte beneficio
+indicato dall'oracle offline sopravvive al ricalcolo non additivo dei gruppi.

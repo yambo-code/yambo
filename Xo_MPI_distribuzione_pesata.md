@@ -344,3 +344,41 @@ numero reale di bande.
 Il report `[X-WB]` mostra intervallo, numero di bande, peso previsto e numero di
 transizioni accettate del rank. Il costo è registrato separatamente come
 `Xo weighted bands prepass` nei timer.
+
+## Correzione dopo T01: peso marginale fra bande adiacenti
+
+T01 ha mostrato che la somma dei gruppi ottenuti da ciascuna banda isolata non
+è una stima utile del costo di un blocco: le transizioni di bande vicine si
+sovrappongono energeticamente e confluiscono negli stessi gruppi. I pesi
+isolati risultavano quasi uniformi e riproducevano quindi quasi esattamente la
+partizione equinumerosa, mentre i gruppi del calcolo effettivo diminuivano
+sistematicamente procedendo verso le bande alte.
+
+Il prepass usa ora un'approssimazione marginale locale. Per ogni banda `ic`
+calcola, allo stesso q-point, sia i gruppi della coppia `(ic-1,ic)` sia quelli
+della sola banda `ic-1`, e assegna:
+
+```text
+weight(ic) = max(Ngruppi(ic-1 U ic) - Ngruppi(ic-1), 0)
+```
+
+Per la prima banda resta `weight(ic_low)=Ngruppi(ic_low)`. I contributi sono
+poi sommati sui q-point come in precedenza. Questa stima include la perdita di
+lavoro dovuta alla sovrapposizione locale senza rendere necessario costruire o
+raccogliere l'intero insieme globale delle transizioni. Rimane
+un'approssimazione: non rappresenta sovrapposizioni fra bande non adiacenti né
+la piena dipendenza del raggruppamento adattivo dall'intero intervallo.
+
+## Diagnostica delle partizioni specifiche per q-point
+
+Il prepass conserva una sola partizione statica per il calcolo produttivo, ma
+calcola anche la partizione contigua minimax stimata separatamente per ciascun
+q-point. Le righe `[X-WB-Q]` riportano, per ogni q e c-rank, intervallo e carico
+marginale previsto. Un riepilogo confronta inoltre il massimo carico marginale
+della partizione specifica con quello prodotto, sullo stesso q, dalla
+partizione statica e ne indica la riduzione percentuale teorica.
+
+Questa diagnostica non modifica le maschere produttive e non ridistribuisce le
+funzioni d'onda. Serve a misurare quanto cambierebbero i confini specifici per
+q e a stimare se il possibile beneficio giustifichi in futuro il costo e la
+complessità di una redistribuzione delle funzioni d'onda durante il q-loop.

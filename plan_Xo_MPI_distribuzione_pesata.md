@@ -56,3 +56,15 @@ Non usare rebase, force-push o riscrittura della cronologia. Ogni richiesta di
 test remoto deve indicare un hash già pubblicato. Ogni sessione remota usa una
 nuova directory `TNN_<scopo>_<git-short>` con manifest, istruzioni di copia e
 sottodirectory `legacy/` e `weighted/` complete.
+
+Per T01 anatase completo, la provenienza dichiarata dall'utente è:
+
+- legacy: branch `5.4`, commit
+  `a4a1dfaa9800917b36bd5aee613d27ff99c60c73`;
+- weighted: branch `tech-xo-weighted-band-distribution`, implementazione T01
+  al commit `cf76e8fdf366f678e4c39f33ece00d5f253c0676`.
+
+L'indicazione di branch/revisione stampata nei report Yambo non è attendibile
+per stabilire la provenienza del binario e non deve essere usata nelle analisi.
+La provenienza va registrata dal comando di build/esecuzione o confermata da
+chi ha effettuato il run.

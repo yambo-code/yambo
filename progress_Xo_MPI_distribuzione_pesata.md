@@ -1,6 +1,6 @@
 # Progressi: distribuzione MPI contigua pesata delle bande di Xo
 
-Ultimo aggiornamento: 2026-10-08.
+Ultimo aggiornamento: 2026-10-09.
 
 ## Stato Git iniziale
 
@@ -67,16 +67,18 @@ Ultimo aggiornamento: 2026-10-08.
 - Correzione statica e verifiche locali pubblicate: `cf76e8fdf`.
 - Commit esatto richiesto per T01:
   `cf76e8fdf366f678e4c39f33ece00d5f253c0676`.
-- T01 predisposto; richiesta pronta per due run q=1 sullo stesso binario
-  (`X_WeightedBands` assente/presente).
+- T01 era stato inizialmente predisposto come due run q=1 sullo stesso binario,
+  ma tali input non sono eseguibili per anatase perché le successive fasi
+  HF/GW richiedono i dati di tutti i q-point. I risultati effettivamente forniti
+  usano pertanto l'input anatase completo.
 
 ## Directory dei risultati
 
 - Radice prevista:
   `/home/nicola/tmp/risultati-test-codex-Xo-distribuzione-pesata`.
-- Sessione predisposta:
-  `T01_q1_smoke_cf76e8fdf`, completa di manifest, istruzioni, input e directory
-  vuote per report/output/log di entrambe le varianti.
+- Sessione dei risultati:
+  `T01_anatase_full_a4a1dfaa9_cf76e8fdf`, con manifest, istruzioni, input
+  completo e report/output/log di entrambe le varianti.
 
 ## Analisi e problemi
 
@@ -87,8 +89,78 @@ Ultimo aggiornamento: 2026-10-08.
 - La logica adattiva del coarse grid è attualmente accoppiata ad allocazioni,
   strutture globali e messaggi; va estratto un nucleo condiviso.
 
+## Analisi T01
+
+- I risultati copiati in `T01_anatase_full_a4a1dfaa9_cf76e8fdf` sono relativi all'input
+  completo `yambo-anatase-full.in`, con tutti i 30 q-point. Questa scelta è
+  necessaria perché limitare Xo al solo q=1 rende indisponibili i dati richiesti
+  dalle successive fasi HF/GW della self-energy.
+- Il nuovo percorso si attiva una sola volta e completa il run. Il prepass
+  costa 9.53 s per rank rispetto a circa 01h35m della fase Xo.
+- La partizione ottenuta è quasi equinumerosa: `249, 248, 247, 247, 246,
+  246, 247, 246` bande. Anche i pesi previsti sono quasi uniformi, fra
+  15,837,486 e 15,882,285 gruppi per rank.
+- Il carico reale non è uniforme. La somma dei gruppi `[X-CG]` sui 30 q-point
+  scende monotonicamente da 7,819,825 sul rank 0 a 5,443,476 sul rank 7. Il
+  timer `Xo (procedure)` scende nello stesso ordine da 5816.88 s a 3173.22 s;
+  l'attesa `Xo (REDUX)` cresce da 0.64 s a 2646.79 s.
+- La causa è la non additività dei gruppi: il prepass somma
+  `Ngruppi(banda)` calcolati su bande isolate, ma il calcolo raggruppa l'unione
+  delle transizioni dell'intero intervallo. Le sovrapposizioni energetiche fra
+  bande eliminano una quota crescente dei gruppi e il segnale utile viene
+  perso.
+- La provenienza confermata dall'utente è: legacy dal branch `5.4`, commit
+  `a4a1dfaa9800917b36bd5aee613d27ff99c60c73`; weighted dal branch di lavoro
+  con la funzionalità T01. L'indicazione di branch/revisione stampata nei report
+  non è attendibile e non va usata per ricostruire il binario impiegato.
+- Poiché legacy e weighted sono intenzionalmente due build diverse, il
+  confronto misura la modifica rispetto alla base prevista. La verifica fisica
+  resta affidata a `o-OUTPUT.qp`, tenendo presenti le normali differenze dovute
+  all'ordine delle riduzioni MPI.
+
+## Correzione successiva a T01
+
+- Il peso di una banda è ora il contributo marginale locale
+  `max(Ngruppi(ic-1 U ic)-Ngruppi(ic-1),0)`, sommato sugli stessi q-point.
+  Per la prima banda si usa il suo numero di gruppi.
+- La coppia adiacente introduce nel peso la sovrapposizione energetica che T01
+  ha mostrato essere dominante, lasciando invariati partizionatore contiguo,
+  filtri fisici e percorso produttivo Xo.
+- La stima resta intenzionalmente locale e approssimata: T01 successivo dovrà
+  verificare che i nuovi confini anticipino il carico verso le bande basse e
+  riducano la dispersione di `[X-CG]` e `Xo (procedure)`.
+- Eseguita una build pulita di `yambo` dopo
+  `module load profile/gcc-14.3.0`: compilazione e link completati.
+- Rilanciato il caso MPI locale Al_bulk a 4 rank con job
+  `weighted_marginal_gcc143`. Il prepass è eseguito una volta, costa 0.0011 s
+  e produce gli intervalli `2:6`, `7:11`, `12:15`, `16:20`, con pesi marginali
+  rispettivamente 625, 684, 538 e 683. La copertura resta completa, contigua e
+  senza sovrapposizioni.
+- Il confronto con `o-weighted_static.qp` conserva energie identiche e mostra
+  soltanto differenze di arrotondamento nelle ultime cifre stampate delle altre
+  colonne, coerenti con il diverso ordine delle riduzioni MPI.
+- Per le prossime build e per tutti i test locali usare sempre
+  `module load profile/gcc-14.3.0`; non usare più il file profilo
+  `/home/nicola/src/profile_gcc_openmpi.txt`.
+- Avviata la valutazione non invasiva delle partizioni specifiche per q-point:
+  il prepass riduce separatamente i pesi marginali di ciascun q, calcola la
+  relativa partizione minimax e la riporta nelle righe `[X-WB-Q]`. La somma dei
+  pesi per q continua a determinare l'unica partizione statica produttiva;
+  maschere e distribuzione delle funzioni d'onda non cambiano durante il loop.
+- Per ogni q viene inoltre riportato il confronto `ideal max`/`static max` e la
+  riduzione percentuale teorica del massimo carico marginale. Questa misura
+  permetterà di decidere dai dati anatase se studiare una redistribuzione delle
+  funzioni d'onda per q o poche partizioni condivise da gruppi di q-point.
+- Build incrementale e test MPI locale `weighted_qbenefit_gcc143` completati
+  con `profile/gcc-14.3.0`. Sul caso Al_bulk, sei q-point su otto hanno beneficio
+  teorico nullo rispetto alla partizione statica; q=6 e q=8 mostrano soltanto
+  2.13% e 2.33%. Il prepass passa da circa 0.0011 s a 0.0020 s e l'output fisico
+  conserva le sole differenze di arrotondamento già osservate. Il caso piccolo
+  non giustifica una redistribuzione per q, ma la decisione resta demandata alla
+  diagnostica sul benchmark anatase.
+
 ## Prossima attività
 
-Pubblicare la correzione della partizione statica e le verifiche locali,
-predisporre T01 sul relativo hash già remoto e attendere i risultati prima di
-preparare T02.
+Compilare e verificare localmente la correzione marginale. Non predisporre T02
+finché la correzione e l'analisi T01 non sono consolidate in un commit
+pubblicato e non è stata concordata una nuova richiesta remota controllata.

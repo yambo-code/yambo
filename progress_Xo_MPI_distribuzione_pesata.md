@@ -533,5 +533,10 @@ causare deadlock.
   di arrotondamento rispetto al precedente output legacy.
 - `git diff --check`: superato.
 
-Il diagnostico locale è funzionalmente pronto per un benchmark anatase
-dedicato, ma nessun T03 è stato ancora predisposto o richiesto.
+Il diagnostico è stato pubblicato nel commit
+`5ebe585da72b80b6d37409a4735b9dfd0b549569`. T03 è predisposto in
+`/home/nicola/tmp/risultati-test-codex-Xo-distribuzione-pesata/`
+`T03_anatase_interval_diag_d48b5dd5f_5ebe585da` come singolo run weighted
+diagnostico sull'input anatase completo. Il manifest richiede esplicitamente
+il checkout del commit `5ebe585da`, raccoglie report, output QP e tutti i log
+per-rank e usa T02 weighted e T01 legacy già disponibili come riferimenti.

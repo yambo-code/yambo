@@ -776,3 +776,12 @@ Dopo l'aggiunta del criterio è stata ripetuta build e prova con job
 `refinement accepted F proposed aggregate max 704 refined aggregate max 715`.
 Tutti i quattro rank raggiungono `Game Over`; il timer interval-aware è 0.0014
 s e il prepass massimo 0.0032 s. Non sono comparsi errori, NaN o abort MPI.
+
+L'analisi T03 è stata pubblicata nel commit documentale `41eea65cc`; il
+raffinamento diagnostico e la relativa documentazione nel commit applicativo
+`b4f568464c64e4a250d18b8fe6e6c05cec155fbc`. T04 è predisposto in
+`/home/nicola/tmp/risultati-test-codex-Xo-distribuzione-pesata/`
+`T04_anatase_interval_refine_5ebe585da_b4f568464` come singolo run weighted
+diagnostico sull'input anatase completo. La richiesta mantiene esplicitamente
+la partizione produttiva T02/T03 e raccoglie `[X-WB-R]`, timer, memoria,
+`o-OUTPUT.qp`, report e tutti gli otto log per-rank.

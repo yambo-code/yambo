@@ -748,3 +748,31 @@ in un successivo test produttivo è già difendibile; l'analisi favorisce però
 prima il raffinamento limitato. In accordo con il vincolo della sessione, non è
 stata applicata la proposta, non è stato predisposto T04 e non è stato creato
 alcun commit.
+
+## Raffinamento diagnostico successivo a T03
+
+Avviata una singola iterazione di raffinamento, ancora non produttiva. Dai
+costi esatti aggregati della proposta `[X-WB-I]` viene ricostruita una nuova
+densità piecewise-constant; il partizionatore minimax produce una candidata
+raffinata e un terzo conteggio degli intervalli completi ne misura il costo
+reale. Le nuove righe `[X-WB-R]` riportano confronto per q, confini, totali e
+un criterio esplicito di accettazione: la candidata è accettata soltanto se il
+suo massimo aggregato esatto è inferiore a quello della proposta precedente.
+La maschera produttiva `[X-WB]` resta invariata.
+
+La build incrementale MPI con `profile/gcc-14.3.0` è completata. Un primo test
+Al_bulk a quattro rank nella directory
+`/home/nicola/tmp/codex/yambo5-xo-weighted-refine-local` è terminato
+regolarmente. La partizione produttiva resta `2:6, 7:11, 12:15, 16:20`; la
+prima proposta resta `2:5, 6:10, 11:15, 16:20`, massimo aggregato 704. Per la
+granularità del caso minuscolo, la seconda iterazione torna alla partizione
+produttiva e porta il massimo a 715: deve quindi essere marcata come rifiutata.
+Il comportamento conferma la necessità del criterio di accettazione e non
+indica un errore collettivo. L'output fisico conserva stati ed energie e mostra
+soltanto variazioni di arrotondamento già osservate nei run precedenti.
+
+Dopo l'aggiunta del criterio è stata ripetuta build e prova con job
+`weighted_refine_accept_gcc143`: il report stampa correttamente
+`refinement accepted F proposed aggregate max 704 refined aggregate max 715`.
+Tutti i quattro rank raggiungono `Game Over`; il timer interval-aware è 0.0014
+s e il prepass massimo 0.0032 s. Non sono comparsi errori, NaN o abort MPI.

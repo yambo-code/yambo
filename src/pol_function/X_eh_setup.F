@@ -184,19 +184,20 @@ subroutine X_weighted_bands_setup(Xen,Xk,X,iq_range,io_X_done)
  type(levels) :: Xen
  type(bz_samp):: Xk
  type(X_t)    :: X
- type(PP_indexes) :: q_partition
+ type(PP_indexes) :: q_partition,refined_partition
  integer      :: iq_range(2),io_X_done(*)
  !
  integer :: iq,ik_bz,i_sym,ik,ik_m_q,iv,ic,ic_eval,i_sp,ic_min,ic_low,nmax,npoles,npoles_prev
  integer :: Nv(n_sp_pol),Nc(n_sp_pol),Nc_XTerm(n_sp_pol),ngroups,ngroups_prev,ngroups_initial
  integer :: ndir,ir
- integer(8) :: ideal_max,static_max,interval_static_max,interval_proposed_max
+ integer(8) :: ideal_max,static_max,interval_static_max,interval_proposed_max,interval_refined_max
+ integer(8) :: proposed_aggregate_max,refined_aggregate_max
  integer(8),allocatable :: weights(:),q_weights(:),q_weights_all(:,:),q_ideal_max(:),accepted(:)
- integer(8),allocatable :: interval_weights(:),interval_static(:,:),interval_proposed(:,:)
+ integer(8),allocatable :: interval_weights(:),interval_static(:,:),interval_proposed(:,:),interval_refined(:,:)
  integer,allocatable :: sorted_x(:),group_sorted(:)
  real(SP),allocatable :: poles(:),ein(:),sorted(:)
  real(SP) :: E_eh,E_in,f_eh,local_tresh
- logical :: l_XTerm_vv
+ logical :: l_XTerm_vv,refinement_accepted
  character(schlen) :: ch
  !
  do i_sp=1,n_sp_pol
@@ -306,11 +307,14 @@ subroutine X_weighted_bands_setup(Xen,Xk,X,iq_range,io_X_done)
  ! Diagnose the non-additive interval cost without changing the production
  ! mask.  First measure the full X-CG cost of the marginal partition.  Its
  ! average cost per band defines only a proposal; measure that proposal again
- ! with the full intervals before reporting any potential benefit.
+ ! with the full intervals.  One further piecewise-constant iteration uses the
+ ! measured proposal costs to refine the boundaries and measures them exactly.
+ ! Neither diagnostic partition replaces the production mask.
  !
  allocate(interval_weights(X%ib(2)))
  allocate(interval_static(PAR_COM_CON_INDEX_X(X%whoami)%n_CPU,iq_range(1):iq_range(2)))
  allocate(interval_proposed(PAR_COM_CON_INDEX_X(X%whoami)%n_CPU,iq_range(1):iq_range(2)))
+ allocate(interval_refined(PAR_COM_CON_INDEX_X(X%whoami)%n_CPU,iq_range(1):iq_range(2)))
  interval_weights=0_8
  call timing('Xo weighted interval diagnostic',OPR='start')
  call interval_costs(PAR_IND_CON_BANDS_X(X%whoami),interval_static)
@@ -324,6 +328,19 @@ subroutine X_weighted_bands_setup(Xen,Xk,X,iq_range,io_X_done)
  call PARALLEL_index_weighted_contiguous(q_partition,X%ib(2),ic_low,interval_weights,&
 &                                        PAR_COM_CON_INDEX_X(X%whoami))
  call interval_costs(q_partition,interval_proposed)
+ interval_weights=0_8
+ do ir=1,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU
+   if (q_partition%n_of_elements(ir)>0) then
+     interval_weights(q_partition%first_of_1D(ir):q_partition%last_of_1D(ir))=&
+&      max(sum(interval_proposed(ir,:))/int(q_partition%n_of_elements(ir),8),1_8)
+   endif
+ enddo
+ call PARALLEL_index_weighted_contiguous(refined_partition,X%ib(2),ic_low,interval_weights,&
+&                                        PAR_COM_CON_INDEX_X(X%whoami))
+ call interval_costs(refined_partition,interval_refined)
+ proposed_aggregate_max=maxval(sum(interval_proposed,dim=2))
+ refined_aggregate_max=maxval(sum(interval_refined,dim=2))
+ refinement_accepted=refined_aggregate_max<proposed_aggregate_max
  call timing('Xo weighted interval diagnostic',OPR='stop')
  !
  if (PAR_COM_CON_INDEX_X(X%whoami)%CPU_id==0) then
@@ -379,10 +396,38 @@ subroutine X_weighted_bands_setup(Xen,Xk,X,iq_range,io_X_done)
    write(ch,'(a,i0)') '[X-WB-I] proposed exact groups ',sum(interval_proposed(ir,:))
    call msg('r',trim(ch))
  enddo
+ do iq=iq_range(1),iq_range(2)
+   if (io_X_done(iq)>0) cycle
+   if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
+   do ir=1,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU
+     write(ch,'(a,i0,a,i0,a,i0,a,i0)') '[X-WB-R] q ',iq,' c-rank ',ir-1,&
+&     ' proposed exact groups ',interval_proposed(ir,iq),' refined exact groups ',interval_refined(ir,iq)
+     call msg('r',trim(ch))
+   enddo
+   interval_proposed_max=maxval(interval_proposed(:,iq))
+   interval_refined_max=maxval(interval_refined(:,iq))
+   write(ch,'(a,i0,a,i0,a,i0,a,f6.2,a)') '[X-WB-R] q ',iq,' proposed exact max ',&
+&   interval_proposed_max,' refined exact max ',interval_refined_max,' measured reduction ',&
+&   100._SP*real(interval_proposed_max-interval_refined_max,SP)/&
+&   real(max(interval_proposed_max,1_8),SP),'%'
+   call msg('r',trim(ch))
+ enddo
+ do ir=1,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU
+   write(ch,'(a,i0,a,i0,a,i0,a,i0,a,i0)') '[X-WB-R] c-rank ',ir-1,' refined bands ',&
+&   refined_partition%first_of_1D(ir),':',refined_partition%last_of_1D(ir),' count ',&
+&   refined_partition%n_of_elements(ir),' proposed exact groups ',sum(interval_proposed(ir,:))
+   call msg('r',trim(ch))
+   write(ch,'(a,i0)') '[X-WB-R] refined exact groups ',sum(interval_refined(ir,:))
+   call msg('r',trim(ch))
+ enddo
+ write(ch,'(a,l1,a,i0,a,i0)') '[X-WB-R] refinement accepted ',refinement_accepted,&
+&  ' proposed aggregate max ',proposed_aggregate_max,' refined aggregate max ',refined_aggregate_max
+ call msg('r',trim(ch))
  endif
  call PP_indexes_reset(q_partition)
+ call PP_indexes_reset(refined_partition)
  deallocate(weights,q_weights,q_weights_all,q_ideal_max,accepted,poles,ein,sorted,sorted_x,group_sorted)
- deallocate(interval_weights,interval_static,interval_proposed)
+ deallocate(interval_weights,interval_static,interval_proposed,interval_refined)
  !
 contains
  !

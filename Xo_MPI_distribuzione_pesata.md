@@ -409,3 +409,18 @@ registrato separatamente dal resto del prepass nel timer
 `Xo weighted interval diagnostic`. La partizione proposta non viene passata a
 `PARALLEL_WF_distribute`: serve soltanto a verificare se il forte beneficio
 indicato dall'oracle offline sopravvive al ricalcolo non additivo dei gruppi.
+
+## Raffinamento diagnostico interval-aware
+
+Dopo la prima validazione sugli intervalli completi, il diagnostico esegue una
+sola iterazione aggiuntiva. La densità piecewise-constant viene ricostruita dai
+costi esatti della prima proposta, anziché da quelli della partizione marginale;
+il partizionatore contiguo minimax genera quindi confini raffinati e
+`FREQUENCIES_group_engine` ne misura nuovamente i costi completi.
+
+Le righe `[X-WB-R]` confrontano proposta e raffinamento per q-point, riportano
+confini e costi aggregati e indicano se il massimo aggregato esatto è realmente
+diminuito. Il raffinamento è considerato accettato soltanto in quest'ultimo
+caso. Questa seconda iterazione resta diagnostica: né la prima proposta né i
+confini raffinati modificano `PAR_IND_CON_BANDS_X` o vengono passati a
+`PARALLEL_WF_distribute`.

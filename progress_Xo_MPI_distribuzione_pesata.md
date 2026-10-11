@@ -785,3 +785,248 @@ raffinamento diagnostico e la relativa documentazione nel commit applicativo
 diagnostico sull'input anatase completo. La richiesta mantiene esplicitamente
 la partizione produttiva T02/T03 e raccoglie `[X-WB-R]`, timer, memoria,
 `o-OUTPUT.qp`, report e tutti gli otto log per-rank.
+
+## Analisi T04: seconda iterazione interval-aware
+
+### Provenienza, artefatti e completamento
+
+La provenienza attendibile dichiarata dall'utente è il binario costruito dal
+commit applicativo `b4f568464c64e4a250d18b8fe6e6c05cec155fbc`; le stringhe
+di branch, revisione e hash stampate da Yambo sono state ignorate. Il branch
+di analisi è `tech-xo-weighted-band-distribution`, con HEAD al commit
+documentale `758c4a478`; la cronologia rilevante è `41eea65cc` (analisi T03),
+`b4f568464` (raffinamento diagnostico) e `758c4a478` (preparazione T04).
+Prima dell'analisi il branch era allineato a `origin` e il worktree conteneva
+soltanto i due file non tracciati `prossimo_prompt_post_T03.md` e
+`prossimo_prompt_post_T04.md`, lasciati invariati.
+
+La directory T04 contiene l'input effettivo, un report, `o-OUTPUT.qp` e tutti
+gli otto log `CPU_1`--`CPU_8`. L'input ha SHA-256
+`bde9fc279770e9480091c2dc8816c1cce8ecfd8ef449d3b5dafe054a53c46695`
+ed è byte-identico a T03. Tutti gli otto log contengono una e una sola sezione
+`Game Over`; il report registra inizio 2026-10-11 02:11, fine 04:47 e tempo
+totale 02h35m (profilo 9326.1846 s). Non mancano artefatti e il run è
+terminato regolarmente.
+
+### Partizione produttiva e riproduzione integrale di T03
+
+La partizione produttiva `[X-WB]` è ancora esattamente quella marginale di
+T02 e T03, inclusi pesi marginali e transizioni accettate:
+
+| c-rank | bande | numero | gruppi marginali | transizioni |
+|---:|:---:|---:|---:|---:|
+| 0 | 25:273 | 249 | 13,560,352 | 38,724,480 |
+| 1 | 274:521 | 248 | 13,545,929 | 38,568,960 |
+| 2 | 522:769 | 248 | 13,560,914 | 38,568,960 |
+| 3 | 770:1017 | 248 | 13,570,588 | 38,568,960 |
+| 4 | 1018:1262 | 245 | 13,530,561 | 38,102,400 |
+| 5 | 1263:1507 | 245 | 13,544,664 | 38,102,400 |
+| 6 | 1508:1754 | 247 | 13,535,283 | 38,413,440 |
+| 7 | 1755:2000 | 246 | 13,563,924 | 38,257,920 |
+
+Tutte le 240 coppie `(q,c-rank)` di `static exact groups` e tutte le 240 di
+`proposed exact groups` coincidono esattamente con T03: zero valori diversi,
+differenza massima zero e somma delle differenze zero. Coincidono anche i
+confini della prima proposta `25:221, 222:441, 442:679, 680:929, 930:1185,
+1186:1448, 1449:1721, 1722:2000`, i relativi numeri di bande
+`197,220,238,250,256,263,273,279`, i massimi e le riduzioni di tutti i 30
+q-point e i totali aggregati. Il commit di raffinamento non ha quindi alterato
+alcun risultato della diagnostica precedente.
+
+Inoltre i 240 `static exact groups` T04 coincidono uno per uno con i successivi
+gruppi produttivi `[X-CG]`: 240/240 uguali, zero discrepanze, differenza
+massima, somma assoluta e somma con segno tutte nulle. Questo, insieme alla
+partizione `[X-WB]` invariata e alle allocazioni `WF%c` ancora proporzionali a
+245--249 bande, conferma che né `[X-WB-I]` né `[X-WB-R]` è stato passato a
+`PARALLEL_WF_distribute`.
+
+### Risultati completi del raffinamento per q-point
+
+Le celle elencano i rank 0--7. I massimi ricalcolati dai valori per-rank
+coincidono esattamente con quelli stampati; le percentuali stampate coincidono
+con il calcolo indipendente entro il solo arrotondamento a due decimali
+(scarto massimo 0.00488 punti percentuali).
+
+| q | proposed exact groups r0--r7 | refined exact groups r0--r7 | max proposto | max raffinato | riduzione |
+|---:|:---|:---|---:|---:|---:|
+| 1 | 96885,100681,104374,106184,106882,107712,108450,109190 | 92075,98854,103090,105469,107343,109171,110937,112470 | 109190 | 112470 | -3.00% |
+| 2 | 256230,242346,238773,236019,233271,229937,226419,223948 | 245342,239315,237055,235389,234316,233045,230796,229414 | 256230 | 245342 | 4.25% |
+| 3 | 249664,236620,233930,231093,228411,225652,222344,220076 | 238960,233785,231905,230580,229438,228689,226687,225545 | 249664 | 238960 | 4.29% |
+| 4 | 179984,177922,179321,179346,178400,177981,176812,176038 | 171751,175328,177513,178758,179181,180386,180477,180819 | 179984 | 180819 | -0.46% |
+| 5 | 247898,235541,232516,229933,227142,224903,221191,219092 | 237275,232503,230734,229166,228029,227763,225374,224433 | 247898 | 237275 | 4.29% |
+| 6 | 279378,261064,256618,252493,248969,245800,241037,238323 | 267698,258026,254441,251944,250104,248972,245432,244022 | 279378 | 267698 | 4.18% |
+| 7 | 284991,264864,259651,255494,251708,248220,242858,240217 | 273146,262156,257896,254786,252812,251425,247472,245878 | 284991 | 273146 | 4.16% |
+| 8 | 310619,285188,277833,272901,267939,263572,257304,253681 | 298101,282335,276044,272157,269066,267015,261912,259544 | 310619 | 298101 | 4.03% |
+| 9 | 189164,185428,186389,186478,185031,184548,183261,182106 | 180488,182673,184427,185806,185822,187038,187015,186896 | 189164 | 187038 | 1.12% |
+| 10 | 245343,233198,231053,228674,225479,223464,219540,217675 | 234715,230353,229070,227950,226391,226515,223728,223082 | 245343 | 234715 | 4.33% |
+| 11 | 292028,270778,264909,260808,256399,253002,247127,244134 | 280071,267932,263034,260068,257339,256297,251673,249869 | 292028 | 280071 | 4.09% |
+| 12 | 187281,184038,185269,185245,183978,183201,181853,181037 | 178670,181340,183530,184338,184791,185697,185628,185877 | 187281 | 185877 | 0.75% |
+| 13 | 131369,133286,136411,137983,138142,138882,138796,139269 | 124912,130999,134873,137359,138734,140792,141789,143253 | 139269 | 143253 | -2.86% |
+| 14 | 138770,140371,143403,144095,144467,144468,144759,144667 | 132156,138053,141722,143524,145192,146499,147796,148907 | 144759 | 148907 | -2.87% |
+| 15 | 238210,227386,225739,223113,221199,218694,215988,214250 | 227877,224559,223855,222473,222228,221666,220184,219640 | 238210 | 227877 | 4.34% |
+| 16 | 249391,236694,233978,231164,228599,225617,222181,220112 | 238800,233752,231979,230581,229734,228558,226541,225509 | 249391 | 238800 | 4.25% |
+| 17 | 235461,225351,223862,221361,219534,216843,214149,212087 | 225197,222546,221936,220713,220383,219823,218381,217477 | 235461 | 225197 | 4.36% |
+| 18 | 191963,188137,188888,188826,187789,187031,185229,184427 | 183277,185395,187122,188069,188756,189384,188891,189254 | 191963 | 189384 | 1.34% |
+| 19 | 247956,235374,232239,229920,227131,225161,221171,218912 | 237195,232567,230539,229057,228248,227994,225453,224269 | 247956 | 237195 | 4.34% |
+| 20 | 310530,285001,277783,272628,268064,263660,257226,253749 | 297967,282067,275882,271881,269098,267066,261842,259650 | 310530 | 297967 | 4.05% |
+| 21 | 229694,220506,219015,217424,215222,213439,210569,208734 | 219487,217568,216962,216789,216015,216246,214809,213957 | 229694 | 219487 | 4.44% |
+| 22 | 186834,183575,184729,184831,183527,182780,181413,180888 | 178124,180960,182906,184057,184408,185162,185150,185715 | 186834 | 185715 | 0.60% |
+| 23 | 245552,232978,230857,228609,225547,223313,219776,217526 | 235013,230139,229018,227846,226484,226276,224002,222901 | 245552 | 235013 | 4.29% |
+| 24 | 176334,174163,175911,176180,174842,174797,173471,173321 | 168066,171588,174133,175523,175741,177016,177058,178010 | 176334 | 178010 | -0.95% |
+| 25 | 233208,223404,221890,220211,217765,216213,212673,211212 | 223021,220478,219929,219541,218639,218875,216935,216523 | 233208 | 223021 | 4.37% |
+| 26 | 138762,140289,143277,144394,144381,144806,144796,144824 | 132070,137979,141610,143739,144989,146654,147853,148954 | 144824 | 148954 | -2.85% |
+| 27 | 256467,242362,238872,236054,233108,230097,226274,224117 | 245529,239516,237041,235547,234092,233148,230629,229481 | 256467 | 245529 | 4.26% |
+| 28 | 192051,188270,189039,188796,187870,186880,185257,184435 | 183437,185552,187243,188167,188667,189178,189080,189232 | 192051 | 189232 | 1.47% |
+| 29 | 188510,185048,186074,186355,184933,184621,182610,181726 | 179877,182258,184223,185493,185698,186992,186500,186503 | 188510 | 186992 | 0.81% |
+| 30 | 95953,99790,103523,105501,105779,106959,108009,108412 | 91152,97896,102240,104914,106364,108403,110417,111671 | 108412 | 111671 | -3.01% |
+
+Il beneficio per q ha media 2.080%, mediana 4.070%, minimo -3.006% e massimo
+4.444%: 23 q sono positivi, nessuno nullo e 7 negativi (q=1, 4, 13, 14,
+24, 26 e 30). Il segno misto non contraddice l'accettazione aggregata: una
+partizione statica unica ottimizza il totale sui q, non ogni q separatamente.
+
+### Confini, aggregati e criterio di accettazione
+
+| c-rank | prima proposta | bande | raffinata | bande | gruppi proposti | gruppi raffinati |
+|---:|:---:|---:|:---:|---:|---:|---:|
+| 0 | 25:221 | 197 | 25:210 | 186 | 6,506,480 | 6,221,449 |
+| 1 | 222:441 | 220 | 211:425 | 215 | 6,239,653 | 6,158,472 |
+| 2 | 442:679 | 238 | 426:659 | 234 | 6,206,126 | 6,151,952 |
+| 3 | 680:929 | 250 | 660:907 | 248 | 6,162,113 | 6,141,684 |
+| 4 | 930:1185 | 256 | 908:1164 | 257 | 6,101,508 | 6,128,102 |
+| 5 | 1186:1448 | 263 | 1165:1431 | 267 | 6,052,253 | 6,131,745 |
+| 6 | 1449:1721 | 273 | 1432:1711 | 280 | 5,972,543 | 6,090,441 |
+| 7 | 1722:2000 | 279 | 1712:2000 | 289 | 5,928,185 | 6,078,755 |
+
+| statistica | prima proposta | raffinata |
+|:---|---:|---:|
+| minimo | 5,928,185 | 6,078,755 |
+| massimo | 6,506,480 | 6,221,449 |
+| range | 578,295 | 142,694 |
+| media | 6,146,107.625 | 6,137,825.000 |
+| deviazione standard popolazione | 169,886.04 | 41,078.81 |
+| CV | 2.764% | 0.669% |
+| max/min | 1.09755 | 1.02347 |
+| somma totale | 49,168,861 | 49,102,600 |
+
+Il massimo aggregato diminuisce di 285,031 gruppi, cioè 4.381%. La somma
+totale diminuisce di 66,261 gruppi (-0.135%) passando dalla proposta al
+raffinamento e di 326,172 (-0.660%) rispetto allo statico produttivo: non è
+conservata perché il numero di gruppi locali non è additivo rispetto ai tagli.
+
+La riga riepilogativa stampa
+`refinement accepted T proposed aggregate max 6506480 refined aggregate max
+6221449`. Il calcolo indipendente sui 240 valori produce gli stessi massimi e
+il booleano `6221449 < 6506480` è vero. Il sorgente usa esattamente questa
+condizione stretta; il criterio è stato quindi applicato correttamente.
+
+I sette confini superiori si spostano dalla prima proposta di
+`-11,-16,-20,-22,-21,-17,-10` bande. Rispetto alla partizione produttiva gli
+spostamenti totali sono `-63,-96,-110,-110,-98,-76,-43`, tutti nella stessa
+direzione: la seconda iterazione non torna verso la partizione marginale e
+non oscilla. I numeri di bande cambiano dalla proposta al raffinamento di
+`-11,-5,-4,-2,+1,+4,+7,+10`, trasferendo ancora lavoro dai rank bassi a quelli
+alti. I carichi raffinati sono quasi monotoni decrescenti; l'unica inversione
+è il piccolo aumento rank 4->5 di 3,643 gruppi (0.059%). Il gradiente fra gli
+estremi è ormai 2.29%, contro 9.76% della proposta, e il CV scende sotto l'1%.
+Questa è evidenza di convergenza utile, non di oscillazione. Una terza
+iterazione avrebbe al più un margine residuo piccolo e non è giustificata dal
+costo di un ulteriore conteggio o dal rischio di sovracorrezione per i q già
+negativi.
+
+### Timer misurati e stime controfattuali
+
+| run | `Xo (procedure)` min/max | range | CV | `Xo (REDUX)` min/max | diagnostico max | prepass max | Xo+prepass critico |
+|:---|:---|---:|---:|:---|---:|---:|---:|
+| T01 legacy | 3197.292 / 5736.258 s | 2538.967 s | 20.186% | 0.644 / 2549.431 s | 0 | 0 | 5736.258 s |
+| T02 weighted | 3174.054 / 5797.772 s | 2623.718 s | 20.737% | 0.634 / 2627.305 s | 0 | 29.336 s | 5827.108 s |
+| T03 prima proposta | 3158.617 / 5792.910 s | 2634.292 s | 20.812% | 0.644 / 2638.028 s | 33.385 s | 62.629 s | 5855.538 s |
+| T04 raffinamento | 3169.932 / 5785.373 s | 2615.441 s | 20.749% | 0.640 / 2618.802 s | 51.870 s | 81.056 s | 5866.428 s |
+
+Il timer diagnostico è incluso nel prepass. Il terzo conteggio aggiunge
+direttamente circa 18.485 s al diagnostico (51.8698-33.3845 s) e 18.427 s al
+massimo del prepass (81.0562-62.6288 s); la differenza di 0.058 s è rumore
+nelle altre parti del prepass. `Xo (procedure)` produttivo, che usa ancora la
+stessa partizione, cambia di -7.537 s al massimo rispetto a T03; i valori dei
+singoli rank oscillano sia in aumento sia in diminuzione. `Xo (REDUX)` cambia
+coerentemente in senso opposto. Queste variazioni sono normale rumore fra run,
+non effetto del raffinamento diagnostico. Il cammino critico misurato peggiora
+di 10.890 s rispetto a T03, 39.320 s rispetto a T02 e 130.170 s rispetto al
+legacy; il tempo totale arrotondato resta 02h35m, come T03.
+
+Sul T04 il fit lineare fra gruppi produttivi aggregati e timer per rank è
+
+```text
+Xo (procedure) [s] = -2907.98 + 0.00110283 * gruppi aggregati
+```
+
+con R²=0.99583 ed errore RMS 52.33 s. Inserendo il massimo della prima
+proposta, 6,506,480, si stimano 4267.6 s; inserendo quello raffinato,
+6,221,449, si stimano 3953.2 s. Rispetto al massimo produttivo T04 di 5785.4 s
+sono riduzioni previste rispettivamente di circa 1517.8 s (26.24%) e 1832.2 s
+(31.67%); il vantaggio incrementale previsto del raffinamento è circa 314.3 s
+(7.36% rispetto alla stima della prima proposta). Non sono tempi misurati.
+Il modello assume linearità invariata, uguale costo medio per gruppo dopo il
+cambio degli intervalli e costi comparabili di GEMM, comunicazioni e memoria.
+L'incertezza statistica minima è dell'ordine dei 52 s RMS, ma quella reale può
+essere maggiore perché il fit ha soltanto otto rank e non osserva ancora i
+nuovi intervalli in produzione.
+
+### Memoria e scalabilità del terzo conteggio
+
+Il timer interval-aware T04 è 51.8673--51.8698 s sugli otto rank, range 2.5 ms;
+il prepass è 81.0549--81.0562 s, range 1.3 ms. La fase è quindi uniforme e non
+introduce uno squilibrio MPI visibile. Il terzo conteggio da circa 18.485 s
+vale lo 0.32% del massimo `Xo (procedure)`; l'intero diagnostico vale lo 0.90%
+e il prepass completo l'1.40%. Il suo costo è piccolo rispetto al beneficio
+produttivo previsto, ma non serve mantenerlo come ulteriore iterazione una
+volta scelti i confini.
+
+Non compaiono warning di memoria, fallimenti di allocazione o crescita
+persistente. Il massimo master è 2.566209 GiB host e 2.350015 GiB device,
+contro 2.566206/2.350015 GiB in T03: differenza host trascurabile e device
+identico. Le allocazioni produttive iniziali `WF%c` variano secondo le
+245--249 bande statiche da circa 2.411 a 2.445 GiB host e 2.304 a 2.337 GiB
+device, come T03; le temporanee del diagnostico non superano la soglia di
+stampa di 375.89 MiB e vengono deallocate prima del calcolo produttivo.
+
+### Equivalenza fisica e anomalie
+
+Tutti gli `o-OUTPUT.qp` confrontati contengono gli stessi 420 stati, con
+identità esatta delle coppie `(k,banda)` e di `Eo`. Le differenze massime/RMS
+per le cinque colonne numeriche sono:
+
+| confronto T04 contro | k | banda | Eo | `E-Eo` max / RMS [eV] | `Sc|Eo` max / RMS [eV] |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| T03 | 0 / 0 | 0 / 0 | 0 / 0 | 7e-6 / 1.45e-6 | 1e-6 / 2.24e-7 |
+| T02 weighted | 0 / 0 | 0 / 0 | 0 / 0 | 8e-6 / 1.73e-6 | 1e-6 / 2.34e-7 |
+| T01 weighted | 0 / 0 | 0 / 0 | 0 / 0 | 2.7e-5 / 6.32e-6 | 5e-6 / 7.32e-7 |
+| T01 legacy | 0 / 0 | 0 / 0 | 0 / 0 | 1.54e-4 / 3.49e-5 | 2.9e-5 / 1.17e-5 |
+
+Le differenze sono entro le tolleranze già usate e coerenti con il diverso
+ordine delle riduzioni MPI; non emerge alcuna regressione fisica.
+
+La ricerca nel report e negli otto log non trova errori, abort, NaN,
+segmentation fault, `MPI_ABORT`, failure o anomalie MPI. L'unico warning è il
+preesistente `[x,Vnl]`, una volta nel report e una volta in ciascun log. Le
+righe `Time ordering fails/rest` sono normali statistiche numeriche, non
+messaggi di fallimento. Non vi sono messaggi diagnostici incoerenti: i massimi,
+la percentuale, i totali e il booleano di accettazione sono internamente
+coerenti.
+
+### Decisione dopo T04
+
+Il raffinamento supera entrambi i criteri concordati: riduce il massimo del
+4.381%, ben oltre circa l'1%, e porta il CV allo 0.669%, sotto l'intervallo
+obiettivo 1--1.5%. Va quindi preferito alla prima proposta T03. La seconda
+iterazione si muove in modo coerente, non torna verso la partizione marginale
+e lascia soltanto un residuo molto piccolo; non vi è evidenza per una terza
+iterazione né per progettare ora un diverso `cost(a,b,q)`.
+
+La partizione raffinata è sufficientemente bilanciata, stabile e verificata
+per essere la candidata da applicare produttivamente in un test successivo.
+Resta però una previsione: T04 non misura il tempo con questi confini. Prima di
+concludere sulle prestazioni servirà un run produttivo dedicato che applichi i
+confini raffinati e confronti timer, memoria e output fisico. In accordo con il
+vincolo della sessione, tale applicazione non è stata implementata, il test
+successivo non è stato preparato e non è stato creato alcun commit.

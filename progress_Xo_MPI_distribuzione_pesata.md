@@ -1030,3 +1030,40 @@ concludere sulle prestazioni servirà un run produttivo dedicato che applichi i
 confini raffinati e confronti timer, memoria e output fisico. In accordo con il
 vincolo della sessione, tale applicazione non è stata implementata, il test
 successivo non è stato preparato e non è stato creato alcun commit.
+
+## Applicazione produttiva successiva a T04
+
+Dopo la discussione dei risultati T04 è stata autorizzata l'applicazione
+produttiva della migliore partizione interval-aware. `X_weighted_bands_setup`
+installa ora `refined_partition` in `PAR_IND_CON_BANDS_X` quando
+`refined_aggregate_max < proposed_aggregate_max`; in caso contrario installa
+`q_partition`, cioè la prima proposta interval-aware. La copia avviene su ogni
+rank prima di `PARALLEL_WF_distribute` usando gli helper esistenti
+`PP_indexes_reset` e `PAR_INDEX_copy`.
+
+Per eliminare l'ambiguità dei report, `[X-WB-M]` identifica ora la partizione
+marginale iniziale, mentre `[X-WB]` riporta esclusivamente intervalli, conteggi
+e sorgente della maschera produttiva finale. `[X-WB-I]` e `[X-WB-R]` restano
+le misure esatte usate per costruire e accettare la scelta.
+
+La build MPI incrementale con `profile/gcc-14.3.0` è completata. Il test locale
+Al_bulk a quattro rank, job `weighted_production_refined_gcc143` nella
+directory `/home/nicola/tmp/codex/yambo5-xo-weighted-refine-local`, è terminato
+regolarmente su tutti i rank. In questo piccolo caso il raffinamento torna alla
+partizione marginale e viene correttamente rifiutato (`704 -> 715`); il ramo di
+fallback installa produttivamente la prima proposta
+`2:5, 6:10, 11:15, 16:20`. I successivi gruppi `[X-CG]` coincidono per tutti
+gli otto q-point e quattro rank con i `proposed exact groups`, provando che la
+nuova maschera è effettivamente passata alla distribuzione delle funzioni
+d'onda. Non compaiono errori, NaN o abort MPI.
+
+L'output locale conserva gli stessi 32 stati e identiche colonne `(k,banda,Eo)`
+del precedente diagnostico. Il diverso ordine produttivo delle riduzioni porta
+differenze massime/RMS di 1.0e-4/4.34e-5 eV in `E-Eo` e 3.0e-5/5.88e-6 eV in
+`Sc|Eo`, della scala già osservata nei confronti fra partizioni MPI diverse.
+
+Il ramo accettato è lo stesso percorso di copia, selezionato dal booleano già
+verificato in T04; la sua efficacia prestazionale su anatase resta da misurare
+nel test produttivo T05. Prima di rendere eseguibile la richiesta remota serve
+un commit applicativo pubblicato, perché il protocollo richiede un hash
+immutabile e non consente di identificare il binario dai metadati del report.

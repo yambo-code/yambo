@@ -410,7 +410,7 @@ registrato separatamente dal resto del prepass nel timer
 `PARALLEL_WF_distribute`: serve soltanto a verificare se il forte beneficio
 indicato dall'oracle offline sopravvive al ricalcolo non additivo dei gruppi.
 
-## Raffinamento diagnostico interval-aware
+## Raffinamento interval-aware e selezione produttiva
 
 Dopo la prima validazione sugli intervalli completi, il diagnostico esegue una
 sola iterazione aggiuntiva. La densità piecewise-constant viene ricostruita dai
@@ -421,6 +421,13 @@ il partizionatore contiguo minimax genera quindi confini raffinati e
 Le righe `[X-WB-R]` confrontano proposta e raffinamento per q-point, riportano
 confini e costi aggregati e indicano se il massimo aggregato esatto è realmente
 diminuito. Il raffinamento è considerato accettato soltanto in quest'ultimo
-caso. Questa seconda iterazione resta diagnostica: né la prima proposta né i
-confini raffinati modificano `PAR_IND_CON_BANDS_X` o vengono passati a
-`PARALLEL_WF_distribute`.
+caso.
+
+Dopo la validazione T04, la selezione è diventata produttiva. Se il massimo
+aggregato raffinato è strettamente inferiore a quello della prima proposta,
+`PAR_IND_CON_BANDS_X` viene sostituito con la partizione raffinata; altrimenti
+viene installata la prima proposta interval-aware. La scelta avviene prima di
+`PARALLEL_WF_distribute`. Le righe `[X-WB-M]` descrivono la partizione
+marginale iniziale usata come seme e riferimento diagnostico; `[X-WB]`
+descrive invece la maschera produttiva finale e ne indica esplicitamente la
+provenienza `refined interval-aware` o `proposed interval-aware`.

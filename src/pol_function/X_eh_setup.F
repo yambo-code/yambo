@@ -173,7 +173,7 @@ subroutine X_weighted_bands_setup(Xen,Xk,X,iq_range,io_X_done)
  use X_m,          ONLY:X_t,l_X_terminator,X_term_E,X_terminator_E,n_OPTICAL_dir_to_eval
  use R_lattice,    ONLY:bz_samp,qindx_X
  use electrons,    ONLY:levels,n_sp_pol,spin_occ
- use parallel_m,   ONLY:PP_indexes,PP_indexes_reset,PAR_IND_Q_ibz,PAR_IND_Xk_bz,&
+ use parallel_m,   ONLY:PP_indexes,PP_indexes_reset,PAR_INDEX_copy,PAR_IND_Q_ibz,PAR_IND_Xk_bz,&
 &                       PAR_IND_VAL_BANDS_X,PAR_IND_CON_BANDS_X,PAR_COM_CON_INDEX_X
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index_weighted_contiguous
  use com,          ONLY:msg
@@ -304,12 +304,13 @@ subroutine X_weighted_bands_setup(Xen,Xk,X,iq_range,io_X_done)
  call PARALLEL_index_weighted_contiguous(PAR_IND_CON_BANDS_X(X%whoami),X%ib(2),ic_low,weights,&
 &                                        PAR_COM_CON_INDEX_X(X%whoami))
  !
- ! Diagnose the non-additive interval cost without changing the production
- ! mask.  First measure the full X-CG cost of the marginal partition.  Its
+ ! Measure the non-additive interval cost and select the production mask.
+ ! First measure the full X-CG cost of the marginal partition.  Its
  ! average cost per band defines only a proposal; measure that proposal again
  ! with the full intervals.  One further piecewise-constant iteration uses the
  ! measured proposal costs to refine the boundaries and measures them exactly.
- ! Neither diagnostic partition replaces the production mask.
+ ! The refined partition is selected when it lowers the exact aggregate
+ ! maximum; otherwise the first interval-aware proposal is selected.
  !
  allocate(interval_weights(X%ib(2)))
  allocate(interval_static(PAR_COM_CON_INDEX_X(X%whoami)%n_CPU,iq_range(1):iq_range(2)))
@@ -359,13 +360,13 @@ subroutine X_weighted_bands_setup(Xen,Xk,X,iq_range,io_X_done)
    call msg('r',trim(ch))
  enddo
  do ir=1,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU
-   write(ch,'(a,i0,a,i0,a,i0,a,i0)') '[X-WB] c-rank ',ir-1,' bands ',&
+   write(ch,'(a,i0,a,i0,a,i0,a,i0)') '[X-WB-M] c-rank ',ir-1,' bands ',&
 &    PAR_IND_CON_BANDS_X(X%whoami)%first_of_1D(ir),':',&
 &    PAR_IND_CON_BANDS_X(X%whoami)%last_of_1D(ir),' count ',&
 &    PAR_IND_CON_BANDS_X(X%whoami)%n_of_elements(ir)
    call msg('r',trim(ch))
    if (PAR_IND_CON_BANDS_X(X%whoami)%first_of_1D(ir)>0) then
-     write(ch,'(a,i0,a,i0)') '[X-WB] predicted marginal groups ',sum(weights(&
+     write(ch,'(a,i0,a,i0)') '[X-WB-M] predicted marginal groups ',sum(weights(&
 &      PAR_IND_CON_BANDS_X(X%whoami)%first_of_1D(ir):PAR_IND_CON_BANDS_X(X%whoami)%last_of_1D(ir))),&
 &      ' accepted transitions ',sum(accepted(PAR_IND_CON_BANDS_X(X%whoami)%first_of_1D(ir):&
 &      PAR_IND_CON_BANDS_X(X%whoami)%last_of_1D(ir)))
@@ -423,6 +424,31 @@ subroutine X_weighted_bands_setup(Xen,Xk,X,iq_range,io_X_done)
  write(ch,'(a,l1,a,i0,a,i0)') '[X-WB-R] refinement accepted ',refinement_accepted,&
 &  ' proposed aggregate max ',proposed_aggregate_max,' refined aggregate max ',refined_aggregate_max
  call msg('r',trim(ch))
+ endif
+ !
+ ! Install the accepted interval-aware partition before wavefunctions are
+ ! distributed.  The first proposal is the fallback when refinement does not
+ ! lower the exact aggregate maximum.
+ !
+ call PP_indexes_reset(PAR_IND_CON_BANDS_X(X%whoami))
+ if (refinement_accepted) then
+   call PAR_INDEX_copy(refined_partition,PAR_IND_CON_BANDS_X(X%whoami))
+ else
+   call PAR_INDEX_copy(q_partition,PAR_IND_CON_BANDS_X(X%whoami))
+ endif
+ if (PAR_COM_CON_INDEX_X(X%whoami)%CPU_id==0) then
+   do ir=1,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU
+     write(ch,'(a,i0,a,i0,a,i0,a,i0)') '[X-WB] c-rank ',ir-1,' production bands ',&
+&      PAR_IND_CON_BANDS_X(X%whoami)%first_of_1D(ir),':',&
+&      PAR_IND_CON_BANDS_X(X%whoami)%last_of_1D(ir),' count ',&
+&      PAR_IND_CON_BANDS_X(X%whoami)%n_of_elements(ir)
+     call msg('r',trim(ch))
+   enddo
+   if (refinement_accepted) then
+     call msg('r','[X-WB] production partition source refined interval-aware')
+   else
+     call msg('r','[X-WB] production partition source proposed interval-aware')
+   endif
  endif
  call PP_indexes_reset(q_partition)
  call PP_indexes_reset(refined_partition)

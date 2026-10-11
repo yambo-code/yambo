@@ -1064,6 +1064,13 @@ differenze massime/RMS di 1.0e-4/4.34e-5 eV in `E-Eo` e 3.0e-5/5.88e-6 eV in
 
 Il ramo accettato è lo stesso percorso di copia, selezionato dal booleano già
 verificato in T04; la sua efficacia prestazionale su anatase resta da misurare
-nel test produttivo T05. Prima di rendere eseguibile la richiesta remota serve
-un commit applicativo pubblicato, perché il protocollo richiede un hash
-immutabile e non consente di identificare il binario dai metadati del report.
+nel test produttivo T05.
+
+L'analisi T04 è stata pubblicata nel commit documentale `6febb1d79`; la
+selezione produttiva nel commit applicativo
+`9e36122b73d7d04d379139a3174c787509d459b9`. T05 è predisposto in
+`/home/nicola/tmp/risultati-test-codex-Xo-distribuzione-pesata/`
+`T05_anatase_refined_production_b4f568464_9e36122b7`, con manifest, istruzioni
+di copia, input anatase verificato e directory vuote per report, output e otto
+log. La richiesta usa esplicitamente l'hash applicativo pubblicato e richiede
+di ignorare i metadati Git stampati dal report.

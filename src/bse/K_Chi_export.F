@@ -36,7 +36,7 @@ subroutine K_Chi_export(iq,Ken,Xk,W)
  use pars,           ONLY:SP,DP,pi,schlen,cZERO
  use units,          ONLY:HA2EV
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,n_spinor
  use R_lattice,      ONLY:bz_samp,bare_qpg,qindx_X,g_vec
  use com,            ONLY:msg,isec
  use stderr,         ONLY:intc,real2ch,STRING_match
@@ -165,6 +165,7 @@ subroutine K_Chi_export(iq,Ken,Xk,W)
  if (l_full_L)      call msg('r','[Chi/BSK] exchange with G=0 (Lkind full): P^-1 = chib^-1 + v')
  if (.not.l_full_L) call msg('r','[Chi/BSK] exchange without G=0 (Lkind bar): P^-1 = chib^-1 + vbar')
  call msg('r','[Chi/BSK] QP-corrected BSE transitions',l_qp)
+ call msg('r','[Chi/BSK] spinor states (two components, spin_occ = 1)',n_spinor==2)
  call msg('r','[Chi/BSK] lowest BSE transition energy (gap of the window) [eV]',real(minval(BSS_eh_E(1:n))*HA2EV,SP))
  if (l_exc.and..not.l_qp) call warning('[Chi/BSK] BSEChiOut= "exc" on KS transitions: the reference bubble is the KS one')
  !

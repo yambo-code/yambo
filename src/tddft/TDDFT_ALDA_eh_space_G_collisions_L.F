@@ -127,29 +127,28 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_L(iq,Xk,i_T_grp,NG,l_bs_tddft_wf_in_
      call WF_apply_symm(os,WF_symm2_p)
    endif
    !
-   if( n_spinor==1 ) then
-     if (BS_K_is_Chi) then
-       ! Match the native Chi density vertex at every G, including USPP
-       ! augmentation.  The transition charge is conjg(rho_cv(G)).
-       chi_scatt%is=is
-       chi_scatt%os=os
-       chi_scatt%qs=(/i_g_p,iq,1/)
-       call scatter_Bamp(chi_scatt)
-       BS_T_grp(i_T_grp)%O_tddft_L(:,i_T_el,1,1)=conjg(chi_scatt%rhotw)
-       if (iq==1) then
-         if (.not.allocated(DIP_iR)) call error('[Chi/BSK] optical position dipoles were not loaded')
-         call DIPOLE_rotate(i_c,i_v,i_k_bz,i_sp_c,'DIP_iR',Xk,chi_dipole)
-         chi_head=-dot_product(BSS_q0,chi_dipole)
-         if (mode=='A'.or.mode=='Q') chi_head=-conjg(chi_head)
-         BS_T_grp(i_T_grp)%O_tddft_L(1,i_T_el,1,1)=chi_head
-       endif
-     else
-       rhotwr_p(:)=cmplx(WF_symm1_p(:,1)*conjg(WF_symm2_p(:,1)),kind=DP)
-       call perform_fft_3d(qs,rhotwr_p,BS_T_grp(i_T_grp)%O_tddft_L(:,i_T_el,1,1))
+   if (BS_K_is_Chi) then
+     ! Match the native Chi density vertex at every G: rho_cv(q+G) from scatter_Bamp
+     ! (summed over the spinor components, USPP augmentation included). The transition
+     ! charge is conjg(rho_cv(G)); one vertex per transition for scalar and spinor states.
+     chi_scatt%is=is
+     chi_scatt%os=os
+     chi_scatt%qs=(/i_g_p,iq,1/)
+     call scatter_Bamp(chi_scatt)
+     BS_T_grp(i_T_grp)%O_tddft_L(:,i_T_el,1,1)=conjg(chi_scatt%rhotw)
+     if (iq==1) then
+       if (.not.allocated(DIP_iR)) call error('[Chi/BSK] optical position dipoles were not loaded')
+       call DIPOLE_rotate(i_c,i_v,i_k_bz,i_sp_c,'DIP_iR',Xk,chi_dipole)
+       chi_head=-dot_product(BSS_q0,chi_dipole)
+       if (mode=='A'.or.mode=='Q') chi_head=-conjg(chi_head)
+       BS_T_grp(i_T_grp)%O_tddft_L(1,i_T_el,1,1)=chi_head
      endif
+   else if( n_spinor==1 ) then
+     rhotwr_p(:)=cmplx(WF_symm1_p(:,1)*conjg(WF_symm2_p(:,1)),kind=DP)
+     call perform_fft_3d(qs,rhotwr_p,BS_T_grp(i_T_grp)%O_tddft_L(:,i_T_el,1,1))
    endif
    !
-   if(n_spinor==2) then
+   if(n_spinor==2.and..not.BS_K_is_Chi) then
      !
      do i_spinor=1,n_spinor
        do j_spinor=1,n_spinor

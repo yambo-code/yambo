@@ -60,8 +60,11 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_R(iq,Xk,i_T_grp,NG,l_bs_tddft_wf_in_
  !
  call timing('T_space ALDA Osc.',OPR='start')
  bare_vertex=l_bare
- if (bare_vertex.and.(n_spinor/=1.or.n_sp_pol/=1.or.n_spin/=1)) &
-& call error('[Chi/BSK] bare transition vertices currently require a scalar, unpolarized calculation')
+ ! The bare vertex is the transition density rho_cv(q+G): scatter_Bamp sums it over the
+ ! spinor components, so scalar and spinor (SOC) states are both supported; collinear spin
+ ! polarization (a spin index per transition) and magnons are not.
+ if (bare_vertex.and.(n_sp_pol/=1.or.l_BS_magnons)) &
+& call error('[Chi/BSK] bare transition vertices: scalar or spinor states only (no spin polarization, no magnons)')
  !
  ! Allocate
  !
@@ -142,31 +145,32 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_R(iq,Xk,i_T_grp,NG,l_bs_tddft_wf_in_
      call WF_apply_symm(os,WF_symm2_p)
    endif
    !
-   if( n_spin==1 ) then
+   if (bare_vertex) then
      !
-     if (bare_vertex) then
-       ! Native Chi uses rho_cv(G) from scatter_Bamp, including USPP
-       ! augmentation.  The transition charge is conjg(rho_cv(G)).
-       chi_scatt%is=is
-       chi_scatt%os=os
-       chi_scatt%qs=(/i_g_p,iq,1/)
-       call scatter_Bamp(chi_scatt)
-       BS_T_grp(i_T_grp)%O_tddft_R(:,i_T_el,1,1)=conjg(chi_scatt%rhotw)
-       if (iq==1) then
-         if (.not.allocated(DIP_iR)) call error('[Chi/BSK] optical position dipoles were not loaded')
-         call DIPOLE_rotate(i_c,i_v,i_k_bz,i_sp_c,'DIP_iR',Xk,chi_dipole)
-         chi_head=-dot_product(BSS_q0,chi_dipole)
-         if (mode=='A'.or.mode=='C') chi_head=-conjg(chi_head)
-         BS_T_grp(i_T_grp)%O_tddft_R(1,i_T_el,1,1)=chi_head
-       endif
-     else
-       rhotwr_p(:)=cmplx(F_xc_mat(:,1,1,1,1)*WF_symm1_p(:,1)*conjg(WF_symm2_p(:,1)),kind=DP)
-       call perform_fft_3d(qs,rhotwr_p,BS_T_grp(i_T_grp)%O_tddft_R(:,i_T_el,1,1))
+     ! Native Chi uses rho_cv(G) from scatter_Bamp (summed over the spinor components,
+     ! USPP augmentation included). The transition charge is conjg(rho_cv(G)). One
+     ! density vertex per transition, in the (1,1) slot, for scalar and spinor states.
+     chi_scatt%is=is
+     chi_scatt%os=os
+     chi_scatt%qs=(/i_g_p,iq,1/)
+     call scatter_Bamp(chi_scatt)
+     BS_T_grp(i_T_grp)%O_tddft_R(:,i_T_el,1,1)=conjg(chi_scatt%rhotw)
+     if (iq==1) then
+       if (.not.allocated(DIP_iR)) call error('[Chi/BSK] optical position dipoles were not loaded')
+       call DIPOLE_rotate(i_c,i_v,i_k_bz,i_sp_c,'DIP_iR',Xk,chi_dipole)
+       chi_head=-dot_product(BSS_q0,chi_dipole)
+       if (mode=='A'.or.mode=='C') chi_head=-conjg(chi_head)
+       BS_T_grp(i_T_grp)%O_tddft_R(1,i_T_el,1,1)=chi_head
      endif
+     !
+   else if( n_spin==1 ) then
+     !
+     rhotwr_p(:)=cmplx(F_xc_mat(:,1,1,1,1)*WF_symm1_p(:,1)*conjg(WF_symm2_p(:,1)),kind=DP)
+     call perform_fft_3d(qs,rhotwr_p,BS_T_grp(i_T_grp)%O_tddft_R(:,i_T_el,1,1))
      !
    endif
    !
-   if(n_sp_pol==2) then
+   if(n_sp_pol==2.and..not.bare_vertex) then
      !
      do i_sp_loop=1,n_sp_pol
        do o_sp_loop=1,n_sp_pol
@@ -186,7 +190,7 @@ subroutine TDDFT_ALDA_eh_space_G_collisions_R(iq,Xk,i_T_grp,NG,l_bs_tddft_wf_in_
      enddo
    endif
    !
-   if(n_spinor==2) then
+   if(n_spinor==2.and..not.bare_vertex) then
      !
      do i_spinor=1,n_spinor
        do j_spinor=1,n_spinor

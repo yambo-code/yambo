@@ -358,8 +358,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      if ((BS_K_coupling.or.BS_K_anti_resonant).and..not.l_BS_ares_from_res.and.(iq==1.or..not.BS_K_coupling)) &
 &      call error('[Chi/BSK] the anti-resonant blocks must be built from the resonant ones')
      chi_grp_p=0
-     if (n_spinor/=1.or.n_sp_pol/=1.or.n_spin/=1.or.l_BS_magnons) &
-&      call error('[Chi/BSK] only scalar, unpolarized transitions are supported')
+     ! Scalar or spinor (SOC) states: the vertices are the transition densities summed over
+     ! the spinor components, the occupations and Co carry spin_occ (2 or 1). Collinear spin
+     ! polarization, magnons and perturbative SOC (energies not in the vertices) are not supported.
+     if (n_sp_pol/=1.or.l_BS_magnons.or.BS_perturbative_SOC) &
+&      call error('[Chi/BSK] scalar or spinor transitions only (no spin polarization, magnons or perturbative SOC)')
      ! OP_RD_CL: RD_CL only reads an already-open unit and never assigns an ID.
      call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_Chi)
      io_Chi_err=io_Chi(X,Chi_w,ID_Chi)
@@ -436,8 +439,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    if (l_chi_vtx_only) then
      ! BSEChiOut: collect the Chi vertices of every transition for K_Chi_export
      if (ncpu/=1) call error('[Chi/BSK] BSEChiOut: the vertex pass is serial (MPI); use OpenMP threads')
-     if (n_spinor/=1.or.n_sp_pol/=1.or.n_spin/=1.or.l_BS_magnons) &
-&      call error('[Chi/BSK] BSEChiOut: only scalar, unpolarized transitions are supported')
+     if (n_sp_pol/=1.or.l_BS_magnons.or.BS_perturbative_SOC) &
+&      call error('[Chi/BSK] BSEChiOut: scalar or spinor transitions only (no spin polarization, magnons or perturbative SOC)')
      if (.not.BS_res_K_exchange.or.BS_n_g_exch/=BS_n_g_fxc) &
 &      call error('[Chi/BSK] BSEChiOut: exchange on, with BSENGexx equal to BSENGfxc (one G basis for v and P)')
      call Chi_dyn_free()

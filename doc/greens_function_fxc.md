@@ -216,8 +216,8 @@ transition energies (`KfnQPdb` off). Set `BSEQptR` to q index 1,
 `QShiftOrder=1`, and `BLongDir` to the response `LongDrXs` direction. The
 loader checks the direction,
 normalization, G basis, and zero-frequency Hermiticity before projection.
-The BSE path currently requires one CPU rank, scalar unpolarized states,
-and a matrix solver. Its static Casida matrix uses only the first (zero)
+The BSE path currently requires one CPU rank, scalar or spinor (SOC) states
+without collinear spin polarization, and a matrix solver. Its static Casida matrix uses only the first (zero)
 frequency of the exported kernel. Start by comparing `G0` against the
 ordinary KS calculation; then compare the `COHSEX` result. With coupling,
 the BSE bands and the G basis of the `ndb.Chi`, the static Casida response
@@ -273,8 +273,8 @@ solver replaces the requested `BSSmod` and writes `o-<job>.eps_q1_chidyn_bse`
 and `o-<job>.eel_q1_chidyn_bse`. Each frequency costs one dense LU solve of
 size N (TDA, twice) or 2N (coupling); frequencies are distributed over OpenMP
 threads, each holding about three (2N)^2 complex(8) matrices with coupling.
-The restrictions of the static path apply (one MPI rank, scalar unpolarized
-states), plus the length gauge and absorption only.
+The restrictions of the static path apply (one MPI rank, scalar or spinor
+states, no collinear spin polarization), plus the length gauge and absorption only.
 
 Three conditions matter in practice:
 
@@ -363,8 +363,9 @@ transitions the gap is the QP gap on the k grid. For a "full" kernel the
 transitions are KS ones; take the gap from the exporting BSE.
 
 Restrictions: one MPI rank (OpenMP threads parallelize the frequencies), coupling with
-the diagonalization solver, length gauge, scalar
-unpolarized states, no transition widths or Z factors, `BSENGexx = BSENGfxc`.
+the diagonalization solver, length gauge, scalar or spinor states (see "Spinor
+states" below; no collinear spin polarization, magnons or perturbative SOC), no
+transition widths or Z factors, `BSENGexx = BSENGfxc`.
 The export stops if the reference bubble or the BSE response is
 ill-conditioned (`[Chi/BSK] minimum rcond` below `ChiRcondMin`); reduce the
 G basis then. Monolayer WS2 (bands 11-16, 9 G, no Coulomb cutoff) passes with
@@ -694,6 +695,42 @@ steps, scan +-0.04 eV around the BSE exciton):
 Static Casida with fxc(q2, 4.293079 eV) from `--at`: lowest bright eigenvalue 4.293057 eV.
 The static kernel fxc(q, 0) binds the exciton by 0.66-0.83 eV, against 1.96-2.27 eV: the
 binding comes from the frequency dependence of the kernel, at finite q as at q = 0.
+
+### Spinor states (noncollinear, spin-orbit coupling)
+
+The export and the Casida paths accept spinor states (`noncolin`, with or without
+`lspinorb`). Nothing in the formulas changes: the vertex of a transition is its density
+rho_cv(q+G) = sum over the two spinor components (`scatter_Bamp`), the occupation factors
+f_t = (f_v - f_c)/spin_occ and the constant Co carry spin_occ = 1 instead of 2, and each
+spinor band holds one electron, so a band window doubles (WS2 bands 11-16 become 21-32)
+and the number of transitions quadruples. Collinear spin polarization (`nspin=2`), magnons
+and perturbative SOC are still refused.
+
+Monolayer hBN with `noncolin=.true., lspinorb=.false.` (the scalar pseudopotentials, so the
+scalar run of the previous sections is the reference: bands 3-6 become 5-12), 17 G in-plane,
+q1 and q2:
+
+| k-point symmetry | head vs BSE | bubble vs chi0 | Casida vs BSE | spinor BSE at q1 |
+| --- | --- | --- | --- | --- |
+| 24 (spatial + time reversal) | 1e-15 | 5e-8 | 3e-5 (q2) | six states 3.708-3.773 eV, strengths 0.06-1 |
+| 12 (spatial, `noinv`) | 1e-15 | 4e-8 | 1e-4 (q2) | 3.713-3.775 eV, triplet not dark |
+| none (`nosym`, `noinv`) | 1e-15 | 3e-8 | 1e-4 (q1), 1e-4 (q2) | dark triplet 3.7126 eV (strength 1e-9), bright singlet 3.7341 eV |
+
+The kernel reproduces the BSE in every case, so the export is consistent with whatever
+BSE Yambo built. The BSE itself is right only without symmetries: without SOC the spinor
+BSE must give the scalar singlet and a dark triplet, and it does so only on the full k
+grid, where it matches the scalar run on the same grid to 0.1 meV (3.7340 eV at q1,
+4.2928 eV at q2; the scalar run with symmetries gives 3.7371 and 4.2931 eV, so Yambo's
+symmetric W term shifts even scalar excitons by 3 meV at q1). With symmetries the spinor
+W term mixes singlet and triplet. The exchange-only BSE (`BSKmod="Hartree"`) is clean in
+all cases (triplets at the transition energies, strength 1e-6), and the RPA response
+(`optics chi`) at q1-q4 agrees with the scalar one to 4e-4, so the screening and the GW
+machinery rotate the spinors consistently; only the BSE direct term does not (standard and
+direct algorithms alike, `ImposeDirAlg`). This is upstream Yambo, not the export. For
+spinor runs use `nosym=.true., noinv=.true.` in the QE nscf, so that every k point is
+explicit and no spinor is rotated. The IBZ is then the full grid: the GW and static
+screening steps cost about (number of k points)/(number of IBZ points) more, 8 for the
+15x15 grid of WS2.
 
 ### MPI for the response
 

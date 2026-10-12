@@ -40,7 +40,8 @@ module LOGO
    !
    subroutine pickup_a_logo(unit_)
      !
-     use C_driver, ONLY:code_version,code_revision,code_hash,code_libraries,code_branch
+     use C_driver, ONLY:code_version,code_commit_short,code_libraries,code_branch,&
+&                       code_state,code_provenance_source
      use pars,     ONLY:SP
      use stderr,   ONLY:intc,slash
      !
@@ -53,9 +54,9 @@ module LOGO
      !
      comment(1)='Version '//&
 &                trim(intc(code_version(1)))//'.'//trim(intc(code_version(2)))//&
-&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_revision))//' Hash (prev commit) '//trim(code_hash)
+&                '.'//trim(intc(code_version(3)))//' Commit '//trim(code_commit_short)//' ('//trim(code_state)//')'
      !
-     comment(2)="Branch is "//trim(code_branch)
+     comment(2)='Ref '//trim(code_branch)//' [source: '//trim(code_provenance_source)//']'
      !
      comment(3)=trim(code_libraries)//" Build"
      !

@@ -15,3 +15,11 @@ define todo_driver
  $(ECHO) "\t[$$BASE] $$X2DO (setup)";\
  ./sbin/compilation/helper.sh -n -t $$X2DO -d $$BASE -N $(MAKEFLAGS) -g $@  -- $(xcpp) $$ADF
 endef
+define update_provenance
+ UPDATED=`$(SHELL) $(srcdir)/sbin/generate_build_provenance.sh $(srcdir) \
+   $(includedir)/version/build_provenance.h $(compdir)/config/build-provenance.txt`; \
+ if test -n "$$UPDATED"; then \
+  rm -f $(compdir)/config/stamps_and_lists/lib_Y_driver.a.stamp; \
+  rm -f $(compdir)/config/stamps_and_lists/$$X2DO.stamp; \
+ fi
+endef

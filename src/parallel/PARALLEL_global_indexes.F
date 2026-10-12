@@ -22,7 +22,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
  use parallel_m,    ONLY:PAR_COM_WORLD,PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved,COMM_copy
  use parallel_int,  ONLY:PARALLEL_index,PARALLEL_live_message
  use DIPOLES,       ONLY:DIPOLE_t
- use X_m,           ONLY:X_t,l_X_terminator
+ use X_m,           ONLY:X_t,l_X_terminator,X_WeightedBands
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use pars,          ONLY:SP
@@ -176,12 +176,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
    PAR_IND_CON_BANDS_X_ID(X_type)=PAR_COM_CON_INDEX_X(X_type)%CPU_id
    !
    if (l_X_terminator) then
-       call PARALLEL_live_message("CON bands",ENVIRONMENT=ENVIRONMENT,&
+       call PARALLEL_live_message(merge("CON bands (provisional)","CON bands              ",X_WeightedBands),&
+&                             ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_CON_BANDS_X(X_type)%n_of_elements(PAR_COM_CON_INDEX_X(X_type)%CPU_id+1),&
 &                             TOTAL=PAR_n_c_bands(2)-PAR_n_v_bands(1)+1,&
 &                             NCPU=PAR_COM_CON_INDEX_X(X_type)%n_CPU)
    else
-       call PARALLEL_live_message("CON bands",ENVIRONMENT=ENVIRONMENT,&
+       call PARALLEL_live_message(merge("CON bands (provisional)","CON bands              ",X_WeightedBands),&
+&                             ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_CON_BANDS_X(X_type)%n_of_elements(PAR_COM_CON_INDEX_X(X_type)%CPU_id+1),&
 &                             TOTAL=PAR_n_c_bands(2)-PAR_n_c_bands(1)+1,&
 &                             NCPU=PAR_COM_CON_INDEX_X(X_type)%n_CPU)

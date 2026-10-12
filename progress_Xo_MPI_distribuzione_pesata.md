@@ -1,6 +1,6 @@
 # Progressi: distribuzione MPI contigua pesata delle bande di Xo
 
-Ultimo aggiornamento: 2026-10-11.
+Ultimo aggiornamento: 2026-10-12.
 
 ## Stato Git iniziale
 
@@ -1074,3 +1074,288 @@ selezione produttiva nel commit applicativo
 di copia, input anatase verificato e directory vuote per report, output e otto
 log. La richiesta usa esplicitamente l'hash applicativo pubblicato e richiede
 di ignorare i metadati Git stampati dal report.
+
+## Analisi T05: partizione raffinata in produzione
+
+La provenienza attendibile è il binario del commit applicativo
+`9e36122b73d7d04d379139a3174c787509d459b9`; le stringhe Git stampate da
+Yambo sono state ignorate. Il branch corrente è
+`tech-xo-weighted-band-distribution` a `7eabcf15f`, allineato a `origin`.
+Prima dell'analisi erano presenti soltanto i tre prompt non tracciati
+`prossimo_prompt_post_T03.md`, `prossimo_prompt_post_T04.md` e
+`prossimo_prompt_post_T05.md`.
+
+T05 contiene un input, un report, `o-OUTPUT.qp` e gli otto log `CPU_1`--`CPU_8`.
+L'input pesa 3013 byte e ha SHA-256
+`bde9fc279770e9480091c2dc8816c1cce8ecfd8ef449d3b5dafe054a53c46695`,
+identico byte per byte a T04, T03, T02 weighted e T01 weighted. Ogni log ha
+una sola sezione `Game Over`; il report termina regolarmente in 02h06m
+(7598.3286 s sul master).
+
+Il prepass riproduce integralmente T04. `[X-WB-M]` coincide numericamente con
+la partizione marginale T02--T04: confini `25:273,274:521,522:769,770:1017,
+1018:1262,1263:1507,1508:1754,1755:2000`, bande
+`249,248,248,248,245,245,247,246`, pesi `13560352,13545929,13560914,
+13570588,13530561,13544664,13535283,13563924` e transizioni
+`38724480,38568960,38568960,38568960,38102400,38102400,38413440,38257920`.
+Tutte le 286 righe `[X-WB-I]` e tutte le 287 `[X-WB-R]` sono identiche a T04
+dal marcatore in poi, comprese le 240 coppie q/rank, confini, massimi per q,
+totali e accettazione. Per ciascuno dei tre confronti: differenze 0, massimo
+0, somma assoluta 0 e somma con segno 0.
+
+I massimi aggregati ricalcolati sono 6,506,480 (proposto) e 6,221,449
+(raffinato); `6221449 < 6506480` conferma `refinement accepted T`.
+`production partition source refined interval-aware` installa gli intervalli
+`25:210,211:425,426:659,660:907,908:1164,1165:1431,1432:1711,1712:2000`,
+con `186,215,234,248,257,267,280,289` bande. Copertura 25:2000 completa,
+contigua, ordinata e senza sovrapposizioni. Le 240 righe `[X-CG]` coincidono
+esattamente con `refined exact groups`: discrepanze 0, massimo 0, somma
+assoluta 0 e somma con segno 0. La maschera raffinata è quindi stata realmente
+usata in produzione.
+
+### Gruppi produttivi completi
+
+CV usa la deviazione standard di popolazione.
+
+|q|r0|r1|r2|r3|r4|r5|r6|r7|min|max|range|CV|max/min|
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+|1|92075|98854|103090|105469|107343|109171|110937|112470|92075|112470|20395|6.052%|1.222|
+|2|245342|239315|237055|235389|234316|233045|230796|229414|229414|245342|15928|2.016%|1.069|
+|3|238960|233785|231905|230580|229438|228689|226687|225545|225545|238960|13415|1.731%|1.059|
+|4|171751|175328|177513|178758|179181|180386|180477|180819|171751|180819|9068|1.640%|1.053|
+|5|237275|232503|230734|229166|228029|227763|225374|224433|224433|237275|12842|1.681%|1.057|
+|6|267698|258026|254441|251944|250104|248972|245432|244022|244022|267698|23676|2.819%|1.097|
+|7|273146|262156|257896|254786|252812|251425|247472|245878|245878|273146|27268|3.221%|1.111|
+|8|298101|282335|276044|272157|269066|267015|261912|259544|259544|298101|38557|4.256%|1.149|
+|9|180488|182673|184427|185806|185822|187038|187015|186896|180488|187038|6550|1.197%|1.036|
+|10|234715|230353|229070|227950|226391|226515|223728|223082|223082|234715|11633|1.540%|1.052|
+|11|280071|267932|263034|260068|257339|256297|251673|249869|249869|280071|30202|3.490%|1.121|
+|12|178670|181340|183530|184338|184791|185697|185628|185877|178670|185877|7207|1.290%|1.040|
+|13|124912|130999|134873|137359|138734|140792|141789|143253|124912|143253|18341|4.213%|1.147|
+|14|132156|138053|141722|143524|145192|146499|147796|148907|132156|148907|16751|3.659%|1.127|
+|15|227877|224559|223855|222473|222228|221666|220184|219640|219640|227877|8237|1.105%|1.038|
+|16|238800|233752|231979|230581|229734|228558|226541|225509|225509|238800|13291|1.723%|1.059|
+|17|225197|222546|221936|220713|220383|219823|218381|217477|217477|225197|7720|1.034%|1.035|
+|18|183277|185395|187122|188069|188756|189384|188891|189254|183277|189384|6107|1.081%|1.033|
+|19|237195|232567|230539|229057|228248|227994|225453|224269|224269|237195|12926|1.670%|1.058|
+|20|297967|282067|275882|271881|269098|267066|261842|259650|259650|297967|38317|4.230%|1.148|
+|21|219487|217568|216962|216789|216015|216246|214809|213957|213957|219487|5530|0.730%|1.026|
+|22|178124|180960|182906|184057|184408|185162|185150|185715|178124|185715|7591|1.321%|1.043|
+|23|235013|230139|229018|227846|226484|226276|224002|222901|222901|235013|12112|1.563%|1.054|
+|24|168066|171588|174133|175523|175741|177016|177058|178010|168066|178010|9944|1.784%|1.059|
+|25|223021|220478|219929|219541|218639|218875|216935|216523|216523|223021|6498|0.877%|1.030|
+|26|132070|137979|141610|143739|144989|146654|147853|148954|132070|148954|16884|3.696%|1.128|
+|27|245529|239516|237041|235547|234092|233148|230629|229481|229481|245529|16048|2.049%|1.070|
+|28|183437|185552|187243|188167|188667|189178|189080|189232|183437|189232|5795|1.040%|1.032|
+|29|179877|182258|184223|185493|185698|186992|186500|186503|179877|186992|7115|1.253%|1.040|
+|30|91152|97896|102240|104914|106364|108403|110417|111671|91152|111671|20519|6.178%|1.225|
+
+Le somme sui 30 q sono `6221449,6158472,6151952,6141684,6128102,6131745,
+6090441,6078755`: minimo 6,078,755, massimo 6,221,449, range 142,694,
+media 6,137,825, deviazione standard 41,078.81, CV 0.6693%, max/min
+1.02347 e totale 49,102,600. Vi è una sola inversione residua r4->r5 di
+3,643 gruppi (0.059%). L'obiettivo sotto circa 1--1.5% è raggiunto.
+
+Dal proposto al raffinato il massimo scende di 285,031 (-4.381%) e il CV da
+2.764% a 0.669%; dalla partizione marginale T02/T04 il massimo scende da
+7,819,825 (-20.44%) e il CV da 11.869%. T01 weighted aveva 7,819,825 e
+11.832%, T01 legacy 7,771,736 e 11.525%. Il totale cambia da 49,428,772
+marginale a 49,168,861 proposto e 49,102,600 raffinato: la piccola variazione
+del totale misura la non additività dei nuovi tagli, mentre la riduzione del
+massimo misura il beneficio dei confini.
+
+### Timer, previsione e costi secondari
+
+|rank|diagnostico|prepass|Xo procedure|Xo REDUX|procedure+prepass|
+|---:|---:|---:|---:|---:|---:|
+|0|51.1647|80.3495|3794.8725|269.6361|3875.2220|
+|1|51.1658|80.3490|3768.3453|298.5503|3848.6943|
+|2|51.1661|80.3494|3811.8767|254.8190|3892.2261|
+|3|51.1662|80.3494|3817.0516|249.5409|3897.4010|
+|4|51.1667|80.3499|3823.9315|241.9001|3904.2814|
+|5|51.1667|80.3500|3840.6933|225.0917|3921.0433|
+|6|51.1666|80.3498|3847.5258|218.2269|3927.8756|
+|7|51.1659|80.3491|3879.2430|186.4786|3959.5921|
+
+Il diagnostico varia 2.0 ms e il prepass 1.0 ms. Il massimo `Xo (procedure)`
+è 3879.243 s, range 110.898 s e CV 0.828%, contro
+5785.373/2615.441/20.749% in T04. `Xo (REDUX)` è 186.479--298.550 s, range
+112.072 s: l'attesa massima scende di 2320.252 s (-88.60%) e diventa molto
+più uniforme. Il rank critico della procedura passa da r0 a r7; il massimo
+REDUX è r1. Il lieve gradiente residuo è opposto a quello dei gruppi.
+
+Il cammino critico completo è 3959.592 s. Rispetto a T04 migliora di
+1906.836 s (-32.50%); rispetto a T03, T02, T01 weighted e T01 legacy di
+1895.946 (-32.38%), 1867.515 (-32.05%), 1866.814 (-32.04%) e 1776.665 s
+(-30.97%). Il massimo della sola procedura migliora rispettivamente di
+1906.130, 1913.667, 1918.529, 1937.633 e 1857.015 s. Il tempo totale passa da
+9326.199 s T04 a 7598.343 s: -1727.856 s (-18.53%); contro T03, T02, T01
+weighted e legacy: -1711.525 (-18.38%), -1698.163 (-18.27%), -1700.342
+(-18.29%) e -1609.734 s (-17.48%).
+
+Il prepass costa 80.350 s (2.07% del massimo produttivo), 0.706 s meno di T04;
+il diagnostico è 0.703 s più rapido. Rispetto al legacy il break-even richiede
+di conservare appena 80.350/1857.015 = 4.33% del risparmio Xo: il beneficio
+osservato è 23.11 volte il costo. Rispetto a T04 il risparmio della procedura
+supera il prepass intero di 1825.780 s.
+
+La previsione T04 di 3953.2 s non era una misura. Il massimo T05 osservato,
+3879.243 s, è 73.96 s più basso (-1.87%), circa 1.41 volte l'RMS storico di
+52.33 s: il modello ha previsto bene il cammino critico assoluto.
+
+Il nuovo fit univariato T05 sugli otto rank è:
+
+```text
+Xo (procedure) [s] = 7579.2344 - 0.000611991 * gruppi aggregati
+```
+
+R²=0.63074, RMS=19.235 s; residui r0--r7
+`+23.107,-41.961,-2.420,-3.529,-4.961,+14.030,-4.415,+20.150` s. Il segno
+negativo non significa che più gruppi accelerino Xo: il range dei gruppi è
+ormai solo 2.35%, mentre le bande crescono da 186 a 289 e sono anticorrelate
+ai gruppi. Un fit separato dà `time=3609.697+0.863343*bande`, R²=0.76878 e
+RMS=15.221 s. Nel residuo dominano quindi lavoro per banda,
+transizioni/GEMM/accessi alle WF e costi fissi. Il modello gruppi/tempo T03/T04
+resta valido per il grande guadagno e il massimo assoluto, ma non discrimina
+più i piccoli scarti nel regime quasi bilanciato.
+
+### Memoria, output fisico e anomalie
+
+Le allocazioni Xo iniziali `WF%c` r0--r7 sono `1.768774,2.013033,2.173065,
+2.290983,2.366788,2.451015,2.560511,2.636315` GiB, su host e device, coerenti
+con le bande crescenti. T04 era circa 2.27--2.30 GiB: T05 riduce i rank bassi
+e porta il massimo a r7, circa +14.7% rispetto al massimo Xo T04. Il totale
+tracciato al massimo è circa 2.782 GiB host e 2.674 GiB device sul rank 7. Le
+allocazioni successive `WF%c` (0.80--1.05 GiB e 2.223601 GiB) sono liberate
+normalmente; nessuna crescita persistente. Il report master indica picchi
+memstat 2.165179 GiB host e 2.160261 GiB device. Nessun warning di memoria.
+
+Tutti gli `o-OUTPUT.qp` contengono gli stessi 420 stati, con identità esatta
+di `k`, banda ed `Eo`. Differenze T05 massimo/RMS:
+
+|contro|`E-Eo` [eV]|`Sc|Eo` [eV]|
+|:---|:---:|:---:|
+|T04|7.56e-4 / 2.870e-4|4.07e-4 / 3.157e-4|
+|T03|7.55e-4 / 2.870e-4|4.07e-4 / 3.157e-4|
+|T02 weighted|7.56e-4 / 2.869e-4|4.07e-4 / 3.156e-4|
+|T01 weighted|7.48e-4 / 2.870e-4|4.06e-4 / 3.157e-4|
+|T01 legacy|7.30e-4 / 2.808e-4|3.95e-4 / 3.055e-4|
+
+Le differenze aumentano rispetto ai confronti con uguali confini, come atteso
+dal cambiamento maggiore dell'ordine delle riduzioni MPI, ma restano sub-meV
+e dentro le tolleranze fisiche già usate. Nessuno stato mancante o valore
+fuori scala.
+
+La ricerca integrale non trova errori, abort, NaN, segmentation fault,
+failure o anomalie MPI. L'unico warning è `[x,Vnl]`, una volta nel report e
+una per log. `Time ordering fails/rest` è una statistica normale. I marcatori
+`[X-WB-M]`, `[X-WB-I]`, `[X-WB-R]` e `[X-WB]` sono coerenti.
+
+### Decisione dopo T05
+
+La selezione produttiva è riuscita: conteggi previsti riprodotti, partizione
+realmente usata, CV 0.669%, massimo Xo entro 1.87% dalla previsione, guadagno
+netto materiale anche col prepass ed equivalenza fisica. Non è giustificata
+una terza iterazione.
+
+Per ora conviene mantenere i tre conteggi nella versione di validazione: T05
+è un solo sistema e 80 s sono piccoli rispetto ai 1857--1906 s risparmiati.
+Dopo almeno un secondo benchmark e un caso con raffinamento rifiutato, si può
+rendere opzionale la diagnostica dettagliata o evitare conteggi ridondanti,
+preservando ciò che serve alla selezione. Prima dell'integrazione servono:
+regressione col flag disabilitato, build CPU-only/MPI senza GPU, caso con
+gerarchia `q/g/k/c` non banale, stress memoria con più bande sul rank finale e
+verifica tester delle tolleranze QP. Non sono stati modificati algoritmo o
+diagnostica, preparato T06 né creati commit.
+
+## Piano di validazione successivo a T05
+
+Prima dei nuovi benchmark va corretta l'osservabilità della distribuzione.
+Il riepilogo `247/1976` emesso da `PARALLEL_global_indexes` descrive la
+maschera equinumerosa costruita prima del prepass, non quella passata a
+`PARALLEL_WF_distribute`. Con `X_WeightedBands` attivo il messaggio iniziale
+deve quindi essere marcato come provvisorio e, dopo la selezione interval-aware,
+deve essere emesso un secondo riepilogo parallelo con il conteggio finale
+locale. Il percorso e il messaggio legacy restano invariati col flag spento.
+
+La correzione di reporting precede la validazione, nell'ordine:
+
+1. verificare localmente coerenza fra riepilogo finale, `n_of_elements`,
+   intervalli `[X-WB]` e somma globale delle bande, sia per raffinamento
+   accettato sia per fallback;
+2. regressione col flag disabilitato;
+3. build e prova MPI CPU-only;
+4. caso con gerarchia `q/g/k/c` non banale;
+5. secondo benchmark rappresentativo, controllo memoria e verifica tester
+   delle tolleranze QP;
+6. soltanto dopo questi dati, decidere se ridurre o rendere opzionale la
+   diagnostica dettagliata.
+
+### Correzione del reporting e verifica locale
+
+Il reporting è stato corretto senza cambiare la partizione. Quando
+`X_WeightedBands` è attivo, il riepilogo prodotto durante
+`PARALLEL_global_indexes` usa ora l'etichetta `CON bands (provisional)`.
+Subito dopo la copia della partizione interval-aware selezionata viene emesso
+su ogni rank `CON bands [X-WB final]`, usando il `n_of_elements` della maschera
+che sarà passata a `PARALLEL_WF_distribute`. Col flag disabilitato resta
+esattamente l'etichetta storica `CON bands` e non viene aggiunto alcun secondo
+messaggio.
+
+La build MPI con `profile/gcc-14.3.0` e `make yambo` è completata. Il caso
+locale Al_bulk a quattro rank è stato rilanciato come
+`weighted_reporting_gcc143` in
+`/home/nicola/tmp/codex/yambo5-xo-weighted-refine-local`. Il raffinamento è
+stato correttamente rifiutato (`704 -> 715`) e il fallback ha prodotto
+`2:5,6:10,11:15,16:20`. I log mostrano conteggi provvisori `5,5,5,4` e
+conteggi finali `4,5,5,5` su 19 bande, in esatta corrispondenza con gli
+intervalli `[X-WB]`; la somma finale è 19. Tutti i rank terminano con
+`Game Over`. L'output QP differisce dal precedente run soltanto per normali
+arrotondamenti nell'ultima cifra stampata e per intestazione/data.
+
+È stato inoltre eseguito `reporting_legacy_gcc143` con lo stesso input privo
+di `X_WeightedBands`. I quattro log contengono soltanto il messaggio storico
+con `5,5,5,4/19`, nessuna stringa `provisional`, `final` o `[X-WB]`, e tutti
+terminano regolarmente. Il ramo con raffinamento accettato attraversa lo
+stesso punto di reporting comune dopo le due alternative di copia; la sua
+verifica runtime esplicita resta associata al prossimo benchmark che lo
+seleziona naturalmente, senza forzare o modificare l'algoritmo.
+
+### Validazione locale MPI CPU-only
+
+È stata creata una worktree isolata in
+`/home/nicola/tmp/codex/yambo5-xo-weighted-cpu-local`, basata su `7eabcf15f`
+e con le sole modifiche sorgente correnti riportate localmente. La
+configurazione usa GCC 14.3.0, OpenMPI 5.0.8, OpenMP, ScaLAPACK, SLEPc e HDF5
+parallelo; `config/report` conferma `GPU support ( no_gpu )` e non contiene
+macro CUDA. `make yambo` è completato.
+
+Sul database Al_bulk sono stati eseguiti due run con quattro rank MPI,
+`OMP_NUM_THREADS=1` e job directory distinte: `cpu_only_weighted_gcc143`, con
+`X_WeightedBands`, e `cpu_only_legacy_gcc143`, col flag assente. Entrambi
+terminano con `Game Over` su tutti i rank e senza errori, NaN o abort MPI.
+
+Il weighted riproduce i precedenti conteggi locali: marginale
+`2:6,7:11,12:15,16:20`, proposta `2:5,6:10,11:15,16:20`, massimo proposto
+704, raffinato 715 e fallback correttamente selezionato. Le 32 coppie q/rank
+produttive coincidono con i `proposed exact groups`. Il reporting mostra
+`5,5,4,5/19` provvisorio e `4,5,5,5/19` finale; il legacy mostra soltanto il
+messaggio storico `5,5,5,4/19`.
+
+| variante | `Xo (procedure)` r0--r3 [s] | `Xo (REDUX)` r0--r3 [s] | diagnostico [s] | prepass [s] |
+|:---|:---|:---|:---|:---|
+| legacy | 0.0538, 0.0553, 0.0551, 0.0519 | 0.0084, 0.0057, 0.0059, 0.0086 | -- | -- |
+| weighted | 0.0462, 0.0566, 0.0593, 0.0549 | 0.0173, 0.0068, 0.0033, 0.0028 | 0.0014 su tutti | 0.0033, 0.0028, 0.0028, 0.0028 |
+
+La scala di pochi millisecondi rende i timer dominati da costi fissi e rumore:
+il caso verifica correttezza e portabilità CPU, non il guadagno prestazionale.
+Gli `o-*.qp` hanno gli stessi 32 stati e identiche colonne `(k,banda,Eo)`;
+weighted contro legacy differisce al massimo/RMS di `1.0e-4/5.61e-5` eV
+nella larghezza e `3.0e-5/5.60e-6` eV nell'ultima colonna, coerentemente col
+diverso ordine delle riduzioni MPI.
+
+La validazione locale CPU-only è superata. La misura prestazionale CPU resta
+demandata ai due run X-only legacy/weighted di anatase su Leonardo-DCGP. Se
+non verrà prodotto `o-OUTPUT`, l'equivalenza fisica sarà verificata sui
+database NetCDF e sui frammenti del driver X, separando metadati e ordine dei
+frammenti dai valori fisici confrontabili.

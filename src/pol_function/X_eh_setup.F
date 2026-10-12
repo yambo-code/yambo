@@ -175,7 +175,7 @@ subroutine X_weighted_bands_setup(Xen,Xk,X,iq_range,io_X_done)
  use electrons,    ONLY:levels,n_sp_pol,spin_occ
  use parallel_m,   ONLY:PP_indexes,PP_indexes_reset,PAR_INDEX_copy,PAR_IND_Q_ibz,PAR_IND_Xk_bz,&
 &                       PAR_IND_VAL_BANDS_X,PAR_IND_CON_BANDS_X,PAR_COM_CON_INDEX_X
- use parallel_int, ONLY:PP_redux_wait,PARALLEL_index_weighted_contiguous
+ use parallel_int, ONLY:PP_redux_wait,PARALLEL_index_weighted_contiguous,PARALLEL_live_message
  use com,          ONLY:msg
  use timing_m,     ONLY:timing
  !
@@ -436,6 +436,9 @@ subroutine X_weighted_bands_setup(Xen,Xk,X,iq_range,io_X_done)
  else
    call PAR_INDEX_copy(q_partition,PAR_IND_CON_BANDS_X(X%whoami))
  endif
+ call PARALLEL_live_message("CON bands [X-WB final]",ENVIRONMENT="Response_G_space_and_IO",&
+& LOADED=PAR_IND_CON_BANDS_X(X%whoami)%n_of_elements(PAR_COM_CON_INDEX_X(X%whoami)%CPU_id+1),&
+& TOTAL=X%ib(2)-ic_low+1,NCPU=PAR_COM_CON_INDEX_X(X%whoami)%n_CPU)
  if (PAR_COM_CON_INDEX_X(X%whoami)%CPU_id==0) then
    do ir=1,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU
      write(ch,'(a,i0,a,i0,a,i0,a,i0)') '[X-WB] c-rank ',ir-1,' production bands ',&

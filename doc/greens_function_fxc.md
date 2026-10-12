@@ -706,31 +706,39 @@ spinor band holds one electron, so a band window doubles (WS2 bands 11-16 become
 and the number of transitions quadruples. Collinear spin polarization (`nspin=2`), magnons
 and perturbative SOC are still refused.
 
-Monolayer hBN with `noncolin=.true., lspinorb=.false.` (the scalar pseudopotentials, so the
-scalar run of the previous sections is the reference: bands 3-6 become 5-12), 17 G in-plane,
-q1 and q2:
+Monolayer WS2 with spin-orbit coupling (`noncolin=.true., lspinorb=.true.`, fully
+relativistic PseudoDojo norm-conserving W and S, W with 5s5p semicore, a = 3.184 A,
+12 A cell, 50 Ry, 6x6 k grid, bands 23-30 = four valence and four conduction spinor
+bands, 21 G of which 7 in-plane, scissor 0.8 eV). The valence splitting at K is 0.427 eV.
 
-| k-point symmetry | head vs BSE | bubble vs chi0 | Casida vs BSE | spinor BSE at q1 |
+| k-point symmetry | head vs BSE | Casida vs BSE q1, q2 | dark, A, B at q1 [eV] | BSE eps2 vs the other |
 | --- | --- | --- | --- | --- |
-| 24 (spatial + time reversal) | 1e-15 | 5e-8 | 3e-5 (q2) | six states 3.708-3.773 eV, strengths 0.06-1 |
-| 12 (spatial, `noinv`) | 1e-15 | 4e-8 | 1e-4 (q2) | 3.713-3.775 eV, triplet not dark |
-| none (`nosym`, `noinv`) | 1e-15 | 3e-8 | 1e-4 (q1), 1e-4 (q2) | dark triplet 3.7126 eV (strength 1e-9), bright singlet 3.7341 eV |
+| 24 (spatial + time reversal), 7 IBZ k | 1e-15 | 9e-5, 2e-4 | 1.915244, 1.948497, 2.340670 | 4e-4 (q1), 2e-3 (q2) |
+| none (`nosym`, `noinv`), 36 k | 2e-15 | 3e-4, 2e-4 | 1.915244, 1.948488, 2.340672 | |
 
-The kernel reproduces the BSE in every case, so the export is consistent with whatever
-BSE Yambo built. The BSE itself is right only without symmetries: without SOC the spinor
-BSE must give the scalar singlet and a dark triplet, and it does so only on the full k
-grid, where it matches the scalar run on the same grid to 0.1 meV (3.7340 eV at q1,
-4.2928 eV at q2; the scalar run with symmetries gives 3.7371 and 4.2931 eV, so Yambo's
-symmetric W term shifts even scalar excitons by 3 meV at q1). With symmetries the spinor
-W term mixes singlet and triplet. The exchange-only BSE (`BSKmod="Hartree"`) is clean in
-all cases (triplets at the transition energies, strength 1e-6), and the RPA response
-(`optics chi`) at q1-q4 agrees with the scalar one to 4e-4, so the screening and the GW
-machinery rotate the spinors consistently; only the BSE direct term does not (standard and
-direct algorithms alike, `ImposeDirAlg`). This is upstream Yambo, not the export. For
-spinor runs use `nosym=.true., noinv=.true.` in the QE nscf, so that every k point is
-explicit and no spinor is rotated. The IBZ is then the full grid: the GW and static
-screening steps cost about (number of k points)/(number of IBZ points) more, 8 for the
-15x15 grid of WS2.
+The excitons agree to 0.01 meV at q1 and 0.3 meV at q2: with SOC, Yambo's spinor BSE
+is the same with and without k-point symmetries, and the dark state (33 meV below A) and
+the B exciton (0.39 eV above A) come out as expected. Each state is a near-degenerate pair
+(the two valleys); how the strength splits within a pair depends on the basis and differs
+between the runs, the spectra do not. Use the symmetries.
+
+One case does break with symmetries: noncollinear states **without** SOC
+(`lspinorb=.false.`). Every band is then exactly doubly degenerate and QE fixes the spin
+direction inside each pair arbitrarily, differently at each k. In monolayer hBN (scalar
+pseudopotentials, bands 3-6 become 5-12, 17 G) the kernel still reproduces the BSE in
+every case (head 1e-15, Casida 3e-5 to 1e-4 at q1 and q2), but the BSE itself is right
+only on the full grid:
+
+| k-point symmetry | spinor BSE at q1 |
+| --- | --- |
+| 24 (spatial + time reversal) | six states 3.708-3.773 eV, strengths 0.06-1 |
+| 12 (spatial, `noinv`) | 3.713-3.775 eV, triplet not dark |
+| none (`nosym`, `noinv`) | dark triplet 3.7126 eV (strength 1e-9), bright singlet 3.7341 eV |
+
+On the full grid the bright state matches the scalar run on the same grid to 0.1 meV
+(3.7340 eV at q1, 4.2928 eV at q2). The exchange-only BSE and the RPA response are clean
+with symmetries; only the screened direct term mixes singlet and triplet. This needs
+noncollinear states without SOC, which have no use here (run those systems scalar).
 
 ### MPI for the response
 

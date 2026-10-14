@@ -748,6 +748,45 @@ On the full grid the bright state matches the scalar run on the same grid to 0.1
 with symmetries; only the screened direct term mixes singlet and triplet. This needs
 noncollinear states without SOC, which have no use here (run those systems scalar).
 
+### Yambo's own TDDFT kernels on the same system
+
+The WS2 SOC test above (q1, bands 23-30, scissor 0.8 eV, 21 G, eta = 0.05 eV) with the
+kernels Yambo already has, in the G-space Dyson equation (`optics chi`, `Chimod`) or in
+transition space (`BSKmod`). The A peak is the first maximum of eps2 (5 meV grid, parabola);
+the gap of the window is 2.3618 eV.
+
+| Kernel | A peak [eV] | Binding [eV] |
+| --- | --- | --- |
+| BSE (`SEX`, coupling), reference | 1.9486 | 0.413 |
+| exact kernel fxc(w), `CHI` + `BSEChiDyn` | 1.9483 | 0.413 |
+| exact kernel fxc(0), `CHI` static | 2.3157 | 0.046 |
+| IP, RPA (`Hartree`), ALDA in transition space | 2.392-2.397 | none |
+| LRC, alpha = 0.686 (head of the exact fxc(0)) | 2.339 | 0.022 |
+| LRC, alpha = 1.35 (head of the exact fxc at E_A) | 2.230 | 0.132 |
+| LRC, alpha = 2.2 (fitted; eps2 peak 119 vs 19 of the BSE) | 1.927 | 0.435 |
+| PF `EMP` (Botti, alpha from eps_M: 0.638) | 2.345 | 0.017 |
+| PF `CUR` (0.524), `RBO` (RPA bootstrap, 0.518) | 2.357 | 0.005 |
+| PF `JGM` (alpha = 7.06) | no bound peak | - |
+| `BSfxc` | not available | - |
+
+- Yambo's LRC kernel is fxc_00 = +`LRC_alpha`/|q|^2 (`X_redux`: 1 - chi0 (v + fxc)), so an
+  attractive (excitonic) LRC needs a negative `LRC_alpha`. The alpha of the exported kernel
+  (fxc_00 = -alpha/|q|^2, as in `fxc_export.py`) is `LRC_alpha = -alpha`. Above about
+  alpha = 3.5 the static response turns over (Re eps(0) < 0) and the spectrum is unphysical.
+- A head-only kernel with the exact head at E_A binds 0.13 of the 0.41 eV: the local-field
+  (G /= 0) part of the exact kernel carries most of the binding. An LRC alpha fitted to the
+  binding energy (about 2.15) puts the peak in place with six times its strength.
+- The PF kernels take alpha from the macroscopic eps_M of the supercell, which in a slab
+  depends on the vacuum; here they bind 5-17 meV. JGM, built on the density, is dominated
+  by the low-density vacuum.
+- G-space ALDA depends on the G set through the pure-G_z components that sample the vacuum
+  (f_ALDA grows as n^-2/3): with 7, 13 and 27 G the A peak is at 2.392 (= RPA), 2.501 and
+  2.042 eV. ALDA in transition space, with the same G, gives RPA (2.392 eV): ALDA binds no
+  exciton, and the G-space values are an artifact of the vacuum. `FxcGRLc` smaller than
+  `NGsBlkXd` stops the run in this build; use equal values.
+- `BSfxc` builds the BSE kernel and stops: its fxc step is commented out in `K_solvers`
+  and the matching branch of `X_redux` is empty in this version.
+
 ### MPI for the response
 
 G0, COHSEX and DYSON support k-point distribution on CPUs. For N ranks,

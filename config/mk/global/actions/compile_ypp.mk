@@ -48,6 +48,7 @@ ypp ypp_ph ypp_sc ypp_rt_gpl ypp_rt ypp_nl:
 	@rm -f ${compdir}/log/"compile_"$@".log"
 	@rm -f ${compdir}/config/stamps_and_lists/compilation_stop_$@.stamp
 	@touch ${compdir}/config/stamps_and_lists/compiling_$@.stamp
+	@+X2DO="$@";$(update_provenance)
 	@$(call todo_precision,$(Y_PRECMP))
 	@$(MAKE) $(MAKEFLAGS) dependencies
 	@$(MAKE) $(MAKEFLAGS) ext-libs

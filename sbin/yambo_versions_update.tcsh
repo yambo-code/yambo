@@ -1,4 +1,6 @@
 #! /bin/tcsh -f
+# Legacy release-version helper. Build provenance is generated at make time;
+# SHASH and SREVISION must not be used to identify a compiled binary.
 #
 # License-Identifier: GPL
 #

@@ -771,8 +771,8 @@ the gap of the window is 2.3618 eV.
 
 - Yambo's LRC kernel is fxc_00 = +`LRC_alpha`/|q|^2 (`X_redux`: 1 - chi0 (v + fxc)), so an
   attractive (excitonic) LRC needs a negative `LRC_alpha`. The alpha of the exported kernel
-  (fxc_00 = -alpha/|q|^2, as in `fxc_export.py`) is `LRC_alpha = -alpha`. Above about
-  alpha = 3.5 the static response turns over (Re eps(0) < 0) and the spectrum is unphysical.
+  (fxc_00 = -alpha/|q|^2, as in `fxc_export.py`) is `LRC_alpha = -alpha`. Between
+  alpha = 3 and 4 the static response turns over (Re eps(0) < 0) and the spectrum is unphysical.
 - A head-only kernel with the exact head at E_A binds 0.13 of the 0.41 eV: the local-field
   (G /= 0) part of the exact kernel carries most of the binding. An LRC alpha fitted to the
   binding energy (about 2.15) puts the peak in place with six times its strength.

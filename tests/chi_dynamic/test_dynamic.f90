@@ -8,7 +8,8 @@ program test_chi_dynamic
   use pars, only: DP
   use TDDFT_Chi_dynamic_m, only: TDDFT_Chi_dynamic_kernel,TDDFT_Chi_dynamic_response,&
 &   TDDFT_Chi_pair_response,TDDFT_Chi_pair_bubble,TDDFT_Chi_kernel_from_response,&
-&   TDDFT_Chi_full_response,TDDFT_Chi_full_bubble,TDDFT_Chi_full_dynamic_response
+&   TDDFT_Chi_full_response,TDDFT_Chi_full_bubble,TDDFT_Chi_full_dynamic_response,&
+&   TDDFT_Chi_mdr_response,TDDFT_Chi_kernel_mdr
   implicit none
   integer, parameter :: m=3,ng=2*m+1,nt=5
   complex(DP), parameter :: ci=(0._DP,1._DP),zero=(0._DP,0._DP)
@@ -89,6 +90,8 @@ program test_chi_dynamic
   call export_chain_checks()
 
   call full_space_checks()
+
+  call mdr_checks()
 
   if (failures>0) then
     print *,failures,' check(s) failed'
@@ -587,6 +590,105 @@ contains
       call check('explicit rows: Casida G-resolved response = chib (max rel. dev.)',info,1._DP+worst_c,(1._DP,0._DP))
     enddo
   end subroutine
+
+  subroutine mdr_checks()
+    ! Marini-Del Sole-Rubio kernel (BSEChiOut= "mdr"), explicit rows, BSE with exchange Kx
+    ! and a W-like part Wp. The exchange-free matrix is M - Kx = diag(E) + Wp.
+    ! 1. Wp diagonal: MDR is exact (P and kernel equal the exported ones).
+    ! 2. Off-diagonal Wp scaled by eps: P_MDR - P = O(eps^2) (first order in K_off).
+    ! 3. Casida with the MDR kernel returns the head of (P_MDR^-1 - vbar)^-1.
+    integer, parameter :: nh=2*nt
+    complex(DP) :: M(nh,nh),Kx(nh,nh),Wp(nh,nh),Wd(nh,nh),Koff(nh,nh),Ed(nh),V(ng,nh),sf(nh),df(nh),zz
+    complex(DP) :: chib(ng,ng),chi0(ng,ng),f(ng,ng),Pm(ng,ng),fm(ng,ng),Pmd(ng,ng),p0(ng,ng),dp1(ng,ng)
+    complex(DP) :: vb(ng,ng),d(ng),r1,ch(ng,ng),e_c(2)
+    real(DP) :: E(nh),fo(nh),rc(2),c_fac,eps(2),errs(2)
+    integer :: t,i,ie,info
+    c_fac=0.37_DP
+    call random_vertices(V)
+    do t=1,nt
+      fo(t)=0.6_DP+0.2_DP*t
+      fo(nt+t)=-(0.5_DP+0.3_DP*t)
+      E(t)=0.8_DP+0.35_DP*t
+      E(nt+t)=-(0.9_DP+0.3_DP*t)
+    enddo
+    do i=1,nh
+      sf(i)=sqrt(cmplx(fo(i),kind=DP))
+    enddo
+    d(1)=40._DP
+    do i=2,ng
+      d(i)=1.5_DP/sqrt(real(i,DP))
+    enddo
+    vb=zero
+    do i=2,ng
+      vb(i,i)=d(i)**2
+    enddo
+    Kx=c_fac*matmul(conjg(transpose(V)),matmul(vb,V))
+    do i=1,nh
+      Kx(:,i)=Kx(:,i)*sf(i)
+      Kx(i,:)=Kx(i,:)*sf(i)
+    enddo
+    call random_matrix(Wp)
+    Wp=0.2_DP*Wp
+    Wd=zero
+    do t=1,nh
+      Wd(t,t)=Wp(t,t)
+    enddo
+    df=conjg(V(1,:))
+    zz=cmplx(1.6_DP,0.04_DP,kind=DP)
+    eps=[0._DP,0._DP]
+    do ie=0,2
+      if (ie>0) eps(ie)=1.E-3_DP*ie
+      Koff=Wp-Wd
+      if (ie>0) Koff=eps(ie)*Koff
+      if (ie==0) Koff=zero
+      M=Kx+Wd+Koff
+      do t=1,nh
+        M(t,t)=M(t,t)+E(t)
+        Ed(t)=E(t)+Wd(t,t)
+      enddo
+      call TDDFT_Chi_full_response(zz,M,V,sf,c_fac,chib,info)
+      call TDDFT_Chi_full_bubble(zz,E,V,sf,c_fac,chi0)
+      call TDDFT_Chi_kernel_from_response(chi0,chib,d,.TRUE.,f,Pm,rc,info)
+      call TDDFT_Chi_mdr_response(zz,Ed,Koff,V,sf,c_fac,p0,dp1)
+      call TDDFT_Chi_kernel_mdr(chi0,p0,dp1,d,fm,Pmd,rc,info)
+      if (info/=0) then
+        print *,'FAIL: kernel_mdr error',info
+        failures=failures+1
+        return
+      endif
+      if (ie==0) then
+        call check('MDR with diagonal W = exact P (G=1,2)',info,Pmd(1,2),Pm(1,2))
+        call check('MDR with diagonal W = exact fxc (G=2,3)',info,fm(2,3),f(2,3))
+        ! 3. Casida with the MDR kernel: head of (P_MDR^-1 - vbar)^-1
+        ch=Pmd
+        call inv(ch)
+        ch=ch-vb
+        call inv(ch)
+        call TDDFT_Chi_full_dynamic_response(zz,Kx+diag(E),fm,V,sf,c_fac,df,r1,info)
+        call check('Casida(E, v, fxc_MDR) = head of (P_MDR^-1 - vbar)^-1',info,c_fac*r1,ch(1,1))
+      else
+        errs(ie)=maxval(abs(Pmd-Pm))/maxval(abs(Pm))
+      endif
+    enddo
+    ! second order: doubling eps multiplies the error by 4
+    e_c(1)=cmplx(errs(2)/errs(1),0._DP,kind=DP)
+    if (abs(real(e_c(1))-4._DP)<0.2_DP) then
+      print '(a,es9.2,a,f6.3)','PASS: MDR error is second order in K_off  err(eps)=',errs(1),'  err(2eps)/err(eps)=',real(e_c(1))
+    else
+      print '(a,2es10.2)','FAIL: MDR error not second order in K_off ',errs
+      failures=failures+1
+    endif
+  end subroutine
+
+  function diag(x) result(m)
+    real(DP), intent(in) :: x(:)
+    complex(DP) :: m(size(x),size(x))
+    integer :: i
+    m=zero
+    do i=1,size(x)
+      m(i,i)=x(i)
+    enddo
+  end function
 
   subroutine inv(mat)
     complex(DP), intent(inout) :: mat(:,:)

@@ -24,6 +24,8 @@ projection, and A, B are the residual vectors of the diagonalization solver.
    eigenvectors and their overlap);
 3. error codes for inconsistent sizes;
 4. a frequency loop run from OpenMP threads against the serial loop.
+5. the Marini-Del Sole-Rubio kernel (`BSEChiOut= "mdr"`): exact for a diagonal W,
+   second-order error in the off-diagonal W, and Casida with it returns its P.
 
 Run with `python run_tests.py --fc gfortran` and, for the threaded loop,
 `python run_tests.py --fc gfortran --openmp`. LAPACK and BLAS are linked with

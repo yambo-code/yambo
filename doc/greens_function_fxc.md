@@ -323,6 +323,7 @@ chib(z) = Co/(4 pi) B^T [ z - M ]^-1 A        (G-resolved BSE response)
 P^-1    = chib^-1 + vbar
 "exc" : fxc = Pref^-1  - P^-1,  Pref = bubble of the BSE transition energies
 "full": fxc = chi0^-1  - P^-1,  chi0 = KS bubble (Yambo's bare energies)
+"mdr" : as "exc", with P of the Marini-Del Sole-Rubio approximation (below)
 ```
 
 and writes `ndb.Chi` (chi0 column = Pref or chi0, P, fxc) into the BSE job
@@ -767,7 +768,9 @@ the gap of the window is 2.3618 eV.
 | PF `EMP` (Botti, alpha from eps_M: 0.638) | 2.345 | 0.017 |
 | PF `CUR` (0.524), `RBO` (RPA bootstrap, 0.518) | 2.357 | 0.005 |
 | PF `JGM` (alpha = 7.06) | no bound peak | - |
-| `BSfxc` | not available | - |
+| MDR kernel fxc(w), `BSEChiOut= "mdr"` + `BSEChiDyn` | 1.9580 | 0.404 |
+| MDR kernel fxc(0), static | 2.3169 | 0.045 |
+| `BSfxc` | not available (MDR above replaces it) | - |
 
 - Yambo's LRC kernel is fxc_00 = +`LRC_alpha`/|q|^2 (`X_redux`: 1 - chi0 (v + fxc)), so an
   attractive (excitonic) LRC needs a negative `LRC_alpha`. The alpha of the exported kernel
@@ -785,7 +788,40 @@ the gap of the window is 2.3618 eV.
   exciton, and the G-space values are an artifact of the vacuum. `FxcGRLc` smaller than
   `NGsBlkXd` stops the run in this build; use equal values.
 - `BSfxc` builds the BSE kernel and stops: its fxc step is commented out in `K_solvers`
-  and the matching branch of `X_redux` is empty in this version.
+  and the matching branch of `X_redux` is empty in this version. It was the
+  Marini-Del Sole-Rubio (MDR) kernel, now available as `BSEChiOut= "mdr"` (below).
+
+### The Marini-Del Sole-Rubio kernel: `BSEChiOut= "mdr"`
+
+The BSE-derived kernel of Marini, Del Sole and Rubio (PRL 91, 256402 (2003)), the
+construction behind Yambo's legacy `BSfxc`, written by the same export. The exchange is
+removed from the coupled BSE matrix (X = c s_A s_B sum_G conj(v_A) vbar_G v_B on the G of
+the exchange; the export checks that M - X gives the exact P), and the exchange-free
+matrix M_W is split into its diagonal Ed (the e-h attraction of each transition moved
+into its energy) and its off-diagonal part K_off, kept to first order:
+
+```
+[z - M_W]^-1 ~ g + g K_off g,          g = diag(1/(z - Ed))
+p0 = c V g U,   dp = c V g K_off g U   (shifted bubble, first-order term)
+P^-1 = p0^-1 - p0^-1 dp p0^-1,         fxc = Pqp^-1 - P^-1
+```
+
+The inversions are exact in G space, so the kernel resums the first-order coupling
+through the Dyson equation. It is exact when W is diagonal in the transitions and its
+error is second order in K_off (`tests/chi_dynamic`). The ndb.Chi is read as an "exc"
+kernel (QP energies in the Casida run). Use it as the approximate BSE-derived kernel of
+the literature next to the exact one: same input as "exc", `BSEChiOut= "mdr"`.
+
+WS2 SOC test (as above, q1 and q2, BSE grid 0-4 eV, eta = 0.05 eV; exchange check 2e-15):
+
+| q | BSE / exact fxc(w) | MDR fxc(w) | MDR fxc(0) | exact fxc(0) |
+| --- | --- | --- | --- | --- |
+| q1, A peak (binding) | 1.9483 (0.414) | 1.9580 (0.404) | 2.3169 (0.045) | 2.3157 (0.046) |
+| q2, A peak (binding) | 2.5687 (0.453) | 2.5979 (0.423) | 2.9913 (0.030) | |
+
+MDR recovers 98% (q1) and 94% (q2) of the binding with its frequency dependence, and
+nothing statically, like the exact kernel: the first-order coupling, resummed in G
+space, carries most of the e-h attraction of this BSE.
 
 ### MPI for the response
 

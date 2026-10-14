@@ -42,6 +42,7 @@ module TDDFT_Chi_dynamic_m
  public :: TDDFT_Chi_dynamic_kernel,TDDFT_Chi_dynamic_response
  public :: TDDFT_Chi_pair_response,TDDFT_Chi_pair_bubble,TDDFT_Chi_kernel_from_response
  public :: TDDFT_Chi_full_response,TDDFT_Chi_full_bubble,TDDFT_Chi_full_dynamic_response
+ public :: TDDFT_Chi_mdr_response,TDDFT_Chi_kernel_mdr
  complex(DP), parameter :: zero=(0._DP,0._DP),one=(1._DP,0._DP),ci=(0._DP,1._DP)
 contains
  !
@@ -308,6 +309,117 @@ contains
    if (ierr==0) resp=sum(s*conjg(d)*rhs)
    deallocate(M,fv,rhs,ipiv)
  end subroutine TDDFT_Chi_full_dynamic_response
+ !
+ ! Marini-Del Sole-Rubio kernel (PRL 91, 256402 (2003)). The exchange-free BSE matrix
+ ! M_W = Ed + K_off is split into its diagonal Ed (the e-h attraction of each transition
+ ! moved into its energy) and the off-diagonal coupling K_off, taken to first order:
+ !
+ !   [z - M_W]^-1 ~ g + g K_off g,  g = diag(1/(z - Ed))
+ !
+ !   p0(G,G') = c sum_A   s_A v(G,A) g_A conj(v(G',A)) s_A          (shifted bubble)
+ !   dP1(G,G') = c sum_AB  s_A v(G,A) g_A K_off(A,B) g_B conj(v(G',B)) s_B
+ !
+ ! The kernel on the shifted bubble is p0^-1 dP1 p0^-1 (first order in dP1); on the
+ ! reference bubble chi0 the diagonal shift adds chi0^-1 - p0^-1:
+ !
+ !   fxc = chi0^-1 - P^-1,  P^-1 = p0^-1 - p0^-1 dP1 p0^-1
+ !
+ ! Exact when K_off = 0. Same vertices, s and c as TDDFT_Chi_full_response.
+ !
+ recursive subroutine TDDFT_Chi_mdr_response(z,Ed,Koff,v,s,c,p0,dP1)
+   complex(DP), intent(in)  :: z,Ed(:),Koff(:,:),v(:,:),s(:)
+   real(DP),    intent(in)  :: c
+   complex(DP), intent(out) :: p0(:,:),dP1(:,:)
+   complex(DP), allocatable :: Y(:,:),X(:,:),YK(:,:)
+   integer :: nh,ng,i
+   nh=size(s); ng=size(v,1)
+   allocate(Y(ng,nh),X(ng,nh),YK(ng,nh))
+   ! Y(G,A) = s_A v(G,A) g_A,  X(G',A) = s_A conj(v(G',A))  (s_A, not conj(s_A): i for
+   ! the anti-resonant rows, as in TDDFT_Chi_full_response)
+   do i=1,nh
+     Y(:,i)=s(i)*v(:,i)/(z-Ed(i))
+     X(:,i)=s(i)*conjg(v(:,i))
+   enddo
+   call zgemm('N','T',ng,ng,nh,cmplx(c,0._DP,kind=DP),Y,ng,X,ng,zero,p0,ng)
+   ! dP1 = c (Y K_off) (g X)^T
+   call zgemm('N','N',ng,nh,nh,one,Y,ng,Koff,nh,zero,YK,ng)
+   do i=1,nh
+     X(:,i)=X(:,i)/(z-Ed(i))
+   enddo
+   call zgemm('N','T',ng,ng,nh,cmplx(c,0._DP,kind=DP),YK,ng,X,ng,zero,dP1,ng)
+   deallocate(Y,X,YK)
+ end subroutine TDDFT_Chi_mdr_response
+ !
+ recursive subroutine TDDFT_Chi_kernel_mdr(chi0,p0,dP1,d,fxc,P,rcond,ierr)
+   ! fxc = chi0^-1 - p0^-1 + p0^-1 dP1 p0^-1 and P = (p0^-1 - p0^-1 dP1 p0^-1)^-1, inverted on
+   ! the Coulomb-symmetrized matrices D x D as TDDFT_Chi_kernel_from_response
+   complex(DP), intent(in)  :: chi0(:,:),p0(:,:),dP1(:,:),d(:)
+   complex(DP), intent(out) :: fxc(:,:),P(:,:)
+   real(DP),    intent(out) :: rcond(2)
+   integer,     intent(out) :: ierr
+   complex(DP), allocatable :: A(:,:),B(:,:),C(:,:),T(:,:)
+   real(DP) :: rcP
+   integer :: ng,i,j
+   ! ierr: 20 sizes, 31/32 singular chi0/p0, 33 singular P^-1
+   ng=size(d)
+   fxc=zero; P=zero; rcond=0._DP
+   ierr=20
+   if (any(shape(chi0)/=(/ng,ng/)).or.any(shape(p0)/=(/ng,ng/)).or.any(shape(dP1)/=(/ng,ng/)).or.&
+&      any(shape(fxc)/=(/ng,ng/)).or.any(shape(P)/=(/ng,ng/))) return
+   allocate(A(ng,ng),B(ng,ng),C(ng,ng),T(ng,ng))
+   do j=1,ng
+     do i=1,ng
+       A(i,j)=d(i)*chi0(i,j)*d(j)
+       B(i,j)=d(i)*p0(i,j)*d(j)
+       C(i,j)=d(i)*dP1(i,j)*d(j)
+     enddo
+   enddo
+   call invert(A,rcond(1),ierr)
+   if (ierr/=0) then; ierr=31; goto 1; endif
+   call invert(B,rcond(2),ierr)
+   if (ierr/=0) then; ierr=32; goto 1; endif
+   ! B <- p0~^-1 - p0~^-1 dP1~ p0~^-1
+   call zgemm('N','N',ng,ng,ng,one,C,ng,B,ng,zero,T,ng)
+   call zgemm('N','N',ng,ng,ng,one,B,ng,T,ng,zero,C,ng)
+   B=B-C
+   do j=1,ng
+     do i=1,ng
+       fxc(i,j)=d(i)*(A(i,j)-B(i,j))*d(j)
+     enddo
+   enddo
+   call invert(B,rcP,ierr)
+   if (ierr/=0) then; ierr=33; goto 1; endif
+   do j=1,ng
+     do i=1,ng
+       P(i,j)=B(i,j)/(d(i)*d(j))
+     enddo
+   enddo
+   ierr=0
+1  deallocate(A,B,C,T)
+ contains
+   recursive subroutine invert(Mx,rc,err)
+     complex(DP), intent(inout) :: Mx(:,:)
+     real(DP),    intent(out)   :: rc
+     integer,     intent(out)   :: err
+     integer :: ipv(size(Mx,1)),info,m,lw
+     complex(DP) :: wq(1)
+     complex(DP), allocatable :: wk(:)
+     real(DP) :: anorm,rwk(2*size(Mx,1))
+     complex(DP) :: cwk(2*size(Mx,1))
+     m=size(Mx,1)
+     anorm=maxval(sum(abs(Mx),dim=1))
+     err=1
+     call zgetrf(m,m,Mx,m,ipv,info)
+     if (info/=0) return
+     call zgecon('1',m,Mx,m,anorm,rc,cwk,rwk,info)
+     call zgetri(m,Mx,m,ipv,wq,-1,info)
+     lw=max(1,int(real(wq(1))))
+     allocate(wk(lw))
+     call zgetri(m,Mx,m,ipv,wk,lw,info)
+     deallocate(wk)
+     if (info==0) err=0
+   end subroutine invert
+ end subroutine TDDFT_Chi_kernel_mdr
  !
  recursive subroutine TDDFT_Chi_kernel_from_response(chi0,chib,d,exch,fxc,P,rcond,ierr,exch_head)
    ! fxc = chi0^-1 - P^-1 with P^-1 = chib^-1 + vbar, vbar = diag(0, d_G^2) when the

@@ -18,6 +18,9 @@ subroutine K_Chi_export(iq,Ken,Xk,W)
  !
  !   "exc" : fxc = Pqp^-1 - P^-1,  Pqp = bubble of the BSE transition energies
  !   "full": fxc = chi0^-1 - P^-1, chi0 = bubble of the KS transition energies
+ !   "mdr" : as "exc", with P from the exchange-free BSE matrix to first order in its
+ !           off-diagonal part (Marini-Del Sole-Rubio, TDDFT_Chi_mdr_response): an
+ !           approximate BSE-derived kernel, not the one that reproduces this BSE
  !
  ! makes the Casida response with the same reference energies and vbar equal to chib,
  ! and so reproduces this BSE, exciton included (tests/chi_dynamic). ndb.Chi stores
@@ -52,7 +55,7 @@ subroutine K_Chi_export(iq,Ken,Xk,W)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_WR_CL,OP_APP_CL,REP
  use TDDFT_Chi_dynamic_m, ONLY:TDDFT_Chi_full_response,TDDFT_Chi_full_bubble,TDDFT_Chi_kernel_from_response,&
-&                              TDDFT_Chi_full_dynamic_response
+&                              TDDFT_Chi_full_dynamic_response,TDDFT_Chi_mdr_response,TDDFT_Chi_kernel_mdr
  use timing_m,       ONLY:timing
  !
  implicit none
@@ -65,7 +68,7 @@ subroutine K_Chi_export(iq,Ken,Xk,W)
  ! Work Space
  !
  character(1)             :: sec
- logical                  :: l_exc,l_qp,l_full_L
+ logical                  :: l_exc,l_qp,l_full_L,l_mdr
  logical, save            :: header_done=.FALSE.
  integer                  :: n,nh,ng,nw,iw,it,ig,jg,ik,ikv,ierr,n_bad,ID,io_err
  integer,     external    :: io_Chi
@@ -75,6 +78,8 @@ subroutine K_Chi_export(iq,Ken,Xk,W)
  complex(DP), allocatable :: d(:),H0(:,:),zz(:),chib(:,:),chi0(:,:),f(:,:),Pm(:,:)
  complex(DP), allocatable :: head(:),F0(:,:),chs(:,:),c0s(:,:),fs(:,:),Ps(:,:)
  complex(DP), allocatable :: Vf(:,:),sf(:),df(:)
+ complex(DP), allocatable :: Hw(:,:),Ed(:),p0(:,:),dpm(:,:),p0s(:,:),dps(:,:)
+ real(DP)                 :: mdr_err,mdr_nrm
  integer,     allocatable :: S(:)
  integer                  :: ns
  complex(DP)              :: rr(9),lam
@@ -89,7 +94,8 @@ subroutine K_Chi_export(iq,Ken,Xk,W)
  if (isec(2)==0) sec="+"
  call section(sec,'Chi kernel from the BSE @q'//trim(intc(iq)))
  !
- l_exc=trim(BS_K_Chi_out)=='exc'
+ l_mdr=trim(BS_K_Chi_out)=='mdr'
+ l_exc=trim(BS_K_Chi_out)=='exc'.or.l_mdr
  !
  if (.not.l_BS_ares_from_res.and.iq==1) &
 &  call error('[Chi/BSK] BSEChiOut at the optical q: anti-resonant blocks from the resonant ones only (no ImposeAsym)')
@@ -180,12 +186,42 @@ subroutine K_Chi_export(iq,Ken,Xk,W)
  Chi_freqs=cmplx(zz,kind=SP)
  allocate(H0(nh,nh),head(nw))
  H0=cmplx(BS_mat,kind=DP)
+ !
+ ! MDR: the exchange-free matrix M_W = M - X, X(A,B) = c s_A s_B sum_G conj(v(G,A)) vbar_G v(G,B)
+ ! over the G of the exchange (S, without G=0 unless Lkind full), split into its diagonal Ed
+ ! and off-diagonal part Hw
+ if (l_mdr) then
+   call msg('r','[Chi/BSK] MDR kernel: diagonal of W in the energies, off-diagonal W to first order')
+   allocate(Hw(nh,nh),Ed(nh))
+   allocate(p0(ng,nh),dpm(ng,nh))
+   do it=1,nh
+     do is=1,ns
+       ig=S(is)
+       p0(is,it)=sf(it)*conjg(Vf(ig,it))
+       dpm(is,it)=sf(it)*Vf(ig,it)
+       if (is==1.and..not.l_full_L) then
+         p0(is,it)=(0._DP,0._DP)
+         dpm(is,it)=(0._DP,0._DP)
+       endif
+       p0(is,it)=p0(is,it)*d(ig)**2
+     enddo
+   enddo
+   ! X = c U^T V with U(G,A) = vbar_G s_A conj(v(G,A)), V(G,B) = s_B v(G,B)
+   call zgemm('T','N',nh,nh,ns,cmplx(Chi_dyn_c,0._DP,kind=DP),p0,ng,dpm,ng,(0._DP,0._DP),Hw,nh)
+   Hw=H0-Hw
+   do it=1,nh
+     Ed(it)=Hw(it,it)
+     Hw(it,it)=(0._DP,0._DP)
+   enddo
+   deallocate(p0,dpm)
+ endif
  err_w=0
  head=(0._DP,0._DP)
  !
- !$omp parallel default(shared) private(iw,chib,chi0,f,Pm,rc,ierr,chs,c0s,fs,Ps)
+ !$omp parallel default(shared) private(iw,chib,chi0,f,Pm,rc,ierr,chs,c0s,fs,Ps,p0,dpm,p0s,dps)
  allocate(chib(ng,ng),chi0(ng,ng),f(ng,ng),Pm(ng,ng))
  allocate(chs(ns,ns),c0s(ns,ns),fs(ns,ns),Ps(ns,ns))
+ if (l_mdr) allocate(p0(ng,ng),dpm(ng,ng),p0s(ns,ns),dps(ns,ns))
  !$omp do schedule(dynamic)
  do iw=1,nw
    call TDDFT_Chi_full_response(zz(iw),H0,Vf,sf,Chi_dyn_c,chib,ierr)
@@ -195,7 +231,14 @@ subroutine K_Chi_export(iq,Ken,Xk,W)
      ! kernel on the G set S (all G unless BSEGinplane), zero outside it
      chs=chib(S(:ns),S(:ns))
      c0s=chi0(S(:ns),S(:ns))
-     call TDDFT_Chi_kernel_from_response(c0s,chs,d(S(:ns)),.TRUE.,fs,Ps,rc,ierr,exch_head=l_full_L)
+     if (l_mdr) then
+       call TDDFT_Chi_mdr_response(zz(iw),Ed,Hw,Vf,sf,Chi_dyn_c,p0,dpm)
+       p0s=p0(S(:ns),S(:ns))
+       dps=dpm(S(:ns),S(:ns))
+       call TDDFT_Chi_kernel_mdr(c0s,p0s,dps,d(S(:ns)),fs,Ps,rc,ierr)
+     else
+       call TDDFT_Chi_kernel_from_response(c0s,chs,d(S(:ns)),.TRUE.,fs,Ps,rc,ierr,exch_head=l_full_L)
+     endif
      f=(0._DP,0._DP)
      Pm=(0._DP,0._DP)
      f(S(:ns),S(:ns))=fs
@@ -211,6 +254,7 @@ subroutine K_Chi_export(iq,Ken,Xk,W)
  enddo
  !$omp end do
  deallocate(chib,chi0,f,Pm,chs,c0s,fs,Ps)
+ if (l_mdr) deallocate(p0,dpm,p0s,dps)
  !$omp end parallel
  !
  n_bad=count(err_w/=0)
@@ -245,6 +289,41 @@ subroutine K_Chi_export(iq,Ken,Xk,W)
 &  call warning('[Chi/BSK] the exported G=0 response differs from the BSE one: '//&
 &    'vertex or anti-resonant convention mismatch at this q, the kernel is not the BSE one')
  deallocate(F0)
+ !
+ ! MDR: the exchange-free matrix must give the exact P of this BSE (P^-1 = chib^-1 + vbar)
+ if (l_mdr) then
+   allocate(chib(ng,ng),chi0(ng,ng),chs(ns,ns),c0s(ns,ns),fs(ns,ns),Ps(ns,ns),p0s(ns,ns))
+   do it=1,nh
+     Hw(it,it)=Ed(it)
+   enddo
+   mdr_err=0._DP
+   mdr_nrm=0._DP
+   do is=1,9,4
+     call TDDFT_Chi_full_response(zz(iws(is)),H0,Vf,sf,Chi_dyn_c,chib,ierr)
+     if (ierr/=0) cycle
+     call TDDFT_Chi_full_bubble(zz(iws(is)),E_ref,Vf,sf,Chi_dyn_c,chi0)
+     chs=chib(S(:ns),S(:ns))
+     c0s=chi0(S(:ns),S(:ns))
+     call TDDFT_Chi_kernel_from_response(c0s,chs,d(S(:ns)),.TRUE.,fs,Ps,rc,ierr,exch_head=l_full_L)
+     if (ierr/=0) cycle
+     call TDDFT_Chi_full_response(zz(iws(is)),Hw,Vf,sf,Chi_dyn_c,chib,ierr)
+     if (ierr/=0) cycle
+     p0s=chib(S(:ns),S(:ns))
+     do jg=1,ns
+       do ig=1,ns
+         mdr_err=max(mdr_err,abs((p0s(ig,jg)-Ps(ig,jg))*d(S(ig))*d(S(jg))))
+         mdr_nrm=max(mdr_nrm,abs(Ps(ig,jg)*d(S(ig))*d(S(jg))))
+       enddo
+     enddo
+   enddo
+   do it=1,nh
+     Hw(it,it)=(0._DP,0._DP)
+   enddo
+   call msg('r','[Chi/BSK] MDR: P of the exchange-free matrix vs the exact P (max relative difference)',&
+&           real(mdr_err/max(mdr_nrm,tiny(1._DP)),SP))
+   if (mdr_err>1.E-4_DP*mdr_nrm) call warning('[Chi/BSK] MDR: the exchange removed from the BSE matrix is not its exchange')
+   deallocate(chib,chi0,chs,c0s,fs,Ps,p0s,Hw,Ed)
+ endif
  if (minval(Chi_rcond)<Chi_rcond_floor) &
 &  call error('[Chi/BSK] BSEChiOut: ill-conditioned response; reduce BSENGexx/BSENGfxc for this band window')
  !
@@ -273,7 +352,10 @@ subroutine K_Chi_export(iq,Ken,Xk,W)
  Chi_optical_q0=0._SP
  Chi_optical_q0_known=iq==1
  if (iq==1) Chi_optical_q0=BSS_q0
- if (l_exc) then
+ if (l_mdr) then
+   Chi_G_mode='BSE-EXC'
+   Chi_QP_action='MDR: P to first order in the off-diagonal W; chi0 = bubble of the (QP) BSE energies'
+ else if (l_exc) then
    Chi_G_mode='BSE-EXC'
    Chi_QP_action='P from the coupled BSE; chi0 = bubble of its (QP) transition energies'
  else

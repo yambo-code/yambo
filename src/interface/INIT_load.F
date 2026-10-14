@@ -308,7 +308,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSENGfxc','[BSK] Fxc components', BS_n_g_fxc,G_unit,verb_level=V_resp)
- call it(defs,'BSEChiOut','[BSK] Write ndb.Chi with P from this coupled BSE: none/exc (QP reference)/full (KS reference)',&
+ call it(defs,'BSEChiOut','[BSK] Write ndb.Chi with P from this coupled BSE: none/exc (QP reference)/full (KS reference)/mdr',&
 &        BS_K_Chi_out,case="a")
  call it('f',defs,'BSEChiDyn','[BSK] BSKmod=CHI: frequency-dependent fxc(w) from a real-axis ndb.Chi, one solve per frequency')
  call it(defs,'BSEChiKoutW','[BSK] BSEChiDyn: write the Casida matrix at the ndb.Chi frequencies in this Re w window',&

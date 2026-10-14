@@ -722,6 +722,14 @@ the B exciton (0.39 eV above A) come out as expected. Each state is a near-degen
 (the two valleys); how the strength splits within a pair depends on the basis and differs
 between the runs, the spectra do not. Use the symmetries.
 
+The exported P can also be checked against an independent BSE. P is the response to the
+total macroscopic potential, i.e. the BSE with the exchange vbar switched off (direct W
+ladder only), whose eps is 1 - (4 pi/|q|^2) P_00. The same input with `BSENGexx= 1 RL`
+(only G=0, which vbar drops) and no `BSEChiOut` gives that BSE. Fitting eps - 1 = K P_00
+over the 201 frequencies of the grid gives K = -4 pi/|q|^2 (q1: -1.2566e11, the optical
+q0 = 1e-5; q2: -311.19, |q| = 0.2010 bohr^-1 = |b1|/6), real to 5e-5, with a residual of
+1e-4 (q1) and 7e-5 (q2): the exported P is the exchange-free BSE response.
+
 One case does break with symmetries: noncollinear states **without** SOC
 (`lspinorb=.false.`). Every band is then exactly doubly degenerate and QE fixes the spin
 direction inside each pair arbitrarily, differently at each k. In monolayer hBN (scalar

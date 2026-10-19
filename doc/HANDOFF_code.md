@@ -59,15 +59,19 @@ The fork offers several choices of P (`ChiGMode`, `BSEChiOut`):
 
 **Casida with f_xc(ω).**
 - The f_xc projected onto transitions depends on ω. Excitons are the solutions of λ(ω) = ω (`BSEChiDyn`, `K_Chi_dynamic.F`).
-- A static kernel f_xc(ω = 0) gives only about 7 % of the WS2 binding energy.
-- The kernel has poles between the exciton energies. In WS2, α(ω) has a pole near 2.315 eV.
+- A static kernel f_xc(ω = 0) gives only about 7 % of the WS2 binding energy (12×12 non-SOC run below; 11 % in the doc's 6×6 SOC test).
+- The kernel has poles between the exciton energies. In the 12×12 non-SOC run, α(ω) changes sign between 2.31 and 2.32 eV (the doc's 6×6 SOC test has its pole near 2.29 eV).
 - `sbin/chi_tools/sc_scan.py` tells a genuine crossing of λ(ω) = ω from a jump caused by a pole.
 
 **MDR.** P_MDR = χ0 + χ0 (W-ladder) χ0 at first order, with the kernel f_xc = χ0⁻¹ P_MDR χ0⁻¹ (Marini, Del Sole and Rubio, PRL 91, 256402, 2003).
 - Implemented as `TDDFT_Chi_mdr_response` and `TDDFT_Chi_kernel_mdr`.
 - Selected with `BSEChiOut= "mdr"`. It replaces Yambo's disabled `BSfxc`.
 
-**Kernel comparison on WS2** (12×12 SOC test; BSE Eb = 0.308 eV):
+**Kernel comparison on WS2**: the user's cluster run of `sbin/chi_tools/jobs/kernel_compare.sh`.
+- Setup: 12×12 k-grid **without SOC**, bands 11–16, 21 G, `BSEGinplane`, GW energies from `g0w0/ndb.QP`, q1.
+- Window gap 2.5433 eV; BSE A exciton at 2.2353 eV, so Eb = 0.308 eV.
+- This run is newer than the doc. The doc's table (`greens_function_fxc.md`, "Yambo's own TDDFT kernels") is the 6×6 SOC test: bands 23–30, Eb 0.413 eV, MDR 98 %, fitted α 2.2, pole near 2.29 eV. The two sets of numbers come from different systems and are both correct.
+- The doc's 0.309 eV run (bands 11–16, 9 G, no cutoff) is a third, earlier run.
 
 | Kernel | Result |
 |---|---|
@@ -156,6 +160,11 @@ make yambo
 - For fast iteration, copy edited `.F` files into a configured build tree and run `make yambo`.
 - A fresh container has no build and no test SAVE databases. The earlier ones lived in the old session's scratchpad: a 12×12 WS2 with 80 bands, a 6×6 SOC WS2, and silicon. Rebuild them with Quantum ESPRESSO + p2y if a material test is needed, or ask the user for a small SAVE.
 
+**gfortran 13 miscompile.** gfortran 13 at `-O3` miscompiles `src/bse/K_correlation_collisions_std.F`. A plain SEX BSE crashes, and with the export it gives NaN (doc, end of the BSEChiOut section).
+- Earlier sessions recompiled that one file at `-O1` and relinked, using a sandbox-only script that was not kept. No source change was made.
+- Before any local material BSE, reproduce that workaround and check that a plain SEX BSE gives no NaN.
+- It does not affect the unit tests. The user's cluster SEX BSE runs gave sane binding energies, but which compiler built the fork there has not been checked.
+
 Unit tests need only gfortran, plus LAPACK where noted:
 ```
 python tests/chi_green/run_tests.py --fc gfortran [--lapack-source DIR] [--mpifc mpifort --mpiexec mpiexec]
@@ -181,7 +190,12 @@ Monolayer WS2:
    - the G bubbles (`Chi_G_bubble.F`);
    - the export, where s_t = √(f_v − f_c) and states inside a band can carry both occupations (`K_Chi_export.F`);
    - the Casida paths.
-   Start from how upstream BSE handles `n_met_bands` and the band-occupation factors in `K_driver_init.F` and `K_kernel.F`. Also decide how to handle intraband (Drude) transitions.
+   Current blocks:
+   - `X_pre_setup.F` (about lines 144–145) stops any metallic KS reference (`nbf /= nbm`).
+   - `Chi_G_bubble.F` (about lines 235–248) treats each state as full (f > 0.5) or empty. It stops when an occupied QP level lies above an empty one, which is what a partly filled conduction band gives.
+   - `K_Chi_export.F` (about line 129) already forms s = √f per transition as a complex number. The open question is the transitions inside the partly filled band, where f_v − f_c is small or zero.
+
+   Upstream BSE uses `n_met_bands` in `K_Transitions_setup.F` (lines 37, 244, 278), not in `K_driver_init.F` or `K_kernel.F`; start there. Also decide how to treat intraband (Drude) transitions.
 2. **Trions.** Define the interface to the advisor's TDDFT trion code. It probably takes f_xc_GG′(q, ω) from `fxc_export.py` at several q (BSEChiOut at finite q already exports this) plus the band structure. Agree the format with the user before writing code.
 3. **ChiGMode limits.** The DYSON optical limit, off-diagonal Σ, and MPI beyond k-only are unsupported (doc, "Current scope").
 4. **Possible upstream patch.** The `cutoff_driver.F` barrier fix is generic and could go to Yambo upstream. Only do this if the user asks.

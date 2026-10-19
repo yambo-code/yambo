@@ -38,6 +38,7 @@ subroutine cutoff_driver(q)
  use parser_m,      ONLY:parser
  use drivers,       ONLY:l_col_cut
  use timing_m,      ONLY:timing
+ use parallel_int,  ONLY:PP_wait
  implicit none
  type(bz_samp) :: q
  !
@@ -227,6 +228,12 @@ subroutine cutoff_driver(q)
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=io_COL_CUT(ID)
  !
+ ! The master writes ndb.cutoff below: every task must have read it before (a slow task could
+ ! otherwise read it while it is written, and stop on a NetCDF error), and nobody may read it
+ ! again before the write is complete (second barrier, after the write)
+ !
+ call PP_wait()
+ !
  if (io_err/=0) then
    !
    if (cut_is_sphere) call cutoff_sphere()
@@ -237,6 +244,7 @@ subroutine cutoff_driver(q)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=io_COL_CUT(ID)
+   call PP_wait()
    !
    ! Real-Space Test
    !

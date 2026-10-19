@@ -186,16 +186,19 @@ Monolayer WS2:
 
 ## 7. Open code items
 
-1. **Doping (needed next).** ndb.Chi currently rejects metallic KS references. n-doped WS2 needs partial occupations in:
-   - the G bubbles (`Chi_G_bubble.F`);
-   - the export, where s_t = √(f_v − f_c) and states inside a band can carry both occupations (`K_Chi_export.F`);
-   - the Casida paths.
-   Current blocks:
-   - `X_pre_setup.F` (about lines 144–145) stops any metallic KS reference (`nbf /= nbm`).
-   - `Chi_G_bubble.F` (about lines 235–248) treats each state as full (f > 0.5) or empty. It stops when an occupied QP level lies above an empty one, which is what a partly filled conduction band gives.
-   - `K_Chi_export.F` (about line 129) already forms s = √f per transition as a complex number. The open question is the transitions inside the partly filled band, where f_v − f_c is small or zero.
-
-   Upstream BSE uses `n_met_bands` in `K_Transitions_setup.F` (lines 37, 244, 278), not in `K_driver_init.F` or `K_kernel.F`; start there. Also decide how to treat intraband (Drude) transitions.
+1. **Doping (needed next).** The BSE route already accepts partial occupations; the G routes do not. No doped material run has been made yet.
+   - Upstream BSE, ground state: `src/bse/K_Transition_check.F`.
+     - f_t = (f_v − f_c)/spin_occ (line 64).
+     - f < 0 goes to the anti-resonant block (line 110). f = 0 is kept only on the E > 0 side, for the JDOS (line 116).
+     - Every E = 0 transition is dropped (line 47). At q = 0 this removes all intraband (Drude) terms.
+     - In the length gauge at q = 0, transitions below `Dip%Energy_treshold` are dropped (line 44).
+     - A partly filled band is both valence and conduction: `V_bands` ends at `maxval(Ken%nbm)` and `C_bands` starts at `minval(Ken%nbf)+1` (`K_Transitions_setup.F:273-274`).
+     - `n_met_bands` (`K_Transitions_setup.F:275-285`) is inside `#if defined _RT`: real-time carriers only, not the ground-state path. `BS_not_const_eh_f` (line 107) is set but read nowhere else.
+   - Fork, exact-kernel route (`BSEChiOut` → Casida): `K_Chi_export.F` (about line 129) forms s = √f as a complex number. `tests/chi_dynamic` checks the identity with non-unit and negative occupation factors (`test_dynamic.f90:534-535`).
+   - Blocked, G routes (`ChiGMode`):
+     - `X_pre_setup.F` (about lines 144–145) stops any metallic KS reference (`nbf /= nbm`).
+     - `Chi_G_bubble.F` (about lines 235–248) treats each state as full (f > 0.5) or empty, and stops when an occupied QP level lies above an empty one.
+   - Open: the intraband (Drude) term; the screening W of the doped layer at q → 0; the `[BSE]` report, whose "gap" (lowest transition of the window) means nothing when a band is partly filled.
 2. **Trions.** Define the interface to the advisor's TDDFT trion code. It probably takes f_xc_GG′(q, ω) from `fxc_export.py` at several q (BSEChiOut at finite q already exports this) plus the band structure. Agree the format with the user before writing code.
 3. **ChiGMode limits.** The DYSON optical limit, off-diagonal Σ, and MPI beyond k-only are unsupported (doc, "Current scope").
 4. **Possible upstream patch.** The `cutoff_driver.F` barrier fix is generic and could go to Yambo upstream. Only do this if the user asks.

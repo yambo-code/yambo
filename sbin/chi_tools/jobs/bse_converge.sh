@@ -454,11 +454,26 @@ for sfx, rows in grids.items():
         print(f'  {r[1]:>10s} {r[0]:>3d}x{r[0]:<2d} {r[2]:9.4f} {r[3]:8.4f} {r[4]:8.4f} {r[5]:8.4f}')
     pts = [(r[0], r[5]) for r in rows if r[0] > 0 and np.isfinite(r[5])]
     if len(pts) >= 3:
-        N = np.array([p[0] for p in pts], float); e = np.array([p[1] for p in pts])
-        A = np.vstack([np.ones_like(N), 1 / N]).T
-        (einf, a), *_ = np.linalg.lstsq(A, e, rcond=None)
-        res = (A @ [einf, a] - e) * 1000
-        print(f'  Eb(A) = Eb_inf + a/N fit: Eb_inf = {einf:.4f} eV (residuals {" ".join(f"{x:+.1f}" for x in res)} meV)')
+        # Eb_inf + a/N^p on the densest grids only: on coarse grids Eb falls like 1/N, on dense ones
+        # faster (WS2 RIM-W 9..30: a 1/N fit of all six grids leaves residuals of up to 18 meV in a
+        # systematic pattern and extrapolates to 0.34 eV; on 15..30 the best power is p = 2.5, 0.48 eV)
+        pts.sort()
+        N = np.array([p[0] for p in pts[-4:]], float); e = np.array([p[1] for p in pts[-4:]])
+        def fit(p):
+            A = np.vstack([np.ones_like(N), N ** -p]).T
+            c, *_ = np.linalg.lstsq(A, e, rcond=None)
+            return c[0], np.sqrt(np.mean((A @ c - e) ** 2)) * 1000
+        fits = [(f'1/N^{p}', *fit(p)) for p in (1, 2)]
+        if len(N) >= 4:
+            p = min(np.arange(0.5, 6.0, 0.01), key=lambda p: fit(p)[1])
+            fits.append((f'1/N^{p:.2f} (best p)', *fit(p)))
+        print(f'  Eb(A) = Eb_inf + a/N^p on the {len(N)} densest grids ({", ".join(str(int(n)) for n in N)}):')
+        for lab, einf, rms in fits:
+            print(f'    {lab:18s} Eb_inf = {einf:.4f} eV   (rms residual {rms:.1f} meV)')
+        rmin = min(x[2] for x in fits)
+        ev = [x[1] for x in fits if x[2] <= max(3.0, 2 * rmin)]   # the fits that describe the points
+        print(f'  estimate: Eb_inf {min(ev):.3f}-{max(ev):.3f} eV (fits with rms <= {max(3.0, 2 * rmin):.1f} meV);'
+              f' densest grid {e[-1]:.4f} eV, last step {1000 * (e[-1] - e[-2]):+.1f} meV')
 
 try:
     import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt

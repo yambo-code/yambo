@@ -103,16 +103,20 @@ cd "$TOP"; mkdir -p log bconv
 # --- system information from the yambo setup (r_setup) of a directory ---
 setup_info () {   # dir -> NB_SAVE NK NKBZ NQ VB GAP NGRID
   local d=$1
+  [ -f "$d/SAVE/ns.db1" ] || {
+    echo "!!! $d/SAVE/ns.db1 not found: run p2y in the nscf .save folder of this grid and put its SAVE in $d"; exit 1; }
   if [ ! -f "$d/r_setup" ]; then (cd "$d" && $RUNNER yambo $YFLAGS > log_setup.out 2>&1); fi
-  NB_SAVE=$(awk -F: '/^ *Bands  /{print $2+0; exit}' "$d/r_setup")
-  NK=$(awk -F: '/IBZ K-points/{print $2+0; exit}' "$d/r_setup")
-  NKBZ=$(awk -F: '/BZ +K-points/ && !/IBZ/{print $2+0; exit}' "$d/r_setup")
-  NQ=$(awk -F: '/IBZ Q-points/{print $2+0; exit}' "$d/r_setup")
-  VB=$(awk -F: '/Filled Bands/{print $2+0; exit}' "$d/r_setup")
-  GAP=$(awk -F: '/\[X\] Direct Gap  /{print $2+0; exit}' "$d/r_setup")
-  NGRID=$(awk -F: '/Grid dimensions/{print $2+0; exit}' "$d/r_setup")
+  NB_SAVE=$(awk -F: '/^ *Bands  /{print $2+0; exit}' "$d/r_setup" 2>/dev/null)
+  NK=$(awk -F: '/IBZ K-points/{print $2+0; exit}' "$d/r_setup" 2>/dev/null)
+  NKBZ=$(awk -F: '/BZ +K-points/ && !/IBZ/{print $2+0; exit}' "$d/r_setup" 2>/dev/null)
+  NQ=$(awk -F: '/IBZ Q-points/{print $2+0; exit}' "$d/r_setup" 2>/dev/null)
+  VB=$(awk -F: '/Filled Bands/{print $2+0; exit}' "$d/r_setup" 2>/dev/null)
+  GAP=$(awk -F: '/\[X\] Direct Gap  /{print $2+0; exit}' "$d/r_setup" 2>/dev/null)
+  NGRID=$(awk -F: '/Grid dimensions/{print $2+0; exit}' "$d/r_setup" 2>/dev/null)
   [ -n "$NB_SAVE" ] && [ -n "$NK" ] && [ -n "$NKBZ" ] && [ -n "$NQ" ] && [ -n "$VB" ] && [ -n "$GAP" ] || {
-    echo "!!! cannot read bands/k-points/q-points/gap from $d/r_setup"; exit 1; }
+    echo "!!! cannot read bands/k-points/q-points/gap from $d/r_setup (yambo setup failed?)"
+    tail -5 "$d/log_setup.out" "$d/r_setup" 2>/dev/null; ls -t "$d"/l_setup* "$d"/LOG/l_setup* 2>/dev/null | head -1 | xargs -r tail -5
+    rm -f "$d/r_setup"; exit 1; }
   CB=$((VB+1))
 }
 
@@ -346,6 +350,12 @@ case $STAGE in bands|all)
   for p in $BANDS_LIST; do run_bse "$TOP" bands_${p/:/-}$JS $WB0 $EXX0 $WBLK0 $p || exit 1; done ;; esac
 case $STAGE in dirs)
   [ -n "$DIRS" ] || { echo "!!! STAGE=dirs needs DIRS=\"dir1 dir2 ...\""; exit 1; }
+  # set up and check every folder first, so a missing SAVE in the last one stops the job before any run
+  for d in $DIRS; do
+    setup_info "$TOP/$d"
+    [ "$NB_SAVE" -ge $WB0 ] || { echo "!!! $d has $NB_SAVE bands, fewer than the WB0=$WB0 screening bands"; exit 1; }
+  done
+  echo "  folders OK: $DIRS"
   for d in $DIRS; do
     setup_info "$TOP/$d"
     echo "=== $d: ${NGRID:-?}x${NGRID:-?}, $NK k-points (screening $WB0 bands, BSE $BANDS0, exchange $EXX0 Ry, W block $WBLK0 Ry${JS:+, RIM-W}) ==="

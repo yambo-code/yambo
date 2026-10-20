@@ -15,7 +15,7 @@
 #include <slepc/finclude/slepceps.h>
 #endif
 !
-subroutine K_diago_driver(iq,W,X_static) 
+subroutine K_diago_driver(iq,W,Ken,X_static) 
  !
  ! Generic diagonalization method to solve resonant and non resonant Hamiltonians.
  !
@@ -28,9 +28,9 @@ subroutine K_diago_driver(iq,W,X_static)
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
 &                         BS_res_ares_n_mat,l_BS_optics,l_BS_dichroism !,BS_Blocks_symmetrize_K,&
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,&
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E,BSS_eh_E
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E,BSS_eh_E,BSS_eh_table
  use X_m,            ONLY:X_t,X_OUTPUT_driver
- use electrons,      ONLY:n_sp_pol,n_spinor
+ use electrons,      ONLY:levels,n_sp_pol,n_spinor
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec,msg
  use LIVE_t,         ONLY:live_timing
@@ -58,6 +58,7 @@ subroutine K_diago_driver(iq,W,X_static)
 #include<y_memory.h>
  ! 
  type(w_samp)  :: W
+ type(levels)  :: Ken
  integer       :: iq
  !
  ! Work Space
@@ -380,23 +381,32 @@ subroutine K_diago_driver(iq,W,X_static)
      ! respect to the lowest transition of the BSE window: the gap of this run's energies,
      ! i.e. the QP gap on the k-grid when QP corrections are applied.
      !
-     integer               :: i1,n_pos,i_bright
-     integer,  allocatable :: indx(:)
-     real(SP), allocatable :: E_pos(:),strength(:)
-     real(SP)              :: s_max,E_gap
+     ! With partly filled bands (nbf < nbm, e.g. a doped layer) the window also holds the
+     ! transitions out of those bands, so its lowest transition is not a gap. The interband
+     ! lines then take the gap from the lowest transition whose lower band is full (band <= nbf:
+     ! the band edge, Pauli-blocked transitions included), and count as interband the
+     ! excitations with more than half of their eigenvector weight on such transitions.
+     !
+     integer               :: i1,n_pos,i_bright,nbf,n_rows,n_inter,i_inter_bright
+     integer,  allocatable :: indx(:),i_eig(:)
+     real(SP), allocatable :: E_pos(:),strength(:),E_inter(:),s_inter(:)
+     logical,  allocatable :: l_full(:)
+     real(SP)              :: s_max,E_gap,w_all,w_full
      !
      n_pos=count(real(BS_E)>1.E-5_SP)
      if (n_pos==0) return
-     allocate(E_pos(n_pos),strength(n_pos),indx(n_pos))
+     allocate(E_pos(n_pos),strength(n_pos),indx(n_pos),i_eig(n_pos))
      n_pos=0
      do i1=1,BSS_n_eig
        if (real(BS_E(i1))<=1.E-5_SP) cycle
        n_pos=n_pos+1
        E_pos(n_pos)=real(BS_E(i1))
        strength(n_pos)=abs(BS_R_left_abs(i1)*BS_R_right_abs(i1))
+       i_eig(n_pos)=i1
      enddo
      call sort(E_pos,indx=indx)
      strength=strength(indx)
+     i_eig=i_eig(indx)
      s_max=max(maxval(strength),tiny(1._SP))
      strength=strength/s_max
      i_bright=0
@@ -412,15 +422,64 @@ subroutine K_diago_driver(iq,W,X_static)
      if (i_bright>0) call msg('r','[BSE] lowest bright excitation (strength > 1%) [eV]',E_pos(i_bright)*HA2EV)
      if (allocated(BSS_eh_E)) then
        ! resonant transitions only (the coupling matrix also holds the -E ones)
-       if (.not.any(BSS_eh_E>1.E-5_SP)) return
-       E_gap=minval(BSS_eh_E,mask=BSS_eh_E>1.E-5_SP)
-       call msg('r','[BSE] lowest transition energy of the window (gap) [eV]',E_gap*HA2EV)
-       call msg('r','[BSE] binding energy, gap - lowest excitation [eV]',(E_gap-E_pos(1))*HA2EV)
-       if (i_bright>0) call msg('r','[BSE] binding energy, gap - lowest bright excitation [eV]',&
-&                               (E_gap-E_pos(i_bright))*HA2EV)
+       if (any(BSS_eh_E>1.E-5_SP)) then
+         E_gap=minval(BSS_eh_E,mask=BSS_eh_E>1.E-5_SP)
+         call msg('r','[BSE] lowest transition energy of the window (gap) [eV]',E_gap*HA2EV)
+         call msg('r','[BSE] binding energy, gap - lowest excitation [eV]',(E_gap-E_pos(1))*HA2EV)
+         if (i_bright>0) call msg('r','[BSE] binding energy, gap - lowest bright excitation [eV]',&
+&                                 (E_gap-E_pos(i_bright))*HA2EV)
+       endif
      endif
      !
-     if (allocated(E_pos)) deallocate(E_pos,strength,indx)
+     ! Partly filled bands: interband gap and excitations
+     !
+     if (all(Ken%nbf(:n_sp_pol)==Ken%nbm(:n_sp_pol))) return
+     nbf=minval(Ken%nbf(:n_sp_pol))
+     call msg('r','[BSE] partly filled bands, first and last',(/nbf+1,maxval(Ken%nbm(:n_sp_pol))/))
+     if (io_err>=0.or..not.allocated(BSS_eh_table)) then
+       call msg('r','[BSE] interband lines skipped: no eigenvectors (diagonalization read from ndb.BS_diago)')
+       return
+     endif
+     !
+     ! Rows of the diagonalized matrix. The lower band of a transition is the full one: in the
+     ! explicit anti-resonant rows the table holds the two bands swapped.
+     n_rows=BS_H_dim
+     if (.not.K_is_not_hermitian) n_rows=BS_K_dim(1)
+     allocate(l_full(n_rows),E_inter(n_pos),s_inter(n_pos))
+     do i1=1,n_rows
+       l_full(i1)=minval(BSS_eh_table(i1,2:3))<=nbf
+     enddo
+     if (.not.any(l_full.and.BSS_eh_E(:n_rows)>1.E-5_SP)) return
+     E_gap=minval(BSS_eh_E(:n_rows),mask=l_full.and.BSS_eh_E(:n_rows)>1.E-5_SP)
+     !
+     n_inter=0
+     i_inter_bright=0
+     do i1=1,n_pos
+       if (K_is_not_hermitian) then
+         w_all =sum(abs(BS_V_right(:,i_eig(i1)))**2)
+         w_full=sum(abs(BS_V_right(:,i_eig(i1)))**2,mask=l_full)
+       else
+         w_all =sum(abs(BS_mat(:,i_eig(i1)))**2)
+         w_full=sum(abs(BS_mat(:,i_eig(i1)))**2,mask=l_full)
+       endif
+       if (w_full<=0.5_SP*w_all) cycle
+       n_inter=n_inter+1
+       E_inter(n_inter)=E_pos(i1)
+       s_inter(n_inter)=strength(i1)
+       if (i_inter_bright==0.and.strength(i1)>1.E-2_SP) i_inter_bright=n_inter
+     enddo
+     !
+     call msg('r','[BSE] interband gap, lowest transition from a full band [eV]',E_gap*HA2EV)
+     if (n_inter>0) then
+       call msg('r','[BSE] lowest interband excitations (weight > 50% on full-band transitions) [eV]',&
+&               E_inter(:min(6,n_inter))*HA2EV)
+       call msg('r','[BSE] interband excitations, relative optical strength',s_inter(:min(6,n_inter)))
+     endif
+     if (i_inter_bright>0) then
+       call msg('r','[BSE] lowest bright interband excitation (strength > 1%) [eV]',E_inter(i_inter_bright)*HA2EV)
+       call msg('r','[BSE] binding energy, interband gap - lowest bright interband excitation [eV]',&
+&               (E_gap-E_inter(i_inter_bright))*HA2EV)
+     endif
      !
    end subroutine binding_report
    !

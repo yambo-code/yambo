@@ -74,11 +74,11 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
    call PARALLEL_assign_LA_COMMs("Response_T_space",DIAGO,CPU_structure(4)%nCPU_lin_algebra_DIAGO)
    !
-   call K_diago_driver(iq,W_bss,X_static)
+   call K_diago_driver(iq,W_bss,Ken,X_static)
    !
  endif
  !
- if (run_Slepc) call K_diago_driver(iq,W_bss,X_static)
+ if (run_Slepc) call K_diago_driver(iq,W_bss,Ken,X_static)
  !
  ! Inversion
  !

@@ -363,6 +363,67 @@ the maximum), the lowest transition of the window and the binding energy
 transitions the gap is the QP gap on the k grid. For a "full" kernel the
 transitions are KS ones; take the gap from the exporting BSE.
 
+With partly filled bands (`nbf < nbm`, e.g. a doped layer) the window also holds the
+transitions out of those bands, so its lowest transition is not a gap and the lines above
+give a meaningless binding energy. The report then adds interband lines: the gap is the
+lowest transition whose lower band is full (band <= nbf: the band edge, Pauli-blocked
+transitions included), an excitation is interband when more than half of its eigenvector
+weight lies on such transitions, and the binding energy is `interband gap - lowest bright
+interband excitation`. These lines need the eigenvectors of the run and are skipped when the
+diagonalization is read back from `ndb.BS_diago`. The lines above are unchanged.
+
+```text
+[BSE] partly filled bands, first and last
+[BSE] interband gap, lowest transition from a full band [eV]
+[BSE] lowest interband excitations (weight > 50% on full-band transitions) [eV]
+[BSE] interband excitations, relative optical strength
+[BSE] lowest bright interband excitation (strength > 1%) [eV]
+[BSE] binding energy, interband gap - lowest bright interband excitation [eV]
+```
+
+Doped WS2 test of the next section: window gap 0.033 eV (bands 27 -> 28 at K) and binding
+-0.84 eV; interband gap 1.600 eV, lowest bright interband excitation 0.875 eV, binding
+0.726 eV, the same with coupling and in TDA. The intra-band excitations at 0.05 and 0.22 eV
+are not counted.
+
+### Partly filled bands (doped layers)
+
+The `BSEChiOut` export and the Casida paths accept partial occupations; the `ChiGMode` routes
+still reject a metallic reference. Yambo builds the transitions as for any metal
+(`K_Transition_check.F`): f_t = (f_v - f_c)/spin_occ; a partly filled band is both valence and
+conduction; a transition out of a state holding less than 1e-5 electrons is dropped; f < 0
+goes to the anti-resonant block; every E = 0 transition is dropped. At q = 0 the intraband
+(Drude) response is therefore absent (Yambo warns `The system is a metal but Drude term not
+included`, in the screening and in the BSE). The doped electrons enter through Pauli blocking
+and, at finite q, through transitions inside the partly filled bands.
+
+Test: monolayer WS2 with SOC, 6x6 k grid, 50 Ry, `tot_charge = -0.02` in QE (n = 2.3e13 cm^-2;
+QE spreads the compensating charge over the cell), bands 23-30, KS energies, SEX, coupling,
+`BSEChiOut="full"`, then `BSKmod="CHI"` with `BSEChiDyn`. At 300 K the Fermi level lies 45 meV
+below the K conduction minimum: f = 0.150 (K, band 27), 0.047 (K, band 28), 0.055 (Q, band 27).
+Maximum relative difference of eps, Casida with fxc(w) against the BSE:
+
+| Case | Im eps | Re eps |
+| --- | --- | --- |
+| q1, 1 G | 3.2e-5 | 6.3e-5 |
+| q1, 21 G with `BSEGinplane` | 5.8e-5 | 1.0e-4 |
+| q2, 1 G, explicit anti-resonant rows | 2.3e-5 | 3.0e-5 |
+| q1, 1 G, export and Casida 0.1 K apart | 2.5e-4 | 3.3e-4 |
+
+At q2 the rows include 10 transitions inside bands 27/28 (k-q -> k, f = 0.05-0.15) and their
+anti-resonant partners with f < 0.
+
+Temperature. `p2y` gives Yambo 300 K whenever the DFT run used smearing
+(`interfaces/p2y/mod_p2y.F:298`); `ElecTemp` overrides it. The identity needs the same
+occupations in the exporting BSE and in the Casida run (last row of the table). A job that
+reads another job's databases takes the temperature stored in them (`src/io/io_header.F`), and
+the Fermi-level search may then add a 0.1 K step (`OCCUPATIONS_Fermi.F`), so two jobs of a
+chain can differ by 0.1 K. Compare the `[X] Electronic Temperature` lines of the two `r-` files.
+The `BSE bubble vs ndb.Chi chi0` check sees the mismatch (9e-6 against 4e-8) but warns only
+above 1e-3. A negative `ElecTemp` keeps the temperature fixed but also freezes the full and
+partly filled bands at their T = 0 values (`src/setup/setup.F`); here that dropped the four
+transitions out of the thermally occupied band 28.
+
 Restrictions: one MPI rank (OpenMP threads parallelize the frequencies), coupling with
 the diagonalization solver, length gauge, scalar or spinor states (see "Spinor
 states" below; no collinear spin polarization, magnons or perturbative SOC), no

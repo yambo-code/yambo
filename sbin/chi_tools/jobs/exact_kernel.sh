@@ -14,7 +14,7 @@
 #
 #   STAGE=setup  : yambo setup, system (bands, k grid, VB, spinors), plan of the run; checks only
 #   STAGE=gw     : G0W0 plasmon pole, RIM-W, slab cutoff, QP energies of the BSE bands at every k
-#                  -> prod/gw/ndb.QP                                                      (MPI)
+#                  -> prod/gw/ndb.QP, or <GWDIR>/prod_gw/gw/ndb.QP with GWDIR (below)       (MPI)
 #   STAGE=w      : static screening of the BSE -> prod/w/ndb.em1s                            (MPI)
 #   STAGE=ref    : reference BSE at q = 0: Tamm-Dancoff, exchange on all G (BSENGexx = EXX_REF), as
 #                  in the convergence; its A exciton is the number to quote                  (MPI)
@@ -33,6 +33,13 @@
 # Run from the directory with SAVE (QE nscf on the production k grid + p2y). Everything goes to
 # prod/. Typical use, one directory per material and grid:
 #   cd WSe2/k18 && sbatch ~/yambo-cpu/sbin/chi_tools/jobs/exact_kernel.sh
+#
+# GWDIR=<folder with a coarser SAVE of the same material and spinors> runs the GW there (at all of
+# its k) and interpolates the QP corrections onto this SAVE's grid (Yambo's KfnQPdb interpolation,
+# QPINTERP=ubi: smooth Fourier interpolation; uki: nearest k). The GW converges on a coarser grid than
+# the BSE (WS2 with RIM-W: GW 12x12, BSE 24x24), and this SAVE then needs only the BSE bands (WB).
+# The corrections at k-points of both grids (Gamma, K for N/3 grids) are the GW values themselves.
+#   e.g.  cd WS2/k24soc && GWDIR=../soc sbatch exact_kernel.sh
 #
 # Spinor (SOC) SAVE: detected from r_setup ("Spinor components: 2"). Each band then holds one
 # electron, so the band counts double (GW_BANDS, WB) and the BSE window is 2:4 instead of 1:2.
@@ -77,6 +84,8 @@ FORKCHECK=${FORKCHECK:-1}
 YFLAGS=${YFLAGS-auto}
 RUNNER=${RUNNER:-""}
 CHECK=${CHECK:-1}
+GWDIR=${GWDIR:-}                     # coarse SAVE folder for the GW (default: the GW runs here)
+QPINTERP=${QPINTERP:-ubi}            # interpolation of the QP corrections from GWDIR: ubi (smooth) or uki (nearest k)
 
 if type module >/dev/null 2>&1 && [ -n "$SLURM_JOB_ID" ]; then
   module purge
@@ -121,10 +130,11 @@ if [ "$FORKCHECK" = 1 ]; then
 fi
 
 # --- system ---
-setup_info () {
-  [ -f "$TOP/SAVE/ns.db1" ] || { echo "!!! $TOP/SAVE/ns.db1 not found: run p2y in the nscf .save folder and put its SAVE here"; exit 1; }
-  [ -f "$TOP/r_setup" ] || (cd "$TOP" && $RUNNER yambo $YFLAGS > log/setup.out 2>&1)
-  local r=$TOP/r_setup
+setup_info () {   # [dir] (default TOP)
+  local d=${1:-$TOP}
+  [ -f "$d/SAVE/ns.db1" ] || { echo "!!! $d/SAVE/ns.db1 not found: run p2y in the nscf .save folder and put its SAVE there"; exit 1; }
+  [ -f "$d/r_setup" ] || (cd "$d" && $RUNNER yambo $YFLAGS > log_setup.out 2>&1)
+  local r=$d/r_setup
   NB_SAVE=$(awk -F: '/^ *Bands  /{print $2+0; exit}' $r 2>/dev/null)
   NK=$(awk -F: '/IBZ K-points/{print $2+0; exit}' $r 2>/dev/null)
   NKBZ=$(awk -F: '/BZ +K-points/ && !/IBZ/{print $2+0; exit}' $r 2>/dev/null)
@@ -134,10 +144,21 @@ setup_info () {
   NGRID=$(awk -F: '/Grid dimensions/{print $2+0; exit}' $r 2>/dev/null)
   [ -n "$NB_SAVE" ] && [ -n "$NK" ] && [ -n "$NKBZ" ] && [ -n "$NQ" ] && [ -n "$VB" ] && [ -n "$NSP" ] || {
     echo "!!! cannot read bands/k-points/q-points/spinors from $r (yambo setup failed?)"
-    tail -5 log/setup.out 2>/dev/null; [ -f $r ] && tail -5 $r; rm -f $r; exit 1; }
+    tail -5 $d/log_setup.out 2>/dev/null; [ -f $r ] && tail -5 $r; rm -f $r; exit 1; }
   CB=$((VB + 1))
+  KSIND=$(awk -F: '/\[X\] Indirect Gap  /{print $2+0; exit}' $r 2>/dev/null)
 }
+if [ -n "$GWDIR" ]; then             # the GW grid: its k, q and bands
+  GWDIR=$(cd "$GWDIR" 2>/dev/null && pwd) || { echo "!!! GWDIR not found"; exit 1; }
+  setup_info "$GWDIR"
+  GNB=$NB_SAVE; GNK=$NK; GNKBZ=$NKBZ; GNQ=$NQ; GVB=$VB; GNSP=$NSP; GGRID=$NGRID
+  GP=$GWDIR/prod_gw; mkdir -p $GP; [ -e $GP/SAVE ] || ln -s ../SAVE $GP/SAVE
+fi
 setup_info
+[ -n "$GWDIR" ] || { GNB=$NB_SAVE; GNK=$NK; GNKBZ=$NKBZ; GNQ=$NQ; GVB=$VB; GNSP=$NSP; GGRID=$NGRID; GP=$P; }
+[ "$GVB" = "$VB" ] && [ "$GNSP" = "$NSP" ] || { echo "!!! GWDIR has VB $GVB and $GNSP spinor components, this SAVE $VB and $NSP: not the same system"; exit 1; }
+QPDB="gw/ndb.QP"
+if [ -n "$GWDIR" ]; then QPDB="gwqp/ndb.QP $QPINTERP"; [ -e $P/gwqp ] || ln -s $GP/gw $P/gwqp; fi
 SF=$NSP                                   # 2: spinors, one electron per band
 GBASE=800; [ -n "$GTERM" ] && GBASE=400            # converged for WS2: 800 bands, or 400 with the BG terminator
 GW_BANDS=${GW_BANDS:-$((GBASE * SF))}
@@ -153,7 +174,7 @@ fi
 
 plan () {
   echo "=== $(basename "$TOP"): SAVE $NB_SAVE bands, ${NGRID:-?}x${NGRID:-?} grid, $NK IBZ k, $NQ q, VB $VB, $([ $SF = 2 ] && echo spinors \(SOC\) || echo no SOC); $NP MPI tasks x $OMP_NUM_THREADS threads, one-task stages $NT1 threads ==="
-  echo "    GW   : PPA, EXX $GW_EXX Ry, $GW_BANDS bands${GTERM:+ + $GTERM terminator}, block $GW_BLOCK Ry, RIM-W, QP bands $BLO-$BHI at all $NK k"
+  echo "    GW   : PPA, EXX $GW_EXX Ry, $GW_BANDS bands${GTERM:+ + $GTERM terminator}, block $GW_BLOCK Ry, RIM-W, QP bands $BLO-$BHI at all $GNK k${GWDIR:+ of the ${GGRID}x$GGRID grid in $GWDIR, interpolated ($QPINTERP) onto this grid}"
   echo "    W    : static screening, $WB bands, block $XBLK Ry"
   echo "    ref  : BSE bands $BLO-$BHI ($BANDS), TDA, exchange $EXX_REF Ry (all G), W block $WBLK Ry, RIM-W"
   echo "    kernel: coupled BSE + export at q = 1..$NQ, exchange/kernel $NG_X (in-plane G), $NTR resonant transitions per q (Casida matrix $((2 * NTR)))"
@@ -163,7 +184,7 @@ plan () {
 }
 plan
 msg=""
-[ "$GW_BANDS" -le "$NB_SAVE" ] || msg="$msg\n!!! GW_BANDS=$GW_BANDS > the $NB_SAVE bands of the SAVE: redo the nscf with nbnd >= $GW_BANDS"
+[ "$GW_BANDS" -le "$GNB" ] || msg="$msg\n!!! GW_BANDS=$GW_BANDS > the $GNB bands of the GW SAVE: redo the nscf with nbnd >= $GW_BANDS (or GWDIR=<a coarser SAVE with them>)"
 [ "$WB" -le "$NB_SAVE" ] || msg="$msg\n!!! WB=$WB > the $NB_SAVE bands of the SAVE"
 [ "$BHI" -le "$WB" ] || msg="$msg\n!!! BSE bands up to $BHI need WB >= $BHI"
 [ "$NV" -le "$VB" ] || msg="$msg\n!!! $NV valence bands requested, there are $VB"
@@ -189,13 +210,13 @@ fit () {     # ntasks cap1 cap2 cap3 -> a b c, a*b*c = ntasks, each <= its cap
   done
   return 1
 }
-NQP=$((NK * (BHI - BLO + 1)))
+NQP=$((GNK * (BHI - BLO + 1)))   # QP states of the GW
 par_gw () {   # nbands -> DIP, X, SE lines of the GW
   [ "$NP" -gt 1 ] || return 0
   local nc=$(( $1 - VB )) d x s
-  d=($(split $NP $nc $NK)); [ ${#d[@]} -eq 2 ] || { echo "!!! $NP tasks do not fit the GW dipoles: c <= $nc, k <= $NK" >&2; return 1; }
-  x=($(split $NP $nc $NKBZ $NQ)); [ ${#x[@]} -eq 3 ] || { echo "!!! $NP tasks do not fit the GW screening: c <= $nc, k <= $NKBZ, q <= $NQ" >&2; return 1; }
-  s=($(split $NP $BHI $NQ $NQP)); [ ${#s[@]} -eq 3 ] || { echo "!!! $NP tasks do not fit the self-energy: b <= $BHI, q <= $NQ, qp <= $NQP" >&2; return 1; }
+  d=($(split $NP $nc $GNK)); [ ${#d[@]} -eq 2 ] || { echo "!!! $NP tasks do not fit the GW dipoles: c <= $nc, k <= $GNK" >&2; return 1; }
+  x=($(split $NP $nc $GNKBZ $GNQ)); [ ${#x[@]} -eq 3 ] || { echo "!!! $NP tasks do not fit the GW screening: c <= $nc, k <= $GNKBZ, q <= $GNQ" >&2; return 1; }
+  s=($(split $NP $BHI $GNQ $NQP)); [ ${#s[@]} -eq 3 ] || { echo "!!! $NP tasks do not fit the self-energy: b <= $BHI, q <= $GNQ, qp <= $NQP" >&2; return 1; }
   printf 'DIP_CPU= "%d %d 1"\nDIP_ROLEs= "k c v"\n' ${d[1]} ${d[0]}
   printf 'X_and_IO_CPU= "%d 1 %d %d 1"\nX_and_IO_ROLEs= "q g k c v"\n' ${x[2]} ${x[1]} ${x[0]}
   printf 'SE_CPU= "%d %d %d"\nSE_ROLEs= "q qp b"\n' ${s[1]} ${s[2]} ${s[0]}
@@ -220,7 +241,7 @@ done
 
 # --- runs (in prod/) ---
 launch () {   # job jobdirs done-test [one] : yambo on prod/<job>.in; "one" = one task, NT1 threads
-  local job=$1 js=$2 done=$3 run="$RUNNER" yf="$YFLAGS" nt=$OMP_NUM_THREADS e try
+  local job=$1 js=$2 done=$3 run="$RUNNER" yf="$YFLAGS" nt=$OMP_NUM_THREADS e try P=${RUNDIR:-$P}
   [ "$4" = one ] && { run=""; yf=$NOMPI; nt=$NT1; }
   for try in 1 2 3; do
     ( cd $P && OMP_NUM_THREADS=$nt $run yambo $yf -F $job.in -J "$js" > $job.out 2>&1 )
@@ -236,7 +257,7 @@ launch () {   # job jobdirs done-test [one] : yambo on prod/<job>.in; "one" = on
   if [ -n "$e" ]; then echo "$e"; else tail -5 $P/$job.out; fi
   return 1
 }
-fresh () { rm -rf $P/$1 $P/o-$1.* $P/[rl]-$1_* $P/LOG/l-$1_*; }
+fresh () { local P=${RUNDIR:-$P}; rm -rf $P/$1 $P/o-$1.* $P/[rl]-$1_* $P/LOG/l-$1_*; }
 say () { echo "  $* ($(date +%H:%M))"; }
 
 gw_in () {   # file nbands exx [rim lines]
@@ -274,7 +295,7 @@ $PPA
 %
 DysSolver= "n"
 %QPkrange
- 1|$NK|$BLO|$BHI|
+ 1|$GNK|$BLO|$BHI|
 %
 $EXTRA_GW
 EOF
@@ -350,7 +371,7 @@ BEnSteps= $ns
  1.0 | 0.0 | 0.0 |
 %
 BSEprop= "abs"
-KfnQPdb= "E < gw/ndb.QP"
+KfnQPdb= "E < $QPDB"
 $EXTRA_BSE
 EOF
   for l in "$@"; do printf '%s\n' "$l" >> $f; done
@@ -359,8 +380,8 @@ EOF
 # report lines of a BSE run: rep <job> <iq> <pattern> -> last field (per momentum block)
 rep () { awk -v q=$2 -v p="$3" '/BSE momentum index/{i=$NF} (i==q || i=="") && index($0,p){print $NF}' $P/r-$1_* 2>/dev/null | tail -1; }
 rep_low () { awk -v q=$2 '/BSE momentum index/{i=$NF} (i==q || i=="") && /lowest excitation energies/{print $6}' $P/r-$1_* 2>/dev/null | tail -1; }
-qp_gaps () {  # -> direct and indirect QP gap (eV) between VB and CB, from prod/o-gw.qp
-  python3 - $P/o-gw.qp $VB $CB <<'PY'
+qp_gaps () {  # -> direct and indirect QP gap (eV) between VB and CB on the GW grid, and the smallest
+  python3 - $GP/o-gw.qp $VB $CB <<'PY'   # opening of a gap, min dE(CB) - max dE(VB) (bounds the gaps of an interpolated grid)
 import sys
 f, vb, cb = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
 E = {}
@@ -371,7 +392,12 @@ for l in open(f):
     E[(int(float(x[0])), int(float(x[1])))] = float(x[2]) + float(x[3])
 ks = sorted({k for k, b in E})
 v = {k: E[(k, vb)] for k in ks if (k, vb) in E}; c = {k: E[(k, cb)] for k in ks if (k, cb) in E}
-print(f'{min(c[k] - v[k] for k in v if k in c):.4f} {min(c.values()) - max(v.values()):.4f}')
+d = {}
+for l in open(f):
+    x = l.split()
+    if x and not l.lstrip().startswith('#'): d[(int(float(x[0])), int(float(x[1])))] = float(x[3])
+dmin = min(d[(k, cb)] for k in ks if (k, cb) in d) - max(d[(k, vb)] for k in ks if (k, vb) in d)
+print(f'{min(c[k] - v[k] for k in v if k in c):.4f} {min(c.values()) - max(v.values()):.4f} {dmin:.4f}')
 PY
 }
 grid () {     # WLO WHI NW of the export: below the indirect QP gap, down to WMARGIN under the exciton
@@ -387,30 +413,38 @@ case $STAGE in setup) echo "=== setup done: nothing else run"; exit 0 ;; esac
 
 # ---------- GW ----------
 case $STAGE in gw|all)
-  if [ -s $P/gw/ndb.QP ] && [ -s $P/o-gw.qp ]; then echo "=== GW done"
+  RUNDIR=$GP
+  if [ -s $GP/gw/ndb.QP ] && [ -s $GP/o-gw.qp ]; then echo "=== GW done${GWDIR:+ (in $GP)}"
   else
-    echo "=== GW ($(date +%H:%M)) ==="
+    echo "=== GW${GWDIR:+ in $GP} ($(date +%H:%M)) ==="
     if [ "$CHECK" = 1 ]; then   # cheap GW with the same MPI layout, block and RIM-W: catches an abort in
       ref=$(par_gw $GW_BANDS); nbs=$GW_BANDS     # the self-energy step before hours of screening
       for ((t = BHI + 1; t < GW_BANDS; t++)); do [ "$(par_gw $t 2>/dev/null)" = "$ref" ] && { nbs=$t; break; }; done
       fresh gw_check
-      gw_in $P/gw_check.in $nbs 5 $'RandQpts= 1000\nRandGvec= 1 RL' || exit 1
+      gw_in $GP/gw_check.in $nbs 5 $'RandQpts= 1000\nRandGvec= 1 RL' || exit 1
       say "check: cheap GW, $nbs bands, same MPI layout, block and RIM-W"
       launch gw_check gw_check "ls o-gw_check.qp >/dev/null 2>&1" || {
-        grep -qs "for RIM-W is higher" $P/LOG/l-gw_check_* $P/l-gw_check_* &&
+        grep -qs "for RIM-W is higher" $GP/LOG/l-gw_check_* $GP/l-gw_check_* &&
           echo "!!! RIM-W needs more G-vectors than the $GW_BLOCK Ry block has: raise GW_BLOCK or lower RIMW_G"
         echo "!!! the check failed: nothing else was run"; exit 1; }
-      fresh gw_check; rm -f $P/gw_check.*
+      fresh gw_check; rm -f $GP/gw_check.*
       say "check OK"
     fi
-    fresh gw; gw_in $P/gw.in $GW_BANDS $GW_EXX || exit 1
-    say "gw: $GW_BANDS bands, QP bands $BLO-$BHI at $NK k"
+    fresh gw; gw_in $GP/gw.in $GW_BANDS $GW_EXX || exit 1
+    say "gw: $GW_BANDS bands, QP bands $BLO-$BHI at $GNK k"
     launch gw gw "ls o-gw.qp >/dev/null 2>&1 && ls gw/ndb.QP >/dev/null 2>&1" || exit 1
   fi
-  read GDIR GIND <<< $(qp_gaps)
-  echo "  QP gap: direct $GDIR eV, indirect $GIND eV" ;; esac
-[ -s $P/o-gw.qp ] || { echo "!!! prod/o-gw.qp missing: run STAGE=gw first"; exit 1; }
-read GDIR GIND <<< $(qp_gaps)
+  unset RUNDIR
+  read GDIR GIND DMIN <<< $(qp_gaps)
+  echo "  QP gap${GWDIR:+ on the GW grid}: direct $GDIR eV, indirect $GIND eV" ;; esac
+[ -s $GP/o-gw.qp ] || { echo "!!! $GP/o-gw.qp missing: run STAGE=gw first"; exit 1; }
+read GDIR GIND DMIN <<< $(qp_gaps)
+# lowest gap of any q on this grid = the QP indirect gap of this grid: Yambo prints it once it has
+# applied (and with GWDIR interpolated) the corrections, "[K+QP] Indirect Gap" in the BSE report;
+# before the reference BSE, a lower bound (KS indirect gap + smallest gap opening of the GW)
+KQP=$(awk -F: '/\[K\+QP\] Indirect Gap  /{print $2+0; exit}' $P/r-bse_ref_* 2>/dev/null)
+if [ -n "$KQP" ]; then GIND=$KQP
+elif [ -n "$GWDIR" ]; then GIND=$(python3 -c "print(f'{min($GIND, $KSIND + $DMIN):.4f}')"); fi
 
 # ---------- static screening ----------
 case $STAGE in w|ref|export|all)
@@ -433,7 +467,9 @@ case $STAGE in ref|export|all)
     grep -qs "break level degeneracy" $P/LOG/l-bse_ref_* $P/l-bse_ref_* &&
       echo "  note: BSE bands $BLO-$BHI split a degenerate pair at some k (Yambo warning): consider another BANDS window"
   fi
-  echo "  reference BSE: lowest $(rep_low bse_ref 1) eV, A $(rep bse_ref 1 'lowest bright excitation (strength') eV, Eb $(rep bse_ref 1 'binding energy, gap - lowest bright') eV" ;; esac
+  echo "  reference BSE: lowest $(rep_low bse_ref 1) eV, A $(rep bse_ref 1 'lowest bright excitation (strength') eV, Eb $(rep bse_ref 1 'binding energy, gap - lowest bright') eV"
+  KQP=$(awk -F: '/\[K\+QP\] Indirect Gap  /{print $2+0; exit}' $P/r-bse_ref_* 2>/dev/null)
+  [ -n "$KQP" ] && GIND=$KQP && echo "  QP indirect gap of this grid: $GIND eV" ;; esac
 
 # frequency grid of the kernel (fixed once the export has run: read back from its input)
 if [ -s $P/kx_bse.in ] && [ -s $P/kx/ndb.Chi ]; then
@@ -480,6 +516,7 @@ for iq in range(1, nq + 1):
     if h[0] > 1e-4 or abs(h[1] - 1) > 1e-3: bad.append(f'q{iq}: exported response differs from the BSE response')
     if ns < 7: bad.append(f'q{iq}: only {ns} in-plane G (need G=0 + the first star, 7): raise NG_X')
     if min(lo, br) - dwin < wlo: bad.append(f'q{iq}: exciton {min(lo, br):.4f} eV below the grid ({wlo} eV): raise WMARGIN')
+    if br > whi - 0.002: bad.append(f'q{iq}: bright exciton {br:.4f} eV above the grid (top {whi} eV)')
     if whi >= gap: bad.append(f'q{iq}: grid reaches the gap {gap:.4f} eV')
 for b in bad: print('  !!!', b)
 sys.exit(1 if bad else 0)
@@ -519,7 +556,7 @@ case $STAGE in summary|all)
     python3 $T/xq_summary.py --bse r-kx_bse_* --npz fxc_GGq_static.npz --out xq_dispersion > xq_summary.out || { tail xq_summary.out; exit 1; }
     [ -s xq_dispersion_omega.dat ] && python3 $T/fxc_export.py kx --at xq_dispersion_omega.dat --sym --inplane --out fxc_GGq_scw > fxc_scw.out
   fi
-  python3 - "$P" "$(basename "$TOP")" "$GDIR" "$GIND" "$SF" "$NGRID" "$BLO-$BHI" \
+  python3 - "$P" "$(basename "$TOP")${GWDIR:+ (GW on the ${GGRID}x$GGRID grid of $GWDIR, corrections interpolated: $QPINTERP)}" "$GDIR" "$GIND" "$SF" "$NGRID" "$BLO-$BHI" \
     "$(awk -F= '/BSENGexx/{print $2; exit}' bse_ref.in 2>/dev/null)" "$(awk -F= '/BSENGexx/{print $2; exit}' kx_bse.in 2>/dev/null)" > summary.txt <<'PY'
 import glob, sys
 import numpy as np
@@ -533,7 +570,7 @@ def rep(job, key, q=1):
     return v
 num = lambda l, k=-1: float(l.split()[k]) if l else float('nan')
 print(f'{name}: {ngrid}x{ngrid} k grid, {"spinors (SOC)" if sf == "2" else "no SOC"}, BSE bands {bands}')
-print(f'QP gap (G0W0, RIM-W): direct {gdir} eV, indirect {gind} eV')
+print(f'QP gap (G0W0, RIM-W) of the GW grid: direct {gdir} eV; QP indirect gap of this grid {gind} eV')
 for job, what in (('bse_ref', f'reference BSE (TDA, exchange{exx} on all G)'),
                   ('kx_bse', f'export BSE (coupling, exchange{ngx} on in-plane G), q1')):
     a = num(rep(job, 'lowest bright excitation (strength')); g = num(rep(job, 'lowest transition energy of the window'))

@@ -8,6 +8,8 @@
 #SBATCH --job-name=xkernel
 #SBATCH --output=log/xkernel.o%A
 #SBATCH --error=log/xkernel.e%A
+#SBATCH --mail-type=ALL,TIME_LIMIT_80
+#SBATCH --mail-user=ad531114@ucf.edu
 
 # Production run of the exact kernel fxc_GG'(q, w) of a monolayer (WS2, WSe2, ...) from a fresh
 # SAVE, with the parameters converged for WS2 (gw_converge.sh, bse_converge.sh):

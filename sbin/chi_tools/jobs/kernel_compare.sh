@@ -8,6 +8,8 @@
 #SBATCH --job-name=kern_cmp
 #SBATCH --output=log/kern_cmp.o%A
 #SBATCH --error=log/kern_cmp.e%A
+#SBATCH --mail-type=ALL,TIME_LIMIT_80
+#SBATCH --mail-user=ad531114@ucf.edu
 
 # A exciton (q1) with Yambo's own TDDFT kernels next to the BSE and the exact exported kernel.
 # Run from the directory where xq_dispersion.sh ran (SAVE, cohsex/ndb.em1s*, g0w0/ndb.QP,

@@ -8,6 +8,8 @@
 #SBATCH --job-name=finiteq
 #SBATCH --output=log/finiteq.o%A
 #SBATCH --error=log/finiteq.e%A
+#SBATCH --mail-type=ALL,TIME_LIMIT_80
+#SBATCH --mail-user=ad531114@ucf.edu
 
 # Item 1: does this Yambo build solve the COUPLED BSE at finite momentum q?
 # Stock Yambo only (no export yet). Run from 06_TEST_VAL, same settings as binding.sh.

@@ -8,6 +8,8 @@
 #SBATCH --job-name=bse_conv
 #SBATCH --output=log/bse_conv.o%A
 #SBATCH --error=log/bse_conv.e%A
+#SBATCH --mail-type=ALL,TIME_LIMIT_80
+#SBATCH --mail-user=ad531114@ucf.edu
 
 # BSE convergence for monolayer WS2 in Yambo (static screening em1s + BSE, q = 0, in-plane light).
 # Tracks the lowest bright exciton (A) and its binding energy Eb = (lowest transition of the BSE

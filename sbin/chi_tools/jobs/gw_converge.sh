@@ -8,6 +8,8 @@
 #SBATCH --job-name=gw_conv
 #SBATCH --output=log/gw_conv.o%A
 #SBATCH --error=log/gw_conv.e%A
+#SBATCH --mail-type=ALL,TIME_LIMIT_80
+#SBATCH --mail-user=ad531114@ucf.edu
 
 # G0W0 (plasmon pole) convergence for monolayer WS2 in Yambo. Converges the quasiparticle
 # band gap (direct gap at the k-point of the KS minimum gap, normally K) one parameter at a

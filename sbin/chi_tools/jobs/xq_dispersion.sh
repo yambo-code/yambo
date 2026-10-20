@@ -8,6 +8,8 @@
 #SBATCH --job-name=xq_disp
 #SBATCH --output=log/xq_disp.o%A
 #SBATCH --error=log/xq_disp.e%A
+#SBATCH --mail-type=ALL,TIME_LIMIT_80
+#SBATCH --mail-user=ad531114@ucf.edu
 
 # Exciton energies and binding energies at every q from the exported kernel fxc_GG'(q, w):
 # Casida with the q-dependent kernel, solved self-consistently (lambda(w) = w), next to the

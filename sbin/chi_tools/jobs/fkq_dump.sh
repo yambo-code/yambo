@@ -8,6 +8,8 @@
 #SBATCH --job-name=fkq_dump
 #SBATCH --output=log/fkq_dump.o%A
 #SBATCH --error=log/fkq_dump.e%A
+#SBATCH --mail-type=ALL,TIME_LIMIT_80
+#SBATCH --mail-user=ad531114@ucf.edu
 
 # F_tt'(q, w): the exported kernel projected on the transitions (Casida matrix pieces),
 # at the q points QS and the frequency window W1..W2 (eV). Uses kx_fq/ndb.Chi of fq_export.sh,

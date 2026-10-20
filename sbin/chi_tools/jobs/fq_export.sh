@@ -8,6 +8,8 @@
 #SBATCH --job-name=fq_export
 #SBATCH --output=log/fq_export.o%A
 #SBATCH --error=log/fq_export.e%A
+#SBATCH --mail-type=ALL,TIME_LIMIT_80
+#SBATCH --mail-user=ad531114@ucf.edu
 
 # Steps A + B: the exact kernel fxc_GG'(q, w) at every q of the grid, from the BSE (BSEChiOut).
 # Run from 06_TEST_VAL with the same settings as binding.sh. Needs the fork with explicit

@@ -127,7 +127,7 @@ setup_info () {   # dir -> sets NB_SAVE NK NKBZ NQ VB CB K1 K2 NQP
   VB=$(awk -F: '/Filled Bands/{print $2+0; exit}' "$d/r_setup" 2>/dev/null)
   [ -n "$NB_SAVE" ] && [ -n "$NK" ] && [ -n "$NKBZ" ] && [ -n "$NQ" ] && [ -n "$VB" ] || {
     echo "!!! cannot read bands/k-points/q-points from $d/r_setup (yambo setup failed?)"
-    tail -5 "$d/log_setup.out" "$d/r_setup" 2>/dev/null; ls -t "$d"/l_setup* "$d"/LOG/l_setup* 2>/dev/null | head -1 | xargs -r tail -5
+    tail -5 "$d/log_setup.out" 2>/dev/null; [ -f "$d/r_setup" ] && tail -5 "$d/r_setup"; ls -t "$d"/l_setup* "$d"/LOG/l_setup* 2>/dev/null | head -1 | xargs -r tail -5
     rm -f "$d/r_setup"; exit 1; }
   CB=$((VB+1))
   KG=$(awk -F: '/Direct Gap localized at k/{print $2+0; exit}' "$d/r_setup" 2>/dev/null)

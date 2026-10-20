@@ -113,6 +113,7 @@ Run `git log --oneline 19c1241..HEAD` for the history. In total the fork changes
 
 **Cluster job scripts** in `sbin/chi_tools/jobs/` (SLURM, stokes):
 - `gw_converge.sh` and `bse_converge.sh`: staged convergence with MPI-layout preflight checks.
+- `exact_kernel.sh`: production workflow from a fresh SAVE (GW, screening, reference BSE, kernel export at every q, Casida check, kernel files). The Casida check showed that spin-forbidden dark excitons (relative strength ~1e-8 with SOC) are not poles of the density response P, so no density kernel reproduces them.
 - `kernel_compare.sh` and `plot_kernels.py`: run and plot the kernel comparison above.
 - `xq_dispersion.sh`, `finiteq_test.sh`, `fkq_dump.sh`, `fq_export.sh`
 - `test_gw_converge_mpi.sh`: local, oversubscribed MPI test; set `S`.

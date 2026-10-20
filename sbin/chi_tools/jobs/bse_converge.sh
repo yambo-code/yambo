@@ -115,7 +115,7 @@ setup_info () {   # dir -> NB_SAVE NK NKBZ NQ VB GAP NGRID
   NGRID=$(awk -F: '/Grid dimensions/{print $2+0; exit}' "$d/r_setup" 2>/dev/null)
   [ -n "$NB_SAVE" ] && [ -n "$NK" ] && [ -n "$NKBZ" ] && [ -n "$NQ" ] && [ -n "$VB" ] && [ -n "$GAP" ] || {
     echo "!!! cannot read bands/k-points/q-points/gap from $d/r_setup (yambo setup failed?)"
-    tail -5 "$d/log_setup.out" "$d/r_setup" 2>/dev/null; ls -t "$d"/l_setup* "$d"/LOG/l_setup* 2>/dev/null | head -1 | xargs -r tail -5
+    tail -5 "$d/log_setup.out" 2>/dev/null; [ -f "$d/r_setup" ] && tail -5 "$d/r_setup"; ls -t "$d"/l_setup* "$d"/LOG/l_setup* 2>/dev/null | head -1 | xargs -r tail -5
     rm -f "$d/r_setup"; exit 1; }
   CB=$((VB+1))
 }

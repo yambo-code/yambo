@@ -762,8 +762,9 @@ if rows:
             print(f'    q{iq}: BSE state {E:.4f} eV (strength {S:.1e}) found only to {d:.1f} meV: near a pole of fxc(w)?'
                   ' a finer DW (re-export) resolves it')
     if dark:
-        print(f'  density-dark BSE states (strength < 1e-6, e.g. spin-forbidden with SOC), not in P, so not in any'
-              f' density-kernel TDDFT: ' + ', '.join(f'q{i} {E:.4f}' for i, E in dark[:8]) + (' ...' if len(dark) > 8 else ''))
+        print(f'  BSE states with no density vertex at that q (strength < 1e-6), not poles of P(q), so not in Casida at that q: '
+              + ', '.join(f'q{i} {E:.4f}' for i, E in dark[:8]) + (' ...' if len(dark) > 8 else ''))
+        print('    (at q1: the partner of a degenerate pair polarized across the field direction, or spin-forbidden with SOC)')
     try:
         x = np.loadtxt(f'{p}/xq_dispersion.dat', ndmin=2)
         print(f'q1: Eb(A) self-consistent {x[0, 9]:.4f} eV (BSE {x[0, 8]:.4f}), static fxc(q1, 0) {x[0, 10]:.4f} eV')

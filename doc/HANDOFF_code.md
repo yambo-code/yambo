@@ -3,7 +3,7 @@
 This file passes the technical work on this Yambo fork to a new Claude Code session.
 The other session keeps the cluster runs, convergence, results and explanations.
 This session works on the theory, the Fortran, the tests and new features.
-Read this file first, then `doc/greens_function_fxc.md`, which is the full reference at 1157 lines.
+Read this file first, then `doc/greens_function_fxc.md`, which is the full reference at 1230 lines.
 
 ## 1. Goal and working rules
 
@@ -49,6 +49,7 @@ The fork offers several choices of P (`ChiGMode`, `BSEChiOut`):
 | DYSON | convolution of the retarded GW spectral functions (needs PPA) | `Chi_G_bubble.F`, `QP_Green_Function.F` |
 | BSE `exc` / `full` | proper BSE response with the exchange term removed, QP or KS reference | `K_Chi_export.F` |
 | BSE `mdr` | Marini–Del Sole–Rubio kernel | `TDDFT_Chi_dynamic.F` |
+| BSE `nq` | Nanoquanta kernel χ0⁻¹ T₂ χ0⁻¹: all of W, diagonal included, at first order (the `mdr` route with Ed = E) | `TDDFT_Chi_dynamic.F`, `K_Chi_export.F` |
 
 **BSE as P.** P(ω) = ρ [ω − H̃]⁻¹ ρ* (Adler–Wiser form with BSE energies).
 - H̃ = D + √F K √F, where D holds the transition energies and K is the BSE kernel.
@@ -94,7 +95,7 @@ Run `git log --oneline 19c1241..HEAD` for the history. In total the fork changes
 | Retarded G export (DYSON) | `qp/QP_Green_Function.F`, `QP_driver.F`, `io/io_QP_and_GF.F`, `mod_QP.F` | Requires PPA, a diagonal Σ, and no terminator or zoom. |
 | **BSKmod="CHI"** (projects ndb.Chi onto transitions) | `bse/K_kernel.F`, `tddft/TDDFT_Chi_Fourier.F`, `TDDFT_ALDA_eh_space_G_collisions_{L,R}.F` | Uses the optical q→0 limit with the head and wings. Uses the de-excitation vertex in the coupling block. |
 | **BSEChiDyn** (frequency-dependent Casida) | `bse/K_Chi_dynamic.F`, `tddft/TDDFT_Chi_dynamic.F`, `K_solvers.F` | Does one solve per ndb.Chi frequency. Accepts undamped real frequencies for kernels exported from a BSE. |
-| **BSEChiOut** = none/exc/full/mdr | `bse/K_Chi_export.F`, `K_diago_driver.F` (`binding_report`) | Builds P from the coupled BSE and writes ndb.Chi. Prints the `[BSE]` binding-energy report lines. |
+| **BSEChiOut** = none/exc/full/mdr/nq | `bse/K_Chi_export.F`, `K_diago_driver.F` (`binding_report`) | Builds P from the coupled BSE and writes ndb.Chi. Prints the `[BSE]` binding-energy report lines. |
 | Finite q (`BSEQptR`) | `K_Chi_export.F`, `K_kernel.F`, `K_driver_init.F` | Adds explicit anti-resonant transitions and exports over all rows for each BSE q. |
 | **BSEChiKoutW / BSEChiKoutB** | `bse/K_Chi_Kdump.F` | Dumps the Casida matrix as text. `sbin/chi_tools/ktt_casida.py` diagonalizes it. |
 | **BSEGinplane** | `K_exchange_collisions.F`, `K_Chi_export.F`, `K_kernel.F` | Keeps only G_z = 0 for layers in the xy plane. |
@@ -166,6 +167,8 @@ make yambo
 - Earlier sessions recompiled that one file at `-O1` and relinked, using a sandbox-only script that was not kept. No source change was made.
 - Before any local material BSE, reproduce that workaround and check that a plain SEX BSE gives no NaN.
 - It does not affect the unit tests. The user's cluster SEX BSE runs gave sane binding energies, but which compiler built the fork there has not been checked.
+- With gfortran 13.3.0 (this container) the `-O3` and `-O1` builds gave identical SEX BSE spectra on WS2 (SOC and scalar, one thread): the miscompile was not reproduced.
+- A rebuild after a change to a module that file uses (e.g. `mod_BS.F`) recompiles it at `-O3` and silently undoes the workaround: redo it, and check the object by checksum, not by comparing it with the archive.
 
 Unit tests need only gfortran, plus LAPACK where noted:
 ```
@@ -208,3 +211,4 @@ Monolayer WS2:
 3. **ChiGMode limits.** The DYSON optical limit, off-diagonal Σ, and MPI beyond k-only are unsupported (doc, "Current scope").
 4. **Possible upstream patch.** The `cutoff_driver.F` barrier fix is generic and could go to Yambo upstream. Only do this if the user asks.
 5. **Optional.** Clean MPA + RIM-W support would need RIM-W added to the MPA W path, not just to the runlevel list. That is a deeper change to `QP_mpa` and the RIM-W tables.
+6. **Literature checks for the paper (pending, the papers could not be opened from the container).** (a) How MDR (PRL 91, 256402; arXiv cond-mat/0310495) treats the diagonal W_KK: does `mdr` (per-transition Ed = E + W_tt) match it? (b) The "nanoquanta kernel" of Shi, Turkowski, Le, Rahman (arXiv:2302.08375; PRB 107, 155431 unconfirmed): static or dynamic, basis, diagonal. (c) Eq. 3 of Sottile et al. (PRL 91, 056402) against the `nq` definition (doc, "The Nanoquanta kernel").

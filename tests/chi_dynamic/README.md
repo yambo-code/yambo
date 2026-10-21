@@ -26,6 +26,12 @@ projection, and A, B are the residual vectors of the diagonalization solver.
 4. a frequency loop run from OpenMP threads against the serial loop.
 5. the Marini-Del Sole-Rubio kernel (`BSEChiOut= "mdr"`): exact for a diagonal W,
    second-order error in the off-diagonal W, and Casida with it returns its P.
+6. the Nanoquanta kernel (`BSEChiOut= "nq"`), for anti-resonant rows derived from the
+   resonant ones and for explicit ones: the export route (the MDR routines with Ed = E,
+   the whole W part, chi0 passed for p0) equals chi0^-1 T2 chi0^-1 built term by term,
+   T2(G,G') = c sum_AB s_A v(G,A) W_AB s_B conj(v(G',B))/((E_A - z)(E_B - z)); it equals
+   MDR when W has no diagonal and differs from it otherwise; the exact kernel of the BSE
+   with eps W differs from it at second order in eps.
 
 Run with `python run_tests.py --fc gfortran` and, for the threaded loop,
 `python run_tests.py --fc gfortran --openmp`. LAPACK and BLAS are linked with

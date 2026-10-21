@@ -899,6 +899,79 @@ MDR recovers 98% (q1) and 94% (q2) of the binding with its frequency dependence,
 nothing statically, like the exact kernel: the first-order coupling, resummed in G
 space, carries most of the e-h attraction of this BSE.
 
+The diagonal moved into the energies is per transition, Ed_t = E_t + W_tt, with W_tt the W
+part of the exchange-free matrix (occupation factors included). Whether this is the
+treatment of W_KK in the MDR paper or a variant of it has not been checked against the paper
+in this repository (see "Open checks" below).
+
+### The Nanoquanta kernel: `BSEChiOut= "nq"`
+
+The first-order BSE-derived kernel associated with Sottile, Olevano and Reining (PRL 91,
+056402 (2003)), with all of W, its diagonal included, at first order and no P inverted:
+
+```
+fxc_NQ(z) = chi0^-1(z) T2(z) chi0^-1(z)
+T2(G,G';z) = c sum_tt' s_t v_t(G) W_tt' s_t' conj(v_t'(G')) / ((E_t - z)(E_t' - z))
+```
+
+chi0 is the bubble of the BSE transition energies E_t (QP energies with `KfnQPdb`, as for
+"exc"), W_tt' the W part of the exchange-free BSE matrix M_W = M - X (the attraction as it
+enters the BSE matrix, sign and occupation factors s_t s_t' included), v_t the Chi vertices
+and c = Co/(4 pi). The definition was given for this mode as Eq. 3 of the paper; it has not
+been checked against the paper here.
+
+It is the MDR route with the diagonal of W left at first order: `Ed = E` and
+`Koff = M_W - diag(E)` (`K_Chi_export.F`). Then g = diag(1/(z - E)), the shifted bubble p0 of
+`TDDFT_Chi_mdr_response` is chi0, its dP1 is T2, and `TDDFT_Chi_kernel_mdr(chi0, chi0, T2)`
+returns chi0^-1 - chi0^-1 + chi0^-1 T2 chi0^-1 = chi0^-1 T2 chi0^-1 (the same matrix in both
+slots, so the first two terms cancel identically). The ndb.Chi P column holds
+(chi0^-1 - fxc_NQ)^-1, the response this kernel gives. Rows, the exchange removal and the
+reading as an "exc" kernel (QP energies in the Casida run) are those of "mdr": all 2N rows of
+the coupled matrix, anti-resonant rows derived at q = 0 and explicit at finite q. MDR and NQ
+differ only in W_tt: MDR resums it in the energies, NQ keeps it at first order; with W_tt = 0
+they coincide (`tests/chi_dynamic`). The export reports:
+
+```text
+[Chi/BSK] diagonal of the W part (resonant rows) [eV]: min, mean, max      (also for "mdr")
+[Chi/BSK] NQ: bubble with Ed = E vs the reference bubble (max relative difference)
+[Chi/BSK] NQ: P of the exchange-free matrix vs the exact P (max relative difference)
+```
+
+`tests/chi_dynamic` builds chi0 and T2 term by term from the formula above, for derived and
+for explicit anti-resonant rows, and checks: the export route equals chi0^-1 T2 chi0^-1
+(8e-15 and 2e-14 relative); with W_tt = 0, NQ = MDR; with W_tt /= 0, MDR fails that comparison
+(0.22 and 2.1); the exact kernel of the BSE with eps W differs from eps fxc_NQ at order eps^2
+(ratio 4.00 when eps doubles). Mutations of `TDDFT_Chi_dynamic.F` (sign of the first-order
+term, one dropped or sign-flipped 1/(z - E), conj(s) for s) each fail at least four NQ checks.
+
+Monolayer WS2 with SOC, local test: 6x6 k grid, 50 Ry, 20 A cell without Coulomb cutoff,
+static screening with 60 bands and a 3 Ry block (so W is weakly screened and the binding
+large), bands 23-30, scissor 0.8 eV (`KfnQP_E`), coupling, 21 G with `BSEGinplane`
+(7 in-plane G), eta = 0.05 eV, 5 meV grid on 1.2-2.8 eV. Window gap 2.3963 eV; diagonal of
+the W part -0.788, -0.760, -0.740 eV (min, mean, max). Static: lowest bright excitation of
+the static Casida; fxc(w): first eps2 peak of `BSEChiDyn`:
+
+| Kernel | static fxc(0): binding [eV] | fxc(w): A peak [eV] | binding [eV] | peak height |
+| --- | --- | --- | --- | --- |
+| BSE (reference) | - | 1.6356 | 0.7607 | 11.35 |
+| exact ("exc") | 0.1129 | 1.6356 | 0.7607 | 11.35 |
+| MDR | 0.1117 | 1.6438 | 0.7526 | 11.27 |
+| NQ | 0.1102 | 1.9759 | 0.4204 | 26.99 |
+
+The static limits agree within 3 meV. With fxc(w), MDR keeps 99% of the binding and the
+spectrum; NQ keeps 55% and puts most of the weight in one peak at 1.976 eV (height 2.4 times
+the BSE A peak; the B peak and the 2.5-2.7 eV structure are gone; no negative eps2 in the
+window). On this grid W_tt is close to the binding energy itself, and keeping it at first
+order is the difference between the two kernels. The 6x6 mesh and weak screening make W_tt
+large; how NQ behaves on converged meshes is not tested here.
+
+Open checks before naming these modes in a paper (the papers could not be opened from this
+environment): how the MDR paper treats the diagonal W_KK (a per-transition shift as in "mdr",
+a single shift per q, or something else), and the form of the "nanoquanta kernel" in Shi,
+Turkowski, Le and Rahman (arXiv:2302.08375; the PRB 107, 155431 reference is unconfirmed here):
+static or frequency dependent, G-space or density-matrix (k-space) representation, treatment
+of the diagonal.
+
 ### MPI for the response
 
 G0, COHSEX and DYSON support k-point distribution on CPUs. For N ranks,

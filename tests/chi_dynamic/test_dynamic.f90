@@ -93,6 +93,9 @@ program test_chi_dynamic
 
   call mdr_checks()
 
+  call nq_checks(.TRUE.)
+  call nq_checks(.FALSE.)
+
   if (failures>0) then
     print *,failures,' check(s) failed'
     error stop 1
@@ -676,6 +679,146 @@ contains
       print '(a,es9.2,a,f6.3)','PASS: MDR error is second order in K_off  err(eps)=',errs(1),'  err(2eps)/err(eps)=',real(e_c(1))
     else
       print '(a,2es10.2)','FAIL: MDR error not second order in K_off ',errs
+      failures=failures+1
+    endif
+  end subroutine
+
+  subroutine nq_checks(derived)
+    ! Nanoquanta kernel (BSEChiOut= "nq"): fxc = chi0^-1 T2 chi0^-1 with
+    !   T2(G,G') = c sum_AB s_A v(G,A) W_AB s_B conj(v(G',B)) / ((E_A - z)(E_B - z)),
+    ! W the whole W part of the BSE matrix (diagonal included) and chi0 the bubble of E.
+    ! The export runs the MDR routines with Ed = E and Koff = W and passes chi0 for p0.
+    ! derived: anti-resonant rows derived from the resonant ones (q=0: v = (v_r, v_c),
+    ! s = (s, i s), E = (E, -E)); otherwise explicit rows with f < 0 (finite q).
+    ! 1. export route = chi0^-1 T2 chi0^-1 built here term by term (all G, G')
+    ! 2. Ed = E: the shifted bubble is chi0, and dP1 is T2
+    ! 3. W with zero diagonal: NQ = MDR. With the diagonal, MDR (diagonal moved into the
+    !    energies) must fail check 1: the check tells the two kernels apart
+    ! 4. first order: the exact kernel of the BSE with eps W is eps fxc_NQ + O(eps^2)
+    logical, intent(in) :: derived
+    integer, parameter :: nh=2*nt
+    complex(DP) :: M(nh,nh),Kx(nh,nh),Wp(nh,nh),Wz(nh,nh),Ed(nh),V(ng,nh),sf(nh),zz,acc
+    complex(DP) :: chib(ng,ng),chi0(ng,ng),c0d(ng,ng),t2(ng,ng),fd(ng,ng),fnq(ng,ng),Pnq(ng,ng)
+    complex(DP) :: p0(ng,ng),dp1(ng,ng),fmd(ng,ng),Pmd(ng,ng),fex(ng,ng),Pex(ng,ng),vb(ng,ng),d(ng),ci0(ng,ng)
+    real(DP) :: E(nh),fo(nh),rc(2),c_fac,dev,errs(2),eps,fn1
+    character(10) :: rows
+    integer :: t,a,b,ig,jg,ie,info
+    rows='explicit'
+    if (derived) rows='derived'
+    c_fac=0.37_DP
+    call random_vertices(V)
+    do t=1,nt
+      E(t)=0.8_DP+0.35_DP*t
+      if (derived) then
+        E(nt+t)=-E(t)
+        sf(t)=sqrt(0.6_DP+0.2_DP*t)
+        sf(nt+t)=ci*sf(t)
+      else
+        E(nt+t)=-(0.9_DP+0.3_DP*t)
+        fo(t)=0.6_DP+0.2_DP*t
+        fo(nt+t)=-(0.5_DP+0.3_DP*t)
+        sf(t)=sqrt(cmplx(fo(t),kind=DP))
+        sf(nt+t)=sqrt(cmplx(fo(nt+t),kind=DP))
+      endif
+    enddo
+    d(1)=40._DP
+    do ig=2,ng
+      d(ig)=1.5_DP/sqrt(real(ig,DP))
+    enddo
+    vb=zero
+    do ig=2,ng
+      vb(ig,ig)=d(ig)**2
+    enddo
+    Kx=c_fac*matmul(conjg(transpose(V)),matmul(vb,V))
+    do t=1,nh
+      Kx(:,t)=Kx(:,t)*sf(t)
+      Kx(t,:)=Kx(t,:)*sf(t)
+    enddo
+    ! W part with an attractive diagonal, the analogue of MDR's W_KK
+    call random_matrix(Wp)
+    Wp=0.2_DP*Wp
+    do t=1,nh
+      Wp(t,t)=Wp(t,t)-0.3_DP
+    enddo
+    zz=cmplx(1.6_DP,0.04_DP,kind=DP)
+    ! chi0 and T2 term by term (no library routine)
+    do jg=1,ng
+      do ig=1,ng
+        acc=zero
+        do a=1,nh
+          acc=acc+sf(a)**2*V(ig,a)*conjg(V(jg,a))/(zz-E(a))
+        enddo
+        c0d(ig,jg)=c_fac*acc
+        acc=zero
+        do a=1,nh
+          do b=1,nh
+            acc=acc+sf(a)*V(ig,a)*Wp(a,b)*sf(b)*conjg(V(jg,b))/((E(a)-zz)*(E(b)-zz))
+          enddo
+        enddo
+        t2(ig,jg)=c_fac*acc
+      enddo
+    enddo
+    ci0=c0d
+    call inv(ci0)
+    fd=matmul(ci0,matmul(t2,ci0))
+    ! the export route
+    call TDDFT_Chi_full_bubble(zz,E,V,sf,c_fac,chi0)
+    Ed=cmplx(E,0._DP,kind=DP)
+    call TDDFT_Chi_mdr_response(zz,Ed,Wp,V,sf,c_fac,p0,dp1)
+    call TDDFT_Chi_kernel_mdr(chi0,chi0,dp1,d,fnq,Pnq,rc,info)
+    dev=maxval(abs(fnq-fd))/maxval(abs(fd))
+    call check('NQ ('//trim(rows)//' rows): export route = chi0^-1 T2 chi0^-1 (max rel. dev.)',info,&
+&              cmplx(1._DP+dev,0._DP,kind=DP),(1._DP,0._DP))
+    dev=max(maxval(abs(p0-c0d))/maxval(abs(c0d)),maxval(abs(chi0-c0d))/maxval(abs(c0d)))
+    call check('NQ ('//trim(rows)//' rows): Ed = E bubble = chi0 (max rel. dev.)',0,&
+&              cmplx(1._DP+dev,0._DP,kind=DP),(1._DP,0._DP))
+    dev=maxval(abs(dp1-t2))/maxval(abs(t2))
+    call check('NQ ('//trim(rows)//' rows): dP1 with Ed = E = T2 (max rel. dev.)',0,&
+&              cmplx(1._DP+dev,0._DP,kind=DP),(1._DP,0._DP))
+    ! 3. zero W diagonal: NQ and MDR coincide
+    Wz=Wp
+    do t=1,nh
+      Wz(t,t)=zero
+    enddo
+    call TDDFT_Chi_mdr_response(zz,Ed,Wz,V,sf,c_fac,p0,dp1)
+    call TDDFT_Chi_kernel_mdr(chi0,chi0,dp1,d,fnq,Pnq,rc,info)
+    call TDDFT_Chi_kernel_mdr(chi0,p0,dp1,d,fmd,Pmd,rc,info)
+    dev=maxval(abs(fnq-fmd))/maxval(abs(fnq))
+    call check('NQ ('//trim(rows)//' rows): zero W diagonal, NQ = MDR (max rel. dev.)',info,&
+&              cmplx(1._DP+dev,0._DP,kind=DP),(1._DP,0._DP))
+    ! with the diagonal MDR resums it: it must not pass check 1
+    do t=1,nh
+      Ed(t)=E(t)+Wp(t,t)
+    enddo
+    call TDDFT_Chi_mdr_response(zz,Ed,Wz,V,sf,c_fac,p0,dp1)
+    call TDDFT_Chi_kernel_mdr(chi0,p0,dp1,d,fmd,Pmd,rc,info)
+    dev=maxval(abs(fmd-fd))/maxval(abs(fd))
+    if (info==0.and.dev>1.E-3_DP) then
+      print '(a,a,a,es9.2)','PASS: NQ (',trim(rows),' rows): MDR (diagonal in the energies) /= chi0^-1 T2 chi0^-1  rel=',dev
+    else
+      print '(a,a,a,i4,es10.2)','FAIL: NQ (',trim(rows),' rows): the check cannot tell MDR from NQ',info,dev
+      failures=failures+1
+    endif
+    ! 4. first order in W: exact kernel(eps W) - fxc_NQ(eps W) = O(eps^2)
+    Ed=cmplx(E,0._DP,kind=DP)
+    do ie=1,2
+      eps=1.E-3_DP*ie
+      M=Kx+eps*Wp
+      do t=1,nh
+        M(t,t)=M(t,t)+E(t)
+      enddo
+      call TDDFT_Chi_full_response(zz,M,V,sf,c_fac,chib,info)
+      call TDDFT_Chi_kernel_from_response(chi0,chib,d,.TRUE.,fex,Pex,rc,info)
+      call TDDFT_Chi_mdr_response(zz,Ed,eps*Wp,V,sf,c_fac,p0,dp1)
+      call TDDFT_Chi_kernel_mdr(chi0,chi0,dp1,d,fnq,Pnq,rc,info)
+      errs(ie)=maxval(abs(fex-fnq))
+      if (ie==1) fn1=maxval(abs(fnq))
+    enddo
+    if (abs(errs(2)/errs(1)-4._DP)<0.2_DP) then
+      print '(a,a,a,es9.2,a,f6.3)','PASS: NQ (',trim(rows),' rows): exact kernel - NQ is second order in W  err(eps)=',&
+&           errs(1)/fn1,'  err(2eps)/err(eps)=',errs(2)/errs(1)
+    else
+      print '(a,a,a,2es10.2)','FAIL: NQ (',trim(rows),' rows): exact kernel - NQ not second order in W ',errs
       failures=failures+1
     endif
   end subroutine

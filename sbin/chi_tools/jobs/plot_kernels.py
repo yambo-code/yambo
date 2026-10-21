@@ -120,8 +120,10 @@ def ylim_of(curves):
 fams = []
 f1 = [('exact fxc(w), Casida', xw, CAT[0], (0, (5, 2))) if xw is not None else None,
       ('MDR fxc(w)', spectrum('kc_mdr'), CAT[1], '-'),
-      ('MDR fxc(0), static', spectrum('kc_mdrst'), CAT[2], '-')]
-fams.append(('a  Frequency-dependent kernels from the BSE (exact, MDR) and their static limit', [c for c in f1 if c and c[1] is not None]))
+      ('MDR fxc(0), static', spectrum('kc_mdrst'), CAT[2], '-'),
+      ('NQ fxc(w)', spectrum('kc_nq'), CAT[1], ':'),
+      ('NQ fxc(0), static', spectrum('kc_nqst'), CAT[2], ':')]
+fams.append(('a  Frequency-dependent kernels from the BSE (exact, MDR, NQ) and their static limit', [c for c in f1 if c and c[1] is not None]))
 pick = []
 for al, n in lrc:
     tag = n.split('(')[-1] if '(' in n else ''
@@ -158,9 +160,10 @@ fig.tight_layout(); fig.savefig('kernel_spectra.png', dpi=180, facecolor=SURF); 
 # --- figure 2: binding energy and peak height relative to the BSE ---
 jobs = {'BSE (SEX), reference': 'kc_sex', 'RPA (Hartree), transition space': 'kc_hart', 'ALDA, transition space': 'kc_alda',
         'MDR kernel fxc(0), static': 'kc_mdrst', 'MDR kernel fxc(w)': 'kc_mdr', 'IP': 'kc_ip', 'RPA, G space': 'kc_rpa',
+        'NQ kernel fxc(0), static': 'kc_nqst', 'NQ kernel fxc(w)': 'kc_nq',
         'exact kernel fxc(w), self-consistent': 'xw_q1' if xw is not None else '-'}
-order = ['BSE (SEX), reference', 'exact kernel fxc(w), self-consistent', 'MDR kernel fxc(w)',
-         'exact kernel fxc(0), static', 'MDR kernel fxc(0), static'] + [n for _, n in lrc if _ > 0] + \
+order = ['BSE (SEX), reference', 'exact kernel fxc(w), self-consistent', 'MDR kernel fxc(w)', 'NQ kernel fxc(w)',
+         'exact kernel fxc(0), static', 'MDR kernel fxc(0), static', 'NQ kernel fxc(0), static'] + [n for _, n in lrc if _ > 0] + \
         ['PF EMP', 'PF RBO', 'PF CUR', 'PF JGM', 'ALDA, transition space', 'RPA (Hartree), transition space', 'RPA, G space', 'IP']
 order = [n for n in order if n in row]
 H0 = peak_height('kc_sex')
@@ -205,6 +208,7 @@ fig.tight_layout(); fig.savefig('kernel_binding.png', dpi=180, facecolor=SURF); 
 runs = [('BSE (SEX), reference', 'kc_sex'), ('exact fxc: BSE export, all q (xq_bse)', 'xq_bse'),
         ('exact fxc(w): Casida at q1 (xw_q1)', 'xw_q1'), ('MDR: BSE export (kc_mdrx)', 'kc_mdrx'),
         ('MDR fxc(w): Casida (kc_mdr)', 'kc_mdr'), ('MDR fxc(0): Casida (kc_mdrst)', 'kc_mdrst'),
+        ('NQ: BSE export (kc_nqx)', 'kc_nqx'), ('NQ fxc(w): Casida (kc_nq)', 'kc_nq'), ('NQ fxc(0): Casida (kc_nqst)', 'kc_nqst'),
         ('RPA (T space)', 'kc_hart'), ('ALDA (T space)', 'kc_alda'), ('IP (G space)', 'kc_ip'), ('RPA (G space)', 'kc_rpa')] + \
        [(f'LRC α = {al:g}', lrc_job(al)) for al, _ in lrc if al > 0][:1] + [(f'PF {x}', f'kc_pf{x}') for x in ('EMP', 'JGM')]
 tt = [(lab, walltime(j)) for lab, j in runs]

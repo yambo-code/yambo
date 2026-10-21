@@ -326,6 +326,15 @@ contains
  !
  ! Exact when K_off = 0. Same vertices, s and c as TDDFT_Chi_full_response.
  !
+ ! Nanoquanta kernel (Sottile, Olevano, Reining, PRL 91, 056402 (2003)): the same routines
+ ! with the diagonal of W not moved into the energies, Ed = E and Koff = M_W - diag(E) (the
+ ! whole W part). Then g = diag(1/(z-E)), p0 is the reference bubble chi0, and
+ !
+ !   dP1(G,G') = c sum_AB s_A v(G,A) W_AB s_B conj(v(G',B)) / ((E_A - z)(E_B - z)) = T2(z)
+ !
+ ! (W_AB the W part of the BSE matrix, sign included). TDDFT_Chi_kernel_mdr(chi0,chi0,T2)
+ ! returns fxc = chi0^-1 T2 chi0^-1: with the same matrix in both slots chi0^-1 - p0^-1 vanishes.
+ !
  recursive subroutine TDDFT_Chi_mdr_response(z,Ed,Koff,v,s,c,p0,dP1)
    complex(DP), intent(in)  :: z,Ed(:),Koff(:,:),v(:,:),s(:)
    real(DP),    intent(in)  :: c

@@ -32,6 +32,7 @@ module BS
  ! BSEChiOut: "none", or write ndb.Chi from this BSE with P = its pair response and
  ! fxc = Pref^-1 - P^-1; "exc": Pref = bubble of the BSE energies, "full": KS bubble,
  ! "mdr": as "exc" with P to first order in the off-diagonal W (Marini-Del Sole-Rubio)
+ ! "nq": as "exc" with fxc = Pref^-1 T2 Pref^-1, all of W to first order (Sottile-Olevano-Reining)
  character(schlen) :: BS_K_Chi_out="none"
  ! BSEChiKout: with BSEChiDyn, write the Casida matrix (exchange and fxc parts) at the ndb.Chi
  ! frequencies with Re w in this window [Ha] (off when the upper bound is negative), for all

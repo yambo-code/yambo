@@ -20,6 +20,8 @@
 #  exact kernel: static and self-consistent energies of q1 from xq_dispersion.dat
 #  MDR kernel (Marini-Del Sole-Rubio, BSEChiOut= "mdr", needs the yambo build with it):
 #                exported on the same grid, then Casida static and with fxc(w)
+#  NQ kernel (Sottile-Olevano-Reining, BSEChiOut= "nq", all of W to first order): the same
+#                three runs (NQ=0 skips them)
 #
 #  LRC is run with the alpha of the exact kernel at w = 0 and at the exciton (read from
 #  kx_xq), and with the list ALPHAS to find the alpha that gives the BSE binding.
@@ -181,6 +183,15 @@ if [ "${MDR:-1}" = 1 ]; then
     bse_in kc_mdr.in CHI "${EXTRA[@]}" BSEChiDyn;   run kc_mdr "kc_mdr,kx_mdr"
   fi
 fi
+if [ "${NQ:-1}" = 1 ]; then
+  bse_in kc_nqx.in SEX "BSENGBlk= $WBLK" "${EXTRA[@]}" 'BSEChiOut= "nq"'
+  if run kc_nqx "kc_nqx,w_em1s"; then
+    grep -h "NQ: P of the exchange-free\|NQ: bubble with Ed = E\|diagonal of the W part" r-kc_nqx_* | head -3
+    rm -rf kx_nq; mkdir -p kx_nq; cp kc_nqx/ndb.Chi* kx_nq/
+    bse_in kc_nqst.in CHI "${EXTRA[@]}";            run kc_nqst "kc_nqst,kx_nq"
+    bse_in kc_nq.in CHI "${EXTRA[@]}" BSEChiDyn;    run kc_nq "kc_nq,kx_nq"
+  fi
+fi
 # G space
 chi_in kc_ip.in IP;        run kc_ip kc_ip
 chi_in kc_rpa.in Hartree;  run kc_rpa kc_rpa
@@ -218,7 +229,8 @@ for f in glob.glob('r-kc_sex_*'):
         if 'lowest transition energy of the window' in l: gap = float(l.split()[-1])
 rows = []
 for job, name in (('kc_sex', 'BSE (SEX), reference'), ('kc_hart', 'RPA (Hartree), transition space'),
-                  ('kc_alda', 'ALDA, transition space'), ('kc_mdrst', 'MDR kernel fxc(0), static')):
+                  ('kc_alda', 'ALDA, transition space'), ('kc_mdrst', 'MDR kernel fxc(0), static'),
+                  ('kc_nqst', 'NQ kernel fxc(0), static')):
     e = rep(job, 'lowest bright excitation (strength')
     rows.append((name, e, gap - e, peak(job)[1]))
 try:
@@ -230,7 +242,7 @@ try:
 except OSError:
     pass
 lrc = []
-for job, name in [('kc_mdr', 'MDR kernel fxc(w)'), ('kc_ip', 'IP'), ('kc_rpa', 'RPA, G space')] + \
+for job, name in [('kc_mdr', 'MDR kernel fxc(w)'), ('kc_nq', 'NQ kernel fxc(w)'), ('kc_ip', 'IP'), ('kc_rpa', 'RPA, G space')] + \
         [(re.match(r'o-(.*?)\.eps', f).group(1), None) for f in sorted(glob.glob('o-kc_lrc*.eps_q1_*'))] + \
         [(f'kc_pf{p}', f'PF {p}') for p in ('EMP', 'RBO', 'CUR', 'JGM')]:
     p, h = peak(job)

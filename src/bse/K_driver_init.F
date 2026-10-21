@@ -65,8 +65,8 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  ! A kernel exported from this BSE (K_Chi_export): P from its coupled pair response
  if (len_trim(BS_K_Chi_out)==0) BS_K_Chi_out='none'
  if (trim(BS_K_Chi_out)/='none') then
-   if (trim(BS_K_Chi_out)/='exc'.and.trim(BS_K_Chi_out)/='full'.and.trim(BS_K_Chi_out)/='mdr') &
-&    call error('[Chi/BSK] BSEChiOut must be "none", "exc", "full" or "mdr"')
+   if (trim(BS_K_Chi_out)/='exc'.and.trim(BS_K_Chi_out)/='full'.and.trim(BS_K_Chi_out)/='mdr'.and.&
+&      trim(BS_K_Chi_out)/='nq') call error('[Chi/BSK] BSEChiOut must be "none", "exc", "full", "mdr" or "nq"')
    if (BS_K_is_Chi) call error('[Chi/BSK] BSEChiOut exports a kernel from a BSE: use BSKmod= "SEX" (or Hartree), not "CHI"')
    if (.not.BS_K_coupling) call error('[Chi/BSK] BSEChiOut needs BSEmod= "coupling": only the coupled response is a physical P')
    if (have_gpu) call error('[Chi/BSK] BSEChiOut: CPU build only')

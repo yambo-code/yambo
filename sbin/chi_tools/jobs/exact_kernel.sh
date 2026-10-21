@@ -29,6 +29,14 @@
 #                    fxc_GGq_static.*  fxc(q, w=0)
 #                    fxc_GGq_allw.*    fxc(q, w) on the whole grid
 #                    fxc_GGq_scw.*     fxc(q, w*) at the self-consistent exciton energy w* of each q
+#   Checks of the kernel (not part of "all"; after STAGE=export, q = 1 unless set):
+#   STAGE=basis  : static (w = 0) binding against the size of the kernel basis: export + static Casida
+#                  at q1 for NG_LIST (Ry; the in-plane stars of each are kept) -> prod/basis_scan.dat
+#   STAGE=wscan  : the kernel frozen at each w of 0..WHI (step WSTEP) at q = QW: lowest bright eigenvalue
+#                  lambda(w) of static Casida with fxc(w); crosses lambda = w at the BSE exciton
+#                  -> prod/wscan_q<QW>.dat and .png
+#   STAGE=static0: Casida with fxc(0) against the same BSE (broadened, q1): equal at w = 0 (the static
+#                  response the w = 0 kernel is defined by), different at the exciton -> prod/static0.*
 #   STAGE=all    : all of them in a row (default). Every stage skips what is already done, so a job
 #                  that stops (time limit, error) is resubmitted with the same command.
 #
@@ -76,6 +84,8 @@ XBLK=${XBLK:-6}; WBLK=${WBLK:-3}; EXX_REF=${EXX_REF:-6}
 NG_X=${NG_X:-"2 Ry"}                 # BSENGexx = BSENGfxc of the export (in-plane G of it are kept)
 DW=${DW:-}; WMARGIN=${WMARGIN:-0.5}; DWIN=${DWIN:-0.04}  # eV: grid step (default 0.002, 0.005 for large systems), margin below the exciton, scan half-window
 QS=${QS:-}                           # q of the scan (default: all if cheap, else 1; see below)
+NG_LIST=${NG_LIST:-"2 4.5 6 8"}      # STAGE=basis: kernel bases (Ry); WS2: 2 Ry = 1 star (7 in-plane G), 4.5 = 2, 6 = 3
+QW=${QW:-1}; WSTEP=${WSTEP:-0.02}    # STAGE=wscan: momentum and frequency step
 ETA=${ETA:-0.05}; DE=${DE:-0.005}    # broadening and step of the reference spectrum
 CUT=${CUT:-'CUTGeo= "slab z"'}
 RIM=${RIM:-$'RandQpts= 1000000\nRandGvec= 100 RL'}
@@ -328,7 +338,7 @@ NGsBlkXs= $XBLK Ry
 EOF
 }
 
-bse_in () {   # file kind(ref|kx|cas) q1 q2 [extra lines...]
+bse_in () {   # file kind(ref|kx|cas|bcp|cas0) q1 q2 [extra lines...]; XLO XHI XNS XDM override the grid
   local f=$1 kind=$2 q1=$3 q2=$4 lines par="" lo hi ns dm; shift 4
   case $kind in
     ref) par=$(par_w | grep DIP; par_bs)
@@ -339,7 +349,12 @@ bse_in () {   # file kind(ref|kx|cas) q1 q2 [extra lines...]
          lo=$WLO; hi=$WHI; ns=$NW; dm=0.0 ;;
     cas) lines=$'BSKmod= "CHI"\nBSEmod= "coupling"\nBSENGexx= '$NG_X$'\nBSENGfxc= '$NG_X$'\nBSEChiDyn\nBSEGinplane'
          lo=$WLO; hi=$WHI; ns=$NW; dm=0.0 ;;
+    bcp) lines=$'rim_w\nRandGvecW= '$RIMW_G$' RL\nBSKmod= "SEX"\nBSEmod= "coupling"\nBSENGexx= '$NG_X$'\nBSENGBlk= '$WBLK$' Ry\nBSEGinplane'
+         lo=0; hi=$WHI; ns=$NW; dm=$ETA ;;           # the export's BSE, broadened, no export
+    cas0) lines=$'BSKmod= "CHI"\nBSEmod= "coupling"\nBSENGexx= '$NG_X$'\nBSENGfxc= '$NG_X$'\nBSEGinplane'
+         lo=0; hi=$WHI; ns=$NW; dm=$ETA ;;           # Casida with the static fxc(0) of the kernel
   esac
+  lo=${XLO:-$lo}; hi=${XHI:-$hi}; ns=${XNS:-$ns}; dm=${XDM:-$dm}
   cat > $f <<EOF
 optics
 bse
@@ -478,7 +493,7 @@ if [ -s $P/kx_bse.in ] && [ -s $P/kx/ndb.Chi ]; then
   read WLO WHI <<< $(awk '/BEnRange/{getline; print $1, $3}' $P/kx_bse.in); NW=$(awk -F= '/BEnSteps/{print $2+0}' $P/kx_bse.in)
 else
   EL=$(rep_low bse_ref 1)
-  case $STAGE in export|scan|summary|all) [ -n "$EL" ] || { echo "!!! no reference BSE: run STAGE=ref first"; exit 1; } ;; esac
+  case $STAGE in export|scan|summary|all|basis|wscan|static0) [ -n "$EL" ] || { echo "!!! no reference BSE: run STAGE=ref first"; exit 1; } ;; esac
   [ -n "$EL" ] && read WLO WHI NW <<< $(grid $EL $GIND)
 fi
 
@@ -547,6 +562,138 @@ case $STAGE in scan|all)
     grep "= w at\|BSE = \|no crossing\|!!!" $P/sc_q$q.log | sed 's/^/    /'
     rm -rf $P/xs_q$q $P/xw_q$q
   done ;; esac
+
+# ---------- checks of the kernel ----------
+casida_static () {   # job kerneldir q -> static Casida (matrix at z = 0) -> prod/static_<job>.log
+  local j=$1 kd=$2 q=$3
+  fresh $j; bse_in $P/$j.in cas $q $q '% BSEChiKoutW' ' 0.0 | 0.0 | eV' '%'
+  launch $j "$j,$kd,w" "ls o-$j.Ktt_q${q}_w1 >/dev/null 2>&1" one || return 1
+  ( cd $P && python3 $T/ktt_casida.py o-$j.Ktt_q${q}_transitions o-$j.Ktt_q${q}_w1 > static_$j.log ) || return 1
+  rm -rf $P/o-$j.Ktt_q${q}_w* $P/$j
+}
+case $STAGE in basis)
+  echo "=== kernel basis scan at q1: NG = $NG_LIST Ry ($(date +%H:%M)) ==="
+  for g in $NG_LIST; do
+    t=${g/./p}; j=kxb_$t
+    if [ ! -s $P/static_xs$j.log ]; then
+      if [ ! -s $P/${j}k/ndb.Chi ]; then
+        fresh $j; ( NG_X="$g Ry"; bse_in $P/$j.in kx 1 1 )
+        say "$j: export at q1, exchange/kernel $g Ry"
+        launch $j "$j,w" "ls $j/ndb.Chi >/dev/null 2>&1" one || { echo "  $g Ry: export failed (ill-conditioned basis?), next"; continue; }
+        mkdir -p $P/${j}k; cp $P/$j/ndb.Chi* $P/${j}k/; rm -f $P/$j/ndb.BS_*
+      fi
+      ( NG_X="$g Ry"; casida_static xs$j ${j}k 1 ) || { echo "  $g Ry: static Casida failed, next"; continue; }
+    fi
+  done
+  python3 - $P "$NG_LIST" <<'PY' | tee $P/basis_scan.dat
+import glob, sys
+p, gl = sys.argv[1], sys.argv[2].split()
+print('# kernel basis scan, q1: binding of the export BSE and of static Casida with fxc(w = 0)')
+print('#  NG[Ry]  in-plane G  all G   rcond(P)   E_A(BSE)  gap      Eb(BSE)  Eb(static)  ratio')
+for g in gl:
+    j = 'kxb_' + g.replace('.', 'p'); d = {}
+    for f in glob.glob(f'{p}/r-{j}_*'):
+        for l in open(f, errors='ignore'):
+            if 'in-plane G of the basis' in l: d['ns'], d['ng'] = map(int, l.split()[-2:])
+            if 'minimum rcond' in l: d['rc'] = float(l.split()[-1])
+            if 'lowest bright excitation (strength' in l: d['ea'] = float(l.split()[-1])
+            if 'lowest transition energy of the window' in l: d['gap'] = float(l.split()[-1])
+    try:
+        st = [l for l in open(f'{p}/static_xs{j}.log') if 'lowest bright:' in l][0]
+        d['ebs'] = float(st.split('=')[-1].split()[0])
+    except Exception:
+        pass
+    if 'ea' not in d:
+        print(f'  {g:>6s}  (no export: failed or ill-conditioned)'); continue
+    eb = d['gap'] - d['ea']; ebs = d.get('ebs', float('nan'))
+    print(f'  {g:>6s}  {d.get("ns", 0):9d}  {d.get("ng", 0):6d}  {d.get("rc", 0):9.2e}  {d["ea"]:8.4f}  {d["gap"]:7.4f}  {eb:7.4f}  {ebs:9.4f}  {ebs / eb:6.1%}')
+PY
+;; esac
+
+case $STAGE in wscan)
+  j=kxw_q$QW; NWS=$(python3 -c "print(int(round(($WHI - $WSTEP) / $WSTEP)) + 1)")
+  echo "=== kernel frozen at w = 0, $WSTEP..$WHI eV ($NWS + 1 values) at q$QW ($(date +%H:%M)) ==="
+  if [ ! -s $P/${j}k/ndb.Chi ]; then
+    fresh $j; ( XLO=$WSTEP XHI=$WHI XNS=$NWS; bse_in $P/$j.in kx $QW $QW )
+    say "$j: export at q$QW on $NWS undamped frequencies"
+    launch $j "$j,w" "ls $j/ndb.Chi >/dev/null 2>&1" one || exit 1
+    mkdir -p $P/${j}k; cp $P/$j/ndb.Chi* $P/${j}k/; rm -f $P/$j/ndb.BS_*
+  fi
+  EX=$(rep $j $QW 'lowest bright excitation (strength'); GQ=$(rep $j $QW 'lowest transition energy of the window')
+  if [ ! -s $P/wscan_q$QW.dat ]; then
+    c=xw$j; fresh $c; ( XLO=$WSTEP XHI=$WHI XNS=$NWS; bse_in $P/$c.in cas $QW $QW '% BSEChiKoutW' " 0.0 | $WHI | eV" '%' )
+    say "$c: Casida matrices with fxc(w) at every w"
+    launch $c "$c,${j}k,w" "ls o-$c.Ktt_q${QW}_w1 >/dev/null 2>&1" one || exit 1
+    ( cd $P && python3 $T/sc_scan.py o-$c.Ktt_q${QW}_transitions o-$c.Ktt_q${QW}_w* --out wscan_q$QW.dat \
+                --exciton $EX --delete > wscan_q$QW.log 2>&1 ) || { tail $P/wscan_q$QW.log; exit 1; }
+    rm -rf $P/$c
+  fi
+  grep "= w at\|BSE = \|jumps" $P/wscan_q$QW.log | sed 's/^/  /'
+  python3 - $P/wscan_q$QW.dat $EX $GQ $QW <<'PY'
+import sys
+import numpy as np
+f, ex, gap, q = sys.argv[1], float(sys.argv[2]), float(sys.argv[3]), sys.argv[4]
+x = np.loadtxt(f, ndmin=2); w, lb, ll = x[:, 0], x[:, 1], x[:, 3]
+i0 = np.argmin(abs(w)); ie = np.argmin(abs(w - ex))
+print(f'  kernel frozen at w = 0      : lowest bright {lb[i0]:.4f} eV, binding {gap - lb[i0]:.4f} eV ({(gap - lb[i0]) / (gap - ex):.0%} of the BSE {gap - ex:.4f} eV)')
+print(f'  kernel frozen at w = {w[ie]:.3f} : lowest bright {lb[ie]:.4f} eV, binding {gap - lb[ie]:.4f} eV (BSE exciton {ex:.4f} eV)')
+try:
+    import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(figsize=(6.4, 4.4))
+    lo, hi = min(lb.min(), ex) - 0.15, gap + 0.15
+    ok = (lb > lo) & (lb < hi)
+    ax.plot(w[ok], lb[ok], 'o', ms=3, color='#2a78d6', label='lowest bright eigenvalue, kernel frozen at ω')
+    ax.plot(w, w, '-', color='#888888', lw=1, label='λ = ω')
+    ax.axhline(ex, color='#eb6834', lw=1.2, ls='--', label=f'BSE exciton {ex:.3f} eV')
+    ax.axhline(gap, color='#1baf7a', lw=1.2, ls=':', label=f'gap of the window {gap:.3f} eV')
+    ax.set_xlim(0, w.max()); ax.set_ylim(lo, hi)
+    ax.set_xlabel('ω at which f_xc(q, ω) is frozen (eV)'); ax.set_ylabel('static Casida eigenvalue λ (eV)')
+    ax.set_title(f'q{q}: static Casida with the exact kernel at each ω')
+    ax.legend(fontsize=8, loc='lower left'); fig.tight_layout()
+    out = f.replace('.dat', '.png'); fig.savefig(out, dpi=150); print('  wrote', out)
+except Exception as e:
+    print('  no plot:', e)
+PY
+;; esac
+
+case $STAGE in static0)
+  [ -f $P/kx/ok ] || { echo "!!! no checked kernel in prod/kx: run STAGE=export"; exit 1; }
+  ETA0=${ETA0:-0.01}
+  echo "=== static response: BSE vs Casida with fxc(0), q1, broadening $ETA0 eV ($(date +%H:%M)) ==="
+  for j in bcp cas0; do
+    ls $P/o-$j.*_q1_* >/dev/null 2>&1 && continue
+    fresh $j; ( XDM=$ETA0; bse_in $P/$j.in $j 1 1 )
+    if [ $j = bcp ]; then launch $j "$j,w" "ls o-$j.*_q1_* >/dev/null 2>&1" one || exit 1
+    else launch $j "$j,kx,w" "ls o-$j.*_q1_* >/dev/null 2>&1" one || exit 1; fi
+    rm -rf $P/$j
+  done
+  python3 - $P <<'PY' | tee $P/static0.dat
+import glob, sys
+import numpy as np
+p = sys.argv[1]
+def spec(j):
+    f = sorted(glob.glob(f'{p}/o-{j}.*_q1_*'))[0]
+    return np.loadtxt(f)[:, :3]
+b, c = spec('bcp'), spec('cas0')
+print('# BSE (coupled, the export model) vs static Casida with fxc(0), q1: Re and Im of the response')
+print('#   w[eV]   Re BSE      Re Casida    rel.diff   Im BSE      Im Casida')
+for w0 in (0.0, 0.5, 1.0, 1.5):
+    i = np.argmin(abs(b[:, 0] - w0))
+    print(f'  {b[i, 0]:6.3f}  {b[i, 2]:10.5f}  {c[i, 2]:10.5f}  {abs(c[i, 2] - b[i, 2]) / abs(b[i, 2]):9.2e}  {b[i, 1]:10.5f}  {c[i, 1]:10.5f}')
+ib, ic = np.argmax(b[:, 1]), np.argmax(c[:, 1])
+print(f'# strongest peak: BSE {b[ib, 0]:.3f} eV, static Casida {c[ic, 0]:.3f} eV')
+print('# expected: equal at w = 0 (fxc(0) reproduces the static response by construction), different peaks')
+try:
+    import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(figsize=(6.4, 4.0))
+    ax.plot(b[:, 0], b[:, 1], color='#2a78d6', label='BSE')
+    ax.plot(c[:, 0], c[:, 1], color='#eb6834', label='Casida, static f_xc(ω = 0)')
+    ax.set_xlabel('ω (eV)'); ax.set_ylabel('Im α (q1)'); ax.legend(fontsize=8); fig.tight_layout()
+    fig.savefig(f'{p}/static0.png', dpi=150); print('# wrote', f'{p}/static0.png')
+except Exception as e:
+    print('# no plot:', e)
+PY
+;; esac
 
 # ---------- summary ----------
 case $STAGE in summary|all)

@@ -54,7 +54,20 @@ subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
  !
  velocity_correction=(index(mode,"opt")>0).and.(trim(global_gauge)=="velocity")
  !
- l_duplicate_mem_par=(ncpu>1.and.neigs_this_cpu==neig_total)
+ ! neig_shift<0: row-distributed eigenvectors (ChASE). Every rank must
+ ! contribute a partial dot for every eigenvalue; PP_redux completes the sum.
+ !
+ if (neig_shift<0) then
+   l_duplicate_mem_par=.false.
+   n_steps=neigs_this_cpu
+   step_shift=0
+   res_shift=0
+ else
+   l_duplicate_mem_par=(ncpu>1.and.neigs_this_cpu==neig_total)
+   n_steps=neigs_this_cpu
+   step_shift=neig_shift
+   res_shift=0
+ endif
  !
  if(BS_K_coupling) then 
    SL_H_dim=BS_H_dim
@@ -65,10 +78,6 @@ subroutine K_diago_R_res(mode, i_BS_mat, BS_E, &
  endif
  !
  allocate(tmp_res(SL_H_dim))
- !
- n_steps=neigs_this_cpu
- step_shift=neig_shift
- res_shift=0
  !
  if (l_duplicate_mem_par) then
    call PP_indexes_reset(px)

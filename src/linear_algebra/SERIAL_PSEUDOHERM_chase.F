@@ -14,6 +14,7 @@ subroutine SERIAL_PSEUDOHERM_chase(n,M,E,V_left,V_right,neig)
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,&
 &                         LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
+ use chase_diag
  !
 #include<y_memory.h>
  !
@@ -36,34 +37,43 @@ subroutine SERIAL_PSEUDOHERM_chase(n,M,E,V_left,V_right,neig)
  ! 
  E=0.0
  !
- nev = min(neig,n)
- nex = min(n-nev,nev)
+ ! AF: Warning if neig too large (eg > 25-30% of n)
+ ! AF: neig is here assumed to be the number of positive eigs
  !
+ nev = min(neig,n)
+ nex = min(100,nev)
+ !
+#ifdef _DOUBLE
  deg = 20
  tol = 1e-8
+#else
+ deg = 10
+ tol = 1e-4
+#endif
+ !
  mode = 'R'
  opt = 'S'
  qr = 'C'
  !
- allocate(Vtemp(n,nev+nex))
- allocate(Etemp(nev+nex))
+ YAMBO_ALLOC(Vtemp,(n,2*(nev+nex)))
+ YAMBO_ALLOC(Etemp,(2*(nev+nex)))
  Vtemp = 0.0
  Etemp = 0.0
  ! 
  call timing('ChASE_PS_INIT',OPR='start')
  !
 #if defined _DOUBLE
- call zchase_init_pseudo(n, nev, nex, M, n, Vtemp, Etemp, ierr)
+ call zchase_init_pseudo(n, nev, nex, M, n, Vtemp, Etemp, init=ierr)
 #else
- call cchase_init_pseudo(n, nev, nex, M, n, Vtemp, Etemp, ierr)
+ call cchase_init_pseudo(n, nev, nex, M, n, Vtemp, Etemp, init=ierr)
 #endif
  !
  call timing('ChASE_PS_INIT',OPR='stop')
  !
 #if defined _DOUBLE
- call zchase_pseudo(deg,tol,mode,opt,qr)
+ call zchase(deg,tol,mode,opt,qr)
 #else
- call cchase_pseudo(deg,tol,mode,opt,qr)
+ call cchase(deg,tol,mode,opt,qr)
 #endif
  ! 
 #if defined _DOUBLE
@@ -77,12 +87,16 @@ subroutine SERIAL_PSEUDOHERM_chase(n,M,E,V_left,V_right,neig)
  E(1:nev) = Etemp(1:nev)
  V_right(:,1:nev) = Vtemp(:,1:nev)
  !
+ ! Left eigenvectors: L = S R with S=diag(I,-I) for BSE pseudo-Hermitian.
+ ! If R=(X,Y), then L=(X,-Y). Must copy the upper half as well.
+ !
  is=n/2+1
  ie=n
+ V_left(1:n/2,1:nev) =  Vtemp(1:n/2,1:nev)
  V_left(is:ie,1:nev) = -Vtemp(is:ie,1:nev)
  !
- deallocate(Etemp)
- deallocate(Vtemp)
+ YAMBO_FREE(Etemp)
+ YAMBO_FREE(Vtemp)
  !
  if(.not.(l_nl_optics.or.l_real_time)) then
    call timing('SERIAL_PSEUDOHERM_chase',OPR='stop')

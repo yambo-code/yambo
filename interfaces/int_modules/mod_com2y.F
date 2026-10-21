@@ -90,7 +90,7 @@ module mod_com2y
      double_symmetries=.not.mag_syms
      if (mag_syms) i_time_rev=1
      !
-     ! Space Invertion (possible only for v >= 3.0.4)
+     ! Space Inversion (possible only for v >= 3.0.4)
      !
      call atoms_spatial_inversion()
      !

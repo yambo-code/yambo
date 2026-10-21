@@ -814,8 +814,8 @@ HDF5_OPT
 HDF5_INCS
 HDF5_LIBS
 def_chase
-CHASE_LIBS
 CHASE_INCS
+CHASE_LIBS
 CHASE_INCS_R
 CHASE_LIBS_R
 external_chase
@@ -7572,6 +7572,15 @@ aarch*linux* | arm*linux* )
     NETCDFFLAGS="-DgFortran"
     DEBUG_FLAGS="-Og -g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
+  *nvfortran* )
+    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp -c++libs"
+    FUFLAGS="-O0 -g -Mbackslash -cpp"
+    FCMFLAG="-Mnomain"
+    OMPFLAGS="-mp"
+    def_compiler="-D_PGI"
+    NETCDFFLAGS="-DpgiFortran"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame  -Mbackslash -cpp"
+    ;;
   *)
     SYSFLAGS="-g -O"
     FUFLAGS="-O0"
@@ -13985,6 +13994,7 @@ else $as_nop
   as_fn_error $? "lchase_f not found   " "$LINENO" 5
 fi
 
+        #AC_CHECK_FILES("${CHASE_LIBS_R}/libchase_cuda_kernels.a" ,[],[AC_ERROR([lchase_cuda not found])])
         as_ac_File=`printf "%s\n" "ac_cv_file_"${CHASE_LIBS_R}/libchase_cuda_kernels.a"" | $as_tr_sh`
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for \"${CHASE_LIBS_R}/libchase_cuda_kernels.a\"" >&5
 printf %s "checking for \"${CHASE_LIBS_R}/libchase_cuda_kernels.a\"... " >&6; }
@@ -14009,27 +14019,29 @@ then :
 cat >>confdefs.h <<_ACEOF
 #define `printf "%s\n" "HAVE_"${CHASE_LIBS_R}/libchase_cuda_kernels.a"" | $as_tr_cpp` 1
 _ACEOF
-
+have_chase_cuda=yes
 else $as_nop
-  as_fn_error $? "lchase_cuda not found" "$LINENO" 5
+  have_chase_cuda=no
 fi
 
 
-        CHASE_INCS="${CHASE_INCS} -I${CHASE_INCS_R}"
+        #AC_SUBST([CHASE_INCS],["${CHASE_INCS} -I${CHASE_INCS_R}"])
+        CHASE_INCS="$CHASE_INCS -I${CHASE_INCS_R}"
+        #
+        if test "$have_chase_cuda" = "yes" ; then
+          #AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels "])
+          CHASE_LIBS="${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels"
+        else
+          #AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f "])
+          CHASE_LIBS="${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f"
+        fi
+        #AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -lstdc++ "])
+        CHASE_LIBS="${CHASE_LIBS} -lstdc++"
 
-        CHASE_LIBS="${CHASE_LIBS} -L${CHASE_LIBS_R} -lchase_c -lchase_f -lchase_cuda_kernels "
-
-        CHASE_LIBS="${CHASE_LIBS} -lstdc++ "
-
-
-        CHASE_LIBS="${CHASE_LIBS}  "
-
+        ##AC_SUBST([CHASE_LIBS],["${CHASE_LIBS}  "])
         #-lcudart -lcublas -lcusolver -lcudart -lcurand -lnccl
         #LIBS="${LIBS} ${CHASE_LIBS} "
         #INCS="${INCS} ${CHASE_INCS} "
-
-	#AC_SUBST(LIBS)
-	#AC_SUBST(INCS)
 
         #Assuming a CUDA compiler...
         #LIBS+="-lcudart -lcublas -lcusolver -lcudart -lcurand -lnccl -lstdc++ "
@@ -14038,6 +14050,8 @@ fi
 else
         def_chase=""
 fi
+
+
 
 
 

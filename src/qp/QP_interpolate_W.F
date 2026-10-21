@@ -66,7 +66,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  !
  call section("+", "RIM-W interpolation")
  !
- call msg("r", trim(rimW_type))
+ call msg("r", trim(rimw_type))
  !
  !Load q_grid_b in rlu
  do idm=1,3
@@ -196,39 +196,43 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
          enddo
        enddo
        ! 
-       ! Calculation of next nearest neighbours vX needed only for the q=0 term 
-       ! and the neighboursing q-points for the wings and the head term 
-       !
-       do iqn2=1,7 
+       if ((trim(rimw_type) /= "semiconductor") .and. (.not. cut_is_slab)) then
          !
-         if (idx_q(1,iq1,iqn2)==1) then
-           idm=7
-           if (ig1==1) idm=13
-           do nn=1,idm
-             if (idx_q_2(1,iq1,nn) == iq) then
-               vX_nnn(nn,iq1,1,ig1,iomega) = X_mat(idx_G_2(1,iq1,nn),idx_G_2(ig1,iq1,nn),iomega)
-             endif
-           enddo
-           cycle  
-           !
-         endif
+         ! Calculation of next nearest neighbours vX needed only for the q=0 term 
+         ! and the neighboursing q-points (for the wings and the head term)
          !
-       enddo
-       !
-       if (ig1>1) then
          do iqn2=1,7 
            !
            if (idx_q(1,iq1,iqn2)==1) then
-             do nn=1,7
+             idm=7
+             if (ig1==1) idm=13
+             do nn=1,idm
                if (idx_q_2(1,iq1,nn) == iq) then
-                 vX_nnn(nn,iq1,ig1,1,iomega) = X_mat(idx_G_2(ig1,iq1,nn),idx_G_2(1,iq1,nn),iomega)
+                 vX_nnn(nn,iq1,1,ig1,iomega) = X_mat(idx_G_2(1,iq1,nn),idx_G_2(ig1,iq1,nn),iomega)
                endif
              enddo
              cycle  
+             !
            endif
            !
          enddo
-       endif 
+         !
+         if (ig1>1) then
+           do iqn2=1,7 
+             !
+             if (idx_q(1,iq1,iqn2)==1) then
+               do nn=1,7
+                 if (idx_q_2(1,iq1,nn) == iq) then
+                   vX_nnn(nn,iq1,ig1,1,iomega) = X_mat(idx_G_2(ig1,iq1,nn),idx_G_2(1,iq1,nn),iomega)
+                 endif
+               enddo
+               cycle  
+             endif
+             !
+           enddo
+         endif 
+         !
+       endif
        !
      enddo
      !
@@ -321,12 +325,23 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
           end if
           !
           !
-          if ((ig1==1) .and. (ig2==1)  .and. (iomega .ne. 1) .and. (iq2 .ne. 1) .and. (iq1 .ne. 1)) then
+          if ((ig1==1) .and. (ig2==1)  .and. (iomega .ne. 1) .and. (iq2 .ne. 1) .and. (iq1 .ne. 1)) then      
+           select case (trim(rimw_type))
+           case ("semiconductor")
+           if  (.not. cut_is_slab) then  
             iq3 = idx_q(ig1,iq2,nn)
             if (iq3==1) then
-              q0_snd_neighbour=.true.
+              q0_snd_neighbour=.true.  
               iq0=nn
             end if
+           end if
+           case ("metal")
+            iq3 = idx_q(ig1,iq2,nn)
+            if (iq3==1) then
+              q0_snd_neighbour=.true.  
+              iq0=nn
+            end if
+           end select
           end if           
         enddo
         !
@@ -458,10 +473,10 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
           !
 
           if ( (igr==1.and.igc==1) &
-&            .or. ( (igr==1) .and. (igc/= 1) .and. (cut_is_slab) &
+&            .or. ( (igr==1) .and. (igc .ne. 1) .and. (cut_is_slab) &
 &                   .and. (g_vec(igc,idir(2))==g_vec(igc,idir(3))) .and. (g_vec(igc,idir(2))==0) .and. (iomega==1) ) &
-&            .or. ( (igr==1) .and. (igc .ne. 1) .and. (cut_is_slab) .and. (g_vec(igc,idir(2))==g_vec(igc,idir(3))) &
-&                   .and. (g_vec(igc,idir(2))==0) .and. (iomega==1) ) ) then
+&            .or. ( (igc==1) .and. (igr .ne. 1) .and. (cut_is_slab) .and. (g_vec(igr,idir(2))==g_vec(igr,idir(3))) &
+&                   .and. (g_vec(igr,idir(2))==0) .and. (iomega==1) ) ) then
           !
           ! Special treatment of the q-->0 term
           !=====================================
@@ -751,7 +766,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
             end if
             !
             ! Wings 
-            if ((igr==1) .neqv. (igc==1)) then
+	if ((igr==1) .neqv. (igc==1)) then
               select case (trim(rimw_type))
               !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 ! case ("semiconductor")

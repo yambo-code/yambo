@@ -111,8 +111,13 @@ subroutine MATRIX_PAR_to_from_PAR( BLC_s, ROWS_s, COLS_s,&
    !
    subroutine elemental_transfer( )
      !
+     ! MPI_SEND/RECV need a contiguous buffer. A section of a larger
+     ! Fortran matrix is generally non-contiguous; pack via buf first
+     ! (same approach as MATRIX_BSE_to_PAR's M_tmp).
+     !
      use parallel_int, ONLY:PP_send_and_receive
-     integer              ::CROP_s(4),CROP_r(4)
+     integer :: CROP_s(4),CROP_r(4),nr,nc
+     complex(SP), allocatable :: buf(:,:)
      !
      if (myid/=i_snd_world.and.myid/=i_rcv_world) return
      !
@@ -121,12 +126,21 @@ subroutine MATRIX_PAR_to_from_PAR( BLC_s, ROWS_s, COLS_s,&
      CROP_r(1:2)=CROP(1:2)-ROWS_r(1)+1
      CROP_r(3:4)=CROP(3:4)-COLS_r(1)+1
      !
+     nr = CROP(2)-CROP(1)+1
+     nc = CROP(4)-CROP(3)+1
+     !
      if (myid==i_snd_world.and.i_snd_world==i_rcv_world) then
        BLC_r(CROP_r(1):CROP_r(2),CROP_r(3):CROP_r(4))=BLC_s(CROP_s(1):CROP_s(2),CROP_s(3):CROP_s(4))
      else if (myid==i_snd_world) then
-       call PP_send_and_receive("send",BLC_s(CROP_s(1):CROP_s(2),CROP_s(3):CROP_s(4)),i_rcv_world)
+       allocate(buf(nr,nc))
+       buf=BLC_s(CROP_s(1):CROP_s(2),CROP_s(3):CROP_s(4))
+       call PP_send_and_receive("send",buf,i_rcv_world)
+       deallocate(buf)
      else if (myid==i_rcv_world) then
-       call PP_send_and_receive("receive",BLC_r(CROP_r(1):CROP_r(2),CROP_r(3):CROP_r(4)),i_snd_world)
+       allocate(buf(nr,nc))
+       call PP_send_and_receive("receive",buf,i_snd_world)
+       BLC_r(CROP_r(1):CROP_r(2),CROP_r(3):CROP_r(4))=buf
+       deallocate(buf)
      endif
      !
    end subroutine

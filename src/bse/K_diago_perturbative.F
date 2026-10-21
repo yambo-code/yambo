@@ -53,21 +53,24 @@ subroutine K_diago_perturbative(pert_dim, what, i_BS_mat, &
     tmp_v_left => BS_VR
  endif
  !
- l_duplicate_mem_par=(ncpu>1.and.neigs_this_cpu==BSS_n_eig)
- !
+ l_duplicate_mem_par=.false.
  n_steps=neigs_this_cpu
  res_shift=0
- step_shift=neig_shift
- if (l_duplicate_mem_par) then
-   call PP_indexes_reset(px)
-   call PARALLEL_index(px,(/BSS_n_eig/),CONSECUTIVE=.TRUE.)
-   n_steps=px%n_of_elements(myid+1)
-   do i1=1,BSS_n_eig
-     if (.not.px%element_1D(i1)) cycle
-     res_shift=i1-1
-     step_shift=i1-1
-     exit
-   enddo
+ step_shift=0
+ if (neig_shift>=0) then
+   l_duplicate_mem_par=(ncpu>1.and.neigs_this_cpu==BSS_n_eig)
+   step_shift=neig_shift
+   if (l_duplicate_mem_par) then
+     call PP_indexes_reset(px)
+     call PARALLEL_index(px,(/BSS_n_eig/),CONSECUTIVE=.TRUE.)
+     n_steps=px%n_of_elements(myid+1)
+     do i1=1,BSS_n_eig
+       if (.not.px%element_1D(i1)) cycle
+       res_shift=i1-1
+       step_shift=i1-1
+       exit
+     enddo
+   endif
  endif
  !
  allocate(tmp_BS_RL(SL_H_dim))

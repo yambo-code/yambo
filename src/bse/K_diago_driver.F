@@ -29,6 +29,7 @@ subroutine K_diago_driver(iq,W,X_static)
 &                         BS_res_ares_n_mat,l_BS_optics,l_BS_dichroism,l_BS_ares_from_res !,BS_Blocks_symmetrize_K,&
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode, BSS_resize,BSS_n_eig_Input, &
 &                         BSS_write_eig_2_db,BSS_eh_W,BSS_n_eig,BS_E,BSS_slepc_pseudo_herm,write_bs_ev_par,&
+&                         write_bs_ev_row_par,&
 &                         BSS_ydiago_solver,BSS_first_eig,BSS_target_E,BSS_trange_E,BSS_er,BSS_slepc_precondition
  use X_m,            ONLY:X_t,X_OUTPUT_driver
  use electrons,      ONLY:n_sp_pol,n_spinor
@@ -39,6 +40,9 @@ subroutine K_diago_driver(iq,W,X_static)
  use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver,&
  &                        PL_diago_residual,K_diago_L_res,K_diago_R_res,&
  &                        K_diago_perturbative, K_stored_in_a_big_matrix
+#if defined _CHASE
+ use interfaces,     ONLY:CHASE_driver,K_stored_in_a_blacs_matrix
+#endif
 #if defined _YDIAGO
  use interfaces,     ONLY:YDIAGO_driver
 #endif
@@ -47,6 +51,8 @@ subroutine K_diago_driver(iq,W,X_static)
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
  use parallel_int,   ONLY:PP_wait
+ use parallel_m,     ONLY:ncpu
+ use matrix,         ONLY:PAR_matrix,MATRIX_reset
 #if defined _SLEPC && !defined _NL
  use interfaces,     ONLY:MATRIX_slepc
  use petscmat
@@ -75,6 +81,7 @@ subroutine K_diago_driver(iq,W,X_static)
  ! Work Space
  !
  integer          :: i_BS_mat,Input_n_eig, BS_mat_dim, neigs_this_cpu, neig_shift, elpa_solver = 2
+ integer          :: ncpu_blacs
  logical          :: K_is_not_hermitian,l_diago,l_diagx,l_chase,l_slepc,l_dip_more,l_target_erange,l_neig_input, &
  &                   l_ydiago,l_kerr_lft,l_kerr_rgt,l_abs_res
  character(1)     :: sec
@@ -102,6 +109,7 @@ subroutine K_diago_driver(iq,W,X_static)
  complex(SP),allocatable, target :: BS_V_left(:,:)
  complex(SP),allocatable, target :: BS_V_right(:,:)
  complex(SP),pointer             :: BS_overlap(:,:)   ! => null()
+ type(PAR_matrix)                :: M_blacs
  !
  ! Residuals, different for each response function
  !=================================================
@@ -224,22 +232,18 @@ subroutine K_diago_driver(iq,W,X_static)
      !   to a distributed (SLEPC shells / or eventually BLACS) matrix
      ! - The resulting matrix is symmetrized
      !
-     if (l_diago.or.l_diagx.or.l_chase) then
+     if (l_diago.or.l_diagx) then
        !
        call K_stored_in_a_big_matrix(i_BS_mat,BS_mat_dim,BS_V_right,iq,"DIAGO")
        !
-       ! These line will be needed when the BS kernel will not be folded in BS_mat. But in order to do so
-       ! also linear_algebra_is_parallel must be swiched off when K is not hermitian.
-       !=========================
-       !
-       !if (.not.linear_algebra_is_parallel) call K_stored_in_a_big_matrix(i_BS_mat,BS_V_right,iq,"DIAGO")
-       !
-#if defined _SCALAPACK
-       ! Here maybe the name "K_blacs_matrix(iq)" would probably be more appropiate
-       !if (     linear_algebra_is_parallel) call BS_Blocks_symmetrize_K()
-#endif
-       !
      endif
+     !
+#if defined _CHASE
+     if (l_chase) then
+       ncpu_blacs=ncpu
+       call K_stored_in_a_blacs_matrix(M_blacs,ncpu_blacs,i_BS_mat,BS_mat_dim,iq)
+     endif
+#endif
      !
 #if defined _SLEPC && !defined _NL
      if(l_slepc) then
@@ -294,19 +298,21 @@ subroutine K_diago_driver(iq,W,X_static)
        endif
 #endif
        !
-       YAMBO_ALLOC(BS_mat,(BS_mat_dim,BS_mat_dim))
-       BS_mat=BS_V_right
-       !
        if (l_diago) then
+         YAMBO_ALLOC(BS_mat,(BS_mat_dim,BS_mat_dim))
+         BS_mat=BS_V_right
          call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
+         YAMBO_FREE(BS_mat)
        endif
        !
+#if defined _CHASE
        if (l_chase) then
-         call LINEAR_ALGEBRA_driver(CHASE,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right,neig=BSS_n_eig)
+         call CHASE_driver(BS_mat_dim,BSS_n_eig,M_blacs,BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
          neigs_this_cpu = BSS_n_eig
+         neig_shift = -1
+         call MATRIX_reset(M_blacs)
        endif
-       !
-       YAMBO_FREE(BS_mat)
+#endif
        !
 #if defined _SLEPC && !defined _NL
        if (l_slepc) then
@@ -337,11 +343,15 @@ subroutine K_diago_driver(iq,W,X_static)
          neigs_this_cpu = BSS_n_eig
        endif
        !
+#if defined _CHASE
        if (l_chase) then
-         call LINEAR_ALGEBRA_driver(CHASE,M=BS_V_right,E_real=BS_E_real,neig=BSS_n_eig)
+         call CHASE_driver(BS_mat_dim,BSS_n_eig,M_blacs,BS_V_right,E_real=BS_E_real)
          BS_E=cmplx(BS_E_real,0._SP,kind=SP)
          neigs_this_cpu = BSS_n_eig
+         neig_shift = -1
+         call MATRIX_reset(M_blacs)
        endif
+#endif
        !
 #if defined _SLEPC && !defined _NL
        if(l_slepc) then
@@ -406,7 +416,7 @@ subroutine K_diago_driver(iq,W,X_static)
      if (K_is_not_hermitian) then
        !
        ! In the ydiago solver, the BS_overlap is an identity matrix.
-       if (.not.l_ydiago) call K_diago_overlap_matrix(BS_V_left,BS_V_right,BS_overlap)
+       if (.not.l_ydiago) call K_diago_overlap_matrix(BS_V_left,BS_V_right,BS_overlap,neig_shift<0)
        !
        ! Left residuals
        if(l_abs_res) then
@@ -437,6 +447,7 @@ subroutine K_diago_driver(iq,W,X_static)
      ! DS: this also should be changed according to the general structure
      if(l_BS_photolum) then
        if (l_ydiago) call error("PL not implemented in Ydiago solver")
+       if (neig_shift<0) call error("PL not implemented for row-distributed ChASE eigenvectors")
        if (K_is_not_hermitian) then
          call PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap)
        else
@@ -472,12 +483,23 @@ subroutine K_diago_driver(iq,W,X_static)
      call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
      io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
      &     BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL,&
-     &                                                   BS_mat=BS_V_right,write_ev=.not.l_ydiago)
+     &                                                   BS_mat=BS_V_right,write_ev=.not.l_ydiago.and..not.l_chase)
      !
      call PP_wait()
 #if defined _YDIAGO
      if (l_ydiago .and. BSS_write_eig_2_db) call write_bs_ev_par(iq, i_BS_mat, &
 &                             neigs_this_cpu, neig_shift, BS_V_right, BS_V_left)
+#endif
+#if defined _CHASE
+     ! Row-distributed ChASE evecs: parallel NetCDF dump along kcv (no gather)
+     if (l_chase .and. BSS_write_eig_2_db) then
+       if (K_is_not_hermitian) then
+         call write_bs_ev_row_par(iq,i_BS_mat,BS_V_right,BS_V_left)
+       else
+         call write_bs_ev_row_par(iq,i_BS_mat,BS_V_right)
+       endif
+       call PP_wait()
+     endif
 #endif
    endif
    !
@@ -548,6 +570,12 @@ subroutine K_diago_driver(iq,W,X_static)
            YAMBO_ALLOC(BS_corrections,(1,BSS_n_eig))
          endif
        endif
+       !
+#if defined _CHASE
+       if (l_chase) then
+         YAMBO_ALLOC(BS_V_right,(BS_mat_dim,BSS_n_eig))
+       endif
+#endif
        !
 #if defined _SLEPC && !defined _NL
        ! In the old diago case BS_V_right is allocated by K_stored_in_a_big_matrix

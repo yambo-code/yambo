@@ -65,7 +65,19 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  !
  velocity_correction=(index(mode,"opt")>0).and.(trim(global_gauge)=="velocity")
  !
- l_duplicate_mem_par=(ncpu>1.and.neigs_this_cpu==neig_total)
+ if (neig_shift<0) then
+   l_duplicate_mem_par=.false.
+   n_steps=neigs_this_cpu
+   step_shift=0
+   res_shift=0
+   neig_shift_loc=0
+ else
+   l_duplicate_mem_par=(ncpu>1.and.neigs_this_cpu==neig_total)
+   n_steps=neigs_this_cpu
+   step_shift=neig_shift
+   res_shift=0
+   neig_shift_loc=neig_shift
+ endif
  !
  if(BS_K_coupling) then 
    SL_H_dim=BS_H_dim
@@ -80,10 +92,6 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  if (trim(scheme)=="hermitian")     BS_R_tmp => BS_R_left
  if (trim(scheme)=="non-hermitian") allocate(BS_R_tmp(neig_total))
  !
- n_steps=neigs_this_cpu
- step_shift=neig_shift
- res_shift=0
- neig_shift_loc=neig_shift
  if (l_duplicate_mem_par) then
    call PP_indexes_reset(px)
    call PARALLEL_index(px,(/neig_total/),CONSECUTIVE=.TRUE.)
@@ -137,6 +145,14 @@ subroutine K_diago_L_res(mode, i_BS_mat, BS_E, &
  ! [2] BS_R_left(i)=BS_overlap(i,j)BS_R_tmp(j)
  !
  BS_R_left=cZERO
+ !
+ if (neig_shift<0) then
+   ! Row-distributed path: BS_R_tmp already reduced; do not redux again.
+   do i1=1,neig_total
+     BS_R_left(i1)=V_dot_V_omp(neig_total,BS_overlap(i1,:),BS_R_tmp)
+   enddo
+   return
+ endif
  !
  call live_timing('EPS L x overlap',n_steps)
  do i1=1, n_steps

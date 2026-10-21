@@ -424,6 +424,21 @@ above 1e-3. A negative `ElecTemp` keeps the temperature fixed but also freezes t
 partly filled bands at their T = 0 values (`src/setup/setup.F`); here that dropped the four
 transitions out of the thermally occupied band 28.
 
+The export therefore stores the occupations of its BSE levels in `ndb.Chi` (BSE bands, every
+IBZ k, the full and last occupied bands, the temperature), and the Casida run compares them
+with its own before the projection and the solver:
+
+```text
+[Chi/BSK] occupations vs the exporting BSE: max |df|, its and this temperature [K]
+```
+
+It stops when max |df| exceeds 1e-6 or the full / last occupied bands differ. Doped test: a
+Casida run 0.1 K warmer than its export (|df| = 7e-5) stops after 1 s; one at the same
+temperature (|df| = 0) runs and matches the BSE to 3e-5. In an insulator a 0.1 K difference
+leaves |df| = 0 (undoped WS2: passes, 5e-5 from the BSE). An `ndb.Chi` exported before this check
+has no occupations: the run warns and goes on. Yambo returns exit status 0 after an `[ERROR]`,
+so a script must look for the output files.
+
 Restrictions: one MPI rank (OpenMP threads parallelize the frequencies), coupling with
 the diagonalization solver, length gauge, scalar or spinor states (see "Spinor
 states" below; no collinear spin polarization, magnons or perturbative SOC), no
@@ -1042,6 +1057,9 @@ The existing variables and per-q fragment layout of `ndb.Chi` are retained:
   `CHI_G_PARAMETERS` = [norm tolerance, KS comparison tolerance, rcond
   threshold, chemical potential, kBT]. `CHI_OPTICAL_Q0` stores the optical
   field direction with Yambo's numerical q0 norm for q=0 projection.
+- `BSEChiOut` header only: `CHI_OCC_PARS` = [BSE bands (2), IBZ k, spins, full bands, last
+  occupied band, temperature] and `CHI_OCCUPATIONS` (bands, k, spin), the occupations of the
+  exporting BSE levels, checked by the Casida run.
 
 Older Chi files remain readable without the new optional metadata; absent
 conditioning diagnostics read as zero and absent G0 diagnostics as -1.

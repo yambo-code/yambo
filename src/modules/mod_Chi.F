@@ -95,6 +95,13 @@ module Chi_m
  logical,     allocatable :: Chi_dyn_filled(:,:)
  real(DP)                 :: Chi_dyn_c=0._DP
  !
+ ! Occupations of the BSE levels behind a BSEChiOut export: Ken%f on the BSE bands, every
+ ! IBZ k and spin, the full / partly filled bands and the temperature. The exact kernel
+ ! holds only with these occupations, so the Casida run (BSKmod="CHI") checks them.
+ real(SP), allocatable    :: Chi_occupations(:,:,:)
+ integer                  :: Chi_occ_bands(2)=0,Chi_occ_nk=0,Chi_occ_nsp=0,Chi_occ_nbf=0,Chi_occ_nbm=0
+ real(SP)                 :: Chi_occ_Tel=0._SP
+ !
  contains
    !
    subroutine Chi_alloc(ng,nw)
@@ -114,6 +121,23 @@ module Chi_m
      YAMBO_FREE(Chi_fxc)
      YAMBO_FREE(Chi_rcond)
    end subroutine Chi_free
+   subroutine Chi_occ_alloc()
+     call Chi_occ_free(.FALSE.)
+     YAMBO_ALLOC(Chi_occupations,(Chi_occ_bands(2)-Chi_occ_bands(1)+1,Chi_occ_nk,Chi_occ_nsp))
+   end subroutine Chi_occ_alloc
+   !
+   subroutine Chi_occ_free(reset)
+     logical, intent(in) :: reset
+     YAMBO_FREE(Chi_occupations)
+     if (.not.reset) return
+     Chi_occ_bands=0
+     Chi_occ_nk=0
+     Chi_occ_nsp=0
+     Chi_occ_nbf=0
+     Chi_occ_nbm=0
+     Chi_occ_Tel=0._SP
+   end subroutine Chi_occ_free
+   !
    subroutine Chi_dyn_free()
      if (allocated(Chi_dyn_V)) deallocate(Chi_dyn_V)
      if (allocated(Chi_dyn_s)) deallocate(Chi_dyn_s)

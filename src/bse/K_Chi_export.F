@@ -39,7 +39,8 @@ subroutine K_Chi_export(iq,Ken,Xk,W)
  use pars,           ONLY:SP,DP,pi,schlen,cZERO
  use units,          ONLY:HA2EV
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
- use electrons,      ONLY:levels,n_spinor
+ use electrons,      ONLY:levels,n_spinor,n_sp_pol
+ use D_lattice,      ONLY:Tel
  use R_lattice,      ONLY:bz_samp,bare_qpg,qindx_X,g_vec
  use com,            ONLY:msg,isec
  use stderr,         ONLY:intc,real2ch,STRING_match
@@ -52,6 +53,8 @@ subroutine K_Chi_export(iq,Ken,Xk,W)
 &                         Chi_QP_applied,Chi_QP_action,Chi_convention,Chi_G_mode,Chi_G_axis,Chi_G_db,&
 &                         Chi_optical_q0,Chi_optical_q0_known,Chi_G0_error,Chi_rcond_floor,&
 &                         Chi_dyn_V,Chi_dyn_filled,Chi_dyn_c,Chi_dyn_free
+ use Chi_m,          ONLY:Chi_occupations,Chi_occ_bands,Chi_occ_nk,Chi_occ_nsp,Chi_occ_nbf,Chi_occ_nbm,&
+&                         Chi_occ_Tel,Chi_occ_alloc,Chi_occ_free
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_WR_CL,OP_APP_CL,REP
  use TDDFT_Chi_dynamic_m, ONLY:TDDFT_Chi_full_response,TDDFT_Chi_full_bubble,TDDFT_Chi_kernel_from_response,&
@@ -371,9 +374,19 @@ subroutine K_Chi_export(iq,Ken,Xk,W)
  ! One header per run (it holds |q+G| of every q); each q appends its fragment. Run q=1
  ! first in a multi-q job (BSEQptR 1 | n) to keep the optical q0 of the header.
  if (.not.header_done) then
+   ! Occupations of these BSE levels, checked by the Casida run (BSKmod="CHI")
+   Chi_occ_bands=BS_bands
+   Chi_occ_nk=Ken%nk
+   Chi_occ_nsp=n_sp_pol
+   Chi_occ_nbf=minval(Ken%nbf(:n_sp_pol))
+   Chi_occ_nbm=maxval(Ken%nbm(:n_sp_pol))
+   Chi_occ_Tel=Tel
+   call Chi_occ_alloc()
+   Chi_occupations=Ken%f(BS_bands(1):BS_bands(2),:,:)
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
    io_err=io_Chi(X_io,W_io,ID)
    if (io_err<0) call error('[Chi/BSK] cannot write the ndb.Chi header')
+   call Chi_occ_free(.TRUE.)
    header_done=.TRUE.
  endif
  call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=ID)

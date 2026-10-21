@@ -16,7 +16,7 @@ integer function io_Chi(X,Xw,ID)
  !            2*iq+1   -> per-q matrices
  !
  use pars,          ONLY:SP,schlen
- use units,         ONLY:HA2EV
+ use units,         ONLY:HA2EV,HA2KEL
  use R_lattice,     ONLY:g_vec,bare_qpg,nqibz
  use X_m,           ONLY:X_t
  use frequency,     ONLY:w_samp
@@ -25,6 +25,8 @@ integer function io_Chi(X,Xw,ID)
  use Chi_m,         ONLY:Chi_G_mode,Chi_G_db,Chi_G_norm_tol,Chi_G_check_tol,Chi_rcond_floor,&
 &                        Chi_G_mu,Chi_G_kbt,Chi_G0_error,Chi_rcond
  use Chi_m,         ONLY:Chi_G_axis,Chi_optical_q0,Chi_optical_q0_known
+ use Chi_m,         ONLY:Chi_occupations,Chi_occ_bands,Chi_occ_nk,Chi_occ_nsp,Chi_occ_nbf,Chi_occ_nbm,&
+&                        Chi_occ_Tel,Chi_occ_alloc,Chi_occ_free
  use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_header,io_fragment,&
 &                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental
  use IO_m,          ONLY:io_sec,io_com,io_status,write_is_on,read_is_on,NONE,frag_RESPONSE,&
@@ -134,6 +136,21 @@ integer function io_Chi(X,Xw,ID)
      call io_elemental(ID,VAR='',VAR_SZ=0,MENU=0)
      Chi_optical_q0_known=.TRUE.
    endif
+   ! Occupations of the BSE levels behind a BSEChiOut export (array after |q+G|).
+   ! Databases without them remain readable and are not checked.
+   if (read_is_on(ID)) call Chi_occ_free(.TRUE.)
+   if ((write_is_on(ID).and.allocated(Chi_occupations)).or.&
+&      (read_is_on(ID).and.variable_exist(ID,'CHI_OCC_PARS'))) then
+     call io_elemental(ID,VAR='CHI_OCC_PARS',VAR_SZ=7,MENU=0)
+     call io_elemental(ID,I1=Chi_occ_bands,VAR='Occupations: bands               ',DESCRIPTOR=Chi_desc)
+     call io_elemental(ID,I0=Chi_occ_nk)
+     call io_elemental(ID,I0=Chi_occ_nsp)
+     call io_elemental(ID,I0=Chi_occ_nbf,VAR='Occupations: full bands         ',DESCRIPTOR=Chi_desc)
+     call io_elemental(ID,I0=Chi_occ_nbm,VAR='Occupations: last occupied band ',DESCRIPTOR=Chi_desc)
+     call io_elemental(ID,R0=Chi_occ_Tel,UNIT=HA2KEL,&
+&         VAR='Occupations: temperature',TERMINATOR='K',DESCRIPTOR=Chi_desc)
+     call io_elemental(ID,VAR='',VAR_SZ=0,MENU=0)
+   endif
    !
    io_Chi=io_status(ID)
    if (io_Chi/=0) goto 1
@@ -168,6 +185,12 @@ integer function io_Chi(X,Xw,ID)
 &        call error('[Chi] stored |q+G| differs from the current Coulomb normalization/cutoff')
    endif
    YAMBO_FREE(qpg_disk)
+   !
+   if (Chi_occ_bands(1)>0) then
+     if (read_is_on(ID)) call Chi_occ_alloc()
+     call def_variable_bulk(ID,'CHI_OCCUPATIONS',4,(/Chi_occ_bands(2)-Chi_occ_bands(1)+1,Chi_occ_nk,Chi_occ_nsp/),SP)
+     call  io_variable_bulk(ID,4,R3=Chi_occupations)
+   endif
    !
    if (.not.any((/io_sec(ID,:)==2/))) then
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)

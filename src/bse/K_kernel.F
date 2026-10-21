@@ -10,13 +10,14 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  ! K = <2V-W> for n_spin=1; K=<V-W> for n_spin>1
  !
  use pars,          ONLY:SP,DP,schlen,pi,cZERO,cI
+ use units,         ONLY:HA2KEL
  use LOGO,          ONLY:pickup_a_random
  use drivers,       ONLY:l_bs_fxc,l_tddft,l_rim_w
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_spin,n_spinor,n_sp_pol
  use FFT_m,         ONLY:fft_size
  use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G,TDDFT_ALDA_eh_space_R_kernel
- use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
+ use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab,Tel
  use R_lattice,     ONLY:qindx_X,bz_samp,&
 &                        qindx_B,qindx_B_max,qindx_B_load,RIM_W,RIM_W_d,&
 &                        RIM_ng,RIM_W_is_diagonal,RIM_W_ng,bare_qpg
@@ -55,6 +56,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use parser_m,      ONLY:parser
  use Chi_m,         ONLY:Chi_ng,Chi_n_freqs,Chi_freqs,Chi_fxc,Chi_free
  use Chi_m,         ONLY:Chi_optical_q0,Chi_optical_q0_known,Chi_G_mode,Chi_G_db
+ use Chi_m,         ONLY:Chi_occupations,Chi_occ_bands,Chi_occ_nk,Chi_occ_nsp,Chi_occ_nbf,Chi_occ_nbm,&
+&                        Chi_occ_Tel,Chi_occ_free
  use Chi_m,         ONLY:Chi_dyn_V,Chi_dyn_s,Chi_dyn_filled,Chi_dyn_c,Chi_dyn_free
  use BS_solvers,    ONLY:BSS_q0
  use TDDFT_Chi_Fourier_m, ONLY:TDDFT_Chi_pair_G
@@ -119,7 +122,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  integer :: ID_Chi,io_Chi_err,chi_ierr,ig,jg,chi_grp_p,i_T_dyn,i_ra
  integer, external :: io_Chi
  logical :: l_KfnQPdb,l_chi_vtx,l_chi_vtx_only
- real(SP) :: chi_norm,chi_antiherm,chi_scale,chi_raw_norm,chi_raw_antiherm,chi_diff
+ real(SP) :: chi_norm,chi_antiherm,chi_scale,chi_raw_norm,chi_raw_antiherm,chi_diff,chi_occ_diff
  complex(DP) :: chi_pair
  complex(DP), allocatable :: Chi_static(:,:)
  complex(SP), allocatable :: chi_R_res(:,:),chi_R_cpl(:,:)
@@ -390,6 +393,23 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      endif
      if (trim(Chi_G_mode)=='BSE-KS') call msg('r','[Chi/BSK] kernel from BSEChiOut= "full": it carries the QP shift, '//&
 &      'so binding energies are measured from the QP gap of the exporting BSE, not from these KS transitions')
+     ! The exported kernel is exact only with the occupations of its BSE: with partly filled
+     ! bands the temperature of each job decides them (stop before the projection and solver)
+     if (allocated(Chi_occupations)) then
+       if (any(Chi_occ_bands/=BS_bands).or.Chi_occ_nk/=Ken%nk.or.Chi_occ_nsp/=n_sp_pol) &
+&        call error('[Chi/BSK] the ndb.Chi occupations are on other bands, k points or spins')
+       chi_occ_diff=maxval(abs(Chi_occupations-Ken%f(BS_bands(1):BS_bands(2),:,:)))/spin_occ
+       call msg('r','[Chi/BSK] occupations vs the exporting BSE: max |df|, its and this temperature [K]',&
+&               (/chi_occ_diff,Chi_occ_Tel*HA2KEL,Tel*HA2KEL/))
+       if (chi_occ_diff>1.E-6_SP.or.Chi_occ_nbf/=minval(Ken%nbf(:n_sp_pol)).or.&
+&          Chi_occ_nbm/=maxval(Ken%nbm(:n_sp_pol))) &
+&        call error('[Chi/BSK] occupations differ from those of the exporting BSE. Use its ElecTemp: a job '//&
+&                   'reading the databases of another job takes their temperature; a negative ElecTemp in both '//&
+&                   'runs keeps it fixed')
+       call Chi_occ_free(.TRUE.)
+     else if (index(Chi_G_mode,'BSE-')==1) then
+       call warning('[Chi/BSK] ndb.Chi from an export without stored occupations: they are not checked')
+     endif
      call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/2*iq,2*iq+1/),ID=ID_Chi)
      io_Chi_err=io_Chi(X,Chi_w,ID_Chi)
      if (io_Chi_err/=0) call error('[Chi/BSK] cannot read ndb.Chi q fragment (IO code '//trim(intc(io_Chi_err))//')')

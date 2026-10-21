@@ -3,7 +3,7 @@
 This file passes the technical work on this Yambo fork to a new Claude Code session.
 The other session keeps the cluster runs, convergence, results and explanations.
 This session works on the theory, the Fortran, the tests and new features.
-Read this file first, then `doc/greens_function_fxc.md`, which is the full reference at 1139 lines.
+Read this file first, then `doc/greens_function_fxc.md`, which is the full reference at 1157 lines.
 
 ## 1. Goal and working rules
 
@@ -190,7 +190,7 @@ Monolayer WS2:
 
 1. **Doping (needed next).** The BSE route already accepts partial occupations; the G routes do not. Validated on a doped 6×6 WS2 SOC test (doc, "Partly filled bands"): Casida with the exported fxc(ω) reproduces the BSE at q1 and q2 when both runs use the same occupations.
    - Decisions (user): keep the standard temperature (300 K, set by `p2y` because QE uses smearing); Drude term on hold; doped-aware `[BSE]` report done (`K_diago_driver.F`, `binding_report`, interband lines).
-   - Proposed, not decided: a fail-fast check that the Casida run uses the occupations of the exporting BSE (job chains can differ by 0.1 K, see the doc).
+   - Occupation check (user approved, done): the export stores its BSE occupations in `ndb.Chi` (`CHI_OCCUPATIONS`, `io_Chi.F`), and `K_kernel.F` stops a Casida run whose occupations differ (job chains can differ by 0.1 K, see the doc). Yambo exits with status 0 after `[ERROR]`: scripts must check outputs.
    - Not tested: the "exc" kernel with QP energies (QP corrections recompute the BSE occupations, `QP_apply.F:175-176`), low temperature, q beyond 2.
    - Upstream BSE, ground state: `src/bse/K_Transition_check.F`.
      - f_t = (f_v − f_c)/spin_occ (line 64).

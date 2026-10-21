@@ -2,8 +2,8 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
-#SBATCH --mem=32G
-#SBATCH --time=02:00:00
+#SBATCH --mem=64G
+#SBATCH --time=12:00:00
 #SBATCH --partition=normal
 #SBATCH --job-name=p2y
 #SBATCH --output=p2y.o%A
@@ -17,6 +17,10 @@
 #
 #   cd tmp/ws2.save && DEST=~/wse2ws2/WS2/prod/k24 sbatch ~/yambo-cpu/sbin/chi_tools/jobs/p2y.sh
 #
+# p2y is serial and its time grows with the wavefunction data (k-points x bands x plane waves x spinor
+# components): a SOC nscf with many bands can take hours. For a BSE SAVE, keep nbnd to what the BSE
+# needs (screening bands + a margin, e.g. ~250 with SOC). Progress: tail p2y.log in the .save folder.
+#
 # p2y comes from the cluster's Yambo 5.2.3 module (the 5.3 build has no p2y); Yambo 5.3 reads its
 # SAVE. The setup runs with the yambo of the production runs.
 
@@ -26,8 +30,10 @@ cd "${SLURM_SUBMIT_DIR:-.}"
 [ -e "$DEST/SAVE" ] && { echo "!!! $DEST/SAVE exists: move it away first"; exit 1; }
 
 module purge
+module load netcdf/netcdf-fortran-4.6.1-openmpi-4.1.5-gcc-12.2.0   # the 5.2.3 module needs it loaded first
 module load yambo/yambo-5.2.3-openmpi-4.1.5-gcc-12.2.0
 echo "p2y: $(which p2y)"
+echo "QE data: $(du -sh . | cut -f1), $(ls wfc* 2>/dev/null | wc -l) wavefunction files"
 rm -rf SAVE
 p2y > p2y.log 2>&1 || { tail -20 p2y.log; exit 1; }
 [ -f SAVE/ns.db1 ] || { echo "!!! p2y wrote no SAVE/ns.db1"; tail -20 p2y.log; exit 1; }

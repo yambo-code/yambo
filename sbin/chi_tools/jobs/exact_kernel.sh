@@ -706,10 +706,12 @@ case $STAGE in summary|all)
     [ -s xq_dispersion_omega.dat ] && python3 $T/fxc_export.py kx --at xq_dispersion_omega.dat --sym --inplane --out fxc_GGq_scw > fxc_scw.out
   fi
   python3 - "$P" "$(basename "$TOP")${GWDIR:+ (GW on the ${GGRID}x$GGRID grid of $GWDIR, corrections interpolated: $QPINTERP)}" "$GDIR" "$GIND" "$SF" "$NGRID" "$BLO-$BHI" \
-    "$(awk -F= '/BSENGexx/{print $2; exit}' bse_ref.in 2>/dev/null)" "$(awk -F= '/BSENGexx/{print $2; exit}' kx_bse.in 2>/dev/null)" > summary.txt <<'PY'
+    "$(awk -F= '/BSENGexx/{print $2; exit}' bse_ref.in 2>/dev/null)" "$(awk -F= '/BSENGexx/{print $2; exit}' kx_bse.in 2>/dev/null)" \
+    "$GP/o-gw.qp" "$VB" "$CB" "$GW_BANDS${GTERM:+ + $GTERM}" "${GGRID}x$GGRID" > summary.txt <<'PY'
 import glob, sys
 import numpy as np
-p, name, gdir, gind, sf, ngrid, bands, exx, ngx = sys.argv[1:]
+p, name, gdir, gind, sf, ngrid, bands, exx, ngx, gwqp, vb, cb, gwb, ggrid = sys.argv[1:]
+vb, cb = int(vb), int(cb)
 def rep(job, key, q=1):
     i, v = None, None
     for f in glob.glob(f'{p}/r-{job}_*'):
@@ -720,6 +722,23 @@ def rep(job, key, q=1):
 num = lambda l, k=-1: float(l.split()[k]) if l else float('nan')
 print(f'{name}: {ngrid}x{ngrid} k grid, {"spinors (SOC)" if sf == "2" else "no SOC"}, BSE bands {bands}')
 print(f'QP gap (G0W0, RIM-W) of the GW grid: direct {gdir} eV; QP indirect gap of this grid {gind} eV')
+# G0W0 at the k of the smallest direct gap of the GW grid: KS and QP energies, corrections
+try:
+    E0, dE = {}, {}
+    for l in open(gwqp):
+        if l.lstrip().startswith('#') or not l.strip(): continue
+        x = l.split(); k, b = int(float(x[0])), int(float(x[1])); E0[(k, b)] = float(x[2]); dE[(k, b)] = float(x[3])
+    ks = sorted({k for k, b in E0 if (k, vb) in E0 and (k, cb) in E0})
+    kg = min(ks, key=lambda k: E0[(k, cb)] + dE[(k, cb)] - E0[(k, vb)] - dE[(k, vb)])
+    gks = E0[(kg, cb)] - E0[(kg, vb)]; gqp = gks + dE[(kg, cb)] - dE[(kg, vb)]
+    print(f'G0W0 (PPA, {gwb} bands, {ggrid} grid), at k{kg} of that grid (the direct gap):')
+    print(f'    KS gap {gks:.4f} eV -> QP gap {gqp:.4f} eV (opening {gqp - gks:.4f} eV); '
+          f'dE(VB {vb}) {dE[(kg, vb)]:+.4f} eV, dE(CB {cb}) {dE[(kg, cb)]:+.4f} eV')
+    dv = [dE[(k, vb)] for k in ks]; dc = [dE[(k, cb)] for k in ks]
+    print(f'    corrections over the {len(ks)} k of the GW grid: dE(VB) {min(dv):+.4f}..{max(dv):+.4f} eV, '
+          f'dE(CB) {min(dc):+.4f}..{max(dc):+.4f} eV')
+except Exception as e:
+    print('G0W0 table not read:', e)
 for job, what in (('bse_ref', f'reference BSE (TDA, exchange{exx} on all G)'),
                   ('kx_bse', f'export BSE (coupling, exchange{ngx} on in-plane G), q1')):
     a = num(rep(job, 'lowest bright excitation (strength')); g = num(rep(job, 'lowest transition energy of the window'))
@@ -767,7 +786,16 @@ if rows:
         print('    (at q1: the partner of a degenerate pair polarized across the field direction, or spin-forbidden with SOC)')
     try:
         x = np.loadtxt(f'{p}/xq_dispersion.dat', ndmin=2)
-        print(f'q1: Eb(A) self-consistent {x[0, 9]:.4f} eV (BSE {x[0, 8]:.4f}), static fxc(q1, 0) {x[0, 10]:.4f} eV')
+        print(f'q1, A exciton (lowest bright), energies and binding (gap of the window {x[0, 2]:.4f} eV):')
+        print(f'    BSE (export)                     {x[0, 4]:.4f} eV   Eb {x[0, 8]:.4f} eV')
+        print(f'    TDDFT, exact fxc(w), self-cons.  {x[0, 6]:.4f} eV   Eb {x[0, 9]:.4f} eV')
+        print(f'    TDDFT, static fxc(q1, 0)         {x[0, 7]:.4f} eV   Eb {x[0, 10]:.4f} eV ({x[0, 10] / x[0, 8]:.1%} of the BSE)')
+        ok = np.isfinite(x[:, 6])
+        if ok.sum() > 1:
+            i = np.nanargmin(x[:, 3])
+            print(f'all {len(x)} q: lowest exciton {x[i, 3]:.4f} eV at q{int(x[i, 0])} (|q| = {x[i, 1]:.4f} bohr^-1); '
+                  f'static fxc(q, 0) binds {np.nanmin(x[:, 10]):.4f}..{np.nanmax(x[:, 10]):.4f} eV '
+                  f'(BSE {np.nanmin(x[:, 8]):.4f}..{np.nanmax(x[:, 8]):.4f} eV)')
     except Exception:
         pass
 else:

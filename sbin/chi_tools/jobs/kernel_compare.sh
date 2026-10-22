@@ -30,6 +30,10 @@
 #  changes with the number of G (see doc/greens_function_fxc.md); ALDA is run in
 #  transition space. BSfxc does not work in Yambo 5.3.
 #
+#  exact kernel spectrum: the exact kernel ("exc") exported on the same broadened grid, then Casida with
+#                fxc(w) (kc_exact): the curve that must lie on the BSE (plot_kernels.py, panel a)
+#  ONLY=exact runs just that (kc_sex, kc_exx, kc_exact) and rewrites the table from the runs already there.
+#
 # Output: kernel_compare.dat (kernel, A energy, binding) and the o-kc_* spectra.
 
 BANDS=${BANDS:-"11 | 16"}
@@ -165,13 +169,23 @@ PY2
 read A0 AX WX SRC <<< $(kx_alpha)
 
 # transition space
-bse_in kc_sex.in SEX "BSENGBlk= $WBLK" "${EXTRA[@]}"; run kc_sex "kc_sex,w_em1s"
+if [ "${ONLY:-}" != exact ] || ! ls o-kc_sex.*_q1_* >/dev/null 2>&1; then
+  bse_in kc_sex.in SEX "BSENGBlk= $WBLK" "${EXTRA[@]}"; run kc_sex "kc_sex,w_em1s"
+fi
 if [ "$WX" = nan ]; then
   EBSE=$(grep -h "lowest bright excitation (strength" r-kc_sex_* 2>/dev/null | head -1 | awk '{print $NF}')
   read A0 AX WX SRC <<< $(kx_alpha "$EBSE")
 fi
 echo "=== exact kernel at q1: alpha(0) = $A0, alpha(E_X = $WX eV, from $SRC) = $AX ==="
 [ "$AX" = nan ] && echo "!!! alpha(E_X) not available (E_X from $SRC): the LRC run at alpha(E_X) is skipped"
+# exact kernel on the broadened grid of these runs, and Casida with it: the spectrum to compare
+bse_in kc_exx.in SEX "BSENGBlk= $WBLK" "${EXTRA[@]}" 'BSEChiOut= "exc"'
+if run kc_exx "kc_exx,w_em1s"; then
+  rm -rf kx_exact; mkdir -p kx_exact; cp kc_exx/ndb.Chi* kx_exact/; rm -rf kc_exx/ndb.BS_*
+  bse_in kc_exact.in CHI "${EXTRA[@]}" BSEChiDyn; run kc_exact "kc_exact,kx_exact"
+  bse_in kc_exst.in CHI "${EXTRA[@]}";            run kc_exst "kc_exst,kx_exact"      # the static fxc(0)
+fi
+if [ "${ONLY:-}" != exact ]; then
 bse_in kc_hart.in Hartree "${EXTRA[@]}";            run kc_hart kc_hart
 bse_in kc_alda.in ALDA "${EXTRA[@]}";               run kc_alda kc_alda
 if [ "${MDR:-1}" = 1 ]; then
@@ -201,6 +215,7 @@ done
 for p in EMP RBO CUR JGM; do
   chi_in kc_pf$p.in PF "PF_alpha= \"$p\""; run kc_pf$p kc_pf$p
 done
+fi   # ONLY=exact
 
 python3 - "$A0" "$AX" <<'PY'
 import glob, re, sys

@@ -84,12 +84,24 @@ lrc_job = lambda al: f'kc_lrc{next(n for n in [f"{al:g}", f"{al:.4f}", f"{al}"] 
 
 # --- figure 1: spectra by family ---
 ip = spectrum('kc_ip')
-xw = spectrum('xw_q1')                            # exact kernel fxc(w), Casida at q1 (xq_dispersion)
-if xw is not None:                                # it must reproduce the BSE: same system and settings
-    w, y = xw; sel = (w > EA - 0.3) & (w < EA + 0.3)
-    if not sel.any() or abs(w[sel][np.argmax(y[sel])] - EA) > 0.02:
-        print(f'o-xw_q1.eps* does not peak at the BSE exciton ({EA:.3f} eV): not used (other run or settings?)')
-        xw = None
+# exact kernel fxc(w), Casida at q1: a BROADENED run over the whole window (fq_export.sh: fqx_cas), else
+# the xq_dispersion scan run (xw_q1), which is undamped and covers only the scan window: a few bare poles,
+# not a spectrum. A curve is used only if it peaks at the BSE exciton with the BSE's height (within 30%).
+bse_s = spectrum('kc_sex')
+hb = max(bse_s[1][(bse_s[0] > EA - 0.1) & (bse_s[0] < EA + 0.1)]) if bse_s is not None else np.nan
+xw, xw_job = None, None
+for job in ('kc_exact', 'fqx_cas', 'xw_q1'):
+    c = spectrum(job)
+    if c is None:
+        continue
+    w, y = c; sel = (w > EA - 0.1) & (w < EA + 0.1)
+    if sel.sum() < 5 or abs(w[sel][np.argmax(y[sel])] - EA) > 0.02 or not (0.7 < y[sel].max() / hb < 1.3) \
+            or w.min() > EA - 0.2 or w.max() < gap + 0.2:
+        print(f'o-{job} spectrum: not a broadened spectrum peaking at the BSE exciton ({EA:.3f} eV, height {hb:.2f}) over the window: not used')
+        continue
+    xw, xw_job = c, job; print(f'exact kernel fxc(w) spectrum: o-{job}'); break
+if xw is None:
+    print('no usable exact-kernel spectrum: run fq_export.sh (fqx_cas, broadened Casida with the exported kernel) in --dirs')
 emin = a.emin or (EA - 0.4); emax = a.emax or (gap + 0.6)
 
 def style(ax, title):
@@ -119,11 +131,14 @@ def ylim_of(curves):
 
 fams = []
 f1 = [('exact fxc(w), Casida', xw, CAT[0], (0, (5, 2))) if xw is not None else None,
+      ('exact fxc(0), static', spectrum('kc_exst'), CAT[0], ':'),
       ('MDR fxc(w)', spectrum('kc_mdr'), CAT[1], '-'),
       ('MDR fxc(0), static', spectrum('kc_mdrst'), CAT[2], '-'),
       ('NQ fxc(w)', spectrum('kc_nq'), CAT[1], ':'),
       ('NQ fxc(0), static', spectrum('kc_nqst'), CAT[2], ':')]
-fams.append(('a  Frequency-dependent kernels from the BSE (exact, MDR, NQ) and their static limit', [c for c in f1 if c and c[1] is not None]))
+f1 = [c for c in f1 if c and c[1] is not None]
+fams.append(('a  Kernels from the BSE (' + ', '.join(k for k, t in (('exact', 'exact'), ('MDR', 'MDR'), ('NQ', 'NQ'))
+             if any(c[0].startswith(t) for c in f1)) + ') and their static limit', f1))
 pick = []
 for al, n in lrc:
     tag = n.split('(')[-1] if '(' in n else ''
@@ -161,7 +176,7 @@ fig.tight_layout(); fig.savefig('kernel_spectra.png', dpi=180, facecolor=SURF); 
 jobs = {'BSE (SEX), reference': 'kc_sex', 'RPA (Hartree), transition space': 'kc_hart', 'ALDA, transition space': 'kc_alda',
         'MDR kernel fxc(0), static': 'kc_mdrst', 'MDR kernel fxc(w)': 'kc_mdr', 'IP': 'kc_ip', 'RPA, G space': 'kc_rpa',
         'NQ kernel fxc(0), static': 'kc_nqst', 'NQ kernel fxc(w)': 'kc_nq',
-        'exact kernel fxc(w), self-consistent': 'xw_q1' if xw is not None else '-'}
+        'exact kernel fxc(w), self-consistent': xw_job if xw is not None else '-'}
 order = ['BSE (SEX), reference', 'exact kernel fxc(w), self-consistent', 'MDR kernel fxc(w)', 'NQ kernel fxc(w)',
          'exact kernel fxc(0), static', 'MDR kernel fxc(0), static', 'NQ kernel fxc(0), static'] + [n for _, n in lrc if _ > 0] + \
         ['PF EMP', 'PF RBO', 'PF CUR', 'PF JGM', 'ALDA, transition space', 'RPA (Hartree), transition space', 'RPA, G space', 'IP']

@@ -55,8 +55,8 @@ def report(p, job, iq, key):
         for l in open(f, errors='ignore'):
             if 'BSE momentum index' in l:
                 i = int(l.split()[-1])
-            if (i is None or i == iq) and key in l:
-                v = float(l.split()[-1])
+            if (i is None or i == iq) and key in l and ':' in l:
+                v = float(l.rsplit(':', 1)[1].split()[0])   # the number right after the label
     return v
 
 
@@ -94,6 +94,16 @@ def wscan(p, fmt, label):
         w, lb = x[:, 0], x[:, 1]
         ex = report(p, f'kxw_q{iq}', iq, 'lowest bright excitation (strength')
         gap = report(p, f'kxw_q{iq}', iq, 'lowest transition energy of the window')
+        eb = report(p, f'kxw_q{iq}', iq, 'binding energy, gap - lowest bright')
+        xq = os.path.join(p, 'xq_dispersion.dat')       # the exciton of this q from the dispersion table
+        if os.path.exists(xq):
+            t = np.loadtxt(xq, ndmin=2)
+            t = t[t[:, 0] == iq]
+            if len(t):
+                ex, gap = t[0, 4], t[0, 2]
+        if ex is not None and gap is not None and ex < 0.5 * gap and eb is not None:
+            ex = gap - eb                                # a binding energy was read as the exciton
+        print(f'  q{iq}: BSE exciton {ex} eV, gap {gap} eV')
         fig, ax = plt.subplots(figsize=(6.4, 4.4))
         lo = min(lb.min(), ex or lb.min()) - 0.15
         hi = (gap or lb.max()) + 0.15

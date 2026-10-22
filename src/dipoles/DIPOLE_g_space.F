@@ -111,8 +111,6 @@ subroutine DIPOLE_g_space(Xen,Xk,Dip)
    !
  endif
  !
-write(*,*) "here 3"
- 
  if(l_use_comm) then
    !
    ! allocation of DEV variabless with zero dims is a problem (PGI, CUDA For)
@@ -121,20 +119,15 @@ write(*,*) "here 3"
    YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_dim_atom))
    !
    if (have_gpu) then
-write(*,*) "here 5"
 #if defined _OPENACC || defined _OPENMP_GPU
      YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_dim_yambo,Dip%ib(1):Dip%ib(2)))
 #endif
      YAMBO_ALLOC_GPU(XX,(n_spinor,n_spinor,4,pp_dim_yambo,Dip%ib(1):Dip%ib(2)))
-write(*,*) "here 6"
      YAMBO_ALLOC_GPU(DEV_VAR(kbv),(wf_ncx,n_spinor,4,pp_dim_atom))
-write(*,*) "here 7"
      call devxlib_memset_d(DEV_VAR(kbv),cZERO)
-write(*,*) "here 8"
    else
      YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_dim_yambo,Dip%ib(1):Dip%ib(2)))
    endif
-write(*,*) "here 9"
    !
    ! Eo    are always the eigenvalues consistent with the WFs
    ! E     do also include the QP corrections when Eo are allocated
@@ -151,7 +144,6 @@ write(*,*) "here 9"
    !
    call DIPOLE_alloc_elemental("DIP_work",[pp_dim_yambo])
    !
-write(*,*) "here 10"
  endif
  !
  ! Main loop over k in IBZ
@@ -184,11 +176,9 @@ write(*,*) "here 10"
      !
      ! WF load
      !
-write(*,*) "here 11"
      call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='C',&
 &                 title='-Oscillators/G space/Transverse '//spin_string(i_sp_pol),force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
      !
-write(*,*) "here 12"
      if (l_use_comm) then
        !
        call timing('DIPOLE_g_space_proj',OPR='start')
@@ -197,10 +187,8 @@ write(*,*) "here 12"
        npp=0
        npp_tab=0
        pp_range(2)=0
-write(*,*) "here 13"
        call devxlib_memset_d(XX,cZERO)
        !
-write(*,*) "here 14"
        do is = 1,n_atomic_species
          do ia = 1,n_atoms_species(is)
            !
@@ -236,10 +224,8 @@ write(*,*) "here 14"
        !
        call timing('DIPOLE_g_space_proj',OPR='stop')
        !
-write(*,*) "here 15"
      endif
      !
-write(*,*) "here 16"
      do iv=Dip%ib(1),Dip%ib_lim(1) 
        !
        if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
@@ -247,7 +233,6 @@ write(*,*) "here 16"
        ic_min=max(iv,Dip%ib_lim(2))
        if (l_X_terminator) ic_min=iv
        !
-write(*,*) "here 17"
        do ic=ic_min,Dip%ib(2)
          !
          if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
@@ -341,7 +326,6 @@ write(*,*) "here 17"
        enddo    ! conduction band loop
      enddo      ! valence    band loop
      !
-write(*,*) "here 18"
      call WF_free(WF)
      ! 
    enddo        ! k-points loop
@@ -351,7 +335,6 @@ write(*,*) "here 18"
  !
  ! CLEAN
  !
-write(*,*) "here 19"
  if (l_use_comm) then
    call DIPOLE_alloc_elemental("DIP_work")
    if (have_gpu) then
@@ -366,7 +349,6 @@ write(*,*) "here 19"
    YAMBO_FREE(pp_factor)
    call PP_free()
  endif
-write(*,*) "here 20"
  !
  call timing('DIPOLE_g_space',OPR='stop')
  !

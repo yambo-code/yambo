@@ -49,7 +49,7 @@ The fork offers several choices of P (`ChiGMode`, `BSEChiOut`):
 | DYSON | convolution of the retarded GW spectral functions (needs PPA) | `Chi_G_bubble.F`, `QP_Green_Function.F` |
 | BSE `exc` / `full` | proper BSE response with the exchange term removed, QP or KS reference | `K_Chi_export.F` |
 | BSE `mdr` | Marini–Del Sole–Rubio kernel | `TDDFT_Chi_dynamic.F` |
-| BSE `nq` | Nanoquanta kernel χ0⁻¹ T₂ χ0⁻¹: all of W, diagonal included, at first order (the `mdr` route with Ed = E) | `TDDFT_Chi_dynamic.F`, `K_Chi_export.F` |
+| BSE `nq` | χ0⁻¹ T₂ χ0⁻¹: all of W, diagonal included, at first order (the `mdr` route with Ed = E). Attributed to Sottile et al. (Nanoquanta); not yet checked against the paper | `TDDFT_Chi_dynamic.F` (`TDDFT_Chi_exchange_free_split`, `TDDFT_Chi_first_order_kernel`), `K_Chi_export.F` |
 
 **BSE as P.** P(ω) = ρ [ω − H̃]⁻¹ ρ* (Adler–Wiser form with BSE energies).
 - H̃ = D + √F K √F, where D holds the transition energies and K is the BSE kernel.

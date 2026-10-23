@@ -9,7 +9,7 @@ program test_chi_dynamic
   use TDDFT_Chi_dynamic_m, only: TDDFT_Chi_dynamic_kernel,TDDFT_Chi_dynamic_response,&
 &   TDDFT_Chi_pair_response,TDDFT_Chi_pair_bubble,TDDFT_Chi_kernel_from_response,&
 &   TDDFT_Chi_full_response,TDDFT_Chi_full_bubble,TDDFT_Chi_full_dynamic_response,&
-&   TDDFT_Chi_mdr_response,TDDFT_Chi_kernel_mdr
+&   TDDFT_Chi_mdr_response,TDDFT_Chi_kernel_mdr,TDDFT_Chi_exchange_free_split,TDDFT_Chi_first_order_kernel
   implicit none
   integer, parameter :: m=3,ng=2*m+1,nt=5
   complex(DP), parameter :: ci=(0._DP,1._DP),zero=(0._DP,0._DP)
@@ -684,133 +684,188 @@ contains
   end subroutine
 
   subroutine nq_checks(derived)
-    ! Nanoquanta kernel (BSEChiOut= "nq"): fxc = chi0^-1 T2 chi0^-1 with
-    !   T2(G,G') = c sum_AB s_A v(G,A) W_AB s_B conj(v(G',B)) / ((E_A - z)(E_B - z)),
-    ! W the whole W part of the BSE matrix (diagonal included) and chi0 the bubble of E.
-    ! The export runs the MDR routines with Ed = E and Koff = W and passes chi0 for p0.
-    ! derived: anti-resonant rows derived from the resonant ones (q=0: v = (v_r, v_c),
-    ! s = (s, i s), E = (E, -E)); otherwise explicit rows with f < 0 (finite q).
-    ! 1. export route = chi0^-1 T2 chi0^-1 built here term by term (all G, G')
-    ! 2. Ed = E: the shifted bubble is chi0, and dP1 is T2
-    ! 3. W with zero diagonal: NQ = MDR. With the diagonal, MDR (diagonal moved into the
-    !    energies) must fail check 1: the check tells the two kernels apart
-    ! 4. first order: the exact kernel of the BSE with eps W is eps fxc_NQ + O(eps^2)
+    ! BSEChiOut= "nq" and "mdr" through the routines K_Chi_export calls,
+    ! TDDFT_Chi_exchange_free_split and TDDFT_Chi_first_order_kernel, on a coupled BSE matrix
+    ! assembled with the rules of K_stored_in_a_big_matrix: diagonal real(K_ii) + E, resonant
+    ! and anti-resonant blocks Hermitian, coupling blocks i C mirrored as -conj.
+    ! derived: anti-resonant rows derived from the resonant ones (q=0), v_c(G) = conj(v_r(-G)),
+    ! s = (s, i s), E = (E, -E), anti-resonant block -conj(R), symmetric C. Otherwise explicit
+    ! anti-resonant rows (finite q) with their own vertices, energies and occupations f < 0.
+    ! The kernel G set S leaves out the pair (6,7) (as BSEGinplane), the exchange acts on S
+    ! without G=0, and the pair (4,5) has an imaginary Coulomb factor d (cut Coulomb, v_cut < 0).
+    ! References are built term by term from the W blocks alone:
+    ! 1. the split: Wd = diagonal of the W part; "nq": Koff = W part, Ed = E; "mdr": Koff = its
+    !    off-diagonal, Ed = E + Wd
+    ! 2. fxc_NQ = chi0^-1 T2 chi0^-1 on S,
+    !    T2(G,G') = c sum_AB s_A v(G,A) W_AB s_B conj(v(G',B)) / ((E_A - z)(E_B - z))
+    ! 3. fxc_MDR = chi0^-1 - p0^-1 + p0^-1 dP1 p0^-1 on S, p0 and dP1 with Ed = E + Wd
+    ! 4. W with zero diagonal: both modes give the same kernel. With the diagonal, the MDR
+    !    kernel must fail check 2 (the check tells the two apart)
+    ! 5. first order: the exact kernel of the BSE with eps W is eps fxc_NQ + O(eps^2)
     logical, intent(in) :: derived
-    integer, parameter :: nh=2*nt
-    complex(DP) :: M(nh,nh),Kx(nh,nh),Wp(nh,nh),Wz(nh,nh),Ed(nh),V(ng,nh),sf(nh),zz,acc
-    complex(DP) :: chib(ng,ng),chi0(ng,ng),c0d(ng,ng),t2(ng,ng),fd(ng,ng),fnq(ng,ng),Pnq(ng,ng)
-    complex(DP) :: p0(ng,ng),dp1(ng,ng),fmd(ng,ng),Pmd(ng,ng),fex(ng,ng),Pex(ng,ng),vb(ng,ng),d(ng),ci0(ng,ng)
-    real(DP) :: E(nh),fo(nh),rc(2),c_fac,dev,errs(2),eps,fn1
+    integer, parameter :: n=nt,nh=2*nt,ns=5
+    complex(DP) :: vr(ng,n),va(ng,n),Vt(ng,nh),st(nh),d(ng),zz,acc
+    complex(DP) :: XR(n,n),XC(n,n),XA(n,n),WR(n,n),WC(n,n),WA(n,n),Rb(n,n),Ab(n,n),Cb(n,n)
+    complex(DP) :: M(nh,nh),Wf(nh,nh),W0(nh,nh),Koff(nh,nh),Ed(nh),Wd(nh),Kref(nh,nh)
+    complex(DP) :: chi0(ng,ng),p0(ng,ng),dp1(ng,ng),c0d(ns,ns),t2(ns,ns),ci0(ns,ns),p0r(ns,ns),dpr(ns,ns)
+    complex(DP) :: fd(ns,ns),fmr(ns,ns),fnq(ns,ns),fmd(ns,ns),Pq(ns,ns),fex(ns,ns),Pex(ns,ns),chib(ng,ng)
+    real(DP) :: Et(nh),fr(n),fa(n),Er(n),Ea(n),c_fac,dev,errs(2),eps,fn1,rc(2)
+    logical :: xg(ng)
+    integer :: idx(ns),i,j,a,b,ig,jg,ie,info
     character(10) :: rows
-    integer :: t,a,b,ig,jg,ie,info
     rows='explicit'
     if (derived) rows='derived'
     c_fac=0.37_DP
-    call random_vertices(V)
-    do t=1,nt
-      E(t)=0.8_DP+0.35_DP*t
+    idx=[1,2,3,4,5]
+    xg=.FALSE.
+    xg(2:5)=.TRUE.
+    d=[(40._DP,0._DP),(1.1_DP,0._DP),(1.1_DP,0._DP),(0._DP,0.8_DP),(0._DP,0.8_DP),(0.6_DP,0._DP),(0.6_DP,0._DP)]
+    call random_vertices(vr)
+    call random_vertices(va)
+    do i=1,n
+      fr(i)=0.6_DP+0.05_DP*i
+      Er(i)=0.8_DP+0.35_DP*i
       if (derived) then
-        E(nt+t)=-E(t)
-        sf(t)=sqrt(0.6_DP+0.2_DP*t)
-        sf(nt+t)=ci*sf(t)
+        do ig=1,ng
+          va(ig,i)=conjg(vr(minus(ig),i))
+        enddo
+        fa(i)=-fr(i)
+        Ea(i)=-Er(i)
       else
-        E(nt+t)=-(0.9_DP+0.3_DP*t)
-        fo(t)=0.6_DP+0.2_DP*t
-        fo(nt+t)=-(0.5_DP+0.3_DP*t)
-        sf(t)=sqrt(cmplx(fo(t),kind=DP))
-        sf(nt+t)=sqrt(cmplx(fo(nt+t),kind=DP))
+        fa(i)=-(0.5_DP+0.07_DP*i)
+        Ea(i)=-(0.9_DP+0.3_DP*i)
       endif
     enddo
-    d(1)=40._DP
-    do ig=2,ng
-      d(ig)=1.5_DP/sqrt(real(ig,DP))
+    Vt(:,:n)=vr
+    Vt(:,n+1:)=va
+    st(:n)=sqrt(fr)
+    st(n+1:)=ci*sqrt(-fa)
+    Et(:n)=Er
+    Et(n+1:)=Ea
+    ! exchange blocks: X(A,B) = c s_A s_B sum_{G in xg} conj(v(G,A)) d_G^2 v(G,B); the coupling
+    ! block of the matrix is i XC (K_kernel), so XC carries |s| of the anti-resonant row
+    do j=1,n
+      do i=1,n
+        XR(i,j)=c_fac*st(i)*st(j)*sum(conjg(vr(:,i))*d**2*vr(:,j),mask=xg)
+        XC(i,j)=c_fac*st(i)*sqrt(-fa(j))*sum(conjg(vr(:,i))*d**2*va(:,j),mask=xg)
+        XA(i,j)=c_fac*st(n+i)*st(n+j)*sum(conjg(va(:,i))*d**2*va(:,j),mask=xg)
+      enddo
     enddo
-    vb=zero
-    do ig=2,ng
-      vb(ig,ig)=d(ig)**2
-    enddo
-    Kx=c_fac*matmul(conjg(transpose(V)),matmul(vb,V))
-    do t=1,nh
-      Kx(:,t)=Kx(:,t)*sf(t)
-      Kx(t,:)=Kx(t,:)*sf(t)
-    enddo
-    ! W part with an attractive diagonal, the analogue of MDR's W_KK
-    call random_matrix(Wp)
-    Wp=0.2_DP*Wp
-    do t=1,nh
-      Wp(t,t)=Wp(t,t)-0.3_DP
+    ! W blocks: Hermitian R and A with an attractive diagonal, C symmetric for derived rows
+    call random_matrix(WR)
+    WR=0.1_DP*(WR+conjg(transpose(WR)))
+    call random_matrix(WA)
+    WA=0.1_DP*(WA+conjg(transpose(WA)))
+    call random_matrix(WC)
+    WC=0.1_DP*WC
+    if (derived) WC=0.5_DP*(WC+transpose(WC))
+    do i=1,n
+      WR(i,i)=-0.3_DP-0.02_DP*i
+      WA(i,i)=0.25_DP+0.02_DP*i
     enddo
     zz=cmplx(1.6_DP,0.04_DP,kind=DP)
-    ! chi0 and T2 term by term (no library routine)
-    do jg=1,ng
-      do ig=1,ng
+    ! the W part alone, as the matrix holds it (diagonal real(W_ii)), and the full matrix
+    call assemble_bse(derived,Et,WR,WA,ci*WC,0._DP,Wf)
+    call assemble_bse(derived,Et,XR+WR,XA+WA,ci*(XC+WC),1._DP,M)
+    ! 1. the split, both modes
+    call TDDFT_Chi_exchange_free_split('nq',M,Vt,st,d,xg,c_fac,Et,Koff,Ed,Wd,info)
+    dev=maxval(abs(Koff-Wf))/maxval(abs(Wf))
+    do i=1,nh
+      dev=max(dev,abs(Wd(i)-Wf(i,i))/maxval(abs(Wf)),abs(Ed(i)-Et(i)))
+    enddo
+    call check('NQ ('//trim(rows)//' rows): split, Koff = W part, Wd = its diagonal, Ed = E',info,&
+&              cmplx(1._DP+dev,0._DP,kind=DP),(1._DP,0._DP))
+    call TDDFT_Chi_exchange_free_split('mdr',M,Vt,st,d,xg,c_fac,Et,Koff,Ed,Wd,info)
+    Kref=Wf
+    dev=0._DP
+    do i=1,nh
+      Kref(i,i)=zero
+      dev=max(dev,abs(Ed(i)-Et(i)-Wf(i,i)))
+    enddo
+    dev=max(dev,maxval(abs(Koff-Kref))/maxval(abs(Wf)))
+    call check('MDR ('//trim(rows)//' rows): split, Koff = off-diagonal W, Ed = E + Wd',info,&
+&              cmplx(1._DP+dev,0._DP,kind=DP),(1._DP,0._DP))
+    ! references on S
+    do jg=1,ns
+      do ig=1,ns
         acc=zero
         do a=1,nh
-          acc=acc+sf(a)**2*V(ig,a)*conjg(V(jg,a))/(zz-E(a))
+          acc=acc+st(a)**2*Vt(idx(ig),a)*conjg(Vt(idx(jg),a))/(zz-Et(a))
         enddo
         c0d(ig,jg)=c_fac*acc
         acc=zero
         do a=1,nh
           do b=1,nh
-            acc=acc+sf(a)*V(ig,a)*Wp(a,b)*sf(b)*conjg(V(jg,b))/((E(a)-zz)*(E(b)-zz))
+            acc=acc+st(a)*Vt(idx(ig),a)*Wf(a,b)*st(b)*conjg(Vt(idx(jg),b))/((Et(a)-zz)*(Et(b)-zz))
           enddo
         enddo
         t2(ig,jg)=c_fac*acc
+        acc=zero
+        do a=1,nh
+          acc=acc+st(a)**2*Vt(idx(ig),a)*conjg(Vt(idx(jg),a))/(zz-Et(a)-Wf(a,a))
+        enddo
+        p0r(ig,jg)=c_fac*acc
+        acc=zero
+        do a=1,nh
+          do b=1,nh
+            acc=acc+st(a)*Vt(idx(ig),a)*Kref(a,b)*st(b)*conjg(Vt(idx(jg),b))/((zz-Et(a)-Wf(a,a))*(zz-Et(b)-Wf(b,b)))
+          enddo
+        enddo
+        dpr(ig,jg)=c_fac*acc
       enddo
     enddo
     ci0=c0d
     call inv(ci0)
     fd=matmul(ci0,matmul(t2,ci0))
-    ! the export route
-    call TDDFT_Chi_full_bubble(zz,E,V,sf,c_fac,chi0)
-    Ed=cmplx(E,0._DP,kind=DP)
-    call TDDFT_Chi_mdr_response(zz,Ed,Wp,V,sf,c_fac,p0,dp1)
-    call TDDFT_Chi_kernel_mdr(chi0,chi0,dp1,d,fnq,Pnq,rc,info)
+    fmr=p0r
+    call inv(fmr)
+    fmr=ci0-fmr+matmul(fmr,matmul(dpr,fmr))
+    ! 2. and 3. the kernels of the export routines
+    call TDDFT_Chi_full_bubble(zz,Et,Vt,st,c_fac,chi0)
+    call nq_export('nq',M,Vt,st,d,xg,c_fac,Et,zz,idx,chi0(idx,idx),fnq,info)
     dev=maxval(abs(fnq-fd))/maxval(abs(fd))
-    call check('NQ ('//trim(rows)//' rows): export route = chi0^-1 T2 chi0^-1 (max rel. dev.)',info,&
+    call check('NQ ('//trim(rows)//' rows): export routines = chi0^-1 T2 chi0^-1 (max rel. dev.)',info,&
 &              cmplx(1._DP+dev,0._DP,kind=DP),(1._DP,0._DP))
-    dev=max(maxval(abs(p0-c0d))/maxval(abs(c0d)),maxval(abs(chi0-c0d))/maxval(abs(c0d)))
-    call check('NQ ('//trim(rows)//' rows): Ed = E bubble = chi0 (max rel. dev.)',0,&
+    call nq_export('mdr',M,Vt,st,d,xg,c_fac,Et,zz,idx,chi0(idx,idx),fmd,info)
+    dev=maxval(abs(fmd-fmr))/maxval(abs(fmr))
+    call check('MDR ('//trim(rows)//' rows): export routines = chi0^-1 - p0^-1 + p0^-1 dP1 p0^-1',info,&
 &              cmplx(1._DP+dev,0._DP,kind=DP),(1._DP,0._DP))
-    dev=maxval(abs(dp1-t2))/maxval(abs(t2))
-    call check('NQ ('//trim(rows)//' rows): dP1 with Ed = E = T2 (max rel. dev.)',0,&
-&              cmplx(1._DP+dev,0._DP,kind=DP),(1._DP,0._DP))
-    ! 3. zero W diagonal: NQ and MDR coincide
-    Wz=Wp
-    do t=1,nh
-      Wz(t,t)=zero
-    enddo
-    call TDDFT_Chi_mdr_response(zz,Ed,Wz,V,sf,c_fac,p0,dp1)
-    call TDDFT_Chi_kernel_mdr(chi0,chi0,dp1,d,fnq,Pnq,rc,info)
-    call TDDFT_Chi_kernel_mdr(chi0,p0,dp1,d,fmd,Pmd,rc,info)
-    dev=maxval(abs(fnq-fmd))/maxval(abs(fnq))
-    call check('NQ ('//trim(rows)//' rows): zero W diagonal, NQ = MDR (max rel. dev.)',info,&
-&              cmplx(1._DP+dev,0._DP,kind=DP),(1._DP,0._DP))
-    ! with the diagonal MDR resums it: it must not pass check 1
-    do t=1,nh
-      Ed(t)=E(t)+Wp(t,t)
-    enddo
-    call TDDFT_Chi_mdr_response(zz,Ed,Wz,V,sf,c_fac,p0,dp1)
-    call TDDFT_Chi_kernel_mdr(chi0,p0,dp1,d,fmd,Pmd,rc,info)
+    ! the MDR kernel must fail check 2
     dev=maxval(abs(fmd-fd))/maxval(abs(fd))
     if (info==0.and.dev>1.E-3_DP) then
-      print '(a,a,a,es9.2)','PASS: NQ (',trim(rows),' rows): MDR (diagonal in the energies) /= chi0^-1 T2 chi0^-1  rel=',dev
+      print '(a,a,a,es9.2)','PASS: NQ (',trim(rows),' rows): MDR kernel (diagonal in the energies) /= chi0^-1 T2 chi0^-1  rel=',dev
     else
       print '(a,a,a,i4,es10.2)','FAIL: NQ (',trim(rows),' rows): the check cannot tell MDR from NQ',info,dev
       failures=failures+1
     endif
-    ! 4. first order in W: exact kernel(eps W) - fxc_NQ(eps W) = O(eps^2)
-    Ed=cmplx(E,0._DP,kind=DP)
+    ! Ed = E: the shifted bubble is chi0 and dP1 is T2 (full G set)
+    call TDDFT_Chi_mdr_response(zz,cmplx(Et,0._DP,kind=DP),Wf,Vt,st,c_fac,p0,dp1)
+    dev=maxval(abs(p0(idx,idx)-c0d))/maxval(abs(c0d))
+    dev=max(dev,maxval(abs(dp1(idx,idx)-t2))/maxval(abs(t2)))
+    call check('NQ ('//trim(rows)//' rows): Ed = E bubble = chi0 and dP1 = T2 (max rel. dev.)',0,&
+&              cmplx(1._DP+dev,0._DP,kind=DP),(1._DP,0._DP))
+    ! 4. W without diagonal: the two modes give the same kernel
+    do i=1,n
+      WR(i,i)=zero
+      WA(i,i)=zero
+    enddo
+    call assemble_bse(derived,Et,XR+WR,XA+WA,ci*(XC+WC),1._DP,W0)
+    call nq_export('nq',W0,Vt,st,d,xg,c_fac,Et,zz,idx,chi0(idx,idx),fnq,info)
+    call nq_export('mdr',W0,Vt,st,d,xg,c_fac,Et,zz,idx,chi0(idx,idx),fmd,info)
+    dev=maxval(abs(fnq-fmd))/maxval(abs(fnq))
+    call check('NQ ('//trim(rows)//' rows): W without diagonal, NQ = MDR (max rel. dev.)',info,&
+&              cmplx(1._DP+dev,0._DP,kind=DP),(1._DP,0._DP))
+    do i=1,n
+      WR(i,i)=-0.3_DP-0.02_DP*i
+      WA(i,i)=0.25_DP+0.02_DP*i
+    enddo
+    ! 5. first order in W: exact kernel(eps W) - fxc_NQ(eps W) = O(eps^2)
     do ie=1,2
       eps=1.E-3_DP*ie
-      M=Kx+eps*Wp
-      do t=1,nh
-        M(t,t)=M(t,t)+E(t)
-      enddo
-      call TDDFT_Chi_full_response(zz,M,V,sf,c_fac,chib,info)
-      call TDDFT_Chi_kernel_from_response(chi0,chib,d,.TRUE.,fex,Pex,rc,info)
-      call TDDFT_Chi_mdr_response(zz,Ed,eps*Wp,V,sf,c_fac,p0,dp1)
-      call TDDFT_Chi_kernel_mdr(chi0,chi0,dp1,d,fnq,Pnq,rc,info)
+      call assemble_bse(derived,Et,XR+eps*WR,XA+eps*WA,ci*(XC+eps*WC),1._DP,W0)
+      call TDDFT_Chi_full_response(zz,W0,Vt,st,c_fac,chib,info)
+      call TDDFT_Chi_kernel_from_response(chi0(idx,idx),chib(idx,idx),d(idx),.TRUE.,fex,Pex,rc,info)
+      call nq_export('nq',W0,Vt,st,d,xg,c_fac,Et,zz,idx,chi0(idx,idx),fnq,info)
       errs(ie)=maxval(abs(fex-fnq))
       if (ie==1) fn1=maxval(abs(fnq))
     enddo
@@ -821,6 +876,64 @@ contains
       print '(a,a,a,2es10.2)','FAIL: NQ (',trim(rows),' rows): exact kernel - NQ not second order in W ',errs
       failures=failures+1
     endif
+  end subroutine
+
+  subroutine nq_export(mode,Mx,Vt,st,d,xg,c_fac,Et,zz,idx,chi0s,fk,info)
+    ! what K_Chi_export does for "nq"/"mdr": the split, then the first-order kernel on idx at zz
+    character(*), intent(in) :: mode
+    complex(DP), intent(in) :: Mx(:,:),Vt(:,:),st(:),d(:),zz,chi0s(:,:)
+    logical, intent(in) :: xg(:)
+    real(DP), intent(in) :: c_fac,Et(:)
+    integer, intent(in) :: idx(:)
+    complex(DP), intent(out) :: fk(:,:)
+    integer, intent(out) :: info
+    complex(DP) :: Koff(size(st),size(st)),Ed(size(st)),Wd(size(st)),Pq(size(idx),size(idx))
+    real(DP) :: rc(2)
+    call TDDFT_Chi_exchange_free_split(mode,Mx,Vt,st,d,xg,c_fac,Et,Koff,Ed,Wd,info)
+    if (info/=0) return
+    call TDDFT_Chi_first_order_kernel(mode,zz,Ed,Koff,Vt,st,c_fac,idx,chi0s,d(idx),fk,Pq,rc,info)
+  end subroutine
+
+  subroutine assemble_bse(derived,Et,R,A,C,efac,Mx)
+    ! K_stored_in_a_big_matrix for one "R" block, one "C" block and (explicit rows) one "A"
+    ! block at the origin: upper triangles, energies on the diagonal as real(K_ii) + E
+    logical, intent(in) :: derived
+    real(DP), intent(in) :: Et(2*nt),efac
+    complex(DP), intent(in) :: R(nt,nt),A(nt,nt),C(nt,nt)
+    complex(DP), intent(out) :: Mx(2*nt,2*nt)
+    complex(DP) :: mij
+    integer :: ir,ic,n
+    n=nt
+    Mx=zero
+    do ic=1,n
+      do ir=1,ic
+        mij=R(ir,ic)
+        if (ir==ic) mij=real(mij)+efac*Et(ir)
+        Mx(ir,ic)=mij
+        Mx(ic,ir)=conjg(mij)
+        if (derived) then
+          Mx(ir+n,ic+n)=-conjg(mij)
+          Mx(ic+n,ir+n)=-mij
+        else
+          mij=A(ir,ic)
+          if (ir==ic) mij=real(mij)+efac*Et(n+ir)
+          Mx(ir+n,ic+n)=mij
+          Mx(ic+n,ir+n)=conjg(mij)
+        endif
+      enddo
+    enddo
+    do ic=1,n
+      do ir=1,n
+        if (derived.and.ir>ic) cycle
+        mij=C(ir,ic)
+        Mx(ir,ic+n)=mij
+        Mx(ic+n,ir)=-conjg(mij)
+        if (derived) then
+          Mx(ic,ir+n)=mij
+          Mx(ir+n,ic)=-conjg(mij)
+        endif
+      enddo
+    enddo
   end subroutine
 
   function diag(x) result(m)

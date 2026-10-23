@@ -43,6 +43,7 @@ module TDDFT_Chi_dynamic_m
  public :: TDDFT_Chi_pair_response,TDDFT_Chi_pair_bubble,TDDFT_Chi_kernel_from_response
  public :: TDDFT_Chi_full_response,TDDFT_Chi_full_bubble,TDDFT_Chi_full_dynamic_response
  public :: TDDFT_Chi_mdr_response,TDDFT_Chi_kernel_mdr
+ public :: TDDFT_Chi_exchange_free_split,TDDFT_Chi_first_order_kernel
  complex(DP), parameter :: zero=(0._DP,0._DP),one=(1._DP,0._DP),ci=(0._DP,1._DP)
 contains
  !
@@ -326,9 +327,10 @@ contains
  !
  ! Exact when K_off = 0. Same vertices, s and c as TDDFT_Chi_full_response.
  !
- ! Nanoquanta kernel (Sottile, Olevano, Reining, PRL 91, 056402 (2003)): the same routines
- ! with the diagonal of W not moved into the energies, Ed = E and Koff = M_W - diag(E) (the
- ! whole W part). Then g = diag(1/(z-E)), p0 is the reference bubble chi0, and
+ ! Nanoquanta-type kernel (BSEChiOut= "nq", defined in doc/greens_function_fxc.md; attributed
+ ! to Sottile, Olevano, Reining, PRL 91, 056402 (2003), not checked against the paper): the same
+ ! routines with the diagonal of W not moved into the energies, Ed = E and Koff = M_W - diag(E)
+ ! (the whole W part). Then g = diag(1/(z-E)), p0 is the reference bubble chi0, and
  !
  !   dP1(G,G') = c sum_AB s_A v(G,A) W_AB s_B conj(v(G',B)) / ((E_A - z)(E_B - z)) = T2(z)
  !
@@ -429,6 +431,89 @@ contains
      if (info==0) err=0
    end subroutine invert
  end subroutine TDDFT_Chi_kernel_mdr
+ !
+ ! BSEChiOut= "mdr"/"nq" from the coupled BSE matrix M (K_Chi_export). The exchange
+ !   X(A,B) = c s_A s_B sum_G conj(v(G,A)) d_G^2 v(G,B)
+ ! acts on the G with xg(G) true (the kernel G set, without G=0 unless Lkind full). The
+ ! exchange-free matrix M_W = M - X has the W part M_W - diag(E), whose diagonal is Wd.
+ !   "mdr": Ed = diag(M_W) = E + Wd,  Koff = M_W - diag(Ed)  (the off-diagonal W)
+ !   "nq" : Ed = E,                   Koff = M_W - diag(E)   (the whole W part)
+ ! In both modes M_W = Koff + diag(Ed).
+ !
+ recursive subroutine TDDFT_Chi_exchange_free_split(mode,M,v,s,d,xg,c,E,Koff,Ed,Wd,ierr)
+   character(*), intent(in)  :: mode
+   complex(DP),  intent(in)  :: M(:,:),v(:,:),s(:),d(:)
+   logical,      intent(in)  :: xg(:)
+   real(DP),     intent(in)  :: c,E(:)
+   complex(DP),  intent(out) :: Koff(:,:),Ed(:),Wd(:)
+   integer,      intent(out) :: ierr
+   complex(DP), allocatable :: U(:,:),Y(:,:)
+   integer :: nh,ng,nx,i,ig
+   ! ierr: 1 unknown mode, 20 sizes
+   ierr=1
+   if (trim(mode)/='mdr'.and.trim(mode)/='nq') return
+   nh=size(s); ng=size(v,1)
+   ierr=20
+   if (any(shape(M)/=(/nh,nh/)).or.any(shape(Koff)/=(/nh,nh/)).or.size(v,2)/=nh.or.size(d)/=ng.or.&
+&      size(xg)/=ng.or.size(E)/=nh.or.size(Ed)/=nh.or.size(Wd)/=nh) return
+   nx=count(xg)
+   allocate(U(max(nx,1),nh),Y(max(nx,1),nh))
+   ! X = c U^T Y with U(G,A) = d_G^2 s_A conj(v(G,A)), Y(G,B) = s_B v(G,B)
+   nx=0
+   do ig=1,ng
+     if (.not.xg(ig)) cycle
+     nx=nx+1
+     U(nx,:)=s*conjg(v(ig,:))*d(ig)**2
+     Y(nx,:)=s*v(ig,:)
+   enddo
+   Koff=zero
+   if (nx>0) call zgemm('T','N',nh,nh,nx,cmplx(c,0._DP,kind=DP),U,nx,Y,nx,zero,Koff,nh)
+   Koff=M-Koff
+   do i=1,nh
+     Wd(i)=Koff(i,i)-E(i)
+     if (trim(mode)=='mdr') then
+       Ed(i)=Koff(i,i)
+       Koff(i,i)=zero
+     else
+       Ed(i)=cmplx(E(i),0._DP,kind=DP)
+       Koff(i,i)=Wd(i)
+     endif
+   enddo
+   deallocate(U,Y)
+   ierr=0
+ end subroutine TDDFT_Chi_exchange_free_split
+ !
+ ! The kernel of TDDFT_Chi_exchange_free_split's (Ed, Koff) at one frequency, on the G subset
+ ! idx (all G, or the in-plane ones with BSEGinplane); chi0 and d are already on idx.
+ !   "mdr": fxc = chi0^-1 - p0^-1 + p0^-1 dP1 p0^-1
+ !   "nq" : fxc = chi0^-1 T2 chi0^-1, chi0 in both slots of TDDFT_Chi_kernel_mdr (dP1 = T2)
+ !
+ recursive subroutine TDDFT_Chi_first_order_kernel(mode,z,Ed,Koff,v,s,c,idx,chi0,d,fxc,P,rcond,ierr)
+   character(*), intent(in)  :: mode
+   complex(DP),  intent(in)  :: z,Ed(:),Koff(:,:),v(:,:),s(:),chi0(:,:),d(:)
+   integer,      intent(in)  :: idx(:)
+   real(DP),     intent(in)  :: c
+   complex(DP),  intent(out) :: fxc(:,:),P(:,:)
+   real(DP),     intent(out) :: rcond(2)
+   integer,      intent(out) :: ierr
+   complex(DP), allocatable :: p0(:,:),dP1(:,:)
+   integer :: ng
+   ! ierr: 1 unknown mode, 20 sizes, else those of TDDFT_Chi_kernel_mdr
+   fxc=zero; P=zero; rcond=0._DP
+   ierr=1
+   if (trim(mode)/='mdr'.and.trim(mode)/='nq') return
+   ng=size(v,1)
+   ierr=20
+   if (any(idx<1).or.any(idx>ng).or.size(d)/=size(idx)) return
+   allocate(p0(ng,ng),dP1(ng,ng))
+   call TDDFT_Chi_mdr_response(z,Ed,Koff,v,s,c,p0,dP1)
+   if (trim(mode)=='nq') then
+     call TDDFT_Chi_kernel_mdr(chi0,chi0,dP1(idx,idx),d,fxc,P,rcond,ierr)
+   else
+     call TDDFT_Chi_kernel_mdr(chi0,p0(idx,idx),dP1(idx,idx),d,fxc,P,rcond,ierr)
+   endif
+   deallocate(p0,dP1)
+ end subroutine TDDFT_Chi_first_order_kernel
  !
  recursive subroutine TDDFT_Chi_kernel_from_response(chi0,chib,d,exch,fxc,P,rcond,ierr,exch_head)
    ! fxc = chi0^-1 - P^-1 with P^-1 = chib^-1 + vbar, vbar = diag(0, d_G^2) when the

@@ -906,7 +906,7 @@ in this repository (see "Open checks" below).
 
 ### The Nanoquanta kernel: `BSEChiOut= "nq"`
 
-The first-order BSE-derived kernel associated with Sottile, Olevano and Reining (PRL 91,
+A first-order BSE-derived kernel, attributed to Sottile, Olevano and Reining (PRL 91,
 056402 (2003)), with all of W, its diagonal included, at first order and no P inverted:
 
 ```
@@ -921,7 +921,10 @@ and c = Co/(4 pi). The definition was given for this mode as Eq. 3 of the paper;
 been checked against the paper here.
 
 It is the MDR route with the diagonal of W left at first order: `Ed = E` and
-`Koff = M_W - diag(E)` (`K_Chi_export.F`). Then g = diag(1/(z - E)), the shifted bubble p0 of
+`Koff = M_W - diag(E)`. Both modes go through two routines of `TDDFT_Chi_dynamic.F`, which
+`K_Chi_export.F` calls: `TDDFT_Chi_exchange_free_split` (M_W, Ed, Koff and the W diagonal Wd)
+and `TDDFT_Chi_first_order_kernel` (the kernel on the G set at one frequency). With Ed = E,
+g = diag(1/(z - E)), the shifted bubble p0 of
 `TDDFT_Chi_mdr_response` is chi0, its dP1 is T2, and `TDDFT_Chi_kernel_mdr(chi0, chi0, T2)`
 returns chi0^-1 - chi0^-1 + chi0^-1 T2 chi0^-1 = chi0^-1 T2 chi0^-1 (the same matrix in both
 slots, so the first two terms cancel identically). The ndb.Chi P column holds
@@ -929,7 +932,7 @@ slots, so the first two terms cancel identically). The ndb.Chi P column holds
 reading as an "exc" kernel (QP energies in the Casida run) are those of "mdr": all 2N rows of
 the coupled matrix, anti-resonant rows derived at q = 0 and explicit at finite q. MDR and NQ
 differ only in W_tt: MDR resums it in the energies, NQ keeps it at first order; with W_tt = 0
-they coincide (`tests/chi_dynamic`). The export reports:
+they give the same kernel. The export reports:
 
 ```text
 [Chi/BSK] diagonal of the W part (resonant rows) [eV]: min, mean, max      (also for "mdr")
@@ -937,12 +940,28 @@ they coincide (`tests/chi_dynamic`). The export reports:
 [Chi/BSK] NQ: P of the exchange-free matrix vs the exact P (max relative difference)
 ```
 
-`tests/chi_dynamic` builds chi0 and T2 term by term from the formula above, for derived and
-for explicit anti-resonant rows, and checks: the export route equals chi0^-1 T2 chi0^-1
-(8e-15 and 2e-14 relative); with W_tt = 0, NQ = MDR; with W_tt /= 0, MDR fails that comparison
-(0.22 and 2.1); the exact kernel of the BSE with eps W differs from eps fxc_NQ at order eps^2
-(ratio 4.00 when eps doubles). Mutations of `TDDFT_Chi_dynamic.F` (sign of the first-order
-term, one dropped or sign-flipped 1/(z - E), conj(s) for s) each fail at least four NQ checks.
+`tests/chi_dynamic` calls these two routines on a coupled BSE matrix assembled with the rules
+of `K_stored_in_a_big_matrix` (diagonal real(K_ii) + E, coupling blocks i C mirrored as -conj),
+for derived and for explicit anti-resonant rows, with the exchange on a G subset without G=0
+and one +-G pair with an imaginary Coulomb factor (cut Coulomb). It compares them with
+references built term by term from the W blocks (relative deviations, derived/explicit rows):
+
+| Check | Result |
+| --- | --- |
+| split: Wd, Koff and Ed of both modes | 2e-16 / 2e-16 |
+| "nq" kernel = chi0^-1 T2 chi0^-1 | 8e-15 / 7e-15 |
+| "mdr" kernel = chi0^-1 - p0^-1 + p0^-1 dP1 p0^-1 with Ed = E + Wd | 6e-15 / 5e-15 |
+| W without diagonal: "nq" kernel = "mdr" kernel | 5e-15 / 2e-14 |
+| W with diagonal: the "mdr" kernel fails the "nq" comparison | 1.6 / 0.925 |
+| exact kernel of the BSE with eps W minus eps fxc_NQ: error ratio when eps doubles | 4.01 / 3.98 |
+
+Nine mutations of these routines each fail at least two of these checks: the nq diagonal
+dropped, the sign of Wd, Ed = diag(M_W) for "nq", conj(s) or |d|^2 in the exchange, G=0 in the
+exchange, chi0 in the p0 slot for "mdr", conj(d) in `TDDFT_Chi_kernel_mdr`, the sign of the
+first-order term. Passing p0 instead of chi0 in the "nq" branch passes them, as it must (with
+Ed = E, p0 is chi0). Not unit-tested: the remaining lines of `K_Chi_export.F` (frequency loop,
+G set, I/O); in a material run they are checked by the head check and the exchange-removal
+check, and `[Chi/BSK] NQ: bubble with Ed = E` compares two codings of chi0 (no threshold).
 
 Monolayer WS2 with SOC, local test: 6x6 k grid, 50 Ry, 20 A cell without Coulomb cutoff,
 static screening with 60 bands and a 3 Ry block (so W is weakly screened and the binding
@@ -962,7 +981,9 @@ The static limits agree within 3 meV. With fxc(w), MDR keeps 99% of the binding 
 spectrum; NQ keeps 55% and puts most of the weight in one peak at 1.976 eV (height 2.4 times
 the BSE A peak; the B peak and the 2.5-2.7 eV structure are gone; no negative eps2 in the
 window). On this grid W_tt is close to the binding energy itself, and keeping it at first
-order is the difference between the two kernels. The 6x6 mesh and weak screening make W_tt
+order is the difference between the two kernels. The expansion parameter near the exciton is
+W_tt/(E_t - E_X), about W_tt/E_b, here close to 1; with all transitions at one energy, or as
+many transitions as G vectors, NQ is exact (reasoning, not a test in the tree). The 6x6 mesh and weak screening make W_tt
 large; how NQ behaves on converged meshes is not tested here.
 
 Open checks before naming these modes in a paper (the papers could not be opened from this

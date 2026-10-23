@@ -3,7 +3,7 @@
 This file passes the technical work on this Yambo fork to a new Claude Code session.
 The other session keeps the cluster runs, convergence, results and explanations.
 This session works on the theory, the Fortran, the tests and new features.
-Read this file first, then `doc/greens_function_fxc.md`, which is the full reference at 1230 lines.
+Read this file first, then `doc/greens_function_fxc.md`, which is the full reference at 1251 lines.
 
 ## 1. Goal and working rules
 

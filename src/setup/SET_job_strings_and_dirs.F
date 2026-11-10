@@ -23,6 +23,7 @@ subroutine SET_job_strings_and_dirs(JS)
  !
  call STRING_split(JS,string,",")
  !
+ n_alt_jobstr=0
  jobstr    =" "
  alt_jobstr=" "
  jobdir    =" "

@@ -21,7 +21,7 @@ module com
  character(lchlen)  :: repfile
  !
  integer            :: repfile_unit
- integer            :: inpfile_unit
+ integer            :: inpfile_unit=12
  !
  ! Path for the shifted grids
  !

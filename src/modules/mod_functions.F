@@ -127,7 +127,7 @@ module functions
      Fermi_fnc=1._SP
      if (T==0._SP.and.E>0._SP) Fermi_fnc=0._SP
      !
-     if (T/=0._SP) Fermi_fnc=1._SP/(1._SP+exp(E/T))
+     if (T/=0._SP) Fermi_fnc=1._SP/(1._SP+exp(min(E/T,80._SP)))
      !
      if (Fermi_fnc<filled_tresh)  Fermi_fnc=0._SP
      !
@@ -144,7 +144,7 @@ module functions
      real(SP), intent(in) :: E,T
      real(SP),parameter :: tresh=0._SP
      Fermi_fnc_derivative=0._SP
-     if (T/=0._SP) Fermi_fnc_derivative=1._SP/(2._SP+exp(E/T)+exp(-E/T))/T
+     if (T/=0._SP) Fermi_fnc_derivative=1._SP/(2._SP+exp(min(E/T,80._SP))+exp(min(-E/T,80._SP)))/T
      if (Fermi_fnc_derivative<tresh)  Fermi_fnc_derivative=0._SP
    end function
    !
@@ -156,7 +156,7 @@ module functions
      real(SP), intent(in) :: E,T
      real(SP),parameter :: tresh=0._SP
      Fermi_fnc_T_derivative=0._SP
-     if (T/=0._SP) Fermi_fnc_T_derivative=E/(2._SP+exp(E/T)+exp(-E/T))/T**2
+     if (T/=0._SP) Fermi_fnc_T_derivative=E/(2._SP+exp(min(E/T,80._SP))+exp(min(-E/T,80._SP)))/T**2
    end function
    !
    ! Bose functions
@@ -175,7 +175,8 @@ module functions
      !
      if (abs(Eb)>epsilon(1.)) then
        if (abs(Eb)<=bose_E_cut*Bose_Temp) bose_f=spin_occ*Bose_Temp/Eb
-       if (abs(Eb)> bose_E_cut*Bose_Temp) bose_f=spin_occ/(exp(Eb/Bose_Temp)-1.)
+       ! Capped: exp overflow gives NaN with -Kfast
+       if (abs(Eb)> bose_E_cut*Bose_Temp) bose_f=spin_occ/(exp(min(Eb/Bose_Temp,80._SP))-1.)
      else
        bose_f=spin_occ*Bose_Temp/epsilon(1.)
      endif

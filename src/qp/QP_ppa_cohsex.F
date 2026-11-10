@@ -736,7 +736,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              if (Finite_Tel) then
                if (abs(PPA_E)>epsilon(1.)) then
                  if (abs(PPA_E)<=bose_E_cut*Bose_Temp) bose_PPA_E=spin_occ*Bose_Temp/PPA_E
-                 if (abs(PPA_E)> bose_E_cut*Bose_Temp) bose_PPA_E=spin_occ/(exp(PPA_E/Bose_Temp)-1.)
+                 ! Capped: exp overflow gives NaN with -Kfast
+                 if (abs(PPA_E)> bose_E_cut*Bose_Temp) bose_PPA_E=spin_occ/(exp(min(PPA_E/Bose_Temp,80._SP))-1.)
                else
                  bose_PPA_E=spin_occ*Bose_Temp/epsilon(1.)
                endif

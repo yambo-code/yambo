@@ -17,7 +17,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use FFT_m,         ONLY:fft_size
  use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G,TDDFT_ALDA_eh_space_R_kernel
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,     ONLY:qindx_X,bz_samp,&
+ use R_lattice,     ONLY:qindx_X,bz_samp,bare_qpg,&
 &                        qindx_B,qindx_B_max,qindx_B_load,RIM_W,RIM_W_d,&
 &                        RIM_ng,RIM_W_is_diagonal,RIM_W_ng
  use com,           ONLY:msg
@@ -89,6 +89,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  real(SP),    allocatable :: BS_max_val_CPU(:),rho(:)
  complex(SP), allocatable DEV_ATTR :: O1(:),O2(:),O_times_W(:)
+ complex(SP), allocatable :: qpg_m2(:)   ! 1/bare_qpg(iq,:)**2 for the exchange kernel
  !
  complex(SP),   external :: K_correlation_kernel_std,K_correlation_kernel_dir
  complex(SP),   external :: TDDFT_ALDA_eh_space_G_kernel
@@ -448,6 +449,12 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (m_steps>0) call live_timing(trim(section_title),m_steps)
  !
+ ! 1/bare_qpg**2 for the exchange kernel, once per q
+ if (iHxc==1) then
+   allocate(qpg_m2(BS_n_g_exch))
+   qpg_m2=1._SP/bare_qpg(iq,1:BS_n_g_exch)**2
+ endif
+ !
  !------------------
  ! LOOP over blocks
  !------------------
@@ -731,7 +738,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          ! Exchange
          if (iHxc==1) H_x=K_exchange_kernel_resonant(iq, BS_n_g_exch,               &
-&                                   BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
+&                                   BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk, qpg_m2)
          !
          ! ALDA
          if (iHxc==2) then
@@ -761,7 +768,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          ! Exchange
          if (iHxc==1) H_x=K_exchange_kernel_coupling(iq, BS_n_g_exch,              &
-&                                 BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk) 
+&                                 BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk, qpg_m2)
          !
          ! ALDA
          if (iHxc==2) then
@@ -878,6 +885,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    call live_timing(steps=i_steps)
    !
  enddo block_loop
+ !
+ if (allocated(qpg_m2)) deallocate(qpg_m2)
  !
  if (m_steps>0) call live_timing( )
  !

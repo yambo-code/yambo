@@ -94,6 +94,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP)      :: W_i,lW,QP_ppa_EET
  real(DP)         :: dp_dummy_r,dp_dummy_i
  complex(DP)      :: dp_dummy,ctmp
+ real(SP),    allocatable, save :: PPA_E_c(:),bose_c(:)
+ complex(SP), allocatable, save :: PPA_R_c(:)
+ !$omp threadprivate(PPA_E_c,PPA_R_c,bose_c)
+ complex(DP)      :: dc_red(8)
+ integer          :: i_w0,n_w
  !
  complex(SP), allocatable          :: W_(:),dc(:)
  complex(SP), allocatable DEV_ATTR :: eet_factor(:,:)
@@ -691,6 +696,60 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
          !
          !
+#if !defined _GPU
+         !
+         ! CPU: poles, residuals and Bose factors of a column first, so the
+         ! frequency loop has no branches (ig1 vectorises). Work arrays are
+         ! kept by each thread; frequencies in chunks of size(dc_red)
+         !
+         do i_w0=1,QP_dSc_steps,size(dc_red)
+           n_w=min(size(dc_red),QP_dSc_steps-i_w0+1)
+           dc_red=(0._DP,0._DP)
+           !$omp parallel do default(shared), private(ig1,ig2,i_w,W_i,ctmp,dp_dummy), reduction(+:dc_red)
+           do ig2=X_cols1,X_cols2
+             if (allocated(PPA_E_c)) then
+               if (lbound(PPA_E_c,1)/=X_rows1.or.ubound(PPA_E_c,1)/=X_rows2) deallocate(PPA_E_c,PPA_R_c,bose_c)
+             endif
+             if (.not.allocated(PPA_E_c)) allocate(PPA_E_c(X_rows1:X_rows2),PPA_R_c(X_rows1:X_rows2),bose_c(X_rows1:X_rows2))
+             do ig1=X_rows1,X_rows2
+               PPA_E_c(ig1)=real(X_ppaE/X_blc_p(ig1,ig2,X_range2),kind=SP)
+               PPA_R_c(ig1)=-X_blc_p(ig1,ig2,X_range1)/2._SP*PPA_E_c(ig1)*isc_gamp_p(ig1,ig2)
+               bose_c(ig1)=merge(-spin_occ,0._SP,PPA_E_c(ig1)<0._SP)
+             enddo
+             !
+             ! RIM W support
+             !
+             if (l_rim_w.and.ig2<=RIM_W_ng) then
+               do ig1=X_rows1,min(X_rows2,RIM_W_ng)
+                 if (RIM_W_is_diagonal.and.ig1/=ig2) cycle
+                 PPA_R_c(ig1)=-cmplx(real(DEV_VAR(RIM_W)(1,iqibz,ig1,ig2))/2._SP, &
+&                                    aimag(X_blc_p(ig1,ig2,X_range1))*real(isc_gamp_p(ig1,ig2)),kind=SP)/2._SP*PPA_E_c(ig1)
+               enddo
+             endif
+             if (Finite_Tel) then
+               do ig1=X_rows1,X_rows2
+                 bose_c(ig1)=bose_f(PPA_E_c(ig1))
+               enddo
+             endif
+             !
+             do i_w=1,n_w
+               W_i=W_(i_w0+i_w-1)
+               dp_dummy=(0._DP,0._DP)
+               do ig1=X_rows1,X_rows2
+                 ctmp = -4._SP/spin_occ*pi*isc_rhotw_p(ig1)*conjg_iscp_rhotw(ig2)*(-PPA_R_c(ig1))*&
+&                       ( (spin_occ-f_kmq+bose_c(ig1))/(W_i-E_kmq-PPA_E_c(ig1))+&
+&                         (f_kmq+bose_c(ig1))/(conjg(W_i)-E_kmq+PPA_E_c(ig1)))
+                 dp_dummy=dp_dummy+ctmp
+               enddo
+               dc_red(i_w)=dc_red(i_w)+dp_dummy
+             enddo
+           enddo
+           !$omp end parallel do
+           dc(i_w0:i_w0+n_w-1)=cmplx(dc_red(:n_w),kind=SP)
+         enddo
+         !
+#else
+         !
          do i_w=1,QP_dSc_steps
            !
            W_i = W_(i_w)
@@ -764,6 +823,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            dc(i_w) = cmplx(dp_dummy,kind=SP)
            !
          enddo
+#endif
          !
          QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+dc(:QP_dSc_steps)
          !

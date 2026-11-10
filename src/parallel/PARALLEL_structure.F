@@ -57,6 +57,8 @@ subroutine PARALLEL_structure(n_elements,ROLE)
    ncpu_chain(i_chain)=1
    do i_structure = 1, PARALLEL_n_structures_active
      if ( trim(PARALLEL_CPU_role(i_structure)) == trim(ROLE(i_order)) ) then
+       ! Roles without a phase space (e.g. ScaLapacK p, d) keep -1
+       PHASE_space=-1
        if (trim(ROLE(i_order))=="g" ) PHASE_space=PAR_n_G_vectors
        if (trim(ROLE(i_order))=="k" ) PHASE_space=PAR_K_range
        if (trim(ROLE(i_order))=="q" ) PHASE_space=PAR_Q_ibz_range(2)-PAR_Q_ibz_range(1)+1
@@ -67,7 +69,7 @@ subroutine PARALLEL_structure(n_elements,ROLE)
        if (trim(ROLE(i_order))=="v" ) PHASE_space=PAR_n_v_bands(2)-PAR_n_v_bands(1)+1
        if (trim(ROLE(i_order))=="w" ) PHASE_space=PAR_n_freqs
        !
-       if (PARALLEL_CPU_used(i_structure)>PHASE_space.and.trim(ROLE(i_order))/="eh") then
+       if (PHASE_space>=0.and.PARALLEL_CPU_used(i_structure)>PHASE_space.and.trim(ROLE(i_order))/="eh") then
          USER_structure_msg=trim(intc(PARALLEL_CPU_used(i_structure)))//" CPU for "//&
 &                           trim(intc(PHASE_space))//" elements (ROLE is '"//trim(ROLE(i_order))//"')"
          call PARALLEL_check_phase_space(PHASE_space/PARALLEL_CPU_used(i_structure),MSG=trim(USER_structure_msg))

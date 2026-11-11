@@ -196,7 +196,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
          enddo
        enddo
        ! 
-       if ((trim(rimw_type) != "semiconductor") and (.not.  cut_is_slab)) then
+       if ((trim(rimw_type) /= "semiconductor") .and. (.not.  cut_is_slab)) then
        !
        ! Calculation of next nearest neighbours vX needed only for the q=0 term 
        ! and the neighboursing q-points (for the wings and the head term)

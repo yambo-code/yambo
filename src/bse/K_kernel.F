@@ -67,6 +67,16 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  character(schlen) :: section_title
  character(1)      :: mode_now
  !
+ ! Matrix elements of the exchange, G-space ALDA and correlation kernels evaluated for the whole block
+ !
+ logical           :: l_batched,l_no_batched,l_iHxc_batched
+ character(1)      :: mode_batched
+ complex(SP), allocatable :: H_kernel_batched(:,:)
+ complex(SP)       :: H_coef
+ integer           :: H_pos_start(2)
+ !
+ external :: K_exchange_batched,K_tddft_batched,K_correlation_batched,K_correlation_batched_free,K_block_tables,K_block_assemble
+ !
  ! ... Kernel loop
  !
  ! DEFINE BSK COMMON INDEXES
@@ -310,7 +320,18 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  BS_blk_done=.false.
  !
+ ! Evaluate the exchange, the G-space ALDA and the correlation matrix elements of a whole block
+ ! with a few GEMM, instead of one by one. This is the default, the input flag KernelNoBatch switches it off.
+ call parser('KernelNoBatch',l_no_batched)
+ l_batched=.not.l_no_batched
+ !
  do iHxc=1,3
+   !
+ ! Is the kernel of this iHxc evaluated in batched mode?
+ l_iHxc_batched=.false.
+ if (iHxc==1) l_iHxc_batched=l_batched
+ if (iHxc==2) l_iHxc_batched=l_batched.and.l_tddft_gsum.and..not.l_tddft_rsum.and.n_sp_pol==1
+ if (iHxc==3) l_iHxc_batched=l_batched.and..not.l_BS_magnons
    !
  if ((.not.l_bs_exch).and.iHxc==1) cycle
  !
@@ -553,6 +574,39 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! Transition Loops
    !------------------
+   !
+   if (l_iHxc_batched) then
+     !
+     ! The matrix elements of the whole block are computed with a few GEMM
+     !
+     H_pos_start(1)=sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+(BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1)
+     H_pos_start(2)=sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+(BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1)
+     !
+     mode_batched=mode_now
+     if (mode_now=="Q") mode_batched="C"
+     !
+     YAMBO_ALLOC(H_kernel_batched,(BS_T_grp(i_Tgrp_k)%size,BS_T_grp(i_Tgrp_p)%size))
+     !
+     if (iHxc==1) call K_exchange_batched(iq,mode_batched,BS_n_g_exch,BS_T_grp(i_Tgrp_k),BS_T_grp(i_Tgrp_p),H_kernel_batched)
+     ! the G-space ALDA kernel has the same form for all the modes
+     if (iHxc==2) call K_tddft_batched("R",BS_n_g_fxc,BS_T_grp(i_Tgrp_k),BS_T_grp(i_Tgrp_p),H_kernel_batched)
+     if (iHxc==3) call K_correlation_batched(iq,i_block,i_Tgrp_k,i_Tgrp_p,H_pos_start,mode_batched,Xk,q,l_std_alg,&
+&                                             qindx_ID_frag,H_kernel_batched)
+     !
+     call K_block_tables(i_block,i_Tgrp_k,i_Tgrp_p,H_pos_start,mode_now)
+     !
+     ! Matrix element = sqrt(f_k) (H_x*Co-H_c) sqrt(f_p), with H_x=0 for the correlation
+     H_coef=Co
+     if (iHxc==3) then
+       H_coef=-cmplx(1._SP,0._SP,SP)
+       if (l_tddft.and.WF_exx_fraction>0._SP) H_coef=-cmplx(WF_exx_fraction,0._SP,SP)
+     endif
+     call K_block_assemble(i_block,i_Tgrp_k,i_Tgrp_p,H_pos_start,H_coef,mode_now,&
+&                          l_matrix_init,l_write_kernel,H_kernel_batched)
+     !
+     YAMBO_FREE(H_kernel_batched)
+     !
+   else
    !
    !DEV_OMP parallel default(shared), &
    !DEV_OMP private(i_Tk,i_Tp, O1,O2,O_times_W, &
@@ -847,6 +901,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    !DEV_OMP end parallel
    !
+   endif
+   !
    call timing('X T_space Kernel sum',OPR='stop')
    !
    if(BS_K_cutoff>0._SP.and.l_write_kernel) &
@@ -912,6 +968,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    YAMBO_FREE_GPU(DEV_VAR(RIM_W)) 
    YAMBO_FREE(RIM_W)
+   call K_correlation_batched_free()
  endif
  !
  if ( (iHxc==1 .and. l_bs_exch_wf_in_loop) .or. (iHxc==2.and.l_bs_tddft_wf_in_loop.and.l_tddft_gsum)) then

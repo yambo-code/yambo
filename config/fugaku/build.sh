@@ -6,7 +6,7 @@ set -euo pipefail
 PROFILE=$(cd "$(dirname "$0")" && pwd)
 SOURCE=$(cd "$PROFILE/../.." && pwd)
 WORK=${YAMBO_WORK:?Set YAMBO_WORK to a new directory on project storage}
-OPT=${YAMBO_FCFLAGS:--Kfast -g -Kopenmp}
+OPT=${YAMBO_FCFLAGS:--Kfast -Kocl -g -Kopenmp}
 
 TCS=/opt/FJSVxtclanga/tcsds-1.2.41
 SPACK=/vol0004/apps/oss/spack-v1.0.1/opt/spack/linux-a64fx

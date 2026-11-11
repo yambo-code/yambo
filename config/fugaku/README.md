@@ -18,7 +18,7 @@ LibXC 6.2.2. Double precision, MPI, OpenMP, parallel I/O.
 
 ## Optimisation flags
 
-Fortran is compiled with **`-Kfast -g -Kopenmp`** (override with
+Fortran is compiled with **`-Kfast -Kocl -g -Kopenmp`** (override with
 `YAMBO_FCFLAGS`). Do not use `-O2`: the GW-PPA self-energy was 1.6× and
 the BSE kernel 1.5× slower than with `-Kfast`, mostly from strict complex
 division and runtime complex `abs`/`**` calls. 
@@ -28,6 +28,10 @@ turns an overflowed `1/Inf` into NaN; so in our commits we capped the Bose and F
 exponents so finite-temperature GW and metals are correct. We wanted to use
 `-Ksimd=2`, but found it leads to crashes. So other work arounds were introduced
 to properly vectorize.
+
+`-Kocl` enables `!OCL` lines (ignored by default). One keeps exact
+division and no FMA in `mod_vec_operate.F`: with `-Kfast` there, GrCo GW
+quasiparticle energies shifted by 0.2 meV.
 
 ## Run
 
@@ -57,3 +61,5 @@ OMP_NUM_THREADS=12 mpiexec -n 4 "$YAMBO_WORK/verify"
 - Haydock dot products broadcast from rank 0 (`K_dot_product.F`, Fujitsu
   only). SSL2's ZDOTC rounds differently for data at different addresses,
   so rank replicas diverged and multi-rank Haydock spectra were wrong.
+- `!OCL NOFP_RELAXED,NOFP_CONTRACT` on `vec_operate` (`mod_vec_operate.F`):
+  `-Kfast` arithmetic in the k/q/G conversions shifted metal QP energies.

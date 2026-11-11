@@ -15,6 +15,10 @@ subroutine K_dot_product(dot,V,W,i_kind)
  use BS_solvers,     ONLY:Haydock_vector
  use BS,             ONLY:BS_nT_grps,BS_T_grp
  use parallel_m,     ONLY:PAR_IND_T_groups,PAR_COM_Xk_ibz_INDEX,PAR_COM_eh_INDEX
+#if defined _FUJITSU
+ use parallel_m,     ONLY:PAR_COM_WORLD
+ use parallel_int,   ONLY:PP_bcast
+#endif
  use parallel_int,   ONLY:PP_redux_wait
  use wrapper_omp,    ONLY:Vstar_dot_V_omp
  !
@@ -49,4 +53,10 @@ subroutine K_dot_product(dot,V,W,i_kind)
  call PP_redux_wait( dot ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait( dot ,COMM=PAR_COM_eh_INDEX%COMM )
  !
+#if defined _FUJITSU
+ ! Other ranks hold replicas and compute this sum too. SSL2's ZDOTC can
+ ! round it differently and Haydock amplifies that: use rank 0's value.
+ call PP_bcast( dot ,0,COMM=PAR_COM_WORLD%COMM )
+ !
+#endif
 end subroutine K_dot_product

@@ -5,6 +5,8 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
+! Fujitsu -Kfast: keep exact divisions and no FMA in the k/q/G conversions
+!OCL NOFP_RELAXED,NOFP_CONTRACT
 module vec_operate
  !
  use pars,      ONLY:SP,pi,zero_dfl,rZERO

@@ -113,7 +113,7 @@ subroutine msg_characters_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,MSG_
  else
    write (lch,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
  endif
- if (len_trim(after_msg)> 0) lch=trim(lch)//" ["//trim(after_msg)//"]"
+ if (len_trim(after_msg_)> 0) lch=trim(lch)//" ["//trim(after_msg_)//"]"
  !
  if (LOG_msg) then
    if(.not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")

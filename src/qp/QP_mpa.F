@@ -568,7 +568,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
                      bose_PPA_E=spin_occ*Bose_Temp/real(MPA_E_par_p(ig1,ig2,i_np),SP)
                    endif 
                    if (real(MPA_E_par_p(ig1,ig2,i_np),SP)> bose_E_cut*Bose_Temp) then
-                     bose_PPA_E=spin_occ/(exp(real(MPA_E_par_p(ig1,ig2,i_np),SP)/Bose_Temp)-1._SP)
+                     bose_PPA_E=spin_occ/(exp(min(real(MPA_E_par_p(ig1,ig2,i_np),SP)/Bose_Temp,80._SP))-1._SP)
                    endif
                  else
                    bose_PPA_E=spin_occ*Bose_Temp/epsilon(1._SP)
@@ -654,7 +654,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
                      bose_PPA_E=spin_occ*Bose_Temp/real(MPA_E_par_p(ig1,ig2,i_np),SP)
                    endif 
                    if (real(MPA_E_par_p(ig1,ig2,i_np),SP)> bose_E_cut*Bose_Temp) then
-                     bose_PPA_E=spin_occ/(exp(real(MPA_E_par_p(ig1,ig2,i_np),SP)/Bose_Temp)-1._SP)
+                     bose_PPA_E=spin_occ/(exp(min(real(MPA_E_par_p(ig1,ig2,i_np),SP)/Bose_Temp,80._SP))-1._SP)
                    endif
                  else
                    bose_PPA_E=spin_occ*Bose_Temp/epsilon(1._SP)

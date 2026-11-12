@@ -183,7 +183,7 @@ module wrapper
      integer,     intent(in)  :: K,LDA,LDB,LDC,M,N
      character,   intent(in)  :: TRANSA,TRANSB
      complex(SP), intent(in)  :: A(LDA,*),B(LDB,*)
-     complex(SP), intent(out) :: C(LDC,*)
+     complex(SP), intent(inout) :: C(LDC,*)
 #if defined _DOUBLE
      call ZGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
 #else
@@ -207,7 +207,7 @@ module wrapper
      complex(SP), intent(in)  :: BETA
      integer,     intent(in)  :: msize
      complex(SP), intent(in)  :: A(msize,msize),B(msize,msize)
-     complex(SP), intent(out) :: C(msize,msize)
+     complex(SP), intent(inout) :: C(msize,msize)
      character,   intent(in)  :: TRANSA,TRANSB
 #if defined _DOUBLE
      call ZGEMM(TRANSA,TRANSB,msize,msize,msize,(1._SP,0._SP),A,msize,B,msize,BETA,C,msize)
@@ -225,7 +225,7 @@ module wrapper
      integer,  intent(in) :: INCX,INCY,LDA,M,N
      character,intent(in) :: TRANS
      real(SP), intent(in) :: A(LDA,*),X(*)
-     real(SP), intent(out):: Y(*)
+     real(SP), intent(inout):: Y(*)
 #if defined _DOUBLE
      call DGEMV(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
 #else
@@ -238,7 +238,7 @@ module wrapper
      integer,  intent(in) :: INCX,INCY,LDA,M,N
      character,intent(in) :: TRANS
      real(SP), intent(in)  DEV_ATTR :: A(:,:),X(:)
-     real(SP), intent(out) DEV_ATTR :: Y(:)
+     real(SP), intent(inout) DEV_ATTR :: Y(:)
      !
      call devxlib_xGEMV_gpu(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
    end subroutine mv_sgemv_gpu
@@ -248,7 +248,7 @@ module wrapper
      integer,     intent(in) :: INCX,INCY,LDA,M,N
      character,   intent(in) :: TRANS
      complex(SP), intent(in) :: A(LDA,*),X(*)
-     complex(SP), intent(out):: Y(*)
+     complex(SP), intent(inout):: Y(*)
 #if defined _DOUBLE
      call ZGEMV(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
 #else
@@ -261,7 +261,7 @@ module wrapper
      integer,     intent(in) :: INCX,INCY,LDA,M,N
      character,   intent(in) :: TRANS
      complex(SP), intent(in)  DEV_ATTR :: A(:,:),X(:)
-     complex(SP), intent(out) DEV_ATTR :: Y(:)
+     complex(SP), intent(inout) DEV_ATTR :: Y(:)
      !
      call devxlib_xGEMV_gpu(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
    end subroutine mv_cgemv_gpu
@@ -308,7 +308,7 @@ module wrapper
      complex(SP), intent(in) :: CA
      integer,     intent(in) :: N
      complex(SP), intent(in) :: CX(N,N)
-     complex(SP), intent(out):: CY(N,N)
+     complex(SP), intent(inout):: CY(N,N)
 #if defined _DOUBLE
      call ZAXPY(N**2,CA,CX,1,CY,1)
 #else
@@ -324,7 +324,7 @@ module wrapper
      complex(SP), intent(in) :: CA
      integer,     intent(in) :: N
      complex(SP), intent(in) :: CX(*)
-     complex(SP), intent(out):: CY(*)
+     complex(SP), intent(inout):: CY(*)
 #if defined _DOUBLE
      call ZAXPY(N,CA,CX,1,CY,1)
 #else
@@ -337,7 +337,7 @@ module wrapper
      complex(SP), intent(in) :: CA
      integer,     intent(in) :: N
      complex(SP), intent(in) :: CX(*)
-     complex(SP), intent(out):: CY(*)
+     complex(SP), intent(inout):: CY(*)
      integer,     intent(in) :: INCX,INCY
 #if defined _DOUBLE
      call ZAXPY(N,CA,CX,INCX,CY,INCY)
@@ -350,7 +350,7 @@ module wrapper
      complex(SP),          intent(in)  :: CA
      integer,              intent(in)  :: N
      complex(SP) DEV_ATTR, intent(in)  :: CX(N)
-     complex(SP) DEV_ATTR, intent(out) :: CY(N)
+     complex(SP) DEV_ATTR, intent(inout) :: CY(N)
      !
      call devxlib_xAXPY_gpu(N,CA,CX,1,CY,1)
    end subroutine vv_c_gpu
@@ -359,7 +359,7 @@ module wrapper
      real(SP),    intent(in) :: CA
      integer,     intent(in) :: N
      real(SP),    intent(in) :: CX(*)
-     real(SP),    intent(out):: CY(*)
+     real(SP),    intent(inout):: CY(*)
 #if defined _DOUBLE
      call DAXPY(N,CA,CX,1,CY,1)
 #else
@@ -371,7 +371,7 @@ module wrapper
      real(SP),    intent(in) :: CA
      integer,     intent(in) :: N
      real(SP),    intent(in) :: CX(*)
-     real(SP),    intent(out):: CY(*)
+     real(SP),    intent(inout):: CY(*)
      integer,     intent(in) :: INCX,INCY
 #if defined _DOUBLE
      call DAXPY(N,CA,CX,INCX,CY,INCY)

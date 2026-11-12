@@ -7,7 +7,7 @@
 !
 #include<dev_defs.h>
 !
-function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp_ik, i_Tk) result(H_x)
+function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp_ik, i_Tk, qpg_m2) result(H_x)
   !==============================
   !
   ! :::EXCHANGE    (resonant):::
@@ -21,6 +21,7 @@ function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   implicit none
   !
   integer,                  intent(in) :: iq,BS_n_g_exch,i_Tp,i_Tk
+  complex(SP),              intent(in) :: qpg_m2(*)   ! 1/bare_qpg(iq,:)**2 (CPU path)
   type(BS_T_group), target, intent(in) :: BS_T_grp_ip,BS_T_grp_ik
   complex(SP) :: H_x
   !
@@ -58,8 +59,11 @@ function K_exchange_kernel_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   H_x=cmplx(H_x_r,H_x_i,kind=SP)
   !
 #else
-  H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp_ip%O_x(:,i_Tp),&
-                                   BS_T_grp_ik%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
+  ! qpg_m2=1/bare_qpg**2, computed once per q in K_kernel
+  H_x=cZERO
+  do ig=1,BS_n_g_exch
+    H_x=H_x+conjg(BS_T_grp_ip%O_x(ig,i_Tp))*BS_T_grp_ik%O_x(ig,i_Tk)*qpg_m2(ig)
+  enddo
 #endif
   !
 end function K_exchange_kernel_resonant
@@ -67,7 +71,7 @@ end function K_exchange_kernel_resonant
 !
 !
 !
-function K_exchange_kernel_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp_ik, i_Tk) result(H_x)
+function K_exchange_kernel_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp_ik, i_Tk, qpg_m2) result(H_x)
   !==============================
   !
   ! :::EXCHANGE    (coupling):::
@@ -82,6 +86,7 @@ function K_exchange_kernel_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   implicit none
   !
   integer,                  intent(in) :: iq, BS_n_g_exch,i_Tp,i_Tk
+  complex(SP),              intent(in) :: qpg_m2(*)   ! 1/bare_qpg(iq,:)**2 (CPU path)
   type(BS_T_group), target, intent(in) :: BS_T_grp_ip,BS_T_grp_ik
   complex(SP) :: H_x
   !
@@ -119,8 +124,11 @@ function K_exchange_kernel_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, BS_T_grp
   H_x=cmplx(H_x_r,H_x_i,SP)
   !
 #else
-  H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp_ip%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
-                               BS_T_grp_ik%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
+  ! qpg_m2=1/bare_qpg**2, computed once per q in K_kernel
+  H_x=cZERO
+  do ig=1,BS_n_g_exch
+    H_x=H_x+BS_T_grp_ip%O_x(minus_G(ig),i_Tp)*BS_T_grp_ik%O_x(ig,i_Tk)*qpg_m2(ig)
+  enddo
 #endif
  !
 end function K_exchange_kernel_coupling

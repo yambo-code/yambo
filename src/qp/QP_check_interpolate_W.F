@@ -582,8 +582,8 @@ subroutine check_W_interpolation(q,Xw,f_coeff,delta_q,vX,idx_q,idx_is,idx_G)
                        epsm1_sampl = 0
                        func=0               
                      else
-                       func = ((f_coeff(2,1,ig2,iq,iomega)-f_coeff(5,1,ig2,iq,iomega))*abs(q_rlu(1)) + &
-&                           + (f_coeff(3,1,ig2,iq,iomega)-f_coeff(6,1,ig2,iq,iomega))*abs(q_rlu(2)) +  &
+                       func = ((f_coeff(2,1,ig2,iq,iomega)-f_coeff(5,1,ig2,iq,iomega))*abs(q_rlu(1)) &
+&                           + (f_coeff(3,1,ig2,iq,iomega)-f_coeff(6,1,ig2,iq,iomega))*abs(q_rlu(2)) &
 &                           + (f_coeff(4,1,ig2,iq,iomega)-f_coeff(7,1,ig2,iq,iomega))*abs(q_rlu(3)))   &
                              /iku_v_norm(q_sampl)/2.0_SP
                        W_sampl = func/iku_v_norm(qpGc+q_sampl)**2*vslab**2/q0_def_norm

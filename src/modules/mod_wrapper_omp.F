@@ -63,7 +63,7 @@ module wrapper_omp
      integer,     intent(in)  :: K,LDA,LDB,LDC,M,N
      character,   intent(in)  :: TRANSA,TRANSB
      complex(SP), intent(in)  :: A(LDA,*),B(LDB,*)
-     complex(SP), intent(out) :: C(LDC,*)
+     complex(SP), intent(inout) :: C(LDC,*)
 #if defined _OPENMP_INT_LINALG && defined _DOUBLE
      call ZGEMM_omp(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
 #elif defined _OPENMP_INT_LINALG && !defined _DOUBLE
@@ -117,7 +117,7 @@ module wrapper_omp
      integer,  intent(in) :: INCX,INCY,LDA,M,N
      character,intent(in) :: TRANS
      real(SP), intent(in) :: A(LDA,*),X(*)
-     real(SP), intent(out):: Y(*)
+     real(SP), intent(inout):: Y(*)
 #if defined _OPENMP_INT_LINALG && defined _DOUBLE
      call DGEMV_omp(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
 #elif defined _OPENMP_INT_LINALG && !defined _DOUBLE
@@ -134,7 +134,7 @@ module wrapper_omp
      integer,     intent(in) :: INCX,INCY,LDA,M,N
      character,   intent(in) :: TRANS
      complex(SP), intent(in) :: A(LDA,*),X(*)
-     complex(SP), intent(out):: Y(*)
+     complex(SP), intent(inout):: Y(*)
 #if defined _OPENMP_INT_LINALG && defined _DOUBLE
      call ZGEMV_omp(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
 #elif defined _OPENMP_INT_LINALG && !defined _DOUBLE
@@ -186,7 +186,7 @@ module wrapper_omp
      complex(SP), intent(in) :: CA
      integer,     intent(in) :: N
      complex(SP), intent(in) :: CX(N,N)
-     complex(SP), intent(out):: CY(N,N)
+     complex(SP), intent(inout):: CY(N,N)
      !
 #if defined _OPENMP_INT_LINALG 
      integer :: i,j
@@ -215,7 +215,7 @@ module wrapper_omp
      complex(SP), intent(in) :: CA
      integer,     intent(in) :: N
      complex(SP), intent(in) :: CX(:)
-     complex(SP), intent(out):: CY(:)
+     complex(SP), intent(inout):: CY(:)
      !
 #if defined _OPENMP_INT_LINALG
      integer :: i
@@ -238,7 +238,7 @@ module wrapper_omp
      real(SP),    intent(in) :: CA
      integer,     intent(in) :: N
      real(SP),    intent(in) :: CX(:)
-     real(SP),    intent(out):: CY(:)
+     real(SP),    intent(inout):: CY(:)
      !
 #if defined _OPENMP_INT_LINALG
      integer :: i

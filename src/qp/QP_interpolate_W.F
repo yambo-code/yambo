@@ -150,6 +150,18 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
          G_max_ibz(idx_q(ig,iq,nn)) = idx_G(ig,iq,nn)
        endif 
      enddo
+     do nn=2,7
+       if (G_max_ibz(idx_q_2(ig,iq,nn)) < idx_G_2(ig,iq,nn)) then
+         G_max_ibz(idx_q_2(ig,iq,nn)) = idx_G_2(ig,iq,nn)
+       endif
+     enddo
+     if (ig==1) then
+       do nn=8,13
+         if (G_max_ibz(idx_q_2(ig,iq,nn)) < idx_G_2(ig,iq,nn)) then
+           G_max_ibz(idx_q_2(ig,iq,nn)) = idx_G_2(ig,iq,nn)
+         endif
+       enddo
+     endif
    enddo
  enddo
  !

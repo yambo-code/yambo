@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): CR AF DS
+! Authors (see AUTHORS file for details): CR AF DS XW
 !
 ! Parallel pseudo-Hermitian ChASE. Returns right eigenvectors only,
 ! row-distributed (mycol==0). Left vectors L=S R are built by the caller.

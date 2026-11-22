@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM AF
+! Authors (see AUTHORS file for details): AM AF XW
 !
 ! #CHASE STAMP      
 !

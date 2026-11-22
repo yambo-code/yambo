@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details):
+! Authors (see AUTHORS file for details): XW
 !
 ! Input options that ChASE only accepts through its setters. They act on the
 ! active solver, so call this between *chase_init* and *chase(...).

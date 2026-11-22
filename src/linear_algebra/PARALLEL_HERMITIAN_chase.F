@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): CR AF DS
+! Authors (see AUTHORS file for details): CR AF DS XW
 !
 ! Block-block ChASE. Eigenvectors stay row-distributed: only mycol==0
 ! ranks deposit local rows into V_blc (no gather). Residuals Allreduce scalars.

@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM XW
 !
 subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !

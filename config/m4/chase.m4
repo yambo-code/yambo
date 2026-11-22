@@ -79,9 +79,9 @@ For a CPU-only run, point --with-chase-libdir/--with-chase-includedir to a CPU b
         #AC_SUBST([CHASE_LIBS],["${CHASE_LIBS} -lstdc++ "])
         CHASE_LIBS="${CHASE_LIBS} -lstdc++"
         #
-        # Prefer the complete static link line exported by ChASE (chase.pc),
-        # or a user supplied one. Older chase.pc files do not list the ChASE
-        # libraries at all; keep the line above for those.
+        # ChASE >= 1.7.4 puts -lchase_f -lchase_c in Libs and the static
+        # dependencies in Libs.private. The Version field is not a reliable
+        # check: a 1.7.4 chase.pc still says 1.7.0. --with-chase-libs overrides.
         AC_PATH_PROGS(PKG_CONFIG,[pkg-config pkgconf])
         chase_pc_path="${CHASE_LIBS_R}/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
         if test x"$with_chase_libs" != "x" ; then
@@ -89,6 +89,9 @@ For a CPU-only run, point --with-chase-libdir/--with-chase-includedir to a CPU b
         elif test x"$PKG_CONFIG" != "x" && \
              PKG_CONFIG_PATH="$chase_pc_path" $PKG_CONFIG --libs chase 2>/dev/null | grep -q -e '-lchase_c' ; then
           CHASE_LIBS=`PKG_CONFIG_PATH="$chase_pc_path" $PKG_CONFIG --static --libs chase`
+        else
+          AC_MSG_ERROR([ChASE >= 1.7.4 is required. The chase.pc in ${CHASE_LIBS_R} does not list -lchase_c, so its link line is incomplete.
+Install ChASE 1.7.4 or later, or pass the full link line with --with-chase-libs.])
         fi
 	
         ##AC_SUBST([CHASE_LIBS],["${CHASE_LIBS}  "])

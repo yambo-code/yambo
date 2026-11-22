@@ -14,6 +14,7 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V_blc, N, E, neig)
  use SLK_m,          ONLY:SLK_ORTHO
  use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing
+ use linear_algebra, ONLY:CHASE_input_parameters
  use chase_diag
  !
  implicit none
@@ -24,6 +25,7 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V_blc, N, E, neig)
  real(SP),         intent(out)  :: E(neig)
  !
  integer   :: nbr,nrows,ncols,rows(2),nprow,npcol,myrow,mycol,nev,nex,ierr,deg,comm
+ real(SP)  :: tol
  character :: mode, opt, qr, grid_major
  complex(SP), allocatable :: Vtemp(:,:)
  real(SP),    allocatable :: Etemp(:)
@@ -37,8 +39,10 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V_blc, N, E, neig)
  nev = min(neig,N)
 #ifdef _DOUBLE
  deg = 20
+ tol = 1.0e-10_SP
 #else
  deg = 10
+ tol = 1.0e-5_SP
 #endif
  mode = 'R'
  opt = 'S'
@@ -55,6 +59,7 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V_blc, N, E, neig)
  rows  = Mat%rows
  comm  = SLK_ORTHO%COMM
  nex   = min(100,nev)
+ call CHASE_input_parameters(N,nev,nex,deg,tol,qr)
  !
  allocate(Vtemp(nrows,nev+nex))
  allocate(Etemp(nev+nex))
@@ -72,11 +77,12 @@ subroutine PARALLEL_HERMITIAN_chase(Mat, V_blc, N, E, neig)
  call timing('ChASE init',OPR='stop')
  !
  if (ierr/=1) call warning("ChASE did not init properly")
+ call CHASE_set_options()
  !
 #if defined _DOUBLE
- call pzchase(deg,1.0e-10_SP,mode,opt,qr)
+ call pzchase(deg,tol,mode,opt,qr)
 #else
- call pcchase(deg,1.0e-5_SP,mode,opt,qr)
+ call pcchase(deg,tol,mode,opt,qr)
 #endif
  !
 #if defined _DOUBLE

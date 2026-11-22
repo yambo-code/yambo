@@ -14,6 +14,7 @@ subroutine PARALLEL_PSEUDOHERM_chase(Mat, V_blc, N, E, neig)
  use SLK_m,          ONLY:SLK_ORTHO
  use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing
+ use linear_algebra, ONLY:CHASE_input_parameters
  use chase_diag
  !
  implicit none
@@ -58,6 +59,8 @@ subroutine PARALLEL_PSEUDOHERM_chase(Mat, V_blc, N, E, neig)
  rows  = Mat%rows
  comm  = SLK_ORTHO%COMM
  nex   = min(100,nev)
+ ! The pseudo-Hermitian search space is 2*(nev+nex) <= N
+ call CHASE_input_parameters(N/2,nev,nex,deg,tol,qr)
  !
  allocate(Vtemp(nrows,2*(nev+nex)))
  allocate(Etemp(2*(nev+nex)))
@@ -75,6 +78,7 @@ subroutine PARALLEL_PSEUDOHERM_chase(Mat, V_blc, N, E, neig)
  call timing('ChASE_PS init',OPR='stop')
  !
  if (ierr/=1) call warning("ChASE_PS did not init properly")
+ call CHASE_set_options()
  !
 #if defined _DOUBLE
  call pzchase(deg,tol,mode,opt,qr)

@@ -25,6 +25,19 @@ module linear_algebra
  integer, parameter :: CHASE=11
  integer, parameter :: min_cpu_block_size=50
  !
+ ! ChASE input parameters. Negative integers (and CHASE_tol<=0, CHASE_qr="")
+ ! keep the built-in defaults of the *_chase.F drivers or of ChASE.
+ !
+ integer           :: CHASE_nex
+ integer           :: CHASE_deg
+ integer           :: CHASE_max_deg
+ integer           :: CHASE_deg_extra
+ integer           :: CHASE_max_iter
+ integer           :: CHASE_lanczos_iter
+ integer           :: CHASE_num_lanczos
+ real(SP)          :: CHASE_tol
+ character(schlen) :: CHASE_qr
+ !
  ! Common Work Space
  !
  type LALGEBRA_WS
@@ -111,6 +124,21 @@ module linear_algebra
        !call error("[GPU] openacc FREE not implemented in LinAlg_WS_reset")
 #endif
      endif
+     !
+   end subroutine
+   !
+   subroutine CHASE_input_parameters(N,nev,nex,deg,tol,qr)
+     integer,   intent(in)    :: N,nev
+     integer,   intent(inout) :: nex,deg
+     real(SP),  intent(inout) :: tol
+     character, intent(inout) :: qr
+     !
+     if (CHASE_nex>=0)    nex=CHASE_nex
+     nex=max(0,min(nex,N-nev))
+     if (CHASE_deg>0)     deg=CHASE_deg
+     if (CHASE_tol>0._SP) tol=CHASE_tol
+     if (trim(CHASE_qr)=="cholqr")      qr='C'
+     if (trim(CHASE_qr)=="householder") qr='H'
      !
    end subroutine
    !

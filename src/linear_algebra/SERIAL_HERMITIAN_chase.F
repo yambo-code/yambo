@@ -12,7 +12,7 @@ subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_nl_optics,l_real_time
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,&
-&                         LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
+&                         LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS,CHASE_input_parameters
  use timing_m,       ONLY:timing
  use chase_diag
  !
@@ -50,6 +50,7 @@ subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
  mode = 'R'
  opt = 'S'
  qr = 'C'
+ call CHASE_input_parameters(n,nev,nex,deg,tol,qr)
  !
  YAMBO_ALLOC(Vtemp,(n,nev+nex))
  YAMBO_ALLOC(Etemp,(nev+nex))
@@ -65,6 +66,7 @@ subroutine SERIAL_HERMITIAN_chase(n,M,E,neig)
 #endif
  !
  call timing('ChASE_INIT',OPR='stop')
+ call CHASE_set_options()
  !
 #if defined _DOUBLE
  call zchase(deg,tol,mode,opt,qr)

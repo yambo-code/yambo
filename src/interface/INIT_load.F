@@ -41,6 +41,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use BS_solvers,    ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_maxit,&
  &                       BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_mpd,BSS_slepc_matrix_format
 #endif
+#if defined _CHASE
+ use linear_algebra, ONLY:CHASE_nex,CHASE_deg,CHASE_max_deg,CHASE_deg_extra,CHASE_max_iter,&
+&                         CHASE_lanczos_iter,CHASE_num_lanczos,CHASE_tol,CHASE_qr
+#endif
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits,FXC_PF_alpha,FXC_mode
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
@@ -345,6 +349,21 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSSSlepcTol',   '[SLEPC] Tolerance for the iterative solver',BSS_slepc_tol,verb_level=V_resp)
  call it(defs,'BSSSlepcMatrixFormat','[SLEPC] Matrix type (shell|explicit)',&
  &                                                BSS_slepc_matrix_format,verb_level=V_resp)
+#endif
+#if defined _CHASE
+ call it(defs,'BSSChaseNex',        '[CHASE] Extra search vectors (<0: min(100,nev))',CHASE_nex)
+ call it(defs,'BSSChaseTol',        '[CHASE] Residual tolerance (<=0: built-in default)',CHASE_tol)
+ call it(defs,'BSSChaseDeg',        '[CHASE] Initial Chebyshev degree (<0: built-in default)',CHASE_deg)
+ call it(defs,'BSSChaseMaxIter',    '[CHASE] Maximum subspace iterations (<0: ChASE default)',CHASE_max_iter)
+ call it(defs,'BSSChaseMaxDeg',     '[CHASE] Maximum Chebyshev degree (<0: ChASE default)',CHASE_max_deg,verb_level=V_resp)
+ call it(defs,'BSSChaseDegExtra',   '[CHASE] Extra degree added to the filter (<0: ChASE default)',&
+&                                                                          CHASE_deg_extra,verb_level=V_resp)
+ call it(defs,'BSSChaseLanczosIter','[CHASE] Lanczos steps for the spectral bounds (<0: ChASE default)',&
+&                                                                          CHASE_lanczos_iter,verb_level=V_resp)
+ call it(defs,'BSSChaseNumLanczos', '[CHASE] Lanczos runs for the spectral bounds (<0: ChASE default)',&
+&                                                                          CHASE_num_lanczos,verb_level=V_resp)
+ call it(defs,'BSSChaseQR',         '[CHASE] QR factorization (cholqr|householder, empty: cholqr)',&
+&                                                                          CHASE_qr,verb_level=V_resp)
 #endif
 #if !defined _SC
  call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)

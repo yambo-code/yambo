@@ -12,7 +12,7 @@ subroutine SERIAL_PSEUDOHERM_chase(n,M,E,V_left,V_right,neig)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_nl_optics,l_real_time
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,&
-&                         LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
+&                         LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS,CHASE_input_parameters
  use timing_m,       ONLY:timing
  use chase_diag
  !
@@ -54,6 +54,8 @@ subroutine SERIAL_PSEUDOHERM_chase(n,M,E,V_left,V_right,neig)
  mode = 'R'
  opt = 'S'
  qr = 'C'
+ ! The pseudo-Hermitian search space is 2*(nev+nex) <= n
+ call CHASE_input_parameters(n/2,nev,nex,deg,tol,qr)
  !
  YAMBO_ALLOC(Vtemp,(n,2*(nev+nex)))
  YAMBO_ALLOC(Etemp,(2*(nev+nex)))
@@ -69,6 +71,7 @@ subroutine SERIAL_PSEUDOHERM_chase(n,M,E,V_left,V_right,neig)
 #endif
  !
  call timing('ChASE_PS_INIT',OPR='stop')
+ call CHASE_set_options()
  !
 #if defined _DOUBLE
  call zchase(deg,tol,mode,opt,qr)

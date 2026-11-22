@@ -55,6 +55,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_mpd,&
 &                     BSS_slepc_pseudo_herm
 #endif
+#if defined _CHASE
+ use linear_algebra, ONLY:CHASE_nex,CHASE_deg,CHASE_max_deg,CHASE_deg_extra,CHASE_max_iter,&
+&                         CHASE_lanczos_iter,CHASE_num_lanczos,CHASE_tol,CHASE_qr
+#endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,MAX_BSK_LIN_size,&
 &                     BS_K_dim,BS_not_const_eh_f,BSK_mode,l_BSE_kernel_complete,&
 &                     BS_K_is_ALDA,BSE_mode,BSE_prop,BSE_L_kind,BS_K_cutoff,BS_perturbative_SOC,BSK_IO_mode
@@ -488,6 +492,17 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_slepc_mpd=0
  BSS_slepc_tol=1E-5_SP
  BSS_slepc_pseudo_herm=.FALSE.
+#endif
+#if defined _CHASE
+ CHASE_nex=-1
+ CHASE_deg=-1
+ CHASE_max_deg=-1
+ CHASE_deg_extra=-1
+ CHASE_max_iter=-1
+ CHASE_lanczos_iter=-1
+ CHASE_num_lanczos=-1
+ CHASE_tol=0._SP
+ CHASE_qr=""
 #endif
  !
  ! TDDFT

@@ -299,6 +299,8 @@ subroutine INIT_activate()
    endif
    if (index(BSS_mode,'c')/=0) then
         call initactivate(1,'WRbsWF BSSPertWidth BSSNEig')
+        call initactivate(1,'BSSChaseNex BSSChaseTol BSSChaseDeg BSSChaseMaxIter BSSChaseMaxDeg')
+        call initactivate(1,'BSSChaseDegExtra BSSChaseLanczosIter BSSChaseNumLanczos BSSChaseQR')
    endif
    !
    ! Special project dependent variables

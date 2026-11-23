@@ -67,7 +67,7 @@
 #                 @PETSC_INCS_R@ 
 # [@SLEPC_check@] SLEPC     : @SLEPC_LIBS_R@ @SLEPC_info@
 #                 @SLEPC_INCS_R@ 
-# [@CHASE_check@] ChASE     : @CHASE_LIBS_R@
+# [@CHASE_check@] ChASE     : @CHASE_LIBS_R@ @CHASE_info@
 #                 @CHASE_INCS_R@ 
 #
 # > OTHERs: @DEVXLIB_info@

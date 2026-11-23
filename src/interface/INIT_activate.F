@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM DS
+! Authors (see AUTHORS file for details): AM DS XW
 !
 subroutine INIT_activate()
  !
@@ -299,6 +299,8 @@ subroutine INIT_activate()
    endif
    if (index(BSS_mode,'c')/=0) then
         call initactivate(1,'WRbsWF BSSPertWidth BSSNEig')
+        call initactivate(1,'BSSChaseNex BSSChaseTol BSSChaseDeg BSSChaseMaxIter BSSChaseMaxDeg')
+        call initactivate(1,'BSSChaseDegExtra BSSChaseLanczosIter BSSChaseNumLanczos BSSChaseQR')
    endif
    !
    ! Special project dependent variables

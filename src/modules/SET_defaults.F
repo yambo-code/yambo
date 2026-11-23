@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2006 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM XW
 !
 subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
@@ -54,6 +54,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_maxit,&
 &                     BSS_slepc_precondition,BSS_slepc_approach,BSS_slepc_matrix_format,BSS_slepc_mpd,&
 &                     BSS_slepc_pseudo_herm
+#endif
+#if defined _CHASE
+ use linear_algebra, ONLY:CHASE_nex,CHASE_deg,CHASE_max_deg,CHASE_deg_extra,CHASE_max_iter,&
+&                         CHASE_lanczos_iter,CHASE_num_lanczos,CHASE_tol,CHASE_qr
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,MAX_BSK_LIN_size,&
 &                     BS_K_dim,BS_not_const_eh_f,BSK_mode,l_BSE_kernel_complete,&
@@ -488,6 +492,17 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_slepc_mpd=0
  BSS_slepc_tol=1E-5_SP
  BSS_slepc_pseudo_herm=.FALSE.
+#endif
+#if defined _CHASE
+ CHASE_nex=-1
+ CHASE_deg=-1
+ CHASE_max_deg=-1
+ CHASE_deg_extra=-1
+ CHASE_max_iter=-1
+ CHASE_lanczos_iter=-1
+ CHASE_num_lanczos=-1
+ CHASE_tol=0._SP
+ CHASE_qr=""
 #endif
  !
  ! TDDFT

@@ -17,3 +17,5 @@
 	$(f77_elemental_compilation)
 .c.o:
 	$(c_elemental_compilation)
+
+get_version.o: $(includedir)/version/build_provenance.h

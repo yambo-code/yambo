@@ -75,7 +75,10 @@ struct tool_struct tool_init( )
   t.pj=pj;
  }
  if (pj==NULL) pj=" ";
- sprintf(t.version_string,"%i.%i.%i Revision %i Hash %s",t.version,t.subversion,t.patchlevel,t.revision,t.hash);
+ snprintf(t.version_string,sizeof(t.version_string),
+  "%i.%i.%i Commit %s (%s) Ref %s [source: %s]",
+  t.version,t.subversion,t.patchlevel,t.commit_short,t.state,t.ref,
+  t.provenance_source);
  return(t);
 };
 

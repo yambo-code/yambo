@@ -158,3 +158,381 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  YAMBO_FREE(Ein_poles)
  !
 end function
+!
+subroutine X_weighted_bands_setup(Xen,Xk,X,iq_range,io_X_done)
+ !
+ ! Estimate, by conduction band, the marginal number of X-CG groups generated
+ ! over all pending q points owned by this q group.  The marginal contribution
+ ! is obtained from each adjacent band pair, so that energetic overlap between
+ ! bands enters the otherwise additive partition weights.  The provisional c
+ ! mask is ignored; q, k and v ownership is retained.  Bands are sampled
+ ! cyclically on c and combined with a 64-bit reduction before the contiguous
+ ! minimax partition.
+ !
+ use pars,         ONLY:SP,schlen
+ use X_m,          ONLY:X_t,l_X_terminator,X_term_E,X_terminator_E,n_OPTICAL_dir_to_eval
+ use R_lattice,    ONLY:bz_samp,qindx_X
+ use electrons,    ONLY:levels,n_sp_pol,spin_occ
+ use parallel_m,   ONLY:PP_indexes,PP_indexes_reset,PAR_INDEX_copy,PAR_IND_Q_ibz,PAR_IND_Xk_bz,&
+&                       PAR_IND_VAL_BANDS_X,PAR_IND_CON_BANDS_X,PAR_COM_CON_INDEX_X
+ use parallel_int, ONLY:PP_redux_wait,PARALLEL_index_weighted_contiguous,PARALLEL_live_message
+ use com,          ONLY:msg
+ use timing_m,     ONLY:timing
+ !
+#include<y_memory.h>
+ !
+ type(levels) :: Xen
+ type(bz_samp):: Xk
+ type(X_t)    :: X
+ type(PP_indexes) :: q_partition,refined_partition
+ integer      :: iq_range(2),io_X_done(*)
+ !
+ integer :: iq,ik_bz,i_sym,ik,ik_m_q,iv,ic,ic_eval,i_sp,ic_min,ic_low,nmax,npoles,npoles_prev
+ integer :: Nv(n_sp_pol),Nc(n_sp_pol),Nc_XTerm(n_sp_pol),ngroups,ngroups_prev,ngroups_initial
+ integer :: ndir,ir
+ integer(8) :: ideal_max,static_max,interval_static_max,interval_proposed_max,interval_refined_max
+ integer(8) :: proposed_aggregate_max,refined_aggregate_max
+ integer(8),allocatable :: weights(:),q_weights(:),q_weights_all(:,:),q_ideal_max(:),accepted(:)
+ integer(8),allocatable :: interval_weights(:),interval_static(:,:),interval_proposed(:,:),interval_refined(:,:)
+ integer,allocatable :: sorted_x(:),group_sorted(:)
+ real(SP),allocatable :: poles(:),ein(:),sorted(:)
+ real(SP) :: E_eh,E_in,f_eh,local_tresh
+ logical :: l_XTerm_vv,refinement_accepted
+ character(schlen) :: ch
+ !
+ do i_sp=1,n_sp_pol
+   Nv(i_sp)=Xen%nbm(i_sp)-X%ib(1)+1
+   Nc(i_sp)=X%ib(2)-Xen%nbf(i_sp)
+ enddo
+ Nc_XTerm=0
+ if (l_X_terminator) Nc_XTerm=Nv
+ ic_low=minval(Xen%nbf(:n_sp_pol))+1
+ if (l_X_terminator) ic_low=X%ib(1)
+ nmax=Xk%nbz*sum(Nv)
+ allocate(weights(X%ib(2)),q_weights(X%ib(2)),accepted(X%ib(2)))
+ allocate(q_weights_all(X%ib(2),iq_range(1):iq_range(2)))
+ allocate(q_ideal_max(iq_range(1):iq_range(2)))
+ weights=0_8
+ q_weights_all=0_8
+ q_ideal_max=0_8
+ accepted=0_8
+ allocate(poles(2*nmax),ein(2*nmax),sorted(2*nmax),sorted_x(2*nmax),group_sorted(2*nmax))
+ local_tresh=epsilon(1._SP)
+ if (l_X_terminator) X_term_E=minval(Xen%E(X%ib(2),:,:))+X_terminator_E
+ !
+ do iq=iq_range(1),iq_range(2)
+   if (io_X_done(iq)>0) cycle
+   if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
+   q_weights=0_8
+   ndir=1
+   if (iq==1) then
+     call X_AVERAGE_setup('Q-LOOP',iq,X%q0)
+     ndir=n_OPTICAL_dir_to_eval
+   endif
+   do ic=ic_low,X%ib(2)
+     if (mod(ic-ic_low,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU)/=&
+&        PAR_COM_CON_INDEX_X(X%whoami)%CPU_id) cycle
+     npoles=0
+     npoles_prev=0
+     do ic_eval=max(ic-1,ic_low),ic
+       do i_sp=1,n_sp_pol
+         ic_min=X%ib(2)-Nc(i_sp)+1
+         if (l_X_terminator) ic_min=X%ib(1)
+         if (ic_eval<ic_min) cycle
+         do ik_bz=1,Xk%nbz
+           if (allocated(PAR_IND_Xk_bz%element_1D)) then
+             if (.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle
+           endif
+           do iv=X%ib(1),X%ib(1)+Nv(i_sp)-1
+             if (allocated(PAR_IND_VAL_BANDS_X(X%whoami)%element_1D)) then
+               if (.not.PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)) cycle
+             endif
+             i_sym=qindx_X(iq,ik_bz,1)
+             ik=Xk%sstar(ik_bz,1)
+             ik_m_q=Xk%sstar(i_sym,1)
+             if (ic_eval>=X%ib(1).and.ic_eval<=Xen%nbm(i_sp).and.l_X_terminator) then
+               l_XTerm_vv=.true.
+               E_eh=X_term_E-Xen%E(iv,ik_m_q,i_sp)
+             else
+               l_XTerm_vv=.false.
+               E_eh=Xen%E(ic_eval,ik,i_sp)-Xen%E(iv,ik_m_q,i_sp)
+             endif
+             E_in=Xen%E(iv,ik_m_q,i_sp)
+             if (.not.l_XTerm_vv) f_eh=Xen%f(iv,ik_m_q,i_sp)*&
+&              (spin_occ-Xen%f(ic_eval,ik,i_sp))/spin_occ
+             if (     l_XTerm_vv) f_eh=Xen%f(iv,ik_m_q,i_sp)*Xen%f(ic_eval,ik,i_sp)/spin_occ
+             if (abs(f_eh)<local_tresh) cycle
+             if (any((/abs(E_eh)<X%ehe(1),abs(E_eh)>X%ehe(2).and.X%ehe(2)>0._SP/))) cycle
+             npoles=npoles+1
+             poles(npoles)=E_eh
+             ein(npoles)=E_in
+           enddo
+         enddo
+       enddo
+       if (ic_eval<ic) npoles_prev=npoles
+     enddo
+     accepted(ic)=accepted(ic)+int(npoles-npoles_prev,8)*int(ndir,8)
+     if (npoles>0) then
+       call FREQUENCIES_group_engine(poles,npoles,X%cg_percentual,ein,l_X_terminator,&
+&                                   ngroups,ngroups_initial,sorted,sorted_x,group_sorted)
+       ngroups_prev=0
+       if (npoles_prev>0) call FREQUENCIES_group_engine(poles,npoles_prev,X%cg_percentual,ein,&
+&        l_X_terminator,ngroups_prev,ngroups_initial,sorted,sorted_x,group_sorted)
+       q_weights(ic)=int(max(ngroups-ngroups_prev,0),8)*int(ndir,8)
+     endif
+   enddo
+   call PP_redux_wait(q_weights,COMM=PAR_COM_CON_INDEX_X(X%whoami)%COMM)
+   q_weights_all(:,iq)=q_weights
+   weights=weights+q_weights
+   call PARALLEL_index_weighted_contiguous(q_partition,X%ib(2),ic_low,q_weights,&
+&                                          PAR_COM_CON_INDEX_X(X%whoami))
+   if (PAR_COM_CON_INDEX_X(X%whoami)%CPU_id==0) then
+     ideal_max=0_8
+     do ir=1,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU
+       if (q_partition%first_of_1D(ir)>0) then
+         ideal_max=max(ideal_max,sum(q_weights(q_partition%first_of_1D(ir):q_partition%last_of_1D(ir))))
+         write(ch,'(a,i0,a,i0,a,i0,a,i0,a,i0)') '[X-WB-Q] q ',iq,' c-rank ',ir-1,' bands ',&
+&         q_partition%first_of_1D(ir),':',q_partition%last_of_1D(ir),' marginal groups ',&
+&         sum(q_weights(q_partition%first_of_1D(ir):q_partition%last_of_1D(ir)))
+         call msg('r',trim(ch))
+       endif
+     enddo
+     q_ideal_max(iq)=ideal_max
+   endif
+ enddo
+ call PP_redux_wait(accepted,COMM=PAR_COM_CON_INDEX_X(X%whoami)%COMM)
+ call PARALLEL_index_weighted_contiguous(PAR_IND_CON_BANDS_X(X%whoami),X%ib(2),ic_low,weights,&
+&                                        PAR_COM_CON_INDEX_X(X%whoami))
+ !
+ ! Measure the non-additive interval cost and select the production mask.
+ ! First measure the full X-CG cost of the marginal partition.  Its
+ ! average cost per band defines only a proposal; measure that proposal again
+ ! with the full intervals.  One further piecewise-constant iteration uses the
+ ! measured proposal costs to refine the boundaries and measures them exactly.
+ ! The refined partition is selected when it lowers the exact aggregate
+ ! maximum; otherwise the first interval-aware proposal is selected.
+ !
+ allocate(interval_weights(X%ib(2)))
+ allocate(interval_static(PAR_COM_CON_INDEX_X(X%whoami)%n_CPU,iq_range(1):iq_range(2)))
+ allocate(interval_proposed(PAR_COM_CON_INDEX_X(X%whoami)%n_CPU,iq_range(1):iq_range(2)))
+ allocate(interval_refined(PAR_COM_CON_INDEX_X(X%whoami)%n_CPU,iq_range(1):iq_range(2)))
+ interval_weights=0_8
+ call timing('Xo weighted interval diagnostic',OPR='start')
+ call interval_costs(PAR_IND_CON_BANDS_X(X%whoami),interval_static)
+ do ir=1,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU
+   if (PAR_IND_CON_BANDS_X(X%whoami)%n_of_elements(ir)>0) then
+     interval_weights(PAR_IND_CON_BANDS_X(X%whoami)%first_of_1D(ir):&
+&                     PAR_IND_CON_BANDS_X(X%whoami)%last_of_1D(ir))=&
+&      max(sum(interval_static(ir,:))/int(PAR_IND_CON_BANDS_X(X%whoami)%n_of_elements(ir),8),1_8)
+   endif
+ enddo
+ call PARALLEL_index_weighted_contiguous(q_partition,X%ib(2),ic_low,interval_weights,&
+&                                        PAR_COM_CON_INDEX_X(X%whoami))
+ call interval_costs(q_partition,interval_proposed)
+ interval_weights=0_8
+ do ir=1,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU
+   if (q_partition%n_of_elements(ir)>0) then
+     interval_weights(q_partition%first_of_1D(ir):q_partition%last_of_1D(ir))=&
+&      max(sum(interval_proposed(ir,:))/int(q_partition%n_of_elements(ir),8),1_8)
+   endif
+ enddo
+ call PARALLEL_index_weighted_contiguous(refined_partition,X%ib(2),ic_low,interval_weights,&
+&                                        PAR_COM_CON_INDEX_X(X%whoami))
+ call interval_costs(refined_partition,interval_refined)
+ proposed_aggregate_max=maxval(sum(interval_proposed,dim=2))
+ refined_aggregate_max=maxval(sum(interval_refined,dim=2))
+ refinement_accepted=refined_aggregate_max<proposed_aggregate_max
+ call timing('Xo weighted interval diagnostic',OPR='stop')
+ !
+ if (PAR_COM_CON_INDEX_X(X%whoami)%CPU_id==0) then
+ do iq=iq_range(1),iq_range(2)
+   if (io_X_done(iq)>0) cycle
+   if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
+   static_max=0_8
+   do ir=1,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU
+     if (PAR_IND_CON_BANDS_X(X%whoami)%first_of_1D(ir)>0) static_max=max(static_max,&
+&     sum(q_weights_all(PAR_IND_CON_BANDS_X(X%whoami)%first_of_1D(ir):&
+&                       PAR_IND_CON_BANDS_X(X%whoami)%last_of_1D(ir),iq)))
+   enddo
+   write(ch,'(a,i0,a,i0,a,i0,a,f6.2,a)') '[X-WB-Q] q ',iq,' ideal max ',q_ideal_max(iq),&
+&   ' static max ',static_max,' potential reduction ',100._SP*real(static_max-q_ideal_max(iq),SP)/&
+&   real(max(static_max,1_8),SP),'%'
+   call msg('r',trim(ch))
+ enddo
+ do ir=1,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU
+   write(ch,'(a,i0,a,i0,a,i0,a,i0)') '[X-WB-M] c-rank ',ir-1,' bands ',&
+&    PAR_IND_CON_BANDS_X(X%whoami)%first_of_1D(ir),':',&
+&    PAR_IND_CON_BANDS_X(X%whoami)%last_of_1D(ir),' count ',&
+&    PAR_IND_CON_BANDS_X(X%whoami)%n_of_elements(ir)
+   call msg('r',trim(ch))
+   if (PAR_IND_CON_BANDS_X(X%whoami)%first_of_1D(ir)>0) then
+     write(ch,'(a,i0,a,i0)') '[X-WB-M] predicted marginal groups ',sum(weights(&
+&      PAR_IND_CON_BANDS_X(X%whoami)%first_of_1D(ir):PAR_IND_CON_BANDS_X(X%whoami)%last_of_1D(ir))),&
+&      ' accepted transitions ',sum(accepted(PAR_IND_CON_BANDS_X(X%whoami)%first_of_1D(ir):&
+&      PAR_IND_CON_BANDS_X(X%whoami)%last_of_1D(ir)))
+     call msg('r',trim(ch))
+   endif
+ enddo
+ do iq=iq_range(1),iq_range(2)
+   if (io_X_done(iq)>0) cycle
+   if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
+   do ir=1,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU
+     write(ch,'(a,i0,a,i0,a,i0,a,i0)') '[X-WB-I] q ',iq,' c-rank ',ir-1,&
+&     ' static exact groups ',interval_static(ir,iq),' proposed exact groups ',interval_proposed(ir,iq)
+     call msg('r',trim(ch))
+   enddo
+   interval_static_max=maxval(interval_static(:,iq))
+   interval_proposed_max=maxval(interval_proposed(:,iq))
+   write(ch,'(a,i0,a,i0,a,i0,a,f6.2,a)') '[X-WB-I] q ',iq,' static exact max ',&
+&   interval_static_max,' proposed exact max ',interval_proposed_max,' measured reduction ',&
+&   100._SP*real(interval_static_max-interval_proposed_max,SP)/&
+&   real(max(interval_static_max,1_8),SP),'%'
+   call msg('r',trim(ch))
+ enddo
+ do ir=1,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU
+   write(ch,'(a,i0,a,i0,a,i0,a,i0,a,i0)') '[X-WB-I] c-rank ',ir-1,' proposed bands ',&
+&   q_partition%first_of_1D(ir),':',q_partition%last_of_1D(ir),' count ',&
+&   q_partition%n_of_elements(ir),' static exact groups ',sum(interval_static(ir,:))
+   call msg('r',trim(ch))
+   write(ch,'(a,i0)') '[X-WB-I] proposed exact groups ',sum(interval_proposed(ir,:))
+   call msg('r',trim(ch))
+ enddo
+ do iq=iq_range(1),iq_range(2)
+   if (io_X_done(iq)>0) cycle
+   if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
+   do ir=1,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU
+     write(ch,'(a,i0,a,i0,a,i0,a,i0)') '[X-WB-R] q ',iq,' c-rank ',ir-1,&
+&     ' proposed exact groups ',interval_proposed(ir,iq),' refined exact groups ',interval_refined(ir,iq)
+     call msg('r',trim(ch))
+   enddo
+   interval_proposed_max=maxval(interval_proposed(:,iq))
+   interval_refined_max=maxval(interval_refined(:,iq))
+   write(ch,'(a,i0,a,i0,a,i0,a,f6.2,a)') '[X-WB-R] q ',iq,' proposed exact max ',&
+&   interval_proposed_max,' refined exact max ',interval_refined_max,' measured reduction ',&
+&   100._SP*real(interval_proposed_max-interval_refined_max,SP)/&
+&   real(max(interval_proposed_max,1_8),SP),'%'
+   call msg('r',trim(ch))
+ enddo
+ do ir=1,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU
+   write(ch,'(a,i0,a,i0,a,i0,a,i0,a,i0)') '[X-WB-R] c-rank ',ir-1,' refined bands ',&
+&   refined_partition%first_of_1D(ir),':',refined_partition%last_of_1D(ir),' count ',&
+&   refined_partition%n_of_elements(ir),' proposed exact groups ',sum(interval_proposed(ir,:))
+   call msg('r',trim(ch))
+   write(ch,'(a,i0)') '[X-WB-R] refined exact groups ',sum(interval_refined(ir,:))
+   call msg('r',trim(ch))
+ enddo
+ write(ch,'(a,l1,a,i0,a,i0)') '[X-WB-R] refinement accepted ',refinement_accepted,&
+&  ' proposed aggregate max ',proposed_aggregate_max,' refined aggregate max ',refined_aggregate_max
+ call msg('r',trim(ch))
+ endif
+ !
+ ! Install the accepted interval-aware partition before wavefunctions are
+ ! distributed.  The first proposal is the fallback when refinement does not
+ ! lower the exact aggregate maximum.
+ !
+ call PP_indexes_reset(PAR_IND_CON_BANDS_X(X%whoami))
+ if (refinement_accepted) then
+   call PAR_INDEX_copy(refined_partition,PAR_IND_CON_BANDS_X(X%whoami))
+ else
+   call PAR_INDEX_copy(q_partition,PAR_IND_CON_BANDS_X(X%whoami))
+ endif
+ call PARALLEL_live_message("CON bands [X-WB final]",ENVIRONMENT="Response_G_space_and_IO",&
+& LOADED=PAR_IND_CON_BANDS_X(X%whoami)%n_of_elements(PAR_COM_CON_INDEX_X(X%whoami)%CPU_id+1),&
+& TOTAL=X%ib(2)-ic_low+1,NCPU=PAR_COM_CON_INDEX_X(X%whoami)%n_CPU)
+ if (PAR_COM_CON_INDEX_X(X%whoami)%CPU_id==0) then
+   do ir=1,PAR_COM_CON_INDEX_X(X%whoami)%n_CPU
+     write(ch,'(a,i0,a,i0,a,i0,a,i0)') '[X-WB] c-rank ',ir-1,' production bands ',&
+&      PAR_IND_CON_BANDS_X(X%whoami)%first_of_1D(ir),':',&
+&      PAR_IND_CON_BANDS_X(X%whoami)%last_of_1D(ir),' count ',&
+&      PAR_IND_CON_BANDS_X(X%whoami)%n_of_elements(ir)
+     call msg('r',trim(ch))
+   enddo
+   if (refinement_accepted) then
+     call msg('r','[X-WB] production partition source refined interval-aware')
+   else
+     call msg('r','[X-WB] production partition source proposed interval-aware')
+   endif
+ endif
+ call PP_indexes_reset(q_partition)
+ call PP_indexes_reset(refined_partition)
+ deallocate(weights,q_weights,q_weights_all,q_ideal_max,accepted,poles,ein,sorted,sorted_x,group_sorted)
+ deallocate(interval_weights,interval_static,interval_proposed,interval_refined)
+ !
+contains
+ !
+ subroutine interval_costs(partition,costs)
+  !
+  ! Evaluate the group count of one complete interval per c rank.  The
+  ! reduction makes every interval cost available to all ranks.  No global
+  ! X-CG state and no production parallel index are modified.
+  !
+  type(PP_indexes),intent(in) :: partition
+  integer(8),intent(out) :: costs(:,:)
+  !
+  integer :: iq_i,ir_i,ic_i,i_sp_i,ik_bz_i,iv_i,i_sym_i,ik_i,ik_m_q_i
+  integer :: ic_min_i,npoles_i,ngroups_i,ngroups_initial_i,ndir_i,nmax_i
+  real(SP) :: E_eh_i,E_in_i,f_eh_i
+  logical :: l_XTerm_vv_i
+  real(SP),allocatable :: poles_i(:),ein_i(:),sorted_i(:)
+  integer,allocatable :: sorted_x_i(:),group_sorted_i(:)
+  !
+  costs=0_8
+  ir_i=PAR_COM_CON_INDEX_X(X%whoami)%CPU_id+1
+  nmax_i=max(nmax*partition%n_of_elements(ir_i),1)
+  allocate(poles_i(nmax_i),ein_i(nmax_i),sorted_i(nmax_i))
+  allocate(sorted_x_i(nmax_i),group_sorted_i(nmax_i))
+  do iq_i=iq_range(1),iq_range(2)
+    if (io_X_done(iq_i)>0) cycle
+    if (.not.PAR_IND_Q_ibz%element_1D(iq_i)) cycle
+    ndir_i=1
+    if (iq_i==1) ndir_i=n_OPTICAL_dir_to_eval
+    npoles_i=0
+    do ic_i=max(partition%first_of_1D(ir_i),ic_low),partition%last_of_1D(ir_i)
+      do i_sp_i=1,n_sp_pol
+        ic_min_i=X%ib(2)-Nc(i_sp_i)+1
+        if (l_X_terminator) ic_min_i=X%ib(1)
+        if (ic_i<ic_min_i) cycle
+        do ik_bz_i=1,Xk%nbz
+          if (allocated(PAR_IND_Xk_bz%element_1D)) then
+            if (.not.PAR_IND_Xk_bz%element_1D(ik_bz_i)) cycle
+          endif
+          do iv_i=X%ib(1),X%ib(1)+Nv(i_sp_i)-1
+            if (allocated(PAR_IND_VAL_BANDS_X(X%whoami)%element_1D)) then
+              if (.not.PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv_i)) cycle
+            endif
+            i_sym_i=qindx_X(iq_i,ik_bz_i,1)
+            ik_i=Xk%sstar(ik_bz_i,1)
+            ik_m_q_i=Xk%sstar(i_sym_i,1)
+            if (ic_i>=X%ib(1).and.ic_i<=Xen%nbm(i_sp_i).and.l_X_terminator) then
+              l_XTerm_vv_i=.true.
+              E_eh_i=X_term_E-Xen%E(iv_i,ik_m_q_i,i_sp_i)
+            else
+              l_XTerm_vv_i=.false.
+              E_eh_i=Xen%E(ic_i,ik_i,i_sp_i)-Xen%E(iv_i,ik_m_q_i,i_sp_i)
+            endif
+            E_in_i=Xen%E(iv_i,ik_m_q_i,i_sp_i)
+            if (.not.l_XTerm_vv_i) f_eh_i=Xen%f(iv_i,ik_m_q_i,i_sp_i)*&
+&             (spin_occ-Xen%f(ic_i,ik_i,i_sp_i))/spin_occ
+            if (     l_XTerm_vv_i) f_eh_i=Xen%f(iv_i,ik_m_q_i,i_sp_i)*&
+&             Xen%f(ic_i,ik_i,i_sp_i)/spin_occ
+            if (abs(f_eh_i)<local_tresh) cycle
+            if (any((/abs(E_eh_i)<X%ehe(1),abs(E_eh_i)>X%ehe(2).and.X%ehe(2)>0._SP/))) cycle
+            npoles_i=npoles_i+1
+            poles_i(npoles_i)=E_eh_i
+            ein_i(npoles_i)=E_in_i
+          enddo
+        enddo
+      enddo
+    enddo
+    if (npoles_i>0) then
+      call FREQUENCIES_group_engine(poles_i,npoles_i,X%cg_percentual,ein_i,l_X_terminator,&
+&                                  ngroups_i,ngroups_initial_i,sorted_i,sorted_x_i,group_sorted_i)
+      costs(ir_i,iq_i)=int(ngroups_i,8)*int(ndir_i,8)
+    endif
+    call PP_redux_wait(costs(:,iq_i),COMM=PAR_COM_CON_INDEX_X(X%whoami)%COMM)
+  enddo
+  deallocate(poles_i,ein_i,sorted_i,sorted_x_i,group_sorted_i)
+  !
+ end subroutine
+ !
+end subroutine

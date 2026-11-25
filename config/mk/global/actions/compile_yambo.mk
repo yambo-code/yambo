@@ -34,6 +34,7 @@ yambo yambo_ph yambo_sc yambo_rt yambo_nl:
 	@rm -f ${compdir}/log/"compile_"$@".log"
 	@rm -f ${compdir}/config/stamps_and_lists/compilation_stop_$@.stamp
 	@touch ${compdir}/config/stamps_and_lists/compiling_$@.stamp
+	@+X2DO="$@";$(update_provenance)
 	@$(call todo_precision,$(PRECMP))
 	@$(MAKE) $(MAKEFLAGS) dependencies
 	@$(MAKE) $(MAKEFLAGS) ext-libs

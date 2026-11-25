@@ -57,7 +57,6 @@ ACX_VERSION
 #
 # ============================================================================
 # Current branch
-ACX_BRANCH
 #
 # Checks for library functions.
 # ============================================================================
@@ -324,7 +323,7 @@ AC_CONFIG_FILES([
  config/setup config/mk/global/defs.mk config/report config/msg_ydb
  src/wf_and_fft/sgfft.F src/tools/.objects  
  config/mk/local/defs.mk config/mk/defs.mk sbin/compilation/helper.inc.sh
- include/branch.inc include/driver/editor.h lib/archive/git.list ])
+ include/driver/editor.h lib/archive/git.list ])
 #
 AC_OUTPUT
 #

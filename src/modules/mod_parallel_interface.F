@@ -89,6 +89,14 @@ module parallel_int
      logical,       optional::MASK(:)
    end subroutine
    !
+   subroutine PARALLEL_index_weighted_contiguous(px,uplim,lowlim,weights,COMM)
+     use parallel_m, ONLY:PP_indexes,yMPI_COMM
+     type(PP_indexes) :: px
+     integer :: uplim,lowlim
+     integer(8) :: weights(:)
+     type(yMPI_COMM) :: COMM
+   end subroutine
+   !
    subroutine PARALLEL_MATRIX_distribute(COMM,PAR_IND,nb,PAR_index,PAR_ID,PAR_n_elements)
      use parallel_m,    ONLY:yMPI_comm,PP_indexes
      type(yMPI_comm)   :: COMM

@@ -129,6 +129,9 @@ define clean_config
  rm -fr $(prefix)/*.status;\
  rm -fr $(prefix)/autom4te.cache;\
  rm -fr $(prefix)/include/version/version.h;\
+ rm -fr $(prefix)/include/version/build_provenance.h;\
+ rm -f $(prefix)/config/build-provenance.txt;\
+ rm -f $(prefix)/bin/*.provenance;\
  rm -fr $(prefix)/config/mk/local/static_variables.mk;\
  rm -fr $(prefix)/lib/archive/Makefile;\
  rm -fr $(prefix)/src/tools/.objects;\

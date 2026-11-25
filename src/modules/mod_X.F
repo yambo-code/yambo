@@ -95,6 +95,7 @@ module X_m
  logical :: l_write_disk_Xo=.false.
  logical :: l_X_terminator=.false.
  logical :: l_recalculate_X=.false.
+ logical :: X_WeightedBands=.false.
  character(schlen) :: X_terminator_Kind="none"
  !
  ! I/O DB

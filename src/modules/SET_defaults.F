@@ -128,8 +128,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! Printed reals format lengths 
  !
- include 'branch.inc'
- !
  call set_real_printed_length()
  !
  ! Fat Log?

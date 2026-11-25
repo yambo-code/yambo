@@ -14,7 +14,12 @@ typedef struct tool_struct
  char *bin;
  char *desc;
  char version_string[500];
- char hash[500];
+ char hash[41];
+ char commit_short[13];
+ char ref[128];
+ char tag[128];
+ char state[8];
+ char provenance_source[32];
  char *pj;
  int  version;
  int  subversion;

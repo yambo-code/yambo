@@ -50,6 +50,9 @@ lib/archive/Ydriver
 lib/yambo/Ydriver/yambo/include/editor.h
 lib/yambo/Ydriver/yambo/include/version.h
 include/version/version.h
+include/version/build_provenance.h
+config/build-provenance.txt
+bin/*.provenance
 include/driver/editor.h
 include/branch.inc
 src/tools/.objects

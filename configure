@@ -939,8 +939,6 @@ build_vendor
 build_cpu
 build
 ALLOCA
-Y_BRANCH
-GIT_CHECK
 OBJEXT
 EXEEXT
 ac_ct_CC
@@ -5086,57 +5084,6 @@ EOF
 #
 # ============================================================================
 # Current branch
-
-Y_BRANCH="unknown"
-# Extract the first word of "git", so it can be a program name with args.
-set dummy git; ac_word=$2
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-printf %s "checking for $ac_word... " >&6; }
-if test ${ac_cv_prog_GIT_CHECK+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  if test -n "$GIT_CHECK"; then
-  ac_cv_prog_GIT_CHECK="$GIT_CHECK" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  case $as_dir in #(((
-    '') as_dir=./ ;;
-    */) ;;
-    *) as_dir=$as_dir/ ;;
-  esac
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
-    ac_cv_prog_GIT_CHECK="yes"
-    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-GIT_CHECK=$ac_cv_prog_GIT_CHECK
-if test -n "$GIT_CHECK"; then
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $GIT_CHECK" >&5
-printf "%s\n" "$GIT_CHECK" >&6; }
-else
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
-printf "%s\n" "no" >&6; }
-fi
-
-
-if test x"$GIT_CHECK" = x"yes" && test -f $srcdir/.gitignore; then
- cd $srcdir
- Y_BRANCH=`git branch | grep \* | cut -d ' ' -f2`
- cd $compdir
-fi
-
-
 #
 # Checks for library functions.
 # ============================================================================
@@ -17851,7 +17798,7 @@ LAPACK_PETSC_INCS_R=$STRIPE
 # ============================================================================
 ac_config_headers="$ac_config_headers include/headers/common/have_malloc.h:include/headers/common/have_malloc.h.in"
 
-ac_config_files="$ac_config_files config/setup config/mk/global/defs.mk config/report config/msg_ydb src/wf_and_fft/sgfft.F src/tools/.objects config/mk/local/defs.mk config/mk/defs.mk sbin/compilation/helper.inc.sh include/branch.inc include/driver/editor.h lib/archive/git.list"
+ac_config_files="$ac_config_files config/setup config/mk/global/defs.mk config/report config/msg_ydb src/wf_and_fft/sgfft.F src/tools/.objects config/mk/local/defs.mk config/mk/defs.mk sbin/compilation/helper.inc.sh include/driver/editor.h lib/archive/git.list"
 
 #
 cat >confcache <<\_ACEOF
@@ -18552,7 +18499,6 @@ do
     "config/mk/local/defs.mk") CONFIG_FILES="$CONFIG_FILES config/mk/local/defs.mk" ;;
     "config/mk/defs.mk") CONFIG_FILES="$CONFIG_FILES config/mk/defs.mk" ;;
     "sbin/compilation/helper.inc.sh") CONFIG_FILES="$CONFIG_FILES sbin/compilation/helper.inc.sh" ;;
-    "include/branch.inc") CONFIG_FILES="$CONFIG_FILES include/branch.inc" ;;
     "include/driver/editor.h") CONFIG_FILES="$CONFIG_FILES include/driver/editor.h" ;;
     "lib/archive/git.list") CONFIG_FILES="$CONFIG_FILES lib/archive/git.list" ;;
 

@@ -13,6 +13,10 @@ define mk_exe
    ./sbin/compilation/helper.sh -d $$BASE -t $$exe -o .objects -m x -g $@ -- "$$LLIBS $(xcpp) $$ADF"; \
    cd $$BASE ; $(MAKE) $(MAKEFLAGS) VPATH=$(srcdir)/$$BASE exe || { grep Error $(compdir)/log/compile_$@.log ; exit "$$?"; } ; cd $(compdir); \
   fi;\
+  if test -f $(compdir)/config/build-provenance.txt && test -f $(bindir)/$$exe; then \
+   cmp -s $(compdir)/config/build-provenance.txt $(bindir)/$$exe.provenance || \
+    cp $(compdir)/config/build-provenance.txt $(bindir)/$$exe.provenance; \
+  fi;\
   if test ! -f $(compdir)/config/stamps_and_lists/$$exe.stamp; then \
    echo "$$exe linking failed. Check log/compile_$$exe.log";\
    grep Error $(compdir)/log/compile_$$exe.log;\

@@ -224,3 +224,93 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  endif
  !
 end subroutine
+!
+subroutine PARALLEL_index_weighted_contiguous(px,uplim,lowlim,weights,COMM)
+ !
+ ! Minimax partition of a weighted linear chain into contiguous intervals.
+ ! All ranks build the same boundaries; only the local mask is selected.
+ !
+ use parallel_m, ONLY:PP_indexes,yMPI_comm,PP_indexes_reset
+ !
+#include<y_memory.h>
+ !
+ type(PP_indexes) :: px
+ integer :: uplim,lowlim
+ integer(8) :: weights(:)
+ type(yMPI_comm) :: COMM
+ !
+ integer :: nband,npart,ir,ib,first,last
+ integer(8) :: lower,upper,trial,load
+ integer, allocatable :: first_all(:),last_all(:)
+ !
+ nband=max(uplim-lowlim+1,0)
+ npart=min(nband,COMM%n_CPU)
+ call PP_indexes_reset(px)
+ YAMBO_ALLOC(px%element_1D,(uplim))
+ YAMBO_ALLOC(px%n_of_elements,(COMM%n_CPU))
+ YAMBO_ALLOC(px%first_of_1D,(COMM%n_CPU))
+ YAMBO_ALLOC(px%last_of_1D,(COMM%n_CPU))
+ px%element_1D=.false.
+ px%n_of_elements=0
+ px%first_of_1D=0
+ px%last_of_1D=0
+ if (nband==0) return
+ allocate(first_all(COMM%n_CPU),last_all(COMM%n_CPU))
+ first_all=0
+ last_all=0
+ !
+ if (sum(weights(lowlim:uplim))==0_8) then
+   ! Preserve the historical equinumerous distribution for zero total weight.
+   do ir=1,npart
+     first_all(ir)=lowlim+(nband/npart)*(ir-1)+min(ir-1,mod(nband,npart))
+     last_all(ir)=first_all(ir)+nband/npart-1
+     if (ir<=mod(nband,npart)) last_all(ir)=last_all(ir)+1
+   enddo
+ else
+   lower=maxval(weights(lowlim:uplim))
+   upper=sum(weights(lowlim:uplim))
+   do while(lower<upper)
+     trial=lower+(upper-lower)/2_8
+     ir=1
+     load=0_8
+     do ib=lowlim,uplim
+       if (load+weights(ib)>trial) then
+         ir=ir+1
+         load=0_8
+       endif
+       load=load+weights(ib)
+     enddo
+     if (ir<=npart) then
+       upper=trial
+     else
+       lower=trial+1_8
+     endif
+   enddo
+   ! Reconstruct deterministically from the high-band end, reserving one band
+   ! for every preceding non-empty rank.
+   last=uplim
+   do ir=npart,1,-1
+     first=last
+     load=weights(first)
+     do while(first>lowlim+ir-1)
+       if (load+weights(first-1)>lower) exit
+       first=first-1
+       load=load+weights(first)
+     enddo
+     first_all(ir)=first
+     last_all(ir)=last
+     last=first-1
+   enddo
+ endif
+ !
+ do ir=1,COMM%n_CPU
+   px%first_of_1D(ir)=first_all(ir)
+   px%last_of_1D(ir)=last_all(ir)
+   if (first_all(ir)>0) px%n_of_elements(ir)=last_all(ir)-first_all(ir)+1
+ enddo
+ ir=COMM%CPU_id+1
+ if (first_all(ir)>0) px%element_1D(first_all(ir):last_all(ir))=.true.
+ if (first_all(ir)==0) call warning('[X-WB] excess c rank has no conduction bands')
+ deallocate(first_all,last_all)
+ !
+end subroutine
